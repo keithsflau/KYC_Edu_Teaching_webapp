@@ -367,6 +367,15 @@ function polishFreeDemo(entry, freeMeta) {
   return entry;
 }
 
+function isRedirectStub(htmlPath) {
+  try {
+    const head = fs.readFileSync(htmlPath, "utf8").slice(0, 800);
+    return /http-equiv\s*=\s*["']refresh["']/i.test(head) && /\burl\s*=/i.test(head);
+  } catch {
+    return false;
+  }
+}
+
 function main() {
   const { byPath: freeByPath } = loadFreeCatalog();
   // Canonical apps live under HK Cirriculum/ only — store paths without that prefix for /play/...
@@ -389,6 +398,8 @@ function main() {
     for (const file of files) {
       const folderPath = file.replace(/\/index\.html$/i, "");
       if (seenPaths.has(folderPath)) continue;
+      const absHtml = path.join(REPO, "HK Cirriculum", file);
+      if (isRedirectStub(absHtml)) continue;
       seenPaths.add(folderPath);
       const folderName = path.basename(folderPath);
       const hk = inferHkLevel(folderPath);

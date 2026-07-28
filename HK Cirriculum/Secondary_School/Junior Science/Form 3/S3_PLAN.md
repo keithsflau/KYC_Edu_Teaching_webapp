@@ -1,5 +1,8 @@
 # Form 3 Junior Science — S3 Bridge Plan
 
+> **⚠️ SUPERSEDED for Form 3 canonical apps.** Use `CEO_F3_REBUILD_PLAN.md` instead.  
+> This document describes an obsolete HKDSE bridge lane (30 apps). Bridge content may move to `Bridge/` in Wave 2.
+
 **Theme:** HKDSE Integrated Science bridge — consolidate S1–S2 and preview senior themes.  
 **Stack:** HTML5, Tailwind CSS, React CDN, `common/junior-science-lger.js` (`JSLGER.Shell`)  
 
@@ -17,10 +20,10 @@ Aligned to EDB **Science (S1–3) 2025 framework** units 3, 4, 5, 6, 13 and HKDS
 | 04 | `04_Scientific_Method` | Scientific Method Lab | 4 Scientific Practices II | ✅ LGER |
 | 05 | `05_Force_Motion_Bridge` | Force & Motion Bridge | 9 Force & Motion (HKDSE prep) | ✅ LGER |
 | 06 | `06_Circuit_Design` | Circuit Design Challenge | 10 Electricity (HKDSE prep) | ✅ LGER |
-| 07 | `07_Acid_Base_Review` | Acids & Bases Review | 7 Matter & Energy | 🔲 Planned |
-| 08 | `08_Data_Graphs` | Data & Graphs Workshop | 4 Scientific Practices II | 🔲 Planned |
-| 09 | `09_Human_Body_Systems` | Body Systems Integration | 11 Healthy Body | 🔲 Planned |
-| 10 | `10_Space_Earth` | Earth in Space | 5 Earth & Space | 🔲 Planned |
+| 07 | `07_Acid_Base_Review` | Acids & Bases Review | 7 Matter & Energy | ✅ LGER |
+| 08 | `08_Data_Graphs` | Data & Graphs Workshop | 4 Scientific Practices II | ✅ LGER |
+| 09 | `09_Human_Body_Systems` | Body Systems Integration | 11 Healthy Body | ✅ LGER |
+| 10 | `10_Space_Earth` | Earth in Space | 5 Earth & Space | ✅ LGER |
 | 11–20 | TBD | Chemistry bridge, energy, waves | 7–8, 12 | 🔲 Planned |
 | 21–30 | TBD | IS exam-style integrative labs | Cross-unit | 🔲 Planned |
 
@@ -59,6 +62,6 @@ npm install && npm run build
 
 ## Next wave (P1)
 
-1. Complete apps 07–10 (acids, data literacy, body systems, space)  
+1. Complete apps 11–20 (chemistry bridge, energy, waves)  
 2. Add `framework-2025` tags to Form 3 hub metadata  
 3. Cross-link F3 apps from F2 unit review cards

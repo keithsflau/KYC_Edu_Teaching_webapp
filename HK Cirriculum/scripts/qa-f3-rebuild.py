@@ -32,6 +32,8 @@ def check_app(app_dir: Path) -> dict:
         "ExperimentLab" in text
         or "function ExperimentLab" in text
         or bool(re.search(r"const\s+EXPERIMENT\s*=", text))
+        or "experiment={p =>" in text
+        or "experiment={p=>" in text
     )
     if not has_jslger:
         issues.append("missing JSLGER.Shell")
@@ -86,12 +88,66 @@ def check_app(app_dir: Path) -> dict:
     }
 
 
+CANONICAL_APPS = {
+    "01_Healthy_Lifestyle",
+    "02_Food_Substances",
+    "03_Digestion",
+    "04_Balanced_Diet",
+    "05_Disease_Prevention",
+    "06_Biotechnology",
+    "07_Atoms_Elements",
+    "08_Periodic_Table",
+    "09_Compounds",
+    "10_Metals",
+    "11_Alloys_Materials",
+    "12_Light_Sources",
+    "13_Reflection",
+    "14_Refraction",
+    "15_Total_Internal_Reflection",
+    "16_Lenses",
+    "17_EM_Waves",
+    "18_Light_Technology",
+}
+
+
+def is_canonical_app(name: str) -> bool:
+    return name in CANONICAL_APPS
+
+
+def check_hub() -> dict:
+    idx = BASE / "index.html"
+    if not idx.exists():
+        return {"app": "hub (index.html)", "status": "FAIL", "issues": ["missing hub"]}
+    text = idx.read_text(encoding="utf-8", errors="replace")
+    issues = []
+    broken = []
+    for m in re.finditer(r'href="(\d{2}_[^"/]+/index\.html)"', text):
+        ref = m.group(1)
+        if not (BASE / ref.split("/")[0] / "index.html").exists():
+            broken.append(ref)
+    if broken:
+        issues.append("broken hub links: " + ", ".join(broken[:8]) + ("..." if len(broken) > 8 else ""))
+    if "ncs-i18n.js" not in text:
+        issues.append("missing NCS on hub")
+    return {
+        "app": "hub (index.html)",
+        "status": "PASS" if not issues else "FAIL",
+        "issues": issues,
+        "size_kb": round(idx.stat().st_size / 1024, 1),
+    }
+
+
 def main() -> None:
     apps = sorted(
-        [d for d in BASE.iterdir() if d.is_dir() and (d / "index.html").exists()],
+        [
+            d
+            for d in BASE.iterdir()
+            if d.is_dir() and (d / "index.html").exists() and is_canonical_app(d.name)
+        ],
         key=lambda p: p.name,
     )
     results = [check_app(app) for app in apps]
+    results.append(check_hub())
     pass_n = sum(1 for r in results if r["status"] == "PASS")
     fail_n = sum(1 for r in results if r["status"] == "FAIL")
     print(f"Total apps: {len(results)} | PASS: {pass_n} | FAIL: {fail_n}\n")
