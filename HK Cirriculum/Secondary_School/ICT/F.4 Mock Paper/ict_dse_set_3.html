@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ICT DSE 學霸溫習系統 (Set 3)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; }
+        .fade-in { animation: fadeIn 0.4s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .option-btn { transition: all 0.2s ease; }
+        .option-btn:hover:not(:disabled) { transform: translateX(5px); }
+        .glass-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+    </style>
+
+  <!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../common/ncs-i18n.css" />
+  <script src="../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+</head>
+<body class="text-gray-800 antialiased min-h-screen pb-12">
+
+    <div id="app" class="max-w-5xl mx-auto pt-8 px-4">
+        <!-- Content will be injected here by JavaScript -->
+    </div>
+
+<script>
+// --- 第三 Set 題庫數據 ---
+
+const mcData = [
+    // 電腦系統與硬件
+    { q: "在購買一台手提電腦時，如果預算有限且主要用途是進行高解像度影片編輯，升級下列哪項硬件能帶來最明顯的效能提升？", o: ["儲存容量 (HDD 轉 SSD)", "主記憶體 (RAM 容量)", "網絡介面卡 (Wi-Fi 5 轉 Wi-Fi 6)", "唯讀記憶體 (ROM)"], a: 1, exp: "影片編輯需要大量的 RAM 來暫存和處理未壓縮的影片數據。RAM 不足會導致系統頻繁讀寫硬碟（虛擬記憶體），嚴重拖慢速度。" },
+    { q: "某智能手機的規格寫著「採用 5nm 製程的八核心 CPU」。這裡的「八核心」有甚麼主要好處？", o: ["減少手機耗電量至零", "提升 CPU 的時鐘頻率 (Clock Rate)", "能夠同時處理多個獨立的指令線程 (Threads)，提升多工作業效能", "增加手機的儲存容量"], a: 2, exp: "多核心處理器允許多個處理單位同時工作，特別適合運行支援多線程的應用程式和處理多工作業。" },
+    { q: "系統軟件中的「驅動程式」(Device Driver) 的作用是：", o: ["為電腦提供防毒保護", "充當操作系統與硬件設備之間的翻譯員", "自動備份用戶檔案", "加速互聯網連線"], a: 1, exp: "驅動程式是一段代碼，讓操作系統能夠理解並控制特定的硬件設備（如打印機、顯示卡）。" },
+    { q: "下列哪項是由「磁碟重組程式」(Disk Defragmenter) 完成的？", o: ["刪除不需要的檔案以釋放空間", "將分散在硬碟上的檔案片段重新排列，使檔案連續儲存，加快讀取速度", "修復損壞的硬碟磁區", "壓縮硬碟上的所有檔案"], a: 1, exp: "磁碟重組將檔案的各個區塊（碎片）重新拼湊在一起，減少磁頭移動的距離，從而提升讀寫效率（主要針對傳統 HDD）。" },
+    { q: "以下哪一種儲存媒體最適合用於長期備份大量公司的歷史數據（主要考慮成本和容量）？", o: ["固態硬碟 (SSD)", "磁帶 (Magnetic Tape)", "快閃記憶體 (USB Drive)", "藍光光碟 (Blu-ray Disc)"], a: 1, exp: "磁帶雖然是順序存取（Sequential Access），速度較慢，但儲存成本極低且容量極大，非常適合長期歸檔備份（Archiving）。" },
+
+    // 數據表示與多媒體
+    { q: "某 24-bit 圖像檔案的大小為 3 MB。若將其色彩深度減少至 8-bit (未經壓縮)，檔案大小將大約變為多少？", o: ["1 MB", "2 MB", "3 MB", "9 MB"], a: 0, exp: "色彩深度由 24-bit 減至 8-bit，即資料量減少至原來的三分之一 (8/24 = 1/3)。因此，3 MB × (1/3) = 1 MB。" },
+    { q: "在 ASCII 編碼系統中，大寫字母 'A' 的十進制代碼是 65。那麼大寫字母 'D' 的二進制編碼是甚麼？", o: ["1000001", "1000100", "01000100", "01000011"], a: 1, exp: "'A'=65, 'B'=66, 'C'=67, 'D'=68。68 轉換為二進制：64+4 = 1000000 + 100 = 1000100。" },
+    { q: "一首數字音樂的取樣頻率 (Sampling Rate) 決定了甚麼？", o: ["音樂的總時長", "每秒鐘從模擬聲音波形中提取樣本的次數，頻率越高音質越好", "可表示的音量級別數量", "聲音的立體聲或單聲道"], a: 1, exp: "取樣頻率（如 44.1 kHz 即每秒 44100 次）決定了聲音重建時的精細度（頻率響應）。" },
+    { q: "為什麼在網頁設計中，經常使用 PNG 格式代替 JPEG 格式來儲存標誌 (Logo) 或圖示 (Icon)？", o: ["PNG 的檔案大小永遠比 JPEG 小", "PNG 支援透明背景 (Transparency) 且為無損壓縮，不會出現模糊邊緣", "PNG 能顯示更多的顏色", "PNG 是一種影片格式"], a: 1, exp: "JPEG 有損壓縮在處理高對比度邊緣（如文字和標誌）時會產生偽影 (Artifacts)，且不支援透明背景。" },
+    { q: "將影片轉換為 MP4 格式的過程中使用了「有損壓縮」(Lossy Compression)。這意味著：", o: ["解壓縮後可以 100% 還原原始影片", "壓縮過程中會捨棄部分人類視覺/聽覺不易察覺的數據，導致部分細節永久流失", "檔案大小會增加", "影片只能播放一次"], a: 1, exp: "有損壓縮透過移除人眼不敏感的高頻細節等數據來大幅減少檔案大小，但犧牲了部分畫質。" },
+
+    // 辦公室軟件與資訊演示
+    { q: "在 Word 中，若希望第一頁沒有頁碼，第二頁開始顯示「第 1 頁」，你必須使用甚麼功能？", o: ["換行符號 (Line Break)", "分節符號 (Section Break)", "欄 (Columns)", "尋找及取代"], a: 1, exp: "分節符號允許你將文件分成不同部分，每個部分可以有獨立的頁首、頁尾和頁碼設定。" },
+    { q: "在 Excel 中，儲存格 A1 包含日期 `2024-05-01`，若在 B1 輸入公式 `=A1+7`，結果會是甚麼？", o: ["錯誤 (Error)", "2024-05-08", "2024-05-017", "2031-05-01"], a: 1, exp: "Excel 在內部將日期儲存為序列號（整數）。將日期加上一個整數，代表加上對應的天數。" },
+    { q: "在 PowerPoint 演示中，若想限制觀眾只能按特定的按鈕前進或返回，不允許按滑鼠左鍵或鍵盤方向鍵切換投影片，應在哪裡設定？", o: ["投影片母片 (Slide Master)", "動畫 (Animations)", "設定放映方式 -> 於資訊站瀏覽 (Kiosk Mode)", "投影片切換 (Transitions)"], a: 2, exp: "資訊站模式 (Kiosk) 會鎖定一般導航方式，觀眾只能透過你設計的超連結或動作按鈕進行互動。" },
+    { q: "下列哪個檔案格式**最不適合**用來在不同操作系統（如 Windows 和 Mac）之間共享一份需要保持排版完全一致的文件？", o: ["PDF", "RTF", "TXT", "DOCX (使用特殊字體)"], a: 3, exp: "雖然 DOCX 是通用格式，但如果文件中使用了另一台電腦沒有安裝的特殊字體，排版就會跑掉。PDF 則是為了跨平台保持排版而設計的。" },
+    { q: "在 Excel 中，公式 `=IF(A1>=50, \"及格\", IF(A1>=40, \"補考\", \"不及格\"))` 是一個嵌套的 IF 函數。若 A1 的值為 45，結果會是：", o: ["及格", "補考", "不及格", "錯誤"], a: 1, exp: "A1 (45) 不大於或等於 50，所以進入第二個 IF。45 大於或等於 40 為真 (True)，所以輸出「補考」。" },
+
+    // 數據庫與系統發展
+    { q: "在系統開發生命周期 (SDLC) 的「系統設計」(System Design) 階段，通常會產出甚麼文件？", o: ["系統測試報告", "需求規格說明書", "系統流程圖、數據庫架構圖和使用者介面設計", "可行性研究報告"], a: 2, exp: "設計階段是根據需求，規劃系統的技術架構、數據庫表結構和介面設計。" },
+    { q: "在關聯式數據庫中，兩個資料表之間若要建立「多對多」(Many-to-Many) 關聯，通常需要怎麼做？", o: ["直接將主鍵互作外鍵", "引入第三個「關聯資料表」(Junction Table)，儲存兩者的主鍵", "不需要建立關聯", "合併成一個大資料表"], a: 1, exp: "例如學生與課程。一個學生可修多門課，一門課有多個學生。必須建立一個如「選課記錄」的第三個表來記錄這種關係。" },
+    { q: "某公司的顧客數據庫中，有一個名為「電話號碼」的欄位。這個欄位最適合設定為甚麼數據類型？", o: ["整數 (Integer)", "實數 (Real)", "短文字 (Short Text / Varchar)", "日期/時間 (Date/Time)"], a: 2, exp: "電話號碼可能包含前導零（如 0912...）或符號（如 +852），如果設為整數，前導零會消失且無法輸入符號。且電話號碼不參與數學運算。" },
+    { q: "在 SQL 查詢中，`LIKE '%Smith'` 的作用是：", o: ["尋找完全等於 'Smith' 的記錄", "尋找以 'Smith' 開頭的記錄", "尋找以 'Smith' 結尾的記錄", "尋找包含 'Smith' 的記錄"], a: 2, exp: "百分號 `%` 代表任意數量的字元。放在前面表示前面可以是任何字元，但必須以 'Smith' 結尾。" },
+    { q: "「數據字典」(Data Dictionary) 在數據庫管理中的功能是：", o: ["儲存真實的客戶資料", "定義資料表中每個欄位的屬性（如數據類型、長度、約束條件）及關係", "將英文翻譯成中文", "加速 SQL 查詢執行"], a: 1, exp: "數據字典是「關於數據的數據」(Metadata)，詳細記錄了數據庫的結構定義。" },
+
+    // 網絡與互聯網
+    { q: "家用路由器 (Home Router) 中內置的 NAT (網絡位址轉換) 功能主要解決了甚麼問題？", o: ["防止所有電腦病毒", "允許多台內部裝置共享一個公共 IPv4 位址上網", "提升互聯網的連線速度", "加密所有的網絡流量"], a: 1, exp: "NAT 會將內部網絡的私有 IP 轉換為路由器 WAN 端的公共 IP，延緩了 IPv4 位址耗盡的問題。" },
+    { q: "下列哪一種網絡連接技術屬於「寬頻」(Broadband)，並且上載和下載速度通常是**不對稱**的？", o: ["租用專線 (Leased Line)", "藍牙 (Bluetooth)", "非對稱數碼用戶線路 (ADSL)", "乙太網 (Ethernet)"], a: 2, exp: "ADSL 為了迎合一般用戶下載需求遠大於上載需求的情況，設計了不對稱的傳輸速率。" },
+    { q: "甚麼是「MAC 位址」(MAC Address)？", o: ["由網絡供應商動態分配的邏輯地址", "網絡介面卡 (NIC) 在出廠時被賦予的全球唯一實體硬件地址", "蘋果公司專用的網絡地址", "用來識別網站域名的地址"], a: 1, exp: "MAC 位址是硬體層面的識別碼，通常由 6 組十六進制數字組成，例如 `00:1A:2B:3C:4D:5E`。" },
+    { q: "當你在瀏覽器輸入網址後，出現「404 Not Found」錯誤，這代表甚麼？", o: ["伺服器內部發生嚴重錯誤", "你的網絡連線已中斷", "伺服器無法找到你請求的網頁或檔案", "你沒有權限存取該網頁"], a: 2, exp: "404 是一個 HTTP 狀態碼，表示客戶端能與伺服器通訊，但伺服器找不到所請求的資源（如網址打錯或網頁已刪除）。" },
+    { q: "VoIP (Voice over Internet Protocol) 技術容許用戶透過互聯網撥打電話。以下哪個是其缺點？", o: ["長途電話費用非常高昂", "通話質素容易受網絡穩定性和頻寬影響", "只能在電腦上使用", "無法傳送聲音"], a: 1, exp: "VoIP 把語音轉換為數據包透過網絡傳輸，若網絡塞車（High Latency / Jitter），就會出現聲音斷續或延遲。" },
+
+    // 演算法與程式編寫
+    { q: "在設計演算法時，「空運行」(Dry Run / Trace Table) 的主要目的是甚麼？", o: ["測試電腦硬件的速度", "自動修復程式碼的語法錯誤", "以人手模擬程式碼的執行步驟，追蹤變數的變化，以找出邏輯錯誤", "將程式碼轉換為機器碼"], a: 2, exp: "透過追蹤表記錄每次迴圈中變數的數值，能有效檢查演算法的邏輯是否正確。" },
+    { q: "程式碼 `WHILE (條件) DO ... END WHILE` 是一個迴圈結構。如果「條件」在一開始就是 FALSE (假)，迴圈內的代碼會執行多少次？", o: ["無限次", "最少一次", "0 次", "10 次"], a: 2, exp: "WHILE 迴圈是「前測迴圈」(Pre-test Loop)，會先檢查條件。若一開始就為假，將直接跳過迴圈主體。" },
+    { q: "甚麼是「遞迴」(Recursion)？", o: ["一個不斷重複的死迴圈", "一個函數在執行過程中呼叫自己本身的編程技巧", "將程式碼加密的方法", "刪除程式中的無用數據"], a: 1, exp: "遞迴是一種解決問題的方法，透過將大問題分解為規模較小的同類子問題來解決（例如計算階乘 N!）。" },
+    { q: "在 Python 等直譯語言中，變數 (Variable) 在使用前通常不需要宣告其數據類型（如 Integer 或 String）。這種特性稱為：", o: ["強型別 (Strong Typing)", "動態型別 (Dynamic Typing)", "編譯型 (Compiled)", "物件導向 (Object-Oriented)"], a: 1, exp: "動態型別語言在執行期間才決定變數的類型，提高了編寫的彈性，但也可能在執行時產生類型錯誤。" },
+    { q: "若演算法的目的是從數列 [5, 2, 9, 1, 6] 中找出最大值。第一步是將第一個元素 (5) 設為假定的最大值，然後逐一與後面的元素比較。這是哪種搜尋/排序邏輯的基礎？", o: ["二分搜尋 (Binary Search)", "線性搜尋 (Linear Search) / 簡單比較", "氣泡排序 (Bubble Sort)", "插入排序 (Insertion Sort)"], a: 1, exp: "這是最基本的線性掃描方法，適合未排序的數列。" },
+
+    // 資訊安全與道德
+    { q: "甚麼是 SQL 資料隱碼攻擊 (SQL Injection)？", o: ["利用惡意電郵散播病毒", "黑客在網站的輸入欄位中惡意輸入 SQL 語法，欺騙後端數據庫執行未經授權的指令", "透過大量封包癱瘓數據庫", "攔截數據庫與伺服器之間的傳輸"], a: 1, exp: "如果網站沒有對用戶輸入進行適當的過濾 (Sanitization)，黑客可以利用 SQL 注入繞過登入驗證或竊取資料。" },
+    { q: "安裝並更新「操作系統修補程式」(OS Patches/Updates) 的最主要目的是：", o: ["更改電腦的使用者介面", "修復系統中已知的安全漏洞 (Vulnerabilities)，防止黑客利用", "提升硬碟的總容量", "自動備份所有文件"], a: 1, exp: "軟件漏洞是黑客入侵的常見途徑。修補程式能填補這些漏洞，增強系統安全性。" },
+    { q: "「對稱加密」和「非對稱加密」經常結合使用以取得最佳效果。例如在 HTTPS 連線建立初期，通常會先使用哪種技術來安全地交換會話密鑰？", o: ["對稱加密", "非對稱加密", "雜湊函數 (Hashing)", "無需加密"], a: 1, exp: "在 SSL/TLS 握手階段，會先使用非對稱加密（利用公鑰/私鑰）來安全地協商並交換一個對稱密鑰，之後的通訊再使用速度較快的對稱加密。" },
+    { q: "某員工離職時，偷偷複製了公司的客戶名單並賣給競爭對手。這主要違反了甚麼？", o: ["版權條例", "個人資料 (私隱) 條例及保密協議", "商品說明條例", "防止賄賂條例"], a: 1, exp: "未經授權收集、使用或披露他人的個人資料，嚴重違反私隱條例及商業保密協議。" },
+    { q: "「生物特徵認證」(如指紋、面容) 雖然方便且難以偽造，但有甚麼潛在的安全風險？", o: ["容易忘記密碼", "一旦生物特徵數據被盜取（如資料庫外洩），用戶無法像更改密碼一樣「更改」自己的指紋或面容", "生物特徵會隨時間消失", "生物認證設備成本太低"], a: 1, exp: "生物特徵是不可變更的。一旦被黑客複製（如高精度的 3D 面具或盜取的指紋數據），將構成永久性的安全威脅。" }
+];
+
+const lqData = [
+    { topic: "系統開發", q: "系統開發生命周期 (SDLC) 包括規劃、分析、設計、實施及維護等階段。請簡述在「實施」(Implementation) 階段中，系統切換的兩種策略，並比較其風險。(4分)", ans: "1. 直接切換 (Direct Cutover)：在指定時間完全停用舊系統，即時啟用新系統。(1分) 風險最高，若新系統崩潰將導致業務停頓。(1分)\n2. 平行切換 (Parallel Running)：新舊系統同時運作一段時間，核對兩者結果一致後才停用舊系統。(1分) 風險最低，有舊系統作後備，但缺點是成本極高且需重複輸入數據。(1分)" },
+    { topic: "網絡安全", q: "解釋甚麼是「防火牆」(Firewall)，並說明它如何根據「埠號」(Port Number) 來保障網絡安全。(4分)", ans: "防火牆：可以是硬件或軟件，安裝在內部網絡與互聯網之間，根據預設的保安規則監控和過濾進出的網絡流量。(2分)\n埠號過濾：不同的網絡服務使用不同的埠號(例如 HTTP用Port 80，FTP用Port 21)。防火牆可以設定規則，例如關閉內部電腦對外的 FTP 埠，或只允許特定 IP 存取資料庫埠，從而阻擋未經授權的服務連線。(2分)" },
+    { topic: "多媒體", q: "一幅圖像檔案的解像度為 1024 x 768，色彩深度為 8-bit。如果將它轉換為 24-bit 的 True Color，圖像的視覺效果會有何改變？檔案大小會如何變化 (需列出算式)？(4分)", ans: "視覺效果：色彩層次會變得更豐富平滑。8-bit 只能顯示 256 種顏色，而 24-bit 能顯示約 1677 萬種顏色，減少了色彩漸變時的「色帶」(Banding) 現象。(2分)\n檔案大小變化：檔案大小會變成原來的 3 倍。(1分) \n算式：原檔案大小 = (1024 x 768 x 8) bits。新檔案大小 = (1024 x 768 x 24) bits。24 是 8 的三倍。(1分)" },
+    { topic: "數據庫", q: "關聯式數據庫中，何謂「參照完整性」(Referential Integrity)？試舉例說明。(4分)", ans: "參照完整性：是指在兩個互相關聯的資料表中，確保「外鍵」(Foreign Key) 的值必須與另一個表的「主鍵」(Primary Key) 的值相對應，或者為 Null。(2分)\n例子：在「訂單表」中，有一個外鍵「客戶編號」。參照完整性規則會阻止你輸入一個在「客戶表」的主鍵中不存在的「客戶編號」，防止出現「孤兒訂單」。(2分)" },
+    { topic: "程式編寫", q: "在測試程式時，甚麼是「正常數據」(Normal Data)、「異常數據」(Abnormal Data) 和「邊界數據」(Boundary Data)？假設一個程式要求輸入 1 到 10 之間的整數，請為這三類數據各舉一個例子。(4分)", ans: "正常數據：在預期範圍內，系統能正常處理的有效輸入。例子：5 (或任何 2-9 的整數)。(1.5分)\n異常數據：超出預期範圍或類型錯誤，系統應拒絕或報錯的無效輸入。例子：15, -2, 或輸入英文字母 'A'。(1.5分)\n邊界數據：剛好在有效範圍邊緣的數值，這通常是程式邏輯最容易出錯的地方。例子：1 或 10。(1分)" },
+    { topic: "辦公室軟件", q: "試算表中，如果要在一個包含 1000 名學生分數的列表中，自動用不同的顏色標示出「大於 80 分」(綠色) 和「小於 50 分」(紅色) 的儲存格，應使用甚麼功能？該功能有何好處？(3分)", ans: "功能：條件格式化 (Conditional Formatting)。(1分)\n好處：\n1. 能提供視覺提示，讓用戶在龐大的數據集中一眼就能識別出極端數值或符合特定條件的關鍵數據。(1分)\n2. 格式會隨著儲存格數據的更改而自動動態更新，無需手動重新設定顏色。(1分)" },
+    { topic: "互聯網應用", q: "什麼是「串流傳輸」(Streaming)？它與傳統的「下載後播放」(Download-and-play) 有什麼主要分別？(4分)", ans: "串流傳輸：一種透過網絡連續傳送多媒體(影片/音訊)數據包的技術，讓客戶端裝置能在接收數據的同時即時解碼並播放，無需等待整個檔案傳輸完畢。(2分)\n主要分別 (任選一項 2分)：\n- 播放時間：串流可即時播放(只需短暫緩衝)；傳統下載需等整個檔案下載完成才能播放。\n- 儲存空間：串流數據播放後通常會被捨棄，不佔用本地硬碟空間；下載則會將完整檔案永久儲存在設備上。" },
+    { topic: "資訊社會", q: "「大數據」(Big Data) 分析具有 3V 特徵：Volume(資料量)、Velocity(速度)、Variety(多樣性)。試解釋「多樣性」(Variety) 的意思，並給出一個大數據在商業上應用的例子。(4分)", ans: "多樣性 (Variety)：指大數據的來源和格式非常廣泛，除了傳統數據庫的結構化數據(如數字、表格)外，還包含大量非結構化數據，如社交媒體貼文、影片、音訊、感測器日誌等。(2分)\n商業應用例子：串流平台(如 Netflix 或 Spotify) 收集用戶的觀看歷史、搜尋記錄、暫停/回放行為等龐大數據，進行分析後，透過推薦演算法向用戶精準推薦他們可能感興趣的電影或音樂。(2分)" },
+    { topic: "網絡技術", q: "甚麼是「虛擬私人網絡」(VPN)？試述企業員工在外地出差時，使用 VPN 連接公司內聯網的兩個主要好處。(4分)", ans: "VPN：利用加密和隧道技術 (Tunneling)，在公共互聯網上建立一條安全的專用通訊通道。(2分)\n好處 (各1分)：\n1. 數據加密：在公共 Wi-Fi 上傳輸的機密商業資料會被加密，防止黑客竊聽。\n2. 授權存取：讓身處外地的員工能取得如同在辦公室內部網絡一樣的權限，安全地存取公司內聯網的伺服器和檔案。" },
+    { topic: "資訊安全", q: "解釋密碼學中的「雜湊函數」(Hash Function)。它如何用來驗證下載檔案的完整性 (Integrity)？(4分)", ans: "雜湊函數：一種將任意長度的輸入數據轉換為固定長度的獨特字串 (雜湊值/Hash Value) 的單向演算法。即使輸入稍微改變一個字元，產生的雜湊值也會完全不同。(2分)\n驗證完整性：軟件開發商會在網站上公佈原始檔案的雜湊值(如 MD5 或 SHA-256)。用戶下載檔案後，使用工具計算出下載檔案的雜湊值。如果兩個雜湊值完全相同，則證明檔案在傳輸過程中沒有損壞或被黑客竄改(植入病毒)。(2分)" },
+    { topic: "電腦系統", q: "在電腦架構中，「匯流排」(Bus) 的作用是甚麼？請列出三種主要的系統匯流排及其傳送的內容。(4分)", ans: "作用：匯流排是主機板上的實體線路通道，負責在 CPU、記憶體及周邊設備之間高速傳遞資訊。(1分)\n三種主要匯流排 (各1分)：\n1. 數據匯流排 (Data Bus)：傳送實際要處理的數據或指令碼。\n2. 位址匯流排 (Address Bus)：由 CPU 傳送記憶體位址或 I/O 設備位址，指出要存取哪個位置。\n3. 控制匯流排 (Control Bus)：傳送控制訊號(如讀取/寫入指令、時鐘訊號、中斷請求)，協調各部件運作。" },
+    { topic: "數據庫", q: "在編寫 SQL 查詢時，若希望找出「平均分高於 60 分」的班別，應在哪個子句中使用聚合函數 AVG()？請解釋為何不能使用 WHERE 子句。(3分)", ans: "應使用 `HAVING` 子句。(1分)\n解釋：`WHERE` 子句是用來在進行數據分組 (GROUP BY) 之前，過濾個別的記錄行，它不允許包含聚合函數。(1分) 而 `HAVING` 子句專門設計用於對 GROUP BY 分組後所產生的聚合結果（如計算出的班別平均分）進行條件過濾。(1分)" },
+    { topic: "程式編寫", q: "請說明直譯器 (Interpreter) 執行程式的過程，並指出它在程式開發(除錯)階段相較於編譯器 (Compiler) 的一個優點。(3分)", ans: "執行過程：直譯器會逐行讀取高階語言的源代碼，即時將其翻譯為機器碼並立即執行。它不會產生一個獨立的可執行檔 (如 .exe)。(2分)\n優點：在除錯 (Debugging) 階段，直譯器遇到錯誤會立即停止並指出出錯的行數，程式員修改後可馬上重新執行，這使得開發和除錯的流程更快速互動。(1分)" },
+    { topic: "健康與社會", q: "何謂「知識產權」(Intellectual Property)？舉例說明軟件盜版對軟件開發商和普通用戶可能造成的負面影響。(4分)", ans: "知識產權：指人類透過心智創造出來的無形財產(如文學作品、發明、軟件代碼)，並受法律(如版權法、專利法)保護，賦予創作者獨佔的權利。(2分)\n對開發商的影響：收入大幅減少，導致缺乏資金繼續開發新軟件或提供更新維護。(1分)\n對用戶的影響：下載的盜版軟件經常被植入木馬或勒索病毒，威脅個人資料安全；且無法獲得官方的技術支援和漏洞修補。(1分)" },
+    { topic: "網絡技術", q: "在設定區域網絡 (LAN) 時，子網絡遮罩 (Subnet Mask) 的主要作用是甚麼？(3分)", ans: "子網絡遮罩與 IP 位址結合使用。(1分)\n主要作用是幫助電腦和路由器區分 IP 位址中的哪一部分代表「網絡位址」(Network ID)，哪一部分代表「主機位址」(Host ID)。(1分)\n這讓設備能判斷目標裝置是否與自己在同一個本地網絡中（直接傳送），還是需要將數據包交給「預設閘道」(Router) 轉發到外部網絡。(1分)" }
+];
+
+// --- 應用程式狀態 ---
+let currentView = 'dashboard';
+let mcAnswers = {}; // { questionIndex: selectedOptionIndex }
+let currentMcIndex = 0;
+let lqDrafts = {}; // { questionIndex: string }
+let lqRevealed = {}; // { questionIndex: boolean }
+let currentLqIndex = 0;
+
+// --- 介面渲染函數 ---
+
+function render() {
+    const app = document.getElementById('app');
+    app.innerHTML = '';
+    
+    if (currentView === 'dashboard') {
+        app.innerHTML = getDashboardHTML();
+    } else if (currentView === 'mc') {
+        app.innerHTML = getMcHTML();
+    } else if (currentView === 'lq') {
+        app.innerHTML = getLqHTML();
+    }
+}
+
+function getDashboardHTML() {
+    const mcAttempted = Object.keys(mcAnswers).length;
+    let mcScore = 0;
+    for (let key in mcAnswers) {
+        if (mcAnswers[key] === mcData[key].a) mcScore++;
+    }
+    const mcAccuracy = mcAttempted === 0 ? 0 : Math.round((mcScore / mcAttempted) * 100);
+    const lqRevealedCount = Object.keys(lqRevealed).length;
+
+    return `
+        <div class="space-y-8 fade-in">
+            <div class="bg-gradient-to-r from-blue-700 to-indigo-800 rounded-3xl p-8 md:p-12 text-white shadow-2xl flex flex-col md:flex-row items-center justify-between relative overflow-hidden">
+                <div class="z-10 text-center md:text-left">
+                    <h1 class="text-3xl md:text-4xl font-extrabold mb-3 tracking-tight">ICT DSE 學霸溫習系統 <span class="text-yellow-400 font-bold">(Set 3)</span></h1>
+                    <p class="text-blue-200 text-lg md:text-xl font-light">終極挑戰！破解常見陷阱，奪取 5**。</p>
+                </div>
+                <i class="fas fa-crown text-8xl text-yellow-400 opacity-90 z-10 mt-6 md:mt-0 drop-shadow-lg"></i>
+                <div class="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl"></div>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8">
+                <!-- MC Card -->
+                <div class="glass-panel p-8 rounded-2xl shadow-lg border border-gray-200 flex flex-col items-center text-center transform transition duration-300 hover:shadow-xl">
+                    <div class="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mb-6">
+                        <i class="fas fa-check-double text-4xl text-indigo-600"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-3">終極 MC 挑戰 (${mcData.length}題)</h2>
+                    <p class="text-gray-500 mb-8 leading-relaxed">挑戰易混淆概念與進階題型（如色彩計算、SQL Injection、防護機制）。即時批改助你突破樽頸。</p>
+                    
+                    <div class="w-full bg-gray-100 rounded-full h-4 mb-3 overflow-hidden shadow-inner">
+                        <div class="bg-gradient-to-r from-indigo-500 to-blue-500 h-4 rounded-full transition-all duration-1000 ease-out" style="width: ${(mcAttempted/mcData.length)*100}%"></div>
+                    </div>
+                    <div class="flex justify-between w-full text-sm text-gray-600 mb-8 font-medium">
+                        <span>已完成: ${mcAttempted} / ${mcData.length}</span>
+                        <span>準確率: <span class="${mcAccuracy >= 80 ? 'text-green-600' : 'text-indigo-600'} font-bold">${mcAccuracy}%</span></span>
+                    </div>
+                    
+                    <button onclick="changeView('mc')" class="mt-auto w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl flex justify-center items-center gap-3 transition-colors shadow-md hover:shadow-lg">
+                        進入 MC 訓練 <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+
+                <!-- LQ Card -->
+                <div class="glass-panel p-8 rounded-2xl shadow-lg border border-gray-200 flex flex-col items-center text-center transform transition duration-300 hover:shadow-xl">
+                    <div class="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mb-6">
+                        <i class="fas fa-brain text-4xl text-emerald-600"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-3">終極 LQ 模擬 (${lqData.length}題)</h2>
+                    <p class="text-gray-500 mb-8 leading-relaxed">針對失分重災區（如系統切換、VPN、參照完整性）進行特訓，強化邏輯表達與答題技巧。</p>
+                    
+                    <div class="w-full bg-gray-100 rounded-full h-4 mb-3 overflow-hidden shadow-inner">
+                        <div class="bg-gradient-to-r from-emerald-500 to-teal-400 h-4 rounded-full transition-all duration-1000 ease-out" style="width: ${(lqRevealedCount/lqData.length)*100}%"></div>
+                    </div>
+                    <div class="flex justify-between w-full text-sm text-gray-600 mb-8 font-medium">
+                        <span>已核對: ${lqRevealedCount} / ${lqData.length}</span>
+                    </div>
+                    
+                    <button onclick="changeView('lq')" class="mt-auto w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-xl flex justify-center items-center gap-3 transition-colors shadow-md hover:shadow-lg">
+                        進入 LQ 訓練 <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function getMcHTML() {
+    const q = mcData[currentMcIndex];
+    const isAnswered = mcAnswers[currentMcIndex] !== undefined;
+    const selectedOpt = mcAnswers[currentMcIndex];
+    const isCorrect = selectedOpt === q.a;
+    
+    let mcScore = 0;
+    for (let key in mcAnswers) {
+        if (mcAnswers[key] === mcData[key].a) mcScore++;
+    }
+
+    let optionsHTML = '';
+    q.o.forEach((opt, idx) => {
+        let btnClass = "w-full text-left p-5 rounded-xl border-2 mb-3 option-btn font-medium text-lg text-gray-700 flex justify-between items-center ";
+        let iconHTML = '';
+        
+        if (!isAnswered) {
+            btnClass += "border-gray-200 hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-800 bg-white shadow-sm cursor-pointer";
+        } else {
+            if (idx === q.a) {
+                btnClass += "border-green-500 bg-green-50 text-green-800 shadow-md";
+                iconHTML = '<i class="fas fa-check-circle text-2xl text-green-500"></i>';
+            } else if (selectedOpt === idx) {
+                btnClass += "border-red-400 bg-red-50 text-red-800";
+                iconHTML = '<i class="fas fa-times-circle text-2xl text-red-400"></i>';
+            } else {
+                btnClass += "border-gray-200 bg-gray-50 opacity-60";
+            }
+        }
+
+        optionsHTML += `
+            <button ${isAnswered ? 'disabled' : ''} onclick="answerMc(${idx})" class="${btnClass}">
+                <span><span class="mr-3 font-bold opacity-70">${String.fromCharCode(65 + idx)}.</span> ${opt}</span>
+                ${iconHTML}
+            </button>
+        `;
+    });
+
+    let explanationHTML = '';
+    if (isAnswered) {
+        explanationHTML = `
+            <div class="mt-8 p-6 rounded-xl border-l-4 shadow-sm fade-in ${isCorrect ? 'bg-green-50 border-green-500' : 'bg-red-50 border-red-500'}">
+                <div class="flex items-start gap-4">
+                    <div class="mt-1">
+                        <i class="fas fa-lightbulb text-2xl ${isCorrect ? 'text-green-500' : 'text-red-500'}"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-lg font-bold mb-2 ${isCorrect ? 'text-green-800' : 'text-red-800'}">
+                            ${isCorrect ? '答對了！觀念很清晰！' : `答錯了！正確答案是 ${String.fromCharCode(65 + q.a)}`}
+                        </h4>
+                        <p class="text-gray-700 text-lg leading-relaxed">${q.exp}</p>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    return `
+        <div class="space-y-6 fade-in max-w-4xl mx-auto">
+            <div class="flex justify-between items-center bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
+                <button onclick="changeView('dashboard')" class="text-gray-500 hover:text-indigo-700 flex items-center gap-2 font-bold transition-colors">
+                    <i class="fas fa-chevron-left"></i> 返回儀表板
+                </button>
+                <div class="font-bold text-gray-800 text-lg">MC 挑戰 <span class="text-indigo-600 ml-2">第 ${currentMcIndex + 1} / ${mcData.length} 題</span></div>
+                <div class="text-sm font-bold bg-indigo-100 text-indigo-800 px-4 py-2 rounded-full shadow-inner">
+                    得分: ${mcScore}
+                </div>
+            </div>
+
+            <div class="glass-panel p-8 md:p-10 rounded-2xl shadow-lg border border-gray-200">
+                <h3 class="text-2xl font-bold text-gray-800 mb-8 leading-relaxed">
+                    <span class="text-indigo-500 mr-2">Q${currentMcIndex + 1}.</span>${q.q}
+                </h3>
+                <div class="space-y-4">
+                    ${optionsHTML}
+                </div>
+                ${explanationHTML}
+            </div>
+
+            <div class="flex justify-between items-center gap-4 mt-6">
+                <button ${currentMcIndex === 0 ? 'disabled' : ''} onclick="prevMc()" class="flex-1 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-bold py-4 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm">
+                    <i class="fas fa-arrow-left mr-2"></i> 上一題
+                </button>
+                <button ${currentMcIndex === mcData.length - 1 ? 'disabled' : ''} onclick="nextMc()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md">
+                    下一題 <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+function getLqHTML() {
+    const q = lqData[currentLqIndex];
+    const draft = lqDrafts[currentLqIndex] || '';
+    const isRevealed = lqRevealed[currentLqIndex];
+
+    let answerArea = '';
+    if (!isRevealed) {
+        answerArea = `
+            <div class="mt-6 fade-in">
+                <label class="block text-gray-700 font-bold mb-3 text-lg"><i class="fas fa-keyboard mr-2 text-emerald-500"></i>你的作答草稿：</label>
+                <textarea id="lq-draft" class="w-full p-5 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-emerald-100 focus:border-emerald-400 transition-all resize-y text-lg text-gray-700 bg-gray-50 placeholder-gray-400" rows="6" placeholder="在此輸入你的答案... (小心陷阱，精準作答！)">${draft}</textarea>
+                <button onclick="revealLq()" class="mt-6 w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-4 rounded-xl transition-colors shadow-md flex items-center justify-center gap-2 text-lg">
+                    <i class="fas fa-eye"></i> 核對 Marking Scheme
+                </button>
+            </div>
+        `;
+    } else {
+        answerArea = `
+            <div class="mt-6 space-y-6 fade-in">
+                <div class="p-5 bg-gray-50 rounded-xl border border-gray-200">
+                    <label class="block text-gray-500 font-bold mb-2"><i class="fas fa-user-edit mr-2"></i>你的作答：</label>
+                    <div class="text-gray-700 whitespace-pre-wrap text-lg min-h-[4rem]">${draft || '<span class="italic text-gray-400">沒有填寫草稿</span>'}</div>
+                </div>
+                
+                <div class="p-6 md:p-8 bg-emerald-50 rounded-2xl border-2 border-emerald-200 shadow-inner">
+                    <label class="block text-emerald-800 font-bold mb-4 text-xl flex items-center"><i class="fas fa-check-double mr-3 text-2xl"></i>官方建議答案 / 評分標準：</label>
+                    <div class="text-gray-800 whitespace-pre-wrap text-lg leading-relaxed">${q.ans}</div>
+                </div>
+            </div>
+        `;
+    }
+
+    return `
+        <div class="space-y-6 fade-in max-w-4xl mx-auto">
+            <div class="flex justify-between items-center bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
+                <button onclick="changeView('dashboard')" class="text-gray-500 hover:text-emerald-700 flex items-center gap-2 font-bold transition-colors">
+                    <i class="fas fa-chevron-left"></i> 返回儀表板
+                </button>
+                <div class="font-bold text-gray-800 text-lg">LQ 模擬 <span class="text-emerald-600 ml-2">第 ${currentLqIndex + 1} / ${lqData.length} 題</span></div>
+                <div class="text-sm font-bold bg-emerald-100 text-emerald-800 px-4 py-2 rounded-full shadow-inner">
+                    ${q.topic}
+                </div>
+            </div>
+
+            <div class="glass-panel p-8 md:p-10 rounded-2xl shadow-lg border border-gray-200">
+                <h3 class="text-2xl font-bold text-gray-800 mb-4 leading-relaxed">
+                    <span class="text-emerald-500 mr-2">Q${currentLqIndex + 1}.</span>${q.q}
+                </h3>
+                <hr class="border-gray-200 my-6">
+                ${answerArea}
+            </div>
+
+            <div class="flex justify-between items-center gap-4 mt-6">
+                <button ${currentLqIndex === 0 ? 'disabled' : ''} onclick="prevLq()" class="flex-1 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-bold py-4 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm">
+                    <i class="fas fa-arrow-left mr-2"></i> 上一題
+                </button>
+                <button ${currentLqIndex === lqData.length - 1 ? 'disabled' : ''} onclick="nextLq()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md">
+                    下一題 <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+// --- 邏輯與事件處理 ---
+
+function changeView(view) {
+    if (currentView === 'lq' && !lqRevealed[currentLqIndex]) {
+        const draftArea = document.getElementById('lq-draft');
+        if (draftArea) lqDrafts[currentLqIndex] = draftArea.value;
+    }
+    currentView = view;
+    render();
+    window.scrollTo(0, 0);
+}
+
+function answerMc(idx) {
+    if (mcAnswers[currentMcIndex] !== undefined) return;
+    mcAnswers[currentMcIndex] = idx;
+    render();
+}
+
+function nextMc() {
+    if (currentMcIndex < mcData.length - 1) {
+        currentMcIndex++;
+        render();
+        window.scrollTo(0, 0);
+    }
+}
+
+function prevMc() {
+    if (currentMcIndex > 0) {
+        currentMcIndex--;
+        render();
+        window.scrollTo(0, 0);
+    }
+}
+
+function revealLq() {
+    const draftArea = document.getElementById('lq-draft');
+    if (draftArea) {
+        lqDrafts[currentLqIndex] = draftArea.value;
+    }
+    lqRevealed[currentLqIndex] = true;
+    render();
+}
+
+function nextLq() {
+    if (!lqRevealed[currentLqIndex]) {
+        const draftArea = document.getElementById('lq-draft');
+        if (draftArea) lqDrafts[currentLqIndex] = draftArea.value;
+    }
+    if (currentLqIndex < lqData.length - 1) {
+        currentLqIndex++;
+        render();
+        window.scrollTo(0, 0);
+    }
+}
+
+function prevLq() {
+    if (!lqRevealed[currentLqIndex]) {
+        const draftArea = document.getElementById('lq-draft');
+        if (draftArea) lqDrafts[currentLqIndex] = draftArea.value;
+    }
+    if (currentLqIndex > 0) {
+        currentLqIndex--;
+        render();
+        window.scrollTo(0, 0);
+    }
+}
+
+// 初始化渲染
+render();
+</script>
+</body>
+</html>

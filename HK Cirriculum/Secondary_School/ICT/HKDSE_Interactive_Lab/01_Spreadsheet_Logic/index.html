@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HKDSE ICT - Spreadsheet Lab</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: #0f172a;
+        color: #e2e8f0;
+      }
+      .cell-input {
+        outline: none;
+        background: transparent;
+        width: 100%;
+        height: 100%;
+        padding: 4px;
+        font-family: "Inter", sans-serif;
+      }
+      .cell-selected {
+        border: 2px solid #38bdf8 !important;
+        z-index: 10;
+      }
+      .header-cell {
+        background-color: #1e293b;
+        color: #94a3b8;
+        font-weight: bold;
+        text-align: center;
+        font-size: 0.75rem;
+      }
+    </style>
+  <!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
+  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+      display: none !important;
+    }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+        if (label === "EN" || label === "\u4E2D") {
+          btn.classList.add("ncs-hide-when-ncs-fleet");
+        }
+      });
+      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+        el.classList.add("ncs-hide-when-ncs-fleet");
+      });
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+</head>
+  <body class="min-h-screen p-8 bg-slate-900 flex justify-center items-center">
+    <div id="root" class="w-full max-w-6xl"></div>
+
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+
+// --- LUCIDE ICON SHIM ---
+// The CDN provides window.lucide. This component wraps it for React usage.
+const LucideIcon = ({
+  name,
+  size = 24,
+  className = ""
+}) => {
+  const formatName = n => n.split("-").map(p => p.charAt(0).toUpperCase() + p.slice(1)).join("");
+  const iconName = formatName(name);
+  const [svgHtml, setSvgHtml] = useState("");
+  useEffect(() => {
+    if (window.lucide && window.lucide.icons && window.lucide.icons[iconName] && typeof window.lucide.icons[iconName].toSvg === "function") {
+      setSvgHtml(window.lucide.icons[iconName].toSvg({
+        width: size,
+        height: size,
+        class: className
+      }));
+    }
+  }, [name, size, className, iconName]);
+  return /*#__PURE__*/React.createElement("span", {
+    dangerouslySetInnerHTML: {
+      __html: svgHtml
+    },
+    style: {
+      display: "inline-flex"
+    }
+  });
+};
+
+// define specific icons used in this app
+const Table = p => /*#__PURE__*/React.createElement(LucideIcon, {
+  name: "table",
+  ...p
+});
+const Calculator = p => /*#__PURE__*/React.createElement(LucideIcon, {
+  name: "calculator",
+  ...p
+});
+const Info = p => /*#__PURE__*/React.createElement(LucideIcon, {
+  name: "info",
+  ...p
+});
+const FunctionSquare = p => /*#__PURE__*/React.createElement(LucideIcon, {
+  name: "function-square",
+  ...p
+});
+// --- END SHIM ---
+
+// Mock data based on Paper 1B Q1
+const INITIAL_DATA = {
+  A1: "Class",
+  B1: "Name",
+  C1: "Test 1",
+  D1: "Test 2",
+  E1: "Test 3",
+  F1: "Average",
+  G1: "Grade",
+  A2: "1",
+  B2: "Au Chi Man",
+  C2: "65",
+  D2: "88",
+  E2: "45",
+  F2: "=AVERAGE(C2:E2)",
+  G2: "",
+  A3: "2",
+  B3: "Chan Ka Ka",
+  C3: "37",
+  D3: "20",
+  E3: "29",
+  F3: "=AVERAGE(C3:E3)",
+  G3: "",
+  A4: "3",
+  B4: "Chan Wing",
+  C4: "88",
+  D4: "60",
+  E4: "90",
+  F4: "=AVERAGE(C4:E4)",
+  G4: "",
+  A5: "4",
+  B5: "Chan Yi",
+  C5: "70",
+  D5: "45",
+  E5: "97",
+  F5: "=AVERAGE(C5:E5)",
+  G5: "",
+  H1: "Criteria",
+  I1: "Pass",
+  H2: ">=50",
+  I2: '=COUNTIF(F2:F5, ">=50")'
+};
+const App = () => {
+  const [data, setData] = useState(INITIAL_DATA);
+  const [selected, setSelected] = useState(null);
+  const [formulaBar, setFormulaBar] = useState("");
+
+  // Simple Cell Parser
+  const getCellValue = (cellId, cellData) => {
+    const raw = cellData[cellId] || "";
+    if (!raw.startsWith("=")) return isNaN(Number(raw)) ? raw : Number(raw);
+
+    // Formula Logic
+    const upper = raw.toUpperCase();
+    try {
+      // AVERAGE(C2:E2)
+      if (upper.startsWith("=AVERAGE")) {
+        const match = upper.match(/\((.*?)\)/);
+        if (!match) return "#ERR";
+        const range = parseRange(match[1]);
+        const values = range.map(c => getCellValue(c, cellData)).filter(v => typeof v === "number");
+        if (values.length === 0) return 0;
+        return (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1);
+      }
+
+      // COUNTIF(F2:F5, ">=50")
+      if (upper.startsWith("=COUNTIF")) {
+        const match = upper.match(/\((.*?), ?["'](.*?)["']\)/);
+        if (!match) return "#ERR";
+        const range = parseRange(match[1]);
+        const criteria = match[2]; // e.g. ">=50"
+
+        let count = 0;
+        range.forEach(c => {
+          const val = getCellValue(c, cellData);
+          if (evaluateCriteria(val, criteria)) count++;
+        });
+        return count;
+      }
+    } catch (e) {
+      return "#ERR";
+    }
+    return raw;
+  };
+  const parseRange = rangeStr => {
+    // Simple C2:E2 logic
+    const [start, end] = rangeStr.split(":");
+    const startCol = start.charAt(0);
+    const startRow = parseInt(start.slice(1), 10);
+    const endCol = end.charAt(0);
+    const endRow = parseInt(end.slice(1), 10);
+    const cells = [];
+    for (let r = startRow; r <= endRow; r++) {
+      for (let c = startCol.charCodeAt(0); c <= endCol.charCodeAt(0); c++) {
+        cells.push(String.fromCharCode(c) + r);
+      }
+    }
+    return cells;
+  };
+  const evaluateCriteria = (val, criteria) => {
+    // Coerce spreadsheet cell values (numbers or numeric strings, e.g. AVERAGE → "66.0") for reliable comparisons
+    const num = typeof val === "number" && !Number.isNaN(val) ? val : parseFloat(String(val).trim());
+    if (Number.isNaN(num)) return false;
+    if (criteria.startsWith(">=")) return num >= Number(criteria.slice(2));
+    if (criteria.startsWith("<=")) return num <= Number(criteria.slice(2));
+    if (criteria.startsWith(">")) return num > Number(criteria.slice(1));
+    if (criteria.startsWith("<")) return num < Number(criteria.slice(1));
+    return String(val) == criteria;
+  };
+  const handleSelect = cell => {
+    setSelected(cell);
+    setFormulaBar(data[cell] || "");
+  };
+  const handleChange = val => {
+    setFormulaBar(val);
+    if (selected) {
+      setData(prev => ({
+        ...prev,
+        [selected]: val
+      }));
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "w-full space-y-6"
+  }, /*#__PURE__*/React.createElement("header", {
+    className: "flex items-center justify-between mb-4"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h1", {
+    className: "text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-emerald-600 mb-1"
+  }, "Spreadsheet Simulator"), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-400 text-sm"
+  }, "Paper 1B Q1: Formulas & Functions"))), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2 bg-slate-800 p-2 rounded-lg border border-slate-700"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-700 px-3 py-1 rounded text-slate-300 font-bold text-sm min-w-[3rem] text-center"
+  }, selected || ""), /*#__PURE__*/React.createElement(FunctionSquare, {
+    size: 18,
+    className: "text-slate-500"
+  }), /*#__PURE__*/React.createElement("input", {
+    type: "text",
+    value: formulaBar,
+    onChange: e => handleChange(e.target.value),
+    className: "flex-1 bg-transparent text-white font-mono text-sm outline-none placeholder-slate-600",
+    placeholder: "Select a cell to edit..."
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "overflow-x-auto bg-white rounded-lg border border-slate-700 shadow-xl select-none"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "inline-block min-w-full"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-[3rem_repeat(9,100px)]"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "header-cell bg-slate-200 text-slate-700 border-r border-b border-slate-300"
+  }), ["A", "B", "C", "D", "E", "F", "G", "H", "I"].map(col => /*#__PURE__*/React.createElement("div", {
+    key: col,
+    className: "header-cell bg-slate-100 text-slate-700 py-1 border-r border-b border-slate-300"
+  }, col)), [1, 2, 3, 4, 5, 6].map(row => /*#__PURE__*/React.createElement(React.Fragment, {
+    key: row
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "header-cell bg-slate-100 text-slate-700 py-1 border-r border-b border-slate-300 flex items-center justify-center"
+  }, row), ["A", "B", "C", "D", "E", "F", "G", "H", "I"].map(col => {
+    const cellId = col + row;
+    const rawVal = data[cellId] || "";
+    const displayVal = getCellValue(cellId, data);
+    const isFormula = rawVal.toString().startsWith("=");
+    return /*#__PURE__*/React.createElement("div", {
+      key: cellId,
+      onClick: () => handleSelect(cellId),
+      className: `
+                                                        border-r border-b border-slate-200 text-slate-800 text-sm relative px-2 py-1 h-8 flex items-center
+                                                        ${selected === cellId ? "cell-selected" : ""}
+                                                        ${isFormula ? "text-green-700 font-bold" : ""}
+                                                    `
+    }, row === 1 || col === "A" || col === "B" ?
+    /*#__PURE__*/
+    // Static text styling for headers/names
+    React.createElement("span", {
+      className: cellId.endsWith("1") ? "font-bold text-slate-900 mx-auto" : ""
+    }, displayVal) : /*#__PURE__*/React.createElement("span", {
+      className: "font-mono"
+    }, displayVal));
+  })))))), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-1 md:grid-cols-2 gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-800 p-4 rounded-xl border border-slate-700"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "font-bold text-white mb-2 flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement(Info, {
+    size: 16,
+    className: "text-cyan-400"
+  }), " Key Functions"), /*#__PURE__*/React.createElement("ul", {
+    className: "text-sm text-slate-300 space-y-2 font-mono"
+  }, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("span", {
+    className: "text-green-400"
+  }, "=AVERAGE(range)"), /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("span", {
+    className: "text-xs text-slate-500"
+  }, "Calculates mean value. e.g. =AVERAGE(C2:E2)")), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("span", {
+    className: "text-green-400"
+  }, "=COUNTIF(range, criteria)"), /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("span", {
+    className: "text-xs text-slate-500"
+  }, "Counts cells meeting condition. e.g. =COUNTIF(F2:F5, \">=50\")")))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-800 p-4 rounded-xl border border-slate-700"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "font-bold text-white mb-2 flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement(Info, {
+    size: 16,
+    className: "text-yellow-400"
+  }), " Absolute Referencing ($)"), /*#__PURE__*/React.createElement("div", {
+    className: "text-sm text-slate-300"
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "mb-2"
+  }, "When copying formulas, relative references (A1) change. Absolute references ($A$1) do not."), /*#__PURE__*/React.createElement("div", {
+    className: "mt-2 p-2 bg-slate-900 rounded text-xs font-mono border border-slate-800"
+  }, "Example: =C2 * $H$1", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("span", {
+    className: "text-slate-500"
+  }, "(Multiply C2 by fixed value in H1)"))))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <script src="../../../../common/learn-from-zero.js"></script>
+  <script src="../../../../common/interactive-lab-kit.js"></script>
+<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+</body>
+</html>

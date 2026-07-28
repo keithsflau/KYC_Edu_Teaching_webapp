@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>F4 · Osmosis Sandbox | 滲透沙盒</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="../../../../common/babel-react-classic.js"></script>
+  <link rel="stylesheet" href="../../../../common/subscribe-gate.css" />
+  <script>
+    window.HKC_SUBSCRIBE = {
+      appId: "f4-bio-osmosis",
+      appNameZh: "滲透沙盒",
+      appNameEn: "Osmosis Sandbox",
+      level: "F4",
+      subject: "Biology",
+      freeDrillLimit: 8,
+      wrongBookLimit: 10,
+      contactEmail: "support@hksteamai.com",
+      comingSoonHref: "../../../../pricing/index.html#payment-links"
+    };
+  </script>
+  <script src="../../../../common/subscribe-gate.js"></script>
+  <script src="../../../../common/parent-report.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    body { font-family: "IBM Plex Sans", system-ui, sans-serif; background: radial-gradient(ellipse 80% 50% at 10% -10%, #0d948822, transparent 55%), #f8fafc; color: #0f172a; min-height: 100vh; }
+    input[type="range"] { accent-color: #0d9488; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+  </style>
+<!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
+  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+      display: none !important;
+    }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+        if (label === "EN" || label === "\u4E2D") {
+          btn.classList.add("ncs-hide-when-ncs-fleet");
+        }
+      });
+      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+        el.classList.add("ncs-hide-when-ncs-fleet");
+      });
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+</head>
+<body class="text-slate-800">
+  <!-- SUBSCRIBE_GATE: Marketing owns tiers. Free core must work offline. -->
+  <div id="root"></div>
+  <script>
+    window.SUBSCRIBE_CONFIG = {
+      enabled: true,
+      bannerText: "解鎖完整練習與家長進度 · 全年少於一次補習堂費",
+      premiumFeatures: ["progress_sync", "parent_dashboard", "unlimited_mocks"]
+    };
+  </script>
+  <script type="text/babel" data-presets="react-classic">
+    const { useState, useEffect } = React;
+    const APP_ID = "f4_bio_osmosis";
+    const ACCENT = "#0d9488";
+
+    const HKC = (function () {
+      function progressView() {
+        const p = (window.HkcSubscribe && HkcSubscribe.getProgress()) || { drillsCorrect: 0, modulesCompleted: [], wrongBook: [], drillsAttempted: 0 };
+        return {
+          bestScore: p.drillsCorrect || 0,
+          sessions: (p.modulesCompleted || []).length,
+          totalCorrect: p.drillsCorrect || 0,
+          totalAttempted: p.drillsAttempted || 0,
+          wrongBook: (p.wrongBook || []).map((w, i) => ({ id: String(i) + "-" + (w.at || ""), prompt: w.label || "", hint: w.topic || "", answer: null, at: w.at })),
+          modeCleared: {}
+        };
+      }
+      return {
+        FREE_DAILY_CAP: 8,
+        MARKETING_PATH: "../../../../pricing/index.html#payment-links",
+        isPaid: () => !!(window.HkcSubscribe && HkcSubscribe.features().canDrillUnlimited && !HkcSubscribe.isClassroom()),
+        getEntitlement: () => (window.HkcSubscribe ? HkcSubscribe.getEntitlement() : { tier: "free" }),
+        remainingFree: () => {
+          if (!window.HkcSubscribe) return 8;
+          const r = HkcSubscribe.remainingFree();
+          return r === Infinity ? Infinity : r;
+        },
+        freeCapReached: () => !(window.HkcSubscribe && HkcSubscribe.canContinueDrills()),
+        recordDrillUse: () => {},
+        loadProgress: progressView,
+        saveProgress: () => progressView(),
+        addWrong: (appId, item) => {
+          if (window.HkcSubscribe) HkcSubscribe.recordDrill({ correct: false, label: (item.prompt || item.q || String(item.id) || "").toString().slice(0, 48), topic: (item.hint || "").toString().slice(0, 80), module: "practice" });
+        },
+        recordOk: (appId, item) => {
+          if (window.HkcSubscribe) HkcSubscribe.recordDrill({ correct: true, label: (item && (item.prompt || item.q || item.id) || "drill").toString().slice(0, 48), topic: "", module: "practice" });
+        },
+        removeWrong: () => {},
+        recordSession: (appId, score, total) => {
+          if (window.HkcSubscribe) HkcSubscribe.recordModule({ id: "session-" + Date.now(), label: "Session", score, total });
+        },
+        startTrialLocal: () => { if (window.HkcSubscribe) HkcSubscribe.setLocalEntitlement("trial", 14); }
+      };
+    })();
+
+        const GUIDED = [
+      { id: "g1", level: 1, q: "Osmosis is the net movement of…", qZh: "滲透作用是…的淨移動",
+        opts: ["Water across a partially permeable membrane 水穿過半透膜", "Solute only 只有溶質", "Ions against gradient 離子逆梯度", "Air molecules 空氣分子"], a: "Water across a partially permeable membrane 水穿過半透膜",
+        hint: "Osmosis = water only, down water potential gradient. 滲透只涉及水，沿水勢梯度。" },
+      { id: "g2", level: 1, q: "In the sandbox, high external solute means…", qZh: "沙盒中外部溶質高意味…",
+        opts: ["Lower water potential outside 外部水勢較低", "Higher water potential outside 外部水勢較高", "No osmosis 無滲透", "Water enters cell always 水一定入細胞"], a: "Lower water potential outside 外部水勢較低",
+        hint: "Solute lowers water potential. 溶質降低水勢。" },
+      { id: "g3", level: 1, q: "Water moves from…", qZh: "水從…移動",
+        opts: ["Higher to lower water potential 高水勢至低水勢", "Lower to higher water potential 低至高水勢", "Only with ATP 只有需 ATP", "Solute to solvent 溶質至溶劑"], a: "Higher to lower water potential 高水勢至低水勢",
+        hint: "Passive movement of water. 水被動移動。" },
+      { id: "g4", level: 2, q: "A plant cell in very salty soil may become plasmolysed because…", qZh: "植物細胞在鹹土中可能質壁分離，因為…",
+        opts: ["Water leaves by osmosis 水因滲透離開", "Salt enters by diffusion 鹽因擴散進入", "Cell wall dissolves 細胞壁溶解", "Active transport of water 水的主動運輸"], a: "Water leaves by osmosis 水因滲透離開",
+        hint: "External ψ lower than cell ψ. 外部水勢低於細胞。" },
+      { id: "g5", level: 2, q: "Near equilibrium in the model (external solute ≈ internal)…", qZh: "模型中接近平衡（內外溶質相近）時…",
+        opts: ["Little net water movement 淨水移動很少", "Cell always bursts 細胞一定破裂", "Only active transport 只有主動運輸", "Water moves only out 水只流出"], a: "Little net water movement 淨水移動很少",
+        hint: "Similar ψ → balanced osmosis. 水勢相近則平衡。" },
+      { id: "g6", level: 2, q: "Which increases turgor pressure in a plant cell?", qZh: "哪項增加植物細胞膨壓？",
+        opts: ["Water entering the vacuole by osmosis 水滲透入液泡", "Water leaving the cell 水離開細胞", "Plasmolysis 質壁分離", "High external salt 外部高鹽"], a: "Water entering the vacuole by osmosis 水滲透入液泡",
+        hint: "Turgid cell = water in, vacuole swells. 充盈細胞水分進入。" }
+    ];
+        const EXAM = [
+      { id: "e1", level: 3, q: "Red blood cells in distilled water swell and burst because…", qZh: "紅血球在蒸餾水中膨脹破裂，因為…",
+        opts: ["Water enters by osmosis; no cell wall 水滲透進入；無細胞壁", "Salt leaves the cell 鹽離開細胞", "Active transport of water 水的主動運輸", "Membrane dissolves 膜溶解"], a: "Water enters by osmosis; no cell wall 水滲透進入；無細胞壁",
+        hint: "Hypotonic solution → lysis. 低滲溶液→溶血。" },
+      { id: "e2", level: 3, q: "Adding solute to a solution generally…", qZh: "向溶液加溶質通常…",
+        opts: ["Lowers water potential 降低水勢", "Raises water potential 提高水勢", "Stops osmosis forever 永久停止滲透", "Only affects ions 只影響離子"], a: "Lowers water potential 降低水勢",
+        hint: "More solute = less free water. 溶質多=自由水少。" },
+      { id: "e3", level: 3, q: "Root hairs absorb water from moist soil by…", qZh: "根毛從濕潤土壤吸收水靠…",
+        opts: ["Osmosis 滲透作用", "Active transport of water 水的主動運輸", "Diffusion of soil particles 土壤粒子擴散", "Transpiration pull only 只靠蒸騰拉力"], a: "Osmosis 滲透作用",
+        hint: "Soil water ψ > root cell ψ. 土壤水勢較高。" },
+      { id: "e4", level: 4, q: "A cell is placed in solution X and neither gains nor loses mass. Solution X is…", qZh: "細胞置於溶液 X 後質量不變。溶液 X 是…",
+        opts: ["Isotonic to the cell 與細胞等滲", "Always distilled water 一定是蒸餾水", "Hypertonic only 一定是高滲", "Hypotonic only 一定是低滲"], a: "Isotonic to the cell 與細胞等滲",
+        hint: "No net osmosis at equal ψ. 水勢相等無淨滲透。" },
+      { id: "e5", level: 4, q: "Why can't starch pass through the cell membrane during osmosis experiments?", qZh: "為何澱粉不能穿過細胞膜？",
+        opts: ["Too large; membrane partially permeable 太大；膜為半透性", "Starch is water 澱粉是水", "Starch moves by osmosis 澱粉靠滲透移動", "Temperature too low 溫度太低"], a: "Too large; membrane partially permeable 太大；膜為半透性",
+        hint: "Size and polarity matter. 分子大小與性質重要。" },
+      { id: "e6", level: 4, q: "Increasing temperature slightly may speed osmosis because…", qZh: "略升溫可能加快滲透，因為…",
+        opts: ["Water molecules move faster 水分子運動加快", "Water potential always rises 水勢一定上升", "Membrane disappears 膜消失", "Solute becomes water 溶質變水"], a: "Water molecules move faster 水分子運動加快",
+        hint: "Kinetic energy affects diffusion rate. 動能影響擴散速率。" }
+    ];
+
+    function LearnExtra(){const [ext,setExt]=useState(0.2);const dir=ext>0.3?"water leaves cell":ext<0.2?"water enters cell":"near equilibrium";return (<div className="mt-3 space-y-2"><label className="text-sm font-semibold">External solute (relative) {ext.toFixed(2)}</label><input type="range" min="0" max="0.6" step="0.05" value={ext} onChange={e=>setExt(+e.target.value)} className="w-full" /><p className="text-sm p-3 rounded-xl bg-teal-50 border border-teal-100">Prediction: {dir}</p></div>);}
+
+    function UpgradeCTA({ reason, onClose, onTrial }) {
+      return (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-4">
+          <div className={"w-full max-w-md rounded-2xl p-5 " + (false ? "bg-slate-900 border border-slate-600" : "bg-white border border-slate-200") }>
+            <h3 className="text-lg font-bold" style={{color: ACCENT}}>解鎖完整練習與家長進度</h3>
+            <p className={"text-sm mt-2 " + (false ? "text-slate-300" : "text-slate-600")}>{reason || window.SUBSCRIBE_CONFIG.bannerText}</p>
+            <ul className={"mt-3 text-sm space-y-1 list-disc list-inside " + (false ? "text-slate-300" : "text-slate-600")}>
+              <li>Unlimited daily drills</li>
+              <li>Full wrong-answer book</li>
+              <li>Progress sync (coming)</li>
+            </ul>
+            <button type="button" onClick={onTrial} className="mt-4 w-full min-h-[48px] rounded-xl font-semibold text-white" style={{background: ACCENT}}>開始 14 日試用（本機）</button>
+            <a href={HKC.MARKETING_PATH} className={"mt-2 block w-full min-h-[44px] text-center leading-[44px] rounded-xl border text-sm " + (false ? "border-slate-600" : "border-slate-300")}>了解家長計劃</a>
+            <button type="button" onClick={onClose} className={"mt-2 w-full text-sm underline " + (false ? "text-slate-400" : "text-slate-500")}>繼續免費</button>
+          </div>
+        </div>
+      );
+    }
+
+    function Drill({ bank, label, onNeedUpgrade, onDone }) {
+      const [qi, setQi] = useState(0);
+      const [fb, setFb] = useState(null);
+      const [score, setScore] = useState(0);
+      const [hint, setHint] = useState(false);
+      const [first, setFirst] = useState(true);
+      const item = bank[qi];
+
+      function pick(opt) {
+        if (HKC.freeCapReached()) {
+          if (window.HkcSubscribe) HkcSubscribe.showPaywall("hit_free_cap");
+          onNeedUpgrade("今日免費練習已用完。");
+          return;
+        }
+        HKC.recordDrillUse(APP_ID);
+        const ok = opt === item.a;
+        setFb(ok
+          ? { ok: true, msg: "Correct · 正確" }
+          : { ok: false, msg: "Not quite · 再想。Use Hint for the method (answer not shown)." });
+        if (ok) {
+          if (typeof HKC.recordOk === "function") HKC.recordOk(APP_ID, item);
+          if (first) setScore(s => s + 1);
+        } else {
+          HKC.addWrong(APP_ID, { id: item.id, prompt: item.q, hint: item.hint, answer: item.a });
+          setFirst(false);
+        }
+      }
+
+      function next() {
+        setFb(null); setHint(false); setFirst(true);
+        if (qi + 1 >= bank.length) {
+          HKC.recordSession(APP_ID, score, bank.length);
+          onDone(score, bank.length);
+        } else setQi(qi + 1);
+      }
+
+      return (
+        <section className={"bg-white border border-slate-200 shadow-sm rounded-2xl p-4 sm:p-5"}>
+          <div className={"flex justify-between text-sm mb-3 " + (false ? "text-slate-400" : "text-slate-500")}>
+            <span>{label} · Q {qi + 1}/{bank.length} · Lv {item.level}</span>
+            <span>Score {score}</span>
+          </div>
+          <h2 className="text-lg font-bold mb-1">{item.q}</h2>
+          {item.qZh ? <p className="text-sm mb-4 opacity-80" style={{color: ACCENT}}>{item.qZh}</p> : <div className="mb-4" />}
+          <div className="grid gap-2">
+            {item.opts.map(o => (
+              <button key={o} type="button" disabled={fb && fb.ok} onClick={() => pick(o)}
+                className={"text-left px-4 py-3 rounded-xl min-h-[48px] disabled:opacity-50 bg-slate-50 hover:bg-slate-100 border border-slate-200"}>{o}</button>
+            ))}
+          </div>
+          <button type="button" className="text-sm mt-3 font-semibold min-h-[44px]" style={{color: ACCENT}} onClick={() => setHint(true)}>Hint · 提示</button>
+          {hint && <p className={"text-sm mt-1 p-3 rounded-xl " + (false ? "bg-amber-950/50 text-amber-100 border border-amber-800/40" : "bg-amber-50 text-amber-900 border border-amber-200")}>{item.hint}</p>}
+          {fb && (
+            <div className={"mt-4 p-3 rounded-xl text-sm " + (fb.ok ? (false ? "bg-emerald-900/40 text-emerald-200" : "bg-emerald-50 text-emerald-800") : (false ? "bg-rose-900/40 text-rose-200" : "bg-rose-50 text-rose-800"))}>
+              {fb.msg}
+              {fb.ok && <button type="button" className="block mt-2 underline font-semibold" onClick={next}>Next →</button>}
+              {!fb.ok && <button type="button" className="block mt-2 underline font-semibold" onClick={() => setFb(null)}>Retry</button>}
+            </div>
+          )}
+        </section>
+      );
+    }
+
+    function App() {
+      const [mode, setMode] = useState("learn");
+      const [progress, setProgress] = useState(() => HKC.loadProgress(APP_ID));
+      const [pay, setPay] = useState(false);
+      const [payReason, setPayReason] = useState("");
+      const [doneMsg, setDoneMsg] = useState(null);
+
+      function refresh() { setProgress(HKC.loadProgress(APP_ID)); }
+      useEffect(() => { refresh(); }, [mode]);
+
+      const tabs = [
+        { id: "learn", label: "Learn · 學習" },
+        { id: "guided", label: "Guided · 引導" },
+        { id: "exam", label: "Exam · 測驗" },
+        { id: "review", label: "Review · 錯題" }
+      ];
+
+      return (
+        <div className="max-w-3xl mx-auto p-4 sm:p-8">
+          <a href="../index.html" className="text-sm hover:underline font-semibold" style={{color: ACCENT}}>← Hub</a>
+          <header className="mt-4 mb-4">
+            <p className="text-xs uppercase tracking-widest font-bold" style={{color: ACCENT}}>F4 Biology · I.c Osmosis lab</p>
+            <h1 className="text-2xl sm:text-3xl font-bold mt-1">Osmosis Sandbox</h1>
+            <p className="text-slate-500 mt-1">滲透沙盒 · Learn → Guided → Exam → Review · 12 items</p>
+          </header>
+
+          <div className={"text-sm border border-dashed rounded-lg px-3 py-2 mb-3 flex flex-wrap justify-between gap-2 items-center " + (false ? "border-slate-600 bg-slate-900/80" : "border-slate-300 bg-white/80")}>
+            <span>{HKC.isPaid() ? (HKC.getEntitlement().tier + " · unlimited") : ("Free · " + HKC.remainingFree() + "/" + HKC.FREE_DAILY_CAP + " today")} · Best {progress.bestScore}</span>
+            {!HKC.isPaid() && (
+              <button type="button" className="px-3 py-1.5 rounded-md text-xs font-semibold text-white min-h-[36px]" style={{background: ACCENT}} onClick={() => setPay(true)}>Upgrade</button>
+            )}
+          </div>
+
+          <nav className="flex flex-wrap gap-2 mb-4">
+            {tabs.map(tab => (
+              <button key={tab.id} type="button" onClick={() => { setMode(tab.id); setDoneMsg(null); }}
+                className={"px-3.5 py-2 rounded-lg text-sm font-semibold min-h-[44px] " + (mode === tab.id ? "text-white" : "bg-white border border-slate-200 text-slate-700")}
+                style={mode === tab.id ? {background: ACCENT} : {}}>
+                {tab.label}
+              </button>
+            ))}
+          </nav>
+
+          {mode === "learn" && (
+            <section className={"bg-white border border-slate-200 shadow-sm rounded-2xl p-4 sm:p-5 space-y-3"}>
+              <h2 className="font-bold text-lg">Key ideas</h2>
+              <ul className={"text-sm space-y-2 list-disc list-inside " + (false ? "text-slate-300" : "text-slate-600")}>
+                <li>Model: bag / cell in solutions of different concentrations.</li><li>Predict mass / volume change from water potential difference.</li><li>Plasmolysis vs turgid: wall pressure ideas at syllabus depth.</li>
+              </ul>
+              <LearnExtra />
+              <button type="button" className="mt-2 px-4 py-2.5 rounded-xl font-semibold min-h-[48px] text-white" style={{background: ACCENT}} onClick={() => setMode("guided")}>
+                Start guided practice →
+              </button>
+            </section>
+          )}
+
+          {mode === "guided" && !doneMsg && (
+            <Drill bank={GUIDED} label="Guided" onNeedUpgrade={r => { setPayReason(r); setPay(true); }}
+              onDone={(s, n) => { setDoneMsg({ s, n, next: "exam" }); refresh(); }} />
+          )}
+          {mode === "exam" && !doneMsg && (
+            <Drill bank={EXAM} label="Exam" onNeedUpgrade={r => { setPayReason(r); setPay(true); }}
+              onDone={(s, n) => { setDoneMsg({ s, n, next: "review" }); refresh(); }} />
+          )}
+          {doneMsg && (mode === "guided" || mode === "exam") && (
+            <section className={"bg-white border border-slate-200 shadow-sm rounded-2xl p-6 text-center"}>
+              <h2 className="text-2xl font-bold">Complete</h2>
+              <p className="mt-2">{doneMsg.s} / {doneMsg.n}</p>
+              <button type="button" className="mt-4 px-4 py-2 rounded-xl font-semibold min-h-[48px] text-white" style={{background: ACCENT}}
+                onClick={() => { setDoneMsg(null); setMode(doneMsg.next); }}>Continue →</button>
+            </section>
+          )}
+          {mode === "review" && (
+            <section className={"bg-white border border-slate-200 shadow-sm rounded-2xl p-4 sm:p-5 space-y-3"}>
+              <h2 className="font-bold text-lg">Wrong-answer book · 錯題簿</h2>
+              {(progress.wrongBook || []).length === 0 && <p className={"text-sm " + (false ? "text-slate-400" : "text-slate-500")}>No wrong answers yet · 暫無錯題</p>}
+              {(progress.wrongBook || []).map(w => (
+                <div key={w.id} className={"rounded-xl p-3 text-sm " + (false ? "border border-slate-700" : "border border-slate-200")}>
+                  <p className="font-semibold">{w.prompt}</p>
+                  <p className="mt-1 opacity-80" style={{color: ACCENT}}>{w.hint}</p>
+                  {HKC.isPaid() && <p className="mt-1 text-emerald-500">Answer unlocked</p>}
+                  <button type="button" className={"text-xs underline mt-2 " + (false ? "text-slate-400" : "text-slate-500")} onClick={() => { HKC.removeWrong(APP_ID, w.id); refresh(); }}>Mark resolved</button>
+                </div>
+              ))}
+            </section>
+          )}
+          {pay && <UpgradeCTA reason={payReason} onClose={() => setPay(false)} onTrial={() => { HKC.startTrialLocal(); setPay(false); refresh(); }} />}
+        </div>
+      );
+    }
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+</body>
+</html>

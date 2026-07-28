@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// Parent account (subscriber)
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  /// Null when account was created via Google SSO only
+  passwordHash String?
+  name         String?
+  role         String   @default("parent") // parent | admin
+  locale       String   @default("en") // en | zh-HK
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  subscription Subscription?
+  children     ChildProfile[]
+  devices      Device[]
+  accessLogs   AccessLog[]
+}
+
+/// Stripe-backed subscription + local entitlement mirror
+model Subscription {
+  id                   String    @id @default(cuid())
+  userId               String    @unique
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// free | primary | secondary | all
+  entitlement          String    @default("free")
+  /// none | trialing | active | past_due | canceled | unpaid
+  status               String    @default("none")
+  plan                 String? // basic_monthly | basic_yearly | pro_monthly | pro_yearly
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  stripePriceId        String?
+
+  trialEndsAt          DateTime?
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean   @default(false)
+
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+}
+
+model ChildProfile {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  gradeHint String? // free-text grade label from parent region
+  createdAt DateTime @default(now())
+}
+
+model Device {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fingerprint String
+  label       String?
+  lastSeenAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@unique([userId, fingerprint])
+}
+
+model AccessLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  modulePath String
+  allowed    Boolean
+  reason     String?
+  ip         String?
+  createdAt  DateTime @default(now())
+}
+
+model FeatureFlag {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String // JSON string
+  updatedAt DateTime @updatedAt
+}

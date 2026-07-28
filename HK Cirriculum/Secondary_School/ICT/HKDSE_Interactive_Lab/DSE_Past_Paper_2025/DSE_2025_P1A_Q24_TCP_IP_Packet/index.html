@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+  <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>HKDSE Past Paper 2025 Paper 1A Q24 - TCP/IP Packet Tracer</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script
+
+      crossorigin
+
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+
+    ></script>
+
+    <script
+
+      crossorigin
+
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+
+    ></script>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <link
+
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap"
+
+      rel="stylesheet"
+
+    />
+
+    <style>
+
+      body {
+
+        font-family: "Inter", sans-serif;
+
+        background-color: #0f172a;
+
+        color: #e2e8f0;
+
+      }
+
+      .packet {
+
+        transition: all 2s cubic-bezier(0.4, 0, 0.2, 1);
+
+      }
+
+    </style>
+
+  <!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../../../common/ncs-i18n.css" />
+  <script src="../../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+      display: none !important;
+    }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+        if (label === "EN" || label === "\u4E2D") {
+          btn.classList.add("ncs-hide-when-ncs-fleet");
+        }
+      });
+      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+        el.classList.add("ncs-hide-when-ncs-fleet");
+      });
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+</head>
+
+  <body class="min-h-screen p-4 md:p-8 flex flex-col items-center">
+
+    <div id="root" class="w-full max-w-5xl"></div>
+
+
+
+    <script>
+
+const {
+
+  useState,
+
+  useEffect
+
+} = React;
+
+
+
+// Lucide Icon Shim
+
+const LucideIcon = ({
+
+  name,
+
+  size = 20,
+
+  className = ""
+
+}) => {
+
+  const formatName = n => n.split("-").map(p => p.charAt(0).toUpperCase() + p.slice(1)).join("");
+
+  const iconName = formatName(name);
+
+  const [svgHtml, setSvgHtml] = useState("");
+
+  useEffect(() => {
+
+    if (window.lucide?.icons[iconName]?.toSvg) {
+
+      setSvgHtml(window.lucide.icons[iconName].toSvg({
+
+        width: size,
+
+        height: size,
+
+        class: className
+
+      }));
+
+    }
+
+  }, [name]);
+
+  return /*#__PURE__*/React.createElement("span", {
+
+    dangerouslySetInnerHTML: {
+
+      __html: svgHtml
+
+    },
+
+    style: {
+
+      display: "inline-flex"
+
+    }
+
+  });
+
+};
+
+const Computer = ({
+
+  label,
+
+  ip
+
+}) => /*#__PURE__*/React.createElement("div", {
+
+  className: "flex flex-col items-center z-10"
+
+}, /*#__PURE__*/React.createElement("div", {
+
+  className: "w-20 h-20 bg-slate-800 rounded-2xl flex items-center justify-center border-2 border-indigo-500 shadow-lg shadow-indigo-900/50"
+
+}, /*#__PURE__*/React.createElement(LucideIcon, {
+
+  name: "laptop",
+
+  size: 32,
+
+  className: "text-indigo-400"
+
+})), /*#__PURE__*/React.createElement("div", {
+
+  className: "mt-2 font-bold text-slate-300"
+
+}, label), /*#__PURE__*/React.createElement("div", {
+
+  className: "text-xs font-mono text-slate-500 bg-slate-900 px-2 py-0.5 rounded"
+
+}, ip));
+
+const Router = ({
+
+  id
+
+}) => /*#__PURE__*/React.createElement("div", {
+
+  className: "w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center border border-slate-600 z-10"
+
+}, /*#__PURE__*/React.createElement(LucideIcon, {
+
+  name: "router",
+
+  size: 20,
+
+  className: "text-slate-400"
+
+}));
+
+const Packet = ({
+
+  id,
+
+  path,
+
+  status,
+
+  targetIp
+
+}) => {
+
+  // Determine position based on status
+
+  // sender: 10% 50%
+
+  // r1: 30% 20% (top)
+
+  // r2: 30% 80% (bottom)
+
+  // r3: 60% 50% (mid)
+
+  // receiver: 90% 50%
+
+
+
+  const positions = {
+
+    start: {
+
+      left: "10%",
+
+      top: "50%"
+
+    },
+
+    r1: {
+
+      left: "35%",
+
+      top: "20%"
+
+    },
+
+    r2: {
+
+      left: "35%",
+
+      top: "80%"
+
+    },
+
+    mid: {
+
+      left: "60%",
+
+      top: "50%"
+
+    },
+
+    end: {
+
+      left: "90%",
+
+      top: "50%"
+
+    }
+
+  };
+
+
+
+  // Simple hardcoded paths for demo
+
+  let pos = positions.start;
+
+  if (status === "traveling") {
+
+    if (path === "top") pos = positions.r1;
+
+    if (path === "bottom") pos = positions.r2;
+
+  } else if (status === "mid") {
+
+    pos = positions.mid;
+
+  } else if (status === "arrived") {
+
+    pos = positions.end;
+
+  }
+
+  return /*#__PURE__*/React.createElement("div", {
+
+    className: "absolute w-8 h-8 bg-green-500 rounded flex items-center justify-center text-[10px] font-bold text-black border border-green-300 packet shadow-[0_0_15px_#22c55e]",
+
+    style: {
+
+      left: pos.left,
+
+      top: pos.top,
+
+      transform: "translate(-50%, -50%)",
+
+      opacity: status === "assembled" ? 0 : 1
+
+    }
+
+  }, "P", id);
+
+};
+
+const App = () => {
+
+  const [isSending, setIsSending] = useState(false);
+
+  const [packets, setPackets] = useState([{
+
+    id: 1,
+
+    path: "top",
+
+    status: "start"
+
+  }, {
+
+    id: 2,
+
+    path: "bottom",
+
+    status: "start"
+
+  }, {
+
+    id: 3,
+
+    path: "top",
+
+    status: "start"
+
+  }]);
+
+  const [messages, setMessages] = useState([]);
+
+  const sendData = () => {
+
+    if (isSending) return;
+
+    setIsSending(true);
+
+    setMessages([]);
+
+    setPackets(p => p.map(pkt => ({
+
+      ...pkt,
+
+      status: "start"
+
+    })));
+
+
+
+    // Step 1: Start
+
+    setTimeout(() => {
+
+      setPackets(p => p.map(pkt => ({
+
+        ...pkt,
+
+        status: "traveling"
+
+      })));
+
+      setMessages(prev => [...prev, "(3) Packets take DIFFERENT paths (Dynamic Routing)."]);
+
+    }, 500);
+
+
+
+    // Step 2: Mid
+
+    setTimeout(() => {
+
+      setPackets(p => p.map(pkt => ({
+
+        ...pkt,
+
+        status: "mid"
+
+      })));
+
+    }, 2500);
+
+
+
+    // Step 3: Arrive
+
+    setTimeout(() => {
+
+      setPackets(p => p.map(pkt => ({
+
+        ...pkt,
+
+        status: "arrived"
+
+      })));
+
+      setMessages(prev => [...prev, "(1) Target IP '192.168.1.9' identifies destination."]);
+
+    }, 4500);
+
+
+
+    // Step 4: Assembled
+
+    setTimeout(() => {
+
+      setPackets(p => p.map(pkt => ({
+
+        ...pkt,
+
+        status: "assembled"
+
+      })));
+
+      setMessages(prev => [...prev, "(2) Reassembled at destination."]);
+
+      setIsSending(false);
+
+    }, 6000);
+
+  };
+
+  return /*#__PURE__*/React.createElement("div", {
+
+    className: "space-y-8 animate-fade-in w-full max-w-5xl mx-auto"
+
+  }, /*#__PURE__*/React.createElement("header", {
+
+    className: "text-center space-y-2"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-900/30 border border-cyan-500/30 text-cyan-400 text-sm font-bold mb-4"
+
+  }, /*#__PURE__*/React.createElement("span", {
+
+    className: "w-2 h-2 rounded-full bg-cyan-400 animate-pulse"
+
+  }), "HKDSE Past Paper 2025 Paper 1A Q24"), /*#__PURE__*/React.createElement("h1", {
+
+    className: "text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-cyan-500"
+
+  }, "TCP/IP Transmission"), /*#__PURE__*/React.createElement("p", {
+
+    className: "text-slate-400 max-w-xl mx-auto"
+
+  }, "How does data travel? Investigate the packet flow.")), /*#__PURE__*/React.createElement("div", {
+
+    className: "bg-slate-950 rounded-3xl border border-slate-800 p-8 h-[400px] relative flex items-center justify-between overflow-hidden"
+
+  }, /*#__PURE__*/React.createElement("svg", {
+
+    className: "absolute inset-0 w-full h-full stroke-slate-800",
+
+    style: {
+
+      strokeWidth: 2
+
+    }
+
+  }, /*#__PURE__*/React.createElement("line", {
+
+    x1: "10%",
+
+    y1: "50%",
+
+    x2: "35%",
+
+    y2: "20%"
+
+  }), /*#__PURE__*/React.createElement("line", {
+
+    x1: "10%",
+
+    y1: "50%",
+
+    x2: "35%",
+
+    y2: "80%"
+
+  }), /*#__PURE__*/React.createElement("line", {
+
+    x1: "35%",
+
+    y1: "20%",
+
+    x2: "60%",
+
+    y2: "50%"
+
+  }), /*#__PURE__*/React.createElement("line", {
+
+    x1: "35%",
+
+    y1: "80%",
+
+    x2: "60%",
+
+    y2: "50%"
+
+  }), /*#__PURE__*/React.createElement("line", {
+
+    x1: "60%",
+
+    y1: "50%",
+
+    x2: "90%",
+
+    y2: "50%"
+
+  })), /*#__PURE__*/React.createElement("div", {
+
+    className: "absolute left-[10%] top-[50%] -translate-x-1/2 -translate-y-1/2"
+
+  }, /*#__PURE__*/React.createElement(Computer, {
+
+    label: "Sender",
+
+    ip: "10.0.0.1"
+
+  })), /*#__PURE__*/React.createElement("div", {
+
+    className: "absolute left-[35%] top-[20%] -translate-x-1/2 -translate-y-1/2"
+
+  }, /*#__PURE__*/React.createElement(Router, null)), /*#__PURE__*/React.createElement("div", {
+
+    className: "absolute left-[35%] top-[80%] -translate-x-1/2 -translate-y-1/2"
+
+  }, /*#__PURE__*/React.createElement(Router, null)), /*#__PURE__*/React.createElement("div", {
+
+    className: "absolute left-[60%] top-[50%] -translate-x-1/2 -translate-y-1/2"
+
+  }, /*#__PURE__*/React.createElement(Router, null)), /*#__PURE__*/React.createElement("div", {
+
+    className: "absolute left-[90%] top-[50%] -translate-x-1/2 -translate-y-1/2"
+
+  }, /*#__PURE__*/React.createElement(Computer, {
+
+    label: "Receiver",
+
+    ip: "192.168.1.9"
+
+  })), packets.map(p => /*#__PURE__*/React.createElement(Packet, {
+
+    key: p.id,
+
+    ...p
+
+  }))), /*#__PURE__*/React.createElement("div", {
+
+    className: "flex flex-col items-center gap-6"
+
+  }, /*#__PURE__*/React.createElement("button", {
+
+    onClick: sendData,
+
+    disabled: isSending,
+
+    className: `px-8 py-4 rounded-full font-bold text-lg flex items-center gap-2 transform transition-all ${isSending ? "bg-slate-700 text-slate-400 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-500 text-white hover:scale-105 shadow-lg shadow-indigo-500/30"}`
+
+  }, /*#__PURE__*/React.createElement(LucideIcon, {
+
+    name: "send"
+
+  }), isSending ? "Transmitting..." : "Send Data Packets"), /*#__PURE__*/React.createElement("div", {
+
+    className: "w-full max-w-2xl space-y-2"
+
+  }, messages.map((msg, i) => /*#__PURE__*/React.createElement("div", {
+
+    key: i,
+
+    className: "p-4 bg-slate-900 border border-slate-700 rounded-xl text-slate-300 animate-slide-up flex items-center gap-3"
+
+  }, /*#__PURE__*/React.createElement(LucideIcon, {
+
+    name: "check-circle",
+
+    className: "text-green-500",
+
+    size: 16
+
+  }), msg))), messages.length === 3 && /*#__PURE__*/React.createElement("div", {
+
+    className: "bg-green-900/20 border border-green-500/30 p-6 rounded-2xl text-center animate-fade-in w-full max-w-2xl"
+
+  }, /*#__PURE__*/React.createElement("h3", {
+
+    className: "text-green-400 font-bold text-xl mb-2"
+
+  }, "Analysis Complete"), /*#__PURE__*/React.createElement("p", {
+
+    className: "text-slate-300 mb-4"
+
+  }, "We observed Statement (1) IP addressing identifying destination, and (2) Reassembly. We did NOT see a single fixed path (packets split up), so (3) is False."), /*#__PURE__*/React.createElement("div", {
+
+    className: "inline-block px-4 py-2 bg-green-600 text-white font-bold rounded-lg shadow"
+
+  }, "Correct Answer: A (1) and (2)"))));
+
+};
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+
+root.render(/*#__PURE__*/React.createElement(App, null));
+
+</script>
+
+  
+
+      
+
+      <!-- Footer -->
+
+      <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+</body>
+
+</html>
+

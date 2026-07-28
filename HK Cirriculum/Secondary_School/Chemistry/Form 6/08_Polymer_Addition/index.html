@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Polymerisation Studio | 聚合反應工作室</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="../../../../common/babel-react-classic.js"></script>
+  <link rel="stylesheet" href="../../../../common/subscribe-gate.css" />
+  <script>
+    window.HKC_SUBSCRIBE = {
+      appId: "f6-chem-polymer-lab",
+      appNameZh: "聚合反應工作室",
+      appNameEn: "Polymerisation Studio",
+      level: "F6",
+      subject: "Chemistry",
+      freeDrillLimit: 12,
+      wrongBookLimit: 10,
+      contactEmail: "support@hksteamai.com",
+      comingSoonHref: "../../../../pricing/index.html#payment-links"
+    };
+    window.__HKC_FREE_CAP = () => !(window.HkcSubscribe && HkcSubscribe.canContinueDrills());
+  </script>
+  <script src="../../../../common/subscribe-gate.js"></script>
+  <script src="../../../../common/parent-report.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+  <style>
+    :root { --accent: #db2777; }
+    body {
+      font-family: "IBM Plex Sans", system-ui, sans-serif;
+      background:
+        radial-gradient(ellipse 70% 45% at 8% -5%, #db277728, transparent 55%),
+        radial-gradient(ellipse 50% 40% at 100% 0%, #64748b14, transparent 50%),
+        #f1f5f9;
+      color: #0f172a;
+      min-height: 100vh;
+    }
+    input[type="range"] { accent-color: #db2777; width: 100%; }
+    .mono { font-family: "JetBrains Mono", ui-monospace, monospace; }
+    canvas { touch-action: none; display: block; width: 100%; height: auto; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+  </style>
+  <!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
+  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+      display: none !important;
+    }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+        if (label === "EN" || label === "\u4E2D") {
+          btn.classList.add("ncs-hide-when-ncs-fleet");
+        }
+      });
+      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+        el.classList.add("ncs-hide-when-ncs-fleet");
+      });
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel" data-presets="react-classic">
+    const { useState, useEffect, useRef, useCallback, useMemo } = React;
+    const ACCENT = "#db2777";
+    const BACK = "../index.html";
+    const LEVEL = "F6";
+    const APP_ID = "f6-chem-polymer-lab";
+
+    function LabChrome({ titleEn, titleZh, blurb, children, explore, legacy }) {
+      return (
+        <div className="max-w-6xl mx-auto px-4 py-6">
+          <header className="mb-5">
+            <a href={BACK} className="text-sm hover:underline" style={{ color: ACCENT }}>← {LEVEL} Chemistry</a>
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-white px-2 py-0.5 rounded" style={{ background: ACCENT }}>Interactive Lab</span>
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-white border text-slate-700">HKDSE · Learn = live sim</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold mt-1">{titleEn} · {titleZh}</h1>
+            <p className="text-slate-600 text-sm mt-1 max-w-2xl">{blurb}</p>
+          </header>
+          {children}
+          <p className="text-[10px] text-slate-400 mt-4">Explores: {explore} · Legacy MCQ: <a className="underline" href="_legacy_lger.html">_legacy_lger.html</a>{legacy ? "" : ""}</p>
+        </div>
+      );
+    }
+
+
+    const MONOMERS = [
+      { id: "ethene", label: "Ethene", type: "addition", unit: "–CH₂–CH₂–" },
+      { id: "propene", label: "Propene", type: "addition", unit: "–CH₂–CH(CH₃)–" },
+      { id: "chloroethene", label: "Chloroethene (PVC)", type: "addition", unit: "–CH₂–CHCl–" },
+      { id: "diol_diacid", label: "HO–R–OH + HOOC–R'–COOH", type: "condensation", unit: "polyester (–COO–) + H₂O" }
+    ];
+
+    function App() {
+      const canvasRef = useRef(null);
+      const [mid, setMid] = useState("ethene");
+      const [n, setN] = useState(8);
+      const [playing, setPlaying] = useState(true);
+      const [explore, setExplore] = useState(0);
+      const [msg, setMsg] = useState("");
+      const mon = MONOMERS.find((m) => m.id === mid);
+      const progress = useRef(0);
+
+      useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        const W = canvas.width, H = canvas.height;
+        let raf;
+        const draw = () => {
+          if (playing) progress.current = Math.min(n, progress.current + 0.04);
+          ctx.clearRect(0, 0, W, H);
+          ctx.fillStyle = "#0f172a";
+          ctx.fillRect(0, 0, W, H);
+          const shown = Math.floor(progress.current);
+          ctx.fillStyle = "#e2e8f0";
+          ctx.font = "bold 14px IBM Plex Sans";
+          ctx.fillText(mon.type === "addition" ? "Addition polymerisation" : "Condensation polymerisation", 30, 40);
+          ctx.font = "12px IBM Plex Sans";
+          ctx.fillText(mon.label + " → " + mon.unit, 30, 62);
+          // chain
+          for (let i = 0; i < shown; i++) {
+            const x = 40 + (i % 10) * 56;
+            const y = 120 + Math.floor(i / 10) * 70;
+            ctx.fillStyle = mon.type === "addition" ? "#38bdf8" : "#f472b6";
+            ctx.fillRect(x, y, 48, 36);
+            ctx.strokeStyle = "#e2e8f0";
+            ctx.strokeRect(x, y, 48, 36);
+            if (i < shown - 1 && (i % 10) < 9) {
+              ctx.beginPath();
+              ctx.moveTo(x + 48, y + 18);
+              ctx.lineTo(x + 56, y + 18);
+              ctx.stroke();
+            }
+            ctx.fillStyle = "#0f172a";
+            ctx.font = "9px JetBrains Mono";
+            ctx.fillText("mer", x + 12, y + 22);
+          }
+          if (mon.type === "condensation" && shown > 0) {
+            ctx.fillStyle = "#94a3b8";
+            ctx.fillText("H₂O lost × " + Math.max(0, shown - 1), 30, H - 30);
+          } else {
+            ctx.fillStyle = "#94a3b8";
+            ctx.fillText("No small molecule lost (addition)", 30, H - 30);
+          }
+          raf = requestAnimationFrame(draw);
+        };
+        raf = requestAnimationFrame(draw);
+        return () => cancelAnimationFrame(raf);
+      }, [mid, n, playing, mon]);
+
+      useEffect(() => { progress.current = 0; }, [mid, n]);
+
+      const bump = () => setExplore((e) => e + 1);
+
+      return (
+        <LabChrome titleEn="Polymerisation Studio" titleZh="聚合反應工作室" blurb="Watch chain grow · contrast addition (C=C) vs condensation (H₂O lost)." explore={explore}>
+          <div className="grid lg:grid-cols-5 gap-4">
+            <div className="lg:col-span-3 rounded-2xl overflow-hidden border">
+              <canvas ref={canvasRef} width={640} height={360} />
+            </div>
+            <div className="lg:col-span-2 space-y-3">
+              <section className="bg-white rounded-2xl border p-4">
+                <h2 className="font-bold text-sm mb-2" style={{ color: ACCENT }}>Monomer</h2>
+                {MONOMERS.map((m) => (
+                  <button key={m.id} type="button" className={"block w-full text-left px-3 py-2 rounded-lg text-sm mb-1 min-h-[40px] " + (mid === m.id ? "text-white" : "bg-slate-100")}
+                    style={mid === m.id ? { background: ACCENT } : {}} onClick={() => { setMid(m.id); bump(); }}>{m.label} · {m.type}</button>
+                ))}
+                <label className="text-xs font-semibold mt-2 block">Chain length n ≈ {n}</label>
+                <input type="range" min="4" max="24" value={n} onChange={(e) => { setN(+e.target.value); bump(); }} />
+                <button type="button" className="mt-2 w-full border rounded-lg py-2 text-sm min-h-[44px]" onClick={() => setPlaying((p) => !p)}>{playing ? "Pause" : "Play"}</button>
+              </section>
+              <section className="bg-slate-900 text-pink-50 rounded-2xl p-4 text-sm">
+                Repeating unit: <span className="mono">{mon.unit}</span>
+                <button type="button" className="block mt-2 text-xs underline" onClick={() => setMsg(mon.type === "addition" ? "Open C=C; draw brackets with n." : "Each link loses H₂O (or HCl).")}>Exam tip</button>
+                {msg && <p className="text-xs mt-1">{msg}</p>}
+              </section>
+            </div>
+          </div>
+        </LabChrome>
+      );
+    }
+
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+</body>
+</html>

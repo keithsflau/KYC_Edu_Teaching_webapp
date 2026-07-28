@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Space Mission · 太空任務 | S2 Junior Science</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: #f0f9ff;
+      color: #0f172a;
+      line-height: 1.5;
+    }
+    .wrap { max-width: 64rem; margin: 0 auto; padding: 1rem 1.25rem 2rem; min-height: 100vh; }
+    a { color: #3b82f6; font-weight: 600; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .unit { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #3b82f6; margin: 0.5rem 0 0; }
+    h1 { font-size: 1.75rem; margin: 0.25rem 0; }
+    .sub { font-size: 0.875rem; color: #64748b; margin: 0.25rem 0 1rem; }
+    .top { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.75rem; align-items: flex-start; margin-bottom: 1rem; }
+    .lang {
+      border: 1px solid #cbd5e1; background: #fff; border-radius: 0.5rem;
+      padding: 0.4rem 0.85rem; font-weight: 600; cursor: pointer; min-height: 44px;
+    }
+    .tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
+    .tab {
+      border: 1px solid #e2e8f0; background: #fff; border-radius: 0.5rem;
+      padding: 0.5rem 0.9rem; font-weight: 600; cursor: pointer; min-height: 44px;
+    }
+    .tab.active { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+    .tab:disabled { opacity: 0.55; cursor: not-allowed; }
+    .card {
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 1rem;
+      padding: 1.25rem; box-shadow: 0 1px 2px rgba(15,23,42,0.04);
+    }
+    .card h2 { margin: 0 0 0.75rem; font-size: 1.125rem; color: #3b82f6; }
+    .card p { margin: 0 0 0.75rem; color: #334155; }
+    .opts { display: grid; gap: 0.5rem; margin: 0.75rem 0; }
+    .opt {
+      text-align: left; border: 1px solid #e2e8f0; background: #f8fafc;
+      border-radius: 0.75rem; padding: 0.75rem 1rem; cursor: pointer; min-height: 48px;
+      font-size: 1rem;
+    }
+    .opt:hover { background: #f1f5f9; }
+    .opt.correct { background: #ecfdf5; border-color: #6ee7b7; }
+    .opt.wrong { background: #fff1f2; border-color: #fda4af; }
+    .opt.dim { opacity: 0.5; }
+    .btn {
+      display: inline-block; border: none; border-radius: 0.75rem;
+      background: #3b82f6; color: #fff; font-weight: 700;
+      padding: 0.65rem 1.25rem; cursor: pointer; min-height: 48px; font-size: 1rem;
+    }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn.secondary { background: #e2e8f0; color: #334155; }
+    .why { font-size: 0.875rem; color: #475569; margin-top: 0.5rem; }
+    .progress { font-size: 0.75rem; font-weight: 700; color: #64748b; margin-bottom: 0.5rem; }
+    #lab-canvas {
+      width: 100%; height: 380px; border-radius: 1rem; position: relative;
+      overflow: hidden; background: #0f172a;
+    }
+    .stars {
+      position: absolute; inset: 0; opacity: 0.5; pointer-events: none;
+      background:
+        radial-gradient(1px 1px at 20% 30%, #fff, transparent),
+        radial-gradient(1px 1px at 60% 70%, rgba(255,255,255,0.5), transparent),
+        radial-gradient(1px 1px at 80% 20%, rgba(255,255,255,0.4), transparent);
+    }
+    .earth, .moon {
+      position: absolute; border-radius: 50%; left: 50%;
+      transform: translateX(-50%); transition: all 1s ease;
+    }
+    .earth { width: 360px; height: 360px; background: radial-gradient(circle at 30% 30%, #3b82f6, #1e3a8a); }
+    .moon { width: 180px; height: 180px; background: radial-gradient(circle at 30% 30%, #e2e8f0, #64748b); }
+    .rocket-wrap {
+      position: absolute; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center;
+      transition: bottom 1s ease;
+    }
+    .rocket-wrap.shake { animation: shake 0.2s infinite; }
+    .rocket { font-size: 3rem; filter: drop-shadow(0 0 10px rgba(255,255,255,.3)); transition: transform 0.2s; }
+    .flames { display: flex; gap: 4px; opacity: 0; transition: opacity 0.3s; }
+    .flames.on { opacity: 1; }
+    .flame { width: 8px; border-radius: 9999px; animation: burn 0.1s infinite alternate; }
+    .flame:nth-child(1) { background: #f97316; height: 28px; }
+    .flame:nth-child(2) { background: #eab308; height: 38px; }
+    .flame:nth-child(3) { background: #f97316; height: 28px; }
+    @keyframes burn { from { transform: scaleY(0.8); } to { transform: scaleY(1.2); } }
+    @keyframes shake {
+      0%,100% { transform: translateX(-50%) translate(0,0); }
+      25% { transform: translateX(-50%) translate(2px,2px); }
+      50% { transform: translateX(-50%) translate(-2px,0); }
+      75% { transform: translateX(-50%) translate(0,-2px); }
+    }
+    .lab-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin-top: 1rem; }
+    .stat-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: #64748b; margin: 0; }
+    .stat-val { font-size: 1.75rem; font-weight: 700; color: #3b82f6; margin: 0.15rem 0 0; font-family: ui-monospace, monospace; }
+    .stat-unit { font-size: 1rem; color: #64748b; font-weight: 400; }
+    input[type="range"] { width: 100%; accent-color: #3b82f6; }
+    ul.summary { margin: 0; padding-left: 1.25rem; color: #334155; }
+    ul.summary li { margin: 0.35rem 0; }
+    .lock-msg { text-align: center; padding: 1.5rem; }
+    .lock-msg h2 { color: #0f172a; }
+    footer {
+      text-align: center; padding: 1rem; font-size: 0.8rem;
+      opacity: 0.7; border-top: 1px solid #e2e8f0; margin-top: 2rem;
+    }
+    .noscript-box {
+      max-width: 32rem; margin: 2rem auto; padding: 1.5rem;
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 1rem;
+    }
+  </style>
+  <!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
+  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+      display: none !important;
+    }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+        if (label === "EN" || label === "\u4E2D") {
+          btn.classList.add("ncs-hide-when-ncs-fleet");
+        }
+      });
+      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+        el.classList.add("ncs-hide-when-ncs-fleet");
+      });
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+</head>
+<body>
+  <div class="wrap" id="app">
+    <header class="top">
+      <div>
+        <a href="../index.html" id="back-link">← Back</a>
+        <p class="unit" id="unit-label">Form 2 · Force &amp; Space</p>
+        <h1 id="title-label">Space Mission</h1>
+        <p class="sub" id="flow-label">LGER: Learn → Guided → Experiment → Review</p>
+      </div>
+    </header>
+    <nav class="tabs" id="tabs" aria-label="LGER sections">
+      <button type="button" class="tab active" data-mode="learn">Learn</button>
+      <button type="button" class="tab" data-mode="guided">Guided</button>
+      <button type="button" class="tab" data-mode="experiment">Experiment 🔒</button>
+      <button type="button" class="tab" data-mode="review">Review</button>
+    </nav>
+    <main id="panel">
+      <section class="card" id="boot-panel">
+        <p class="progress">Learn From Zero · 1 / 6</p>
+        <h2>Gravity on Earth</h2>
+        <p>Earth's gravity pulls all objects toward its centre. A rocket needs thrust greater than its weight to lift off.</p>
+        <p><strong>What force must a rocket overcome at launch?</strong></p>
+      </section>
+    </main>
+  </div>
+  <noscript>
+    <div class="noscript-box">
+      <h1>Space Mission · 太空任務</h1>
+      <p>Enable JavaScript to use the interactive lesson. 請啟用 JavaScript 以使用互動課程。</p>
+    </div>
+  </noscript>
+  <footer>@HKSTEAMAI All Copy-Right Reserved.</footer>
+
+  <script>
+(function () {
+  "use strict";
+  var ACCENT = "#3b82f6";
+  var APP_ID = "s2_space_mission";
+  var isZh = window.NcsI18n ? window.NcsI18n.isZh() : false;
+  var mode = "learn";
+  var learnIdx = 0;
+  var learnPicked = null;
+  var learnDone = false;
+  try { learnDone = localStorage.getItem("hkc_js_lger_" + APP_ID) === "1"; } catch (e) {}
+
+  var guidedIdx = 0;
+  var guidedPicked = null;
+  var reviewIdx = 0;
+  var reviewPicked = null;
+  var reviewCorrect = 0;
+  var reviewDone = false;
+
+  var labStage = 0;
+  var labThrust = 50;
+  var labLaunching = false;
+
+  function t(zh, en) { return isZh ? zh : en; }
+
+  var LEARN = [
+    { titleEn: "Gravity on Earth", titleZh: "地球的引力",
+      bodyEn: "Earth's gravity pulls all objects toward its centre. A rocket needs thrust greater than its weight to lift off.",
+      bodyZh: "地球引力把所有物體拉向地心。火箭需要大於自身重力的推力才能起飛。",
+      qEn: "What force must a rocket overcome at launch?", qZh: "火箭起飛時必須克服甚麼力？",
+      opts: [{ en: "Gravity", zh: "引力" }, { en: "Magnetism", zh: "磁力" }, { en: "Friction only", zh: "只有摩擦力" }],
+      a: 0, whyEn: "Weight = mass × g acts downward.", whyZh: "重量向下。" },
+    { titleEn: "Atmosphere & drag", titleZh: "大氣層與阻力",
+      bodyEn: "The atmosphere creates air resistance. Rockets are streamlined and accelerate quickly to pass through it.",
+      bodyZh: "大氣層產生空氣阻力。火箭外形流線型並快速加速以穿越大氣。",
+      qEn: "Air resistance in the atmosphere is also called…", qZh: "大氣中的空氣阻力亦稱為…",
+      opts: [{ en: "Drag", zh: "阻力" }, { en: "Thrust", zh: "推力" }, { en: "Orbit", zh: "軌道" }],
+      a: 0, whyEn: "Drag opposes motion through air.", whyZh: "阻力與運動方向相反。" },
+    { titleEn: "Low Earth Orbit", titleZh: "近地軌道",
+      bodyEn: "In orbit the spacecraft falls toward Earth continuously but its horizontal speed keeps it missing the ground — apparent weightlessness.",
+      bodyZh: "在軌道上太空船持續落向地球，但水平速度使它不會撞地——出現失重狀態。",
+      qEn: "Astronauts feel 'weightless' in orbit because they are in…", qZh: "太空人感到失重是因為處於…",
+      opts: [{ en: "Continuous free fall", zh: "持續自由落體" }, { en: "Zero gravity zone", zh: "零引力區" }, { en: "No air", zh: "無空氣" }],
+      a: 0, whyEn: "Gravity is still ~90% of surface value at 400 km.", whyZh: "400 km 處引力仍約地面的 90%。" },
+    { titleEn: "Transfer orbit", titleZh: "轉移軌道",
+      bodyEn: "To reach the Moon, engines fire to enter a transfer orbit — an elliptical path from Earth to lunar distance.",
+      bodyZh: "要前往月球，引擎點火進入轉移軌道——從地球到月球距離的橢圓路徑。",
+      qEn: "A transfer orbit to the Moon is usually…", qZh: "前往月球的轉移軌道通常是…",
+      opts: [{ en: "Elliptical", zh: "橢圓形" }, { en: "Perfect circle", zh: "正圓" }, { en: "Straight line", zh: "直線" }],
+      a: 0, whyEn: "Hohmann-style transfer saves fuel.", whyZh: "橢圓轉移較省燃料。" },
+    { titleEn: "Lunar gravity", titleZh: "月球引力",
+      bodyEn: "The Moon has about 1/6 of Earth's surface gravity because its mass is much smaller.",
+      bodyZh: "月球質量遠小於地球，表面引力約為地球的六分之一。",
+      qEn: "On the Moon, a 60 kg astronaut weighs about…", qZh: "在月球上，60 kg 太空人重量約…",
+      opts: ["100 N", "600 N", "60 N"], a: 0,
+      whyEn: "W = mg; g_moon ≈ 1.6 N/kg → 60×1.6 ≈ 96 N.", whyZh: "約 100 N。" },
+    { titleEn: "Mission checkpoint", titleZh: "任務檢查點",
+      bodyEn: "Use the lab to advance through launch → atmosphere → orbit → transfer → lunar orbit → landing. Predict altitude before each stage!",
+      bodyZh: "在實驗室中依次經歷：發射→大氣層→軌道→轉移→繞月→登陸。每階段前先預測高度！",
+      qEn: "Increasing rocket thrust mainly helps overcome…", qZh: "增加火箭推力主要用於克服…",
+      opts: [{ en: "Weight and drag", zh: "重量與阻力" }, { en: "Moon's colour", zh: "月球顏色" }, { en: "Star light", zh: "星光" }],
+      a: 0, whyEn: "Thrust must exceed weight + drag to accelerate upward.", whyZh: "推力需大於重量加阻力。" }
+  ];
+
+  var GUIDED = [
+    { qEn: "At the launch pad, the main force pulling the rocket down is…", qZh: "在發射台上，把火箭向下拉的主要力是…",
+      opts: [{ en: "Gravity", zh: "引力" }, { en: "Magnetic force", zh: "磁力" }, { en: "Solar wind", zh: "太陽風" }], a: 0,
+      hintEn: "Weight acts toward Earth's centre.", hintZh: "重量指向地心。" },
+    { qEn: "Why does a rocket streamline its nose cone?", qZh: "為甚麼火箭要設計流線型頭錐？",
+      opts: [{ en: "Reduce air drag", zh: "減少空氣阻力" }, { en: "Store more fuel", zh: "儲存更多燃料" }, { en: "Reflect sunlight", zh: "反射陽光" }], a: 0,
+      hintEn: "Drag wastes fuel in the atmosphere.", hintZh: "阻力在大氣中浪費燃料。" },
+    { qEn: "In Low Earth Orbit, the spacecraft is still under Earth's…", qZh: "在近地軌道上，太空船仍受地球…",
+      opts: [{ en: "Gravitational pull", zh: "引力" }, { en: "No forces", zh: "無任何力" }, { en: "Only Moon's gravity", zh: "只有月球引力" }], a: 0,
+      hintEn: "Orbit is falling with sideways speed.", hintZh: "軌道是帶水平速度的自由落體。" },
+    { qEn: "Compared to Earth, the Moon's gravity is about…", qZh: "與地球相比，月球引力約為…",
+      opts: [{ en: "1/6", zh: "六分之一" }, { en: "The same", zh: "相同" }, { en: "6 times greater", zh: "六倍" }], a: 0,
+      hintEn: "g_moon ≈ 1.6 N/kg vs 9.8 N/kg.", hintZh: "月球 g 約 1.6 N/kg。" }
+  ];
+
+  var SUMMARY = [
+    { en: "Rockets need thrust > weight (+ drag) to leave Earth.", zh: "火箭需要推力大於重量（加阻力）才能離開地球。" },
+    { en: "Orbit is continuous free fall with high horizontal speed.", zh: "軌道是帶高水平速度的自由落體。" },
+    { en: "Transfer orbits link Earth and Moon efficiently.", zh: "轉移軌道有效連接地球與月球。" },
+    { en: "Lunar surface gravity ≈ 1/6 of Earth's.", zh: "月球表面引力約為地球的六分之一。" }
+  ];
+
+  var REVIEW = [
+    { qEn: "Which stage has the highest air drag?", qZh: "哪個階段空氣阻力最大？",
+      opts: [{ en: "Atmosphere", zh: "大氣層" }, { en: "Deep space", zh: "深空" }, { en: "Moon surface", zh: "月面" }], a: 0 },
+    { qEn: "Weight on the Moon compared to Earth for the same mass is…", qZh: "相同質量在月球上的重量與地球相比…",
+      opts: [{ en: "Smaller", zh: "較小" }, { en: "Larger", zh: "較大" }, { en: "Equal", zh: "相等" }], a: 0 },
+    { qEn: "Astronauts float in the ISS mainly because…", qZh: "太空人在國際太空站漂浮主要是因為…",
+      opts: [{ en: "They are in free fall", zh: "處於自由落體" }, { en: "Gravity is zero", zh: "引力為零" }, { en: "Fans push them", zh: "風扇推動" }], a: 0 },
+    { qEn: "To reach the Moon from Earth orbit, the craft enters a…", qZh: "從地球軌道前往月球，太空船進入…",
+      opts: [{ en: "Transfer orbit", zh: "轉移軌道" }, { en: "Square path", zh: "方形路徑" }, { en: "Random drift", zh: "隨機漂移" }], a: 0 },
+    { qEn: "Increasing thrust during launch mainly…", qZh: "起飛時增加推力主要…",
+      opts: [{ en: "Accelerates rocket upward", zh: "使火箭向上加速" }, { en: "Changes Moon's mass", zh: "改變月球質量" }, { en: "Removes gravity", zh: "消除引力" }], a: 0 }
+  ];
+
+  var STAGES = [
+    { nameEn: "Launch Pad", nameZh: "發射台", alt: "0", unitEn: "m", unitZh: "米", bg: "linear-gradient(to top,#1e3a8a,#000)", bottom: 80, earth: -280, moon: -220, rot: -45 },
+    { nameEn: "Atmosphere", nameZh: "大氣層", alt: "50", unitEn: "km", unitZh: "公里", bg: "linear-gradient(to top,#0f172a,#000)", bottom: 120, earth: -320, moon: -180, rot: -45 },
+    { nameEn: "Low Earth Orbit", nameZh: "近地軌道", alt: "400", unitEn: "km", unitZh: "公里", bg: "#000", bottom: 160, earth: -400, moon: -120, rot: 45 },
+    { nameEn: "Transfer Orbit", nameZh: "轉移軌道", alt: "100,000", unitEn: "km", unitZh: "公里", bg: "#000", bottom: 200, earth: -480, moon: -60, rot: 45 },
+    { nameEn: "Lunar Orbit", nameZh: "月球軌道", alt: "380,000", unitEn: "km", unitZh: "公里", bg: "#000", bottom: 180, earth: -560, moon: 30, rot: 135 },
+    { nameEn: "Moon Surface", nameZh: "月球表面", alt: "0", unitEn: "m (Moon)", unitZh: "米（月球）", bg: "linear-gradient(to top,#334155,#000)", bottom: 160, earth: -700, moon: 140, rot: -45 }
+  ];
+
+  function optText(o) {
+    if (typeof o === "string") return o;
+    return t(o.zh, o.en);
+  }
+
+  function esc(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  function updateChrome() {
+    document.getElementById("back-link").textContent = "← " + t("返回", "Back");
+    document.getElementById("unit-label").textContent = t("中二 · 力與太空", "Form 2 · Force & Space");
+    document.getElementById("title-label").textContent = t("太空任務", "Space Mission");
+    document.getElementById("flow-label").textContent = t("學習 → 引導 → 實驗 → 複習", "LGER: Learn → Guided → Experiment → Review");
+    var tabs = document.getElementById("tabs").querySelectorAll(".tab");
+    var labels = [
+      t("學習", "Learn"),
+      t("引導", "Guided"),
+      learnDone ? t("實驗", "Experiment") : t("實驗 🔒", "Experiment 🔒"),
+      t("複習", "Review")
+    ];
+    for (var i = 0; i < tabs.length; i++) {
+      tabs[i].textContent = labels[i];
+      tabs[i].classList.toggle("active", tabs[i].dataset.mode === mode);
+    }
+  }
+
+  function renderLearn() {
+    var step = LEARN[learnIdx];
+    var html = '<section class="card">';
+    html += '<p class="progress">' + esc(t("從零學起", "Learn From Zero")) + " · " + (learnIdx + 1) + " / " + LEARN.length + "</p>";
+    html += "<h2>" + esc(t(step.titleZh, step.titleEn)) + "</h2>";
+    html += "<p>" + esc(t(step.bodyZh, step.bodyEn)) + "</p>";
+    html += "<p><strong>" + esc(t(step.qZh, step.qEn)) + "</strong></p>";
+    html += '<div class="opts">';
+    step.opts.forEach(function (o, i) {
+      var cls = "opt";
+      if (learnPicked !== null) {
+        if (i === step.a) cls += " correct";
+        else if (learnPicked === i) cls += " wrong";
+        else cls += " dim";
+      }
+      html += '<button type="button" class="' + cls + '" data-opt="' + i + '">' + esc(optText(o)) + "</button>";
+    });
+    html += "</div>";
+    if (learnPicked !== null) {
+      html += '<p class="why">' + esc(t(step.whyZh, step.whyEn)) + "</p>";
+      var last = learnIdx >= LEARN.length - 1;
+      html += '<button type="button" class="btn" id="learn-next">' +
+        esc(last ? t("完成學習 → 實驗", "Finish Learn → Experiment") : t("下一題 →", "Next →")) +
+        "</button>";
+    }
+    html += "</section>";
+    document.getElementById("panel").innerHTML = html;
+    document.getElementById("panel").querySelectorAll(".opt").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        if (learnPicked !== null) return;
+        learnPicked = +btn.dataset.opt;
+        renderLearn();
+      });
+    });
+    var nextBtn = document.getElementById("learn-next");
+    if (nextBtn) nextBtn.addEventListener("click", function () {
+      if (learnIdx + 1 >= LEARN.length) {
+        try { localStorage.setItem("hkc_js_lger_" + APP_ID, "1"); } catch (e) {}
+        learnDone = true;
+        mode = "experiment";
+        learnIdx = 0;
+        learnPicked = null;
+      } else {
+        learnIdx++;
+        learnPicked = null;
+      }
+      updateChrome();
+      render();
+    });
+  }
+
+  function renderGuided() {
+    var item = GUIDED[guidedIdx];
+    var html = '<section class="card">';
+    html += '<p class="progress">' + esc(t("引導練習", "Guided Practice")) + " · " + (guidedIdx + 1) + " / " + GUIDED.length + "</p>";
+    html += "<p><strong>" + esc(t(item.qZh, item.qEn)) + "</strong></p>";
+    html += '<div class="opts">';
+    item.opts.forEach(function (o, i) {
+      var cls = "opt";
+      if (guidedPicked !== null) {
+        if (i === item.a) cls += " correct";
+        else if (guidedPicked === i) cls += " wrong";
+        else cls += " dim";
+      }
+      html += '<button type="button" class="' + cls + '" data-opt="' + i + '">' + esc(optText(o)) + "</button>";
+    });
+    html += "</div>";
+    if (guidedPicked !== null) {
+      html += '<p class="why">' + esc(t(item.hintZh, item.hintEn)) + "</p>";
+      html += '<button type="button" class="btn" id="guided-next">' +
+        esc(guidedIdx + 1 >= GUIDED.length ? t("前往複習 →", "Go to Review →") : t("下一題 →", "Next →")) +
+        "</button>";
+    }
+    html += "</section>";
+    document.getElementById("panel").innerHTML = html;
+    document.getElementById("panel").querySelectorAll(".opt").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        if (guidedPicked !== null) return;
+        guidedPicked = +btn.dataset.opt;
+        renderGuided();
+      });
+    });
+    var nextBtn = document.getElementById("guided-next");
+    if (nextBtn) nextBtn.addEventListener("click", function () {
+      if (guidedIdx + 1 >= GUIDED.length) {
+        mode = "review";
+        guidedIdx = 0;
+        guidedPicked = null;
+      } else {
+        guidedIdx++;
+        guidedPicked = null;
+      }
+      updateChrome();
+      render();
+    });
+  }
+
+  function renderExperiment() {
+    if (!learnDone) {
+      document.getElementById("panel").innerHTML =
+        '<section class="card lock-msg">' +
+        "<h2>" + esc(t("請先完成學習部分", "Complete Learn first")) + "</h2>" +
+        '<button type="button" class="btn" id="go-learn">' + esc(t("前往學習 →", "Go to Learn →")) + "</button>" +
+        "</section>";
+      document.getElementById("go-learn").addEventListener("click", function () {
+        mode = "learn";
+        updateChrome();
+        render();
+      });
+      return;
+    }
+    var s = STAGES[labStage];
+    var html = '<section class="card">';
+    html += "<h2>" + esc(t("互動實驗室", "Interactive Lab")) + "</h2>";
+    html += '<div id="lab-canvas" style="background:' + s.bg + '">';
+    html += '<div class="stars"></div>';
+    html += '<div class="earth" style="bottom:' + s.earth + 'px"></div>';
+    html += '<div class="moon" style="top:' + s.moon + 'px"></div>';
+    html += '<div class="rocket-wrap' + (labLaunching ? " shake" : "") + '" style="bottom:' + s.bottom + 'px">';
+    html += '<div class="rocket" style="transform:rotate(' + s.rot + 'deg)">🚀</div>';
+    html += '<div class="flames' + (labLaunching ? " on" : "") + '"><div class="flame"></div><div class="flame"></div><div class="flame"></div></div>';
+    html += "</div></div>";
+    html += '<div class="lab-stats">';
+    html += "<div><p class=\"stat-label\">" + esc(t("高度", "Altitude")) + "</p>";
+    html += '<p class="stat-val">' + esc(s.alt) + ' <span class="stat-unit">' + esc(t(s.unitZh, s.unitEn)) + "</span></p></div>";
+    html += "<div><p class=\"stat-label\">" + esc(t("階段", "Stage")) + "</p>";
+    html += '<p class="stat-val" style="font-size:1.25rem">' + esc(t(s.nameZh, s.nameEn)) + "</p></div>";
+    html += "<div><p class=\"stat-label\">" + esc(t("推力 %", "Thrust %")) + " · <span id=\"thrust-val\">" + labThrust + "</span></p>";
+    html += '<input type="range" min="10" max="100" value="' + labThrust + '" id="thrust-range" /></div>";
+    html += "</div>";
+    html += '<button type="button" class="btn" id="lab-next" style="margin-top:1rem"' + (labLaunching ? " disabled" : "") + ">" +
+      esc(labStage === 5 ? t("重新開始", "Restart") : labLaunching ? t("推進中…", "Thrusting…") : t("下一階段", "Next Stage")) +
+      "</button></section>";
+    document.getElementById("panel").innerHTML = html;
+    document.getElementById("thrust-range").addEventListener("input", function (e) {
+      labThrust = +e.target.value;
+      document.getElementById("thrust-val").textContent = labThrust;
+    });
+    document.getElementById("lab-next").addEventListener("click", function () {
+      if (labLaunching) return;
+      if (labStage === 5) { labStage = 0; renderExperiment(); return; }
+      labLaunching = true;
+      renderExperiment();
+      setTimeout(function () {
+        labLaunching = false;
+        labStage++;
+        renderExperiment();
+      }, 1800);
+    });
+  }
+
+  function renderReview() {
+    if (reviewDone) {
+      document.getElementById("panel").innerHTML =
+        '<section class="card" style="text-align:center">' +
+        "<h2>" + esc(t("複習完成！", "Review Complete!")) + "</h2>" +
+        "<p>" + reviewCorrect + " / " + REVIEW.length + " " + esc(t("題正確", "correct")) + "</p>" +
+        "</section>";
+      return;
+    }
+    var item = REVIEW[reviewIdx];
+    var html = '<section class="card">';
+    html += "<h2>" + esc(t("重點摘要", "Key Summary")) + "</h2>";
+    html += "<ul class=\"summary\">";
+    SUMMARY.forEach(function (s) {
+      html += "<li>" + esc(t(s.zh, s.en)) + "</li>";
+    });
+    html += "</ul><hr style=\"border:none;border-top:1px solid #e2e8f0;margin:1.25rem 0\" />";
+    html += "<h2>" + esc(t("自我測驗", "Self-Check Quiz")) + " (" + (reviewIdx + 1) + "/" + REVIEW.length + ")</h2>";
+    html += "<p><strong>" + esc(t(item.qZh, item.qEn)) + "</strong></p>";
+    html += '<div class="opts">';
+    item.opts.forEach(function (o, i) {
+      var cls = "opt";
+      if (reviewPicked !== null) {
+        if (i === item.a) cls += " correct";
+        else if (reviewPicked === i) cls += " wrong";
+        else cls += " dim";
+      }
+      html += '<button type="button" class="' + cls + '" data-opt="' + i + '">' + esc(optText(o)) + "</button>";
+    });
+    html += "</div>";
+    if (reviewPicked !== null) {
+      html += '<button type="button" class="btn" id="review-next">' +
+        esc(reviewIdx + 1 >= REVIEW.length ? t("查看成績", "See Results") : t("下一題", "Next")) +
+        "</button>";
+    }
+    html += "</section>";
+    document.getElementById("panel").innerHTML = html;
+    document.getElementById("panel").querySelectorAll(".opt").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        if (reviewPicked !== null) return;
+        reviewPicked = +btn.dataset.opt;
+        if (reviewPicked === item.a) reviewCorrect++;
+        renderReview();
+      });
+    });
+    var nextBtn = document.getElementById("review-next");
+    if (nextBtn) nextBtn.addEventListener("click", function () {
+      if (reviewIdx + 1 >= REVIEW.length) {
+        reviewDone = true;
+      } else {
+        reviewIdx++;
+        reviewPicked = null;
+      }
+      renderReview();
+    });
+  }
+
+  function render() {
+    if (mode === "learn") renderLearn();
+    else if (mode === "guided") renderGuided();
+    else if (mode === "experiment") renderExperiment();
+    else renderReview();
+  }
+
+  if (window.NcsI18n) {
+    window.NcsI18n.mountSwitcher(document.body);
+    window.NcsI18n.onChange(function () {
+      isZh = window.NcsI18n.isZh();
+      updateChrome();
+      render();
+    });
+  }
+
+  document.getElementById("tabs").addEventListener("click", function (e) {
+    var btn = e.target.closest(".tab");
+    if (!btn) return;
+    mode = btn.dataset.mode;
+    updateChrome();
+    render();
+  });
+
+  updateChrome();
+  render();
+})();
+  </script>
+</body>
+</html>

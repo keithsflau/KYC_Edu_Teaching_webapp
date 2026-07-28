@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>F4 · Mitosis & Cell Cycle | 有絲分裂與細胞週期</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="../../../../common/babel-react-classic.js"></script>
+  <link rel="stylesheet" href="../../../../common/subscribe-gate.css" />
+  <script>
+    window.HKC_SUBSCRIBE = {
+      appId: "f4-bio-mitosis",
+      appNameZh: "有絲分裂與細胞週期",
+      appNameEn: "Mitosis & Cell Cycle",
+      level: "F4",
+      subject: "Biology",
+      freeDrillLimit: 8,
+      wrongBookLimit: 10,
+      contactEmail: "support@hksteamai.com",
+      comingSoonHref: "../../../../pricing/index.html#payment-links"
+    };
+  </script>
+  <script src="../../../../common/subscribe-gate.js"></script>
+  <script src="../../../../common/parent-report.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    body { font-family: "IBM Plex Sans", system-ui, sans-serif; background: radial-gradient(ellipse 80% 50% at 10% -10%, #05966922, transparent 55%), #f8fafc; color: #0f172a; min-height: 100vh; }
+    input[type="range"] { accent-color: #059669; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+    canvas.sim { width: 100%; border-radius: 12px; display: block; }
+  </style>
+  <!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
+  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+      display: none !important;
+    }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+        if (label === "EN" || label === "\u4E2D") {
+          btn.classList.add("ncs-hide-when-ncs-fleet");
+        }
+      });
+      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+        el.classList.add("ncs-hide-when-ncs-fleet");
+      });
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+</head>
+<body class="text-slate-800">
+  <!-- SUBSCRIBE_GATE: Marketing owns tiers. Free core must work offline. -->
+  <div id="root"></div>
+  <script>
+    window.SUBSCRIBE_CONFIG = {
+      enabled: true,
+      bannerText: "解鎖完整練習與家長進度 · 全年少於一次補習堂費",
+      premiumFeatures: ["progress_sync", "parent_dashboard", "unlimited_mocks"]
+    };
+  </script>
+  <script type="text/babel" data-presets="react-classic">
+    const { useState, useEffect, useRef } = React;
+    const APP_ID = "f4_bio_mitosis";
+    const ACCENT = "#059669";
+
+    const HKC = (function () {
+      function progressView() {
+        const p = (window.HkcSubscribe && HkcSubscribe.getProgress()) || { drillsCorrect: 0, modulesCompleted: [], wrongBook: [], drillsAttempted: 0 };
+        return {
+          bestScore: p.drillsCorrect || 0,
+          sessions: (p.modulesCompleted || []).length,
+          totalCorrect: p.drillsCorrect || 0,
+          totalAttempted: p.drillsAttempted || 0,
+          wrongBook: (p.wrongBook || []).map((w, i) => ({ id: String(i) + "-" + (w.at || ""), prompt: w.label || "", hint: w.topic || "", answer: null, at: w.at })),
+          modeCleared: {}
+        };
+      }
+      return {
+        FREE_DAILY_CAP: 8,
+        MARKETING_PATH: "../../../../pricing/index.html#payment-links",
+        isPaid: () => !!(window.HkcSubscribe && HkcSubscribe.features().canDrillUnlimited && !HkcSubscribe.isClassroom()),
+        getEntitlement: () => (window.HkcSubscribe ? HkcSubscribe.getEntitlement() : { tier: "free" }),
+        remainingFree: () => { if (!window.HkcSubscribe) return 8; const r = HkcSubscribe.remainingFree(); return r === Infinity ? Infinity : r; },
+        freeCapReached: () => !(window.HkcSubscribe && HkcSubscribe.canContinueDrills()),
+        recordDrillUse: () => {},
+        loadProgress: progressView,
+        saveProgress: () => progressView(),
+        addWrong: (appId, item) => { if (window.HkcSubscribe) HkcSubscribe.recordDrill({ correct: false, label: (item.prompt || item.q || String(item.id) || "").toString().slice(0, 48), topic: (item.hint || "").toString().slice(0, 80), module: "practice" }); },
+        recordOk: (appId, item) => { if (window.HkcSubscribe) HkcSubscribe.recordDrill({ correct: true, label: (item && (item.prompt || item.q || item.id) || "drill").toString().slice(0, 48), topic: "", module: "practice" }); },
+        removeWrong: () => {},
+        recordSession: (appId, score, total) => { if (window.HkcSubscribe) HkcSubscribe.recordModule({ id: "session-" + Date.now(), label: "Session", score, total }); },
+        startTrialLocal: () => { if (window.HkcSubscribe) HkcSubscribe.setLocalEntitlement("trial", 14); }
+      };
+    })();
+
+    const TFZ_STEPS = [
+      { id: "A1", title: "Why cells divide", titleZh: "細胞為何分裂",
+        body: "You grew from ONE cell to trillions by mitosis. Cells divide for growth, repair, and replacing dead cells. Each new cell needs a COMPLETE, IDENTICAL copy of the genetic instructions (DNA).",
+        bodyZh: "你由一個細胞經有絲分裂長成萬億細胞。分裂用於生長、修補、替換死細胞。每個新細胞都需要一份完整且相同的 DNA 指令。",
+        q: "Mitosis produces daughter cells that are genetically…", qZh: "有絲分裂產生的子細胞在遺傳上…",
+        opts: ["Identical to the parent 與母細胞相同", "Half the DNA 只有一半 DNA", "Randomly different 隨機不同"], a: "Identical to the parent 與母細胞相同",
+        why: "Mitosis copies then splits the genome evenly — clones of the parent cell." },
+      { id: "A2", title: "Chromosomes carry the instructions", titleZh: "染色體承載指令",
+        body: "DNA is packaged into CHROMOSOMES. Our demo cell has 4 (2n = 4): one long pair + one short pair. Each pair has a maternal and a paternal homolog (drawn in different shades).",
+        bodyZh: "DNA 包裝成染色體。示範細胞有 4 條(2n = 4):一對長、一對短;每對分別來自母方與父方(深淺色區分)。",
+        q: "'2n = 4' means the cell has…", qZh: "「2n = 4」表示細胞有…",
+        opts: ["4 chromosomes in 2 pairs 兩對共 4 條染色體", "2 chromosomes 2 條", "4 copies of one chromosome 同一條 4 份"], a: "4 chromosomes in 2 pairs 兩對共 4 條染色體",
+        why: "n = number of different chromosome types; body cells are diploid (2n)." },
+      { id: "A3", title: "Interphase: the 'boring' 90%", titleZh: "間期:佔九成的「平淡」時光",
+        body: "Between divisions the cell is in INTERPHASE: G1 (growth), S (DNA replication — every chromosome is copied!), G2 (prep). DNA content goes 2C → 4C in S phase. The cell looks calm but is furiously busy.",
+        bodyZh: "兩次分裂之間是間期:G1 生長、S 期複製 DNA(每條染色體複製!)、G2 準備。S 期 DNA 量由 2C → 4C。",
+        q: "DNA replication happens in…", qZh: "DNA 複製發生在…",
+        opts: ["S phase of interphase 間期 S 期", "Metaphase 中期", "Cytokinesis 胞質分裂"], a: "S phase of interphase 間期 S 期",
+        why: "S = synthesis. After S, each chromosome = two sister chromatids." },
+      { id: "A4", title: "Sister chromatids & the X shape", titleZh: "姊妹染色單體與 X 形",
+        body: "After replication, each chromosome consists of TWO IDENTICAL sister chromatids joined at the centromere — the classic X shape you see in textbook diagrams. Count chromosomes by CENTROMERES: an X is still ONE chromosome.",
+        bodyZh: "複製後每條染色體由兩條相同的姊妹染色單體在著絲點相連,即 X 形。數染色體要數著絲點:X 仍是一條染色體。",
+        q: "After S phase, one X-shaped chromosome contains…", qZh: "S 期後,一條 X 形染色體含有…",
+        opts: ["2 sister chromatids, 1 centromere 兩條姊妹染色單體、一個著絲點", "2 centromeres 兩個著絲點", "4 chromatids 四條單體"], a: "2 sister chromatids, 1 centromere 兩條姊妹染色單體、一個著絲點",
+        why: "Chromatids share one centromere until anaphase splits them." },
+      { id: "A5", title: "Prophase & Metaphase: condense and line up", titleZh: "前期與中期:濃縮、排列",
+        body: "PROPHASE: chromatin coils into visible chromosomes; the nuclear envelope breaks down; spindle fibres grow from the two poles. METAPHASE: chromosomes line up on the EQUATOR (middle line), each centromere attached to spindle fibres from BOTH poles.",
+        bodyZh: "前期:染色質濃縮成可見染色體,核膜解体,兩極長出紡錘絲。中期:染色體排列在赤道板上,每個著絲點連接來自兩極的紡錘絲。",
+        q: "Chromosomes line up at the equator during…", qZh: "染色體排列在赤道板是在…",
+        opts: ["Metaphase 中期", "Prophase 前期", "Telophase 末期"], a: "Metaphase 中期",
+        why: "Think M = Middle. Perfect alignment = fair split coming." },
+      { id: "A6", title: "Anaphase: sisters separate", titleZh: "後期:姊妹分家",
+        body: "ANAPHASE: centromeres split; spindle fibres shorten and drag each chromatid (now a full chromosome!) toward opposite poles. Each pole receives an identical set — this is the moment genetic identity is guaranteed.",
+        bodyZh: "後期:著絲點分裂,紡錘絲縮短,把每條染色單體(現已成為獨立染色體)拉向相反兩極。兩極各得一套相同染色體。",
+        q: "During anaphase, what is pulled to the poles?", qZh: "後期被拉向兩極的是…",
+        opts: ["Separated sister chromatids 分開的姊妹染色單體", "Whole X chromosomes 整條 X 染色體", "The nuclear envelope 核膜"], a: "Separated sister chromatids 分開的姊妹染色單體",
+        why: "A = Apart. Once separated, each chromatid counts as a chromosome." },
+      { id: "A7", title: "Telophase & Cytokinesis: two new cells", titleZh: "末期與胞質分裂:兩個新細胞",
+        body: "TELOPHASE: chromosomes uncoil, a nuclear envelope RE-FORMS around each set. CYTOKINESIS: the cytoplasm pinches in two (animal cells) — two genetically identical daughter cells, each 2n = 4 with 2C DNA, back into interphase.",
+        bodyZh: "末期:染色體解旋,兩套染色體各自重建核膜。胞質分裂:細胞質凹陷一分為二(動物細胞),得兩個遺傳相同的子細胞(各 2n = 4、2C),重回間期。",
+        q: "After cytokinesis, each daughter cell has…", qZh: "胞質分裂後,每個子細胞有…",
+        opts: ["4 chromosomes, DNA 2C 四條染色體、DNA 2C", "8 chromosomes 八條", "2 chromosomes 兩條", "DNA 4C"], a: "4 chromosomes, DNA 2C 四條染色體、DNA 2C",
+        why: "Full set restored per cell; the cycle restarts in interphase." },
+      { id: "A8", title: "Checkpoint: order the stages", titleZh: "檢查點:排列順序",
+        body: "PMAT: Prophase → Metaphase → Anaphase → Telophase, with interphase before and cytokinesis after. In the lab, press PLAY and call each stage BEFORE the label shows — instant exam training.",
+        bodyZh: "口訣 PMAT:前→中→後→末,前有間期,後有胞質分裂。在實驗室按 PLAY,在標籤出現前先喊出階段名稱,即是最佳備試訓練。",
+        q: "The correct order is…", qZh: "正確次序是…",
+        opts: ["Interphase → P → M → A → T → Cytokinesis 間期→前→中→後→末→胞質分裂", "M → A → P → T", "T → A → M → P"], a: "Interphase → P → M → A → T → Cytokinesis 間期→前→中→後→末→胞質分裂",
+        why: "IPMATC — interphase is NOT part of mitosis itself; mitosis = PMAT." }
+    ]
+
+    function LearnFromZero({ steps, onComplete }) {
+      const [i, setI] = useState(0);
+      const [picked, setPicked] = useState(null);
+      const step = steps[i];
+      const last = i === steps.length - 1;
+      function pick(opt) { if (picked) return; setPicked(opt); }
+      function next() {
+        if (last) { onComplete(); return; }
+        setI(i + 1); setPicked(null);
+      }
+      return (
+        <section className="bg-white border border-slate-200 shadow-sm rounded-2xl p-4 sm:p-6">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-black uppercase tracking-widest" style={{color: ACCENT}}>Learn From Zero · 由零開始學</p>
+            <p className="text-xs text-slate-500">{step.id} / A{steps.length}</p>
+          </div>
+          <div className="flex gap-1.5 mb-4">
+            {steps.map((s, k) => (
+              <div key={s.id} className="h-1.5 flex-1 rounded-full" style={{background: k <= i ? ACCENT : "#e2e8f0"}} />
+            ))}
+          </div>
+          <h2 className="text-xl font-bold">{step.title}</h2>
+          <p className="text-sm font-semibold text-slate-500 mt-0.5">{step.titleZh}</p>
+          <p className="text-sm mt-3 text-slate-700 leading-relaxed">{step.body}</p>
+          <p className="text-sm mt-2 text-slate-500 leading-relaxed">{step.bodyZh}</p>
+          <div className="mt-4 p-3 rounded-xl bg-indigo-50 border border-indigo-200">
+            <p className="text-sm font-bold">{step.q}</p>
+            <p className="text-xs text-slate-500 mb-2">{step.qZh}</p>
+            <div className="grid gap-2">
+              {step.opts.map(o => {
+                let cls = "text-left px-3 py-2.5 rounded-xl text-sm border min-h-[44px] ";
+                if (!picked) cls += "bg-white border-slate-200 hover:bg-slate-50";
+                else if (o === step.a) cls += "bg-emerald-50 border-emerald-300 text-emerald-800 font-semibold";
+                else if (o === picked) cls += "bg-rose-50 border-rose-300 text-rose-800";
+                else cls += "bg-white border-slate-200 opacity-60";
+                return <button key={o} type="button" className={cls} onClick={() => pick(o)}>{o}</button>;
+              })}
+            </div>
+            {picked && (
+              <div className="mt-3 text-sm p-3 rounded-lg bg-white/70 border border-slate-200">
+                <p className="font-semibold">{picked === step.a ? "✓ Correct · 正確" : "✗ Not quite — see why · 再想想"}</p>
+                <p className="mt-1 text-slate-600">{step.why}</p>
+                {picked === step.a && (
+                  <button type="button" onClick={next} className="mt-3 px-4 py-2.5 rounded-xl font-semibold text-white min-h-[44px]" style={{background: ACCENT}}>
+                    {last ? "Unlock the Lab → 解鎖實驗室" : "Next step →"}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </section>
+      );
+    }
+
+
+    const MITO_STAGES = [
+      { id: "g1", name: "Interphase G1", zh: "間期 G1", desc: "Cell grows; DNA as loose chromatin. DNA = 2C. 細胞生長,DNA 呈鬆散染色質。", chromatin: true, dna: 2, chrom: "4", chromatids: "0" },
+      { id: "s", name: "Interphase S", zh: "間期 S 期", desc: "DNA REPLICATION: every chromosome is copied. DNA 2C → 4C. 每條染色體複製。", chromatin: true, dna: 3, chrom: "4", chromatids: "replicating 複製中" },
+      { id: "g2", name: "Interphase G2", zh: "間期 G2", desc: "Replication done: each chromosome = 2 sister chromatids. DNA = 4C. 複製完成,每條染色體有兩條姊妹染色單體。", dna: 4, chrom: "4", chromatids: "8" },
+      { id: "prophase", name: "Prophase", zh: "前期", desc: "Chromosomes condense; nuclear envelope breaks down; spindle forms. 染色體濃縮,核膜解体,紡錘體形成。", dna: 4, chrom: "4", chromatids: "8", envelopeGone: true, spindle: true },
+      { id: "metaphase", name: "Metaphase", zh: "中期", desc: "Chromosomes line up on the equator. 染色體排列於赤道板。", dna: 4, chrom: "4", chromatids: "8", envelopeGone: true, spindle: true, equator: true },
+      { id: "anaphase", name: "Anaphase", zh: "後期", desc: "Sister chromatids separate and move to opposite poles. 姊妹染色單體分離,移向兩極。", dna: 4, chrom: "4 → 8 (temporarily 暫時)", chromatids: "separating 分離中", envelopeGone: true, spindle: true, apart: true },
+      { id: "telophase", name: "Telophase", zh: "末期", desc: "Two nuclear envelopes re-form; cell begins to pinch. 重建兩個核膜,細胞開始凹陷。", dna: 4, chrom: "4 + 4", chromatids: "0 (each chromatid = chromosome 各自成為染色體)", spindle: false, twoNuclei: true, pinch: true },
+      { id: "cytokinesis", name: "Cytokinesis", zh: "胞質分裂", desc: "Cytoplasm divides → two IDENTICAL daughter cells (2n = 4, DNA 2C each). 細胞質一分為二,得兩個相同子細胞。", dna: 2, chrom: "4 per cell 每細胞 4 條", chromatids: "0", daughters: true }
+    ];
+    const CHROMS = [
+      { key: "A1", col: "#dc2626", len: 52 },
+      { key: "A2", col: "#f87171", len: 52 },
+      { key: "B1", col: "#2563eb", len: 36 },
+      { key: "B2", col: "#60a5fa", len: 36 }
+    ];
+    function chromLayout(stageId, idx) {
+      const base = [{ x: 165, y: 130 }, { x: 300, y: 118 }, { x: 165, y: 265 }, { x: 305, y: 272 }];
+      if (stageId === "metaphase") return { x: 236, y: 118 + idx * 60, rot: 90 };
+      if (stageId === "anaphase") {
+        const ys = [120, 168, 240, 288];
+        return { pair: [{ x: 150, y: ys[idx], rot: -90 }, { x: 322, y: ys[idx], rot: 90 }] };
+      }
+      if (stageId === "telophase") {
+        const ys = [128, 168, 240, 280];
+        return { pair: [{ x: 118, y: ys[idx], rot: 0 }, { x: 354, y: ys[idx], rot: 0 }] };
+      }
+      if (stageId === "cytokinesis") {
+        const ys = [140, 180, 230, 270];
+        return { pair: [{ x: 118, y: ys[idx], rot: 0, cell: 1 }, { x: 354, y: ys[idx], rot: 0, cell: 2 }] };
+      }
+      return base[idx];
+    }
+    function Chrom({ col, len, shape, x, y, rot, opacity }) {
+      const style = { transform: "translate(" + x + "px," + y + "px) rotate(" + (rot || 0) + "deg)", transition: "transform .9s ease, opacity .9s ease", opacity: opacity == null ? 1 : opacity, transformOrigin: "0 0" };
+      if (shape === "squiggle") {
+        return (
+          <g style={style}>
+            <path d={"M 0 0 q 8 -10 16 0 t 16 0 t " + (len - 32) + " 0"} stroke={col} strokeWidth="5" fill="none" strokeLinecap="round" />
+          </g>
+        );
+      }
+      if (shape === "single") {
+        return (
+          <g style={style}>
+            <rect x={-len / 2} y={-5} width={len} height={10} rx={5} fill={col} />
+          </g>
+        );
+      }
+      return (
+        <g style={style}>
+          <rect x={-len / 2} y={-11} width={len} height={9} rx={4.5} fill={col} transform="rotate(28)" />
+          <rect x={-len / 2} y={2} width={len} height={9} rx={4.5} fill={col} transform="rotate(-28)" />
+          <circle cx={0} cy={0} r={5} fill="#0f172a" />
+        </g>
+      );
+    }
+    function MitosisSim() {
+      const [si, setSi] = useState(0);
+      const [playing, setPlaying] = useState(false);
+      const st = MITO_STAGES[si];
+      useEffect(() => {
+        if (!playing) return;
+        const iv = setInterval(() => setSi(s => (s + 1) % MITO_STAGES.length), 2400);
+        return () => clearInterval(iv);
+      }, [playing]);
+
+      const shapeFor = (id) => (id === "g1" || id === "s") ? "squiggle" : (id === "anaphase" || id === "telophase" || id === "cytokinesis") ? "single" : "x";
+      const envOp = st.envelopeGone ? 0.08 : (st.daughters ? 0 : 0.9);
+      const cellRx = st.pinch ? 165 : 150, cellRy = st.pinch ? 120 : 150;
+
+      return (
+        <div className="space-y-3">
+          <div className="flex flex-wrap gap-2 items-center">
+            <button type="button" onClick={() => setPlaying(p => !p)} className="px-4 py-2 rounded-xl text-sm font-bold text-white min-h-[44px]" style={{background: ACCENT}}>{playing ? "⏸ Pause 暫停" : "▶ Play Animation 播放動畫"}</button>
+            <button type="button" onClick={() => setSi(s => Math.max(0, s - 1))} className="px-3 py-2 rounded-xl text-sm font-semibold bg-white border border-slate-200 min-h-[44px]">← Prev</button>
+            <button type="button" onClick={() => setSi(s => Math.min(MITO_STAGES.length - 1, s + 1))} className="px-3 py-2 rounded-xl text-sm font-semibold bg-white border border-slate-200 min-h-[44px]">Next →</button>
+            <button type="button" onClick={() => setSi(0)} className="px-3 py-2 rounded-xl text-sm font-semibold bg-white border border-slate-200 min-h-[44px]">↺ Reset</button>
+          </div>
+          <div className="grid lg:grid-cols-[1fr_300px] gap-3">
+            <div className="bg-white border border-slate-200 rounded-xl p-2">
+              <svg viewBox="0 0 480 400" className="w-full" style={{background: "#f0fdf4", borderRadius: 12}}>
+                {st.daughters ? (
+                  <g style={{transition: "opacity .9s"}}>
+                    <circle cx={118} cy={205} r={102} fill="#dcfce7" stroke="#059669" strokeWidth={3} />
+                    <circle cx={354} cy={205} r={102} fill="#dcfce7" stroke="#059669" strokeWidth={3} />
+                    <circle cx={118} cy={205} r={72} fill="none" stroke="#86efac" strokeWidth={2} strokeDasharray="6 5" />
+                    <circle cx={354} cy={205} r={72} fill="none" stroke="#86efac" strokeWidth={2} strokeDasharray="6 5" />
+                  </g>
+                ) : (
+                  <g>
+                    <ellipse cx={236} cy={205} rx={cellRx} ry={cellRy} fill="#dcfce7" stroke="#059669" strokeWidth={3} style={{transition: "all .9s ease"}} />
+                    {st.twoNuclei ? (
+                      <g>
+                        <circle cx={118} cy={205} r={66} fill="none" stroke="#86efac" strokeWidth={2} strokeDasharray="6 5" style={{transition: "opacity .9s", opacity: 0.9}} />
+                        <circle cx={354} cy={205} r={66} fill="none" stroke="#86efac" strokeWidth={2} strokeDasharray="6 5" style={{transition: "opacity .9s", opacity: 0.9}} />
+                      </g>
+                    ) : (
+                      <circle cx={236} cy={205} r={100} fill="none" stroke="#86efac" strokeWidth={2} strokeDasharray="6 5" style={{transition: "opacity .9s", opacity: envOp}} />
+                    )}
+                    {st.equator && <line x1={236} y1={60} x2={236} y2={350} stroke="#059669" strokeWidth={2} strokeDasharray="4 6" />}
+                  </g>
+                )}
+                {st.spindle && !st.daughters && (
+                  <g stroke="#94a3b8" strokeWidth={1.5} style={{transition: "opacity .9s"}}>
+                    {[120, 168, 240, 288].map(y => (
+                      <g key={y}>
+                        <line x1={80} y1={205} x2={st.apart ? 150 : 236} y2={y} />
+                        <line x1={392} y1={205} x2={st.apart ? 322 : 236} y2={y} />
+                      </g>
+                    ))}
+                    <circle cx={80} cy={205} r={8} fill="#f59e0b" stroke="none" />
+                    <circle cx={392} cy={205} r={8} fill="#f59e0b" stroke="none" />
+                  </g>
+                )}
+                {CHROMS.map((c, idx) => {
+                  const lay = chromLayout(st.id, idx);
+                  const shape = shapeFor(st.id);
+                  if (lay.pair) {
+                    return lay.pair.map((p, k) => (
+                      <Chrom key={c.key + k} col={c.col} len={c.len} shape={shape === "x" ? "single" : shape} x={p.x} y={p.y} rot={p.rot} />
+                    ));
+                  }
+                  return <Chrom key={c.key} col={c.col} len={c.len} shape={shape} x={lay.x} y={lay.y} rot={lay.rot || 0} />;
+                })}
+                {st.id === "s" && <text x={236} y={378} textAnchor="middle" fontSize="13" fill="#059669" fontWeight="700">DNA replicating… 複製中 2C → 4C</text>}
+                {st.daughters && <text x={236} y={378} textAnchor="middle" fontSize="13" fill="#059669" fontWeight="700">2 identical daughter cells 兩個相同子細胞 (2n = 4)</text>}
+              </svg>
+            </div>
+            <div className="space-y-3">
+              <div className="bg-white border border-slate-200 rounded-xl p-4">
+                <p className="text-xs font-black uppercase tracking-widest" style={{color: ACCENT}}>Stage {si + 1}/8</p>
+                <h3 className="text-lg font-bold mt-1">{st.name} · {st.zh}</h3>
+                <p className="text-sm text-slate-600 mt-2 leading-relaxed">{st.desc}</p>
+              </div>
+              <div className="bg-white border border-slate-200 rounded-xl p-4 text-sm space-y-1.5">
+                <p><b>Chromosomes 染色體:</b> {st.chrom}</p>
+                <p><b>Chromatids 染色單體:</b> {st.chromatids}</p>
+              </div>
+              <div className="bg-white border border-slate-200 rounded-xl p-4">
+                <p className="text-xs font-bold text-slate-500 mb-2">DNA content per cell DNA 含量 (C)</p>
+                <svg viewBox="0 0 260 110" className="w-full">
+                  <line x1={28} y1={86} x2={250} y2={86} stroke="#cbd5e1" />
+                  <line x1={28} y1={86} x2={28} y2={12} stroke="#cbd5e1" />
+                  <text x={4} y={34} fontSize={9} fill="#64748b">4C</text>
+                  <text x={4} y={66} fontSize={9} fill="#64748b">2C</text>
+                  {MITO_STAGES.map((s2, k) => {
+                    const x = 40 + k * 29, y = 86 - (s2.dna - 2) * 16;
+                    const x2 = k < 7 ? 40 + (k + 1) * 29 : x;
+                    return (
+                      <g key={s2.id}>
+                        <line x1={x} y1={y} x2={x2} y2={y} stroke="#059669" strokeWidth={2.5} />
+                        {k === si && <circle cx={x + 4} cy={y} r={5} fill="#f59e0b" />}
+                        <text x={x + 6} y={100} fontSize={7.5} fill={k === si ? "#059669" : "#94a3b8"} fontWeight={k === si ? 800 : 400}>{s2.id}</text>
+                      </g>
+                    );
+                  })}
+                </svg>
+              </div>
+            </div>
+          </div>
+          <input type="range" min="0" max="7" step="1" value={si} onChange={e => setSi(+e.target.value)} className="w-full" />
+          <div className="flex justify-between text-[10px] text-slate-500 -mt-2">
+            {MITO_STAGES.map(s2 => <span key={s2.id}>{s2.zh}</span>)}
+          </div>
+        </div>
+      );
+    }
+
+    const GUIDED = [
+      { id: "g1", level: 1, q: "Mitosis produces how many daughter cells, and are they identical?", qZh: "有絲分裂產生多少個子細胞?是否相同?",
+        opts: ["Two, genetically identical 兩個,遺傳相同", "Two, different 兩個,不同", "Four, identical 四個,相同", "Four, different 四個,不同"], a: "Two, genetically identical 兩個,遺傳相同",
+        hint: "One cell → two clones. 一母細胞變兩個相同子細胞。" },
+      { id: "g2", level: 1, q: "DNA replication occurs during…", qZh: "DNA 複製發生在…",
+        opts: ["S phase of interphase 間期 S 期", "Prophase 前期", "Anaphase 後期", "Cytokinesis 胞質分裂"], a: "S phase of interphase 間期 S 期",
+        hint: "S = synthesis. Before mitosis even starts. 分裂前已完成複製。" },
+      { id: "g3", level: 1, q: "Chromosomes line up at the equator in which stage?", qZh: "染色體排列在赤道板是哪個階段?",
+        opts: ["Metaphase 中期", "Prophase 前期", "Telophase 末期", "Interphase 間期"], a: "Metaphase 中期",
+        hint: "M = Middle. 中期 = 排中間。" },
+      { id: "g4", level: 2, q: "A cell has 12 chromosomes at G1. After S phase it has…", qZh: "某細胞 G1 期有 12 條染色體,S 期後有…",
+        opts: ["12 chromosomes, 24 chromatids 12 條染色體、24 條染色單體", "24 chromosomes 24 條染色體", "12 chromatids 12 條染色單體", "6 chromosomes 6 條"], a: "12 chromosomes, 24 chromatids 12 條染色體、24 條染色單體",
+        hint: "Count chromosomes by centromeres — replication doubles chromatids, NOT chromosome number. 數著絲點!" },
+      { id: "g5", level: 2, q: "Sister chromatids separate and move to opposite poles during…", qZh: "姊妹染色單體分離並移向兩極是在…",
+        opts: ["Anaphase 後期", "Metaphase 中期", "Prophase 前期", "G2 phase G2 期"], a: "Anaphase 後期",
+        hint: "A = Apart. 後期 = 分開。" },
+      { id: "g6", level: 2, q: "The nuclear envelope breaks down in ___ and re-forms in ___.", qZh: "核膜在___解体,在___重建。",
+        opts: ["Prophase; Telophase 前期;末期", "Metaphase; Anaphase 中期;後期", "G1; G2", "S; Prophase"], a: "Prophase; Telophase 前期;末期",
+        hint: "Breakdown frees the chromosomes for the spindle; re-forming seals the two new nuclei. 先拆後建。" }
+    ]
+    const EXAM = [
+      { id: "e1", level: 3, q: "A cell with DNA content 2C enters the cell cycle. Its DNA content at metaphase is…", qZh: "DNA 含量 2C 的細胞進入細胞週期,中期時 DNA 含量為…",
+        opts: ["4C", "2C", "1C", "8C"], a: "4C",
+        hint: "S phase doubles DNA before mitosis: 2C → 4C, unchanged until cytokinesis. 分裂前已複製。" },
+      { id: "e2", level: 3, q: "Why is mitosis essential for growth and repair rather than meiosis?", qZh: "為甚麼生長與修補靠有絲分裂而非減數分裂?",
+        opts: ["It makes identical cells that match the tissue 產生與組織相同的細胞", "It makes variation 產生變異", "It halves chromosome number 減半染色體", "It is faster 較快"], a: "It makes identical cells that match the tissue 產生與組織相同的細胞",
+        hint: "Repair needs exact copies of the cells being replaced. 修補需要相同的細胞。" },
+      { id: "e3", level: 3, q: "During anaphase of a 2n = 8 cell, how many chromosomes move to EACH pole?", qZh: "2n = 8 的細胞在後期,移向每一極的染色體數為…",
+        opts: ["8", "4", "16", "2"], a: "8",
+        hint: "Every chromosome splits; each pole receives one chromatid from all 8 → 8 per pole. 每極得完整一套。" },
+      { id: "e4", level: 4, q: "A student counts '8 chromosomes' in a metaphase cell that has 4 X-shaped structures. The correct count is…", qZh: "某中期細胞有 4 個 X 形結構,學生數成「8 條染色體」。正確數目是…",
+        opts: ["4 chromosomes (count centromeres), 8 chromatids 4 條染色體(數著絲點)、8 條染色單體", "8 chromosomes 8 條", "16 chromosomes 16 條", "2 chromosomes 2 條"], a: "4 chromosomes (count centromeres), 8 chromatids 4 條染色體(數著絲點)、8 條染色單體",
+        hint: "X = 1 chromosome with 2 chromatids until anaphase. X 仍是一條染色體。" },
+      { id: "e5", level: 4, q: "Colchicine destroys spindle fibres. Cells treated with it will arrest at…", qZh: "秋水仙素破壞紡錘絲,處理後細胞會停在哪個階段?",
+        opts: ["Metaphase — chromosomes cannot be pulled apart 中期,無法拉開染色體", "Interphase 間期", "Cytokinesis 胞質分裂", "G1"], a: "Metaphase — chromosomes cannot be pulled apart 中期,無法拉開染色體",
+        hint: "No spindle → no attachment/separation → stuck after lining up. 無紡錘體則卡住。" },
+      { id: "e6", level: 4, q: "Cancer cells ignore normal cell-cycle controls. Which feature of mitosis makes cancer dangerous?", qZh: "癌細胞不受細胞週期控制。有絲分裂的哪個特性令癌症危險?",
+        opts: ["Rapid identical copying amplifies the faulty cell 快速複製令異常細胞擴增", "Mitosis creates variation 有絲分裂產生變異", "Mitosis halves DNA 減半 DNA", "Mitosis repairs damage 修補損傷"], a: "Rapid identical copying amplifies the faulty cell 快速複製令異常細胞擴增",
+        hint: "Mitosis faithfully copies whatever it is given — including a broken cell. 忠實複製,壞細胞也照抄。" }
+    ]
+
+    function UpgradeCTA({ reason, onClose, onTrial }) {
+      return (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-2xl p-5 bg-white border border-slate-200">
+            <h3 className="text-lg font-bold" style={{color: ACCENT}}>解鎖完整練習與家長進度</h3>
+            <p className="text-sm mt-2 text-slate-600">{reason || window.SUBSCRIBE_CONFIG.bannerText}</p>
+            <ul className="mt-3 text-sm space-y-1 list-disc list-inside text-slate-600">
+              <li>Unlimited daily drills</li>
+              <li>Full wrong-answer book</li>
+              <li>Progress sync (coming)</li>
+            </ul>
+            <button type="button" onClick={onTrial} className="mt-4 w-full min-h-[48px] rounded-xl font-semibold text-white" style={{background: ACCENT}}>開始 14 日試用（本機）</button>
+            <a href={HKC.MARKETING_PATH} className="mt-2 block w-full min-h-[44px] text-center leading-[44px] rounded-xl border border-slate-300 text-sm">了解家長計劃</a>
+            <button type="button" onClick={onClose} className="mt-2 w-full text-sm underline text-slate-500">繼續免費</button>
+          </div>
+        </div>
+      );
+    }
+
+    function Drill({ bank, label, onNeedUpgrade, onDone }) {
+      const [qi, setQi] = useState(0);
+      const [fb, setFb] = useState(null);
+      const [score, setScore] = useState(0);
+      const [hint, setHint] = useState(false);
+      const [first, setFirst] = useState(true);
+      const item = bank[qi];
+
+      function pick(opt) {
+        if (HKC.freeCapReached()) {
+          if (window.HkcSubscribe) HkcSubscribe.showPaywall("hit_free_cap");
+          onNeedUpgrade("今日免費練習已用完。");
+          return;
+        }
+        HKC.recordDrillUse(APP_ID);
+        const ok = opt === item.a;
+        setFb(ok
+          ? { ok: true, msg: "Correct · 正確" }
+          : { ok: false, msg: "Not quite · 再想。Use Hint for the method (answer not shown)." });
+        if (ok) {
+          if (typeof HKC.recordOk === "function") HKC.recordOk(APP_ID, item);
+          if (first) setScore(s => s + 1);
+        } else {
+          HKC.addWrong(APP_ID, { id: item.id, prompt: item.q, hint: item.hint, answer: item.a });
+          setFirst(false);
+        }
+      }
+
+      function next() {
+        setFb(null); setHint(false); setFirst(true);
+        if (qi + 1 >= bank.length) {
+          HKC.recordSession(APP_ID, score, bank.length);
+          onDone(score, bank.length);
+        } else setQi(qi + 1);
+      }
+
+      return (
+        <section className="bg-white border border-slate-200 shadow-sm rounded-2xl p-4 sm:p-5">
+          <div className="flex justify-between text-sm mb-3 text-slate-500">
+            <span>{label} · Q {qi + 1}/{bank.length} · Lv {item.level}</span>
+            <span>Score {score}</span>
+          </div>
+          <h2 className="text-lg font-bold mb-1">{item.q}</h2>
+          {item.qZh ? <p className="text-sm mb-4 opacity-80" style={{color: ACCENT}}>{item.qZh}</p> : <div className="mb-4" />}
+          <div className="grid gap-2">
+            {item.opts.map(o => (
+              <button key={o} type="button" disabled={fb && fb.ok} onClick={() => pick(o)}
+                className="text-left px-4 py-3 rounded-xl min-h-[48px] disabled:opacity-50 bg-slate-50 hover:bg-slate-100 border border-slate-200">{o}</button>
+            ))}
+          </div>
+          <button type="button" className="text-sm mt-3 font-semibold min-h-[44px]" style={{color: ACCENT}} onClick={() => setHint(true)}>Hint · 提示</button>
+          {hint && <p className="text-sm mt-1 p-3 rounded-xl bg-amber-50 text-amber-900 border border-amber-200">{item.hint}</p>}
+          {fb && (
+            <div className={"mt-4 p-3 rounded-xl text-sm " + (fb.ok ? "bg-emerald-50 text-emerald-800" : "bg-rose-50 text-rose-800")}>
+              {fb.msg}
+              {fb.ok && <button type="button" className="block mt-2 underline font-semibold" onClick={next}>Next →</button>}
+              {!fb.ok && <button type="button" className="block mt-2 underline font-semibold" onClick={() => setFb(null)}>Retry</button>}
+            </div>
+          )}
+        </section>
+      );
+    }
+
+    function App() {
+      const [mode, setMode] = useState("learn");
+      const [progress, setProgress] = useState(() => HKC.loadProgress(APP_ID));
+      const [pay, setPay] = useState(false);
+      const [payReason, setPayReason] = useState("");
+      const [doneMsg, setDoneMsg] = useState(null);
+      const [tfzDone, setTfzDone] = useState(() => { try { return !!localStorage.getItem("hkc_tfz_" + APP_ID); } catch (e) { return false; } });
+
+      function refresh() { setProgress(HKC.loadProgress(APP_ID)); }
+      useEffect(() => { refresh(); }, [mode]);
+      function completeTfz() {
+        try { localStorage.setItem("hkc_tfz_" + APP_ID, "1"); } catch (e) {}
+        setTfzDone(true); setMode("lab");
+      }
+
+      const tabs = [
+        { id: "learn", label: "Learn · 學習" },
+        { id: "lab", label: tfzDone ? "Lab · 實驗" : "Lab 🔒" },
+        { id: "guided", label: "Guided · 引導" },
+        { id: "exam", label: "Exam · 測驗" },
+        { id: "review", label: "Review · 錯題" }
+      ];
+
+      return (
+        <div className="max-w-5xl mx-auto p-4 sm:p-8">
+          <a href="../../index.html" className="text-sm hover:underline font-semibold" style={{color: ACCENT}}>← Hub</a>
+          <header className="mt-4 mb-4">
+            <p className="text-xs uppercase tracking-widest font-bold" style={{color: ACCENT}}>F4 Biology · Cells & Division</p>
+            <h1 className="text-2xl sm:text-3xl font-bold mt-1">Mitosis & Cell Cycle</h1>
+            <p className="text-slate-500 mt-1">有絲分裂與細胞週期 · Learn (A1–A8) → Lab → Guided → Exam → Review</p>
+          </header>
+
+          <div className="text-sm border border-dashed rounded-lg px-3 py-2 mb-3 flex flex-wrap justify-between gap-2 items-center border-slate-300 bg-white/80">
+            <span>{HKC.isPaid() ? (HKC.getEntitlement().tier + " · unlimited") : ("Free · " + HKC.remainingFree() + "/" + HKC.FREE_DAILY_CAP + " today")} · Best {progress.bestScore}</span>
+            {!HKC.isPaid() && (
+              <button type="button" className="px-3 py-1.5 rounded-md text-xs font-semibold text-white min-h-[36px]" style={{background: ACCENT}} onClick={() => setPay(true)}>Upgrade</button>
+            )}
+          </div>
+
+          <nav className="flex flex-wrap gap-2 mb-4">
+            {tabs.map(tab => (
+              <button key={tab.id} type="button" onClick={() => { setMode(tab.id); setDoneMsg(null); }}
+                className={"px-3.5 py-2 rounded-lg text-sm font-semibold min-h-[44px] " + (mode === tab.id ? "text-white" : "bg-white border border-slate-200 text-slate-700")}
+                style={mode === tab.id ? {background: ACCENT} : {}}>
+                {tab.label}
+              </button>
+            ))}
+          </nav>
+
+          {mode === "learn" && <LearnFromZero steps={TFZ_STEPS} onComplete={completeTfz} />}
+
+          {mode === "lab" && !tfzDone && (
+            <section className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 text-center">
+              <h2 className="text-xl font-bold">Finish Learn From Zero first · 先完成 A1–A8</h2>
+              <p className="text-sm text-slate-500 mt-2">We teach the model before you play — that is how real understanding sticks. 先學模型,後做實驗。</p>
+              <button type="button" className="mt-4 px-4 py-2.5 rounded-xl font-semibold text-white min-h-[48px]" style={{background: ACCENT}} onClick={() => setMode("learn")}>Go to Learn →</button>
+            </section>
+          )}
+          {mode === "lab" && tfzDone && (
+            <section className="bg-white border border-slate-200 shadow-sm rounded-2xl p-4 sm:p-5">
+              <h2 className="font-bold text-lg mb-3">Animated Cell Cycle Studio · 動畫細胞週期工作室</h2>
+              <MitosisSim />
+            </section>
+          )}
+
+          {mode === "guided" && !doneMsg && (
+            <Drill bank={GUIDED} label="Guided" onNeedUpgrade={r => { setPayReason(r); setPay(true); }}
+              onDone={(s, n) => { setDoneMsg({ s, n, next: "exam" }); refresh(); }} />
+          )}
+          {mode === "exam" && !doneMsg && (
+            <Drill bank={EXAM} label="Exam" onNeedUpgrade={r => { setPayReason(r); setPay(true); }}
+              onDone={(s, n) => { setDoneMsg({ s, n, next: "review" }); refresh(); }} />
+          )}
+          {doneMsg && (mode === "guided" || mode === "exam") && (
+            <section className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 text-center">
+              <h2 className="text-2xl font-bold">Complete</h2>
+              <p className="mt-2">{doneMsg.s} / {doneMsg.n}</p>
+              <button type="button" className="mt-4 px-4 py-2 rounded-xl font-semibold min-h-[48px] text-white" style={{background: ACCENT}}
+                onClick={() => { setDoneMsg(null); setMode(doneMsg.next); }}>Continue →</button>
+            </section>
+          )}
+          {mode === "review" && (
+            <section className="bg-white border border-slate-200 shadow-sm rounded-2xl p-4 sm:p-5 space-y-3">
+              <h2 className="font-bold text-lg">Wrong-answer book · 錯題簿</h2>
+              {(progress.wrongBook || []).length === 0 && <p className="text-sm text-slate-500">No wrong answers yet · 暫無錯題</p>}
+              {(progress.wrongBook || []).map(w => (
+                <div key={w.id} className="rounded-xl p-3 text-sm border border-slate-200">
+                  <p className="font-semibold">{w.prompt}</p>
+                  <p className="mt-1 opacity-80" style={{color: ACCENT}}>{w.hint}</p>
+                  {HKC.isPaid() && <p className="mt-1 text-emerald-500">Answer unlocked</p>}
+                  <button type="button" className="text-xs underline mt-2 text-slate-500" onClick={() => { HKC.removeWrong(APP_ID, w.id); refresh(); }}>Mark resolved</button>
+                </div>
+              ))}
+            </section>
+          )}
+          {pay && <UpgradeCTA reason={payReason} onClose={() => setPay(false)} onTrial={() => { HKC.startTrialLocal(); setPay(false); refresh(); }} />}
+        </div>
+      );
+    }
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+</body>
+</html>

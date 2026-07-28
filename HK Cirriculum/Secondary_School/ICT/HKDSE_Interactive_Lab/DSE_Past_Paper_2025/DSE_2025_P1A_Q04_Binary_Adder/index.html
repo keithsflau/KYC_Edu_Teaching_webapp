@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+  <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>HKDSE Past Paper 2025 Paper 1A Q4 - Binary Adder</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script
+
+      crossorigin
+
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+
+    ></script>
+
+    <script
+
+      crossorigin
+
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+
+    ></script>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <link
+
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap"
+
+      rel="stylesheet"
+
+    />
+
+    <style>
+
+      body {
+
+        font-family: "Inter", sans-serif;
+
+        background-color: #0f172a;
+
+        color: #e2e8f0;
+
+      }
+
+      .bit-cell {
+
+        transition: all 0.2s;
+
+      }
+
+      .bit-cell:hover {
+
+        transform: translateY(-2px);
+
+      }
+
+      .bit-text {
+
+        font-family: "JetBrains Mono", monospace;
+
+      }
+
+      .carry-dot {
+
+        width: 6px;
+
+        height: 6px;
+
+        border-radius: 50%;
+
+        background-color: #f59e0b; /* Amber 500 */
+
+        margin: 0 auto;
+
+      }
+
+    </style>
+
+  <!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../../../common/ncs-i18n.css" />
+  <script src="../../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+      display: none !important;
+    }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+        if (label === "EN" || label === "\u4E2D") {
+          btn.classList.add("ncs-hide-when-ncs-fleet");
+        }
+      });
+      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+        el.classList.add("ncs-hide-when-ncs-fleet");
+      });
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+</head>
+
+  <body class="min-h-screen p-4 md:p-8 flex flex-col items-center">
+
+    <div id="root" class="w-full max-w-4xl"></div>
+
+
+
+    <script>
+
+const {
+
+  useState,
+
+  useEffect
+
+} = React;
+
+
+
+// Lucide Icon Shim
+
+const LucideIcon = ({
+
+  name,
+
+  size = 24,
+
+  className = ""
+
+}) => {
+
+  const formatName = n => n.split("-").map(p => p.charAt(0).toUpperCase() + p.slice(1)).join("");
+
+  const iconName = formatName(name);
+
+  const [svgHtml, setSvgHtml] = useState("");
+
+  useEffect(() => {
+
+    if (window.lucide?.icons[iconName]?.toSvg) {
+
+      setSvgHtml(window.lucide.icons[iconName].toSvg({
+
+        width: size,
+
+        height: size,
+
+        class: className
+
+      }));
+
+    }
+
+  }, [name]);
+
+  return /*#__PURE__*/React.createElement("span", {
+
+    dangerouslySetInnerHTML: {
+
+      __html: svgHtml
+
+    },
+
+    style: {
+
+      display: "inline-flex"
+
+    }
+
+  });
+
+};
+
+const BitDisplay = ({
+
+  bits,
+
+  label,
+
+  color = "text-white",
+
+  editable = false,
+
+  onToggle
+
+}) => /*#__PURE__*/React.createElement("div", {
+
+  className: "flex items-center justify-center gap-1 md:gap-2"
+
+}, /*#__PURE__*/React.createElement("span", {
+
+  className: "w-16 text-right text-xs text-slate-500 font-bold mr-2 uppercase self-center"
+
+}, label), bits.map((bit, i) => /*#__PURE__*/React.createElement("button", {
+
+  key: i
+
+  // Bit 7 (0-indexed) is MSB, Bit 0 is LSB. Array is [MSB...LSB].
+
+  // Index 0 in array is MSB (2^7).
+
+  ,
+
+  onClick: () => editable && onToggle(i),
+
+  disabled: !editable,
+
+  className: `w-8 h-10 md:w-10 md:h-12 flex items-center justify-center rounded border bit-text text-lg font-bold transition-all shadow-lg
+
+                   ${editable ? "cursor-pointer hover:border-cyan-400 bit-cell" : "cursor-default"}
+
+                   ${bit === 1 ? "bg-slate-800 border-slate-600 text-cyan-400" : "bg-slate-900 border-slate-800 text-slate-600"}
+
+                   ${label === "Result" && bit === 1 ? "!text-green-400 !border-green-500/50 !bg-green-900/20" : ""}
+
+                `
+
+}, bit)));
+
+const App = () => {
+
+  const [bitsA, setBitsA] = useState([0, 0, 0, 0, 0, 0, 0, 0]); // 8-bit
+
+  const [bitsB, setBitsB] = useState([0, 0, 0, 0, 0, 0, 0, 0]);
+
+  const [selectedOption, setSelectedOption] = useState(null);
+
+
+
+  // Helper: Array to Int (Two's Complement)
+
+  const toSignedInt = bits => {
+
+    const str = bits.join("");
+
+    const val = parseInt(str, 2);
+
+    if (bits[0] === 1) {
+
+      // Negative
+
+      return val - 256;
+
+    }
+
+    return val;
+
+  };
+
+
+
+  // Calculation
+
+  const calculateSum = () => {
+
+    let carry = 0;
+
+    let sumBits = Array(8).fill(0);
+
+    let carries = Array(8).fill(0); // Carries into position i
+
+
+
+    // Loop from LSB (index 7) to MSB (index 0)
+
+    for (let i = 7; i >= 0; i--) {
+
+      const bitA = bitsA[i];
+
+      const bitB = bitsB[i];
+
+      const sum = bitA + bitB + carry;
+
+      sumBits[i] = sum % 2;
+
+      carry = Math.floor(sum / 2);
+
+      if (i > 0) carries[i - 1] = carry;
+
+    }
+
+    // Carry out of MSB is discarded in 8-bit arithmetic usually, but indicates overflow for unsigned
+
+    // For signed overflow: Carry into MSB !== Carry out of MSB
+
+
+
+    return {
+
+      sumBits,
+
+      carries,
+
+      carryOut: carry
+
+    };
+
+  };
+
+  const {
+
+    sumBits,
+
+    carries,
+
+    carryOut
+
+  } = calculateSum();
+
+  const valA = toSignedInt(bitsA);
+
+  const valB = toSignedInt(bitsB);
+
+  const valResult = toSignedInt(sumBits);
+
+  const isZero = valResult === 0;
+
+
+
+  // Presets for Exam Options
+
+  const loadPreset = opt => {
+
+    setSelectedOption(opt);
+
+    // Parse binary strings
+
+    // A: 1110 1111 + 0001 0000 -> -17 + 16 = -1
+
+    // B: 1110 1111 + 0001 0001 -> -17 + 17 = 0
+
+    // C: 0111 1111 + 0000 0001 -> 127 + 1 = -128 (Overflow)
+
+    // D: 0000 0000 + 0000 0001 -> 0 + 1 = 1
+
+
+
+    const parse = str => str.replace(/\s/g, "").split("").map(Number);
+
+    if (opt === "A") {
+
+      setBitsA(parse("11101111"));
+
+      setBitsB(parse("00010000"));
+
+    } else if (opt === "B") {
+
+      setBitsA(parse("11101111"));
+
+      setBitsB(parse("00010001"));
+
+    } else if (opt === "C") {
+
+      setBitsA(parse("01111111"));
+
+      setBitsB(parse("00000001"));
+
+    } else if (opt === "D") {
+
+      setBitsA(parse("00000000"));
+
+      setBitsB(parse("00000001"));
+
+    }
+
+  };
+
+  const toggleBit = (idx, isA) => {
+
+    if (isA) {
+
+      const n = [...bitsA];
+
+      n[idx] = 1 - n[idx];
+
+      setBitsA(n);
+
+    } else {
+
+      const n = [...bitsB];
+
+      n[idx] = 1 - n[idx];
+
+      setBitsB(n);
+
+    }
+
+    setSelectedOption(null); // Clear preset if modified
+
+  };
+
+  return /*#__PURE__*/React.createElement("div", {
+
+    className: "space-y-8 animate-fade-in w-full max-w-4xl mx-auto"
+
+  }, /*#__PURE__*/React.createElement("header", {
+
+    className: "text-center space-y-2"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-900/30 border border-cyan-500/30 text-cyan-400 text-sm font-bold mb-4"
+
+  }, /*#__PURE__*/React.createElement("span", {
+
+    className: "w-2 h-2 rounded-full bg-cyan-400 animate-pulse"
+
+  }), "HKDSE Past Paper 2025 Paper 1A Q4"), /*#__PURE__*/React.createElement("h1", {
+
+    className: "text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-400"
+
+  }, "Two's Complement Adder"), /*#__PURE__*/React.createElement("p", {
+
+    className: "text-slate-400 max-w-xl mx-auto"
+
+  }, "Find the binary addition that results in", " ", /*#__PURE__*/React.createElement("code", {
+
+    className: "text-green-400 font-bold bg-slate-800 px-1 rounded"
+
+  }, "0000 0000"), ".")), /*#__PURE__*/React.createElement("div", {
+
+    className: "bg-slate-950 p-6 md:p-8 rounded-3xl border border-slate-800 shadow-2xl relative"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "absolute top-6 right-6 flex flex-col items-end gap-1 text-xs font-mono text-slate-500"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "flex items-center gap-4"
+
+  }, /*#__PURE__*/React.createElement("span", {
+
+    className: "w-12 text-right"
+
+  }, "Decimal:"), /*#__PURE__*/React.createElement("span", {
+
+    className: "w-10 text-right text-cyan-400 font-bold"
+
+  }, valA)), /*#__PURE__*/React.createElement("div", {
+
+    className: "flex items-center gap-4 border-b border-slate-700 pb-1"
+
+  }, /*#__PURE__*/React.createElement("span", {
+
+    className: "w-12 text-right"
+
+  }, "+"), /*#__PURE__*/React.createElement("span", {
+
+    className: "w-10 text-right text-cyan-400 font-bold"
+
+  }, valB)), /*#__PURE__*/React.createElement("div", {
+
+    className: "flex items-center gap-4"
+
+  }, /*#__PURE__*/React.createElement("span", {
+
+    className: "w-12 text-right"
+
+  }, "="), /*#__PURE__*/React.createElement("span", {
+
+    className: `w-10 text-right font-bold ${isZero ? "text-green-400" : "text-slate-300"}`
+
+  }, valResult))), /*#__PURE__*/React.createElement("div", {
+
+    className: "space-y-4 mt-8 md:mt-0"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "flex items-center justify-center gap-1 md:gap-2 h-4 mb-2"
+
+  }, /*#__PURE__*/React.createElement("span", {
+
+    className: "w-16 mr-2"
+
+  }), " ", carries.map((c, i) => /*#__PURE__*/React.createElement("div", {
+
+    key: i,
+
+    className: "w-8 md:w-10 flex justify-center"
+
+  }, c === 1 && /*#__PURE__*/React.createElement("div", {
+
+    className: "text-[10px] text-yellow-500 font-mono"
+
+  }, "1")))), /*#__PURE__*/React.createElement(BitDisplay, {
+
+    bits: bitsA,
+
+    label: "Num A",
+
+    editable: true,
+
+    onToggle: i => toggleBit(i, true)
+
+  }), /*#__PURE__*/React.createElement("div", {
+
+    className: "flex items-center justify-center gap-1 md:gap-2"
+
+  }, /*#__PURE__*/React.createElement("span", {
+
+    className: "w-16 mr-2"
+
+  }), /*#__PURE__*/React.createElement("div", {
+
+    className: "w-[calc(8*2rem+2rem)] md:w-[calc(8*2.5rem+3.5rem)] text-slate-600 text-center font-bold text-2xl"
+
+  }, "+")), /*#__PURE__*/React.createElement(BitDisplay, {
+
+    bits: bitsB,
+
+    label: "Num B",
+
+    editable: true,
+
+    onToggle: i => toggleBit(i, false)
+
+  }), /*#__PURE__*/React.createElement("div", {
+
+    className: "flex justify-center"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "w-full max-w-md h-px bg-slate-700 my-2"
+
+  })), /*#__PURE__*/React.createElement(BitDisplay, {
+
+    bits: sumBits,
+
+    label: "Result",
+
+    color: isZero ? "text-green-400" : "text-white"
+
+  }), isZero && /*#__PURE__*/React.createElement("div", {
+
+    className: "text-center mt-4"
+
+  }, /*#__PURE__*/React.createElement("span", {
+
+    className: "bg-green-900/30 text-green-400 px-4 py-2 rounded-full font-bold border border-green-500/30 animate-pulse"
+
+  }, "Result is Zero (0000 0000)")), selectedOption === "C" && /*#__PURE__*/React.createElement("div", {
+
+    className: "text-center mt-4"
+
+  }, /*#__PURE__*/React.createElement("span", {
+
+    className: "bg-red-900/30 text-red-400 px-4 py-2 rounded-full font-bold border border-red-500/30"
+
+  }, "Overflow! (127 + 1 ≠ -128)")))), /*#__PURE__*/React.createElement("div", {
+
+    className: "space-y-4"
+
+  }, /*#__PURE__*/React.createElement("h3", {
+
+    className: "text-white font-bold text-lg text-center"
+
+  }, "Select Exam Option to Verify:"), /*#__PURE__*/React.createElement("div", {
+
+    className: "grid grid-cols-1 md:grid-cols-2 gap-4"
+
+  }, ["A", "B", "C", "D"].map(opt => /*#__PURE__*/React.createElement("button", {
+
+    key: opt,
+
+    onClick: () => loadPreset(opt),
+
+    className: `p-4 rounded-xl border text-left transition-all relative overflow-hidden group ${selectedOption === opt ? "bg-slate-800 border-indigo-500 ring-1 ring-indigo-500" : "bg-slate-900 border-slate-700 hover:bg-slate-800"}`
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "flex items-center justify-between mb-2"
+
+  }, /*#__PURE__*/React.createElement("span", {
+
+    className: "font-bold text-lg text-white"
+
+  }, "Option ", opt), opt === "B" && selectedOption === "B" && /*#__PURE__*/React.createElement(LucideIcon, {
+
+    name: "check-circle",
+
+    className: "text-green-400"
+
+  })), /*#__PURE__*/React.createElement("div", {
+
+    className: "font-mono text-xs text-slate-400 group-hover:text-slate-300"
+
+  }, opt === "A" && "1110 1111 + 0001 0000", opt === "B" && "1110 1111 + 0001 0001", opt === "C" && "0111 1111 + 0000 0001", opt === "D" && "0000 0000 + 0000 0001"))))));
+
+};
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+
+root.render(/*#__PURE__*/React.createElement(App, null));
+
+</script>
+
+  
+
+      
+
+      <!-- Footer -->
+
+      <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+</body>
+
+</html>
+

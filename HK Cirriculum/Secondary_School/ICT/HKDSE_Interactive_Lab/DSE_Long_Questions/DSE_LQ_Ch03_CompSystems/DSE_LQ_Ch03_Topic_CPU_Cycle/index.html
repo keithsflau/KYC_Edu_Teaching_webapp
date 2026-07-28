@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+
+<html lang="zh-Hant">
+
+  <head>
+  <meta charset="UTF-8" />
+  <title>HKDSE ICT Ch3 - CPU Instruction Cycle</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script
+
+      crossorigin
+
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+
+    ></script>
+
+    <script
+
+      crossorigin
+
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+
+    ></script>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+
+      body {
+
+        font-family: sans-serif;
+
+        background-color: #0f172a;
+
+        color: #e2e8f0;
+
+      }
+
+      .font-mono {
+
+        font-family: monospace;
+
+      }
+
+      .highlight {
+
+        box-shadow: 0 0 15px rgba(56, 189, 248, 0.6);
+
+        border-color: #38bdf8;
+
+      }
+
+    </style>
+
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet" />
+<!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../../../../common/ncs-i18n.css" />
+  <script src="../../../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+      display: none !important;
+    }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+        if (label === "EN" || label === "\u4E2D") {
+          btn.classList.add("ncs-hide-when-ncs-fleet");
+        }
+      });
+      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+        el.classList.add("ncs-hide-when-ncs-fleet");
+      });
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+</head>
+
+  <body class="p-4 flex justify-center">
+
+    <div id="root" class="w-full max-w-6xl"></div>
+
+    <script>
+
+const {
+
+  useState,
+
+  useEffect
+
+} = React;
+
+const createLucideIcon = name => {
+
+  const iconData = window.lucide?.icons[name];
+
+  if (!iconData) return props => /*#__PURE__*/React.createElement("span", null, "?");
+
+  return ({
+
+    size,
+
+    className,
+
+    ...props
+
+  }) => React.createElement("svg", {
+
+    width: size || 24,
+
+    height: size || 24,
+
+    fill: "none",
+
+    stroke: "currentColor",
+
+    strokeWidth: 2,
+
+    strokeLinecap: "round",
+
+    strokeLinejoin: "round",
+
+    className: `lucide lucide-${name.toLowerCase()} ${className || ""}`,
+
+    viewBox: "0 0 24 24",
+
+    ...props
+
+  }, iconData.map(([tag, attrs], i) => React.createElement(tag, {
+
+    ...attrs,
+
+    key: i
+
+  })));
+
+};
+
+const Icon = ({
+
+  name,
+
+  ...p
+
+}) => {
+
+  const C = createLucideIcon(name);
+
+  return /*#__PURE__*/React.createElement(C, p);
+
+};
+
+const MEM_SIZE = 16;
+
+const INITIAL_MEM = Array(MEM_SIZE).fill(0);
+
+INITIAL_MEM[0] = {
+
+  op: "LDA",
+
+  arg: 10
+
+};
+
+INITIAL_MEM[1] = {
+
+  op: "ADD",
+
+  arg: 11
+
+};
+
+INITIAL_MEM[2] = {
+
+  op: "STO",
+
+  arg: 12
+
+};
+
+INITIAL_MEM[3] = {
+
+  op: "HLT",
+
+  arg: 0
+
+};
+
+INITIAL_MEM[10] = 5;
+
+INITIAL_MEM[11] = 3;
+
+const App = () => {
+
+  const [pc, setPc] = useState(0);
+
+  const [mar, setMar] = useState(0);
+
+  const [mdr, setMdr] = useState(null);
+
+  const [cir, setCir] = useState(null);
+
+  const [acc, setAcc] = useState(0);
+
+  const [mem, setMem] = useState([...INITIAL_MEM]);
+
+  const [step, setStep] = useState(0);
+
+  // Steps: 0=Fetch(PC->MAR), 1=Fetch(Mem[MAR]->MDR, PC++), 2=Fetch(MDR->CIR), 3=Decode/Execute
+
+  const [explanation, setEx] = useState("Click 'Step' to start.");
+
+  const [activeBus, setActiveBus] = useState(null);
+
+  const runStep = () => {
+
+    if (step === 0) {
+
+      setMar(pc);
+
+      setEx("Fetch: PC value copied to MAR (Memory Address Register).");
+
+      setStep(1);
+
+    } else if (step === 1) {
+
+      setMdr(mem[mar]);
+
+      setPc(pc + 1);
+
+      setEx("Fetch: Instruction at address MAR fetches to MDR. PC increments.");
+
+      setStep(2);
+
+    } else if (step === 2) {
+
+      setCir(mdr);
+
+      setEx("Fetch: Content of MDR (Instruction) copied to CIR.");
+
+      setStep(3);
+
+    } else if (step === 3) {
+
+      // Execute
+
+      if (!cir || typeof cir !== "object") {
+
+        setEx("Error: Invalid Instruction");
+
+        return;
+
+      }
+
+      const {
+
+        op,
+
+        arg
+
+      } = cir;
+
+      if (op === "LDA") {
+
+        setMar(arg);
+
+        setMdr(mem[arg]);
+
+        setAcc(mem[arg]); // Simplified: Direct memory to ACC logic for visual
+
+        setEx(`Execute: LDA ${arg}. Loaded value ${mem[arg]} into Accumulator.`);
+
+        setStep(0);
+
+      } else if (op === "ADD") {
+
+        setAcc(acc + mem[arg]);
+
+        setEx(`Execute: ADD ${arg}. Added ${mem[arg]} to Accumulator. Result: ${acc + mem[arg]}.`);
+
+        setStep(0);
+
+      } else if (op === "STO") {
+
+        const newMem = [...mem];
+
+        newMem[arg] = acc;
+
+        setMem(newMem);
+
+        setEx(`Execute: STO ${arg}. Stored Accumulator (${acc}) to Memory[${arg}].`);
+
+        setStep(0);
+
+      } else if (op === "HLT") {
+
+        setEx("Halt: Program execution stopped.");
+
+      }
+
+    }
+
+  };
+
+  const reset = () => {
+
+    setPc(0);
+
+    setMar(0);
+
+    setMdr(null);
+
+    setCir(null);
+
+    setAcc(0);
+
+    setMem([...INITIAL_MEM]);
+
+    setStep(0);
+
+    setEx("Reset complete.");
+
+  };
+
+  return /*#__PURE__*/React.createElement("div", {
+
+    className: "w-full space-y-6"
+
+  }, /*#__PURE__*/React.createElement("header", {
+
+    className: "bg-slate-800 p-4 rounded-xl border border-slate-700 flex justify-between items-center"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "flex items-center gap-3"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "p-2 bg-blue-600 rounded-lg"
+
+  }, /*#__PURE__*/React.createElement(Icon, {
+
+    name: "Cpu",
+
+    className: "text-white"
+
+  })), /*#__PURE__*/React.createElement("h1", {
+
+    className: "font-bold text-white text-xl"
+
+  }, "CPU Cycle Simulator")), /*#__PURE__*/React.createElement("div", {
+
+    className: "flex gap-2"
+
+  }, /*#__PURE__*/React.createElement("button", {
+
+    onClick: runStep,
+
+    className: "px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded font-bold flex gap-2"
+
+  }, /*#__PURE__*/React.createElement(Icon, {
+
+    name: "Play",
+
+    size: 16
+
+  }), " Step"), /*#__PURE__*/React.createElement("button", {
+
+    onClick: reset,
+
+    className: "px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded font-bold"
+
+  }, /*#__PURE__*/React.createElement(Icon, {
+
+    name: "RotateCcw",
+
+    size: 16
+
+  })))), /*#__PURE__*/React.createElement("div", {
+
+    className: "grid grid-cols-1 md:grid-cols-3 gap-6"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "bg-slate-800 p-6 rounded-xl border border-slate-700 space-y-4"
+
+  }, /*#__PURE__*/React.createElement("h3", {
+
+    className: "text-slate-400 font-bold uppercase text-sm mb-4"
+
+  }, "Central Processing Unit"), /*#__PURE__*/React.createElement(Register, {
+
+    name: "Program Counter (PC)",
+
+    val: pc,
+
+    active: step === 0 || step === 1
+
+  }), /*#__PURE__*/React.createElement(Register, {
+
+    name: "Accumulator (ACC)",
+
+    val: acc,
+
+    active: step === 3,
+
+    color: "text-yellow-400"
+
+  }), /*#__PURE__*/React.createElement(Register, {
+
+    name: "Current Instruction (CIR)",
+
+    val: cir ? `${cir.op} ${cir.arg}` : "-",
+
+    active: step === 2 || step === 3
+
+  }), /*#__PURE__*/React.createElement("hr", {
+
+    className: "border-slate-700"
+
+  }), /*#__PURE__*/React.createElement(Register, {
+
+    name: "MAR",
+
+    val: mar,
+
+    active: step === 0 || step === 1
+
+  }), /*#__PURE__*/React.createElement(Register, {
+
+    name: "MDR",
+
+    val: mdr ? typeof mdr === "object" ? `${mdr.op} ${mdr.arg}` : mdr : "-",
+
+    active: step === 1 || step === 2
+
+  })), /*#__PURE__*/React.createElement("div", {
+
+    className: "bg-slate-900 p-6 rounded-xl border border-slate-700 flex flex-col items-center justify-center text-center"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "mb-6 h-32 flex items-center justify-center p-4 bg-slate-800 rounded-lg border border-slate-600 w-full"
+
+  }, /*#__PURE__*/React.createElement("p", {
+
+    className: "text-emerald-400 font-bold text-lg"
+
+  }, explanation)), /*#__PURE__*/React.createElement("div", {
+
+    className: "flex gap-8"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: `flex flex-col items-center transition-opacity ${step === 0 ? "opacity-100" : "opacity-30"}`
+
+  }, /*#__PURE__*/React.createElement("span", {
+
+    className: "text-xs text-slate-500 mb-1"
+
+  }, "Address Bus"), /*#__PURE__*/React.createElement("div", {
+
+    className: "w-2 h-16 bg-blue-500/50 rounded-full"
+
+  })), /*#__PURE__*/React.createElement("div", {
+
+    className: `flex flex-col items-center transition-opacity ${step === 1 || step === 2 ? "opacity-100" : "opacity-30"}`
+
+  }, /*#__PURE__*/React.createElement("span", {
+
+    className: "text-xs text-slate-500 mb-1"
+
+  }, "Data Bus"), /*#__PURE__*/React.createElement("div", {
+
+    className: "w-2 h-16 bg-green-500/50 rounded-full"
+
+  })))), /*#__PURE__*/React.createElement("div", {
+
+    className: "bg-slate-800 p-6 rounded-xl border border-slate-700"
+
+  }, /*#__PURE__*/React.createElement("h3", {
+
+    className: "text-slate-400 font-bold uppercase text-sm mb-4"
+
+  }, "Main Memory (RAM)"), /*#__PURE__*/React.createElement("div", {
+
+    className: "grid grid-cols-1 gap-1 max-h-[400px] overflow-auto font-mono text-sm"
+
+  }, mem.map((cell, i) => /*#__PURE__*/React.createElement("div", {
+
+    key: i,
+
+    className: `flex justify-between p-2 rounded ${i === mar ? "bg-blue-900/50 border border-blue-500" : "bg-slate-900/50 border border-slate-700/50"}`
+
+  }, /*#__PURE__*/React.createElement("span", {
+
+    className: "text-slate-500 w-8"
+
+  }, i), /*#__PURE__*/React.createElement("span", {
+
+    className: "text-white font-bold"
+
+  }, typeof cell === "object" ? /*#__PURE__*/React.createElement("span", {
+
+    className: "text-purple-400"
+
+  }, cell.op, " ", /*#__PURE__*/React.createElement("span", {
+
+    className: "text-white"
+
+  }, cell.arg)) : /*#__PURE__*/React.createElement("span", {
+
+    className: "text-yellow-200"
+
+  }, cell))))))));
+
+};
+
+const Register = ({
+
+  name,
+
+  val,
+
+  active,
+
+  color
+
+}) => /*#__PURE__*/React.createElement("div", {
+
+  className: `flex justify-between items-center p-3 rounded-lg border transition-all duration-300 ${active ? "bg-slate-700 border-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.3)]" : "bg-slate-900 border-slate-700"}`
+
+}, /*#__PURE__*/React.createElement("span", {
+
+  className: "text-xs font-bold text-slate-400"
+
+}, name), /*#__PURE__*/React.createElement("span", {
+
+  className: `font-mono text-lg font-bold ${color || "text-white"}`
+
+}, val));
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+
+root.render(/*#__PURE__*/React.createElement(App, null));
+
+</script>
+
+  <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+</body>
+
+</html>
+

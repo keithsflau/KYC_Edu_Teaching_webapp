@@ -59,8 +59,15 @@ Prefer these when they exist for the subject:
 | `Secondary_School/Mathematics/Form 1/S1_MATH_PLAN.md` | 30 F1 apps, unit mapping |
 | `Secondary_School/Mathematics/Form 2/S2_MATH_PLAN.md` | F2 apps |
 | `Secondary_School/Chemistry/curriculum_plan.md` | F3–F6 chemistry modules |
+| `Secondary_School/Chemistry/TEACHER_LAB_PEDAGOGY.md` | Chem lab types, misconceptions, classroom DoD |
+| `Secondary_School/Biology/TEACHER_LAB_BRIEF.md` | Bio 40-min lab brief + misconceptions |
+| `Secondary_School/Physics/TEACHER_LAB_BRIEF.md` | Physics 40-min lab brief + misconceptions |
+| `Secondary_School/Junior Science/TEACHER_LAB_BRIEF.md` | S1–S3 lab brief (no HKDSE dump) |
+| `Secondary_School/Chinese_History/TEACHER_LAB_BRIEF.md` | Chi Hist 40-min labs + misconceptions |
+| `Secondary_School/History/TEACHER_LAB_BRIEF.md` | History 40-min labs + misconceptions |
+| `Secondary_School/Geography/TEACHER_LAB_BRIEF.md` | Geography 40-min labs + misconceptions |
+| `Secondary_School/Christian_Studies/TEACHER_LAB_BRIEF.md` | RE / Christian Studies + sensitive-topic guidance |
 | `Secondary_School/Biology/apps/*/README.md` | HKDSE biology concepts per app |
-| `Secondary_School/ICT/HKDSE_Interactive_Lab/` | Past-paper style ICT items |
 
 ### Secondary alignment checklist
 

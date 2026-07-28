@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>F5 · Food Web Builder | 食物網建構</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="../../../../common/babel-react-classic.js"></script>
+  <link rel="stylesheet" href="../../../../common/subscribe-gate.css" />
+  <script>
+    window.HKC_SUBSCRIBE = {
+      appId: "f5-bio-food-web",
+      appNameZh: "食物網建構",
+      appNameEn: "Food Web Builder",
+      level: "F5",
+      subject: "Biology",
+      freeDrillLimit: 8,
+      wrongBookLimit: 10,
+      contactEmail: "support@hksteamai.com",
+      comingSoonHref: "../../../../pricing/index.html#payment-links"
+    };
+  </script>
+  <script src="../../../../common/subscribe-gate.js"></script>
+  <script src="../../../../common/parent-report.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    body { font-family: "IBM Plex Sans", system-ui, sans-serif; background: radial-gradient(ellipse 80% 50% at 10% -10%, #15803d22, transparent 55%), #f8fafc; color: #0f172a; min-height: 100vh; }
+    input[type="range"] { accent-color: #15803d; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+  </style>
+<!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
+  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+      display: none !important;
+    }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+        if (label === "EN" || label === "\u4E2D") {
+          btn.classList.add("ncs-hide-when-ncs-fleet");
+        }
+      });
+      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+        el.classList.add("ncs-hide-when-ncs-fleet");
+      });
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+</head>
+<body class="text-slate-800">
+  <!-- SUBSCRIBE_GATE: Marketing owns tiers. Free core must work offline. -->
+  <div id="root"></div>
+  <script>
+    window.SUBSCRIBE_CONFIG = {
+      enabled: true,
+      bannerText: "解鎖完整練習與家長進度 · 全年少於一次補習堂費",
+      premiumFeatures: ["progress_sync", "parent_dashboard", "unlimited_mocks"]
+    };
+  </script>
+  <script type="text/babel" data-presets="react-classic">
+    const { useState, useEffect } = React;
+    const APP_ID = "f5_bio_food_web";
+    const ACCENT = "#15803d";
+
+    const HKC = (function () {
+      function progressView() {
+        const p = (window.HkcSubscribe && HkcSubscribe.getProgress()) || { drillsCorrect: 0, modulesCompleted: [], wrongBook: [], drillsAttempted: 0 };
+        return {
+          bestScore: p.drillsCorrect || 0,
+          sessions: (p.modulesCompleted || []).length,
+          totalCorrect: p.drillsCorrect || 0,
+          totalAttempted: p.drillsAttempted || 0,
+          wrongBook: (p.wrongBook || []).map((w, i) => ({ id: String(i) + "-" + (w.at || ""), prompt: w.label || "", hint: w.topic || "", answer: null, at: w.at })),
+          modeCleared: {}
+        };
+      }
+      return {
+        FREE_DAILY_CAP: 8,
+        MARKETING_PATH: "../../../../pricing/index.html#payment-links",
+        isPaid: () => !!(window.HkcSubscribe && HkcSubscribe.features().canDrillUnlimited && !HkcSubscribe.isClassroom()),
+        getEntitlement: () => (window.HkcSubscribe ? HkcSubscribe.getEntitlement() : { tier: "free" }),
+        remainingFree: () => {
+          if (!window.HkcSubscribe) return 8;
+          const r = HkcSubscribe.remainingFree();
+          return r === Infinity ? Infinity : r;
+        },
+        freeCapReached: () => !(window.HkcSubscribe && HkcSubscribe.canContinueDrills()),
+        recordDrillUse: () => {},
+        loadProgress: progressView,
+        saveProgress: () => progressView(),
+        addWrong: (appId, item) => {
+          if (window.HkcSubscribe) HkcSubscribe.recordDrill({ correct: false, label: (item.prompt || item.q || String(item.id) || "").toString().slice(0, 48), topic: (item.hint || "").toString().slice(0, 80), module: "practice" });
+        },
+        recordOk: (appId, item) => {
+          if (window.HkcSubscribe) HkcSubscribe.recordDrill({ correct: true, label: (item && (item.prompt || item.q || item.id) || "drill").toString().slice(0, 48), topic: "", module: "practice" });
+        },
+        removeWrong: () => {},
+        recordSession: (appId, score, total) => {
+          if (window.HkcSubscribe) HkcSubscribe.recordModule({ id: "session-" + Date.now(), label: "Session", score, total });
+        },
+        startTrialLocal: () => { if (window.HkcSubscribe) HkcSubscribe.setLocalEntitlement("trial", 14); }
+      };
+    })();
+
+        const GUIDED = [
+      { id: "g1", level: 1, q: "In the Learn web, algae is a…", qZh: "學習網中藻類是…",
+        opts: ["Producer 生產者", "Primary consumer 初級消費者", "Decomposer 分解者", "Top predator 頂級捕食者"], a: "Producer 生產者",
+        hint: "Makes food by photosynthesis. 光合作用製造食物。" },
+      { id: "g2", level: 1, q: "Shrimp eating algae is a…", qZh: "蝦吃藻類是…",
+        opts: ["Primary consumer 初級消費者", "Producer", "Decomposer", "Tertiary consumer"], a: "Primary consumer 初級消費者",
+        hint: "First animal level eats producers. 第一級動物吃生產者。" },
+      { id: "g3", level: 1, q: "Bacteria in the model mainly act as…", qZh: "模型中細菌主要作為…",
+        opts: ["Decomposers 分解者", "Producers only", "Top predators", "Primary consumers"], a: "Decomposers 分解者",
+        hint: "Break down dead organic matter. 分解有機碎屑。" },
+      { id: "g4", level: 2, q: "A food web differs from a food chain because…", qZh: "食物網與食物鏈不同在於…",
+        opts: ["Multiple feeding links interconnect 多種取食關係交織", "No energy transfer 無能量傳遞", "Only one species 只有一種生物", "No decomposers 無分解者"], a: "Multiple feeding links interconnect 多種取食關係交織",
+        hint: "Real ecosystems have complex diets. 真實生態系統飲食複雜。" },
+      { id: "g5", level: 2, q: "Removing algae from the web would first harm…", qZh: "移除藻類首先損害…",
+        opts: ["Shrimp and other algae-eaters 蝦及其他食藻者", "Heron only 只有蒼鷺", "Bacteria only 只有細菌", "No organisms 無生物"], a: "Shrimp and other algae-eaters 蝦及其他食藻者",
+        hint: "Direct loss of food source. 直接失去食物來源。" },
+      { id: "g6", level: 2, q: "Top predator (heron) is at trophic level…", qZh: "頂級捕食者（蒼鷺）在營養級…",
+        opts: ["Highest in this chain 此鏈最高", "1", "Same as algae 與藻類相同", "Below bacteria 低於細菌"], a: "Highest in this chain 此鏈最高",
+        hint: "Few or no predators above. 上方幾乎無捕食者。" }
+    ];
+        const EXAM = [
+      { id: "e1", level: 3, q: "If fish eat shrimp and heron eats fish, fish are…", qZh: "若魚吃蝦、蒼鷺吃魚，魚是…",
+        opts: ["Secondary consumers 次級消費者", "Producers", "Decomposers", "Primary consumers"], a: "Secondary consumers 次級消費者",
+        hint: "Eat primary consumers. 吃初級消費者。" },
+      { id: "e2", level: 3, q: "Keystone species removal may…", qZh: "移除關鍵物種可能…",
+        opts: ["Collapse community structure 使群落結構崩潰", "Increase all populations 使所有種群增加", "Stop photosynthesis globally 全球停止光合作用", "Eliminate decomposers only"], a: "Collapse community structure 使群落結構崩潰",
+        hint: "Disproportionate effect on web. 對食物網影響過大。" },
+      { id: "e3", level: 3, q: "Energy in a food web flows…", qZh: "食物網中能量流動…",
+        opts: ["One way: producers → consumers → heat 單向：生產者→消費者→熱", "In circles 循環", "From consumers to Sun 從消費者至太陽", "Only between decomposers"], a: "One way: producers → consumers → heat 單向：生產者→消費者→熱",
+        hint: "Energy not recycled. 能量不循環。" },
+      { id: "e4", level: 4, q: "Bioaccumulation of DDT in heron illustrates…", qZh: "蒼鷺體內 DDT 生物累積說明…",
+        opts: ["Toxins concentrate up trophic levels 毒素沿營養級濃縮", "Energy increases upward 能量向上增加", "Decomposers produce DDT", "Producers absorb no toxins"], a: "Toxins concentrate up trophic levels 毒素沿營養級濃縮",
+        hint: "Fat-soluble chemicals magnify at top. 脂溶性物質在頂級放大。" },
+      { id: "e5", level: 4, q: "Which is abiotic in a pond ecosystem?", qZh: "池塘生態系統中哪項是非生物？",
+        opts: ["Dissolved oxygen 溶解氧", "Algae 藻類", "Fish 魚", "Bacteria 細菌"], a: "Dissolved oxygen 溶解氧",
+        hint: "Physical/chemical factor. 物理化學因子。" },
+      { id: "e6", level: 4, q: "Stability of a food web often increases with…", qZh: "食物網穩定性常隨…增加",
+        opts: ["More diverse interconnections 更多樣的交織連結", "Single long chain only 只有單一長鏈", "One producer only 只有一種生產者", "Removing decomposers 移除分解者"], a: "More diverse interconnections 更多樣的交織連結",
+        hint: "Alternative food paths buffer change. 替代食物路徑緩衝變化。" }
+    ];
+
+    function LearnExtra(){const [sp,setSp]=useState("algae");const roles={algae:"Producer",shrimp:"Primary consumer",fish:"Secondary",heron:"Top",bacteria:"Decomposer"};return (<div className="mt-3 space-y-2"><div className="flex flex-wrap gap-2">{Object.keys(roles).map(k=><button key={k} type="button" onClick={()=>setSp(k)} className={"px-3 py-2 rounded-xl font-bold min-h-[44px] capitalize "+(sp===k?"text-white":"bg-slate-100")} style={sp===k?{background:ACCENT}:{}}>{k}</button>)}</div><p className="text-sm p-3 rounded-xl bg-green-50 border border-green-100">{sp}: {roles[sp]}</p></div>);}
+
+    function UpgradeCTA({ reason, onClose, onTrial }) {
+      return (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-4">
+          <div className={"w-full max-w-md rounded-2xl p-5 " + (false ? "bg-slate-900 border border-slate-600" : "bg-white border border-slate-200") }>
+            <h3 className="text-lg font-bold" style={{color: ACCENT}}>解鎖完整練習與家長進度</h3>
+            <p className={"text-sm mt-2 " + (false ? "text-slate-300" : "text-slate-600")}>{reason || window.SUBSCRIBE_CONFIG.bannerText}</p>
+            <ul className={"mt-3 text-sm space-y-1 list-disc list-inside " + (false ? "text-slate-300" : "text-slate-600")}>
+              <li>Unlimited daily drills</li>
+              <li>Full wrong-answer book</li>
+              <li>Progress sync (coming)</li>
+            </ul>
+            <button type="button" onClick={onTrial} className="mt-4 w-full min-h-[48px] rounded-xl font-semibold text-white" style={{background: ACCENT}}>開始 14 日試用（本機）</button>
+            <a href={HKC.MARKETING_PATH} className={"mt-2 block w-full min-h-[44px] text-center leading-[44px] rounded-xl border text-sm " + (false ? "border-slate-600" : "border-slate-300")}>了解家長計劃</a>
+            <button type="button" onClick={onClose} className={"mt-2 w-full text-sm underline " + (false ? "text-slate-400" : "text-slate-500")}>繼續免費</button>
+          </div>
+        </div>
+      );
+    }
+
+    function Drill({ bank, label, onNeedUpgrade, onDone }) {
+      const [qi, setQi] = useState(0);
+      const [fb, setFb] = useState(null);
+      const [score, setScore] = useState(0);
+      const [hint, setHint] = useState(false);
+      const [first, setFirst] = useState(true);
+      const item = bank[qi];
+
+      function pick(opt) {
+        if (HKC.freeCapReached()) {
+          if (window.HkcSubscribe) HkcSubscribe.showPaywall("hit_free_cap");
+          onNeedUpgrade("今日免費練習已用完。");
+          return;
+        }
+        HKC.recordDrillUse(APP_ID);
+        const ok = opt === item.a;
+        setFb(ok
+          ? { ok: true, msg: "Correct · 正確" }
+          : { ok: false, msg: "Not quite · 再想。Use Hint for the method (answer not shown)." });
+        if (ok) {
+          if (typeof HKC.recordOk === "function") HKC.recordOk(APP_ID, item);
+          if (first) setScore(s => s + 1);
+        } else {
+          HKC.addWrong(APP_ID, { id: item.id, prompt: item.q, hint: item.hint, answer: item.a });
+          setFirst(false);
+        }
+      }
+
+      function next() {
+        setFb(null); setHint(false); setFirst(true);
+        if (qi + 1 >= bank.length) {
+          HKC.recordSession(APP_ID, score, bank.length);
+          onDone(score, bank.length);
+        } else setQi(qi + 1);
+      }
+
+      return (
+        <section className={"bg-white border border-slate-200 shadow-sm rounded-2xl p-4 sm:p-5"}>
+          <div className={"flex justify-between text-sm mb-3 " + (false ? "text-slate-400" : "text-slate-500")}>
+            <span>{label} · Q {qi + 1}/{bank.length} · Lv {item.level}</span>
+            <span>Score {score}</span>
+          </div>
+          <h2 className="text-lg font-bold mb-1">{item.q}</h2>
+          {item.qZh ? <p className="text-sm mb-4 opacity-80" style={{color: ACCENT}}>{item.qZh}</p> : <div className="mb-4" />}
+          <div className="grid gap-2">
+            {item.opts.map(o => (
+              <button key={o} type="button" disabled={fb && fb.ok} onClick={() => pick(o)}
+                className={"text-left px-4 py-3 rounded-xl min-h-[48px] disabled:opacity-50 bg-slate-50 hover:bg-slate-100 border border-slate-200"}>{o}</button>
+            ))}
+          </div>
+          <button type="button" className="text-sm mt-3 font-semibold min-h-[44px]" style={{color: ACCENT}} onClick={() => setHint(true)}>Hint · 提示</button>
+          {hint && <p className={"text-sm mt-1 p-3 rounded-xl " + (false ? "bg-amber-950/50 text-amber-100 border border-amber-800/40" : "bg-amber-50 text-amber-900 border border-amber-200")}>{item.hint}</p>}
+          {fb && (
+            <div className={"mt-4 p-3 rounded-xl text-sm " + (fb.ok ? (false ? "bg-emerald-900/40 text-emerald-200" : "bg-emerald-50 text-emerald-800") : (false ? "bg-rose-900/40 text-rose-200" : "bg-rose-50 text-rose-800"))}>
+              {fb.msg}
+              {fb.ok && <button type="button" className="block mt-2 underline font-semibold" onClick={next}>Next →</button>}
+              {!fb.ok && <button type="button" className="block mt-2 underline font-semibold" onClick={() => setFb(null)}>Retry</button>}
+            </div>
+          )}
+        </section>
+      );
+    }
+
+    function App() {
+      const [mode, setMode] = useState("learn");
+      const [progress, setProgress] = useState(() => HKC.loadProgress(APP_ID));
+      const [pay, setPay] = useState(false);
+      const [payReason, setPayReason] = useState("");
+      const [doneMsg, setDoneMsg] = useState(null);
+
+      function refresh() { setProgress(HKC.loadProgress(APP_ID)); }
+      useEffect(() => { refresh(); }, [mode]);
+
+      const tabs = [
+        { id: "learn", label: "Learn · 學習" },
+        { id: "guided", label: "Guided · 引導" },
+        { id: "exam", label: "Exam · 測驗" },
+        { id: "review", label: "Review · 錯題" }
+      ];
+
+      return (
+        <div className="max-w-3xl mx-auto p-4 sm:p-8">
+          <a href="../index.html" className="text-sm hover:underline font-semibold" style={{color: ACCENT}}>← Hub</a>
+          <header className="mt-4 mb-4">
+            <p className="text-xs uppercase tracking-widest font-bold" style={{color: ACCENT}}>F5 Biology · III.f Food webs</p>
+            <h1 className="text-2xl sm:text-3xl font-bold mt-1">Food Web Builder</h1>
+            <p className="text-slate-500 mt-1">食物網建構 · Learn → Guided → Exam → Review · 12 items</p>
+          </header>
+
+          <div className={"text-sm border border-dashed rounded-lg px-3 py-2 mb-3 flex flex-wrap justify-between gap-2 items-center " + (false ? "border-slate-600 bg-slate-900/80" : "border-slate-300 bg-white/80")}>
+            <span>{HKC.isPaid() ? (HKC.getEntitlement().tier + " · unlimited") : ("Free · " + HKC.remainingFree() + "/" + HKC.FREE_DAILY_CAP + " today")} · Best {progress.bestScore}</span>
+            {!HKC.isPaid() && (
+              <button type="button" className="px-3 py-1.5 rounded-md text-xs font-semibold text-white min-h-[36px]" style={{background: ACCENT}} onClick={() => setPay(true)}>Upgrade</button>
+            )}
+          </div>
+
+          <nav className="flex flex-wrap gap-2 mb-4">
+            {tabs.map(tab => (
+              <button key={tab.id} type="button" onClick={() => { setMode(tab.id); setDoneMsg(null); }}
+                className={"px-3.5 py-2 rounded-lg text-sm font-semibold min-h-[44px] " + (mode === tab.id ? "text-white" : "bg-white border border-slate-200 text-slate-700")}
+                style={mode === tab.id ? {background: ACCENT} : {}}>
+                {tab.label}
+              </button>
+            ))}
+          </nav>
+
+          {mode === "learn" && (
+            <section className={"bg-white border border-slate-200 shadow-sm rounded-2xl p-4 sm:p-5 space-y-3"}>
+              <h2 className="font-bold text-lg">Key ideas</h2>
+              <ul className={"text-sm space-y-2 list-disc list-inside " + (false ? "text-slate-300" : "text-slate-600")}>
+                <li>Arrows: energy to the consumer (who eats whom).</li><li>Roles: producer, consumer levels, decomposer.</li><li>Disturbance: remove a species → predict cascade.</li>
+              </ul>
+              <LearnExtra />
+              <button type="button" className="mt-2 px-4 py-2.5 rounded-xl font-semibold min-h-[48px] text-white" style={{background: ACCENT}} onClick={() => setMode("guided")}>
+                Start guided practice →
+              </button>
+            </section>
+          )}
+
+          {mode === "guided" && !doneMsg && (
+            <Drill bank={GUIDED} label="Guided" onNeedUpgrade={r => { setPayReason(r); setPay(true); }}
+              onDone={(s, n) => { setDoneMsg({ s, n, next: "exam" }); refresh(); }} />
+          )}
+          {mode === "exam" && !doneMsg && (
+            <Drill bank={EXAM} label="Exam" onNeedUpgrade={r => { setPayReason(r); setPay(true); }}
+              onDone={(s, n) => { setDoneMsg({ s, n, next: "review" }); refresh(); }} />
+          )}
+          {doneMsg && (mode === "guided" || mode === "exam") && (
+            <section className={"bg-white border border-slate-200 shadow-sm rounded-2xl p-6 text-center"}>
+              <h2 className="text-2xl font-bold">Complete</h2>
+              <p className="mt-2">{doneMsg.s} / {doneMsg.n}</p>
+              <button type="button" className="mt-4 px-4 py-2 rounded-xl font-semibold min-h-[48px] text-white" style={{background: ACCENT}}
+                onClick={() => { setDoneMsg(null); setMode(doneMsg.next); }}>Continue →</button>
+            </section>
+          )}
+          {mode === "review" && (
+            <section className={"bg-white border border-slate-200 shadow-sm rounded-2xl p-4 sm:p-5 space-y-3"}>
+              <h2 className="font-bold text-lg">Wrong-answer book · 錯題簿</h2>
+              {(progress.wrongBook || []).length === 0 && <p className={"text-sm " + (false ? "text-slate-400" : "text-slate-500")}>No wrong answers yet · 暫無錯題</p>}
+              {(progress.wrongBook || []).map(w => (
+                <div key={w.id} className={"rounded-xl p-3 text-sm " + (false ? "border border-slate-700" : "border border-slate-200")}>
+                  <p className="font-semibold">{w.prompt}</p>
+                  <p className="mt-1 opacity-80" style={{color: ACCENT}}>{w.hint}</p>
+                  {HKC.isPaid() && <p className="mt-1 text-emerald-500">Answer unlocked</p>}
+                  <button type="button" className={"text-xs underline mt-2 " + (false ? "text-slate-400" : "text-slate-500")} onClick={() => { HKC.removeWrong(APP_ID, w.id); refresh(); }}>Mark resolved</button>
+                </div>
+              ))}
+            </section>
+          )}
+          {pay && <UpgradeCTA reason={payReason} onClose={() => setPay(false)} onTrial={() => { HKC.startTrialLocal(); setPay(false); refresh(); }} />}
+        </div>
+      );
+    }
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+</body>
+</html>

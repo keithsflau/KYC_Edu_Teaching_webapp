@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+  <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>HKDSE Past Paper 2025 Paper 2 Q4 - Algorithm Race</title>
+
+
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script
+
+      crossorigin
+
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+
+    ></script>
+
+    <script
+
+      crossorigin
+
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+
+    ></script>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <link
+
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap"
+
+      rel="stylesheet"
+
+    />
+
+    <style>
+
+      body {
+
+        font-family: "Inter", sans-serif;
+
+        background-color: #0f172a;
+
+        color: #e2e8f0;
+
+      }
+
+      .progress-bar {
+
+        transition: width 0.1s linear;
+
+      }
+
+      .runner {
+
+        transition: left 0.1s linear;
+
+      }
+
+    </style>
+
+  <!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../../../common/ncs-i18n.css" />
+  <script src="../../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+      display: none !important;
+    }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+        if (label === "EN" || label === "\u4E2D") {
+          btn.classList.add("ncs-hide-when-ncs-fleet");
+        }
+      });
+      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+        el.classList.add("ncs-hide-when-ncs-fleet");
+      });
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+</head>
+
+  <body class="min-h-screen p-8 bg-slate-900 flex justify-center items-center">
+
+    <div id="root" class="w-full max-w-5xl"></div>
+
+
+
+    <script>
+
+const {
+
+  useState,
+
+  useEffect,
+
+  useRef
+
+} = React;
+
+
+
+// --- LUCIDE ICON SHIM ---
+
+const LucideIcon = ({
+
+  name,
+
+  size = 24,
+
+  className = ""
+
+}) => {
+
+  const formatName = n => n.split("-").map(p => p.charAt(0).toUpperCase() + p.slice(1)).join("");
+
+  const iconName = formatName(name);
+
+  const [svgHtml, setSvgHtml] = useState("");
+
+  useEffect(() => {
+
+    if (window.lucide && window.lucide.icons && window.lucide.icons[iconName] && typeof window.lucide.icons[iconName].toSvg === "function") {
+
+      setSvgHtml(window.lucide.icons[iconName].toSvg({
+
+        width: size,
+
+        height: size,
+
+        class: className
+
+      }));
+
+    }
+
+  }, [name, size, className, iconName]);
+
+  return /*#__PURE__*/React.createElement("span", {
+
+    dangerouslySetInnerHTML: {
+
+      __html: svgHtml
+
+    },
+
+    style: {
+
+      display: "inline-flex"
+
+    }
+
+  });
+
+};
+
+const Zap = p => /*#__PURE__*/React.createElement(LucideIcon, {
+
+  name: "zap",
+
+  ...p
+
+});
+
+const Timer = p => /*#__PURE__*/React.createElement(LucideIcon, {
+
+  name: "timer",
+
+  ...p
+
+}); // v2State uses steps but Timer icon is defined
+
+const CheckCircle2 = p => /*#__PURE__*/React.createElement(LucideIcon, {
+
+  name: "check-circle-2",
+
+  ...p
+
+});
+
+const TrendingUp = p => /*#__PURE__*/React.createElement(LucideIcon, {
+
+  name: "trending-up",
+
+  ...p
+
+});
+
+// --- END SHIM ---
+
+
+
+const App = () => {
+
+  const [n, setN] = useState(100);
+
+  const [v1State, setV1State] = useState({
+
+    steps: 0,
+
+    done: false
+
+  });
+
+  const [v2State, setV2State] = useState({
+
+    steps: 0,
+
+    done: false
+
+  });
+
+  const [running, setRunning] = useState(false);
+
+  const timerRef = useRef(null);
+
+  const startRace = () => {
+
+    setV1State({
+
+      steps: 0,
+
+      done: false
+
+    });
+
+    setV2State({
+
+      steps: 0,
+
+      done: false
+
+    });
+
+    setRunning(true);
+
+  };
+
+  useEffect(() => {
+
+    if (running) {
+
+      timerRef.current = setInterval(() => {
+
+        setV1State(prev => {
+
+          if (prev.done) return prev;
+
+          const next = prev.steps + 1;
+
+          if (next >= n) return {
+
+            steps: n,
+
+            done: true
+
+          };
+
+          return {
+
+            ...prev,
+
+            steps: next
+
+          };
+
+        });
+
+        setV2State(prev => {
+
+          if (prev.done) return prev;
+
+          const next = prev.steps + 3;
+
+          if (next >= n) return {
+
+            steps: n,
+
+            done: true
+
+          };
+
+          return {
+
+            ...prev,
+
+            steps: next
+
+          };
+
+        });
+
+      }, 50);
+
+    } else clearInterval(timerRef.current);
+
+    return () => clearInterval(timerRef.current);
+
+  }, [running, n]);
+
+  useEffect(() => {
+
+    if (v1State.done && v2State.done) setRunning(false);
+
+  }, [v1State.done, v2State.done]);
+
+  return /*#__PURE__*/React.createElement("div", {
+
+    className: "grid grid-cols-1 gap-8"
+
+  }, /*#__PURE__*/React.createElement("header", {
+
+    className: "text-center mb-8"
+
+  }, /*#__PURE__*/React.createElement("h1", {
+
+    className: "text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-yellow-400 to-orange-400 mb-2"
+
+  }, "Algorithm Efficiency Race"), /*#__PURE__*/React.createElement("p", {
+
+    className: "text-slate-400"
+
+  }, "Comparing Version 1 vs Version 2 (Paper 1A Q32)")), /*#__PURE__*/React.createElement("div", {
+
+    className: "bg-slate-800 p-8 rounded-2xl border border-slate-700 shadow-2xl relative overflow-hidden"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "flex justify-between items-center mb-8"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "flex items-center gap-4"
+
+  }, /*#__PURE__*/React.createElement("label", {
+
+    className: "text-slate-400 font-bold"
+
+  }, "Input Size (N):"), /*#__PURE__*/React.createElement("input", {
+
+    type: "range",
+
+    min: "20",
+
+    max: "200",
+
+    value: n,
+
+    onChange: e => setN(parseInt(e.target.value, 10) || 0),
+
+    className: "accent-cyan-500 w-48",
+
+    disabled: running
+
+  }), /*#__PURE__*/React.createElement("span", {
+
+    className: "font-mono text-cyan-400 font-bold"
+
+  }, n)), /*#__PURE__*/React.createElement("button", {
+
+    onClick: startRace,
+
+    disabled: running,
+
+    className: "bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-6 rounded-lg shadow-lg flex items-center gap-2"
+
+  }, /*#__PURE__*/React.createElement(Zap, {
+
+    size: 20
+
+  }), " Run Comparison")), /*#__PURE__*/React.createElement("div", {
+
+    className: "mb-12 relative"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "flex justify-between text-xs text-slate-400 mb-2 font-bold uppercase"
+
+  }, /*#__PURE__*/React.createElement("span", null, "Version 1 (Old Algo)"), /*#__PURE__*/React.createElement("span", null, "Steps: ", v1State.steps)), /*#__PURE__*/React.createElement("div", {
+
+    className: "h-12 bg-slate-900 rounded-full border border-slate-700 relative overflow-hidden flex items-center px-2"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "absolute left-0 top-0 bottom-0 bg-slate-700/30 transition-all duration-100 ease-linear",
+
+    style: {
+
+      width: `${v1State.steps / n * 100}%`
+
+    }
+
+  }), /*#__PURE__*/React.createElement("div", {
+
+    className: "runner absolute transition-all duration-100 ease-linear text-3xl",
+
+    style: {
+
+      left: `calc(${v1State.steps / n * 100}% - 30px)`
+
+    }
+
+  }, "🐢")), v1State.done && /*#__PURE__*/React.createElement("div", {
+
+    className: "absolute -right-8 top-2 text-green-500"
+
+  }, /*#__PURE__*/React.createElement(CheckCircle2, null))), /*#__PURE__*/React.createElement("div", {
+
+    className: "mb-8 relative"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "flex justify-between text-xs text-orange-400 mb-2 font-bold uppercase"
+
+  }, /*#__PURE__*/React.createElement("span", null, "Version 2 (Optimized)"), /*#__PURE__*/React.createElement("span", null, "Steps: ", v2State.steps)), /*#__PURE__*/React.createElement("div", {
+
+    className: "h-12 bg-slate-900 rounded-full border border-slate-700 relative overflow-hidden flex items-center px-2"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "absolute left-0 top-0 bottom-0 bg-orange-900/30 transition-all duration-100 ease-linear",
+
+    style: {
+
+      width: `${v2State.steps / n * 100}%`
+
+    }
+
+  }), /*#__PURE__*/React.createElement("div", {
+
+    className: "runner absolute transition-all duration-100 ease-linear text-3xl",
+
+    style: {
+
+      left: `calc(${v2State.steps / n * 100}% - 30px)`
+
+    }
+
+  }, "🐇")), v2State.done && /*#__PURE__*/React.createElement("div", {
+
+    className: "absolute -right-8 top-2 text-green-500"
+
+  }, /*#__PURE__*/React.createElement(CheckCircle2, null))), /*#__PURE__*/React.createElement("div", {
+
+    className: "grid grid-cols-2 gap-8 mt-12 pt-8 border-t border-slate-700"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "text-center"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "text-slate-500 text-xs font-bold uppercase mb-2"
+
+  }, "Version 1 Result"), /*#__PURE__*/React.createElement("div", {
+
+    className: "text-3xl font-mono text-white mb-2"
+
+  }, v1State.steps, " steps"), /*#__PURE__*/React.createElement("div", {
+
+    className: "text-sm text-slate-400"
+
+  }, "Time Complexity: O(N)")), /*#__PURE__*/React.createElement("div", {
+
+    className: "text-center"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "text-orange-500 text-xs font-bold uppercase mb-2"
+
+  }, "Version 2 Result"), /*#__PURE__*/React.createElement("div", {
+
+    className: "text-3xl font-mono text-orange-400 mb-2"
+
+  }, v2State.steps, " steps"), /*#__PURE__*/React.createElement("div", {
+
+    className: "text-sm text-slate-400"
+
+  }, "Time Complexity: O(N/3)")))));
+
+};
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+
+root.render(/*#__PURE__*/React.createElement(App, null));
+
+</script>
+
+  
+
+      
+
+      <!-- Footer -->
+
+      <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+</body>
+
+</html>
+

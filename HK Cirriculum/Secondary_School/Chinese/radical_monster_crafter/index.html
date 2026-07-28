@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>部首合成獸 Radical Monster Crafter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Sans+TC:wght@400;700;900&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            overflow: hidden;
+        }
+
+        .ink-font {
+            font-family: 'Ma Shan Zheng', cursive;
+        }
+
+        .radical-box {
+            cursor: grab;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .radical-box:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.6);
+        }
+
+        .radical-box.dragging {
+            cursor: grabbing;
+            opacity: 0.5;
+        }
+
+        .drop-zone {
+            border: 3px dashed #4ade80;
+            background: rgba(74, 222, 128, 0.05);
+        }
+
+        .drop-zone.drag-over {
+            background: rgba(74, 222, 128, 0.2);
+            border-color: #22c55e;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .monster {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-5px);
+            }
+
+            75% {
+                transform: translateX(5px);
+            }
+        }
+
+        .hit {
+            animation: shake 0.3s;
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+
+            to {
+                opacity: 0;
+                transform: scale(0.5);
+            }
+        }
+
+        .defeated {
+            animation: fadeOut 0.5s forwards;
+        }
+
+        .glow-red {
+            text-shadow: 0 0 10px rgba(239, 68, 68, 0.8), 0 0 20px rgba(239, 68, 68, 0.5);
+        }
+
+        .glow-green {
+            text-shadow: 0 0 10px rgba(74, 222, 128, 0.8), 0 0 20px rgba(74, 222, 128, 0.5);
+        }
+
+        .glow-blue {
+            text-shadow: 0 0 10px rgba(59, 130, 246, 0.8), 0 0 20px rgba(59, 130, 246, 0.5);
+        }
+    </style>
+    <!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../common/ncs-i18n.css" />
+  <script src="../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+      display: none !important;
+    }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+        if (label === "EN" || label === "\u4E2D") {
+          btn.classList.add("ncs-hide-when-ncs-fleet");
+        }
+      });
+      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+        el.classList.add("ncs-hide-when-ncs-fleet");
+      });
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+</head>
+
+<body class="text-white overflow-hidden">
+
+    <div id="app" class="min-h-screen p-4 md:p-8">
+
+        <!-- Start Screen -->
+        <div id="start-screen"
+            class="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 to-purple-900 z-50">
+            <h1 class="text-7xl md:text-9xl ink-font mb-6 glow-red text-red-500">部首合成獸</h1>
+            <p class="text-2xl text-purple-300 mb-8 tracking-widest">Radical Monster Crafter</p>
+            <p class="text-gray-300 mb-8 max-w-md text-center">
+                將部首拖曳到合成區，組合成正確的漢字來攻擊怪獸！<br>
+                <span class="text-sm text-gray-400">Drag radicals to craft characters and defeat monsters!</span>
+            </p>
+            <button id="btn-start"
+                class="bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 px-8 py-4 rounded-xl text-2xl font-bold shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all">
+                開始冒險 START
+            </button>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="hidden">
+            <div class="max-w-7xl mx-auto">
+
+                <!-- Header -->
+                <div class="flex justify-between items-center mb-6">
+                    <div class="bg-slate-800/80 backdrop-blur px-6 py-3 rounded-xl border border-red-500/30">
+                        <div class="text-sm text-gray-400">關卡 Stage</div>
+                        <div class="text-3xl font-bold text-red-400" id="stage-display">1</div>
+                    </div>
+                    <div class="bg-slate-800/80 backdrop-blur px-6 py-3 rounded-xl border border-blue-500/30">
+                        <div class="text-sm text-gray-400">得分 Score</div>
+                        <div class="text-3xl font-bold text-blue-400" id="score-display">0</div>
+                    </div>
+                    <div class="bg-slate-800/80 backdrop-blur px-6 py-3 rounded-xl border border-green-500/30">
+                        <div class="text-sm text-gray-400">生命 Lives</div>
+                        <div class="text-3xl font-bold text-green-400" id="lives-display">❤❤❤</div>
+                    </div>
+                </div>
+
+                <!-- Battle Area -->
+                <div class="grid md:grid-cols-2 gap-6 mb-6">
+
+                    <!-- Monster Side -->
+                    <div
+                        class="bg-gradient-to-br from-red-900/30 to-purple-900/30 backdrop-blur rounded-2xl p-6 border border-red-500/30">
+                        <h2 class="text-2xl font-bold mb-4 text-center text-red-400">怪獸 Monster</h2>
+
+                        <div class="flex flex-col items-center">
+                            <div id="monster-display" class="monster text-8xl mb-4">👹</div>
+                            <div class="text-xl font-bold mb-2 text-white" id="monster-name">錯字獸</div>
+
+                            <!-- HP Bar -->
+                            <div class="w-full max-w-xs">
+                                <div class="flex justify-between text-sm text-gray-400 mb-1">
+                                    <span>HP</span>
+                                    <span id="hp-text">100/100</span>
+                                </div>
+                                <div class="w-full bg-gray-700 rounded-full h-4 overflow-hidden">
+                                    <div id="hp-bar"
+                                        class="bg-gradient-to-r from-red-500 to-pink-500 h-full transition-all duration-300"
+                                        style="width: 100%"></div>
+                                </div>
+                            </div>
+
+                            <!-- Target Character -->
+                            <div class="mt-6 bg-slate-800/50 px-8 py-4 rounded-xl border border-yellow-500/50">
+                                <div class="text-sm text-yellow-400 mb-2 text-center">目標字 Target</div>
+                                <div class="text-6xl font-bold text-yellow-300 ink-font glow-blue" id="target-char">江
+                                </div>
+                                <div class="text-sm text-gray-400 text-center mt-2" id="target-hint">水 + 工 = ?</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Crafting Side -->
+                    <div
+                        class="bg-gradient-to-br from-blue-900/30 to-green-900/30 backdrop-blur rounded-2xl p-6 border border-blue-500/30">
+                        <h2 class="text-2xl font-bold mb-4 text-center text-blue-400">合成區 Crafting Zone</h2>
+
+                        <!-- Drop Zone -->
+                        <div id="drop-zone"
+                            class="drop-zone min-h-[200px] rounded-xl p-6 flex flex-wrap gap-4 items-center justify-center mb-6">
+                            <div class="text-gray-500 text-center w-full" id="drop-hint">
+                                拖曳部首到此處<br>
+                                <span class="text-sm">Drag radicals here</span>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex gap-4 mb-6">
+                            <button id="btn-attack"
+                                class="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 py-4 rounded-xl font-bold text-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-105"
+                                disabled>
+                                ⚔️ 攻擊 ATTACK
+                            </button>
+                            <button id="btn-clear"
+                                class="bg-gray-700 hover:bg-gray-600 px-6 py-4 rounded-xl font-bold transition-all">
+                                🗑️ 清除
+                            </button>
+                        </div>
+
+                        <!-- Feedback -->
+                        <div id="feedback" class="text-center text-xl font-bold h-8"></div>
+                    </div>
+                </div>
+
+                <!-- Radical Inventory -->
+                <div class="bg-slate-800/80 backdrop-blur rounded-2xl p-6 border border-purple-500/30">
+                    <h2 class="text-xl font-bold mb-4 text-purple-400">部首庫 Radical Inventory</h2>
+                    <div id="radical-inventory" class="flex flex-wrap gap-4 justify-center">
+                        <!-- Radicals will be generated here -->
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Victory Screen -->
+        <div id="victory-screen"
+            class="hidden absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-green-900/95 to-blue-900/95 z-50">
+            <div class="text-9xl mb-4">🏆</div>
+            <h2 class="text-6xl ink-font text-yellow-400 mb-4 glow-green">勝利!</h2>
+            <div class="text-3xl text-white mb-8">最終分數: <span id="final-score"
+                    class="text-yellow-300 font-bold">0</span></div>
+            <button id="btn-restart"
+                class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 px-8 py-4 rounded-xl text-2xl font-bold transition-all transform hover:scale-105">
+                再玩一次 PLAY AGAIN
+            </button>
+        </div>
+
+    </div>
+
+    <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+</body>
+
+</html>
+

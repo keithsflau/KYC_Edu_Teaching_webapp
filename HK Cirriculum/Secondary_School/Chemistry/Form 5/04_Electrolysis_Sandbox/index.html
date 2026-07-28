@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Electrolysis Sandbox | 電解沙盒</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="../../../../common/babel-react-classic.js"></script>
+  <link rel="stylesheet" href="../../../../common/subscribe-gate.css" />
+  <script>
+    window.HKC_SUBSCRIBE = {
+      appId: "f5-chem-electrolysis-lab",
+      appNameZh: "電解沙盒",
+      appNameEn: "Electrolysis Sandbox",
+      level: "F5",
+      subject: "Chemistry",
+      freeDrillLimit: 12,
+      wrongBookLimit: 10,
+      contactEmail: "support@hksteamai.com",
+      comingSoonHref: "../../../../pricing/index.html#payment-links"
+    };
+    window.__HKC_FREE_CAP = () => !(window.HkcSubscribe && HkcSubscribe.canContinueDrills());
+  </script>
+  <script src="../../../../common/subscribe-gate.js"></script>
+  <script src="../../../../common/parent-report.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+  <style>
+    :root { --accent: #4f46e5; }
+    body {
+      font-family: "IBM Plex Sans", system-ui, sans-serif;
+      background:
+        radial-gradient(ellipse 70% 45% at 8% -5%, #4f46e528, transparent 55%),
+        radial-gradient(ellipse 50% 40% at 100% 0%, #64748b14, transparent 50%),
+        #f1f5f9;
+      color: #0f172a;
+      min-height: 100vh;
+    }
+    input[type="range"] { accent-color: #4f46e5; width: 100%; }
+    .mono { font-family: "JetBrains Mono", ui-monospace, monospace; }
+    canvas { touch-action: none; display: block; width: 100%; height: auto; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+  </style>
+  <!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
+  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+      display: none !important;
+    }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+        if (label === "EN" || label === "\u4E2D") {
+          btn.classList.add("ncs-hide-when-ncs-fleet");
+        }
+      });
+      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+        el.classList.add("ncs-hide-when-ncs-fleet");
+      });
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel" data-presets="react-classic">
+    const { useState, useEffect, useRef, useCallback, useMemo } = React;
+    const ACCENT = "#4f46e5";
+    const BACK = "../index.html";
+    const LEVEL = "F5";
+    const APP_ID = "f5-chem-electrolysis-lab";
+
+    function LabChrome({ titleEn, titleZh, blurb, children, explore, legacy }) {
+      return (
+        <div className="max-w-6xl mx-auto px-4 py-6">
+          <header className="mb-5">
+            <a href={BACK} className="text-sm hover:underline" style={{ color: ACCENT }}>← {LEVEL} Chemistry</a>
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-white px-2 py-0.5 rounded" style={{ background: ACCENT }}>Interactive Lab</span>
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-white border text-slate-700">HKDSE · Learn = live sim</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold mt-1">{titleEn} · {titleZh}</h1>
+            <p className="text-slate-600 text-sm mt-1 max-w-2xl">{blurb}</p>
+          </header>
+          {children}
+          <p className="text-[10px] text-slate-400 mt-4">Explores: {explore} · Legacy MCQ: <a className="underline" href="_legacy_lger.html">_legacy_lger.html</a>{legacy ? "" : ""}</p>
+        </div>
+      );
+    }
+
+
+    const ELECTROLYTES = {
+      "molten_PbBr2": {
+        label: "Molten PbBr₂",
+        cath: "Pb(l) deposited",
+        an: "Br₂(g) liberated",
+        ions: ["Pb²⁺", "Br⁻"],
+        colour: "#94a3b8"
+      },
+      "aq_CuSO4_inert": {
+        label: "Aq CuSO₄ (inert electrodes)",
+        cath: "Cu(s) plated",
+        an: "O₂(g) + H⁺ (from H₂O)",
+        ions: ["Cu²⁺", "SO₄²⁻", "H⁺", "OH⁻"],
+        colour: "#38bdf8"
+      },
+      "aq_CuSO4_Cu": {
+        label: "Aq CuSO₄ (Cu electrodes)",
+        cath: "Cu(s) plated",
+        an: "Cu(s) dissolves (anode)",
+        ions: ["Cu²⁺", "SO₄²⁻"],
+        colour: "#0ea5e9"
+      },
+      "aq_NaCl": {
+        label: "Conc. aq NaCl",
+        cath: "H₂(g) (preferential)",
+        an: "Cl₂(g)",
+        ions: ["Na⁺", "Cl⁻", "H⁺", "OH⁻"],
+        colour: "#a78bfa"
+      },
+      "dil_H2SO4": {
+        label: "Dil. H₂SO₄",
+        cath: "H₂(g)",
+        an: "O₂(g)",
+        ions: ["H⁺", "SO₄²⁻", "OH⁻"],
+        colour: "#f472b6"
+      }
+    };
+
+    function App() {
+      const canvasRef = useRef(null);
+      const [key, setKey] = useState("aq_CuSO4_inert");
+      const [V, setV] = useState(3.0);
+      const [on, setOn] = useState(true);
+      const [t, setT] = useState(0);
+      const [I, setI] = useState(1.5);
+      const [explore, setExplore] = useState(0);
+      const [challenge, setChallenge] = useState(null);
+      const [msg, setMsg] = useState("");
+      const el = ELECTROLYTES[key];
+      const massCu = useMemo(() => {
+        // Faraday pedagogical: m = (I t M)/(n F); Cu²⁺ n=2, M=63.5, F=96500
+        if (!key.startsWith("aq_Cu")) return null;
+        return (I * t * 63.5) / (2 * 96500);
+      }, [I, t, key]);
+
+      useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        const W = canvas.width, H = canvas.height;
+        let raf, bubbles = [], ions = [], tick = 0;
+        const spawn = () => {
+          if (!on || V < 1.2) return;
+          for (let i = 0; i < 2; i++) {
+            ions.push({ x: W * 0.25 + Math.random() * W * 0.5, y: 80 + Math.random() * 200, q: Math.random() > 0.5 ? 1 : -1, sp: 0.4 + Math.random() * 0.6 });
+          }
+          if (tick % 8 === 0) {
+            bubbles.push({ x: W * 0.22 + (Math.random() - 0.5) * 20, y: H - 90, r: 2 + Math.random() * 3, side: "c" });
+            bubbles.push({ x: W * 0.78 + (Math.random() - 0.5) * 20, y: H - 90, r: 2 + Math.random() * 3, side: "a" });
+          }
+        };
+        const draw = () => {
+          tick++;
+          ctx.clearRect(0, 0, W, H);
+          // beaker
+          ctx.fillStyle = el.colour + "55";
+          ctx.fillRect(40, 60, W - 80, H - 100);
+          ctx.strokeStyle = "#334155";
+          ctx.lineWidth = 3;
+          ctx.strokeRect(40, 60, W - 80, H - 100);
+          // electrodes
+          ctx.fillStyle = "#475569";
+          ctx.fillRect(W * 0.18, 70, 28, H - 130);
+          ctx.fillRect(W * 0.78 - 14, 70, 28, H - 130);
+          ctx.fillStyle = "#0f172a";
+          ctx.font = "12px IBM Plex Sans";
+          ctx.fillText("− Cathode", W * 0.14, 52);
+          ctx.fillText("+ Anode", W * 0.72, 52);
+          if (on && V >= 1.2) {
+            spawn();
+            setT((prev) => prev + 0.05);
+          }
+          ions.forEach((p) => {
+            p.x += p.q > 0 ? -p.sp * (V / 3) : p.sp * (V / 3);
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+            ctx.fillStyle = p.q > 0 ? "#f59e0b" : "#22d3ee";
+            ctx.fill();
+            ctx.fillStyle = "#0f172a";
+            ctx.font = "9px JetBrains Mono";
+            ctx.fillText(p.q > 0 ? "+" : "−", p.x - 3, p.y + 3);
+          });
+          ions = ions.filter((p) => p.x > 70 && p.x < W - 70);
+          bubbles.forEach((b) => {
+            b.y -= 1.2 + V * 0.3;
+            ctx.beginPath();
+            ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+            ctx.fillStyle = "rgba(255,255,255,0.7)";
+            ctx.fill();
+            ctx.strokeStyle = "#94a3b8";
+            ctx.stroke();
+          });
+          bubbles = bubbles.filter((b) => b.y > 70);
+          // labels
+          ctx.fillStyle = "#0f172a";
+          ctx.font = "bold 13px IBM Plex Sans";
+          ctx.fillText("Cathode: " + el.cath, 50, H - 18);
+          ctx.fillText("Anode: " + el.an, W / 2, H - 18);
+          raf = requestAnimationFrame(draw);
+        };
+        raf = requestAnimationFrame(draw);
+        return () => cancelAnimationFrame(raf);
+      }, [key, V, on, el]);
+
+      const bump = () => setExplore((e) => e + 1);
+      const startCh = () => {
+        if (window.__HKC_FREE_CAP && window.__HKC_FREE_CAP()) { setMsg("Free limit — subscribe for more."); return; }
+        if (window.HkcSubscribe) HkcSubscribe.recordDrillAttempt();
+        const kinds = [
+          { id: "nacl", text: "Select conc. aq NaCl. Confirm H₂ at cathode (not Na).", check: () => key === "aq_NaCl" },
+          { id: "cu", text: "Use Cu electrodes + aq CuSO₄ — anode dissolves (mass transfer).", check: () => key === "aq_CuSO4_Cu" },
+          { id: "v", text: "Raise voltage ≥ 4 V and keep power ON so ions migrate visibly.", check: () => on && V >= 4 }
+        ];
+        setChallenge(kinds[Math.floor(Math.random() * kinds.length)]);
+        setMsg("Set up the cell, then Check.");
+      };
+      const checkCh = () => {
+        if (!challenge) return;
+        if (challenge.check()) { setMsg("✓ Products match preferential discharge."); setChallenge(null); }
+        else setMsg("Not yet — rethink preferential discharge.");
+      };
+
+      return (
+        <LabChrome titleEn="Electrolysis Sandbox" titleZh="電解沙盒" blurb="Choose electrolyte · dial voltage · watch ion migration and electrode products (HKDSE preferential discharge)." explore={explore}>
+          <div className="grid lg:grid-cols-5 gap-4">
+            <div className="lg:col-span-3 bg-slate-900 rounded-2xl overflow-hidden border border-indigo-200/30">
+              <canvas ref={canvasRef} width={640} height={400} aria-label="Electrolysis cell" />
+            </div>
+            <div className="lg:col-span-2 space-y-3">
+              <section className="bg-white rounded-2xl border p-4 shadow-sm">
+                <h2 className="font-bold text-sm mb-2" style={{ color: ACCENT }}>Electrolyte · 電解質</h2>
+                <select className="w-full border rounded-lg p-2 text-sm min-h-[44px]" value={key}
+                  onChange={(e) => { setKey(e.target.value); setT(0); bump(); }}>
+                  {Object.entries(ELECTROLYTES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                </select>
+                <label className="block text-xs font-semibold text-slate-600 mt-3 mb-1">Voltage · 電壓 {V.toFixed(1)} V</label>
+                <input type="range" min="0" max="6" step="0.1" value={V} onChange={(e) => { setV(+e.target.value); bump(); }} />
+                <label className="block text-xs font-semibold text-slate-600 mt-3 mb-1">Current I (plating) {I.toFixed(1)} A</label>
+                <input type="range" min="0.2" max="3" step="0.1" value={I} onChange={(e) => { setI(+e.target.value); bump(); }} />
+                <button type="button" className="mt-3 w-full px-3 py-2 rounded-lg text-white text-sm font-semibold min-h-[44px]" style={{ background: on ? "#16a34a" : "#64748b" }}
+                  onClick={() => { setOn((o) => !o); bump(); }}>{on ? "Power ON" : "Power OFF"}</button>
+                <p className="text-[11px] text-slate-500 mt-2">Ions: {el.ions.join(" · ")}</p>
+              </section>
+              <section className="bg-slate-900 text-indigo-50 rounded-2xl p-4">
+                <h2 className="font-bold text-sm text-indigo-300 mb-2">Outcome</h2>
+                <p className="text-sm"><strong>−</strong> {el.cath}</p>
+                <p className="text-sm mt-1"><strong>+</strong> {el.an}</p>
+                {massCu != null && (
+                  <p className="mono text-xs mt-2 text-indigo-200">Cu mass ≈ {massCu.toFixed(4)} g · m = ItM/(nF) · t≈{t.toFixed(0)} s</p>
+                )}
+              </section>
+              <section className="bg-white rounded-2xl border p-4">
+                <p className="text-sm text-slate-600 mb-2">{challenge ? challenge.text : "Challenge: predict products, then verify."}</p>
+                <div className="flex gap-2 flex-wrap">
+                  <button type="button" className="px-3 py-2 text-white rounded-lg text-sm font-semibold min-h-[44px]" style={{ background: ACCENT }} onClick={startCh}>New challenge</button>
+                  {challenge && <button type="button" className="px-3 py-2 bg-emerald-600 text-white rounded-lg text-sm font-semibold min-h-[44px]" onClick={checkCh}>Check</button>}
+                </div>
+                {msg && <p className="text-xs mt-2 text-slate-600">{msg}</p>}
+              </section>
+            </div>
+          </div>
+        </LabChrome>
+      );
+    }
+
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+</body>
+</html>

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>量詞配對工廠 2.0 (Classifier Factory)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: #334155;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .conveyor-belt {
+            height: 20px;
+            background: repeating-linear-gradient(90deg, #1e293b, #1e293b 20px, #0f172a 20px, #0f172a 40px);
+            animation: scrollBelt 2s linear infinite;
+        }
+
+        @keyframes scrollBelt {
+            from {
+                background-position: 0 0;
+            }
+
+            to {
+                background-position: 40px 0;
+            }
+        }
+
+        .item {
+            position: absolute;
+            transition: transform 0.1s;
+            cursor: grab;
+            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5));
+            font-size: 5rem;
+            z-index: 10;
+        }
+
+        .item:active {
+            cursor: grabbing;
+            transform: scale(1.1);
+        }
+
+        .item.moving {
+            transition: left 0.05s linear;
+        }
+
+        .bin {
+            transition: all 0.3s;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+        }
+
+        .bin.hover {
+            background: rgba(34, 197, 94, 0.2);
+            border-color: #4ade80;
+            transform: scale(1.05);
+        }
+
+        .bin.correct-anim {
+            animation: bounce 0.5s;
+            background: #22c55e;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        /* Factory Background */
+        .factory-bg {
+            background-image: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+    </style>
+    <!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../common/ncs-i18n.css" />
+  <script src="../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+      display: none !important;
+    }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+        if (label === "EN" || label === "\u4E2D") {
+          btn.classList.add("ncs-hide-when-ncs-fleet");
+        }
+      });
+      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+        el.classList.add("ncs-hide-when-ncs-fleet");
+      });
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+</head>
+
+<body class="text-white h-screen flex flex-col factory-bg">
+
+    <!-- HUD -->
+    <div class="p-6 flex justify-between items-center bg-slate-900 border-b border-slate-700 shadow-xl z-20">
+        <div>
+            <h1 class="text-2xl font-bold flex items-center gap-2">🏭 量詞工廠 <span
+                    class="text-xs bg-blue-600 px-2 py-1 rounded">2.0</span></h1>
+            <p class="text-slate-400 text-sm">將物品拖到正確的量詞箱子！</p>
+        </div>
+        <div class="flex items-center gap-6">
+            <div id="hearts" class="text-2xl tracking-widest">❤️❤️❤️❤️❤️</div>
+            <div class="text-4xl font-mono text-green-400" id="score">SCORE: 000</div>
+        </div>
+    </div>
+
+    <!-- Gameplay Area -->
+    <div class="flex-1 relative flex flex-col">
+
+        <div class="flex-1 relative flex flex-col">
+
+            <!-- Conveyor Section -->
+            <div class="h-1/3 relative flex items-center bg-slate-800 border-b border-slate-600 shadow-inner">
+                <div class="conveyor-belt absolute bottom-0 w-full"></div>
+                <!-- Spawner (Visual) -->
+                <div
+                    class="absolute left-0 h-full w-20 bg-slate-900 z-10 shadow-xl border-r border-slate-600 flex items-center justify-center text-4xl">
+                    🚪</div>
+                <!-- Destroyer (Visual) -->
+                <div class="absolute right-0 h-full w-20 bg-red-900/50 z-10 flex items-center justify-center text-4xl">
+                    🔥
+                </div>
+
+                <div id="item-container" class="absolute inset-0 overflow-hidden pointer-events-none">
+                    <!-- Items spawn here -->
+                </div>
+            </div>
+
+            <!-- Bins Section -->
+            <div class="h-2/3 grid grid-cols-4 gap-4 p-8 bg-slate-700/50">
+                <!-- Bins generated by JS -->
+            </div>
+
+        </div>
+
+        <!-- Game Over Modal -->
+        <div id="game-over-modal"
+            class="fixed inset-0 bg-black/80 z-50 hidden flex flex-col items-center justify-center">
+            <h2 class="text-6xl font-black text-red-500 mb-4 animate-bounce">GAME OVER</h2>
+            <p class="text-2xl text-white mb-8">最終分數: <span id="final-score">0</span></p>
+            <button onclick="location.reload()"
+                class="px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-2xl font-bold shadow-lg transition transform hover:scale-105">
+                再來一次 (Play Again)
+            </button>
+        </div>
+
+        <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+</body>
+
+</html>
+

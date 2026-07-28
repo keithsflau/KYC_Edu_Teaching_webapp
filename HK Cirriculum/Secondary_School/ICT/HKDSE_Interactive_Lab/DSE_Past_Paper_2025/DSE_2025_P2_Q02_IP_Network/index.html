@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+  <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>HKDSE Past Paper 2025 Paper 2 Q2 - IP &amp; Network Lab</title>
+
+
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script
+
+      crossorigin
+
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+
+    ></script>
+
+    <script
+
+      crossorigin
+
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+
+    ></script>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <link
+
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap"
+
+      rel="stylesheet"
+
+    />
+
+    <style>
+
+      body {
+
+        font-family: "Inter", sans-serif;
+
+        background-color: #0f172a;
+
+        color: #e2e8f0;
+
+      }
+
+      .mono {
+
+        font-family: "JetBrains Mono", monospace;
+
+      }
+
+      .packet {
+
+        position: absolute;
+
+        width: 12px;
+
+        height: 12px;
+
+        background: #22d3ee;
+
+        border-radius: 50%;
+
+        box-shadow: 0 0 10px #22d3ee;
+
+        z-index: 20;
+
+        transition: all 0.5s linear;
+
+      }
+
+      .device {
+
+        transition: all 0.3s;
+
+      }
+
+      .device:hover {
+
+        transform: scale(1.1);
+
+      }
+
+    </style>
+
+  <!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../../../common/ncs-i18n.css" />
+  <script src="../../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+      display: none !important;
+    }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+        if (label === "EN" || label === "\u4E2D") {
+          btn.classList.add("ncs-hide-when-ncs-fleet");
+        }
+      });
+      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+        el.classList.add("ncs-hide-when-ncs-fleet");
+      });
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+</head>
+
+  <body class="min-h-screen p-4 lg:p-8 bg-slate-900">
+
+    <div id="root" class="max-w-6xl mx-auto"></div>
+
+
+
+    <script>
+
+const {
+
+  useState,
+
+  useEffect,
+
+  useRef
+
+} = React;
+
+
+
+// --- LUCIDE ICON SHIM ---
+
+const LucideIcon = ({
+
+  name,
+
+  size = 24,
+
+  className = ""
+
+}) => {
+
+  const formatName = n => n.split("-").map(p => p.charAt(0).toUpperCase() + p.slice(1)).join("");
+
+  const iconName = formatName(name);
+
+  const [svgHtml, setSvgHtml] = useState("");
+
+  useEffect(() => {
+
+    if (window.lucide && window.lucide.icons && window.lucide.icons[iconName] && typeof window.lucide.icons[iconName].toSvg === "function") {
+
+      setSvgHtml(window.lucide.icons[iconName].toSvg({
+
+        width: size,
+
+        height: size,
+
+        class: className
+
+      }));
+
+    }
+
+  }, [name, size, className, iconName]);
+
+  return /*#__PURE__*/React.createElement("span", {
+
+    dangerouslySetInnerHTML: {
+
+      __html: svgHtml
+
+    },
+
+    style: {
+
+      display: "inline-flex"
+
+    }
+
+  });
+
+};
+
+const Globe = p => /*#__PURE__*/React.createElement(LucideIcon, {
+
+  name: "globe",
+
+  ...p
+
+});
+
+const Router = p => /*#__PURE__*/React.createElement(LucideIcon, {
+
+  name: "router",
+
+  ...p
+
+});
+
+const ShieldCheck = p => /*#__PURE__*/React.createElement(LucideIcon, {
+
+  name: "shield-check",
+
+  ...p
+
+});
+
+const AlertTriangle = p => /*#__PURE__*/React.createElement(LucideIcon, {
+
+  name: "alert-triangle",
+
+  ...p
+
+});
+
+const Server = p => /*#__PURE__*/React.createElement(LucideIcon, {
+
+  name: "server",
+
+  ...p
+
+});
+
+const Laptop = p => /*#__PURE__*/React.createElement(LucideIcon, {
+
+  name: "laptop",
+
+  ...p
+
+});
+
+// --- END SHIM ---
+
+
+
+const IPValidator = () => {
+
+  const [ip, setIp] = useState("10.512.10.0");
+
+  const [status, setStatus] = useState(null);
+
+  const validate = val => {
+
+    setIp(val);
+
+    const parts = val.split(".");
+
+    if (parts.length !== 4) return setStatus({
+
+      valid: false,
+
+      msg: "Must have 4 octets"
+
+    });
+
+    for (let p of parts) {
+
+      if (!/^\d+$/.test(p)) return setStatus({
+
+        valid: false,
+
+        msg: "Must be digits"
+
+      });
+
+      const num = parseInt(p, 10);
+
+      if (num < 0 || num > 255) return setStatus({
+
+        valid: false,
+
+        msg: `Octet ${num} out of range (0-255)`
+
+      });
+
+    }
+
+    setStatus({
+
+      valid: true,
+
+      msg: "Valid IPv4 Address"
+
+    });
+
+  };
+
+  return /*#__PURE__*/React.createElement("div", {
+
+    className: "bg-slate-800 p-6 rounded-2xl border border-slate-700"
+
+  }, /*#__PURE__*/React.createElement("h3", {
+
+    className: "text-xl font-bold text-white mb-4 flex items-center gap-2"
+
+  }, /*#__PURE__*/React.createElement(Globe, {
+
+    className: "text-cyan-400"
+
+  }), " IPv4 Validator"), /*#__PURE__*/React.createElement("p", {
+
+    className: "text-slate-400 text-sm mb-4"
+
+  }, "Paper 1A Q18 Check"), /*#__PURE__*/React.createElement("input", {
+
+    type: "text",
+
+    value: ip,
+
+    onChange: e => validate(e.target.value),
+
+    className: "w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-white font-mono text-lg mb-4 focus:outline-none focus:border-cyan-500"
+
+  }), status && /*#__PURE__*/React.createElement("div", {
+
+    className: `p-4 rounded-lg flex items-center gap-2 font-bold ${status.valid ? "bg-green-900/30 text-green-400" : "bg-red-900/30 text-red-400"}`
+
+  }, status.valid ? /*#__PURE__*/React.createElement(ShieldCheck, {
+
+    size: 20
+
+  }) : /*#__PURE__*/React.createElement(AlertTriangle, {
+
+    size: 20
+
+  }), status.msg));
+
+};
+
+const NetworkSim = () => {
+
+  const [mode, setMode] = useState("switch");
+
+  const [packets, setPackets] = useState([]);
+
+  const CENTER = {
+
+    x: 250,
+
+    y: 150
+
+  };
+
+  const DEVICES = [{
+
+    id: "A",
+
+    x: 50,
+
+    y: 50,
+
+    label: "PC A"
+
+  }, {
+
+    id: "B",
+
+    x: 450,
+
+    y: 50,
+
+    label: "PC B"
+
+  }, {
+
+    id: "C",
+
+    x: 50,
+
+    y: 250,
+
+    label: "PC C"
+
+  }, {
+
+    id: "D",
+
+    x: 450,
+
+    y: 250,
+
+    label: "PC D"
+
+  }];
+
+  const sendPacket = (fromId, toId) => {
+
+    const fromDev = DEVICES.find(d => d.id === fromId);
+
+    const pktId = Math.random();
+
+    setPackets(prev => [...prev, {
+
+      id: pktId,
+
+      x: fromDev.x,
+
+      y: fromDev.y,
+
+      step: 0,
+
+      target: toId
+
+    }]);
+
+    setTimeout(() => {
+
+      setPackets(prev => prev.map(p => p.id === pktId ? {
+
+        ...p,
+
+        x: CENTER.x,
+
+        y: CENTER.y,
+
+        step: 1
+
+      } : p));
+
+      setTimeout(() => {
+
+        if (mode === "switch") {
+
+          const targetDev = DEVICES.find(d => d.id === toId);
+
+          setPackets(prev => prev.map(p => p.id === pktId ? {
+
+            ...p,
+
+            x: targetDev.x,
+
+            y: targetDev.y,
+
+            step: 2
+
+          } : p));
+
+        } else {
+
+          setPackets(prev => {
+
+            const others = DEVICES.filter(d => d.id !== fromId);
+
+            const newPkts = others.map(d => ({
+
+              id: Math.random(),
+
+              x: CENTER.x,
+
+              y: CENTER.y,
+
+              step: 1,
+
+              targetX: d.x,
+
+              targetY: d.y,
+
+              isTarget: d.id === toId
+
+            }));
+
+            setTimeout(() => {
+
+              setPackets(curr => curr.map(p => p.targetX ? {
+
+                ...p,
+
+                x: p.targetX,
+
+                y: p.targetY,
+
+                step: 2
+
+              } : p));
+
+            }, 50);
+
+            return prev.filter(p => p.id !== pktId).concat(newPkts);
+
+          });
+
+        }
+
+        setTimeout(() => {
+
+          setPackets(prev => prev.filter(p => p.step !== 2));
+
+        }, 1000);
+
+      }, 600);
+
+    }, 100);
+
+  };
+
+  return /*#__PURE__*/React.createElement("div", {
+
+    className: "bg-slate-800 p-6 rounded-2xl border border-slate-700 min-h-[400px]"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "flex justify-between items-center mb-6"
+
+  }, /*#__PURE__*/React.createElement("h3", {
+
+    className: "text-xl font-bold text-white flex items-center gap-2"
+
+  }, /*#__PURE__*/React.createElement(Router, {
+
+    className: "text-purple-400"
+
+  }), " Network Device Sim"), /*#__PURE__*/React.createElement("div", {
+
+    className: "flex bg-slate-900 rounded-lg p-1"
+
+  }, /*#__PURE__*/React.createElement("button", {
+
+    onClick: () => setMode("switch"),
+
+    className: `px-4 py-1 rounded text-sm font-bold ${mode === "switch" ? "bg-purple-600 text-white" : "text-slate-400 hover:text-white"}`
+
+  }, "Switch"), /*#__PURE__*/React.createElement("button", {
+
+    onClick: () => setMode("hub"),
+
+    className: `px-4 py-1 rounded text-sm font-bold ${mode === "hub" ? "bg-orange-600 text-white" : "text-slate-400 hover:text-white"}`
+
+  }, "Hub"))), /*#__PURE__*/React.createElement("div", {
+
+    className: "relative h-[300px] w-[500px] mx-auto bg-slate-900 rounded-xl border border-slate-700 overflow-hidden"
+
+  }, /*#__PURE__*/React.createElement("svg", {
+
+    className: "absolute inset-0 w-full h-full pointer-events-none"
+
+  }, DEVICES.map(d => /*#__PURE__*/React.createElement("line", {
+
+    key: d.id,
+
+    x1: d.x + 24,
+
+    y1: d.y + 24,
+
+    x2: CENTER.x + 24,
+
+    y2: CENTER.y + 24,
+
+    stroke: "#475569",
+
+    strokeWidth: "2"
+
+  }))), /*#__PURE__*/React.createElement("div", {
+
+    className: "absolute transform -translate-x-1/2 -translate-y-1/2",
+
+    style: {
+
+      left: CENTER.x + 24,
+
+      top: CENTER.y + 24
+
+    }
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: `p-4 rounded-lg shadow-lg ${mode === "switch" ? "bg-purple-600" : "bg-orange-600"}`
+
+  }, mode === "switch" ? /*#__PURE__*/React.createElement(Router, {
+
+    size: 32,
+
+    color: "white"
+
+  }) : /*#__PURE__*/React.createElement(Server, {
+
+    size: 32,
+
+    color: "white"
+
+  })), /*#__PURE__*/React.createElement("div", {
+
+    className: "text-center text-xs mt-1 text-slate-300 font-bold uppercase"
+
+  }, mode)), DEVICES.map(d => /*#__PURE__*/React.createElement("div", {
+
+    key: d.id,
+
+    className: "absolute device cursor-pointer",
+
+    style: {
+
+      left: d.x,
+
+      top: d.y
+
+    },
+
+    onClick: () => sendPacket(d.id, "C" === d.id ? "A" : "C")
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "bg-slate-700 p-3 rounded-lg border border-slate-600 hover:border-cyan-400"
+
+  }, /*#__PURE__*/React.createElement(Laptop, {
+
+    size: 24,
+
+    className: "text-slate-300"
+
+  })), /*#__PURE__*/React.createElement("div", {
+
+    className: "text-center text-xs mt-1 text-slate-400"
+
+  }, d.label))), packets.map(p => /*#__PURE__*/React.createElement("div", {
+
+    key: p.id,
+
+    className: "packet flex items-center justify-center p-1",
+
+    style: {
+
+      left: p.x + 18,
+
+      top: p.y + 18,
+
+      opacity: p.step === 2 && mode === "hub" && !p.isTarget ? 0.3 : 1
+
+    }
+
+  }))), /*#__PURE__*/React.createElement("p", {
+
+    className: "text-center text-slate-400 text-xs mt-4"
+
+  }, "Click any PC to send data to another.", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("span", {
+
+    className: "text-purple-400 font-bold"
+
+  }, "Switch"), ": Directs data ONLY to destination.", " ", /*#__PURE__*/React.createElement("span", {
+
+    className: "text-orange-400 font-bold"
+
+  }, "Hub"), ": Broadcasts to all."));
+
+};
+
+const App = () => {
+
+  return /*#__PURE__*/React.createElement("div", {
+
+    className: "grid grid-cols-1 lg:grid-cols-2 gap-8"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "space-y-8"
+
+  }, /*#__PURE__*/React.createElement("header", null, /*#__PURE__*/React.createElement("h1", {
+
+    className: "text-3xl font-bold text-white mb-2"
+
+  }, "IP & Networking"), /*#__PURE__*/React.createElement("p", {
+
+    className: "text-slate-400"
+
+  }, "Paper 1A Q18 & Q20 Concepts")), /*#__PURE__*/React.createElement(IPValidator, null), /*#__PURE__*/React.createElement("div", {
+
+    className: "p-4 bg-slate-800/50 rounded-lg text-sm text-slate-300"
+
+  }, /*#__PURE__*/React.createElement("strong", null, "Exam Note 1:"), " A valid IPv4 address consists of 4 numbers (octets), each between 0 and 255, separated by dots.", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("strong", null, "Exam Note 2:"), " IPv4 \"Private Addresses\" (like 192.168.x.x) are used in LANs.")), /*#__PURE__*/React.createElement(NetworkSim, null));
+
+};
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+
+root.render(/*#__PURE__*/React.createElement(App, null));
+
+</script>
+
+  
+
+      
+
+      <!-- Footer -->
+
+      <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+</body>
+
+</html>
+

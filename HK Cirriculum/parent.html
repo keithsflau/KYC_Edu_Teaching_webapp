@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>家長報告 | HK STEAM AI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet" />
+  <style>body { font-family: "IBM Plex Sans", "Noto Sans TC", system-ui, sans-serif; }</style>
+  <script src="common/billing-config.js"></script>
+  <script src="common/subscribe-gate.js"></script>
+  <script src="common/entitlement.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen">
+  <div class="max-w-4xl mx-auto px-4 py-10">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <a href="Secondary_School/index.html" class="text-sm text-indigo-600 hover:underline font-semibold" data-i18n="back"></a>
+      <button type="button" id="lang-toggle" class="border border-slate-300 px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-slate-100 min-h-[44px]">EN</button>
+    </div>
+
+    <header class="text-center my-10">
+      <h1 class="text-3xl sm:text-4xl font-black tracking-tight text-slate-900" data-i18n="title"></h1>
+      <p class="mt-3 text-slate-500 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed" data-i18n="lead"></p>
+    </header>
+
+    <div id="plan-card" class="rounded-2xl bg-white border border-slate-200 p-6 shadow-sm mb-8"></div>
+    <div id="apps-host" class="space-y-4"></div>
+
+    <div id="empty-state" class="hidden rounded-2xl border-2 border-dashed border-slate-300 bg-white p-10 text-center">
+      <h2 class="font-bold text-slate-700" data-i18n="emptyTitle"></h2>
+      <p class="text-sm text-slate-500 mt-2" data-i18n="emptyBody"></p>
+      <a href="Secondary_School/index.html" class="inline-flex items-center justify-center min-h-[52px] mt-6 px-6 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:opacity-90" data-i18n="findLab"></a>
+    </div>
+
+    <footer class="mt-12 pt-6 border-t border-slate-200 text-center text-xs text-slate-400 space-y-1">
+      <p data-i18n="footer"></p>
+      <p><a id="pricing-link" class="text-indigo-500 hover:underline font-semibold" href="pricing/index.html#payment-links" data-i18n="pricing"></a></p>
+    </footer>
+  </div>
+
+  <script>
+    (function () {
+      var I18N = {
+        zh: {
+          back: "← 返回資源目錄",
+          title: "家長報告",
+          lead: "本頁直接讀取這部裝置上的學習紀錄，無需帳戶，資料不會離開本機。",
+          emptyTitle: "暫時未有紀錄",
+          emptyBody: "在這部裝置完成任何實驗室練習後，進度會自動出現在這裡。",
+          findLab: "去找實驗室 →",
+          footer: "本機數據 · support@hksteamai.com",
+          pricing: "方案與收費 →",
+          plan: "方案",
+          free: "免費版",
+          unlimited: "無限版",
+          until: "有效至 ",
+          upgrade: "升級解鎖 →",
+          last: "最近活動：",
+          drills: "已練習",
+          acc: "正確率",
+          sessions: "單元",
+          wrong: "錯題",
+          toggle: "EN"
+        },
+        en: {
+          back: "← Back to resources",
+          title: "Parent report",
+          lead: "This page reads learning records stored on this device — no accounts; data never leaves the device.",
+          emptyTitle: "No records yet",
+          emptyBody: "Complete any lab on this device and progress will appear here.",
+          findLab: "Find a lab →",
+          footer: "Local data only · support@hksteamai.com",
+          pricing: "Plans & pricing →",
+          plan: "Plan",
+          free: "Free",
+          unlimited: "Unlimited",
+          until: "Until ",
+          upgrade: "Upgrade →",
+          last: "Last activity: ",
+          drills: "Drills",
+          acc: "Accuracy",
+          sessions: "Modules",
+          wrong: "Wrong",
+          toggle: "中"
+        }
+      };
+
+      var zh = true;
+      try { zh = localStorage.getItem("hkc-lang") !== "en"; } catch (e) {}
+      function t(key) { return (zh ? I18N.zh : I18N.en)[key] || key; }
+
+      function read(key, fallback) {
+        try { var v = JSON.parse(localStorage.getItem(key)); return v == null ? fallback : v; }
+        catch (e) { return fallback; }
+      }
+      function esc(s) {
+        return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+          return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+        });
+      }
+
+      function applyStatic() {
+        document.documentElement.lang = zh ? "zh-HK" : "en";
+        document.title = zh ? "家長報告 | HK STEAM AI" : "Parent report | HK STEAM AI";
+        document.querySelectorAll("[data-i18n]").forEach(function (el) {
+          el.textContent = t(el.getAttribute("data-i18n"));
+        });
+        document.getElementById("lang-toggle").textContent = t("toggle");
+      }
+
+      function render() {
+        applyStatic();
+        var ent = read("hkc_entitlement_v1", { tier: "free", expires: null });
+        if (ent.expires && new Date(ent.expires) < new Date()) ent = { tier: "free", expires: null };
+        var planCard = document.getElementById("plan-card");
+        var tierLabel = ent.tier === "free" ? t("free") : t("unlimited");
+        planCard.innerHTML =
+          '<div class="flex flex-wrap items-center justify-between gap-4">' +
+          '<div><p class="text-xs font-bold uppercase tracking-widest text-slate-400">' + t("plan") + "</p>" +
+          '<p class="text-2xl font-black ' + (ent.tier === "free" ? "text-slate-700" : "text-emerald-600") + '">' + esc(tierLabel) + "</p>" +
+          (ent.expires ? '<p class="text-xs text-slate-400 mt-1">' + t("until") + esc(String(ent.expires).slice(0, 10)) + "</p>" : "") +
+          "</div>" +
+          '<a href="pricing/index.html#payment-links" class="min-h-[52px] inline-flex items-center px-6 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:opacity-90">' + t("upgrade") + "</a>" +
+          "</div>";
+
+        var rows = [];
+        try {
+          for (var i = 0; i < localStorage.length; i++) {
+            var k = localStorage.key(i);
+            var m = /^hkc_progress_(.+)_v1$/.exec(k || "");
+            if (!m) continue;
+            var p = read(k, null);
+            if (!p || typeof p !== "object") continue;
+            var attempted = p.drillsAttempted || 0;
+            var correct = p.drillsCorrect || 0;
+            rows.push({
+              appId: m[1],
+              attempted: attempted,
+              correct: correct,
+              acc: attempted ? Math.round((100 * correct) / attempted) : 0,
+              sessions: (p.modulesCompleted || []).length,
+              wrong: (p.wrongBook || []).length,
+              last: (p.modulesCompleted && p.modulesCompleted[0] && p.modulesCompleted[0].at) || (p.wrongBook && p.wrongBook[0] && p.wrongBook[0].at) || ""
+            });
+          }
+        } catch (e) {}
+
+        rows.sort(function (a, b) { return b.attempted - a.attempted; });
+        var host = document.getElementById("apps-host");
+        host.innerHTML = "";
+        var empty = document.getElementById("empty-state");
+        if (rows.length === 0) {
+          empty.classList.remove("hidden");
+          return;
+        }
+        empty.classList.add("hidden");
+        rows.forEach(function (r) {
+          var card = document.createElement("div");
+          card.className = "rounded-2xl bg-white border border-slate-200 p-5 shadow-sm";
+          card.innerHTML =
+            '<div class="flex flex-wrap items-center gap-4">' +
+            '<div class="flex-1 min-w-[180px]">' +
+            '<p class="font-bold text-slate-800 break-all">' + esc(r.appId) + "</p>" +
+            (r.last ? '<p class="text-xs text-slate-400 mt-0.5">' + t("last") + esc(String(r.last).slice(0, 10)) + "</p>" : "") +
+            "</div>" +
+            '<div class="flex gap-5 text-center">' +
+            '<div><p class="text-lg font-black text-slate-800">' + r.attempted + '</p><p class="text-[10px] font-bold text-slate-400 uppercase">' + t("drills") + "</p></div>" +
+            '<div><p class="text-lg font-black ' + (r.acc >= 70 ? "text-emerald-600" : r.acc >= 40 ? "text-amber-600" : "text-rose-600") + '">' + r.acc + '%</p><p class="text-[10px] font-bold text-slate-400 uppercase">' + t("acc") + "</p></div>" +
+            '<div><p class="text-lg font-black text-slate-800">' + r.sessions + '</p><p class="text-[10px] font-bold text-slate-400 uppercase">' + t("sessions") + "</p></div>" +
+            '<div><p class="text-lg font-black ' + (r.wrong ? "text-rose-600" : "text-slate-800") + '">' + r.wrong + '</p><p class="text-[10px] font-bold text-slate-400 uppercase">' + t("wrong") + "</p></div>" +
+            "</div></div>";
+          host.appendChild(card);
+        });
+      }
+
+      document.getElementById("lang-toggle").addEventListener("click", function () {
+        zh = !zh;
+        try { localStorage.setItem("hkc-lang", zh ? "zh" : "en"); } catch (e) {}
+        render();
+      });
+
+      render();
+    })();
+  </script>
+</body>
+</html>

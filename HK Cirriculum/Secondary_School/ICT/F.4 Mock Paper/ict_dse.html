@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ICT DSE 學霸溫習系統</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; }
+        .fade-in { animation: fadeIn 0.4s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .option-btn { transition: all 0.2s ease; }
+        .option-btn:hover:not(:disabled) { transform: translateX(5px); }
+        .glass-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+    </style>
+
+  <!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../common/ncs-i18n.css" />
+  <script src="../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+</head>
+<body class="text-gray-800 antialiased min-h-screen pb-12">
+
+    <div id="app" class="max-w-5xl mx-auto pt-8 px-4">
+        <!-- Content will be injected here by JavaScript -->
+    </div>
+
+<script>
+// --- 題庫數據 ---
+
+const mcData = [
+    // 硬件與電腦系統 (1-5)
+    { q: "下列哪項不是中央處理器(CPU)的主要組成部分？", o: ["算術及邏輯運算部件(ALU)", "控制部件(CU)", "寄存器(Register)", "唯讀記憶體(ROM)"], a: 3, exp: "ROM 位於主機板上，用作儲存 BIOS 等韌體，並不屬於 CPU 的內部核心結構。" },
+    { q: "相對於傳統硬碟(HDD)，固態硬碟(SSD)有何主要優點？", o: ["儲存容量通常更大", "使用壽命無限", "存取速度更快且抗震", "磁碟重組效率更高"], a: 2, exp: "SSD 使用閃存技術，沒有機械移動部件，因此數據存取速度比 HDD 快很多，且更耐震。" },
+    { q: "在電腦啟動時，哪種記憶體最先被讀取以執行啟動程式(Boot program)？", o: ["快取記憶體(Cache)", "唯讀記憶體(ROM)", "隨機存取記憶體(RAM)", "虛擬記憶體(Virtual Memory)"], a: 1, exp: "電腦啟動時需要執行基本輸出入系統（BIOS/UEFI），這些啟動韌體是永久儲存於非易失性的 ROM 中的。" },
+    { q: "打印機規格中的「dpi」代表什麼？", o: ["每分鐘打印頁數", "每吋點數 (解像度)", "色彩深度", "網絡連接速度"], a: 1, exp: "dpi (dots per inch) 是衡量打印機和掃描器解像度的單位，數值越高影像越清晰。" },
+    { q: "哪種設備最適合將紙本文字轉換為可編輯的電腦文字檔？", o: ["條碼閱讀器", "光學字符識別 (OCR) 掃描器", "磁墨字符識別 (MICR)", "光學標記識別 (OMR)"], a: 1, exp: "OCR 技術能辨識圖像中的文字形狀並轉換為可編輯的文字編碼 (如 ASCII/Unicode)。" },
+    
+    // 數字系統與數據表示 (6-10)
+    { q: "十進制數字 45 轉換為二進制是：", o: ["101101", "101111", "110101", "111001"], a: 0, exp: "45/2=22餘1, 22/2=11餘0, 11/2=5餘1, 5/2=2餘1, 2/2=1餘0, 1/2=0餘1。反向排列為 101101。" },
+    { q: "十六進制數字 '1A' 轉換為十進制是：", o: ["26", "25", "16", "36"], a: 0, exp: "1A = 1×16^1 + 10×16^0 = 16 + 10 = 26。" },
+    { q: "在 8 位元二進制補碼 (Two's complement) 中，'11111111' 代表的十進制數值是：", o: ["255", "1", "-1", "-127"], a: 2, exp: "首位為1代表負數。取反加一：00000000 + 1 = 1。加上負號為 -1。" },
+    { q: "一幅 800 x 600 像素的圖像，使用 24 位元真彩色，不經壓縮下約需多少儲存空間？", o: ["1.44 MB", "14.4 MB", "1.44 KB", "144 KB"], a: 0, exp: "800 × 600 × 24 bits = 11,520,000 bits。除以 8 轉為 1,440,000 Bytes，除以 1000/1024 約為 1.44 MB。" },
+    { q: "為什麼使用 Unicode 而不是 ASCII？", o: ["Unicode 佔用的儲存空間較少", "Unicode 處理英文速度更快", "Unicode 能表示世界上絕大多數語言的字符", "Unicode 能自動翻譯語言"], a: 2, exp: "ASCII 最多表示 128/256 個字符；Unicode 容量大得多，支援繁簡中文等多國語言。" },
+    
+    // 軟件與操作系統 (11-15)
+    { q: "下列哪項是操作系統(OS)的核心功能？", o: ["編寫網頁", "分配硬件資源及記憶體", "進行相片編輯", "提供防毒保護"], a: 1, exp: "操作系統負責管理硬件資源（如 CPU 排程、記憶體分配、周邊設備控制）並提供用戶介面。" },
+    { q: "什麼是「開源軟件」(Open Source Software)？", o: ["免費但不允許修改的軟件", "源代碼公開，允許用戶自由修改和分發的軟件", "必須付費才能獲得源代碼的軟件", "只能在特定操作系統上運行的軟件"], a: 1, exp: "開源軟件的核心精神是源代碼公開，鼓勵社群共同審查、修改和改善程式（如 Linux）。" },
+    { q: "實時處理系統 (Real-time processing system) 最適用於以下哪種情境？", o: ["計算全公司員工每月的薪金", "處理航機訂票系統", "列印大量水費單", "備份數據庫"], a: 1, exp: "實時系統要求數據輸入和處理之間幾乎沒有延遲。航機訂票需要即時確認機位以避免超賣。" },
+    { q: "批次處理系統 (Batch Processing System) 最適合用於：", o: ["自動櫃員機提款", "雷達導航系統", "水費單及電費單的結算", "網上電腦遊戲"], a: 2, exp: "批次處理適合處理大量且不需要即時回應的常規性數據，例如月結單或薪金計算。" },
+    { q: "當電腦的主記憶體(RAM)不足時，操作系統會使用什麼技術來暫時緩解？", o: ["快取記憶體", "唯讀記憶體", "虛擬記憶體", "磁碟重組"], a: 2, exp: "虛擬記憶體 (Virtual Memory) 是將硬碟的一部分空間模擬成 RAM 使用，以容納更多執行中的程式。" },
+    
+    // 文書處理與試算表 (16-20)
+    { q: "在文書處理中，哪項功能最適合將同一封邀請信發送給 500 位不同姓名的賓客？", o: ["尋找及取代", "巨集 (Macro)", "郵件合併 (Mail Merge)", "物件連接與嵌入 (OLE)"], a: 2, exp: "郵件合併可以結合「主文件」和「數據來源」，自動生成大量個人化文件。" },
+    { q: "志明想在 Word 文件中插入一個會自動隨著原 Excel 數據更新的圖表，他應使用：", o: ["匯出為 PDF", "螢幕截圖", "物件嵌入 (Embedding)", "物件連接 (Linking)"], a: 3, exp: "物件連接 (Linking) 會連結到原檔案，當原 Excel 檔案修改時，Word 內的圖表會同步更新。" },
+    { q: "在 Excel 中，公式 `=SUM(A1:A3)` 的意思是：", o: ["將 A1 和 A3 的值相加", "計算 A1、A2、A3 三個儲存格的總和", "計算 A1 和 A3 的平均值", "尋找 A1 到 A3 的最大值"], a: 1, exp: "`A1:A3` 代表一個範圍，包含 A1, A2 和 A3。" },
+    { q: "在試算表中，若公式 `=A1*$B$1` 被複製到下一列（同一欄），公式會變成什麼？", o: ["=A1*$B$1", "=A2*$B$2", "=A2*$B$1", "=B1*$C$1"], a: 2, exp: "$B$1 是絕對參照，複製時不會改變；A1 是相對參照，向下複製一列會變成 A2。" },
+    { q: "在試算表中進行「假設分析」(What-if analysis) 的主要用途是：", o: ["檢查公式語法錯誤", "透過改變輸入值來觀察對結果的影響", "自動設計圖表", "為試算表加密"], a: 1, exp: "假設分析讓用戶測試不同變數（如改變利息、成本）對最終結果的影響，有助於決策。" },
+    
+    // 數據庫與 SQL (21-25)
+    { q: "在關聯式數據庫中，「主鍵」(Primary Key) 的主要作用是：", o: ["為數據加密", "唯一地識別資料表中的每一筆記錄", "連結互聯網", "自動排序中文字"], a: 1, exp: "主鍵必須是唯一的（如身份證號碼或學號），且不能為空值，確保每筆記錄能被準確識別。" },
+    { q: "執行 SQL 指令：`SELECT NAME FROM STUDENT WHERE SCORE > 80 ORDER BY NAME DESC`，結果會如何顯示？", o: ["按分數由高至低顯示姓名", "按名字字母順序(A-Z)顯示", "按名字字母倒序(Z-A)顯示", "只顯示最高分的學生"], a: 2, exp: "ORDER BY NAME DESC 代表根據 NAME 欄位進行降序 (Descending) 排列，即 Z 到 A。" },
+    { q: "為什麼要在數據庫輸入表單中設置「數據驗證」(Data Validation)？", o: ["防止黑客入侵", "減少輸入錯誤，確保數據合理性", "壓縮數據庫檔案大小", "自動備份數據"], a: 1, exp: "例如設定年齡必須為 0-150，能防止輸入不合理數據，提升數據完整性 (Data Integrity)。" },
+    { q: "以下哪句 SQL 指令能找出名字以 'C' 開頭的所有學生？", o: ["SELECT * FROM STUDENT WHERE NAME = 'C*'", "SELECT * FROM STUDENT WHERE NAME LIKE 'C%'", "SELECT * FROM STUDENT WHERE NAME = 'C?'", "SELECT * FROM STUDENT WHERE NAME IN ('C')"], a: 1, exp: "在 SQL 中，`LIKE` 運算符配合 `%` 萬用字元可以匹配任意長度的字符，`C%` 即代表以 C 開頭。" },
+    { q: "若要統計數據庫表 EMPLOYEE 中有多少名員工，應使用以下哪個 SQL 函數？", o: ["SUM()", "MAX()", "COUNT()", "AVG()"], a: 2, exp: "COUNT() 用於計算符合條件的記錄(行)數量；SUM() 用於計算數值欄位的總和。" },
+
+    // 網絡基礎 (26-30)
+    { q: "下列哪種網絡傳輸媒介的數據傳輸速率(Bandwidth)最高且不受電磁干擾？", o: ["雙絞線 (Twisted Pair)", "同軸電纜 (Coaxial Cable)", "光纖 (Optical Fiber)", "微波 (Microwave)"], a: 2, exp: "光纖使用光信號傳輸數據，速度極高，且完全不受電磁波干擾。" },
+    { q: "交換器 (Switch) 和集線器 (Hub) 的主要分別是什麼？", o: ["Hub 速度更快", "Switch 能根據 MAC 位址將數據包發送至指定目標，減少網絡擠塞", "Hub 提供無線連接", "Switch 不能連接互聯網"], a: 1, exp: "Hub 會將信號廣播給所有端口，而 Switch 則具有智能，只發送給目標裝置，效率更高。" },
+    { q: "路由器 (Router) 的主要功能是：", o: ["儲存網頁", "將域名轉換為 IP", "連接不同的網絡並尋找數據包傳輸的最佳路徑", "防止病毒入侵"], a: 2, exp: "路由器能連接 LAN 和 WAN，並透過路由表決定數據包轉發的最優路徑。" },
+    { q: "下列哪個是無效的 IPv4 位址？", o: ["192.168.1.1", "10.0.0.255", "172.16.256.1", "8.8.8.8"], a: 2, exp: "IPv4 由四組 0-255 的數字組成。256 超出了最大限制。" },
+    { q: "在無線網絡 (Wi-Fi) 中，SSID 代表什麼？", o: ["加密密碼", "無線網絡的名稱", "路由器的 IP 位址", "傳輸速率"], a: 1, exp: "SSID (Service Set Identifier) 就是我們平時在手機上看到的 Wi-Fi 網絡名稱。" },
+
+    // 互聯網與 Web (31-35)
+    { q: "DNS 伺服器的作用是：", o: ["發送電郵", "將域名 (如 www.apple.com) 轉換為 IP 位址", "加密網頁數據", "分配動態 IP 給電腦"], a: 1, exp: "DNS (Domain Name System) 就像互聯網的電話簿，把人類易讀的網址翻譯成電腦認知的 IP 位址。" },
+    { q: "TCP/IP 協定中，IP 的主要職責是：", o: ["確保數據無誤送達", "負責數據包的路由及定址", "處理網頁的顯示格式", "處理檔案傳輸"], a: 1, exp: "IP (Internet Protocol) 負責尋址和路由；TCP 則負責確保數據包的完整性和重組。" },
+    { q: "在網址 `https://www.edb.gov.hk` 中，`https` 代表什麼？", o: ["域名", "頂級域名", "通訊協定", "檔案路徑"], a: 2, exp: "HTTPS (HyperText Transfer Protocol Secure) 是一種用於安全通訊的協定。" },
+    { q: "使用串流技術 (Streaming) 觀看影片的好處是：", o: ["畫質一定比下載好", "影片永遠不會有緩衝", "無需等待整個檔案下載完成，可邊下載邊觀看", "不會消耗網絡數據"], a: 2, exp: "串流技術允許數據包源源不絕地接收並即時播放，節省等待時間及本地儲存空間。" },
+    { q: "在瀏覽器中，Cookie 的主要用途是：", o: ["防止電腦中毒", "儲存使用者的網頁偏好設定和登入狀態", "加快網絡下載速度", "自動更新操作系統"], a: 1, exp: "Cookie 是由網站儲存在用戶電腦上的小文字檔，用於記住用戶身份、購物車內容等。" },
+
+    // 網絡安全與威脅 (36-40)
+    { q: "網絡釣魚 (Phishing) 通常透過什麼途徑進行？", o: ["利用暴力破解密碼", "發送偽冒電郵誘騙用戶點擊假網站連結", "破壞硬件設施", "利用 DDoS 癱瘓伺服器"], a: 1, exp: "釣魚攻擊主要利用社交工程，假冒合法機構騙取用戶的敏感資料。" },
+    { q: "某咖啡店提供免費 Wi-Fi，但沒有設定密碼。這種網絡最大的安全隱患是：", o: ["速度太慢", "無法瀏覽特定網站", "數據傳輸未經加密，容易被黑客竊聽", "會損壞手機硬件"], a: 2, exp: "無密碼的開放 Wi-Fi 缺乏加密保護，同一網絡下的黑客可以使用工具輕易截取網絡封包。" },
+    { q: "什麼是「防火牆」(Firewall)？", o: ["防範電腦實體著火的設備", "防止電腦中電腦病毒的軟件", "過濾進出網絡的數據包，阻擋未經授權的存取", "加快上網速度的硬件"], a: 2, exp: "防火牆會根據預設的保安規則，控制和過濾進出的網絡流量。" },
+    { q: "非對稱加密 (Asymmetric Encryption) 的特點是：", o: ["加密和解密使用同一條密鑰", "加密和解密使用一對不同的密鑰（公鑰和私鑰）", "只用作加密密碼，不能加密文件", "不需要密鑰即可解密"], a: 1, exp: "公鑰(Public Key)用作加密，只有對應的私鑰(Private Key)才能解密，安全性極高。" },
+    { q: "以下哪項能減低感染勒索軟件 (Ransomware) 帶來的損失？", o: ["安裝更快的 CPU", "定期將重要資料備份到離線的外部硬碟", "把電腦屏幕亮度調低", "每天重新開機"], a: 1, exp: "勒索軟件會加密你的檔案並勒索贖金。離線備份能確保即使電腦被感染，你仍有資料副本。" },
+
+    // 演算法與程式編寫 (41-45)
+    { q: "在程式編寫中，什麼是「語法錯誤」(Syntax Error)？", o: ["程式邏輯出錯導致計算結果錯誤", "程式碼不符合該程式語言的語法規則，導致無法編譯或執行", "除以零導致程式崩潰", "硬件故障導致程式停止"], a: 1, exp: "語法錯誤如漏寫括號或串錯關鍵字，編譯器通常能立即指出。邏輯出錯屬於 Logical Error。" },
+    { q: "流程圖中，菱形 (Diamond) 符號代表什麼？", o: ["輸入/輸出", "處理/運算", "判斷/條件選擇 (Decision)", "開始/結束"], a: 2, exp: "菱形表示程式中的條件判斷（如 IF-ELSE），會有「是」和「否」的分支。" },
+    { q: "若演算法執行了 `X = 5`, `Y = 10`, `X = Y`, `Y = X`。最後 X 和 Y 的值分別是？", o: ["X=5, Y=10", "X=10, Y=5", "X=10, Y=10", "X=5, Y=5"], a: 2, exp: "第3步: X變成10。第4步: Y等於目前的X(10)，所以Y變成10。兩者皆為10。" },
+    { q: "下列哪種測試數據可用作測試「邊際個案」(Boundary Case)，假設有效輸入範圍是 1 到 100？", o: ["50", "1", "-5", "abc"], a: 1, exp: "邊際個案是剛好在範圍邊界的數值（如 0, 1, 100, 101）。50是正常數據，-5是無效數據。" },
+    { q: "模組化編程 (Modular Programming) 的主要好處不包括：", o: ["提高程式的執行速度", "提高程式碼的重用性 (Reusability)", "方便團隊分工合作", "簡化除錯 (Debugging) 過程"], a: 0, exp: "模組化有助於程式的結構、維護和開發效率，但把程式拆成副程式呼叫本身並不一定能提高執行速度。" },
+
+    // ICT 與社會 (46-50)
+    { q: "什麼是「數碼隔閡」(Digital Divide)？", o: ["數碼數據和模擬數據的差異", "不同社會階層或地區在獲取及使用資訊科技上的機會不平等", "電腦顯示器上的像素間距", "黑客與普通用戶的技術差距"], a: 1, exp: "數碼隔閡指因為經濟、教育、年齡或地理因素，導致部分人無法平等地享受資訊科技帶來的好處。" },
+    { q: "長時間使用滑鼠容易引致「腕管綜合症」。下列哪項是人體工學的改善建議？", o: ["調高屏幕亮度", "使用附有手托的滑鼠墊", "改用更細小的鍵盤", "降低座椅高度"], a: 1, exp: "手托可以保持手腕平直，減少腕部神經受壓。" },
+    { q: "未經授權在網上下載有版權的電影，主要觸犯了什麼？", o: ["不誠實使用電腦罪", "版權條例", "誹謗罪", "個人資料(私隱)條例"], a: 1, exp: "未經版權持有人同意複製或分發其作品，屬侵犯知識產權（版權）。" },
+    { q: "「創用 CC」(Creative Commons) 授權條款的主要目的是：", o: ["向下載者收費", "完全放棄版權", "在保護版權的同時，提供標準化的條款讓創作者彈性地授權他人分享作品", "防止作品被搜尋引擎發現"], a: 2, exp: "CC 條款讓創作者能自訂授權範圍（如：可分享、需標示姓名、不可作商業用途等）。" },
+    { q: "為減輕因長時間盯著電腦螢幕引起的眼睛疲勞，以下哪項做法最適當？", o: ["把室內燈光全部關掉", "調低螢幕對比度至最低", "遵循 20-20-20 法則（每20分鐘看20呎外景物20秒）", "盡量靠近螢幕觀看"], a: 2, exp: "20-20-20 法則是由眼科專家建議，能有效放鬆眼部睫狀肌，減少視覺疲勞。" }
+];
+
+const lqData = [
+    { topic: "電腦系統", q: "說明 RAM (隨機存取記憶體) 和 ROM (唯讀記憶體) 的兩個主要分別。(4分)", ans: "1. 數據保留：RAM是易失性(Volatile)記憶體，斷電後數據會完全消失；ROM是非易失性，斷電後數據仍能保留。(2分)\n2. 預設用途：RAM用作暫存 CPU 正準備處理或正在執行的程式和數據；ROM則通常儲存啟動電腦所需的韌體(如BIOS)。(2分)" },
+    { topic: "網絡安全", q: "解釋「網絡釣魚」(Phishing) 的原理，並提出兩項預防措施。(4分)", ans: "原理：攻擊者偽冒成信譽良好的機構(如銀行)，發送虛假電郵或訊息誘騙受害者點擊惡意連結，並在偽造網站上輸入敏感資料(如密碼、信用卡號碼)。(2分)\n預防措施 (任選兩項，各1分)：\n1. 不隨便點擊可疑電郵中的連結或下載附件。\n2. 仔細核對網址(URL)是否正確，防範串字錯誤的假網站。\n3. 啟用雙重認證(2FA)，增加登入安全性。" },
+    { topic: "資訊安全", q: "試比較「對稱加密」(Symmetric Encryption)與「非對稱加密」(Asymmetric Encryption) 的主要分別。(4分)", ans: "對稱加密：發送方和接收方使用「同一條密鑰」進行加密和解密。優點是運算速度快，但缺點是密鑰在網上分發時容易被截取。(2分)\n非對稱加密：使用「一對不同的密鑰」（公鑰加密、私鑰解密）。優點是安全性高，只需公開公鑰，私鑰自己保留，但缺點是運算速度較慢。(2分)" },
+    { topic: "互聯網應用", q: "什麼是「雲端運算」(Cloud Computing)？試舉出企業使用雲端儲存的兩個優點和兩個缺點。(5分)", ans: "定義：透過互聯網提供按需分配的運算資源(如伺服器、儲存、數據庫等)的服務。(1分)\n優點(各1分)：1. 節省購買和維護本地硬件伺服器的成本。2. 易於擴展容量(Scalability)，按需付費。3. 方便員工隨時隨地跨裝置存取檔案。\n缺點(各1分)：1. 高度依賴網絡連線，斷網時無法存取。2. 資料存放於第三方伺服器，存在潛在的私隱及資料外洩風險。" },
+    { topic: "數據庫", q: "試述「關聯式數據庫」(Relational Database)中「主鍵」(Primary Key)和「外鍵」(Foreign Key)的用途。(4分)", ans: "主鍵 (Primary Key)：用於在資料表中唯一識別每一筆記錄，它不能包含空值(Null)或重複值。(2分)\n外鍵 (Foreign Key)：用於連結兩個相關的資料表，確保資料的參照完整性(Referential Integrity)。外鍵的值必須在被參照表的「主鍵」中存在。(2分)" },
+    { topic: "辦公室軟件", q: "解釋試算表(Spreadsheet)中「絕對儲存格參照」(Absolute Cell Reference)和「相對儲存格參照」(Relative Cell Reference)的分別，並舉例說明。(4分)", ans: "相對參照：(如 A1)，當公式被複製到其他儲存格時，參照的相對位置會隨之改變。(2分)\n絕對參照：(如 $A$1)，當公式被複製時，帶有 $ 符號的欄和列位置會保持固定不變。常用於鎖定稅率或折扣率等固定常數。(2分)" },
+    { topic: "程式編寫", q: "在編寫程式時，使用「模組化」(Modularization) 進行設計有什麼好處？試列出三點。(3分)", ans: "1. 方便除錯(Debugging)和測試，因為每個模組/副程式可獨立運作及排錯。(1分)\n2. 提高程式碼的重用性(Reusability)，相同的模組可在不同程式中重複呼叫。(1分)\n3. 支援團隊合作，不同程式員可同時平行開發不同的模組，最後再整合。(1分)" },
+    { topic: "資訊社會", q: "說明「開源軟件」(Open Source Software) 與「免費軟件」(Freeware) 的一個主要分別，並給出一個開源軟件的例子。(3分)", ans: "主要分別：開源軟件會公開其源代碼(Source Code)，允許社群及用戶自由查看、修改和分發；而免費軟件雖然可免費使用，但通常不公開源代碼，用戶不能修改程式。(2分)\n例子：Linux 操作系統 / Android / Firefox 瀏覽器 / OBS Studio (任選一項 1分)。" },
+    { topic: "互聯網應用", q: "試解釋「物聯網」(IoT) 的概念，並舉出一個在智能家居中的應用例子。(3分)", ans: "概念：將各種日常實體設備(如家電、感測器)透過互聯網連接起來，讓它們能互相收集和交換數據，甚至進行遠程及自動化控制。(2分)\n應用例子：智能恆溫器(Smart Thermostat)能感測室內溫度並根據用戶習慣自動調節冷氣，或智能雪櫃能在缺乏牛奶時自動發送提示給用戶。(1分)" },
+    { topic: "資訊安全", q: "為什麼備份資料很重要？試比較「完全備份」(Full Backup) 與「增量備份」(Incremental Backup) 的優缺點。(5分)", ans: "重要性：防止因硬件故障、人為誤刪或勒索軟件攻擊等意外導致資料永久遺失。(1分)\n完全備份：複製所有選定的資料。優點是還原速度最快、操作簡單；缺點是備份時間極長、需極大儲存空間。(2分)\n增量備份：只備份自上一次備份後曾更改的新資料。優點是備份時間短、省空間；缺點是還原時需要先還原完全備份，再按順序還原各個增量備份，還原速度較慢。(2分)" },
+    { topic: "健康與社會", q: "辦公室員工長時間使用電腦容易引致健康問題。試指出兩項常見的健康問題，並從人體工學角度提出相應的改善建議。(4分)", ans: "問題一：腕管綜合症 / 手腕痛 (1分)。建議：使用附有手托的滑鼠墊或人體工學鍵盤，保持手腕平直 (1分)。\n問題二：眼睛疲勞 / 視力下降 (1分)。建議：保持螢幕與眼睛有適當距離(約50-70cm)，避免螢幕反光，並遵循 20-20-20 法則定時休息 (1分)。(或背痛/頸痛及改善坐姿)" },
+    { topic: "互聯網與通訊", q: "試說明在互聯網上處理機密資料時，使用 HTTPS 而非 HTTP 的重要性。(3分)", ans: "HTTP 以明文(Plain text)傳輸數據，容易被黑客在網絡傳輸過程中截取(Sniffing)和讀取。(1分)\nHTTPS 使用了 SSL/TLS 協議，會對傳輸的數據進行加密 (Encryption)。(1分)\n這確保了數據的機密性和完整性，即使數據被截獲，黑客也無法輕易解密讀取內容，保護了密碼和信用卡等敏感資料。(1分)" },
+    { topic: "辦公室軟件", q: "郵件合併 (Mail Merge) 功能需要哪兩個主要檔案/組件才能運作？試簡述該功能的用途。(3分)", ans: "兩個主要檔案：\n1. 主文件 (Main Document)：包含不變的文字和格式，以及合併欄位代碼。(1分)\n2. 數據來源 (Data Source)：通常是數據庫、試算表或聯絡人清單，包含要填入主文件的變數數據。(1分)\n用途：用於批量自動生成大量內容相似但包含個人化資訊(如姓名、地址)的文件(如邀請信、標籤)。(1分)" },
+    { topic: "電腦系統", q: "甚麼是分佈式處理 (Distributed Processing) 系統？它比傳統單一大型主機集中處理有何優點？(3分)", ans: "定義：將運算任務分割，並分配給網絡上多台位於不同地點的獨立電腦共同協作處理。(1分)\n優點：\n1. 容錯能力高(Fault Tolerance)：若其中一台電腦故障，其他電腦仍可繼續運作，不會導致整個系統癱瘓。(1分)\n2. 擴展性高(Scalability)及成本較低：只需在網絡中加入更多普通電腦即可提升整體運算能力，比起升級單一超級電腦更具成本效益。(1分)" },
+    { topic: "程式編寫", q: "在系統開發的「測試階段」，「白盒測試」(White-box testing) 和「黑盒測試」(Black-box testing) 有什麼分別？(4分)", ans: "白盒測試：測試人員知道程式的內部結構和源代碼邏輯。(1分) 主要測試程式內部的所有路徑、條件分支和循環是否能正確執行。(1分)\n黑盒測試：測試人員不需要知道程式的內部代碼結構。(1分) 只關注系統的輸入和輸出，根據軟件的需求規格(Requirements)，測試在給定特定輸入時，系統是否能產生預期的正確輸出功能。(1分)" }
+];
+
+// --- 應用程式狀態 ---
+let currentView = 'dashboard';
+let mcAnswers = {}; // { questionIndex: selectedOptionIndex }
+let currentMcIndex = 0;
+let lqDrafts = {}; // { questionIndex: string }
+let lqRevealed = {}; // { questionIndex: boolean }
+let currentLqIndex = 0;
+
+// --- 介面渲染函數 ---
+
+function render() {
+    const app = document.getElementById('app');
+    app.innerHTML = '';
+    
+    if (currentView === 'dashboard') {
+        app.innerHTML = getDashboardHTML();
+    } else if (currentView === 'mc') {
+        app.innerHTML = getMcHTML();
+    } else if (currentView === 'lq') {
+        app.innerHTML = getLqHTML();
+    }
+}
+
+function getDashboardHTML() {
+    const mcAttempted = Object.keys(mcAnswers).length;
+    let mcScore = 0;
+    for (let key in mcAnswers) {
+        if (mcAnswers[key] === mcData[key].a) mcScore++;
+    }
+    const mcAccuracy = mcAttempted === 0 ? 0 : Math.round((mcScore / mcAttempted) * 100);
+    const lqRevealedCount = Object.keys(lqRevealed).length;
+
+    return `
+        <div class="space-y-8 fade-in">
+            <div class="bg-gradient-to-r from-blue-700 to-indigo-800 rounded-3xl p-8 md:p-12 text-white shadow-2xl flex flex-col md:flex-row items-center justify-between relative overflow-hidden">
+                <div class="z-10 text-center md:text-left">
+                    <h1 class="text-3xl md:text-4xl font-extrabold mb-3 tracking-tight">ICT DSE 學霸溫習系統</h1>
+                    <p class="text-blue-200 text-lg md:text-xl font-light">Practice does not make perfect. Only perfect practice makes perfect.</p>
+                </div>
+                <i class="fas fa-award text-8xl text-yellow-400 opacity-90 z-10 mt-6 md:mt-0 drop-shadow-lg"></i>
+                <div class="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl"></div>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8">
+                <!-- MC Card -->
+                <div class="glass-panel p-8 rounded-2xl shadow-lg border border-gray-200 flex flex-col items-center text-center transform transition duration-300 hover:shadow-xl">
+                    <div class="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mb-6">
+                        <i class="fas fa-list-ol text-4xl text-indigo-600"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-3">核心 MC 挑戰 (${mcData.length}題)</h2>
+                    <p class="text-gray-500 mb-8 leading-relaxed">精選必考題型，涵蓋硬件、網絡、試算表、編程及社會影響。系統會自動批改並提供詳盡中文解釋，幫你清 Concept。</p>
+                    
+                    <div class="w-full bg-gray-100 rounded-full h-4 mb-3 overflow-hidden shadow-inner">
+                        <div class="bg-gradient-to-r from-indigo-500 to-blue-500 h-4 rounded-full transition-all duration-1000 ease-out" style="width: ${(mcAttempted/mcData.length)*100}%"></div>
+                    </div>
+                    <div class="flex justify-between w-full text-sm text-gray-600 mb-8 font-medium">
+                        <span>已完成: ${mcAttempted} / ${mcData.length}</span>
+                        <span>準確率: <span class="${mcAccuracy >= 80 ? 'text-green-600' : 'text-indigo-600'} font-bold">${mcAccuracy}%</span></span>
+                    </div>
+                    
+                    <button onclick="changeView('mc')" class="mt-auto w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl flex justify-center items-center gap-3 transition-colors shadow-md hover:shadow-lg">
+                        進入 MC 訓練 <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+
+                <!-- LQ Card -->
+                <div class="glass-panel p-8 rounded-2xl shadow-lg border border-gray-200 flex flex-col items-center text-center transform transition duration-300 hover:shadow-xl">
+                    <div class="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mb-6">
+                        <i class="fas fa-pen-nib text-4xl text-emerald-600"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-3">核心 LQ 模擬 (${lqData.length}題)</h2>
+                    <p class="text-gray-500 mb-8 leading-relaxed">嚴選歷屆最常考長題目。提供作答區讓你自行草擬答案，一鍵核對 Marking Scheme，訓練答題命中 Keyword 的能力。</p>
+                    
+                    <div class="w-full bg-gray-100 rounded-full h-4 mb-3 overflow-hidden shadow-inner">
+                        <div class="bg-gradient-to-r from-emerald-500 to-teal-400 h-4 rounded-full transition-all duration-1000 ease-out" style="width: ${(lqRevealedCount/lqData.length)*100}%"></div>
+                    </div>
+                    <div class="flex justify-between w-full text-sm text-gray-600 mb-8 font-medium">
+                        <span>已核對: ${lqRevealedCount} / ${lqData.length}</span>
+                    </div>
+                    
+                    <button onclick="changeView('lq')" class="mt-auto w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-xl flex justify-center items-center gap-3 transition-colors shadow-md hover:shadow-lg">
+                        進入 LQ 訓練 <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function getMcHTML() {
+    const q = mcData[currentMcIndex];
+    const isAnswered = mcAnswers[currentMcIndex] !== undefined;
+    const selectedOpt = mcAnswers[currentMcIndex];
+    const isCorrect = selectedOpt === q.a;
+    
+    let mcScore = 0;
+    for (let key in mcAnswers) {
+        if (mcAnswers[key] === mcData[key].a) mcScore++;
+    }
+
+    let optionsHTML = '';
+    q.o.forEach((opt, idx) => {
+        let btnClass = "w-full text-left p-5 rounded-xl border-2 mb-3 option-btn font-medium text-lg text-gray-700 flex justify-between items-center ";
+        let iconHTML = '';
+        
+        if (!isAnswered) {
+            btnClass += "border-gray-200 hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-800 bg-white shadow-sm cursor-pointer";
+        } else {
+            if (idx === q.a) {
+                btnClass += "border-green-500 bg-green-50 text-green-800 shadow-md";
+                iconHTML = '<i class="fas fa-check-circle text-2xl text-green-500"></i>';
+            } else if (selectedOpt === idx) {
+                btnClass += "border-red-400 bg-red-50 text-red-800";
+                iconHTML = '<i class="fas fa-times-circle text-2xl text-red-400"></i>';
+            } else {
+                btnClass += "border-gray-200 bg-gray-50 opacity-60";
+            }
+        }
+
+        optionsHTML += `
+            <button ${isAnswered ? 'disabled' : ''} onclick="answerMc(${idx})" class="${btnClass}">
+                <span><span class="mr-3 font-bold opacity-70">${String.fromCharCode(65 + idx)}.</span> ${opt}</span>
+                ${iconHTML}
+            </button>
+        `;
+    });
+
+    let explanationHTML = '';
+    if (isAnswered) {
+        explanationHTML = `
+            <div class="mt-8 p-6 rounded-xl border-l-4 shadow-sm fade-in ${isCorrect ? 'bg-green-50 border-green-500' : 'bg-red-50 border-red-500'}">
+                <div class="flex items-start gap-4">
+                    <div class="mt-1">
+                        <i class="fas fa-lightbulb text-2xl ${isCorrect ? 'text-green-500' : 'text-red-500'}"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-lg font-bold mb-2 ${isCorrect ? 'text-green-800' : 'text-red-800'}">
+                            ${isCorrect ? '答對了！太棒了！' : `答錯了！正確答案是 ${String.fromCharCode(65 + q.a)}`}
+                        </h4>
+                        <p class="text-gray-700 text-lg leading-relaxed">${q.exp}</p>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    return `
+        <div class="space-y-6 fade-in max-w-4xl mx-auto">
+            <div class="flex justify-between items-center bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
+                <button onclick="changeView('dashboard')" class="text-gray-500 hover:text-indigo-700 flex items-center gap-2 font-bold transition-colors">
+                    <i class="fas fa-chevron-left"></i> 返回儀表板
+                </button>
+                <div class="font-bold text-gray-800 text-lg">MC 挑戰 <span class="text-indigo-600 ml-2">第 ${currentMcIndex + 1} / ${mcData.length} 題</span></div>
+                <div class="text-sm font-bold bg-indigo-100 text-indigo-800 px-4 py-2 rounded-full shadow-inner">
+                    得分: ${mcScore}
+                </div>
+            </div>
+
+            <div class="glass-panel p-8 md:p-10 rounded-2xl shadow-lg border border-gray-200">
+                <h3 class="text-2xl font-bold text-gray-800 mb-8 leading-relaxed">
+                    <span class="text-indigo-500 mr-2">Q${currentMcIndex + 1}.</span>${q.q}
+                </h3>
+                <div class="space-y-4">
+                    ${optionsHTML}
+                </div>
+                ${explanationHTML}
+            </div>
+
+            <div class="flex justify-between items-center gap-4 mt-6">
+                <button ${currentMcIndex === 0 ? 'disabled' : ''} onclick="prevMc()" class="flex-1 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-bold py-4 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm">
+                    <i class="fas fa-arrow-left mr-2"></i> 上一題
+                </button>
+                <button ${currentMcIndex === mcData.length - 1 ? 'disabled' : ''} onclick="nextMc()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md">
+                    下一題 <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+function getLqHTML() {
+    const q = lqData[currentLqIndex];
+    const draft = lqDrafts[currentLqIndex] || '';
+    const isRevealed = lqRevealed[currentLqIndex];
+
+    let answerArea = '';
+    if (!isRevealed) {
+        answerArea = `
+            <div class="mt-6 fade-in">
+                <label class="block text-gray-700 font-bold mb-3 text-lg"><i class="fas fa-keyboard mr-2 text-emerald-500"></i>你的作答草稿：</label>
+                <textarea id="lq-draft" class="w-full p-5 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-emerald-100 focus:border-emerald-400 transition-all resize-y text-lg text-gray-700 bg-gray-50 placeholder-gray-400" rows="6" placeholder="在此輸入你的答案... (嘗試寫出 Keywords)">${draft}</textarea>
+                <button onclick="revealLq()" class="mt-6 w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-4 rounded-xl transition-colors shadow-md flex items-center justify-center gap-2 text-lg">
+                    <i class="fas fa-eye"></i> 核對 Marking Scheme
+                </button>
+            </div>
+        `;
+    } else {
+        answerArea = `
+            <div class="mt-6 space-y-6 fade-in">
+                <div class="p-5 bg-gray-50 rounded-xl border border-gray-200">
+                    <label class="block text-gray-500 font-bold mb-2"><i class="fas fa-user-edit mr-2"></i>你的作答：</label>
+                    <div class="text-gray-700 whitespace-pre-wrap text-lg min-h-[4rem]">${draft || '<span class="italic text-gray-400">沒有填寫草稿</span>'}</div>
+                </div>
+                
+                <div class="p-6 md:p-8 bg-emerald-50 rounded-2xl border-2 border-emerald-200 shadow-inner">
+                    <label class="block text-emerald-800 font-bold mb-4 text-xl flex items-center"><i class="fas fa-check-double mr-3 text-2xl"></i>官方建議答案 / 評分標準：</label>
+                    <div class="text-gray-800 whitespace-pre-wrap text-lg leading-relaxed">${q.ans}</div>
+                </div>
+            </div>
+        `;
+    }
+
+    return `
+        <div class="space-y-6 fade-in max-w-4xl mx-auto">
+            <div class="flex justify-between items-center bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
+                <button onclick="changeView('dashboard')" class="text-gray-500 hover:text-emerald-700 flex items-center gap-2 font-bold transition-colors">
+                    <i class="fas fa-chevron-left"></i> 返回儀表板
+                </button>
+                <div class="font-bold text-gray-800 text-lg">LQ 模擬 <span class="text-emerald-600 ml-2">第 ${currentLqIndex + 1} / ${lqData.length} 題</span></div>
+                <div class="text-sm font-bold bg-emerald-100 text-emerald-800 px-4 py-2 rounded-full shadow-inner">
+                    ${q.topic}
+                </div>
+            </div>
+
+            <div class="glass-panel p-8 md:p-10 rounded-2xl shadow-lg border border-gray-200">
+                <h3 class="text-2xl font-bold text-gray-800 mb-4 leading-relaxed">
+                    <span class="text-emerald-500 mr-2">Q${currentLqIndex + 1}.</span>${q.q}
+                </h3>
+                <hr class="border-gray-200 my-6">
+                ${answerArea}
+            </div>
+
+            <div class="flex justify-between items-center gap-4 mt-6">
+                <button ${currentLqIndex === 0 ? 'disabled' : ''} onclick="prevLq()" class="flex-1 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-bold py-4 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm">
+                    <i class="fas fa-arrow-left mr-2"></i> 上一題
+                </button>
+                <button ${currentLqIndex === lqData.length - 1 ? 'disabled' : ''} onclick="nextLq()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md">
+                    下一題 <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+// --- 邏輯與事件處理 ---
+
+function changeView(view) {
+    // 儲存 LQ 草稿再切換
+    if (currentView === 'lq' && !lqRevealed[currentLqIndex]) {
+        const draftArea = document.getElementById('lq-draft');
+        if (draftArea) lqDrafts[currentLqIndex] = draftArea.value;
+    }
+    currentView = view;
+    render();
+    window.scrollTo(0, 0);
+}
+
+function answerMc(idx) {
+    if (mcAnswers[currentMcIndex] !== undefined) return; // 已經答過
+    mcAnswers[currentMcIndex] = idx;
+    render();
+}
+
+function nextMc() {
+    if (currentMcIndex < mcData.length - 1) {
+        currentMcIndex++;
+        render();
+        window.scrollTo(0, 0);
+    }
+}
+
+function prevMc() {
+    if (currentMcIndex > 0) {
+        currentMcIndex--;
+        render();
+        window.scrollTo(0, 0);
+    }
+}
+
+function revealLq() {
+    const draftArea = document.getElementById('lq-draft');
+    if (draftArea) {
+        lqDrafts[currentLqIndex] = draftArea.value;
+    }
+    lqRevealed[currentLqIndex] = true;
+    render();
+}
+
+function nextLq() {
+    if (!lqRevealed[currentLqIndex]) {
+        const draftArea = document.getElementById('lq-draft');
+        if (draftArea) lqDrafts[currentLqIndex] = draftArea.value;
+    }
+    if (currentLqIndex < lqData.length - 1) {
+        currentLqIndex++;
+        render();
+        window.scrollTo(0, 0);
+    }
+}
+
+function prevLq() {
+    if (!lqRevealed[currentLqIndex]) {
+        const draftArea = document.getElementById('lq-draft');
+        if (draftArea) lqDrafts[currentLqIndex] = draftArea.value;
+    }
+    if (currentLqIndex > 0) {
+        currentLqIndex--;
+        render();
+        window.scrollTo(0, 0);
+    }
+}
+
+// 初始化渲染
+render();
+</script>
+</body>
+</html>

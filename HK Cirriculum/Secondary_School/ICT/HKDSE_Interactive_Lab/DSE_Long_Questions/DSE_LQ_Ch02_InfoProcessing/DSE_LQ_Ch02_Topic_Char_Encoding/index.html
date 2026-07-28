@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-Hant">
+
+
+  <head>
+
+  <meta charset="UTF-8" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+
+    <title>HKDSE ICT Ch2 - Character Encoding & Parity</title>
+
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+
+    <script
+
+
+      crossorigin
+
+
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+
+
+    ></script>
+
+
+    <script
+
+
+      crossorigin
+
+
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+
+
+    ></script>
+
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+
+    <link
+
+
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Noto+Sans+TC:wght@400;700&family=Fira+Code:wght@400;600&display=swap"
+
+
+      rel="stylesheet"
+
+
+    />
+
+
+    <style>
+
+
+      body {
+
+
+        font-family: "Noto Sans TC", "Inter", sans-serif;
+
+
+        background-color: #0f172a;
+
+
+        color: #e2e8f0;
+
+
+      }
+
+
+      .font-mono {
+
+
+        font-family: "Fira Code", monospace;
+
+
+      }
+
+
+    </style>
+
+
+  <!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../../../../common/ncs-i18n.css" />
+  <script src="../../../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+      display: none !important;
+    }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+        if (label === "EN" || label === "\u4E2D") {
+          btn.classList.add("ncs-hide-when-ncs-fleet");
+        }
+      });
+      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+        el.classList.add("ncs-hide-when-ncs-fleet");
+      });
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+</head>
+
+
+  <body class="min-h-screen p-4 md:p-8 flex flex-col items-center">
+
+
+    <div id="root" class="w-full max-w-6xl"></div>
+
+
+
+
+
+    <script>
+
+
+const {
+
+
+  useState,
+
+
+  useEffect,
+
+
+  useMemo
+
+
+} = React;
+
+
+
+
+
+// --- Robust Lucide Icon Wrapper ---
+
+
+const createLucideIcon = name => {
+
+
+  const iconData = window.lucide?.icons[name];
+
+
+  if (!iconData) return props => /*#__PURE__*/React.createElement("span", props, "?");
+
+
+  const toCamel = s => s.replace(/-./g, x => x[1].toUpperCase());
+
+
+  const formatAttrs = a => {
+
+
+    const n = {};
+
+
+    for (const k in a) {
+
+
+      if (k === "class") n.className = a[k];else if (k.includes("-")) n[toCamel(k)] = a[k];else n[k] = a[k];
+
+
+    }
+
+
+    return n;
+
+
+  };
+
+
+  return ({
+
+
+    color,
+
+
+    size,
+
+
+    strokeWidth,
+
+
+    className,
+
+
+    ...props
+
+
+  }) => {
+
+
+    return React.createElement("svg", {
+
+
+      width: size || 24,
+
+
+      height: size || 24,
+
+
+      stroke: color || "currentColor",
+
+
+      strokeWidth: strokeWidth || 2,
+
+
+      fill: "none",
+
+
+      strokeLinecap: "round",
+
+
+      strokeLinejoin: "round",
+
+
+      className: `lucide lucide-${name.toLowerCase()} ${className || ""}`.trim(),
+
+
+      xmlns: "http://www.w3.org/2000/svg",
+
+
+      viewBox: "0 0 24 24",
+
+
+      ...props
+
+
+    }, iconData.map(([tag, attrs], i) => React.createElement(tag, {
+
+
+      ...formatAttrs(attrs),
+
+
+      key: i
+
+
+    })));
+
+
+  };
+
+
+};
+
+
+const Icons = {
+
+
+  Languages: createLucideIcon("Languages"),
+
+
+  Table: createLucideIcon("Table"),
+
+
+  Binary: createLucideIcon("Binary"),
+
+
+  CheckCircle2: createLucideIcon("CheckCircle2"),
+
+
+  XCircle: createLucideIcon("XCircle"),
+
+
+  ArrowRight: createLucideIcon("ArrowRight"),
+
+
+  Info: createLucideIcon("Info")
+
+
+};
+
+
+const Icon = ({
+
+
+  name,
+
+
+  ...props
+
+
+}) => {
+
+
+  const Cmp = Icons[name];
+
+
+  return Cmp ? /*#__PURE__*/React.createElement(Cmp, props) : null;
+
+
+};
+
+
+
+
+
+// --- Tabs Component ---
+
+
+const Tabs = ({
+
+
+  active,
+
+
+  onChange
+
+
+}) => /*#__PURE__*/React.createElement("div", {
+
+
+  className: "flex bg-slate-900/50 p-1 rounded-lg border border-slate-700 mb-6 w-full max-w-md mx-auto"
+
+
+}, /*#__PURE__*/React.createElement("button", {
+
+
+  onClick: () => onChange("analyzer"),
+
+
+  className: `flex-1 py-2 text-sm font-bold rounded-md transition-all ${active === "analyzer" ? "bg-cyan-600 text-white shadow-lg" : "text-slate-400 hover:text-white"}`
+
+
+}, "Encoding Analyzer"), /*#__PURE__*/React.createElement("button", {
+
+
+  onClick: () => onChange("ascii"),
+
+
+  className: `flex-1 py-2 text-sm font-bold rounded-md transition-all ${active === "ascii" ? "bg-cyan-600 text-white shadow-lg" : "text-slate-400 hover:text-white"}`
+
+
+}, "ASCII Table"), /*#__PURE__*/React.createElement("button", {
+
+
+  onClick: () => onChange("parity"),
+
+
+  className: `flex-1 py-2 text-sm font-bold rounded-md transition-all ${active === "parity" ? "bg-cyan-600 text-white shadow-lg" : "text-slate-400 hover:text-white"}`
+
+
+}, "Parity Check"));
+
+
+
+
+
+// --- Encoding Logic ---
+
+
+const useEncoding = text => {
+
+
+  return useMemo(() => {
+
+
+    if (!text) return [];
+
+
+    return text.split("").map(char => {
+
+
+      const code = char.charCodeAt(0);
+
+
+
+
+
+      // UTF-8 Bytes
+
+
+      const encoder = new TextEncoder();
+
+
+      const utf8Bytes = encoder.encode(char);
+
+
+      const utf8Hex = Array.from(utf8Bytes).map(b => b.toString(16).toUpperCase().padStart(2, "0")).join(" ");
+
+
+
+
+
+      // Binary (of the code point, simplified 8/16 bit view)
+
+
+      const binary = code.toString(2).padStart(code > 255 ? 16 : 8, "0");
+
+
+
+
+
+      // Logic for DSE Big5 estimation
+
+
+      // ASCII (0-127) is 1 byte in Big5
+
+
+      // Others (Chinese, etc) are typically 2 bytes in Big5
+
+
+      const big5Bytes = code <= 127 ? 1 : 2;
+
+
+      return {
+
+
+        char,
+
+
+        code,
+
+
+        hex: code.toString(16).toUpperCase().padStart(code > 255 ? 4 : 2, "0"),
+
+
+        utf8Hex,
+
+
+        utf8Len: utf8Bytes.length,
+
+
+        big5Len: big5Bytes,
+
+
+        binary
+
+
+      };
+
+
+    });
+
+
+  }, [text]);
+
+
+};
+
+
+
+
+
+// --- Main App ---
+
+
+const App = () => {
+
+
+  const [activeTab, setActiveTab] = useState("analyzer");
+
+
+
+
+
+  // Analyzer State
+
+
+  const [inputText, setInputText] = useState("HKDSE 2025!");
+
+
+  const analysis = useEncoding(inputText);
+
+
+
+
+
+  // Parity State
+
+
+  // 0-6 are data bits, 7 is parity bit
+
+
+  const [parityBits, setParityBits] = useState([0, 1, 0, 0, 0, 0, 1, 0]); // 7-bit 'A' (1000001) + Parity 0
+
+
+
+
+
+  const parityAnalysis = useMemo(() => {
+
+
+    const dataBits = parityBits.slice(0, 7); // Bits 0-6
+
+
+    const pBit = parityBits[7]; // Bit 7 (Position 8 visually)
+
+
+    const onesCount = dataBits.filter(b => b === 1).length;
+
+
+    const totalOnes = onesCount + pBit;
+
+
+    return {
+
+
+      dataValue: parseInt(dataBits.join(""), 2),
+
+
+      char: String.fromCharCode(parseInt(dataBits.join(""), 2)),
+
+
+      onesCount,
+
+
+      pBit,
+
+
+      isEvenParity: totalOnes % 2 === 0,
+
+
+      isOddParity: totalOnes % 2 !== 0
+
+
+    };
+
+
+  }, [parityBits]);
+
+
+  const toggleParityBit = idx => {
+
+
+    const n = [...parityBits];
+
+
+    n[idx] = n[idx] ? 0 : 1;
+
+
+    setParityBits(n);
+
+
+  };
+
+
+  return /*#__PURE__*/React.createElement("div", {
+
+
+    className: "w-full space-y-6"
+
+
+  }, /*#__PURE__*/React.createElement("header", {
+
+
+    className: "flex items-center gap-4 bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-lg mb-8"
+
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+
+    className: "p-3 bg-cyan-600 rounded-xl shadow-lg shadow-cyan-500/20"
+
+
+  }, /*#__PURE__*/React.createElement(Icon, {
+
+
+    name: "Languages",
+
+
+    size: 32,
+
+
+    className: "text-white"
+
+
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h1", {
+
+
+    className: "text-2xl font-bold text-white"
+
+
+  }, "Character Encoding & Parity Lab"), /*#__PURE__*/React.createElement("p", {
+
+
+    className: "text-slate-400 text-sm"
+
+
+  }, "HKDSE ICT Information Processing (Ch 2)"))), /*#__PURE__*/React.createElement(Tabs, {
+
+
+    active: activeTab,
+
+
+    onChange: setActiveTab
+
+
+  }), activeTab === "analyzer" && /*#__PURE__*/React.createElement("div", {
+
+
+    className: "space-y-6 animate-in fade-in zoom-in-95 duration-300"
+
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+
+    className: "bg-slate-800 p-6 rounded-2xl border border-slate-700"
+
+
+  }, /*#__PURE__*/React.createElement("label", {
+
+
+    className: "block text-sm font-bold text-cyan-400 mb-2"
+
+
+  }, "Input String"), /*#__PURE__*/React.createElement("textarea", {
+
+
+    value: inputText,
+
+
+    onChange: e => setInputText(e.target.value),
+
+
+    className: "w-full bg-slate-900 border border-slate-600 rounded-lg p-4 text-white text-lg font-mono focus:border-cyan-500 focus:outline-none transition-colors",
+
+
+    rows: 2,
+
+
+    placeholder: "Type something here..."
+
+
+  }), /*#__PURE__*/React.createElement("div", {
+
+
+    className: "mt-2 flex gap-2 justify-end"
+
+
+  }, /*#__PURE__*/React.createElement("button", {
+
+
+    onClick: () => setInputText("Hello World"),
+
+
+    className: "text-xs bg-slate-700 px-2 py-1 rounded text-slate-300 hover:text-white"
+
+
+  }, "Sample 1"), /*#__PURE__*/React.createElement("button", {
+
+
+    onClick: () => setInputText("中學文憑試"),
+
+
+    className: "text-xs bg-slate-700 px-2 py-1 rounded text-slate-300 hover:text-white"
+
+
+  }, "Chinese"), /*#__PURE__*/React.createElement("button", {
+
+
+    onClick: () => setInputText("1+1=2"),
+
+
+    className: "text-xs bg-slate-700 px-2 py-1 rounded text-slate-300 hover:text-white"
+
+
+  }, "Math"))), /*#__PURE__*/React.createElement("div", {
+
+
+    className: "bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden"
+
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+
+    className: "overflow-x-auto"
+
+
+  }, /*#__PURE__*/React.createElement("table", {
+
+
+    className: "w-full text-left border-collapse"
+
+
+  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", {
+
+
+    className: "bg-slate-900 text-slate-400 text-xs uppercase border-b border-slate-700"
+
+
+  }, /*#__PURE__*/React.createElement("th", {
+
+
+    className: "p-4"
+
+
+  }, "Char"), /*#__PURE__*/React.createElement("th", {
+
+
+    className: "p-4"
+
+
+  }, "Code Point"), /*#__PURE__*/React.createElement("th", {
+
+
+    className: "p-4 hidden md:table-cell"
+
+
+  }, "Binary"), /*#__PURE__*/React.createElement("th", {
+
+
+    className: "p-4"
+
+
+  }, "UTF-8 (Hex)"), /*#__PURE__*/React.createElement("th", {
+
+
+    className: "p-4 text-center"
+
+
+  }, "Size (UTF-8)"), /*#__PURE__*/React.createElement("th", {
+
+
+    className: "p-4 text-center text-yellow-500"
+
+
+  }, "Big5 (Est.)"))), /*#__PURE__*/React.createElement("tbody", {
+
+
+    className: "text-sm"
+
+
+  }, analysis.map((item, idx) => /*#__PURE__*/React.createElement("tr", {
+
+
+    key: idx,
+
+
+    className: "border-b border-slate-700/50 hover:bg-slate-700/50 transition-colors"
+
+
+  }, /*#__PURE__*/React.createElement("td", {
+
+
+    className: "p-4 font-bold text-white text-lg bg-slate-800/30 text-center border-r border-slate-700"
+
+
+  }, item.char), /*#__PURE__*/React.createElement("td", {
+
+
+    className: "p-4 font-mono text-cyan-300"
+
+
+  }, "U+", item.hex, " ", /*#__PURE__*/React.createElement("span", {
+
+
+    className: "text-slate-500 text-xs ml-1"
+
+
+  }, "(", item.code, ")")), /*#__PURE__*/React.createElement("td", {
+
+
+    className: "p-4 font-mono text-slate-400 hidden md:table-cell"
+
+
+  }, item.binary), /*#__PURE__*/React.createElement("td", {
+
+
+    className: "p-4 font-mono text-green-400"
+
+
+  }, item.utf8Hex), /*#__PURE__*/React.createElement("td", {
+
+
+    className: "p-4 text-center font-bold text-white"
+
+
+  }, item.utf8Len, " Bytes"), /*#__PURE__*/React.createElement("td", {
+
+
+    className: "p-4 text-center font-bold text-yellow-400"
+
+
+  }, item.big5Len, " Bytes")))), /*#__PURE__*/React.createElement("tfoot", null, /*#__PURE__*/React.createElement("tr", {
+
+
+    className: "bg-slate-900 font-bold text-white"
+
+
+  }, /*#__PURE__*/React.createElement("td", {
+
+
+    colSpan: 4,
+
+
+    className: "p-4 text-right"
+
+
+  }, "Total Size:"), /*#__PURE__*/React.createElement("td", {
+
+
+    className: "p-4 text-center text-green-400"
+
+
+  }, analysis.reduce((s, i) => s + i.utf8Len, 0), " Bytes"), /*#__PURE__*/React.createElement("td", {
+
+
+    className: "p-4 text-center text-yellow-400"
+
+
+  }, analysis.reduce((s, i) => s + i.big5Len, 0), " Bytes"))))))), activeTab === "ascii" && /*#__PURE__*/React.createElement("div", {
+
+
+    className: "bg-slate-800 p-6 rounded-2xl border border-slate-700 animate-in fade-in zoom-in-95 duration-300"
+
+
+  }, /*#__PURE__*/React.createElement("h3", {
+
+
+    className: "text-lg font-bold text-white mb-4 flex items-center gap-2"
+
+
+  }, /*#__PURE__*/React.createElement(Icon, {
+
+
+    name: "Table"
+
+
+  }), " Standard ASCII (32-126)"), /*#__PURE__*/React.createElement("div", {
+
+
+    className: "grid grid-cols-4 md:grid-cols-8 gap-2"
+
+
+  }, Array.from({
+
+
+    length: 127 - 32
+
+
+  }, (_, i) => i + 32).map(code => /*#__PURE__*/React.createElement("div", {
+
+
+    key: code,
+
+
+    className: "bg-slate-900 border border-slate-700 p-2 rounded text-center hover:bg-cyan-900/30 hover:border-cyan-500 transition cursor-pointer group relative"
+
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+
+    className: "text-xs text-slate-500 mb-1"
+
+
+  }, code), /*#__PURE__*/React.createElement("div", {
+
+
+    className: "text-lg font-bold text-white font-mono"
+
+
+  }, String.fromCharCode(code)), /*#__PURE__*/React.createElement("div", {
+
+
+    className: "text-[10px] text-cyan-500 opacity-0 group-hover:opacity-100 transition-opacity"
+
+
+  }, "0x", code.toString(16).toUpperCase()))))), activeTab === "parity" && /*#__PURE__*/React.createElement("div", {
+
+
+    className: "space-y-6 animate-in fade-in zoom-in-95 duration-300"
+
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+
+    className: "bg-slate-800 p-8 rounded-2xl border border-slate-700 text-center"
+
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+
+    className: "flex flex-col md:flex-row items-center justify-center gap-8 mb-10"
+
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+
+    className: "flex gap-2"
+
+
+  }, parityBits.map((bit, i) => /*#__PURE__*/React.createElement("div", {
+
+
+    key: i,
+
+
+    className: "flex flex-col gap-2"
+
+
+  }, /*#__PURE__*/React.createElement("span", {
+
+
+    className: "text-xs text-slate-500 font-mono"
+
+
+  }, i === 7 ? /*#__PURE__*/React.createElement("span", {
+
+
+    className: "text-yellow-500 font-bold"
+
+
+  }, "P") : `D${6 - i}`), /*#__PURE__*/React.createElement("button", {
+
+
+    onClick: () => toggleParityBit(i),
+
+
+    className: `w-12 h-16 rounded-lg font-mono text-2xl font-bold flex items-center justify-center border-b-4 transition-all ${i === 7 ? bit ? "bg-yellow-600 border-yellow-800 text-white" : "bg-slate-700 border-slate-900 text-slate-600" : bit ? "bg-cyan-600 border-cyan-800 text-white" : "bg-slate-700 border-slate-900 text-slate-600"}`
+
+
+  }, bit))))), /*#__PURE__*/React.createElement("div", {
+
+
+    className: "grid md:grid-cols-2 gap-6 bg-slate-900/50 p-6 rounded-xl border border-slate-700"
+
+
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h4", {
+
+
+    className: "text-slate-400 text-sm mb-4"
+
+
+  }, "ASCII Character (Data Bits)"), /*#__PURE__*/React.createElement("div", {
+
+
+    className: "text-4xl font-bold text-white mb-2 font-mono"
+
+
+  }, "'", parityAnalysis.char, "'"), /*#__PURE__*/React.createElement("div", {
+
+
+    className: "text-slate-500 text-sm"
+
+
+  }, "Code: ", parityAnalysis.dataValue, " (0x", parityAnalysis.dataValue.toString(16).toUpperCase(), ")")), /*#__PURE__*/React.createElement("div", {
+
+
+    className: "border-l border-slate-700 pl-6"
+
+
+  }, /*#__PURE__*/React.createElement("h4", {
+
+
+    className: "text-slate-400 text-sm mb-4"
+
+
+  }, "Parity Analysis"), /*#__PURE__*/React.createElement("div", {
+
+
+    className: "space-y-3 text-left"
+
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+
+    className: "flex justify-between text-sm"
+
+
+  }, /*#__PURE__*/React.createElement("span", null, "Number of 1s (Total):"), /*#__PURE__*/React.createElement("span", {
+
+
+    className: "font-bold text-white"
+
+
+  }, parityAnalysis.onesCount + parityAnalysis.pBit)), /*#__PURE__*/React.createElement("div", {
+
+
+    className: `p-3 rounded-lg border flex items-center justify-between ${parityAnalysis.isEvenParity ? "bg-green-900/20 border-green-500/50 text-green-400" : "bg-slate-800 border-slate-700 text-slate-500"}`
+
+
+  }, /*#__PURE__*/React.createElement("span", null, "Even Parity Check"), parityAnalysis.isEvenParity ? /*#__PURE__*/React.createElement(Icon, {
+
+
+    name: "CheckCircle2",
+
+
+    size: 18
+
+
+  }) : /*#__PURE__*/React.createElement(Icon, {
+
+
+    name: "XCircle",
+
+
+    size: 18
+
+
+  })), /*#__PURE__*/React.createElement("div", {
+
+
+    className: `p-3 rounded-lg border flex items-center justify-between ${parityAnalysis.isOddParity ? "bg-green-900/20 border-green-500/50 text-green-400" : "bg-slate-800 border-slate-700 text-slate-500"}`
+
+
+  }, /*#__PURE__*/React.createElement("span", null, "Odd Parity Check"), parityAnalysis.isOddParity ? /*#__PURE__*/React.createElement(Icon, {
+
+
+    name: "CheckCircle2",
+
+
+    size: 18
+
+
+  }) : /*#__PURE__*/React.createElement(Icon, {
+
+
+    name: "XCircle",
+
+
+    size: 18
+
+
+  })))))), /*#__PURE__*/React.createElement("div", {
+
+
+    className: "bg-yellow-900/20 p-4 rounded-lg border border-yellow-500/30 flex gap-3 text-sm text-yellow-200"
+
+
+  }, /*#__PURE__*/React.createElement(Icon, {
+
+
+    name: "Info",
+
+
+    className: "shrink-0"
+
+
+  }), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("strong", null, "Exam Tip:"), " Parity bit is an extra bit added to make the total number of 1s either Even (Even Parity) or Odd (Odd Parity). It detects single-bit errors."))));
+
+
+};
+
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+
+
+root.render(/*#__PURE__*/React.createElement(App, null));
+
+
+</script>
+
+
+    <script src="../../../../../../common/learn-from-zero.js"></script>
+
+
+  <script src="../../../../../../common/interactive-lab-kit.js"></script>
+
+
+<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+
+</body>
+
+
+</html>
+
+

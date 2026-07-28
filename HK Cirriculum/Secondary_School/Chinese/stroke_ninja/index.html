@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <title>筆順忍者 Stroke Ninja 2.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #0f172a;
+            overflow: hidden;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        #game-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .ui-overlay {
+            position: absolute;
+            pointer-events: none;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+            box-sizing: border-box;
+            z-index: 10;
+        }
+
+        .hud-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .score-box {
+            text-align: left;
+            text-shadow: 0 0 10px rgba(59, 130, 246, 0.8);
+        }
+
+        .lives-box {
+            text-align: right;
+            font-size: 2rem;
+            color: #ef4444;
+            text-shadow: 0 0 10px rgba(239, 68, 68, 0.8);
+        }
+
+        .combo-box {
+            position: absolute;
+            top: 20%;
+            left: 20px;
+            transform: rotate(-10deg);
+            opacity: 0;
+            transition: transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .combo-box.active {
+            opacity: 1;
+            transform: rotate(-10deg) scale(1.2);
+        }
+
+        .menu-screen {
+            position: absolute;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+            backdrop-filter: blur(8px);
+        }
+
+        .title {
+            font-size: 5rem;
+            font-weight: 900;
+            background: linear-gradient(to right, #a855f7, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(168, 85, 247, 0.5);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .btn-start {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            padding: 1rem 4rem;
+            font-size: 2rem;
+            border-radius: 9999px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+            transition: all 0.2s;
+            pointer-events: auto;
+            font-weight: bold;
+        }
+
+        .btn-start:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 40px rgba(59, 130, 246, 0.8);
+        }
+
+        .shake {
+            animation: shake 0.5s cubic-bezier(.36, .07, .19, .97) both;
+        }
+
+        @keyframes shake {
+
+            10%,
+            90% {
+                transform: translate3d(-1px, 0, 0);
+            }
+
+            20%,
+            80% {
+                transform: translate3d(2px, 0, 0);
+            }
+
+            30%,
+            50%,
+            70% {
+                transform: translate3d(-4px, 0, 0);
+            }
+
+            40%,
+            60% {
+                transform: translate3d(4px, 0, 0);
+            }
+        }
+    </style>
+    <!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../common/ncs-i18n.css" />
+  <script src="../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+      display: none !important;
+    }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+        if (label === "EN" || label === "\u4E2D") {
+          btn.classList.add("ncs-hide-when-ncs-fleet");
+        }
+      });
+      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+        el.classList.add("ncs-hide-when-ncs-fleet");
+      });
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+</head>
+
+<body>
+
+    <div id="game-container" class="relative w-full h-screen overflow-hidden">
+        <canvas id="game-canvas"></canvas>
+
+        <!-- HUD -->
+        <div class="ui-overlay" id="hud" style="display: none;">
+            <div class="hud-top">
+                <div class="score-box">
+                    <div class="text-blue-400 text-sm font-bold tracking-wider">SCORE</div>
+                    <div class="text-white text-5xl font-black" id="score-display">0</div>
+                </div>
+                <div class="lives-box" id="lives-display">
+                    ❤❤❤
+                </div>
+            </div>
+            <div id="combo-display"
+                class="combo-box text-yellow-400 font-black text-6xl drop-shadow-[0_0_15px_rgba(250,204,21,0.8)]">
+                <span id="combo-count">0</span> <span class="text-3xl">COMBO!</span>
+            </div>
+        </div>
+
+        <!-- Start Menu -->
+        <div id="start-menu" class="menu-screen">
+            <h1 class="title">筆順忍者<br><span class="text-2xl tracking-[1em] text-white/80">STROKE NINJA</span></h1>
+            <p class="text-gray-400 mb-8 text-xl">依筆順切開漢字 • 切勿失手</p>
+            <button class="btn-start" onclick="startGame()">開始修行</button>
+        </div>
+
+        <!-- Game Over Menu -->
+        <div id="game-over-menu" class="menu-screen" style="display: none;">
+            <h1 class="text-6xl font-black text-red-500 mb-2 drop-shadow-[0_0_30px_rgba(239,68,68,0.6)]">修煉結束</h1>
+            <p class="text-gray-300 mb-8 text-2xl">只差一點點！</p>
+            <div class="bg-slate-800/80 p-6 rounded-2xl mb-8 text-center min-w-[300px] border border-slate-700">
+                <div class="text-sm text-gray-400 mb-1">最終得分</div>
+                <div class="text-5xl font-black text-white mb-4" id="final-score">0</div>
+                <div class="text-sm text-gray-400 mb-1">最高連擊</div>
+                <div class="text-3xl font-bold text-yellow-400" id="final-combo">0</div>
+            </div>
+            <button class="btn-start" onclick="resetGame()">再次挑戰</button>
+        </div>
+    </div>
+
+    <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+</body>
+
+</html>
+

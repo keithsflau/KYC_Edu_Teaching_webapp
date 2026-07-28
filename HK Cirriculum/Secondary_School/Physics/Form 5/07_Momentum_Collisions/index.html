@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>F5 · Momentum & Collisions | 動量與碰撞</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="../../../../common/babel-react-classic.js"></script>
+  <link rel="stylesheet" href="../../../../common/subscribe-gate.css" />
+  <script>
+    window.HKC_SUBSCRIBE = {
+      appId: "f5-phy-momentum",
+      appNameZh: "動量與碰撞",
+      appNameEn: "Momentum & Collisions",
+      level: "F5",
+      subject: "Physics",
+      freeDrillLimit: 8,
+      wrongBookLimit: 10,
+      contactEmail: "support@hksteamai.com",
+      comingSoonHref: "../../../../pricing/index.html#payment-links"
+    };
+  </script>
+  <script src="../../../../common/subscribe-gate.js"></script>
+  <script src="../../../../common/parent-report.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    body { font-family: "IBM Plex Sans", system-ui, sans-serif; background: radial-gradient(ellipse 80% 50% at 10% -10%, #0f766e22, transparent 55%), #f8fafc; color: #0f172a; min-height: 100vh; }
+    input[type="range"] { accent-color: #0f766e; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+  </style>
+<!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
+  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+      display: none !important;
+    }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+        if (label === "EN" || label === "\u4E2D") {
+          btn.classList.add("ncs-hide-when-ncs-fleet");
+        }
+      });
+      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+        el.classList.add("ncs-hide-when-ncs-fleet");
+      });
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+</head>
+<body class="text-slate-800">
+  <!-- SUBSCRIBE_GATE: Marketing owns tiers. Free core must work offline. -->
+  <div id="root"></div>
+  <script>
+    window.SUBSCRIBE_CONFIG = {
+      enabled: true,
+      bannerText: "解鎖完整練習與家長進度 · 全年少於一次補習堂費",
+      premiumFeatures: ["progress_sync", "parent_dashboard", "unlimited_mocks"]
+    };
+  </script>
+  <script type="text/babel" data-presets="react-classic">
+    const { useState, useEffect } = React;
+    const APP_ID = "f5_phy_momentum";
+    const ACCENT = "#0f766e";
+
+    const HKC = (function () {
+      function progressView() {
+        const p = (window.HkcSubscribe && HkcSubscribe.getProgress()) || { drillsCorrect: 0, modulesCompleted: [], wrongBook: [], drillsAttempted: 0 };
+        return {
+          bestScore: p.drillsCorrect || 0,
+          sessions: (p.modulesCompleted || []).length,
+          totalCorrect: p.drillsCorrect || 0,
+          totalAttempted: p.drillsAttempted || 0,
+          wrongBook: (p.wrongBook || []).map((w, i) => ({ id: String(i) + "-" + (w.at || ""), prompt: w.label || "", hint: w.topic || "", answer: null, at: w.at })),
+          modeCleared: {}
+        };
+      }
+      return {
+        FREE_DAILY_CAP: 8,
+        MARKETING_PATH: "../../../../pricing/index.html#payment-links",
+        isPaid: () => !!(window.HkcSubscribe && HkcSubscribe.features().canDrillUnlimited && !HkcSubscribe.isClassroom()),
+        getEntitlement: () => (window.HkcSubscribe ? HkcSubscribe.getEntitlement() : { tier: "free" }),
+        remainingFree: () => {
+          if (!window.HkcSubscribe) return 8;
+          const r = HkcSubscribe.remainingFree();
+          return r === Infinity ? Infinity : r;
+        },
+        freeCapReached: () => !(window.HkcSubscribe && HkcSubscribe.canContinueDrills()),
+        recordDrillUse: () => {},
+        loadProgress: progressView,
+        saveProgress: () => progressView(),
+        addWrong: (appId, item) => {
+          if (window.HkcSubscribe) HkcSubscribe.recordDrill({ correct: false, label: (item.prompt || item.q || String(item.id) || "").toString().slice(0, 48), topic: (item.hint || "").toString().slice(0, 80), module: "practice" });
+        },
+        recordOk: (appId, item) => {
+          if (window.HkcSubscribe) HkcSubscribe.recordDrill({ correct: true, label: (item && (item.prompt || item.q || item.id) || "drill").toString().slice(0, 48), topic: "", module: "practice" });
+        },
+        removeWrong: () => {},
+        recordSession: (appId, score, total) => {
+          if (window.HkcSubscribe) HkcSubscribe.recordModule({ id: "session-" + Date.now(), label: "Session", score, total });
+        },
+        startTrialLocal: () => { if (window.HkcSubscribe) HkcSubscribe.setLocalEntitlement("trial", 14); }
+      };
+    })();
+
+    const GUIDED = [
+      { id: "g1", level: 1, q: "Momentum is defined as…", qZh: "動量定義為…",
+        opts: ["Mass × velocity (p = mv) 質量×速度", "Mass × acceleration 質量×加速度", "Force × time only 只有力×時間", "½mv² ½mv²"], a: "Mass × velocity (p = mv) 質量×速度",
+        hint: "p = mv; vector in direction of v. 動量為矢量,方向與速度相同。" },
+      { id: "g2", level: 1, q: "In the model, m = 2 kg and v = 3 m/s. Momentum p = ?", qZh: "模型中 m=2 kg、v=3 m/s,動量 p?",
+        opts: ["6 kg m/s", "5 kg m/s", "1.5 kg m/s", "9 kg m/s"], a: "6 kg m/s",
+        hint: "p = mv = 2 × 3. 直接相乘。" },
+      { id: "g3", level: 1, q: "Impulse equals…", qZh: "衝量等於…",
+        opts: ["Change in momentum (Δp) 動量變化", "Kinetic energy 動能", "Mass only 只有質量", "Velocity squared 速度平方"], a: "Change in momentum (Δp) 動量變化",
+        hint: "Impulse = FΔt = Δp. 衝量 = FΔt = Δp。" },
+      { id: "g4", level: 2, q: "Two carts collide on a frictionless track with no external horizontal force. Total momentum…", qZh: "無摩擦軌道上兩車碰撞,無水平外力,總動量…",
+        opts: ["Is conserved 守恆", "Always becomes zero 恆為零", "Doubles 加倍", "Depends on KE 視乎動能"], a: "Is conserved 守恆",
+        hint: "Net external impulse ≈ 0 → Σp before = Σp after. 無外力則動量守恆。" },
+      { id: "g5", level: 2, q: "A ball hits a wall and bounces back with the same speed. Momentum of the ball…", qZh: "球撞牆以相同速率彈回,球的動量…",
+        opts: ["Reverses direction (Δp ≠ 0) 方向相反(Δp≠0)", "Stays the same 不變", "Becomes zero 變零", "Doubles in magnitude 大小加倍"], a: "Reverses direction (Δp ≠ 0) 方向相反(Δp≠0)",
+        hint: "Speed same but velocity sign flips → large Δp. 速率同但速度反向。" },
+      { id: "g6", level: 2, q: "In an inelastic collision, kinetic energy…", qZh: "非彈性碰撞中,動能…",
+        opts: ["May decrease (not conserved) 可能減少(不守恆)", "Must always double 必加倍", "Is always conserved 必守恆", "Equals momentum 等於動量"], a: "May decrease (not conserved) 可能減少(不守恆)",
+        hint: "Momentum conserved; KE may become sound/heat/deformation. 動量守恆,動能可轉化。" }
+    ];
+    const EXAM = [
+      { id: "e1", level: 3, q: "A 0.2 kg ball moving at 10 m/s is caught by a player. Impulse on the ball?", qZh: "0.2 kg 球以 10 m/s 飛來被接住,對球的衝量?",
+        opts: ["2 N s (magnitude) 大小 2 N·s", "0.02 N s", "20 N s", "0.2 N s"], a: "2 N s (magnitude) 大小 2 N·s",
+        hint: "|Δp| = m|Δv| = 0.2 × 10 if brought to rest. 靜止則 Δp = mv。" },
+      { id: "e2", level: 3, q: "2 kg cart A (3 m/s right) hits 2 kg cart B at rest. They stick together. Common velocity?", qZh: "2 kg 車 A(3 m/s 向右)撞靜止 2 kg 車 B,黏合後共同速度?",
+        opts: ["1.5 m/s right 向右 1.5 m/s", "3 m/s", "0 m/s", "6 m/s"], a: "1.5 m/s right 向右 1.5 m/s",
+        hint: "m₁u₁ = (m₁+m₂)v → 2×3 = 4v → v = 1.5. 完全非彈性:動量守恆。" },
+      { id: "e3", level: 3, q: "Why do airbags reduce injury in a crash?", qZh: "為何安全氣囊減少撞擊傷害?",
+        opts: ["Increase collision time → same Δp with smaller force (F = Δp/Δt) 延長時間→同 Δp 力較小", "Reduce momentum change 減少動量變化", "Increase mass 增加質量", "Remove impulse 消除衝量"], a: "Increase collision time → same Δp with smaller force (F = Δp/Δt) 延長時間→同 Δp 力較小",
+        hint: "Same Δp over longer Δt → lower peak F. F = Δp/Δt。" },
+      { id: "e4", level: 4, q: "Elastic head-on: 1 kg at 4 m/s hits 1 kg at rest. After collision, first ball…", qZh: "彈性正碰:1 kg 以 4 m/s 撞靜止 1 kg,碰後第一球…",
+        opts: ["Stops; second moves at 4 m/s 停止;第二球 4 m/s", "Both move at 2 m/s 皆 2 m/s", "Reverses at 4 m/s 以 4 m/s 反彈", "Both stop 皆停"], a: "Stops; second moves at 4 m/s 停止;第二球 4 m/s",
+        hint: "Equal mass elastic: velocities exchange. 等質量彈性碰撞交換速度。" },
+      { id: "e5", level: 4, q: "A rocket gains momentum forward by…", qZh: "火箭向前獲得動量,因為…",
+        opts: ["Ejecting exhaust backward (conservation of momentum) 向後噴出廢氣(動量守恆)", "Friction with air 空氣摩擦", "Gravity alone 只靠重力", "Increasing mass without exhaust 不噴氣只增質"], a: "Ejecting exhaust backward (conservation of momentum) 向後噴出廢氣(動量守恆)",
+        hint: "System rocket+gas: total p conserved. 系統總動量守恆。" },
+      { id: "e6", level: 4, q: "Before: m₁=3 kg at 2 m/s, m₂=1 kg at −4 m/s (same line). Total momentum?", qZh: "碰前:m₁=3 kg 以 2 m/s,m₂=1 kg 以 −4 m/s(同一直線),總動量?",
+        opts: ["2 kg m/s", "10 kg m/s", "−2 kg m/s", "6 kg m/s"], a: "2 kg m/s",
+        hint: "p_total = 3×2 + 1×(−4) = 6 − 4 = 2. 注意方向符號。" }
+    ];
+
+    function LearnExtra(){const [v,setV]=useState(3);const m=2;return (<div className="mt-3 space-y-2"><label className="text-sm font-semibold">m={m} kg · v={v} → p={m*v} kg m/s</label><input type="range" min="0" max="10" value={v} onChange={e=>setV(+e.target.value)} className="w-full" /><p className="text-sm p-3 rounded-xl bg-teal-50 border border-teal-100">Impulse changes p.</p></div>);}
+
+    function UpgradeCTA({ reason, onClose, onTrial }) {
+      return (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-4">
+          <div className={"w-full max-w-md rounded-2xl p-5 " + (false ? "bg-slate-900 border border-slate-600" : "bg-white border border-slate-200") }>
+            <h3 className="text-lg font-bold" style={{color: ACCENT}}>解鎖完整練習與家長進度</h3>
+            <p className={"text-sm mt-2 " + (false ? "text-slate-300" : "text-slate-600")}>{reason || window.SUBSCRIBE_CONFIG.bannerText}</p>
+            <ul className={"mt-3 text-sm space-y-1 list-disc list-inside " + (false ? "text-slate-300" : "text-slate-600")}>
+              <li>Unlimited daily drills</li>
+              <li>Full wrong-answer book</li>
+              <li>Progress sync (coming)</li>
+            </ul>
+            <button type="button" onClick={onTrial} className="mt-4 w-full min-h-[48px] rounded-xl font-semibold text-white" style={{background: ACCENT}}>開始 14 日試用（本機）</button>
+            <a href={HKC.MARKETING_PATH} className={"mt-2 block w-full min-h-[44px] text-center leading-[44px] rounded-xl border text-sm " + (false ? "border-slate-600" : "border-slate-300")}>了解家長計劃</a>
+            <button type="button" onClick={onClose} className={"mt-2 w-full text-sm underline " + (false ? "text-slate-400" : "text-slate-500")}>繼續免費</button>
+          </div>
+        </div>
+      );
+    }
+
+    function Drill({ bank, label, onNeedUpgrade, onDone }) {
+      const [qi, setQi] = useState(0);
+      const [fb, setFb] = useState(null);
+      const [score, setScore] = useState(0);
+      const [hint, setHint] = useState(false);
+      const [first, setFirst] = useState(true);
+      const item = bank[qi];
+
+      function pick(opt) {
+        if (HKC.freeCapReached()) {
+          if (window.HkcSubscribe) HkcSubscribe.showPaywall("hit_free_cap");
+          onNeedUpgrade("今日免費練習已用完。");
+          return;
+        }
+        HKC.recordDrillUse(APP_ID);
+        const ok = opt === item.a;
+        setFb(ok
+          ? { ok: true, msg: "Correct · 正確" }
+          : { ok: false, msg: "Not quite · 再想。Use Hint for the method (answer not shown)." });
+        if (ok) {
+          if (typeof HKC.recordOk === "function") HKC.recordOk(APP_ID, item);
+          if (first) setScore(s => s + 1);
+        } else {
+          HKC.addWrong(APP_ID, { id: item.id, prompt: item.q, hint: item.hint, answer: item.a });
+          setFirst(false);
+        }
+      }
+
+      function next() {
+        setFb(null); setHint(false); setFirst(true);
+        if (qi + 1 >= bank.length) {
+          HKC.recordSession(APP_ID, score, bank.length);
+          onDone(score, bank.length);
+        } else setQi(qi + 1);
+      }
+
+      return (
+        <section className={"bg-white border border-slate-200 shadow-sm rounded-2xl p-4 sm:p-5"}>
+          <div className={"flex justify-between text-sm mb-3 " + (false ? "text-slate-400" : "text-slate-500")}>
+            <span>{label} · Q {qi + 1}/{bank.length} · Lv {item.level}</span>
+            <span>Score {score}</span>
+          </div>
+          <h2 className="text-lg font-bold mb-1">{item.q}</h2>
+          {item.qZh ? <p className="text-sm mb-4 opacity-80" style={{color: ACCENT}}>{item.qZh}</p> : <div className="mb-4" />}
+          <div className="grid gap-2">
+            {item.opts.map(o => (
+              <button key={o} type="button" disabled={fb && fb.ok} onClick={() => pick(o)}
+                className={"text-left px-4 py-3 rounded-xl min-h-[48px] disabled:opacity-50 bg-slate-50 hover:bg-slate-100 border border-slate-200"}>{o}</button>
+            ))}
+          </div>
+          <button type="button" className="text-sm mt-3 font-semibold min-h-[44px]" style={{color: ACCENT}} onClick={() => setHint(true)}>Hint · 提示</button>
+          {hint && <p className={"text-sm mt-1 p-3 rounded-xl " + (false ? "bg-amber-950/50 text-amber-100 border border-amber-800/40" : "bg-amber-50 text-amber-900 border border-amber-200")}>{item.hint}</p>}
+          {fb && (
+            <div className={"mt-4 p-3 rounded-xl text-sm " + (fb.ok ? (false ? "bg-emerald-900/40 text-emerald-200" : "bg-emerald-50 text-emerald-800") : (false ? "bg-rose-900/40 text-rose-200" : "bg-rose-50 text-rose-800"))}>
+              {fb.msg}
+              {fb.ok && <button type="button" className="block mt-2 underline font-semibold" onClick={next}>Next →</button>}
+              {!fb.ok && <button type="button" className="block mt-2 underline font-semibold" onClick={() => setFb(null)}>Retry</button>}
+            </div>
+          )}
+        </section>
+      );
+    }
+
+    function App() {
+      const [mode, setMode] = useState("learn");
+      const [progress, setProgress] = useState(() => HKC.loadProgress(APP_ID));
+      const [pay, setPay] = useState(false);
+      const [payReason, setPayReason] = useState("");
+      const [doneMsg, setDoneMsg] = useState(null);
+
+      function refresh() { setProgress(HKC.loadProgress(APP_ID)); }
+      useEffect(() => { refresh(); }, [mode]);
+
+      const tabs = [
+        { id: "learn", label: "Learn · 學習" },
+        { id: "guided", label: "Guided · 引導" },
+        { id: "exam", label: "Exam · 測驗" },
+        { id: "review", label: "Review · 錯題" }
+      ];
+
+      return (
+        <div className="max-w-3xl mx-auto p-4 sm:p-8">
+          <a href="../../index.html" className="text-sm hover:underline font-semibold" style={{color: ACCENT}}>← Hub</a>
+          <header className="mt-4 mb-4">
+            <p className="text-xs uppercase tracking-widest font-bold" style={{color: ACCENT}}>F5 Physics · Momentum</p>
+            <h1 className="text-2xl sm:text-3xl font-bold mt-1">Momentum & Collisions</h1>
+            <p className="text-slate-500 mt-1">動量與碰撞 · Learn → Guided → Exam → Review · 12 items</p>
+          </header>
+
+          <div className={"text-sm border border-dashed rounded-lg px-3 py-2 mb-3 flex flex-wrap justify-between gap-2 items-center " + (false ? "border-slate-600 bg-slate-900/80" : "border-slate-300 bg-white/80")}>
+            <span>{HKC.isPaid() ? (HKC.getEntitlement().tier + " · unlimited") : ("Free · " + HKC.remainingFree() + "/" + HKC.FREE_DAILY_CAP + " today")} · Best {progress.bestScore}</span>
+            {!HKC.isPaid() && (
+              <button type="button" className="px-3 py-1.5 rounded-md text-xs font-semibold text-white min-h-[36px]" style={{background: ACCENT}} onClick={() => setPay(true)}>Upgrade</button>
+            )}
+          </div>
+
+          <nav className="flex flex-wrap gap-2 mb-4">
+            {tabs.map(tab => (
+              <button key={tab.id} type="button" onClick={() => { setMode(tab.id); setDoneMsg(null); }}
+                className={"px-3.5 py-2 rounded-lg text-sm font-semibold min-h-[44px] " + (mode === tab.id ? "text-white" : "bg-white border border-slate-200 text-slate-700")}
+                style={mode === tab.id ? {background: ACCENT} : {}}>
+                {tab.label}
+              </button>
+            ))}
+          </nav>
+
+          {mode === "learn" && (
+            <section className={"bg-white border border-slate-200 shadow-sm rounded-2xl p-4 sm:p-5 space-y-3"}>
+              <h2 className="font-bold text-lg">Key ideas</h2>
+              <ul className={"text-sm space-y-2 list-disc list-inside " + (false ? "text-slate-300" : "text-slate-600")}>
+                <li>p = mv; impulse = Δp = FΔt.</li><li>Conservation of momentum if net external impulse ≈ 0.</li><li>Elastic vs inelastic: KE may not conserve.</li>
+              </ul>
+              <LearnExtra />
+              <button type="button" className="mt-2 px-4 py-2.5 rounded-xl font-semibold min-h-[48px] text-white" style={{background: ACCENT}} onClick={() => setMode("guided")}>
+                Start guided practice →
+              </button>
+            </section>
+          )}
+
+          {mode === "guided" && !doneMsg && (
+            <Drill bank={GUIDED} label="Guided" onNeedUpgrade={r => { setPayReason(r); setPay(true); }}
+              onDone={(s, n) => { setDoneMsg({ s, n, next: "exam" }); refresh(); }} />
+          )}
+          {mode === "exam" && !doneMsg && (
+            <Drill bank={EXAM} label="Exam" onNeedUpgrade={r => { setPayReason(r); setPay(true); }}
+              onDone={(s, n) => { setDoneMsg({ s, n, next: "review" }); refresh(); }} />
+          )}
+          {doneMsg && (mode === "guided" || mode === "exam") && (
+            <section className={"bg-white border border-slate-200 shadow-sm rounded-2xl p-6 text-center"}>
+              <h2 className="text-2xl font-bold">Complete</h2>
+              <p className="mt-2">{doneMsg.s} / {doneMsg.n}</p>
+              <button type="button" className="mt-4 px-4 py-2 rounded-xl font-semibold min-h-[48px] text-white" style={{background: ACCENT}}
+                onClick={() => { setDoneMsg(null); setMode(doneMsg.next); }}>Continue →</button>
+            </section>
+          )}
+          {mode === "review" && (
+            <section className={"bg-white border border-slate-200 shadow-sm rounded-2xl p-4 sm:p-5 space-y-3"}>
+              <h2 className="font-bold text-lg">Wrong-answer book · 錯題簿</h2>
+              {(progress.wrongBook || []).length === 0 && <p className={"text-sm " + (false ? "text-slate-400" : "text-slate-500")}>No wrong answers yet · 暫無錯題</p>}
+              {(progress.wrongBook || []).map(w => (
+                <div key={w.id} className={"rounded-xl p-3 text-sm " + (false ? "border border-slate-700" : "border border-slate-200")}>
+                  <p className="font-semibold">{w.prompt}</p>
+                  <p className="mt-1 opacity-80" style={{color: ACCENT}}>{w.hint}</p>
+                  {HKC.isPaid() && <p className="mt-1 text-emerald-500">Answer unlocked</p>}
+                  <button type="button" className={"text-xs underline mt-2 " + (false ? "text-slate-400" : "text-slate-500")} onClick={() => { HKC.removeWrong(APP_ID, w.id); refresh(); }}>Mark resolved</button>
+                </div>
+              ))}
+            </section>
+          )}
+          {pay && <UpgradeCTA reason={payReason} onClose={() => setPay(false)} onTrial={() => { HKC.startTrialLocal(); setPay(false); refresh(); }} />}
+        </div>
+      );
+    }
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+</body>
+</html>

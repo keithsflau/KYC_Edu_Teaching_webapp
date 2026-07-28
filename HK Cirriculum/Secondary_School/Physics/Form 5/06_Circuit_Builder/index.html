@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+
+<html lang="zh-HK">
+
+<head>
+
+  <meta charset="UTF-8" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>F5 ? Circuit Builder | ??????</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <script>
+
+    Babel.registerPreset("react-classic", {
+
+      presets: [[Babel.availablePresets.react, { runtime: "classic", pragma: "React.createElement", pragmaFrag: "React.Fragment" }]]
+
+    });
+
+  </script>
+
+  <link rel="stylesheet" href="../../../../common/subscribe-gate.css" />
+
+  <link rel="stylesheet" href="../../../../_shared/ncs-i18n.css" />
+
+  <script src="../../../../_shared/ncs-i18n.js"></script>
+
+  <script>
+
+    window.HKC_SUBSCRIBE = {
+
+      appId: "f5-phy-circuit",
+
+      appNameZh: "??????",
+
+      appNameEn: "Circuit Builder",
+
+      level: "F5",
+
+      subject: "Physics",
+
+      freeDrillLimit: 8,
+
+      wrongBookLimit: 10,
+
+      contactEmail: "support@hksteamai.com",
+
+      comingSoonHref: "../../../../pricing/index.html#payment-links"
+
+    };
+
+  </script>
+
+  <script src="../../../../common/subscribe-gate.js"></script>
+
+  <script src="../../../../common/parent-report.js"></script>
+
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+
+    body { font-family: "IBM Plex Sans", system-ui, sans-serif; background: radial-gradient(ellipse 80% 50% at 10% -10%, #7c3aed22, transparent 55%), #f8fafc; color: #0f172a; min-height: 100vh; }
+
+    input[type="range"] { accent-color: #7c3aed; }
+
+    button, a { -webkit-tap-highlight-color: transparent; }
+
+    canvas.sim { width: 100%; border-radius: 12px; background: #f8fafc; display: block; border: 1px solid #e2e8f0; }
+
+  </style>
+
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+      display: none !important;
+    }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+        if (label === "EN" || label === "\u4E2D") {
+          btn.classList.add("ncs-hide-when-ncs-fleet");
+        }
+      });
+      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+        el.classList.add("ncs-hide-when-ncs-fleet");
+      });
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+</head>
+
+<body class="text-slate-800">
+
+  <!-- SUBSCRIBE_GATE: Marketing owns tiers. Free core must work offline. -->
+
+  <div id="root"></div>
+
+  <script>
+
+    window.SUBSCRIBE_CONFIG = {
+
+      enabled: true,
+
+      bannerText: "??????????????? ? ??????????????,
+
+      premiumFeatures: ["progress_sync", "parent_dashboard", "unlimited_mocks"]
+
+    };
+
+  </script>
+
+  <script id="circuit-app-src" type="text/plain">
+
+    const { useState, useEffect, useRef } = React;
+
+    const { useLang, LangSwitcher, appTabs } = window.NcsI18n;
+
+    const APP_ID = "f5_phy_circuit";
+
+    const ACCENT = "#7c3aed";
+
+    const HKC = (function () {
+
+      function progressView() {
+
+        const p = (window.HkcSubscribe && HkcSubscribe.getProgress()) || { drillsCorrect: 0, modulesCompleted: [], wrongBook: [], drillsAttempted: 0 };
+
+        return {
+
+          bestScore: p.drillsCorrect || 0,
+
+          sessions: (p.modulesCompleted || []).length,
+
+          totalCorrect: p.drillsCorrect || 0,
+
+          totalAttempted: p.drillsAttempted || 0,
+
+          wrongBook: (p.wrongBook || []).map((w, i) => ({ id: String(i) + "-" + (w.at || ""), prompt: w.label || "", hint: w.topic || "", answer: null, at: w.at })),
+
+          modeCleared: {}
+
+        };
+
+      }
+
+      return {
+
+        FREE_DAILY_CAP: 8,
+
+        MARKETING_PATH: "../../../../pricing/index.html#payment-links",
+
+        isPaid: () => !!(window.HkcSubscribe && HkcSubscribe.features().canDrillUnlimited && !HkcSubscribe.isClassroom()),
+
+        getEntitlement: () => (window.HkcSubscribe ? HkcSubscribe.getEntitlement() : { tier: "free" }),
+
+        remainingFree: () => { if (!window.HkcSubscribe) return 8; const r = HkcSubscribe.remainingFree(); return r === Infinity ? Infinity : r; },
+
+        freeCapReached: () => !(window.HkcSubscribe && HkcSubscribe.canContinueDrills()),
+
+        recordDrillUse: () => {},
+
+        loadProgress: progressView,
+
+        saveProgress: () => progressView(),
+
+        addWrong: (appId, item) => { if (window.HkcSubscribe) HkcSubscribe.recordDrill({ correct: false, label: (item.prompt || item.q || String(item.id) || "").toString().slice(0, 48), topic: (item.hint || "").toString().slice(0, 80), module: "practice" }); },
+
+        recordOk: (appId, item) => { if (window.HkcSubscribe) HkcSubscribe.recordDrill({ correct: true, label: (item && (item.prompt || item.q || item.id) || "drill").toString().slice(0, 48), topic: "", module: "practice" }); },
+
+        removeWrong: () => {},
+
+        recordSession: (appId, score, total) => { if (window.HkcSubscribe) HkcSubscribe.recordModule({ id: "session-" + Date.now(), label: "Session", score, total }); },
+
+        startTrialLocal: () => { if (window.HkcSubscribe) HkcSubscribe.setLocalEntitlement("trial", 14); }
+
+      };
+
+    })();
+
+
+
+    const TFZ_STEPS = [
+
+      { id: "A1", title: "What is electric current?", titleZh: "????????",
+
+        body: "Current is the FLOW of charge. In metal wires, electrons drift around the circuit, pushed by the battery. Current I is measured in amperes (A) = charge per second.",
+
+        bodyZh: "???????????????????????,??????????????????I ?????(A) ????????????????????,
+
+        q: "Current is the rate of flow of??, qZh: "????????????????",
+
+        opts: ["Charge ???", "Voltage ????", "Resistance ???"], a: "Charge ???",
+
+        why: "I = Q/t ??amperes are coulombs per second." },
+
+      { id: "A2", title: "Voltage is the push (energy per charge)", titleZh: "???????????",
+
+        body: "A battery gives each coulomb of charge energy ??that is its voltage (EMF). 6 V means 6 joules of energy given to every coulomb that passes through the cell.",
+
+        bodyZh: "??????????????????????,????????? V ??????????? 6 ????????,
+
+        q: "A 6 V battery gives each coulomb??, qZh: "6 V ???????????????,
+
+        opts: ["6 J of energy 6 ??????, "6 A of current", "6 ? of resistance"], a: "6 J of energy 6 ??????,
+
+        why: "V = E/Q. Voltage is energy transferred per unit charge." },
+
+      { id: "A3", title: "Resistance opposes flow", titleZh: "???????????",
+
+        body: "Components resist the flow of charge, converting electrical energy to heat/light. Resistance R is measured in ohms (?). Bigger R ??smaller current for the same voltage.",
+
+        bodyZh: "?????????????,??????????/??????R ?????(?) ??????????????,R ???????????,
+
+        q: "Same battery, larger resistance ??current becomes??, qZh: "????????,?????,????????,
+
+        opts: ["Smaller ???", "Larger ??", "Unchanged ???"], a: "Smaller ???",
+
+        why: "I = V/R ??inverse proportion." },
+
+      { id: "A4", title: "Ohm's Law: V = IR", titleZh: "??????:V = IR",
+
+        body: "The three quantities lock together: V = I ? R. Know any two, find the third. A 12 V battery across a 4 ? resistor drives I = 12/4 = 3 A.",
+
+        bodyZh: "?????????V = I ? R?????????2 V ??????4 ? ???,???? I = 12/4 = 3 A??,
+
+        q: "9 V across 3 ? gives what current?", qZh: "9 V ??3 ?,??????????",
+
+        opts: ["3 A", "27 A", "0.33 A"], a: "3 A",
+
+        why: "I = V/R = 9/3 = 3 A." },
+
+      { id: "A5", title: "Series: one path, shared current", titleZh: "??:???,????????",
+
+        body: "In series there is only ONE path, so the same current flows through every component. Resistances add: R_total = R??+ R?? The battery voltage is shared between components in proportion to their R.",
+
+        bodyZh: "??????????,???????????????????:R_total = R??+ R???????????????????,
+
+        q: "R??= 2 ? and R??= 4 ? in series. Total resistance?", qZh: "2 ? ??4 ? ??,????",
+
+        opts: ["6 ?", "1.33 ?", "2 ?"], a: "6 ?",
+
+        why: "Series: add them. 2 + 4 = 6 ?." },
+
+      { id: "A6", title: "Parallel: split paths, same voltage", titleZh: "??:???,????????",
+
+        body: "In parallel each branch connects across the SAME two points, so every branch gets the full battery voltage. Currents add: I_total = I??+ I?? Total resistance DROPS below the smallest branch: 1/R = 1/R??+ 1/R??",
+
+        bodyZh: "????????????????????????????????????????I_total = I??+ I??????????????????,
+
+        q: "Two 6 ? resistors in parallel. Total resistance?", qZh: "????6 ? ??,????",
+
+        opts: ["3 ?", "12 ?", "6 ?"], a: "3 ?",
+
+        why: "1/R = 1/6 + 1/6 = 1/3 ??R = 3 ?. Parallel always reduces resistance." },
+
+      { id: "A7", title: "Power: P = VI = I?R", titleZh: "??????P = VI = I?R",
+
+        body: "Components convert energy at a rate P = V ? I. In a resistor that becomes heating: P = I?R ??double the current, FOUR times the heating. This is why thin wires melt in short circuits.",
+
+        bodyZh: "?????P = V ? I ????????????????????????P = I?R:????????????????,
+
+        q: "A resistor carries 2 A and dissipates 12 W. Its resistance is??, qZh: "???????? 2 A,??? 12 W,???????,
+
+        opts: ["3 ?", "6 ?", "24 ?"], a: "3 ?",
+
+        why: "P = I?R ??12 = 4R ??R = 3 ?." },
+
+      { id: "A8", title: "Checkpoint: predict the circuit", titleZh: "??????????",
+
+        body: "In the lab you can switch series ??parallel, open the switch, and change E, R?? R?? Before touching a slider, PREDICT the ammeter reading ??then check. That habit is exam gold.",
+
+        bodyZh: "???????????/????????????E??R???R?????????????????????????????,
+
+        q: "You move a resistor from series to parallel with its twin. Total resistance??, qZh: "?????????????,????????,
+
+        opts: ["Drops ???", "Rises ???", "Stays the same ???"], a: "Drops ???",
+
+        why: "Parallel paths always reduce total R below the smallest branch ??so current rises." }
+
+    ];
+
+
+
+    function LearnFromZero({ steps, onComplete }) {
+
+      const [i, setI] = useState(0);
+
+      const [picked, setPicked] = useState(null);
+
+      const step = steps[i];
+
+      const last = i === steps.length - 1;
+
+      function pick(opt) { if (picked) return; setPicked(opt); }
+
+      function next() {
+
+        if (last) { onComplete(); return; }
+
+        setI(i + 1); setPicked(null);
+
+      }
+
+      return (
+
+        <section className="bg-white border border-slate-200 shadow-sm rounded-2xl p-4 sm:p-6">
+
+          <div className="flex items-center justify-between mb-3">
+
+            <p className="text-xs font-black uppercase tracking-widest" style={{color: ACCENT}}>Learn From Zero ? ?????????/p>
+
+            <p className="text-xs text-slate-500">{step.id} / A{steps.length}</p>
+
+          </div>
+
+          <div className="flex gap-1.5 mb-4">
+
+            {steps.map((s, k) => (
+
+              <div key={s.id} className="h-1.5 flex-1 rounded-full" style={{background: k <= i ? ACCENT : "#e2e8f0"}} />
+
+            ))}
+
+          </div>
+
+          <h2 className="text-xl font-bold">{step.title}</h2>
+
+          <p className="text-sm font-semibold text-slate-500 mt-0.5">{step.titleZh}</p>
+
+          <p className="text-sm mt-3 text-slate-700 leading-relaxed">{step.body}</p>
+
+          <p className="text-sm mt-2 text-slate-500 leading-relaxed">{step.bodyZh}</p>
+
+          <div className="mt-4 p-3 rounded-xl" style={{background: "#f5f3ff", border: "1px solid #ddd6fe"}}>
+
+            <p className="text-sm font-bold">{step.q}</p>
+
+            <p className="text-xs text-slate-500 mb-2">{step.qZh}</p>
+
+            <div className="grid gap-2">
+
+              {step.opts.map(o => {
+
+                let cls = "text-left px-3 py-2.5 rounded-xl text-sm border min-h-[44px] ";
+
+                if (!picked) cls += "bg-white border-slate-200 hover:bg-slate-50";
+
+                else if (o === step.a) cls += "bg-emerald-50 border-emerald-300 text-emerald-800 font-semibold";
+
+                else if (o === picked) cls += "bg-rose-50 border-rose-300 text-rose-800";
+
+                else cls += "bg-white border-slate-200 opacity-60";
+
+                return <button key={o} type="button" className={cls} onClick={() => pick(o)}>{o}</button>;
+
+              })}
+
+            </div>
+
+            {picked && (
+
+              <div className="mt-3 text-sm p-3 rounded-lg bg-white/70 border border-slate-200">
+
+                <p className="font-semibold">{picked === step.a ? "??Correct ? ????" : "??Not quite ??see why ? ?????}</p>
+
+                <p className="mt-1 text-slate-600">{step.why}</p>
+
+                {picked === step.a && (
+
+                  <button type="button" onClick={next} className="mt-3 px-4 py-2.5 rounded-xl font-semibold text-white min-h-[44px]" style={{background: ACCENT}}>
+
+                    {last ? "Unlock the Lab ?????????? : "Next step ??}
+
+                  </button>
+
+                )}
+
+              </div>
+
+            )}
+
+          </div>
+
+        </section>
+
+      );
+
+    }
+
+
+
+    function polylineLength(pts) { let L = 0; for (let i = 1; i < pts.length; i++) L += Math.hypot(pts[i][0] - pts[i-1][0], pts[i][1] - pts[i-1][1]); return L; }
+
+    function pointAt(pts, s) {
+
+      for (let i = 1; i < pts.length; i++) {
+
+        const seg = Math.hypot(pts[i][0] - pts[i-1][0], pts[i][1] - pts[i-1][1]);
+
+        if (s <= seg) { const f = s / seg; return [pts[i-1][0] + f * (pts[i][0] - pts[i-1][0]), pts[i-1][1] + f * (pts[i][1] - pts[i-1][1])]; }
+
+        s -= seg;
+
+      }
+
+      return pts[pts.length - 1];
+
+    }
+
+    function zigzag(ctx, x, y, w, vertical) {
+
+      ctx.save(); ctx.translate(x, y); if (vertical) ctx.rotate(Math.PI / 2);
+
+      ctx.beginPath(); ctx.moveTo(-w / 2, 0);
+
+      const n = 6, amp = 8;
+
+      for (let i = 0; i < n; i++) ctx.lineTo(-w / 2 + (i + 0.5) * (w / n), i % 2 ? amp : -amp);
+
+      ctx.lineTo(w / 2, 0); ctx.stroke(); ctx.restore();
+
+    }
+
+
+
+    function CircuitSim() {
+
+      const [E, setE] = useState(6);
+
+      const [R1, setR1] = useState(4);
+
+      const [R2, setR2] = useState(8);
+
+      const [topo, setTopo] = useState("series");
+
+      const [closed, setClosed] = useState(true);
+
+      const [playing, setPlaying] = useState(true);
+
+      const [slow, setSlow] = useState(false);
+
+      const [flowMode, setFlowMode] = useState("electrons");
+
+      const stepOnce = useRef(false);
+
+      const cv = useRef(null);
+
+      const S = useRef({ dots: [], last: 0 });
+
+      const OUTER = [[110, 300], [110, 80], [610, 80], [610, 300], [110, 300]];
+
+      const BR1 = [[240, 80], [240, 300]];
+
+      const BR2 = [[480, 80], [480, 300]];
+
+
+
+      const phys = (function () {
+
+        if (!closed) return { I: 0, I1: 0, I2: 0, V1: 0, V2: 0, P1: 0, P2: 0, Rt: Infinity };
+
+        if (topo === "series") {
+
+          const Rt = R1 + R2, I = E / Rt;
+
+          return { I, I1: I, I2: I, V1: I * R1, V2: I * R2, P1: I * I * R1, P2: I * I * R2, Rt };
+
+        }
+
+        const Rt = 1 / (1 / R1 + 1 / R2), I = E / Rt, I1 = E / R1, I2 = E / R2;
+
+        return { I, I1, I2, V1: E, V2: E, P1: E * I1, P2: E * I2, Rt };
+
+      })();
+
+
+
+      useEffect(() => {
+
+        let raf, last = performance.now();
+
+        function frame(now) {
+
+          const dt = Math.min(0.05, (now - last) / 1000); last = now;
+
+          draw(cv.current, dt);
+
+          raf = requestAnimationFrame(frame);
+
+        }
+
+        raf = requestAnimationFrame(frame);
+
+        return () => cancelAnimationFrame(raf);
+
+      });
+
+
+
+      function initDots(count, list) {
+
+        while (list.length < count) list.push({ s: Math.random() });
+
+        list.length = count;
+
+      }
+
+
+
+      function draw(c, dt) {
+
+        if (!c) return;
+
+        const ctx = c.getContext("2d");
+
+        ctx.clearRect(0, 0, c.width, c.height);
+
+        ctx.fillStyle = "#f8fafc"; ctx.fillRect(0, 0, c.width, c.height);
+
+        if (!S.current.o) S.current.o = { main: [], b1: [], b2: [] };
+
+        const o = S.current.o;
+
+        const timeMul = (playing || stepOnce.current ? 1 : 0) * (slow ? 0.3 : 1) * (stepOnce.current ? 5 : 1);
+
+        const flowSign = flowMode === "electrons" ? -1 : 1;
+
+        const vMain = closed ? Math.min(200, 40 + 90 * phys.I) * timeMul * flowSign : 0;
+
+        const v1 = closed && topo === "parallel" ? Math.min(200, 40 + 90 * phys.I1) * timeMul * flowSign : vMain;
+
+        const v2 = closed && topo === "parallel" ? Math.min(200, 40 + 90 * phys.I2) * timeMul * flowSign : vMain;
+
+        const pathMain = OUTER;
+
+        const Lm = polylineLength(pathMain);
+
+        initDots(16, o.main);
+
+        ctx.lineWidth = 3; ctx.strokeStyle = "#334155";
+
+        ctx.beginPath(); ctx.moveTo(OUTER[0][0], OUTER[0][1]);
+
+        for (let i = 1; i < OUTER.length; i++) ctx.lineTo(OUTER[i][0], OUTER[i][1]);
+
+        ctx.stroke();
+
+        if (topo === "parallel") {
+
+          ctx.beginPath(); ctx.moveTo(BR1[0][0], BR1[0][1]); ctx.lineTo(BR1[1][0], BR1[1][1]); ctx.stroke();
+
+          ctx.beginPath(); ctx.moveTo(BR2[0][0], BR2[0][1]); ctx.lineTo(BR2[1][0], BR2[1][1]); ctx.stroke();
+
+          ctx.fillStyle = "#334155";
+
+          [[240, 80], [240, 300], [480, 80], [480, 300]].forEach(n => { ctx.beginPath(); ctx.arc(n[0], n[1], 5, 0, 7); ctx.fill(); });
+
+        }
+
+        ctx.strokeStyle = "#0f172a"; ctx.lineWidth = 3;
+
+        ctx.beginPath(); ctx.moveTo(96, 178); ctx.lineTo(124, 178); ctx.moveTo(104, 202); ctx.lineTo(116, 202); ctx.stroke();
+
+        ctx.font = "bold 13px IBM Plex Sans"; ctx.fillStyle = "#0f172a";
+
+        ctx.fillText("E = " + E.toFixed(1) + " V", 60, 165);
+
+        ctx.fillText("+", 130, 172);
+
+        ctx.fillText("??, 130, 212);
+
+        ctx.strokeStyle = "#7c3aed"; ctx.lineWidth = 2.5;
+
+        ctx.beginPath(); ctx.arc(110, 120, 16, 0, 7); ctx.stroke();
+
+        ctx.fillStyle = "#7c3aed"; ctx.font = "bold 14px IBM Plex Sans"; ctx.fillText("A", 105, 125);
+
+        const rPos = topo === "series" ? { r1: [360, 80, false], r2: [360, 300, false] } : { r1: [240, 190, true], r2: [480, 190, true] };
+
+        [[rPos.r1, R1, "R??, phys.P1], [rPos.r2, R2, "R??, phys.P2]].forEach(([rp, Rv, nm, Pw]) => {
+
+          const [x, y, vert] = rp;
+
+          ctx.save();
+
+          ctx.fillStyle = "rgba(239,68,68," + Math.min(0.55, Pw / 40) + ")";
+
+          ctx.beginPath(); ctx.arc(x, y, 26, 0, 7); ctx.fill();
+
+          ctx.restore();
+
+          ctx.strokeStyle = "#0f172a"; ctx.lineWidth = 2.5;
+
+          zigzag(ctx, x, y, 64, vert);
+
+          ctx.fillStyle = "#0f172a"; ctx.font = "bold 13px IBM Plex Sans";
+
+          ctx.fillText(nm + " = " + Rv + " ?", x - 26, y + (vert ? -34 : -22));
+
+          ctx.fillStyle = "#64748b"; ctx.font = "12px IBM Plex Sans";
+
+          ctx.fillText(Pw.toFixed(1) + " W", x - 16, y + (vert ? 44 : 40));
+
+        });
+
+        ctx.strokeStyle = "#0f172a"; ctx.lineWidth = 3;
+
+        if (closed) { ctx.beginPath(); ctx.moveTo(610, 200); ctx.lineTo(610, 260); ctx.stroke(); }
+
+        else { ctx.beginPath(); ctx.moveTo(610, 200); ctx.lineTo(610, 258); ctx.moveTo(610, 200); ctx.lineTo(636, 236); ctx.stroke(); }
+
+        ctx.fillStyle = "#64748b"; ctx.font = "12px IBM Plex Sans";
+
+        ctx.fillText(closed ? "switch closed ????????" : "switch OPEN ????????", 540, 290);
+
+        function drawDots(list, path, v, color) {
+
+          const L = polylineLength(path);
+
+          ctx.fillStyle = color;
+
+          list.forEach(d => {
+
+            d.s = (d.s + (v * dt) / L) % 1;
+
+            const [x, y] = pointAt(path, d.s * L);
+
+            ctx.beginPath(); ctx.arc(x, y, 3.5, 0, 7); ctx.fill();
+
+          });
+
+        }
+
+        if (closed) {
+
+          drawDots(o.main, pathMain, vMain, flowMode === "electrons" ? "#0284c8" : "#dc2626");
+
+          if (topo === "parallel") {
+
+            initDots(8, o.b1); initDots(8, o.b2);
+
+            drawDots(o.b1, BR1, v1, flowMode === "electrons" ? "#dc2626" : "#b45309");
+
+            drawDots(o.b2, BR2, v2, flowMode === "electrons" ? "#ea580c" : "#b45309");
+
+          } else { o.b1 = []; o.b2 = []; }
+
+        }
+
+        stepOnce.current = false;
+
+        ctx.fillStyle = "#334155"; ctx.font = "12px IBM Plex Sans";
+
+        ctx.fillText(flowMode === "electrons"
+
+          ? "electrons ???? (????+ ? speed ??current ?????????"
+
+          : "conventional current ??????? (+ ????? speed ??I)", 380, 340);
+
+      }
+
+
+
+      return (
+
+        <div className="space-y-3">
+
+          <div className="flex flex-wrap gap-2 items-center">
+
+            {["series", "parallel"].map(t => (
+
+              <button key={t} type="button" onClick={() => setTopo(t)}
+
+                className={"px-3 py-2 rounded-xl text-sm font-semibold min-h-[44px] border " + (topo === t ? "text-white" : "bg-white text-slate-700 border-slate-200")}
+
+                style={topo === t ? {background: ACCENT, borderColor: ACCENT} : {}}>{t === "series" ? "Series ??" : "Parallel ??"}</button>
+
+            ))}
+
+            <button type="button" onClick={() => setClosed(c => !c)} className={"px-3 py-2 rounded-xl text-sm font-semibold min-h-[44px] border " + (closed ? "bg-emerald-600 text-white border-emerald-600" : "bg-rose-600 text-white border-rose-600")}>
+
+              {closed ? "Switch: CLOSED ????" : "Switch: OPEN ????"}</button>
+
+          </div>
+
+          <canvas ref={cv} className="sim" width="720" height="380" />
+
+          <div className="grid sm:grid-cols-3 gap-3">
+
+            <label className="text-sm font-semibold bg-white border border-slate-200 rounded-xl p-3">EMF ??????E ? {E.toFixed(1)} V
+
+              <input type="range" min="1.5" max="12" step="0.5" value={E} onChange={e => setE(+e.target.value)} className="w-full mt-2" /></label>
+
+            <label className="text-sm font-semibold bg-white border border-slate-200 rounded-xl p-3">R??? {R1} ?
+
+              <input type="range" min="2" max="40" step="1" value={R1} onChange={e => setR1(+e.target.value)} className="w-full mt-2" /></label>
+
+            <label className="text-sm font-semibold bg-white border border-slate-200 rounded-xl p-3">R??? {R2} ?
+
+              <input type="range" min="2" max="40" step="1" value={R2} onChange={e => setR2(+e.target.value)} className="w-full mt-2" /></label>
+
+          </div>
+
+          <div className="flex flex-wrap gap-2 text-sm">
+
+            <span className="px-3 py-1.5 rounded-full bg-violet-100 text-violet-800 font-bold">I total ??????{closed ? phys.I.toFixed(2) : "0.00"} A</span>
+
+            <span className="px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 font-semibold">R total ??{closed ? phys.Rt.toFixed(1) : "??} ?</span>
+
+            <span className="px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 font-semibold">V??= {phys.V1.toFixed(1)} V ? V??= {phys.V2.toFixed(1)} V</span>
+
+            <span className="px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 font-semibold">P??= {phys.P1.toFixed(1)} W ? P??= {phys.P2.toFixed(1)} W</span>
+
+          </div>
+
+          <div className="flex flex-wrap gap-2 items-center rounded-xl border border-slate-200 p-3 bg-slate-50">
+
+            <button type="button" onClick={() => setPlaying(p => !p)} className="px-4 py-2 rounded-xl text-sm font-bold text-white min-h-[44px]" style={{background: ACCENT}}>{playing ? "?????? Pause" : "????? Play"}</button>
+
+            <button type="button" onClick={() => { setPlaying(false); stepOnce.current = true; }} className="px-4 py-2 rounded-xl text-sm font-bold bg-white border border-slate-300 min-h-[44px]">?????Step</button>
+
+            <label className="flex items-center gap-2 text-sm font-semibold min-h-[44px] px-2">
+
+              <input type="checkbox" checked={slow} onChange={e => setSlow(e.target.checked)} className="w-5 h-5" /> ??? Slow
+
+            </label>
+
+            <div className="flex gap-1.5">
+
+              {["electrons", "conventional"].map(k => (
+
+                <button key={k} type="button" onClick={() => setFlowMode(k)}
+
+                  className={"px-3 py-2 rounded-xl text-sm font-semibold min-h-[44px] border " + (flowMode === k ? "text-white" : "bg-white text-slate-700 border-slate-200")}
+
+                  style={flowMode === k ? {background: ACCENT, borderColor: ACCENT} : {}}>{k === "electrons" ? "??????Electrons" : "??????? Conventional"}</button>
+
+              ))}
+
+            </div>
+
+            <button type="button" onClick={() => { setE(6); setR1(4); setR2(8); setTopo("series"); setClosed(true); setPlaying(true); setSlow(false); setFlowMode("electrons"); S.current.o = null; }} className="ml-auto px-4 py-2 rounded-xl text-sm font-bold bg-white border border-slate-300 min-h-[44px]">????? Reset</button>
+
+          </div>
+
+        </div>
+
+      );
+
+    }
+
+
+
+    const GUIDED = [
+
+      { id: "g1", level: 1, q: "A 6 V battery drives a 12 ? resistor. What current flows?", qZh: "6 V ??????12 ? ???,??????????",
+
+        opts: ["0.5 A", "2 A", "6 A", "72 A"], a: "0.5 A",
+
+        hint: "I = V/R = 6/12. ?????? I = V/R?? },
+
+      { id: "g2", level: 1, q: "In a SERIES circuit with two resistors, which quantity is the same for both?", qZh: "??????????????????????",
+
+        opts: ["Current ????", "Voltage ????", "Power ????", "Resistance ???"], a: "Current ????",
+
+        hint: "One path ??one current. ?????????? },
+
+      { id: "g3", level: 1, q: "Two resistors in PARALLEL share the same??, qZh: "???????????????????,
+
+        opts: ["Voltage ????", "Current ????", "Resistance ???", "Heat ??], a: "Voltage ????",
+
+        hint: "Both connect across the same two nodes. ???????????????? },
+
+      { id: "g4", level: 2, q: "R??= 3 ? and R??= 6 ? in series on a 9 V battery. Current?", qZh: "3 ? ??6 ? ????9 V,?????",
+
+        opts: ["1 A", "3 A", "9 A", "0.5 A"], a: "1 A",
+
+        hint: "Series R adds: 3 + 6 = 9 ?, then I = 9/9. ???????????? },
+
+      { id: "g5", level: 2, q: "Same two resistors (3 ?, 6 ?) in PARALLEL on 9 V. Current through the 3 ? branch?", qZh: "??? 3 ??? ? ???????9 V,3 ? ????????",
+
+        opts: ["3 A", "1.5 A", "1 A", "6 A"], a: "3 A",
+
+        hint: "Each branch gets full voltage: I = 9/3. ???????????????? },
+
+      { id: "g6", level: 2, q: "Why does the total resistance DROP when you add a parallel branch?", qZh: "?????????????????????",
+
+        opts: ["Charge has more paths to flow ?????????", "Resistors get smaller ??????", "Voltage decreases ???????", "Electrons slow down ??????"], a: "Charge has more paths to flow ?????????",
+
+        hint: "More parallel paths = more total current for the same V = lower effective R. 1/R = 1/R??+ 1/R???? }
+
+    ];
+
+    const EXAM = [
+
+      { id: "e1", level: 3, q: "R??= 4 ? and R??= 12 ? in series on a 12 V supply. Voltage across R??", qZh: "4 ? ??12 ? ????12 V,R???????",
+
+        opts: ["9 V", "3 V", "12 V", "6 V"], a: "9 V",
+
+        hint: "I = 12/16 = 0.75 A; V??= 0.75 ? 12. ???????????? V = IR?? },
+
+      { id: "e2", level: 3, q: "A 60 W lamp runs on 12 V. What current does it draw and what is its resistance?", qZh: "60 W ?????12 V,?????????????????",
+
+        opts: ["5 A, 2.4 ?", "5 A, 12 ?", "0.2 A, 60 ?", "2 A, 6 ?"], a: "5 A, 2.4 ?",
+
+        hint: "I = P/V = 60/12 = 5 A; R = V/I = 12/5. ??P = VI?? },
+
+      { id: "e3", level: 3, q: "In the simulation, doubling EMF (fixed R) does what to current and power in a resistor?", qZh: "?????????????????),????????????????",
+
+        opts: ["I doubles, P quadruples I ????P ????, "I doubles, P doubles ??????, "I unchanged, P doubles", "I quadruples, P quadruples"], a: "I doubles, P quadruples I ????P ????,
+
+        hint: "I = V/R doubles; P = I?R ??(2I)?R = 4I?R. P ??I? ?????? },
+
+      { id: "e4", level: 4, q: "Three 6 ? resistors: two in parallel with each other, then in series with the third. Total resistance?", qZh: "???6 ? ???:???????,??????????????????",
+
+        opts: ["9 ?", "18 ?", "2 ?", "12 ?"], a: "9 ?",
+
+        hint: "Parallel pair: 3 ?. Series with third: 3 + 6. ???????? },
+
+      { id: "e5", level: 4, q: "A student opens the switch in the parallel simulation. Branch currents become??, qZh: "????????????????????,????????????,
+
+        opts: ["Zero everywhere ??????", "Half ???", "Unchanged ???", "Doubled ????], a: "Zero everywhere ??????",
+
+        hint: "The switch is on the main line ??open circuit stops ALL current. ??????,??????????? },
+
+      { id: "e6", level: 4, q: "Which circuit arrangement makes two identical bulbs brightest, and why?", qZh: "???????????????????????????",
+
+        opts: ["Parallel ??each gets full voltage ??,??????????", "Series ??current doubles ??????????, "Series ??voltage adds ??????????", "No difference ??????], a: "Parallel ??each gets full voltage ??,??????????",
+
+        hint: "Brightness = power = V?/R. Full V per bulb in parallel beats half V in series. ?????????? }
+
+    ];
+
+
+
+    function UpgradeCTA({ reason, onClose, onTrial }) {
+
+      return (
+
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-4">
+
+          <div className="w-full max-w-md rounded-2xl p-5 bg-white border border-slate-200">
+
+            <h3 className="text-lg font-bold" style={{color: ACCENT}}>???????????????</h3>
+
+            <p className="text-sm mt-2 text-slate-600">{reason || window.SUBSCRIBE_CONFIG.bannerText}</p>
+
+            <ul className="mt-3 text-sm space-y-1 list-disc list-inside text-slate-600">
+
+              <li>Unlimited daily drills</li>
+
+              <li>Full wrong-answer book</li>
+
+              <li>Progress sync (coming)</li>
+
+            </ul>
+
+            <button type="button" onClick={onTrial} className="mt-4 w-full min-h-[48px] rounded-xl font-semibold text-white" style={{background: ACCENT}}>???? 14 ?????????????/button>
+
+            <a href={HKC.MARKETING_PATH} className="mt-2 block w-full min-h-[44px] text-center leading-[44px] rounded-xl border border-slate-300 text-sm">???????</a>
+
+            <button type="button" onClick={onClose} className="mt-2 w-full text-sm underline text-slate-500">??????</button>
+
+          </div>
+
+        </div>
+
+      );
+
+    }
+
+
+
+    function Drill({ bank, label, onNeedUpgrade, onDone }) {
+
+      const [qi, setQi] = useState(0);
+
+      const [fb, setFb] = useState(null);
+
+      const [score, setScore] = useState(0);
+
+      const [hint, setHint] = useState(false);
+
+      const [first, setFirst] = useState(true);
+
+      const item = bank[qi];
+
+
+
+      function pick(opt) {
+
+        if (HKC.freeCapReached()) {
+
+          if (window.HkcSubscribe) HkcSubscribe.showPaywall("hit_free_cap");
+
+          onNeedUpgrade("?????????????);
+
+          return;
+
+        }
+
+        HKC.recordDrillUse(APP_ID);
+
+        const ok = opt === item.a;
+
+        setFb(ok
+
+          ? { ok: true, msg: "Correct ? ????" }
+
+          : { ok: false, msg: "Not quite ? ?????Use Hint for the method (answer not shown)." });
+
+        if (ok) {
+
+          if (typeof HKC.recordOk === "function") HKC.recordOk(APP_ID, item);
+
+          if (first) setScore(s => s + 1);
+
+        } else {
+
+          HKC.addWrong(APP_ID, { id: item.id, prompt: item.q, hint: item.hint, answer: item.a });
+
+          setFirst(false);
+
+        }
+
+      }
+
+
+
+      function next() {
+
+        setFb(null); setHint(false); setFirst(true);
+
+        if (qi + 1 >= bank.length) {
+
+          HKC.recordSession(APP_ID, score, bank.length);
+
+          onDone(score, bank.length);
+
+        } else setQi(qi + 1);
+
+      }
+
+
+
+      return (
+
+        <section className="bg-white border border-slate-200 shadow-sm rounded-2xl p-4 sm:p-5">
+
+          <div className="flex justify-between text-sm mb-3 text-slate-500">
+
+            <span>{label} ? Q {qi + 1}/{bank.length} ? Lv {item.level}</span>
+
+            <span>Score {score}</span>
+
+          </div>
+
+          <h2 className="text-lg font-bold mb-1">{item.q}</h2>
+
+          {item.qZh ? <p className="text-sm mb-4 opacity-80" style={{color: ACCENT}}>{item.qZh}</p> : <div className="mb-4" />}
+
+          <div className="grid gap-2">
+
+            {item.opts.map(o => (
+
+              <button key={o} type="button" disabled={fb && fb.ok} onClick={() => pick(o)}
+
+                className="text-left px-4 py-3 rounded-xl min-h-[48px] disabled:opacity-50 bg-slate-50 hover:bg-slate-100 border border-slate-200">{o}</button>
+
+            ))}
+
+          </div>
+
+          <button type="button" className="text-sm mt-3 font-semibold min-h-[44px]" style={{color: ACCENT}} onClick={() => setHint(true)}>Hint ? ???</button>
+
+          {hint && <p className="text-sm mt-1 p-3 rounded-xl bg-amber-50 text-amber-900 border border-amber-200">{item.hint}</p>}
+
+          {fb && (
+
+            <div className={"mt-4 p-3 rounded-xl text-sm " + (fb.ok ? "bg-emerald-50 text-emerald-800" : "bg-rose-50 text-rose-800")}>
+
+              {fb.msg}
+
+              {fb.ok && <button type="button" className="block mt-2 underline font-semibold" onClick={next}>Next ??/button>}
+
+              {!fb.ok && <button type="button" className="block mt-2 underline font-semibold" onClick={() => setFb(null)}>Retry</button>}
+
+            </div>
+
+          )}
+
+        </section>
+
+      );
+
+    }
+
+
+
+    function App() {
+
+      const { isZh, t } = useLang();
+
+      const [mode, setMode] = useState("learn");
+
+      const [progress, setProgress] = useState(() => HKC.loadProgress(APP_ID));
+
+      const [pay, setPay] = useState(false);
+
+      const [payReason, setPayReason] = useState("");
+
+      const [doneMsg, setDoneMsg] = useState(null);
+
+      const [tfzDone, setTfzDone] = useState(() => { try { return !!localStorage.getItem("hkc_tfz_" + APP_ID); } catch (e) { return false; } });
+
+
+
+      function refresh() { setProgress(HKC.loadProgress(APP_ID)); }
+
+      useEffect(() => { refresh(); }, [mode]);
+
+      function completeTfz() {
+
+        try { localStorage.setItem("hkc_tfz_" + APP_ID, "1"); } catch (e) {}
+
+        setTfzDone(true); setMode("lab");
+
+      }
+
+
+
+      const tabs = appTabs(["learn", "lab", "guided", "exam", "review"], isZh, { labLocked: !tfzDone });
+
+
+
+      return (
+
+        <div className="max-w-5xl mx-auto p-4 sm:p-8">
+
+          <div className="flex flex-wrap justify-between items-center gap-2">
+
+            <a href="../../index.html" className="text-sm hover:underline font-semibold" style={{color: ACCENT}}>{t("?????????", "??Back to hub")}</a>
+          </div>
+
+          <header className="mt-4 mb-4">
+
+            <p className="text-xs uppercase tracking-widest font-bold" style={{color: ACCENT}}>{t("??????? ? ???", "F5 Physics ? Electricity")}</p>
+
+            <h1 className="text-2xl sm:text-3xl font-bold mt-1">{t("??????", "Circuit Builder")}</h1>
+
+            <p className="text-slate-500 mt-1">{t("??? ????? ????? ????? ??????", "Learn ??Lab ??Guided ??Exam ??Review")}</p>
+
+          </header>
+
+
+
+          <div className="text-sm border border-dashed rounded-lg px-3 py-2 mb-3 flex flex-wrap justify-between gap-2 items-center border-slate-300 bg-white/80">
+
+            <span>{HKC.isPaid() ? (HKC.getEntitlement().tier + " ? " + t("????", "unlimited")) : (t("???", "Free") + " ? " + HKC.remainingFree() + "/" + HKC.FREE_DAILY_CAP + " " + t("??", "today"))} ? {t("????, "Best")} {progress.bestScore}</span>
+
+            {!HKC.isPaid() && (
+
+              <button type="button" className="px-3 py-1.5 rounded-md text-xs font-semibold text-white min-h-[36px]" style={{background: ACCENT}} onClick={() => setPay(true)}>{t("????", "Upgrade")}</button>
+
+            )}
+
+          </div>
+
+
+
+          <nav className="flex flex-wrap gap-2 mb-4">
+
+            {tabs.map(tab => (
+
+              <button key={tab.id} type="button" onClick={() => { setMode(tab.id); setDoneMsg(null); }}
+
+                className={"px-3.5 py-2 rounded-lg text-sm font-semibold min-h-[44px] " + (mode === tab.id ? "text-white" : "bg-white border border-slate-200 text-slate-700")}
+
+                style={mode === tab.id ? {background: ACCENT} : {}}>
+
+                {tab.label}
+
+              </button>
+
+            ))}
+
+          </nav>
+
+
+
+          {mode === "learn" && <LearnFromZero steps={TFZ_STEPS} onComplete={completeTfz} />}
+
+
+
+          {mode === "lab" && !tfzDone && (
+
+            <section className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 text-center">
+
+              <h2 className="text-xl font-bold">{t("???????????????A1??A8", "Finish Learn From Zero A1??A8 first")}</h2>
+
+              <p className="text-sm text-slate-500 mt-2">{t("???????????????, "We teach the model before you play.")}</p>
+
+              <button type="button" className="mt-4 px-4 py-2.5 rounded-xl font-semibold text-white min-h-[48px]" style={{background: ACCENT}} onClick={() => setMode("learn")}>{t("??????? ??, "Go to Learn ??)}</button>
+
+            </section>
+
+          )}
+
+          {mode === "lab" && tfzDone && (
+
+            <section className="bg-white border border-slate-200 shadow-sm rounded-2xl p-4 sm:p-5">
+
+              <h2 className="font-bold text-lg mb-3">{t("?????????", "Live Circuit Sandbox")}</h2>
+
+              <CircuitSim />
+
+            </section>
+
+          )}
+
+
+
+          {mode === "guided" && !doneMsg && (
+
+            <Drill bank={GUIDED} label="Guided" onNeedUpgrade={r => { setPayReason(r); setPay(true); }}
+
+              onDone={(s, n) => { setDoneMsg({ s, n, next: "exam" }); refresh(); }} />
+
+          )}
+
+          {mode === "exam" && !doneMsg && (
+
+            <Drill bank={EXAM} label="Exam" onNeedUpgrade={r => { setPayReason(r); setPay(true); }}
+
+              onDone={(s, n) => { setDoneMsg({ s, n, next: "review" }); refresh(); }} />
+
+          )}
+
+          {doneMsg && (mode === "guided" || mode === "exam") && (
+
+            <section className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 text-center">
+
+              <h2 className="text-2xl font-bold">{t("???", "Complete")}</h2>
+
+              <p className="mt-2">{doneMsg.s} / {doneMsg.n}</p>
+
+              <button type="button" className="mt-4 px-4 py-2 rounded-xl font-semibold min-h-[48px] text-white" style={{background: ACCENT}}
+
+                onClick={() => { setDoneMsg(null); setMode(doneMsg.next); }}>{t("??? ??, "Continue ??)}</button>
+
+            </section>
+
+          )}
+
+          {mode === "review" && (
+
+            <section className="bg-white border border-slate-200 shadow-sm rounded-2xl p-4 sm:p-5 space-y-3">
+
+              <h2 className="font-bold text-lg">{t("??????, "Wrong-answer book")}</h2>
+
+              {(progress.wrongBook || []).length === 0 && <p className="text-sm text-slate-500">{t("???????", "No wrong answers yet")}</p>}
+
+              {(progress.wrongBook || []).map(w => (
+
+                <div key={w.id} className="rounded-xl p-3 text-sm border border-slate-200">
+
+                  <p className="font-semibold">{w.prompt}</p>
+
+                  <p className="mt-1 opacity-80" style={{color: ACCENT}}>{w.hint}</p>
+
+                  {HKC.isPaid() && <p className="mt-1 text-emerald-500">Answer unlocked</p>}
+
+                  <button type="button" className="text-xs underline mt-2 text-slate-500" onClick={() => { HKC.removeWrong(APP_ID, w.id); refresh(); }}>Mark resolved</button>
+
+                </div>
+
+              ))}
+
+            </section>
+
+          )}
+
+          {pay && <UpgradeCTA reason={payReason} onClose={() => setPay(false)} onTrial={() => { HKC.startTrialLocal(); setPay(false); refresh(); }} />}
+
+        </div>
+
+      );
+
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+
+  </script>
+
+  <script>
+
+    (function () {
+
+      var src = document.getElementById("circuit-app-src");
+
+      if (!src || !window.Babel || !window.ReactDOM) return;
+
+      var out = Babel.transform(src.textContent, { presets: ["react-classic"], filename: "circuit-app.jsx" }).code;
+
+      (0, eval)(out);
+
+    })();
+
+  </script>
+
+<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+
+</body>
+
+</html>
+

@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HKDSE ICT - Multimedia Calcs</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: #0f172a;
+        color: #e2e8f0;
+      }
+      .input-dark {
+        @apply bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-cyan-500 transition-colors w-full;
+      }
+      .label-text {
+        @apply block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1;
+      }
+      .result-card {
+        @apply bg-gradient-to-br from-slate-800 to-slate-900 p-6 rounded-2xl border border-slate-700 shadow-xl;
+      }
+    </style>
+  <!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
+  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+      display: none !important;
+    }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+        if (label === "EN" || label === "\u4E2D") {
+          btn.classList.add("ncs-hide-when-ncs-fleet");
+        }
+      });
+      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+        el.classList.add("ncs-hide-when-ncs-fleet");
+      });
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+</head>
+  <body class="min-h-screen p-8">
+    <div id="root"></div>
+
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+
+// --- LUCIDE ICON SHIM ---
+const LucideIcon = ({
+  name,
+  size = 24,
+  className = ""
+}) => {
+  const formatName = n => n.split("-").map(p => p.charAt(0).toUpperCase() + p.slice(1)).join("");
+  const iconName = formatName(name);
+  const [svgHtml, setSvgHtml] = useState("");
+  useEffect(() => {
+    if (window.lucide && window.lucide.icons && window.lucide.icons[iconName] && typeof window.lucide.icons[iconName].toSvg === "function") {
+      setSvgHtml(window.lucide.icons[iconName].toSvg({
+        width: size,
+        height: size,
+        class: className
+      }));
+    }
+  }, [name, size, className, iconName]);
+  return /*#__PURE__*/React.createElement("span", {
+    dangerouslySetInnerHTML: {
+      __html: svgHtml
+    },
+    style: {
+      display: "inline-flex"
+    }
+  });
+};
+const Image = p => /*#__PURE__*/React.createElement(LucideIcon, {
+  name: "image",
+  ...p
+});
+const Music = p => /*#__PURE__*/React.createElement(LucideIcon, {
+  name: "music",
+  ...p
+});
+const Wifi = p => /*#__PURE__*/React.createElement(LucideIcon, {
+  name: "wifi",
+  ...p
+});
+// --- END SHIM ---
+
+const formatSize = bits => {
+  const bytes = bits / 8;
+  if (bytes < 1024) return `${bytes.toFixed(2)} Bytes`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+};
+const App = () => {
+  const [activeTab, setActiveTab] = useState("image");
+  const [imgState, setImgState] = useState({
+    w: 800,
+    h: 600,
+    depth: 24,
+    count: 1
+  });
+  const [transState, setTransState] = useState({
+    sizeMB: 5,
+    bandwidth: 100
+  });
+  const imgBits = imgState.w * imgState.h * imgState.depth * imgState.count;
+  const transTime = transState.sizeMB * 1024 * 1024 * 8 / (transState.bandwidth * 1000 * 1000);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "lg:col-span-3 text-center mb-4"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-indigo-400 mb-2"
+  }, "Multimedia & Transmission Lab"), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-400 text-sm"
+  }, "Ref:", " ", /*#__PURE__*/React.createElement("span", {
+    className: "text-yellow-400 font-bold"
+  }, "2025 Paper 1B Q3 & Q4"), ". Calculate file sizes and transmission times.")), /*#__PURE__*/React.createElement("div", {
+    className: "lg:col-span-1 space-y-4"
+  }, [{
+    id: "image",
+    icon: Image,
+    label: "Image Size",
+    color: "text-purple-400"
+  }, {
+    id: "audio",
+    icon: Music,
+    label: "Audio Size",
+    color: "text-pink-400"
+  }, {
+    id: "trans",
+    icon: Wifi,
+    label: "Transmission",
+    color: "text-cyan-400"
+  }].map(tab => /*#__PURE__*/React.createElement("button", {
+    key: tab.id,
+    onClick: () => setActiveTab(tab.id),
+    className: `w-full flex items-center gap-4 p-4 rounded-xl border transition-all ${activeTab === tab.id ? "bg-slate-800 border-cyan-500/50 shadow-lg shadow-cyan-900/20" : "bg-slate-900/50 border-slate-800 hover:bg-slate-800"}`
+  }, /*#__PURE__*/React.createElement(tab.icon, {
+    className: `w-6 h-6 ${tab.color}`
+  }), /*#__PURE__*/React.createElement("span", {
+    className: `font-semibold ${activeTab === tab.id ? "text-white" : "text-slate-400"}`
+  }, tab.label)))), /*#__PURE__*/React.createElement("div", {
+    className: "lg:col-span-2 space-y-6"
+  }, activeTab === "image" && /*#__PURE__*/React.createElement("div", {
+    className: "result-card slide-in"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "text-xl font-bold flex items-center gap-2 mb-6"
+  }, /*#__PURE__*/React.createElement(Image, {
+    className: "text-purple-400"
+  }), " Bitmap Image Calculator"), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 gap-6 mb-8"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "label-text"
+  }, "Width (px)"), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    className: "input-dark",
+    value: imgState.w,
+    onChange: e => setImgState({
+      ...imgState,
+      w: +e.target.value
+    })
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "label-text"
+  }, "Height (px)"), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    className: "input-dark",
+    value: imgState.h,
+    onChange: e => setImgState({
+      ...imgState,
+      h: +e.target.value
+    })
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "label-text"
+  }, "Color Depth"), /*#__PURE__*/React.createElement("select", {
+    className: "input-dark",
+    value: imgState.depth,
+    onChange: e => setImgState({
+      ...imgState,
+      depth: +e.target.value
+    })
+  }, /*#__PURE__*/React.createElement("option", {
+    value: "1"
+  }, "1-bit"), /*#__PURE__*/React.createElement("option", {
+    value: "8"
+  }, "8-bit"), /*#__PURE__*/React.createElement("option", {
+    value: "24"
+  }, "24-bit"), /*#__PURE__*/React.createElement("option", {
+    value: "32"
+  }, "32-bit"))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "label-text"
+  }, "Count"), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    className: "input-dark",
+    value: imgState.count,
+    onChange: e => setImgState({
+      ...imgState,
+      count: +e.target.value
+    })
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-900 p-4 rounded-xl border border-slate-700/50"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-slate-400 text-xs mb-1"
+  }, "Uncompressed Size"), /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-mono font-bold text-white mb-2"
+  }, formatSize(imgBits)), /*#__PURE__*/React.createElement("div", {
+    className: "text-slate-500 font-mono text-xs"
+  }, "Formula: ", imgState.w, " × ", imgState.h, " × ", imgState.depth, " ×", " ", imgState.count, " bits"))), activeTab === "trans" && /*#__PURE__*/React.createElement("div", {
+    className: "result-card slide-in"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "text-xl font-bold flex items-center gap-2 mb-6"
+  }, /*#__PURE__*/React.createElement(Wifi, {
+    className: "text-cyan-400"
+  }), " Transmission Time"), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 gap-6 mb-8"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "label-text"
+  }, "File Size (MB)"), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    className: "input-dark",
+    value: transState.sizeMB,
+    onChange: e => setTransState({
+      ...transState,
+      sizeMB: +e.target.value
+    })
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "label-text"
+  }, "Bandwidth (Mbps)"), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    className: "input-dark",
+    value: transState.bandwidth,
+    onChange: e => setTransState({
+      ...transState,
+      bandwidth: +e.target.value
+    })
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-900 p-4 rounded-xl border border-slate-700/50"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-slate-400 text-xs mb-1"
+  }, "Estimated Time"), /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-mono font-bold text-white mb-2"
+  }, transTime.toFixed(2), " seconds"), /*#__PURE__*/React.createElement("div", {
+    className: "text-slate-500 font-mono text-xs break-all"
+  }, "= (", transState.sizeMB, " × 1024² × 8) / (", transState.bandwidth, " × 10⁶)"))), activeTab === "audio" && /*#__PURE__*/React.createElement("div", {
+    className: "result-card slide-in"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "text-xl font-bold flex items-center gap-2 mb-4"
+  }, /*#__PURE__*/React.createElement(Music, {
+    className: "text-pink-400"
+  }), " Uncompressed PCM Audio"), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-400 text-sm mb-6"
+  }, "試題常用：未壓縮音訊資料量（bits）= 取樣率 × 位元深度 × 聲道數 × 時間（秒）。 單位：Hz × bits × channels × s → bits。"), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 gap-6 mb-8"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "label-text"
+  }, "Sample rate (Hz)"), /*#__PURE__*/React.createElement("select", {
+    className: "input-dark",
+    value: audioState.sampleRate,
+    onChange: e => setAudioState({
+      ...audioState,
+      sampleRate: +e.target.value
+    })
+  }, /*#__PURE__*/React.createElement("option", {
+    value: 8000
+  }, "8000"), /*#__PURE__*/React.createElement("option", {
+    value: 11025
+  }, "11025"), /*#__PURE__*/React.createElement("option", {
+    value: 16000
+  }, "16000"), /*#__PURE__*/React.createElement("option", {
+    value: 22050
+  }, "22050"), /*#__PURE__*/React.createElement("option", {
+    value: 44100
+  }, "44100 (CD)"), /*#__PURE__*/React.createElement("option", {
+    value: 48000
+  }, "48000"))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "label-text"
+  }, "Bit depth"), /*#__PURE__*/React.createElement("select", {
+    className: "input-dark",
+    value: audioState.bitDepth,
+    onChange: e => setAudioState({
+      ...audioState,
+      bitDepth: +e.target.value
+    })
+  }, /*#__PURE__*/React.createElement("option", {
+    value: 8
+  }, "8-bit"), /*#__PURE__*/React.createElement("option", {
+    value: 16
+  }, "16-bit"), /*#__PURE__*/React.createElement("option", {
+    value: 24
+  }, "24-bit"))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "label-text"
+  }, "Channels"), /*#__PURE__*/React.createElement("select", {
+    className: "input-dark",
+    value: audioState.channels,
+    onChange: e => setAudioState({
+      ...audioState,
+      channels: +e.target.value
+    })
+  }, /*#__PURE__*/React.createElement("option", {
+    value: 1
+  }, "Mono (1)"), /*#__PURE__*/React.createElement("option", {
+    value: 2
+  }, "Stereo (2)"))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "label-text"
+  }, "Duration (s)"), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    min: "0",
+    step: "0.1",
+    className: "input-dark",
+    value: audioState.seconds,
+    onChange: e => setAudioState({
+      ...audioState,
+      seconds: Math.max(0, +e.target.value)
+    })
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-900 p-4 rounded-xl border border-slate-700/50"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-slate-400 text-xs mb-1"
+  }, "Uncompressed size"), /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-mono font-bold text-white mb-2"
+  }, formatSize(audioBits)), /*#__PURE__*/React.createElement("div", {
+    className: "text-slate-500 font-mono text-xs break-all"
+  }, "= ", audioState.sampleRate, " × ", audioState.bitDepth, " ×", " ", audioState.channels, " × ", audioState.seconds, " bits")))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+</body>
+</html>

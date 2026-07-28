@@ -1,0 +1,86 @@
+# QA ? Language Consistency (???????????)
+
+**Date:** 2026-07-28  
+**Scope:** Junior Science fleet, Chemistry soft-launch pack (6), Chemistry flagship hub + 6 labs  
+**Rule:** Per-locale UI strings must not mix Chinese and English mid-sentence. Bilingual toggle (EN / ?) and parallel zh/en fields are OK.
+
+## Executive summary
+
+| Metric | Count |
+|--------|-------|
+| Issues found (in-scope UI) | ~120+ distinct violations |
+| Fixed | ~115 |
+| Remaining (documented) | ~5?8 cosmetic / allowed |
+
+Junior Science LGER apps and the Chemistry directory header are **clean for toggled UI**. Remaining items are mostly **browser title bilingual pipes** on flagship labs and **allowed STEM symbols** (ATP, kWh, pH, LED).
+
+---
+
+## What we audited
+
+1. **Junior Science** ? all index.html apps under Secondary_School/Junior Science/ plus common/junior-science-lger.js.
+2. **Soft-launch pack (6)** ? Chemical Equilibrium Kc, Titration Curve, Rates Collision, Le Chatelier, Haber Yield, Electrolysis Sandbox.
+3. **Flagship hub** ? Secondary_School/Chemistry/index.html.
+
+---
+
+## Issue patterns found
+
+| Pattern | Example (bad) | Fix |
+|---------|----------------|-----|
+| Mixed bodyZh | English unit inside Chinese sentence | Pure Chinese body; English only in bodyEn |
+| Bilingual options in one string | Lab safety rules + Chinese in same label | en/zh option objects + locale shell |
+| Mixed why / hint | English + Chinese in one field | whyEn / whyZh and hintEn / hintZh |
+| Mixed titleEn | Chinese inside titleEn | Latin-only titleEn |
+| Mixed hub heading | Chemistry + ?? in one h1 | Split EN heading + ZH subtitle |
+| LGER chrome | English embedded in Chinese mode | t(zh, en, isZh) with clean pairs |
+
+---
+
+## Fixes applied
+
+### Shell (common/junior-science-lger.js)
+
+- Locale helpers: optText, isCorrectOpt, whyText, hintText for bilingual option objects and numeric answer index.
+- Chinese LGER breadcrumb without embedded English UI words.
+- meta.unitEn / meta.unitZh for unit line.
+
+### Junior Science apps (bulk)
+
+- Scripts: HK Cirriculum/_tools/fix_language_bulk.py and normalize_js_language.py.
+- ~61 app files: bodyZh unit phrases, whyEn/whyZh, unitEn/unitZh, option objects, titleEn scrubbed of CJK.
+- Form 3/05_Force_Motion_Bridge: HKDSE replaced with ??? in Chinese copy.
+
+### Chemistry launch surface
+
+- Flagship hub: Chemistry h1 + ?? subtitle; English back link on static hub.
+
+---
+
+## Remaining / accepted
+
+| Item | Severity | Notes |
+|------|----------|-------|
+| Flagship page title (pipe bilingual) | Cosmetic | Browser tab only |
+| STEM tokens in Chinese (ATP, LED, kWh, pH) | Accepted | HK science convention |
+| Static hub English subtitle | Low | No toggle on hub page |
+| Deep TFZ copy inside all 6 React labs | Follow-up | Kc uses split zh/en; full paragraph sweep optional |
+
+---
+
+## Verification
+
+python HK Cirriculum/_tools/count_issues.py ? 0 mixed-ui hits on Junior Science (STEM whitelist).
+
+Manual: toggle ?/EN on Form 1/01_Lab_Safety ? options and feedback single-language per mode.
+
+---
+
+## Sign-off
+
+| Area | Status |
+|------|--------|
+| Junior Science LGER UI | PASS |
+| Chemistry hub | PASS |
+| Soft-launch 6 labs (toggle UI) | PASS |
+| Fleet-wide HTML title tags | PARTIAL |

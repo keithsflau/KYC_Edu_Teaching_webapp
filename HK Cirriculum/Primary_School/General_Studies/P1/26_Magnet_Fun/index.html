@@ -1,0 +1,1461 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-HK">
+
+
+  <head>
+
+
+    <meta charset="UTF-8" />
+
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+
+    <title>小一常識：磁鐵小遊戲 | Magnet Fun</title>
+
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+
+
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+
+
+    <script src="../../common/i18n.js"></script>
+
+
+    <link
+
+
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+
+
+      rel="stylesheet"
+
+
+    />
+
+
+    <style>
+
+
+      body {
+
+
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+
+
+        background: linear-gradient(135deg, #e5e7eb 0%, #9ca3af 100%);
+
+
+      }
+
+
+      .play-area {
+
+
+        touch-action: none;
+
+
+      }
+
+
+      .draggable-item {
+
+
+        touch-action: none;
+
+
+        user-select: none;
+
+
+        transition: transform 0.25s ease, left 0.35s ease, top 0.35s ease;
+
+
+      }
+
+
+      .draggable-item.is-dragging {
+
+
+        transition: none;
+
+
+        z-index: 50;
+
+
+      }
+
+
+      .draggable-item.is-stuck {
+
+
+        transition: left 0.4s ease, top 0.4s ease, transform 0.4s ease;
+
+
+      }
+
+
+    </style>
+
+<!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
+  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+      display: none !important;
+    }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+        if (label === "EN" || label === "\u4E2D") {
+          btn.classList.add("ncs-hide-when-ncs-fleet");
+        }
+      });
+      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+        el.classList.add("ncs-hide-when-ncs-fleet");
+      });
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+</head>
+
+
+  <body>
+
+
+    <div id="root"></div>
+
+
+    <script>
+
+
+      const { useState, useEffect, useRef, useCallback } = React;
+
+
+      const { motion, AnimatePresence } = window.Motion;
+
+
+      const { LanguageSelector } = window.MathI18n;
+
+
+
+
+
+      const t = {
+
+
+        title: {
+
+
+          en: "Magnet Power",
+
+
+          zh: "磁鐵小遊戲",
+
+
+          ja: "マグネットパワー",
+
+
+          ko: "자석 파워",
+
+
+          es: "Poder magnético",
+
+
+          de: "Magnetkraft",
+
+
+          fi: "Magneettivoima",
+
+
+          fr: "Pouvoir magnétique",
+
+
+          ar: "قوة المغناطيس",
+
+
+          it: "Potere magnetico",
+
+
+        },
+
+
+        instruction: {
+
+
+          en: "Drag objects to the magnet. Will they stick?",
+
+
+          zh: "把物件拖向磁鐵，看看會不會被吸住？",
+
+
+          ja: "オブジェクトを磁石にドラッグします。くっつきますか？",
+
+
+          ko: "물체를 자석으로 드래그하세요. 붙을까요?",
+
+
+          es: "Arrastra objetos al imán. ¿Se pegarán?",
+
+
+          de: "Ziehe Objekte zum Magneten. Bleiben sie haften?",
+
+
+          fi: "Raahaa esineitä magneettiin. Tarttuvatko ne?",
+
+
+          fr: "Faites glisser les objets vers l'aimant. Vont-ils coller ?",
+
+
+          ar: "اسحب الأشياء إلى المغناطيس. هل ستلتصق؟",
+
+
+          it: "Trascina gli oggetti sul magnete. Si attaccheranno?",
+
+
+        },
+
+
+        yes: {
+
+
+          en: "Attracted!",
+
+
+          zh: "被吸住了！",
+
+
+          es: "¡Atraído!",
+
+
+          de: "Angezogen!",
+
+
+          fi: "Tarttui!",
+
+
+          fr: "Attiré !",
+
+
+          ar: "ينجذب!",
+
+
+          it: "Attratto!",
+
+
+        },
+
+
+        no: {
+
+
+          en: "Not Attracted",
+
+
+          zh: "沒有反應",
+
+
+          es: "No atraído",
+
+
+          de: "Nicht angezogen",
+
+
+          fi: "Ei tartu",
+
+
+          fr: "Pas attiré",
+
+
+          ar: "لا ينجذب",
+
+
+          it: "Non attratto",
+
+
+        },
+
+
+        reset: {
+
+
+          en: "Reset",
+
+
+          zh: "重置",
+
+
+          es: "Reiniciar",
+
+
+          de: "Zurücksetzen",
+
+
+          fi: "Nollaa",
+
+
+          fr: "Réinitialiser",
+
+
+          ar: "إعادة تعيين",
+
+
+          it: "Reimposta",
+
+
+        },
+
+
+        clip: {
+
+
+          en: "Paper Clip",
+
+
+          zh: "萬字夾",
+
+
+          es: "Clip de papel",
+
+
+          de: "Büroklammer",
+
+
+          fi: "Paperiliitin",
+
+
+          fr: "Trombone",
+
+
+          ar: "مشبك ورق",
+
+
+          it: "Graffetta",
+
+
+        },
+
+
+        nail: {
+
+
+          en: "Iron Nail",
+
+
+          zh: "鐵釘",
+
+
+          es: "Clavo de hierro",
+
+
+          de: "Eisennagel",
+
+
+          fi: "Rautanaula",
+
+
+          fr: "Clou en fer",
+
+
+          ar: "مسمار حديدي",
+
+
+          it: "Chiodo di ferro",
+
+
+        },
+
+
+        scissor: {
+
+
+          en: "Scissors",
+
+
+          zh: "剪刀",
+
+
+          es: "Tijeras",
+
+
+          de: "Schere",
+
+
+          fi: "Sakset",
+
+
+          fr: "Ciseaux",
+
+
+          ar: "مقص",
+
+
+          it: "Forbici",
+
+
+        },
+
+
+        eraser: {
+
+
+          en: "Eraser",
+
+
+          zh: "擦膠",
+
+
+          es: "Borrador",
+
+
+          de: "Radiergummi",
+
+
+          fi: "Pyyhekumi",
+
+
+          fr: "Gomme",
+
+
+          ar: "ممحاة",
+
+
+          it: "Gomma da cancellare",
+
+
+        },
+
+
+        pencil: {
+
+
+          en: "Pencil",
+
+
+          zh: "鉛筆",
+
+
+          es: "Lápiz",
+
+
+          de: "Bleistift",
+
+
+          fi: "Lyijykynä",
+
+
+          fr: "Crayon",
+
+
+          ar: "قلم رصاص",
+
+
+          it: "Matita",
+
+
+        },
+
+
+        lego: {
+
+
+          en: "Plastic Toy",
+
+
+          zh: "塑膠玩具",
+
+
+          es: "Juguete de plástico",
+
+
+          de: "Plastikspielzeug",
+
+
+          fi: "Muovilelu",
+
+
+          fr: "Jouet en plastique",
+
+
+          ar: "لعبة بلاستيكية",
+
+
+          it: "Giocattolo di plastica",
+
+
+        },
+
+
+      };
+
+
+
+
+
+      const OBJECT_DEFS = [
+
+
+        { id: "clip", icon: "📎", magnetic: true },
+
+
+        { id: "nail", icon: "🔩", magnetic: true },
+
+
+        { id: "scissor", icon: "✂️", magnetic: true },
+
+
+        { id: "eraser", icon: "🧽", magnetic: false },
+
+
+        { id: "pencil", icon: "✏️", magnetic: false },
+
+
+        { id: "lego", icon: "🧸", magnetic: false },
+
+
+      ];
+
+
+
+
+
+      const MAGNET_RADIUS = 140;
+
+
+
+
+
+      function createItems() {
+
+
+        return OBJECT_DEFS.map((obj, index) => ({
+
+
+          ...obj,
+
+
+          uid: `${obj.id}-${Date.now()}-${index}`,
+
+
+          homeX: 8 + (index % 3) * 30 + Math.random() * 6,
+
+
+          homeY: 62 + Math.floor(index / 3) * 14 + Math.random() * 4,
+
+
+          offsetX: 0,
+
+
+          offsetY: 0,
+
+
+          stuck: false,
+
+
+          stuckX: 0,
+
+
+          stuckY: 0,
+
+
+        }));
+
+
+      }
+
+
+
+
+
+      function App() {
+
+
+        const [lang, setLang] = useState("zh");
+
+
+        const [items, setItems] = useState([]);
+
+
+        const [feedback, setFeedback] = useState(null);
+
+
+        const [draggingId, setDraggingId] = useState(null);
+
+
+        const magnetRef = useRef(null);
+
+
+        const feedbackTimer = useRef(null);
+
+
+        const dragRef = useRef({
+
+
+          uid: null,
+
+
+          pointerId: null,
+
+
+          startX: 0,
+
+
+          startY: 0,
+
+
+          originX: 0,
+
+
+          originY: 0,
+
+
+        });
+
+
+
+
+
+        const getText = useCallback(
+
+
+          (key) => t[key][lang] || t[key].en || t[key].zh,
+
+
+          [lang]
+
+
+        );
+
+
+
+
+
+        const showFeedback = useCallback((type) => {
+
+
+          if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
+
+
+          setFeedback(type);
+
+
+          feedbackTimer.current = setTimeout(() => setFeedback(null), 1200);
+
+
+        }, []);
+
+
+
+
+
+        const reset = useCallback(() => {
+
+
+          if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
+
+
+          setFeedback(null);
+
+
+          setDraggingId(null);
+
+
+          dragRef.current.uid = null;
+
+
+          setItems(createItems());
+
+
+        }, []);
+
+
+
+
+
+        useEffect(() => {
+
+
+          reset();
+
+
+          return () => {
+
+
+            if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
+
+
+          };
+
+
+        }, [reset]);
+
+
+
+
+
+        const getMagnetCenter = useCallback(() => {
+
+
+          if (!magnetRef.current) return null;
+
+
+          const rect = magnetRef.current.getBoundingClientRect();
+
+
+          return {
+
+
+            x: rect.left + rect.width / 2,
+
+
+            y: rect.bottom - 12,
+
+
+          };
+
+
+        }, []);
+
+
+
+
+
+        const releaseItem = useCallback(
+
+
+          (uid, clientX, clientY) => {
+
+
+            const center = getMagnetCenter();
+
+
+            if (!center) return;
+
+
+
+
+
+            const distance = Math.hypot(clientX - center.x, clientY - center.y);
+
+
+            if (distance > MAGNET_RADIUS) {
+
+
+              setItems((prev) =>
+
+
+                prev.map((item) =>
+
+
+                  item.uid === uid
+
+
+                    ? { ...item, offsetX: 0, offsetY: 0 }
+
+
+                    : item
+
+
+                )
+
+
+              );
+
+
+              return;
+
+
+            }
+
+
+
+
+
+            setItems((prev) =>
+
+
+              prev.map((item) => {
+
+
+                if (item.uid !== uid) return item;
+
+
+
+
+
+                if (item.magnetic) {
+
+
+                  const stuckX = center.x - window.innerWidth / 2;
+
+
+                  const stuckY = center.y - 36 + (Math.random() * 40 - 20);
+
+
+                  showFeedback("yes");
+
+
+                  return {
+
+
+                    ...item,
+
+
+                    stuck: true,
+
+
+                    offsetX: 0,
+
+
+                    offsetY: 0,
+
+
+                    stuckX,
+
+
+                    stuckY,
+
+
+                  };
+
+
+                }
+
+
+
+
+
+                showFeedback("no");
+
+
+                return { ...item, offsetX: 0, offsetY: 0 };
+
+
+              })
+
+
+            );
+
+
+          },
+
+
+          [getMagnetCenter, showFeedback]
+
+
+        );
+
+
+
+
+
+        const handlePointerDown = (event, item) => {
+
+
+          if (item.stuck) return;
+
+
+          event.preventDefault();
+
+
+          event.currentTarget.setPointerCapture(event.pointerId);
+
+
+          dragRef.current = {
+
+
+            uid: item.uid,
+
+
+            pointerId: event.pointerId,
+
+
+            startX: event.clientX,
+
+
+            startY: event.clientY,
+
+
+            originX: item.offsetX,
+
+
+            originY: item.offsetY,
+
+
+          };
+
+
+          setDraggingId(item.uid);
+
+
+        };
+
+
+
+
+
+        const handlePointerMove = (event, item) => {
+
+
+          if (dragRef.current.uid !== item.uid || item.stuck) return;
+
+
+          const dx = event.clientX - dragRef.current.startX;
+
+
+          const dy = event.clientY - dragRef.current.startY;
+
+
+          setItems((prev) =>
+
+
+            prev.map((i) =>
+
+
+              i.uid === item.uid
+
+
+                ? {
+
+
+                    ...i,
+
+
+                    offsetX: dragRef.current.originX + dx,
+
+
+                    offsetY: dragRef.current.originY + dy,
+
+
+                  }
+
+
+                : i
+
+
+            )
+
+
+          );
+
+
+        };
+
+
+
+
+
+        const handlePointerUp = (event, item) => {
+
+
+          if (dragRef.current.uid !== item.uid) return;
+
+
+          event.currentTarget.releasePointerCapture(event.pointerId);
+
+
+          dragRef.current.uid = null;
+
+
+          setDraggingId(null);
+
+
+          releaseItem(item.uid, event.clientX, event.clientY);
+
+
+        };
+
+
+
+
+
+        return /*#__PURE__*/ React.createElement(
+
+
+          "div",
+
+
+          {
+
+
+            className:
+
+
+              "min-h-screen p-4 flex flex-col items-center overflow-hidden relative",
+
+
+          },
+
+
+          /*#__PURE__*/ React.createElement(LanguageSelector, {
+
+
+            lang: lang,
+
+
+            setLang: setLang,
+
+
+          }),
+
+
+          /*#__PURE__*/ React.createElement(
+
+
+            "h1",
+
+
+            {
+
+
+              className:
+
+
+                "text-4xl md:text-5xl font-black text-slate-800 mb-2 mt-8 drop-shadow-sm z-20",
+
+
+            },
+
+
+            "🧲 ",
+
+
+            getText("title")
+
+
+          ),
+
+
+          /*#__PURE__*/ React.createElement(
+
+
+            "p",
+
+
+            {
+
+
+              className:
+
+
+                "font-bold text-slate-700 mb-2 z-20 bg-white/60 px-4 py-1 rounded-lg text-center max-w-xl",
+
+
+            },
+
+
+            getText("instruction")
+
+
+          ),
+
+
+          /*#__PURE__*/ React.createElement(
+
+
+            "div",
+
+
+            {
+
+
+              ref: magnetRef,
+
+
+              className:
+
+
+                "relative z-10 w-56 md:w-64 mt-2 mb-4 pointer-events-none",
+
+
+            },
+
+
+            /*#__PURE__*/ React.createElement(
+
+
+              "div",
+
+
+              {
+
+
+                className:
+
+
+                  "w-full h-44 border-[28px] md:border-[32px] border-red-600 rounded-t-full rounded-b-lg border-b-0 flex justify-between relative",
+
+
+              },
+
+
+              /*#__PURE__*/ React.createElement("div", {
+
+
+                className:
+
+
+                  "w-8 h-12 bg-slate-300 absolute -bottom-12 left-[-28px] md:left-[-32px]",
+
+
+              }),
+
+
+              /*#__PURE__*/ React.createElement("div", {
+
+
+                className:
+
+
+                  "w-8 h-12 bg-slate-300 absolute -bottom-12 right-[-28px] md:right-[-32px]",
+
+
+              })
+
+
+            ),
+
+
+            /*#__PURE__*/ React.createElement("div", {
+
+
+              className:
+
+
+                "absolute -bottom-3 left-1/2 -translate-x-1/2 w-40 h-24 rounded-full border-2 border-dashed border-red-300/70 bg-red-100/20",
+
+
+              "aria-hidden": "true",
+
+
+            })
+
+
+          ),
+
+
+          /*#__PURE__*/ React.createElement(AnimatePresence, null, feedback &&
+
+
+            /*#__PURE__*/ React.createElement(
+
+
+              motion.div,
+
+
+              {
+
+
+                key: feedback,
+
+
+                initial: { opacity: 0, y: -10, scale: 0.9 },
+
+
+                animate: { opacity: 1, y: 0, scale: 1 },
+
+
+                exit: { opacity: 0, y: -10, scale: 0.9 },
+
+
+                className: `z-40 text-2xl md:text-3xl font-black px-6 py-3 rounded-2xl shadow-xl fixed top-48 md:top-52 left-1/2 -translate-x-1/2 ${
+
+
+                  feedback === "yes"
+
+
+                    ? "bg-green-500 text-white"
+
+
+                    : "bg-slate-600 text-white"
+
+
+                }`,
+
+
+              },
+
+
+              feedback === "yes" ? "✨ " : "💨 ",
+
+
+              getText(feedback)
+
+
+            )),
+
+
+          /*#__PURE__*/ React.createElement(
+
+
+            "div",
+
+
+            {
+
+
+              className: "play-area absolute inset-0 top-0 z-20",
+
+
+            },
+
+
+            items.map((item) => {
+
+
+              const isDragging = draggingId === item.uid;
+
+
+              const style = item.stuck
+
+
+                ? {
+
+
+                    left: "50%",
+
+
+                    top: `${item.stuckY}px`,
+
+
+                    transform: `translate(calc(-50% + ${item.stuckX}px), 0) scale(1)`,
+
+
+                    zIndex: 30,
+
+
+                  }
+
+
+                : {
+
+
+                    left: `${item.homeX}%`,
+
+
+                    top: `${item.homeY}%`,
+
+
+                    transform: `translate(${item.offsetX}px, ${item.offsetY}px) scale(${
+
+
+                      isDragging ? 1.08 : 1
+
+
+                    })`,
+
+
+                  };
+
+
+
+
+
+              return /*#__PURE__*/ React.createElement(
+
+
+                "div",
+
+
+                {
+
+
+                  key: item.uid,
+
+
+                  role: "button",
+
+
+                  "aria-label": getText(item.id),
+
+
+                  tabIndex: item.stuck ? -1 : 0,
+
+
+                  onPointerDown: (e) => handlePointerDown(e, item),
+
+
+                  onPointerMove: (e) => handlePointerMove(e, item),
+
+
+                  onPointerUp: (e) => handlePointerUp(e, item),
+
+
+                  onPointerCancel: (e) => handlePointerUp(e, item),
+
+
+                  className: `draggable-item absolute flex flex-col items-center w-20 md:w-24 ${
+
+
+                    item.stuck
+
+
+                      ? "is-stuck cursor-default"
+
+
+                      : "cursor-grab active:cursor-grabbing"
+
+
+                  } ${isDragging ? "is-dragging" : ""}`,
+
+
+                  style: style,
+
+
+                },
+
+
+                /*#__PURE__*/ React.createElement(
+
+
+                  "span",
+
+
+                  {
+
+
+                    className: `text-5xl md:text-6xl filter drop-shadow-md pointer-events-none ${
+
+
+                      item.stuck ? "animate-pulse" : ""
+
+
+                    }`,
+
+
+                  },
+
+
+                  item.icon
+
+
+                ),
+
+
+                /*#__PURE__*/ React.createElement(
+
+
+                  "span",
+
+
+                  {
+
+
+                    className:
+
+
+                      "bg-white/90 px-2 py-0.5 rounded text-xs font-bold mt-1 shadow pointer-events-none whitespace-nowrap",
+
+
+                  },
+
+
+                  getText(item.id)
+
+
+                )
+
+
+              );
+
+
+            })
+
+
+          ),
+
+
+          /*#__PURE__*/ React.createElement(
+
+
+            "button",
+
+
+            {
+
+
+              type: "button",
+
+
+              onClick: reset,
+
+
+              className:
+
+
+                "fixed bottom-8 right-8 bg-slate-700 text-white px-6 py-3 rounded-full font-bold shadow-lg z-50 hover:bg-slate-800 active:scale-95 transition-transform",
+
+
+            },
+
+
+            getText("reset"),
+
+
+            " 🔄"
+
+
+          )
+
+
+        );
+
+
+      }
+
+
+
+
+
+      ReactDOM.createRoot(document.getElementById("root")).render(
+
+
+        /*#__PURE__*/ React.createElement(App, null)
+
+
+      );
+
+
+    </script>
+
+
+    <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">
+
+
+      @HKSTEAMAI All Copy-Right Reserved.
+
+
+    </footer>
+
+
+  </body>
+
+
+</html>
+
+

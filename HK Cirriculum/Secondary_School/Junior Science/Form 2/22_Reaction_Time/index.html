@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reaction Time · 反應時間 | S2 Junior Science</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="../../../../common/babel-react-classic.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet" />
+  <script src="../../../../common/junior-science-lger.js"></script>
+  <style>
+    body { font-family: "Outfit", sans-serif; background: #f0f9ff; }
+    .game-area { transition: background-color 0.15s; cursor: pointer; user-select: none; min-height: 320px; }
+  </style>
+  <!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
+  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+      display: none !important;
+    }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+        if (label === "EN" || label === "\u4E2D") {
+          btn.classList.add("ncs-hide-when-ncs-fleet");
+        }
+      });
+      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+        el.classList.add("ncs-hide-when-ncs-fleet");
+      });
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel" data-presets="react-classic">
+    const { useState, useRef } = React;
+    const ACCENT = "#0ea5e9";
+    const { Shell } = window.JSLGER;
+
+    const LEARN = [
+      { titleEn: "Stimulus and response", titleZh: "刺激與反應",
+        bodyEn: "Your nervous system detects a stimulus (e.g. a green light) and sends signals to muscles to respond.",
+        bodyZh: "神經系統偵測刺激（例如綠燈），並傳送訊號至肌肉作出反應。",
+        qEn: "The pathway is: receptor → … → effector", qZh: "路徑為：感受器 → … → 效應器",
+        opts: [{ en: "Coordinator (brain/spinal cord)", zh: "協調器" }, { en: "Stomach", zh: "胃" }, { en: "Bone", zh: "骨" }], a: 0,
+        whyEn: "CNS processes the signal before the muscle acts.", whyZh: "中樞神經先處理訊號。" },
+      { titleEn: "Reaction time", titleZh: "反應時間",
+        bodyEn: "Reaction time is the delay between stimulus and response. It depends on alertness, age, and practice.",
+        bodyZh: "反應時間是刺激與反應之間的延遲，受警覺性、年齡和練習影響。",
+        qEn: "Typical human visual reaction time is about…", qZh: "一般人視覺反應時間約…",
+        opts: ["200–300 ms", "2–3 s", "5 ms"], a: 0,
+        whyEn: "Nerve transmission + processing takes time.", whyZh: "神經傳導與處理需時。" },
+      { titleEn: "False starts", titleZh: "搶跑",
+        bodyEn: "Clicking before the stimulus (green) means you reacted to anticipation, not the real signal — invalid trial.",
+        bodyZh: "在刺激（綠燈）出現前按鍵，代表對預期而非真實訊號反應——試驗無效。",
+        qEn: "A false start happens when you click during…", qZh: "搶跑發生在你於…期間按鍵",
+        opts: [{ en: "Red/wait phase", zh: "紅色等待階段" }, { en: "Green phase", zh: "綠色階段" }, { en: "Results screen", zh: "結果畫面" }], a: 0,
+        whyEn: "Wait for the actual stimulus.", whyZh: "須等待真正刺激。" },
+      { titleEn: "Measuring fairly", titleZh: "公平量度",
+        bodyEn: "Take multiple trials and calculate the average. Discard obvious outliers caused by distraction.",
+        bodyZh: "進行多次試驗並計算平均值，剔除因分心造成的明顯離群值。",
+        qEn: "Why average several trials?", qZh: "為何要平均多次試驗？",
+        opts: [{ en: "Reduce random error", zh: "減少隨機誤差" }, { en: "Increase reaction time", zh: "增加反應時間" }, { en: "Skip learning", zh: "跳過學習" }], a: 0,
+        whyEn: "One trial can be lucky or unlucky.", whyZh: "單次試驗可能偶然。" },
+      { titleEn: "Safety link", titleZh: "與安全的關係",
+        bodyEn: "Drivers with slow reaction times need longer stopping distances. Drugs and fatigue increase reaction time.",
+        bodyZh: "反應時間慢的司機需要更長的制動距離。藥物和疲勞會延長反應時間。",
+        qEn: "Fatigue generally makes reaction time…", qZh: "疲勞通常使反應時間…",
+        opts: [{ en: "Longer", zh: "更長" }, { en: "Shorter", zh: "更短" }, { en: "Unchanged", zh: "不變" }], a: 0,
+        whyEn: "Alertness drops when tired.", whyZh: "疲倦時警覺性下降。" },
+      { titleEn: "Lab ready", titleZh: "準備實驗",
+        bodyEn: "In the lab, wait for green, click as fast as you can, and compare your average to ~250 ms.",
+        bodyZh: "在實驗室等待綠燈，盡快點擊，並將你的平均值與約 250 ms 比較。",
+        qEn: "The unit of reaction time in this lab is…", qZh: "本實驗室反應時間的單位是…",
+        opts: [{ en: "Milliseconds (ms)", zh: "毫秒" }, { en: "Metres (m)", zh: "米" }, { en: "Newtons (N)", zh: "牛頓" }], a: 0,
+        whyEn: "ms = thousandths of a second.", whyZh: "毫秒是千分之一秒。" }
+    ];
+
+    const GUIDED = [
+      { qEn: "Which part acts as the coordinator?", qZh: "哪部分擔任協調器？",
+        opts: [{ en: "Brain and spinal cord", zh: "腦與脊髓" }, { en: "Skin only", zh: "只有皮膚" }, { en: "Heart", zh: "心臟" }], a: 0,
+        hintEn: "CNS processes input.", hintZh: "中樞神經系統處理輸入。" },
+      { qEn: "Clicking on red is called a…", qZh: "在紅色時按鍵稱為…",
+        opts: [{ en: "False start", zh: "搶跑" }, { en: "Valid trial", zh: "有效試驗" }, { en: "Average", zh: "平均" }], a: 0,
+        hintEn: "Stimulus not yet shown.", hintZh: "刺激尚未出現。" },
+      { qEn: "To improve reliability you should…", qZh: "要提高可靠性應…",
+        opts: [{ en: "Repeat and average", zh: "重複並取平均" }, { en: "Use one click only", zh: "只按一次" }, { en: "Close eyes", zh: "閉眼" }], a: 0,
+        hintEn: "More data → better estimate.", hintZh: "更多數據→更好估計。" },
+      { qEn: "A 300 ms reaction is…", qZh: "300 ms 的反應…",
+        opts: [{ en: "Slower than 200 ms", zh: "比 200 ms 慢" }, { en: "Faster than 150 ms", zh: "比 150 ms 快" }, { en: "Impossible", zh: "不可能" }], a: 0,
+        hintEn: "Higher ms = longer delay.", hintZh: "毫秒數越大延遲越長。" }
+    ];
+
+    const SUMMARY = [
+      { en: "Stimulus → coordinator → effector (muscle).", zh: "刺激 → 協調器 → 效應器（肌肉）。" },
+      { en: "Reaction time ≈ 200–300 ms for sight.", zh: "視覺反應時間約 200–300 ms。" },
+      { en: "Average multiple trials; avoid false starts.", zh: "多次試驗取平均；避免搶跑。" },
+      { en: "Fatigue and alcohol increase reaction time.", zh: "疲勞和酒精會延長反應時間。" }
+    ];
+
+    const REVIEW = [
+      { qEn: "Unit of reaction time?", qZh: "反應時間的單位？",
+        opts: [{ en: "ms", zh: "毫秒" }, { en: "kg", zh: "千克" }, { en: "°C", zh: "攝氏" }], a: 0 },
+      { qEn: "False start = click before…", qZh: "搶跑 = 在…之前按鍵",
+        opts: [{ en: "Stimulus", zh: "刺激" }, { en: "Average", zh: "平均" }, { en: "Review", zh: "複習" }], a: 0 },
+      { qEn: "Nervous message travels to muscles via…", qZh: "神經訊息經…傳至肌肉",
+        opts: [{ en: "Motor neurones", zh: "運動神經元" }, { en: "Air", zh: "空氣" }, { en: "Light", zh: "光" }], a: 0 },
+      { qEn: "Larger average ms means… reaction", qZh: "平均毫秒數越大代表反應…",
+        opts: [{ en: "Slower", zh: "較慢" }, { en: "Faster", zh: "較快" }, { en: "No change", zh: "無變化" }], a: 0 },
+      { qEn: "Best practice in the lab?", qZh: "實驗室最佳做法？",
+        opts: [{ en: "Wait for green", zh: "等綠燈" }, { en: "Click immediately", zh: "立即按" }, { en: "Close tab", zh: "關閉頁面" }], a: 0 }
+    ];
+
+    function ReactionLab({ isZh, accent }) {
+      const [state, setState] = useState("idle");
+      const [time, setTime] = useState(0);
+      const [history, setHistory] = useState([]);
+      const startRef = useRef(0);
+      const timerRef = useRef(null);
+      const t = window.JSLGER.t;
+
+      function start() {
+        setState("waiting");
+        timerRef.current = setTimeout(() => {
+          setState("ready");
+          startRef.current = performance.now();
+        }, 2000 + Math.random() * 3000);
+      }
+      function click() {
+        if (state === "waiting") {
+          clearTimeout(timerRef.current);
+          setState("idle");
+          alert(t("太早了！請等綠色。", "Too early! Wait for green.", isZh));
+        } else if (state === "ready") {
+          const ms = Math.round(performance.now() - startRef.current);
+          setTime(ms);
+          setHistory(h => [...h, ms]);
+          setState("result");
+        } else start();
+      }
+      const avg = history.length ? Math.round(history.reduce((a, b) => a + b, 0) / history.length) : 0;
+      const bg = state === "waiting" ? "bg-red-500" : state === "ready" ? "bg-green-500" : "bg-sky-500";
+      const label = state === "waiting" ? t("等待綠色…", "Wait for green…", isZh)
+        : state === "ready" ? t("立即按！", "CLICK NOW!", isZh)
+        : state === "result" ? time + " ms" : t("按此開始", "Click to start", isZh);
+
+      return (
+        <div>
+          <div className={`game-area rounded-2xl flex flex-col items-center justify-center ${bg}`} onMouseDown={click}>
+            <i className={`fa-solid ${state === "ready" ? "fa-computer-mouse" : "fa-bolt"} text-7xl text-white mb-4`} />
+            <p className="text-4xl font-black text-white">{label}</p>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {history.map((h, i) => <span key={i} className="bg-slate-100 px-3 py-1 rounded font-mono text-sm">{h} ms</span>)}
+          </div>
+          <p className="mt-3 text-lg font-bold" style={{ color: accent }}>{t("平均", "Average", isZh)}: {avg} ms</p>
+          <button type="button" onClick={() => { setHistory([]); setState("idle"); }}
+            className="mt-2 px-4 py-2 rounded-lg bg-slate-200 text-sm font-bold">{t("重設", "Reset", isZh)}</button>
+        </div>
+      );
+    }
+
+    function App() {
+      return (
+        <Shell
+          meta={{ appId: "s2_reaction_time", titleEn: "Reaction Time", titleZh: "反應時間", unit: "Form 2 · Sensing the Environment" }}
+          accent={ACCENT}
+          learnSteps={LEARN}
+          guidedBank={GUIDED}
+          reviewSummary={SUMMARY}
+          reviewQuiz={REVIEW}
+          experiment={p => <ReactionLab {...p} />}
+        />
+      );
+    }
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>

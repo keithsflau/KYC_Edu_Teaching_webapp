@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>諸子百家模擬人生 2.0 (Philosophy Strategy)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@900&family=Noto+Sans+TC:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            background: #1e1e1e;
+            font-family: 'Noto Sans TC', sans-serif;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        #game-ui {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: grid;
+            grid-template-rows: 60px 1fr 150px;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            background: rgba(30, 30, 30, 0.95);
+            border-bottom: 2px solid #b45309;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            color: #d1d5db;
+            pointer-events: auto;
+        }
+
+        .resource {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .res-icon {
+            color: #fbbf24;
+        }
+
+        /* Map Area (Canvas) */
+        #map-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: #111827;
+        }
+
+        /* Bottom Control Panel */
+        .bottom-panel {
+            background: rgba(17, 24, 39, 0.95);
+            border-top: 2px solid #b45309;
+            padding: 15px;
+            display: flex;
+            gap: 20px;
+            pointer-events: auto;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .action-card {
+            width: 140px;
+            height: 110px;
+            background: #374151;
+            border: 1px solid #4b5563;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .action-card:hover {
+            transform: translateY(-5px);
+            border-color: #fbbf24;
+            background: #4b5563;
+        }
+
+        .action-card.disabled {
+            opacity: 0.5;
+            filter: grayscale(1);
+            pointer-events: none;
+        }
+
+        .card-icon {
+            font-size: 2rem;
+            margin-bottom: 5px;
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: bold;
+            color: white;
+        }
+
+        .card-cost {
+            font-size: 0.8rem;
+            color: #fbbf24;
+        }
+
+        /* Event Modal */
+        .modal-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            pointer-events: auto;
+        }
+
+        .scroll-paper {
+            width: 600px;
+            background: #fdf6e3;
+            background-image: linear-gradient(90deg, transparent 50%, rgba(0, 0, 0, 0.03) 50%);
+            background-size: 4px 100%;
+            /* Bamboo slip texture effect */
+            padding: 40px;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.8), inset 0 0 100px rgba(180, 83, 9, 0.1);
+            border-top: 24px solid #92400e;
+            border-bottom: 24px solid #92400e;
+            border-radius: 4px;
+            color: #451a03;
+            position: relative;
+        }
+
+        .scroll-paper::before {
+            content: "📜";
+            position: absolute;
+            top: -50px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 3rem;
+            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5));
+        }
+
+        .event-title {
+            font-family: 'Noto Serif TC', serif;
+            font-size: 2.2rem;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #b45309;
+            padding-bottom: 10px;
+            text-align: center;
+        }
+
+        .event-desc {
+            font-size: 1.2rem;
+            line-height: 1.8;
+            margin-bottom: 30px;
+            text-align: justify;
+        }
+
+        .event-choices {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .choice-btn {
+            background: rgba(255, 255, 255, 0.8);
+            border: 2px solid #92400e;
+            padding: 18px;
+            text-align: left;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .choice-btn:hover {
+            background: #ffedd5;
+            transform: translateX(5px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Floating Text */
+        .float-text {
+            position: absolute;
+            font-weight: bold;
+            animation: floatUp 1.5s forwards;
+            pointer-events: none;
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+        }
+    </style>
+    <!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../common/ncs-i18n.css" />
+  <script src="../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+      display: none !important;
+    }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+        if (label === "EN" || label === "\u4E2D") {
+          btn.classList.add("ncs-hide-when-ncs-fleet");
+        }
+      });
+      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+        el.classList.add("ncs-hide-when-ncs-fleet");
+      });
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+</head>
+
+<body>
+
+    <canvas id="map-container"></canvas>
+
+    <div id="game-ui">
+        <div class="top-bar">
+            <div class="flex gap-8">
+                <div class="resource"><span class="res-icon">👥</span> 民心 (Morale): <span id="res-morale">50</span>
+                </div>
+                <div class="resource"><span class="res-icon">💰</span> 國庫 (Gold): <span id="res-gold">100</span></div>
+                <div class="resource"><span class="res-icon">⚔️</span> 兵力 (Army): <span id="res-army">10</span></div>
+                <div class="resource"><span class="res-icon">👑</span> 影響 (Influence): <span
+                        id="res-influence">10</span></div>
+            </div>
+            <div class="text-xl font-black text-yellow-500">TURN <span id="turn-count">1</span></div>
+            <div class="text-sm text-gray-400">學派: <span id="school-name" class="text-white">儒家 (Confucianism)</span>
+            </div>
+        </div>
+
+        <div></div> <!-- Spacer -->
+
+        <div class="bottom-panel">
+            <div class="action-card" onclick="action('preach')">
+                <div class="card-icon">📜</div>
+                <div class="card-title">遊說列國</div>
+                <div class="card-cost">-10 💰</div>
+            </div>
+            <div class="action-card" onclick="action('recruit')">
+                <div class="card-icon">🚩</div>
+                <div class="card-title">招募門徒</div>
+                <div class="card-cost">-30 💰</div>
+            </div>
+            <div class="action-card" onclick="action('policy')">
+                <div class="card-icon">🏛️</div>
+                <div class="card-title">實施仁政</div>
+                <div class="card-cost">-50 💰</div>
+            </div>
+            <div class="bg-gray-700 w-[2px] h-[80%] mx-2"></div>
+            <div class="action-card" onclick="nextTurn()" style="border-color: #ef4444; background: #7f1d1d;">
+                <div class="card-icon">⏳</div>
+                <div class="card-title">結束回合</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Start Selection -->
+    <div id="start-overlay" class="modal-overlay" style="display:flex;">
+        <div class="scroll-paper" style="text-align:center;">
+            <h1 class="event-title">選擇你的學派</h1>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="choice-btn flex-col items-center hover:bg-yellow-100" onclick="startGame('儒家')">
+                    <span class="text-2xl mb-2">儒家 (Confucian)</span>
+                    <span class="text-sm text-gray-600">優勢: 民心穩定 +20%</span>
+                </div>
+                <div class="choice-btn flex-col items-center hover:bg-gray-300" onclick="startGame('墨家')">
+                    <span class="text-2xl mb-2">墨家 (Mohist)</span>
+                    <span class="text-sm text-gray-600">優勢: 防禦工事 +50%</span>
+                </div>
+                <div class="choice-btn flex-col items-center hover:bg-purple-100" onclick="startGame('法家')">
+                    <span class="text-2xl mb-2">法家 (Legalist)</span>
+                    <span class="text-sm text-gray-600">優勢: 稅收效率 +30%</span>
+                </div>
+                <div class="choice-btn flex-col items-center hover:bg-green-100" onclick="startGame('道家')">
+                    <span class="text-2xl mb-2">道家 (Taoist)</span>
+                    <span class="text-sm text-gray-600">優勢: 還原自然 (事件災難減半)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Event Popup -->
+    <div id="event-overlay" class="modal-overlay">
+        <div class="scroll-paper">
+            <h2 class="event-title" id="evt-title">鄰國饑荒</h2>
+            <p class="event-desc" id="evt-desc">鄰國發生大旱，難民湧入。你的學派主張如何應對？</p>
+            <div class="event-choices" id="evt-choices">
+                <!-- Dynamic Choices -->
+            </div>
+        </div>
+    </div>
+
+    <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+</body>
+
+</html>
+

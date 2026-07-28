@@ -1,0 +1,298 @@
+﻿<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>語文大富翁 - 中一中文遊戲</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            min-height: 100vh;
+        }
+        
+        .board-cell {
+            transition: all 0.3s ease;
+            border: 2px solid #1e293b;
+        }
+        
+        .board-cell:hover {
+            transform: scale(1.05);
+            z-index: 10;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .player-token {
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        @keyframes diceRoll {
+            0% { transform: rotate(0deg) scale(1); }
+            25% { transform: rotate(90deg) scale(1.1); }
+            50% { transform: rotate(180deg) scale(1); }
+            75% { transform: rotate(270deg) scale(1.1); }
+            100% { transform: rotate(360deg) scale(1); }
+        }
+        
+        .dice-rolling {
+            animation: diceRoll 0.6s ease-in-out;
+        }
+        
+        @keyframes movePlayer {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1); }
+        }
+        
+        .player-moving {
+            animation: movePlayer 0.4s ease-in-out;
+        }
+        
+        .property-card {
+            transition: all 0.3s ease;
+        }
+        
+        .property-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .modal-overlay {
+            backdrop-filter: blur(4px);
+        }
+    </style>
+      <!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../common/ncs-i18n.css" />
+  <script src="../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+      display: none !important;
+    }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+        if (label === "EN" || label === "\u4E2D") {
+          btn.classList.add("ncs-hide-when-ncs-fleet");
+        }
+      });
+      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+        el.classList.add("ncs-hide-when-ncs-fleet");
+      });
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+</head>
+<body class="p-2 md:p-4">
+    <div class="max-w-[1800px] mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-4">
+            <h1 class="text-3xl md:text-4xl font-black text-white mb-2 drop-shadow-lg">
+                <i class="fas fa-landmark text-yellow-300"></i> 語文大富翁
+            </h1>
+            <p class="text-white text-sm md:text-lg opacity-90">答對中文問題才能買地！</p>
+        </div>
+
+        <!-- Main Game Container -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-2 md:gap-4">
+            <!-- Left Sidebar: Players & Controls -->
+            <div class="lg:col-span-1 space-y-2 md:space-y-4">
+                <!-- Players Info -->
+                <div class="bg-white rounded-xl shadow-xl p-3 md:p-4">
+                    <h2 class="text-lg md:text-xl font-bold mb-3 text-gray-800">
+                        <i class="fas fa-users"></i> 玩家資訊
+                    </h2>
+                    <div id="playersInfo" class="space-y-2">
+                        <!-- Players will be dynamically added here -->
+                    </div>
+                </div>
+
+                <!-- Game Controls -->
+                <div class="bg-white rounded-xl shadow-xl p-3 md:p-4">
+                    <h2 class="text-lg md:text-xl font-bold mb-3 text-gray-800">
+                        <i class="fas fa-gamepad"></i> 遊戲控制
+                    </h2>
+                    <div class="space-y-3">
+                        <div class="text-center">
+                            <p class="text-xs md:text-sm text-gray-600 mb-1">當前玩家</p>
+                            <div id="currentPlayer" class="text-xl md:text-2xl font-bold"></div>
+                        </div>
+                        <button id="rollDiceBtn" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold py-2 md:py-3 px-4 md:px-6 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105 shadow-lg text-sm md:text-base">
+                            <i class="fas fa-dice"></i> 擲骰子
+                        </button>
+                        <div id="diceResult" class="text-center text-xl md:text-2xl font-bold text-gray-800 hidden"></div>
+                        <div id="gameActions" class="space-y-2 hidden">
+                            <button id="buyPropertyBtn" class="w-full bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 transition-all text-sm">
+                                <i class="fas fa-shopping-cart"></i> 購買地產
+                            </button>
+                            <button id="endTurnBtn" class="w-full bg-gray-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-700 transition-all text-sm">
+                                <i class="fas fa-forward"></i> 結束回合
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Properties Owned -->
+                <div class="bg-white rounded-xl shadow-xl p-3 md:p-4">
+                    <h2 class="text-lg md:text-xl font-bold mb-3 text-gray-800">
+                        <i class="fas fa-map-marked-alt"></i> 我的地產
+                    </h2>
+                    <div id="myProperties" class="space-y-2 max-h-48 overflow-y-auto">
+                        <p class="text-sm text-gray-500 text-center">暫無地產</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center: Game Board -->
+            <div class="lg:col-span-2">
+                <div class="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl shadow-2xl p-2 md:p-4">
+                    <div id="gameBoard" class="relative">
+                        <!-- Board will be generated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Sidebar: Game Info -->
+            <div class="lg:col-span-1 space-y-2 md:space-y-4">
+                <!-- Bank Info -->
+                <div class="bg-white rounded-xl shadow-xl p-3 md:p-4">
+                    <h2 class="text-lg md:text-xl font-bold mb-3 text-gray-800">
+                        <i class="fas fa-university"></i> 銀行資訊
+                    </h2>
+                    <div class="space-y-2 text-sm md:text-base">
+                        <div class="flex justify-between">
+                            <span>起始資金:</span>
+                            <span class="font-bold">$1,500</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>過路費:</span>
+                            <span class="font-bold text-red-600">地價 × 倍數</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Game Rules -->
+                <div class="bg-white rounded-xl shadow-xl p-3 md:p-4">
+                    <h2 class="text-lg md:text-xl font-bold mb-3 text-gray-800">
+                        <i class="fas fa-book"></i> 遊戲規則
+                    </h2>
+                    <ul class="text-xs md:text-sm space-y-1 text-gray-700">
+                        <li>• 答對問題才能買地</li>
+                        <li>• 經過他人地產需付租金</li>
+                        <li>• 破產者退出遊戲</li>
+                        <li>• 最後剩餘者獲勝</li>
+                    </ul>
+                </div>
+
+                <!-- Event Log -->
+                <div class="bg-white rounded-xl shadow-xl p-3 md:p-4">
+                    <h2 class="text-lg md:text-xl font-bold mb-3 text-gray-800">
+                        <i class="fas fa-scroll"></i> 遊戲日誌
+                    </h2>
+                    <div id="eventLog" class="space-y-1 text-xs md:text-sm max-h-48 overflow-y-auto">
+                        <p class="text-gray-500">遊戲開始...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Question Modal -->
+    <div id="questionModal" class="fixed inset-0 bg-black bg-opacity-50 modal-overlay hidden items-center justify-center z-50">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full mx-4 p-6 md:p-8 relative">
+            <button id="closeQuestionModal" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl">×</button>
+            <div id="questionContent" class="space-y-4 md:space-y-6">
+                <!-- Question content will be dynamically loaded -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Property Purchase Modal -->
+    <div id="purchaseModal" class="fixed inset-0 bg-black bg-opacity-50 modal-overlay hidden items-center justify-center z-50">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6 md:p-8 text-center">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">購買地產</h3>
+            <div id="purchaseInfo" class="mb-6"></div>
+            <div class="space-y-3">
+                <button id="confirmPurchaseBtn" class="w-full bg-green-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-700 transition-all">
+                    <i class="fas fa-check"></i> 確認購買
+                </button>
+                <button id="cancelPurchaseBtn" class="w-full bg-gray-400 text-white font-bold py-3 px-6 rounded-lg hover:bg-gray-500 transition-all">
+                    <i class="fas fa-times"></i> 取消
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div id="gameOverModal" class="fixed inset-0 bg-black bg-opacity-50 modal-overlay hidden items-center justify-center z-50">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6 md:p-8 text-center">
+            <h2 class="text-3xl font-bold text-yellow-600 mb-4">🎉 遊戲結束！</h2>
+            <div id="winnerInfo" class="mb-6"></div>
+            <button id="restartGameBtn" class="bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold py-3 px-8 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all">
+                <i class="fas fa-redo"></i> 重新開始
+            </button>
+        </div>
+    </div>
+
+    <!-- Setup Modal -->
+    <div id="setupModal" class="fixed inset-0 bg-black bg-opacity-50 modal-overlay flex items-center justify-center z-50">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6 md:p-8 text-center">
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">
+                <i class="fas fa-landmark text-yellow-300"></i> 語文大富翁
+            </h2>
+            <p class="text-gray-600 mb-6">請選擇玩家數量</p>
+            <div class="grid grid-cols-3 gap-4 mb-6">
+                <button class="player-count-btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-4 px-6 rounded-lg transition-all transform hover:scale-105 shadow-lg" data-count="2">
+                    <div class="text-2xl mb-2">👥</div>
+                    <div class="text-lg">2 人</div>
+                </button>
+                <button class="player-count-btn bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-6 rounded-lg transition-all transform hover:scale-105 shadow-lg" data-count="3">
+                    <div class="text-2xl mb-2">👥</div>
+                    <div class="text-lg">3 人</div>
+                </button>
+                <button class="player-count-btn bg-purple-500 hover:bg-purple-600 text-white font-bold py-4 px-6 rounded-lg transition-all transform hover:scale-105 shadow-lg" data-count="4">
+                    <div class="text-2xl mb-2">👥</div>
+                    <div class="text-lg">4 人</div>
+                </button>
+            </div>
+            <p class="text-sm text-gray-500">答對中文問題才能買地！</p>
+        </div>
+    </div>
+
+    <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+</body>
+</html>
+
+

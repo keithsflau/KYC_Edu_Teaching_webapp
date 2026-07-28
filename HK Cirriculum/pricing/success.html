@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>付款成功 | HK STEAM AI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet" />
+  <style>body { font-family: "IBM Plex Sans", "Noto Sans TC", system-ui, sans-serif; }</style>
+  <script src="../common/billing-config.js"></script>
+  <script src="../common/entitlement.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen">
+  <div class="max-w-lg mx-auto px-4 py-16 text-center">
+    <div id="state-pending" class="space-y-4">
+      <div class="w-12 h-12 mx-auto rounded-full border-4 border-indigo-200 border-t-indigo-600 animate-spin" aria-hidden="true"></div>
+      <h1 class="text-2xl font-black text-slate-900" data-i18n="pendingTitle"></h1>
+      <p class="text-sm text-slate-500 leading-relaxed" data-i18n="pendingBody"></p>
+    </div>
+
+    <div id="state-success" class="hidden space-y-5">
+      <div class="w-16 h-16 mx-auto rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-3xl font-black">✓</div>
+      <h1 class="text-2xl font-black text-slate-900" data-i18n="successTitle"></h1>
+      <p class="text-sm text-slate-600 leading-relaxed" data-i18n="successBody"></p>
+      <p id="tier-label" class="text-xs font-bold uppercase tracking-widest text-indigo-600"></p>
+      <div class="flex flex-col gap-3 pt-2">
+        <a id="launch-pack-link" href="../Secondary_School/Chemistry/Form 5/09_Chemical_Equilibrium_Kc/index.html" class="min-h-[52px] rounded-xl bg-indigo-600 text-white font-bold text-sm flex items-center justify-center hover:opacity-90" data-i18n="ctaLab"></a>
+        <a href="../Secondary_School/index.html" class="min-h-[52px] rounded-xl border border-slate-300 text-slate-700 font-bold text-sm flex items-center justify-center hover:bg-slate-100" data-i18n="ctaHub"></a>
+        <a href="../parent.html" class="text-sm text-indigo-600 font-semibold hover:underline" data-i18n="ctaParent"></a>
+      </div>
+    </div>
+
+    <div id="state-error" class="hidden space-y-5">
+      <div class="w-16 h-16 mx-auto rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-3xl font-black">!</div>
+      <h1 class="text-2xl font-black text-slate-900" data-i18n="errorTitle"></h1>
+      <p id="error-detail" class="text-sm text-slate-600 leading-relaxed"></p>
+      <div class="flex flex-col gap-3 pt-2">
+        <button type="button" id="retry-btn" class="min-h-[52px] rounded-xl bg-indigo-600 text-white font-bold text-sm hover:opacity-90" data-i18n="retry"></button>
+        <a href="index.html#payment-links" class="text-sm text-indigo-600 font-semibold hover:underline" data-i18n="backPricing"></a>
+      </div>
+    </div>
+
+    <p class="mt-12 text-xs text-slate-400" data-i18n="footer"></p>
+  </div>
+
+  <script>
+    (function () {
+      var I18N = {
+        zh: {
+          pendingTitle: "正在確認付款…",
+          pendingBody: "Stripe 已收到付款，我們正在為這部裝置解鎖訂閱權益。通常只需幾秒。",
+          successTitle: "解鎖成功！",
+          successBody: "你現在可以無限練習、使用完整錯題本同家長報告。進度儲存在本機裝置。",
+          ctaLab: "打開 Kc 實驗室 →",
+          ctaHub: "瀏覽所有實驗室 →",
+          ctaParent: "查看家長報告 →",
+          errorTitle: "暫時未能確認付款",
+          retry: "再試一次",
+          backPricing: "返回方案頁",
+          footer: "需要協助？ support@hksteamai.com",
+          tierPaid: "已解鎖 · 家長計劃",
+          tierFamily: "已解鎖 · 家庭計劃"
+        },
+        en: {
+          pendingTitle: "Confirming payment…",
+          pendingBody: "Stripe received your payment. We are unlocking this device — usually within a few seconds.",
+          successTitle: "You're unlocked!",
+          successBody: "Unlimited drills, full wrong-answer book, and parent reports are now active on this device.",
+          ctaLab: "Open Kc Lab →",
+          ctaHub: "Browse all labs →",
+          ctaParent: "View parent report →",
+          errorTitle: "Could not confirm payment",
+          retry: "Try again",
+          backPricing: "Back to pricing",
+          footer: "Need help? support@hksteamai.com",
+          tierPaid: "Unlocked · Parent plan",
+          tierFamily: "Unlocked · Family plan"
+        }
+      };
+
+      var zh = true;
+      try { zh = localStorage.getItem("hkc-lang") !== "en"; } catch (e) {}
+
+      function t(key) { return (zh ? I18N.zh : I18N.en)[key] || key; }
+
+      function applyStatic() {
+        document.documentElement.lang = zh ? "zh-HK" : "en";
+        document.title = zh ? "付款成功 | HK STEAM AI" : "Payment success | HK STEAM AI";
+        document.querySelectorAll("[data-i18n]").forEach(function (el) {
+          el.textContent = t(el.getAttribute("data-i18n"));
+        });
+      }
+
+      function show(id) {
+        ["state-pending", "state-success", "state-error"].forEach(function (s) {
+          document.getElementById(s).classList.toggle("hidden", s !== id);
+        });
+      }
+
+      async function run() {
+        applyStatic();
+        if (!window.HkcEntitlement || !window.HkcEntitlement.configured()) {
+          show("state-error");
+          document.getElementById("error-detail").textContent = zh
+            ? "權益 API 未設定。請聯絡 support@hksteamai.com。"
+            : "Entitlement API not configured. Email support@hksteamai.com.";
+          return;
+        }
+        var sid = new URLSearchParams(location.search).get("session_id") ||
+          new URLSearchParams(location.search).get("redeem");
+        if (!sid) {
+          show("state-error");
+          document.getElementById("error-detail").textContent = zh
+            ? "缺少付款 session。請從方案頁重新訂閱，或檢查 Stripe 成功網址是否包含 session_id。"
+            : "Missing payment session. Subscribe again from pricing, or check Stripe success URL includes session_id.";
+          return;
+        }
+        show("state-pending");
+        var result = await window.HkcEntitlement.redeem(sid);
+        if (result.ok) {
+          show("success");
+          var tier = result.tier || "paid";
+          document.getElementById("tier-label").textContent =
+            tier === "family" || tier === "school" ? t("tierFamily") : t("tierPaid");
+          if (window.history && history.replaceState) {
+            var url = new URL(location.href);
+            url.searchParams.delete("session_id");
+            url.searchParams.delete("redeem");
+            history.replaceState(null, "", url.toString());
+          }
+          return;
+        }
+        show("state-error");
+        document.getElementById("error-detail").textContent =
+          (result && result.message) || (result && result.error) || (zh ? "請稍後再試。" : "Please try again shortly.");
+      }
+
+      document.getElementById("retry-btn").addEventListener("click", run);
+      run();
+    })();
+  </script>
+  <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+</body>
+</html>

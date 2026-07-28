@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fraction Pizza Share Lab | ???????????????/title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="../../../../common/babel-react-classic.js"></script>
+  <link rel="stylesheet" href="../../../../common/subscribe-gate.css" />
+  <link rel="stylesheet" href="../../../../_shared/ncs-i18n.css" />
+  <script src="../../../../_shared/ncs-i18n.js"></script>
+  <script>
+    window.HKC_SUBSCRIBE = {
+      appId: "s1-math-fraction-pizza",
+      appNameZh: "???????????????,
+      appNameEn: "Fraction Pizza Share Lab",
+      level: "S1",
+      subject: "Mathematics",
+      freeDrillLimit: 12,
+      wrongBookLimit: 10,
+      contactEmail: "support@hksteamai.com",
+      comingSoonHref: "../../../../pricing/index.html#payment-links"
+    };
+    window.__HKC_FREE_CAP = () => !(window.HkcSubscribe && HkcSubscribe.canContinueDrills());
+  </script>
+  <script src="../../../../common/subscribe-gate.js"></script>
+  <script src="../../../../common/parent-report.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=JetBrains+Mono:wght@500&family=Fredoka:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root { --accent: #ea580c; }
+    body {
+      font-family: "IBM Plex Sans", "Fredoka", system-ui, sans-serif;
+      background:
+        radial-gradient(ellipse 70% 45% at 8% -5%, #ea580c28, transparent 55%),
+        radial-gradient(ellipse 50% 40% at 100% 0%, #64748b14, transparent 50%),
+        #f1f5f9;
+      color: #0f172a;
+      min-height: 100vh;
+    }
+    input[type="range"] { accent-color: #ea580c; width: 100%; }
+    .mono { font-family: "JetBrains Mono", ui-monospace, monospace; }
+    canvas { touch-action: none; display: block; width: 100%; height: auto; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+  </style>
+    <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+      display: none !important;
+    }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+        if (label === "EN" || label === "\u4E2D") {
+          btn.classList.add("ncs-hide-when-ncs-fleet");
+        }
+      });
+      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+        el.classList.add("ncs-hide-when-ncs-fleet");
+      });
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel" data-presets="react-classic">
+    const { useState, useEffect, useRef, useMemo } = React;
+    const { useLang, LangSwitcher, appTabs } = window.NcsI18n;
+    const ACCENT = "#ea580c";
+    const APP_ID = "s1-math-fraction-pizza";
+
+    const LEARN_STEPS = [
+  { id: "A1", titleZh: "???????, titleEn: "What is a fraction?",
+    bodyZh: "???????????????????a/b ?????? b ?????a ???,
+    bodyEn: "A fraction is part of a whole: a out of b equal parts.",
+    render: ({ sub, setSub }) => (
+      <button type="button" className="px-4 py-2 bg-orange-200 rounded-xl font-bold" onClick={() => setSub(1)}>?? 1 ?????/button>
+    ) },
+  { id: "A2", titleZh: "?????", titleEn: "Equal parts",
+    bodyZh: "???????????????= ???????,
+    bodyEn: "Denominator = number of equal slices.",
+    render: ({ sub, setSub }) => (
+      <div className="flex gap-2 justify-center flex-wrap">
+        {[2,4,8].map(d => <button key={d} type="button" className="px-3 py-2 bg-amber-100 rounded-lg font-bold min-h-[44px]" onClick={() => setSub(d)}>{d} ??/button>)}
+        {sub > 0 && <p className="w-full text-center font-bold">??? = 1/{sub}</p>}
+      </div>
+    ) },
+  { id: "A3", titleZh: "????", titleEn: "Numerator",
+    bodyZh: "???? = ????????????????????,
+    bodyEn: "Numerator = how many slices you take.",
+    render: ({ sub, setSub }) => (
+      <div className="text-center"><button type="button" className="px-4 py-2 bg-red-200 rounded-lg font-bold" onClick={() => setSub(3)}>??? 3 ??/button>
+        {sub > 0 && <p className="mt-2 font-bold">3/8??????</p>}</div>
+    ) },
+  { id: "A4", titleZh: "?????", titleEn: "Equivalent fractions",
+    bodyZh: "1/2 = 2/4 = 4/8 ????????????????????,
+    bodyEn: "Same amount, different cuts: 1/2 = 2/4.",
+    render: ({ sub, setSub }) => (
+      <button type="button" className="px-4 py-2 bg-yellow-200 rounded-lg font-bold" onClick={() => setSub(1)}>????/2 ??2/4</button>
+    ) },
+  { id: "A5", titleZh: "??????", titleEn: "Compare fractions",
+    bodyZh: "??????????????????,
+    bodyEn: "Same denominator: larger numerator wins.",
+    render: ({ sub, setSub }) => (
+      <div className="flex gap-2 justify-center">
+        <button type="button" className="px-3 py-2 bg-slate-200 rounded-lg" onClick={() => setSub(1)}>3/8 vs 5/8</button>
+        {sub > 0 && <span className="font-bold text-emerald-700">5/8 ??</span>}
+      </div>
+    ) },
+  { id: "A6", titleZh: "????????????????", titleEn: "Fraction Pizza Lab",
+    bodyZh: "????????????????????????????,
+    bodyEn: "Cut pizza, shade slices, compare equivalents.",
+    render: () => <PizzaLab /> },
+  { id: "A7", titleZh: "??????", titleEn: "Real life",
+    bodyZh: "???????????????????????,
+    bodyEn: "Sharing pizza or sweets uses fractions.",
+    render: () => <div className="p-4 bg-orange-50 rounded-xl text-center font-bold">?? 4 ??? 1 ?????????? 1/4</div> },
+  { id: "A8", titleZh: "??", titleEn: "Checkpoint",
+    bodyZh: "8 ?????????3 ??????????",
+    bodyEn: "3 slices eaten from 8 ??fraction?",
+    render: ({ sub, setSub }) => (
+      <div className="text-center space-y-2">
+        <button type="button" className="px-4 py-2 bg-indigo-200 rounded-lg font-bold mx-1" onClick={() => alert("??)}>3/5</button>
+        <button type="button" className="px-4 py-2 bg-indigo-200 rounded-lg font-bold mx-1" onClick={() => setSub(1)}>3/8</button>
+        {sub > 0 && <div className="font-bold text-indigo-900">??????/div>}
+      </div>
+    ) }
+];
+
+    function LearnFromZero({ onComplete }) {
+      const [step, setStep] = useState(0);
+      const [sub, setSub] = useState(0);
+      const s = LEARN_STEPS[step];
+      const renderProps = { sub, setSub };
+      return (
+        <section className="bg-white border border-slate-200 shadow-sm rounded-3xl p-6 sm:p-8 space-y-6">
+          <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
+            <span className="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-md text-white" style={{ background: ACCENT }}>Teach from zero ? ??{step + 1}/{LEARN_STEPS.length} ??/span>
+            <div className="flex gap-1.5 flex-wrap ml-auto">
+              {LEARN_STEPS.map((_, i) => (
+                <span key={i} className={"w-2.5 h-2.5 rounded-full " + (i <= step ? "shadow-sm" : "bg-slate-200")} style={i <= step ? { background: ACCENT } : {}} />
+              ))}
+            </div>
+          </div>
+          <h2 className="text-2xl font-bold text-slate-800">{s.titleZh}</h2>
+          <p className="text-sm text-slate-500 font-bold mb-2">{s.titleEn}</p>
+          <p className="text-base leading-relaxed text-slate-700 font-medium">{s.bodyZh}</p>
+          <p className="text-sm text-slate-500 leading-relaxed max-w-xl">{s.bodyEn}</p>
+          <div>{s.render(renderProps)}</div>
+          <div className="flex flex-wrap gap-2 pt-4">
+            {step > 0 && <button type="button" className="px-5 py-3 rounded-xl border border-slate-300 text-slate-700 min-h-[52px] font-bold" onClick={() => { setStep(step - 1); setSub(0); }}>???????/button>}
+            {step < LEARN_STEPS.length - 1 ? (
+              <button type="button" className="px-5 py-3 rounded-xl font-bold text-white min-h-[52px] ml-auto" style={{ background: ACCENT }} onClick={() => { setStep(step + 1); setSub(0); }}>???????/button>
+            ) : (
+              <button type="button" className="px-5 py-3 rounded-xl font-bold text-white min-h-[52px] ml-auto" style={{ background: ACCENT }} onClick={onComplete}>??? Learn ? ???? Guided ??/button>
+            )}
+          </div>
+        </section>
+      );
+    }
+
+    const GUIDED = [
+  { id: "g1", q: "In 3/8, the denominator is??, qZh: "3/8 ?????????, a: "8",
+    opts: ["3", "8", "11", "5"], hint: "Bottom number." },
+  { id: "g2", q: "1/2 is equivalent to??, qZh: "1/2 ????, a: "2/4",
+    opts: ["1/3", "2/4", "3/8", "2/3"], hint: "Same amount." },
+  { id: "g3", q: "Which is larger: 2/5 or 4/5?", qZh: "????????2/5 ??4/5??, a: "4/5",
+    opts: ["2/5", "4/5", "equal", "cannot tell"], hint: "Same denominator." }
+];
+    const EXAM = [
+  { id: "e1", q: "6 equal slices, 2 eaten ??fraction?", qZh: "6 ???? 2 ?????????, a: "2/6",
+    opts: ["2/6", "6/2", "2/4", "1/6"], hint: "Eaten/total." },
+  { id: "e2", q: "Simplify 4/8", qZh: "??? 4/8", a: "1/2",
+    opts: ["1/2", "2/8", "4/4", "8/4"], hint: "Divide top and bottom." },
+  { id: "e3", q: "Compare: 3/4 vs 1/4", qZh: "??? 3/4 ??1/4", a: "3/4 is larger",
+    opts: ["1/4 is larger", "3/4 is larger", "equal", "neither"], hint: "Numerators." }
+];
+
+    function UpgradeCTA({ reason, onClose, onTrial }) {
+      return (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-2xl p-5 bg-white border border-slate-200">
+            <h3 className="text-lg font-bold" style={{color: ACCENT}}>???????????????</h3>
+            <p className="text-sm mt-2 text-slate-600">{reason || "Upgrade required"}</p>
+            <button type="button" onClick={onTrial} className="mt-4 w-full min-h-[48px] rounded-xl font-semibold text-white" style={{background: ACCENT}}>???? 14 ?????????????/button>
+            <button type="button" onClick={onClose} className="mt-2 w-full text-sm underline text-slate-500">??????</button>
+          </div>
+        </div>
+      );
+    }
+
+    function Drill({ bank, label, onNeedUpgrade, onDone }) {
+      const [qi, setQi] = useState(0);
+      const [fb, setFb] = useState(null);
+      const [score, setScore] = useState(0);
+      const [hint, setHint] = useState(false);
+      const [first, setFirst] = useState(true);
+      const item = bank[qi];
+      function pick(opt) {
+        if (window.__HKC_FREE_CAP && window.__HKC_FREE_CAP()) { onNeedUpgrade("?????????????); return; }
+        const ok = opt === item.a;
+        setFb(ok ? { ok: true, msg: "Correct ? ????" } : { ok: false, msg: "Not quite ? ?????Use Hint." });
+        if (ok && first) setScore(s => s + 1);
+        else if (!ok) setFirst(false);
+      }
+      function next() {
+        setFb(null); setHint(false); setFirst(true);
+        if (qi + 1 >= bank.length) onDone(score, bank.length);
+        else setQi(qi + 1);
+      }
+      return (
+        <section className="bg-white border border-slate-200 shadow-sm rounded-2xl p-4 sm:p-5">
+          <div className="flex justify-between text-sm mb-3 text-slate-500">
+            <span>{label} ? Q {qi + 1}/{bank.length}</span>
+            <span>Score {score}</span>
+          </div>
+          <h2 className="text-lg font-bold mb-1">{item?.q}</h2>
+          {item?.qZh && <p className="text-sm mb-3 opacity-80" style={{color: ACCENT}}>{item.qZh}</p>}
+          <div className="grid gap-2">
+            {(item?.opts || []).map(o => (
+              <button key={o} type="button" disabled={fb && fb.ok} onClick={() => pick(o)}
+                className="text-left px-4 py-3 rounded-xl min-h-[48px] disabled:opacity-50 bg-slate-50 hover:bg-slate-100 border border-slate-200">{o}</button>
+            ))}
+          </div>
+          <button type="button" className="text-sm mt-3 font-semibold min-h-[44px]" style={{color: ACCENT}} onClick={() => setHint(true)}>Hint ? ???</button>
+          {hint && <p className="text-sm mt-1 p-3 rounded-xl bg-amber-50 text-amber-900 border border-amber-200">{item?.hint}</p>}
+          {fb && (
+            <div className={"mt-4 p-3 rounded-xl text-sm " + (fb.ok ? "bg-emerald-50 text-emerald-800" : "bg-rose-50 text-rose-800")}>
+              {fb.msg}
+              {fb.ok && <button type="button" className="block mt-2 underline font-semibold" onClick={next}>Next ??/button>}
+              {!fb.ok && <button type="button" className="block mt-2 underline font-semibold" onClick={() => setFb(null)}>Retry</button>}
+            </div>
+          )}
+        </section>
+      );
+    }
+
+    function PizzaLab() {
+      const canvasRef = useRef(null);
+      const [denom, setDenom] = useState(8);
+      const [num, setNum] = useState(3);
+      const [equiv, setEquiv] = useState(false);
+      useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        const W = canvas.width, H = canvas.height;
+        const cx = W / 2, cy = H / 2 + 10, r = Math.min(W, H) * 0.38;
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = "#fff7ed";
+        ctx.fillRect(0, 0, W, H);
+        const d = equiv ? denom * 2 : denom;
+        const n = equiv ? num * 2 : num;
+        for (let i = 0; i < d; i++) {
+          const a0 = (i / d) * Math.PI * 2 - Math.PI / 2;
+          const a1 = ((i + 1) / d) * Math.PI * 2 - Math.PI / 2;
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          ctx.arc(cx, cy, r, a0, a1);
+          ctx.closePath();
+          ctx.fillStyle = i < n ? "#f97316" : "#fde68a";
+          ctx.fill();
+          ctx.strokeStyle = "#92400e";
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.strokeStyle = "#78350f";
+        ctx.lineWidth = 4;
+        ctx.stroke();
+        ctx.fillStyle = "#0f172a";
+        ctx.font = "bold 24px Fredoka";
+        ctx.textAlign = "center";
+        ctx.fillText(n + "/" + d, cx, cy + 8);
+        if (equiv) {
+          ctx.font = "14px IBM Plex Sans";
+          ctx.fillText("????" + num + "/" + denom, cx, cy + 36);
+        }
+      }, [denom, num, equiv]);
+      return (
+        <div className="grid lg:grid-cols-5 gap-4">
+          <div className="lg:col-span-3 bg-white rounded-2xl border p-4 flex justify-center">
+            <canvas ref={canvasRef} width={400} height={400} />
+          </div>
+          <div className="lg:col-span-2 space-y-3">
+            <section className="bg-white rounded-2xl border p-4">
+              <label className="text-xs font-semibold">???????????= {denom}</label>
+              <input type="range" min="2" max="12" step="1" value={denom} onChange={e => { setDenom(+e.target.value); setNum(m => Math.min(m, +e.target.value)); }} />
+              <label className="text-xs font-semibold mt-2 block">???????????= {num}</label>
+              <input type="range" min="0" max={denom} step="1" value={num} onChange={e => setNum(+e.target.value)} />
+              <button type="button" className="mt-3 w-full py-2 rounded-lg border font-bold min-h-[44px]" onClick={() => setEquiv(e => !e)}>
+                {equiv ? "????????" : "???? ?2"}
+              </button>
+            </section>
+            <section className="bg-orange-100 text-orange-900 rounded-2xl p-4 text-sm font-semibold">
+              ??? = {num}/{denom} {equiv && <span>??{(num*2)}/{(denom*2)}</span>}
+            </section>
+          </div>
+        </div>
+      );
+    }
+
+    function App() {
+      const { isZh, t } = useLang();
+      const [mode, setMode] = useState("learn");
+      const [pay, setPay] = useState(false);
+      const [payReason, setPayReason] = useState("");
+      const [doneMsg, setDoneMsg] = useState(null);
+      const tabs = appTabs(["learn", "guided", "exam"], isZh);
+      return (
+        <div className="max-w-5xl mx-auto p-4 sm:p-8">
+          <div className="flex flex-wrap justify-between items-center gap-2">
+            <a href="../index.html" className="text-sm hover:underline font-semibold" style={{color: ACCENT}}>{t("?????????", "??Back to hub")}</a>
+            <LangSwitcher />
+          </div>
+          <header className="mt-4 mb-4">
+            <p className="text-xs uppercase tracking-widest font-bold" style={{color: ACCENT}}>{t("?????? ? ???", "S1 Math ? Fractions")}</p>
+            <h1 className="text-2xl sm:text-3xl font-bold mt-1">{t("???????????????, "Fraction Pizza Share Lab")}</h1>
+            <p className="text-slate-500 mt-1">{t("??? ????? ?????", "Learn ??Guided ??Exam")}</p>
+          </header>
+          <nav className="flex flex-wrap gap-2 mb-4">
+            {tabs.map(tab => (
+              <button key={tab.id} type="button" onClick={() => { setMode(tab.id); setDoneMsg(null); }}
+                className={"px-3.5 py-2 rounded-lg text-sm font-semibold min-h-[44px] " + (mode === tab.id ? "text-white" : "bg-white border border-slate-200 text-slate-700")}
+                style={mode === tab.id ? {background: ACCENT} : {}}>{tab.label}</button>
+            ))}
+          </nav>
+          {mode === "learn" && <LearnFromZero onComplete={() => setMode("guided")} />}
+          {mode === "guided" && !doneMsg && (
+            <Drill bank={GUIDED} label="Guided" onNeedUpgrade={r => { setPayReason(r); setPay(true); }}
+              onDone={(s, n) => setDoneMsg({ s, n, next: "exam" })} />
+          )}
+          {mode === "exam" && !doneMsg && (
+            <Drill bank={EXAM} label="Exam" onNeedUpgrade={r => { setPayReason(r); setPay(true); }}
+              onDone={(s, n) => setDoneMsg({ s, n, next: "learn" })} />
+          )}
+          {doneMsg && (mode === "guided" || mode === "exam") && (
+            <section className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 text-center">
+              <h2 className="text-2xl font-bold">{t("???", "Complete")}</h2>
+              <p className="mt-2">{doneMsg.s} / {doneMsg.n}</p>
+              <button type="button" className="mt-4 px-4 py-2 rounded-xl font-semibold min-h-[48px] text-white" style={{background: ACCENT}}
+                onClick={() => { setDoneMsg(null); setMode(doneMsg.next); }}>{t("??? ??, "Continue ??)}</button>
+            </section>
+          )}
+          {pay && <UpgradeCTA reason={payReason} onClose={() => setPay(false)} onTrial={() => setPay(false)} />}
+        </div>
+      );
+    }
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+  <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+</body>
+</html>

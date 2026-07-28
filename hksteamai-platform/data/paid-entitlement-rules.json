@@ -1,0 +1,117 @@
+{
+  "version": 1,
+  "updatedAt": "2026-07-21",
+  "owner": "Agent 2 — free demo vs paid catalog",
+  "summary": {
+    "en": "Free = 15 forever demos. Basic = Primary OR Secondary library. Pro = full library. Trial = Pro for 7 days.",
+    "zh-HK": "免費＝15 個永久示範。基本＝小學或中學其中一庫。專業＝完整課程庫。試用＝7 日專業權限。"
+  },
+  "guestAccess": "free_demo_catalog_only",
+  "modulesRoot": {
+    "env": "MODULES_ROOT",
+    "defaultRelativeToCwd": ".."
+  },
+  "pathClassification": {
+    "primary": {
+      "entitlement": "primary",
+      "pathPrefixes": ["Primary_School/"],
+      "description": {
+        "en": "All modules under Primary_School/",
+        "zh-HK": "Primary_School/ 底下全部模組"
+      }
+    },
+    "secondary": {
+      "entitlement": "secondary",
+      "pathPrefixes": ["Secondary_School/"],
+      "description": {
+        "en": "All modules under Secondary_School/",
+        "zh-HK": "Secondary_School/ 底下全部模組"
+      }
+    },
+    "other": {
+      "entitlement": "all",
+      "pathPrefixes": [],
+      "notes": "Paths outside Primary_School / Secondary_School (e.g. bible_study, typing test) are out of V1 product scope — do not sell or soft-paywall via this catalog.",
+      "outOfScopePrefixes": [
+        "bible_study/",
+        "typing test/",
+        "Music Therapy/",
+        "Music_Therapy/"
+      ]
+    }
+  },
+  "entitlements": {
+    "free": {
+      "allows": ["free_demo_catalog"],
+      "pathPrefixes": [],
+      "plans": [],
+      "uiTier": "free"
+    },
+    "primary": {
+      "allows": ["free_demo_catalog", "Primary_School/"],
+      "pathPrefixes": ["Primary_School/"],
+      "plans": ["basic_monthly", "basic_yearly"],
+      "checkoutLibraryChoice": "primary",
+      "uiTier": "basic"
+    },
+    "secondary": {
+      "allows": ["free_demo_catalog", "Secondary_School/"],
+      "pathPrefixes": ["Secondary_School/"],
+      "plans": ["basic_monthly", "basic_yearly"],
+      "checkoutLibraryChoice": "secondary",
+      "uiTier": "basic"
+    },
+    "all": {
+      "allows": ["free_demo_catalog", "Primary_School/", "Secondary_School/"],
+      "pathPrefixes": ["Primary_School/", "Secondary_School/"],
+      "plans": ["pro_monthly", "pro_yearly"],
+      "trialDefaultDays": 7,
+      "uiTier": "pro"
+    }
+  },
+  "resolutionOrder": [
+    "1. Normalize path (strip leading slash, trailing /index.html).",
+    "2. If path is in data/free-demo-catalog.json → ALLOW (reason: free_demo). Works for guests.",
+    "3. If path matches outOfScopePrefixes → DENY / hide from product library (V1).",
+    "4. If entitlement === all → ALLOW Primary_School and Secondary_School (reason: pro_or_trial).",
+    "5. If entitlement === primary and path starts with Primary_School/ → ALLOW.",
+    "6. If entitlement === secondary and path starts with Secondary_School/ → ALLOW.",
+    "7. Else DENY with soft paywall (reason: subscribe_required | wrong_library_tier)."
+  ],
+  "denyReasons": {
+    "subscribe_required": {
+      "en": "This module is part of the paid library. Start a free trial or subscribe to unlock.",
+      "zh-HK": "呢個模組屬於付費課程庫。開始免費試用或訂閱即可解鎖。"
+    },
+    "wrong_library_tier": {
+      "en": "Your Basic plan covers one library (Primary or Secondary). Upgrade to Pro for the full library, or switch library at renewal.",
+      "zh-HK": "你嘅基本計劃只包括一個課程庫（小學或中學）。升級專業版可解鎖全部，或於續訂時轉庫。"
+    },
+    "auth_required": {
+      "en": "Sign in to continue. Free demos stay available without an account.",
+      "zh-HK": "請登入後繼續。免費示範仍然唔使帳戶都可以玩。"
+    },
+    "out_of_scope": {
+      "en": "This content is not part of the hksteamai.com V1 library.",
+      "zh-HK": "呢份內容唔屬於 hksteamai.com V1 課程庫。"
+    }
+  },
+  "featureFlags": {
+    "free_catalog_override": {
+      "key": "free_catalog_override",
+      "valueShape": "JSON string array of extra module folder paths",
+      "merge": "union with free-demo-catalog.json paths"
+    }
+  },
+  "importsForAgents": {
+    "runtime": "src/lib/catalog.ts",
+    "accessCheck": "src/lib/entitlements.ts → canAccessModule / canAccessModuleAsync / isFreeDemo",
+    "apiMarketing": "GET /api/catalog",
+    "apiFreeDemos": "GET /api/modules/demos",
+    "apiLibrary": "GET /api/modules/catalog",
+    "humanDocs": [
+      "FREE_DEMO_CATALOG.md",
+      "SOFT_PAYWALL_COPY.md"
+    ]
+  }
+}

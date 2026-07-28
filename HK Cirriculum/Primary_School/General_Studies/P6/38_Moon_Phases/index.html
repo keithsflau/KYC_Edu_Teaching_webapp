@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - Moon Phases</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: #0f172a;
+        color: white;
+      }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet" />
+<!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
+  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+      display: none !important;
+    }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+        if (label === "EN" || label === "\u4E2D") {
+          btn.classList.add("ncs-hide-when-ncs-fleet");
+        }
+      });
+      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+        el.classList.add("ncs-hide-when-ncs-fleet");
+      });
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+</head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Moon Phase Matcher",
+    zh: "月相配對",
+    ja: "月の満ち欠け",
+    ko: "달의 위상",
+    es: "Fases de la luna",
+    de: "Mondphasen",
+    fi: "Kuun vaiheet",
+    fr: "Phases de la lune",
+    ar: "مراحل القمر",
+    it: "Fasi Lunari"
+  },
+  instruction: {
+    en: "Match the moon phase name to the image.",
+    zh: "將月相名稱與圖片配對。",
+    ja: "月の満ち欠けの名前を画像に合わせてください。",
+    ko: "달의 위상 이름을 이미지와 연결하세요.",
+    es: "Empareja el nombre de la fase lunar con la imagen.",
+    de: "Ordne den Namen der Mondphase dem Bild zu.",
+    fi: "Yhdistä kuun vaiheen nimi kuvaan.",
+    fr: "Associez le nom de la phase lunaire à l'image.",
+    ar: "طابق اسم مرحلة القمر بالصورة.",
+    it: "Abbina il nome della fase lunare all'immagine."
+  },
+  new: {
+    en: "New Moon",
+    zh: "新月",
+    ja: "新月",
+    ko: "신월"
+  },
+  full: {
+    en: "Full Moon",
+    zh: "滿月",
+    ja: "満月",
+    ko: "만월"
+  },
+  first: {
+    en: "First Quarter",
+    zh: "上弦月",
+    ja: "上弦の月",
+    ko: "상현달"
+  },
+  last: {
+    en: "Last Quarter",
+    zh: "下弦月",
+    ja: "下弦の月",
+    ko: "하현달"
+  },
+  correct: {
+    en: "Correct!",
+    zh: "正確！",
+    ja: "正解！",
+    ko: "정답!"
+  }
+};
+const phases = [{
+  id: "new",
+  shape: "bg-slate-900 border border-slate-700"
+}, {
+  id: "full",
+  shape: "bg-yellow-100 shadow-[0_0_20px_white]"
+}, {
+  id: "first",
+  shape: "linear-gradient(90deg, #0f172a 50%, #fef9c3 50%)"
+},
+// Half
+{
+  id: "last",
+  shape: "linear-gradient(90deg, #fef9c3 50%, #0f172a 50%)"
+} // Half reversed
+];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [idx, setIdx] = useState(0);
+  const [feedback, setFeedback] = useState(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+  const current = phases[idx];
+  const check = id => {
+    if (feedback) return;
+    if (id === current.id) {
+      setFeedback("correct");
+      setTimeout(() => {
+        setFeedback(null);
+        setIdx((idx + 1) % phases.length);
+      }, 1000);
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-bold mb-8 text-slate-200"
+  }, getText("title")), /*#__PURE__*/React.createElement("p", {
+    className: "mb-8 font-bold text-slate-500"
+  }, getText("instruction")), /*#__PURE__*/React.createElement(motion.div, {
+    key: current.id,
+    initial: {
+      scale: 0.8,
+      opacity: 0
+    },
+    animate: {
+      scale: 1,
+      opacity: 1
+    },
+    className: "w-48 h-48 rounded-full mb-12 shadow-2xl relative overflow-hidden",
+    style: {
+      background: current.shape,
+      border: current.id === "new" ? "2px solid #334155" : "none"
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 gap-4 w-full max-w-md"
+  }, phases.map(p => /*#__PURE__*/React.createElement("button", {
+    key: p.id,
+    onClick: () => check(p.id),
+    className: "p-4 bg-slate-800 text-slate-200 hover:bg-slate-700 rounded-xl font-bold border border-slate-600"
+  }, getText(p.id)))), feedback && /*#__PURE__*/React.createElement("div", {
+    className: "mt-8 text-3xl font-black text-green-400 animate-bounce"
+  }, getText("correct")));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+</body>
+</html>

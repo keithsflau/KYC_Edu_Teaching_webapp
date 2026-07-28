@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Haber Yield Plant | 哈柏法產率廠</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <link rel="stylesheet" href="../../../../common/subscribe-gate.css" />
+  <script>
+    window.HKC_SUBSCRIBE = {
+      appId: "f6-chem-haber-lab",
+      appNameZh: "哈柏法產率廠",
+      appNameEn: "Haber Yield Plant",
+      level: "F6",
+      subject: "Chemistry",
+      freeDrillLimit: 12,
+      wrongBookLimit: 10,
+      contactEmail: "support@hksteamai.com",
+      comingSoonHref: "#coming-soon"
+    };
+    window.__HKC_FREE_CAP = () => !(window.HkcSubscribe && HkcSubscribe.canContinueDrills());
+  </script>
+  <script src="../../../../common/subscribe-gate.js"></script>
+  <script src="../../../../common/parent-report.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+  <style>
+    :root { --accent: #7c3aed; }
+    body {
+      font-family: "IBM Plex Sans", system-ui, sans-serif;
+      background:
+        radial-gradient(ellipse 70% 45% at 8% -5%, #7c3aed28, transparent 55%),
+        radial-gradient(ellipse 50% 40% at 100% 0%, #64748b14, transparent 50%),
+        #f1f5f9;
+      color: #0f172a;
+      min-height: 100vh;
+    }
+    input[type="range"] { accent-color: #7c3aed; width: 100%; }
+    .mono { font-family: "JetBrains Mono", ui-monospace, monospace; }
+    canvas { touch-action: none; display: block; width: 100%; height: auto; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+  </style>
+
+  <!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
+  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect, useRef, useCallback, useMemo } = React;
+    const ACCENT = "#7c3aed";
+    const BACK = "../index.html";
+    const LEVEL = "F6";
+    const APP_ID = "f6-chem-haber-lab";
+
+    function LabChrome({ titleEn, titleZh, blurb, children, explore, legacy }) {
+      return (
+        <div className="max-w-6xl mx-auto px-4 py-6">
+          <header className="mb-5">
+            <a href={BACK} className="text-sm hover:underline" style={{ color: ACCENT }}>← {LEVEL} Chemistry</a>
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-white px-2 py-0.5 rounded" style={{ background: ACCENT }}>Interactive Lab</span>
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-white border text-slate-700">HKDSE · Learn = live sim</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold mt-1">{titleEn} · {titleZh}</h1>
+            <p className="text-slate-600 text-sm mt-1 max-w-2xl">{blurb}</p>
+          </header>
+          {children}
+          <p className="text-[10px] text-slate-400 mt-4">Explores: {explore} · Legacy MCQ: <a className="underline" href="_legacy_lger.html">_legacy_lger.html</a>{legacy ? "" : ""}</p>
+        </div>
+      );
+    }
+
+
+    function App() {
+      const canvasRef = useRef(null);
+      const [T, setT] = useState(450);
+      const [P, setP] = useState(200);
+      const [cat, setCat] = useState(true);
+      const [explore, setExplore] = useState(0);
+      const [msg, setMsg] = useState("");
+      // Compromise: yield ↑ with P and ↓ with T; rate ↑ with T and cat
+      const yieldPct = useMemo(() => {
+        const y = 90 * (1 - Math.exp(-P / 180)) * Math.exp(-(T - 200) / 420);
+        return Math.max(5, Math.min(95, y));
+      }, [T, P]);
+      const rate = useMemo(() => (cat ? 1.8 : 0.4) * Math.exp((T - 300) / 200) * (P / 150), [T, P, cat]);
+      const score = useMemo(() => yieldPct * 0.55 + Math.min(rate, 8) * 5, [yieldPct, rate]);
+
+      useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        const W = canvas.width, H = canvas.height;
+        ctx.clearRect(0, 0, W, H);
+        // reactor
+        ctx.fillStyle = "#1e293b";
+        ctx.fillRect(40, 80, 280, 220);
+        ctx.strokeStyle = "#94a3b8";
+        ctx.lineWidth = 3;
+        ctx.strokeRect(40, 80, 280, 220);
+        ctx.fillStyle = "#e2e8f0";
+        ctx.font = "bold 14px IBM Plex Sans";
+        ctx.fillText("Haber reactor", 120, 70);
+        ctx.fillText("Fe cat: " + (cat ? "ON" : "OFF"), 60, 110);
+        ctx.fillText(T + " °C · " + P + " atm", 60, 135);
+        // yield bar
+        ctx.fillStyle = "#334155";
+        ctx.fillRect(60, 180, 240, 28);
+        ctx.fillStyle = "#22c55e";
+        ctx.fillRect(60, 180, 240 * (yieldPct / 100), 28);
+        ctx.fillStyle = "#fff";
+        ctx.fillText("Yield " + yieldPct.toFixed(0) + "%", 140, 200);
+        // rate bar
+        ctx.fillStyle = "#334155";
+        ctx.fillRect(60, 230, 240, 28);
+        ctx.fillStyle = "#38bdf8";
+        ctx.fillRect(60, 230, Math.min(240, rate * 28), 28);
+        ctx.fillStyle = "#fff";
+        ctx.fillText("Rate (a.u.) " + rate.toFixed(1), 130, 250);
+        // compromise note
+        ctx.fillStyle = "#fbbf24";
+        ctx.font = "12px IBM Plex Sans";
+        ctx.fillText("Industry compromise ≈ 400–450 °C, 150–300 atm, Fe catalyst", 40, 340);
+        // gauge
+        ctx.strokeStyle = "#64748b";
+        ctx.beginPath();
+        ctx.arc(480, 200, 80, Math.PI * 0.75, Math.PI * 2.25);
+        ctx.stroke();
+        const ang = Math.PI * 0.75 + (Math.min(score, 100) / 100) * Math.PI * 1.5;
+        ctx.strokeStyle = ACCENT;
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(480, 200);
+        ctx.lineTo(480 + Math.cos(ang) * 70, 200 + Math.sin(ang) * 70);
+        ctx.stroke();
+        ctx.fillStyle = "#0f172a";
+        ctx.font = "bold 12px IBM Plex Sans";
+        ctx.fillText("Plant score", 448, 300);
+      }, [T, P, cat, yieldPct, rate, score]);
+
+      const bump = () => setExplore((e) => e + 1);
+
+      return (
+        <LabChrome titleEn="Haber Yield Plant" titleZh="哈柏法產率廠" blurb="Trade-off: high P raises yield; high T raises rate but lowers equilibrium yield — find the compromise." explore={explore}>
+          <div className="grid lg:grid-cols-5 gap-4">
+            <div className="lg:col-span-3 bg-white rounded-2xl border overflow-hidden">
+              <canvas ref={canvasRef} width={640} height={380} />
+            </div>
+            <div className="lg:col-span-2 space-y-3">
+              <section className="bg-white rounded-2xl border p-4">
+                <label className="text-xs font-semibold">Temperature {T} °C</label>
+                <input type="range" min="200" max="700" step="10" value={T} onChange={(e) => { setT(+e.target.value); bump(); }} />
+                <label className="text-xs font-semibold mt-2 block">Pressure {P} atm</label>
+                <input type="range" min="50" max="400" step="10" value={P} onChange={(e) => { setP(+e.target.value); bump(); }} />
+                <label className="mt-3 flex items-center gap-2 text-sm font-semibold">
+                  <input type="checkbox" checked={cat} onChange={(e) => { setCat(e.target.checked); bump(); }} /> Iron catalyst
+                </label>
+                <button type="button" className="mt-3 w-full px-3 py-2 text-white rounded-lg text-sm font-semibold min-h-[44px]" style={{ background: ACCENT }}
+                  onClick={() => { setT(450); setP(200); setCat(true); setMsg("Typical industrial compromise loaded."); bump(); }}>Load industry preset</button>
+              </section>
+              <section className="bg-slate-900 text-violet-50 rounded-2xl p-4 text-sm">
+                Yield <strong>{yieldPct.toFixed(0)}%</strong> · Rate <strong>{rate.toFixed(1)}</strong>
+                <p className="text-xs text-violet-200 mt-2">Exothermic: lower T favours NH₃ at eq, but too low → slow kinetics.</p>
+                {msg && <p className="text-xs mt-2">{msg}</p>}
+              </section>
+            </div>
+          </div>
+        </LabChrome>
+      );
+    }
+
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>

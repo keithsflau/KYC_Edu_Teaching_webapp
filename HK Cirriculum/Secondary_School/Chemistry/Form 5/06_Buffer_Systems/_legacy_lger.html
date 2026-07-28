@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Buffer Systems Lab | 緩衝溶液實驗</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <link rel="stylesheet" href="../../../../common/subscribe-gate.css" />
+  <script>
+    window.HKC_SUBSCRIBE = {
+      appId: "f5-chem-buffer-lab",
+      appNameZh: "緩衝溶液實驗",
+      appNameEn: "Buffer Systems Lab",
+      level: "F5",
+      subject: "Chemistry",
+      freeDrillLimit: 12,
+      wrongBookLimit: 10,
+      contactEmail: "support@hksteamai.com",
+      comingSoonHref: "#coming-soon"
+    };
+    window.__HKC_FREE_CAP = () => !(window.HkcSubscribe && HkcSubscribe.canContinueDrills());
+  </script>
+  <script src="../../../../common/subscribe-gate.js"></script>
+  <script src="../../../../common/parent-report.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+  <style>
+    :root { --accent: #0d9488; }
+    body {
+      font-family: "IBM Plex Sans", system-ui, sans-serif;
+      background:
+        radial-gradient(ellipse 70% 45% at 8% -5%, #0d948828, transparent 55%),
+        radial-gradient(ellipse 50% 40% at 100% 0%, #64748b14, transparent 50%),
+        #f1f5f9;
+      color: #0f172a;
+      min-height: 100vh;
+    }
+    input[type="range"] { accent-color: #0d9488; width: 100%; }
+    .mono { font-family: "JetBrains Mono", ui-monospace, monospace; }
+    canvas { touch-action: none; display: block; width: 100%; height: auto; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+  </style>
+
+  <!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
+  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect, useRef, useCallback, useMemo } = React;
+    const ACCENT = "#0d9488";
+    const BACK = "../index.html";
+    const LEVEL = "F5";
+    const APP_ID = "f5-chem-buffer-lab";
+
+    function LabChrome({ titleEn, titleZh, blurb, children, explore, legacy }) {
+      return (
+        <div className="max-w-6xl mx-auto px-4 py-6">
+          <header className="mb-5">
+            <a href={BACK} className="text-sm hover:underline" style={{ color: ACCENT }}>← {LEVEL} Chemistry</a>
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-white px-2 py-0.5 rounded" style={{ background: ACCENT }}>Interactive Lab</span>
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-white border text-slate-700">HKDSE · Learn = live sim</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold mt-1">{titleEn} · {titleZh}</h1>
+            <p className="text-slate-600 text-sm mt-1 max-w-2xl">{blurb}</p>
+          </header>
+          {children}
+          <p className="text-[10px] text-slate-400 mt-4">Explores: {explore} · Legacy MCQ: <a className="underline" href="_legacy_lger.html">_legacy_lger.html</a>{legacy ? "" : ""}</p>
+        </div>
+      );
+    }
+
+
+    function App() {
+      const canvasRef = useRef(null);
+      const [HA, setHA] = useState(0.1);
+      const [A, setA] = useState(0.1);
+      const [pKa, setPKa] = useState(4.76);
+      const [added, setAdded] = useState(0); // mmol strong acid(+) / base(−) to 100 mL
+      const [explore, setExplore] = useState(0);
+      const [challenge, setChallenge] = useState(null);
+      const [msg, setMsg] = useState("");
+
+      const pH = useMemo(() => {
+        // Henderson–Hasselbalch with challenge moles
+        const V = 0.1; // L
+        let nHA = HA * V * 1000; // mmol
+        let nA = A * V * 1000;
+        if (added > 0) { // strong acid
+          nA = Math.max(0.01, nA - added);
+          nHA = nHA + Math.min(added, A * V * 1000 - 0.01);
+        } else if (added < 0) {
+          const b = -added;
+          nHA = Math.max(0.01, nHA - b);
+          nA = nA + Math.min(b, HA * V * 1000 - 0.01);
+        }
+        return pKa + Math.log10(nA / nHA);
+      }, [HA, A, pKa, added]);
+
+      const pH0 = useMemo(() => pKa + Math.log10(A / HA), [HA, A, pKa]);
+
+      useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        const W = canvas.width, H = canvas.height;
+        ctx.clearRect(0, 0, W, H);
+        // beaker fill by pH colour
+        const t = Math.max(0, Math.min(1, (pH - 2) / 10));
+        const r = Math.floor(255 * (1 - t));
+        const b = Math.floor(255 * t);
+        ctx.fillStyle = "rgb(" + r + ",80," + b + ")";
+        ctx.fillRect(80, 60, 200, 280);
+        ctx.strokeStyle = "#334155";
+        ctx.lineWidth = 3;
+        ctx.strokeRect(80, 60, 200, 280);
+        ctx.fillStyle = "#0f172a";
+        ctx.font = "bold 28px JetBrains Mono";
+        ctx.fillText("pH " + pH.toFixed(2), 110, 200);
+        // pH scale meter
+        ctx.fillStyle = "#e2e8f0";
+        ctx.fillRect(360, 40, 40, 300);
+        for (let i = 0; i <= 14; i++) {
+          const y = 40 + (300 * i) / 14;
+          ctx.fillStyle = i % 2 === 0 ? "#64748b" : "#94a3b8";
+          ctx.fillRect(400, y, 8, 2);
+          ctx.font = "10px IBM Plex Sans";
+          ctx.fillText(String(14 - i), 415, y + 3);
+        }
+        const yNeedle = 40 + 300 * (1 - pH / 14);
+        ctx.fillStyle = ACCENT;
+        ctx.beginPath();
+        ctx.moveTo(350, yNeedle);
+        ctx.lineTo(360, yNeedle - 6);
+        ctx.lineTo(360, yNeedle + 6);
+        ctx.fill();
+        ctx.fillStyle = "#0f172a";
+        ctx.font = "12px IBM Plex Sans";
+        ctx.fillText("HA " + HA.toFixed(2) + " M", 80, 370);
+        ctx.fillText("A⁻ " + A.toFixed(2) + " M", 200, 370);
+        ctx.fillText("ΔpH from unchallenged: " + (pH - pH0).toFixed(2), 360, 370);
+      }, [pH, HA, A, pH0]);
+
+      const bump = () => setExplore((e) => e + 1);
+      const startCh = () => {
+        if (window.__HKC_FREE_CAP && window.__HKC_FREE_CAP()) { setMsg("Free limit."); return; }
+        if (window.HkcSubscribe) HkcSubscribe.recordDrillAttempt();
+        setChallenge({ text: "Add ≥ +5 mmol strong acid; |ΔpH| should stay < 0.8 (buffer resists).", check: () => added >= 5 && Math.abs(pH - pH0) < 0.8 });
+        setMsg("Challenge the buffer, then Check.");
+      };
+      const checkCh = () => {
+        if (!challenge) return;
+        if (challenge.check()) { setMsg("✓ Buffer consumes H⁺ via A⁻ → HA."); setChallenge(null); }
+        else setMsg("Add acid first; compare to unbuffered water (would crash pH).");
+      };
+
+      return (
+        <LabChrome titleEn="Buffer Systems Lab" titleZh="緩衝溶液實驗" blurb="Henderson–Hasselbalch live · add acid/base · watch pH resist change." explore={explore}>
+          <div className="grid lg:grid-cols-5 gap-4">
+            <div className="lg:col-span-3 bg-white rounded-2xl border overflow-hidden">
+              <canvas ref={canvasRef} width={640} height={400} />
+            </div>
+            <div className="lg:col-span-2 space-y-3">
+              <section className="bg-white rounded-2xl border p-4">
+                <label className="text-xs font-semibold">[HA] = {HA.toFixed(2)} M</label>
+                <input type="range" min="0.02" max="0.5" step="0.01" value={HA} onChange={(e) => { setHA(+e.target.value); bump(); }} />
+                <label className="text-xs font-semibold mt-2 block">[A⁻] = {A.toFixed(2)} M</label>
+                <input type="range" min="0.02" max="0.5" step="0.01" value={A} onChange={(e) => { setA(+e.target.value); bump(); }} />
+                <label className="text-xs font-semibold mt-2 block">pKa = {pKa.toFixed(2)}</label>
+                <input type="range" min="3" max="10" step="0.01" value={pKa} onChange={(e) => { setPKa(+e.target.value); bump(); }} />
+                <label className="text-xs font-semibold mt-2 block">Challenge: {added > 0 ? "+" + added + " mmol H⁺" : added < 0 ? (−added) + " mmol OH⁻" : "none"}</label>
+                <input type="range" min="-15" max="15" step="1" value={added} onChange={(e) => { setAdded(+e.target.value); bump(); }} />
+                <p className="text-[11px] text-slate-500 mt-2">pH = pKa + log([A⁻]/[HA])</p>
+              </section>
+              <section className="bg-slate-900 text-teal-50 rounded-2xl p-4 mono">
+                pH = <strong>{pH.toFixed(2)}</strong> · unchallenged {pH0.toFixed(2)}
+              </section>
+              <section className="bg-white rounded-2xl border p-4">
+                <p className="text-sm mb-2">{challenge ? challenge.text : "Challenge the buffer."}</p>
+                <div className="flex gap-2">
+                  <button type="button" className="px-3 py-2 text-white rounded-lg text-sm font-semibold min-h-[44px]" style={{ background: ACCENT }} onClick={startCh}>New challenge</button>
+                  {challenge && <button type="button" className="px-3 py-2 bg-emerald-600 text-white rounded-lg text-sm font-semibold min-h-[44px]" onClick={checkCh}>Check</button>}
+                </div>
+                {msg && <p className="text-xs mt-2">{msg}</p>}
+              </section>
+            </div>
+          </div>
+        </LabChrome>
+      );
+    }
+
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>

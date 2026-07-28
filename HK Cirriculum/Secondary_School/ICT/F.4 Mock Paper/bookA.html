@@ -1,0 +1,1618 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-HK">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DSE ICT 終極互動溫習系統</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f5f7ff',
+                            100: '#ebf0ff',
+                            500: '#4f46e5',
+                            600: '#4338ca',
+                            700: '#3730a3',
+                            900: '#1e1b4b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- MathJax CDN for Beautiful LaTeX math -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        body {
+            font-family: 'PingFang HK', 'Heiti TC', 'Microsoft JhengHei', sans-serif;
+        }
+        .latex-rendered .MathJax {
+            display: inline-block !important;
+            margin: 0 4px;
+        }
+    </style>
+
+  <!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../common/ncs-i18n.css" />
+  <script src="../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col">
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-slate-950 border-b border-slate-800 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo -->
+                <div class="flex items-center space-x-3">
+                    <div class="bg-indigo-600 p-2 rounded-xl text-white shadow-lg shadow-indigo-500/20">
+                        <i class="fa-solid fa-graduation-cap text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-bold bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">DSE ICT 溫習神器</h1>
+                        <p class="text-xs text-slate-400">卓越成績 • 伴你同行</p>
+                    </div>
+                </div>
+                <!-- Nav Tabs -->
+                <nav class="hidden md:flex space-x-1" id="nav-desktop">
+                    <button onclick="switchTab('dashboard')" id="btn-tab-dashboard" class="tab-btn px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 text-indigo-400 bg-indigo-500/10">
+                        <i class="fa-solid fa-chart-line mr-2"></i>主頁儀表板
+                    </button>
+                    <button onclick="switchTab('revision')" id="btn-tab-revision" class="tab-btn px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 text-slate-400 hover:text-slate-200 hover:bg-slate-800">
+                        <i class="fa-solid fa-book-open mr-2"></i>精簡筆記
+                    </button>
+                    <button onclick="switchTab('mcq')" id="btn-tab-mcq" class="tab-btn px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 text-slate-400 hover:text-slate-200 hover:bg-slate-800">
+                        <i class="fa-solid fa-list-check mr-2"></i>20題選擇題
+                    </button>
+                    <button onclick="switchTab('long')" id="btn-tab-long" class="tab-btn px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 text-slate-400 hover:text-slate-200 hover:bg-slate-800">
+                        <i class="fa-solid fa-pen-to-square mr-2"></i>5題長題目
+                    </button>
+                </nav>
+                <!-- Timer / User State -->
+                <div class="flex items-center space-x-4">
+                    <div class="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg flex items-center space-x-2 text-xs sm:text-sm">
+                        <i class="fa-solid fa-stopwatch text-indigo-400 animate-pulse"></i>
+                        <span id="timer" class="font-mono text-slate-300">00:00:00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Mobile Navigation Tab Bar -->
+    <div class="md:hidden bg-slate-950 border-b border-slate-800 flex justify-around py-2 sticky top-[65px] z-40 text-xs">
+        <button onclick="switchTab('dashboard')" id="btn-mob-dashboard" class="flex flex-col items-center text-indigo-400 space-y-1">
+            <i class="fa-solid fa-chart-line text-lg"></i>
+            <span>儀表板</span>
+        </button>
+        <button onclick="switchTab('revision')" id="btn-mob-revision" class="flex flex-col items-center text-slate-400 space-y-1">
+            <i class="fa-solid fa-book-open text-lg"></i>
+            <span>筆記</span>
+        </button>
+        <button onclick="switchTab('mcq')" id="btn-mob-mcq" class="flex flex-col items-center text-slate-400 space-y-1">
+            <i class="fa-solid fa-list-check text-lg"></i>
+            <span>選擇題</span>
+        </button>
+        <button onclick="switchTab('long')" id="btn-mob-long" class="flex flex-col items-center text-slate-400 space-y-1">
+            <i class="fa-solid fa-pen-to-square text-lg"></i>
+            <span>長題目</span>
+        </button>
+    </div>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- ==================== DASHBOARD TAB ==================== -->
+        <section id="tab-dashboard" class="space-y-8">
+            <!-- Hero welcome banner -->
+            <div class="bg-gradient-to-r from-indigo-900 via-slate-900 to-indigo-950 rounded-3xl p-6 sm:p-8 border border-indigo-500/20 shadow-xl relative overflow-hidden">
+                <div class="absolute -right-20 -bottom-20 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl"></div>
+                <div class="relative z-10 max-w-3xl space-y-3">
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-500/20 text-indigo-300">
+                        <i class="fa-solid fa-sparkles mr-1.5"></i> 考前衝刺系統
+                    </span>
+                    <h2 class="text-2xl sm:text-4xl font-extrabold text-white">歡迎回來！品學兼優的 ICT 尖子 🎓</h2>
+                    <p class="text-slate-300 text-sm sm:text-base">
+                        這套系統是特別為您打造的！它緊扣 <b>資訊處理、數據控制、數據表示、試算表與數據庫</b> 五大核心課堂重點。先溫習精簡筆記，再挑戰 20 題難關選擇題和 5 題模擬長題目，穩奪 5**！
+                    </p>
+                    <div class="pt-4 flex flex-wrap gap-3">
+                        <button onclick="switchTab('mcq')" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-5 py-2.5 rounded-xl transition-all shadow-lg shadow-indigo-600/25 text-sm">
+                            開始 20 題模擬考
+                        </button>
+                        <button onclick="switchTab('revision')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold px-5 py-2.5 rounded-xl transition-all text-sm border border-slate-700">
+                            快速閱讀溫書筆記
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats and progress summary cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- MCQ Status Card -->
+                <div class="bg-slate-950 border border-slate-800 rounded-2xl p-6 flex items-center justify-between shadow-md">
+                    <div class="space-y-2">
+                        <span class="text-xs text-slate-400 font-semibold uppercase tracking-wider">選擇題模擬考進度</span>
+                        <h3 class="text-3xl font-bold text-white" id="stat-mcq-score">未提交</h3>
+                        <p class="text-xs text-slate-400" id="stat-mcq-desc">20題核心考點大挑戰</p>
+                    </div>
+                    <div class="p-4 bg-indigo-500/10 text-indigo-400 rounded-2xl">
+                        <i class="fa-solid fa-circle-question text-3xl"></i>
+                    </div>
+                </div>
+
+                <!-- Long Question Status Card -->
+                <div class="bg-slate-950 border border-slate-800 rounded-2xl p-6 flex items-center justify-between shadow-md">
+                    <div class="space-y-2">
+                        <span class="text-xs text-slate-400 font-semibold uppercase tracking-wider">長題目自我評分</span>
+                        <h3 class="text-3xl font-bold text-white" id="stat-long-score">0 / 50</h3>
+                        <p class="text-xs text-slate-400" id="stat-long-desc">5題經典必考題，提供標準考卷Rubric</p>
+                    </div>
+                    <div class="p-4 bg-emerald-500/10 text-emerald-400 rounded-2xl">
+                        <i class="fa-solid fa-signature text-3xl"></i>
+                    </div>
+                </div>
+
+                <!-- Study Time tracker Card -->
+                <div class="bg-slate-950 border border-slate-800 rounded-2xl p-6 flex items-center justify-between shadow-md sm:col-span-2 lg:col-span-1">
+                    <div class="space-y-2">
+                        <span class="text-xs text-slate-400 font-semibold uppercase tracking-wider">今日專注時間</span>
+                        <h3 class="text-3xl font-bold text-white" id="stat-time-value">00:00</h3>
+                        <p class="text-xs text-slate-400">專注是通往 5** 的唯一捷徑</p>
+                    </div>
+                    <div class="p-4 bg-violet-500/10 text-violet-400 rounded-2xl">
+                        <i class="fa-solid fa-hourglass-start text-3xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chapter Checklist / Navigation Map -->
+            <div class="bg-slate-950 border border-slate-800 rounded-3xl p-6">
+                <h3 class="text-xl font-bold mb-6 flex items-center text-white">
+                    <i class="fa-solid fa-map-location-dot text-indigo-500 mr-2.5"></i>
+                    必考課堂溫習地圖
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Chapter 1 Box -->
+                    <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 flex flex-col justify-between">
+                        <div class="space-y-2">
+                            <span class="text-xs text-indigo-400 font-bold">第一課</span>
+                            <h4 class="text-md font-semibold text-white">資訊處理簡介</h4>
+                            <p class="text-xs text-slate-400">深入了解資訊系統功能、IPO週期、多媒體數據類型與資訊素養。</p>
+                        </div>
+                        <button onclick="openChapterNotes(1)" class="mt-4 text-xs font-semibold text-indigo-400 hover:text-indigo-300 text-left flex items-center space-x-1">
+                            <span>前往溫習</span> <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                        </button>
+                    </div>
+
+                    <!-- Chapter 2 Box -->
+                    <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 flex flex-col justify-between">
+                        <div class="space-y-2">
+                            <span class="text-xs text-indigo-400 font-bold">第二課</span>
+                            <h4 class="text-md font-semibold text-white">數據控制及組織</h4>
+                            <p class="text-xs text-slate-400">必考有效性檢驗與驗證（GIGO錯誤、奇偶檢測、主關鍵碼）及直接/順序存取。</p>
+                        </div>
+                        <button onclick="openChapterNotes(2)" class="mt-4 text-xs font-semibold text-indigo-400 hover:text-indigo-300 text-left flex items-center space-x-1">
+                            <span>前往溫習</span> <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                        </button>
+                    </div>
+
+                    <!-- Chapter 3 Box -->
+                    <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 flex flex-col justify-between">
+                        <div class="space-y-2">
+                            <span class="text-xs text-indigo-400 font-bold">第三課</span>
+                            <h4 class="text-md font-semibold text-white">數據表示 (重災區)</h4>
+                            <p class="text-xs text-slate-400">二進制與十六進制換算、二補碼有符號數計算、溢出誤差及圖像音頻容量計算。</p>
+                        </div>
+                        <button onclick="openChapterNotes(3)" class="mt-4 text-xs font-semibold text-indigo-400 hover:text-indigo-300 text-left flex items-center space-x-1">
+                            <span>前往溫習</span> <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                        </button>
+                    </div>
+
+                    <!-- Chapter 4 Box -->
+                    <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 flex flex-col justify-between">
+                        <div class="space-y-2">
+                            <span class="text-xs text-indigo-400 font-bold">第四課</span>
+                            <h4 class="text-md font-semibold text-white">試算表 Excel</h4>
+                            <p class="text-xs text-slate-400">公式運算子、相對與絕對引用複製、SUMIF、VLOOKUP、樞紐分析表與目標搜尋。</p>
+                        </div>
+                        <button onclick="openChapterNotes(4)" class="mt-4 text-xs font-semibold text-indigo-400 hover:text-indigo-300 text-left flex items-center space-x-1">
+                            <span>前往溫習</span> <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                        </button>
+                    </div>
+
+                    <!-- Chapter 5 Box -->
+                    <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 flex flex-col justify-between">
+                        <div class="space-y-2">
+                            <span class="text-xs text-indigo-400 font-bold">第五課</span>
+                            <h4 class="text-md font-semibold text-white">數據庫 Access & SQL</h4>
+                            <p class="text-xs text-slate-400">4大Access物件、SQL查詢（SELECT、WHERE、GROUP BY、HAVING、ORDER BY）。</p>
+                        </div>
+                        <button onclick="openChapterNotes(5)" class="mt-4 text-xs font-semibold text-indigo-400 hover:text-indigo-300 text-left flex items-center space-x-1">
+                            <span>前往溫習</span> <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                        </button>
+                    </div>
+
+                    <!-- Complete Progress Status -->
+                    <div class="bg-indigo-950/40 p-5 rounded-2xl border border-indigo-800/30 flex flex-col justify-between">
+                        <div class="space-y-2">
+                            <h4 class="text-md font-semibold text-indigo-300 flex items-center">
+                                <i class="fa-solid fa-medal mr-2"></i>DSE 成績目標
+                            </h4>
+                            <p class="text-xs text-indigo-200">透過全面完成模擬考，您能在系統內解鎖考卷的進階分析與強弱點指南。</p>
+                        </div>
+                        <div class="pt-4">
+                            <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                                <div id="overall-progress-bar" class="bg-indigo-500 h-2 w-0 transition-all duration-300"></div>
+                            </div>
+                            <div class="flex justify-between items-center mt-2 text-[10px] text-indigo-300 font-semibold">
+                                <span>測驗完成率</span>
+                                <span id="overall-progress-percent">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== STUDY NOTES TAB ==================== -->
+        <section id="tab-revision" class="space-y-8 hidden">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-white flex items-center">
+                        <i class="fa-solid fa-book-open text-indigo-500 mr-3"></i>考前極速精簡溫書筆記
+                    </h2>
+                    <p class="text-xs text-slate-400">將五大課堂的 PPT 教學重點，濃縮成極速吸收的精簡指南。</p>
+                </div>
+                <!-- Chapter select pill bar -->
+                <div class="flex flex-wrap gap-2" id="chapter-note-selector">
+                    <button onclick="showChapterNote(1)" id="pill-1" class="chap-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white shadow-md">第一課</button>
+                    <button onclick="showChapterNote(2)" id="pill-2" class="chap-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400 hover:bg-slate-700">第二課</button>
+                    <button onclick="showChapterNote(3)" id="pill-3" class="chap-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400 hover:bg-slate-700">第三課</button>
+                    <button onclick="showChapterNote(4)" id="pill-4" class="chap-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400 hover:bg-slate-700">第四課</button>
+                    <button onclick="showChapterNote(5)" id="pill-5" class="chap-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400 hover:bg-slate-700">第五課</button>
+                </div>
+            </div>
+
+            <!-- Note Content Boxes -->
+            <!-- CHAPTER 1 NOTE -->
+            <div id="note-chapter-1" class="chap-note bg-slate-950 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-6">
+                <div class="border-b border-slate-800 pb-4">
+                    <span class="text-indigo-400 font-bold text-sm">第一課資訊處理簡介 (Intro to Info Processing)</span>
+                    <h3 class="text-xl font-bold text-white mt-1">重點精華整理</h3>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="space-y-4">
+                        <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+                            <h4 class="text-sm font-bold text-indigo-300 flex items-center mb-2">
+                                <i class="fa-solid fa-code-compare mr-2"></i>數據 (Data) 與 資訊 (Information) 辨析
+                            </h4>
+                            <ul class="list-disc pl-5 text-xs text-slate-300 space-y-1.5">
+                                <li><b>數據 (Data)</b>：一組未經整理的事實，單獨來看通常沒有任何意義（例如：未經處理的氣溫數字、未剪輯影片）。</li>
+                                <li><b>資訊 (Information)</b>：數據經處理（排序、計算、分析等）後，轉換為有意義的輸出（例如：公司的年淨收入增長率、逐字演講稿）。</li>
+                            </ul>
+                        </div>
+                        <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+                            <h4 class="text-sm font-bold text-indigo-300 flex items-center mb-2">
+                                <i class="fa-solid fa-rotate mr-2"></i>輸入-處理-輸出週期 (IPO Cycle)
+                            </h4>
+                            <p class="text-xs text-slate-300">
+                                資訊系統的基本運作架構。例如將食材<b>輸入</b>烤箱，烤箱進行烘烤（<b>處理</b>），最終<b>輸出</b>香噴噴的披薩。
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+                            <h4 class="text-sm font-bold text-indigo-300 flex items-center mb-2">
+                                <i class="fa-solid fa-arrows-split-up-and-left mr-2"></i>資訊處理的七個階段
+                            </h4>
+                            <div class="text-[11px] text-slate-300 grid grid-cols-2 gap-2">
+                                <div class="bg-slate-950 p-2 rounded border border-slate-800"><b>1. 收集 (Collection)</b>：觀察、實驗、問卷調查。</div>
+                                <div class="bg-slate-950 p-2 rounded border border-slate-800"><b>2. 組織 (Organization)</b>：分類與有效性檢驗。</div>
+                                <div class="bg-slate-950 p-2 rounded border border-slate-800"><b>3. 儲存 (Storage)</b>：存於硬碟、快閃記憶體。</div>
+                                <div class="bg-slate-950 p-2 rounded border border-slate-800"><b>4. 處理 (Processing)</b>：編輯、修改、多媒體更新。</div>
+                                <div class="bg-slate-950 p-2 rounded border border-slate-800"><b>5. 分析 (Analysis)</b>：提取趨勢，如分析氣候。</div>
+                                <div class="bg-slate-950 p-2 rounded border border-slate-800"><b>6. 傳輸 (Transmission)</b>：利用網絡媒體傳送數據。</div>
+                                <div class="bg-slate-950 p-2 rounded border border-slate-800 col-span-2"><b>7. 演示 (Presentation)</b>：通過文字、圖像、音效等媒體輸出資訊。</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Custom SVG Diagram for Chapter 1 -->
+                <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 flex flex-col items-center">
+                    <span class="text-xs font-semibold text-slate-400 mb-4">資訊處理系統 IPO 基本架構示意圖</span>
+                    <svg class="w-full max-w-lg h-32" viewBox="0 0 500 120">
+                        <!-- Input Node -->
+                        <rect x="20" y="30" width="100" height="60" rx="10" fill="#312e81" stroke="#4f46e5" stroke-width="2"/>
+                        <text x="70" y="65" fill="#ffffff" font-size="14" font-weight="bold" text-anchor="middle">輸入 (Input)</text>
+                        <text x="70" y="80" fill="#cbd5e1" fill-opacity="0.8" font-size="10" text-anchor="middle">未經加工數據</text>
+                        
+                        <!-- Arrow 1 -->
+                        <path d="M 130 60 L 190 60" stroke="#6366f1" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+                        
+                        <!-- Process Node -->
+                        <rect x="200" y="30" width="100" height="60" rx="10" fill="#1e1b4b" stroke="#6366f1" stroke-width="2"/>
+                        <text x="250" y="65" fill="#ffffff" font-size="14" font-weight="bold" text-anchor="middle">處理 (Process)</text>
+                        <text x="250" y="80" fill="#cbd5e1" fill-opacity="0.8" font-size="10" text-anchor="middle">排序、運算、分析</text>
+
+                        <!-- Arrow 2 -->
+                        <path d="M 310 60 L 370 60" stroke="#6366f1" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+
+                        <!-- Output Node -->
+                        <rect x="380" y="30" width="100" height="60" rx="10" fill="#312e81" stroke="#4f46e5" stroke-width="2"/>
+                        <text x="430" y="65" fill="#ffffff" font-size="14" font-weight="bold" text-anchor="middle">輸出 (Output)</text>
+                        <text x="430" y="80" fill="#cbd5e1" fill-opacity="0.8" font-size="10" text-anchor="middle">有意義的資訊</text>
+
+                        <!-- Arrow marker helper -->
+                        <defs>
+                            <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 0 L 10 5 L 0 10 z" fill="#6366f1"/>
+                            </marker>
+                        </defs>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- CHAPTER 2 NOTE -->
+            <div id="note-chapter-2" class="chap-note bg-slate-950 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-6 hidden">
+                <div class="border-b border-slate-800 pb-4">
+                    <span class="text-indigo-400 font-bold text-sm">第二課數據控制及組織 (Data Control & Org)</span>
+                    <h3 class="text-xl font-bold text-white mt-1">重點精華整理</h3>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="space-y-4">
+                        <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+                            <h4 class="text-sm font-bold text-indigo-300 flex items-center mb-2">
+                                <i class="fa-solid fa-triangle-exclamation mr-2"></i>「無用輸入，無用輸出」(GIGO - Garbage In, Garbage Out)
+                            </h4>
+                            <p class="text-xs text-slate-300 leading-relaxed">
+                                輸入錯誤數據，只會導致無法得出有用結果。數據輸入常見錯誤有：
+                                <br>1. <b>數據來源錯誤 (Source Error)</b>：用戶提供了不存在的值（如錯誤的電子郵件）。
+                                <br>2. <b>轉錄錯誤 (Transcription Error)</b>：數據誤植（如將「冶」打錯為「治」）。
+                                <br>3. <b>換位錯誤 (Transposition Error)</b>：相鄰數字位置調轉（如「$15」變成「$51」）。
+                            </p>
+                        </div>
+                        <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+                            <h4 class="text-sm font-bold text-indigo-300 flex items-center mb-2">
+                                <i class="fa-solid fa-list-check mr-2"></i>數據有效性檢驗 (Data Validation) 一覽
+                            </h4>
+                            <ul class="list-disc pl-5 text-xs text-slate-300 space-y-1">
+                                <li><b>完整性檢查 (Completeness Check)</b>：確保必填欄不為空白。</li>
+                                <li><b>固定值檢查 (Fixed Value Check)</b>：只允許特定範圍的值（如單選鈕 M/F）。</li>
+                                <li><b>類型檢查 (Type Check)</b>：確保數據為特定類型（如年齡必須是數字）。</li>
+                                <li><b>範圍檢查 (Range Check)</b>：數值位於指定區間內（如年齡必大於12）。</li>
+                                <li><b>長度檢查 (Length Check)</b>：字元數量符合要求（如8位電話號碼）。</li>
+                                <li><b>格式檢查 (Format Check)</b>：符合特定格式（如電郵地址須包含 @ 符號）。</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+                            <h4 class="text-sm font-bold text-indigo-300 flex items-center mb-2">
+                                <i class="fa-solid fa-shield mr-2"></i>數據驗證 (Data Verification)
+                            </h4>
+                            <p class="text-xs text-slate-300 leading-relaxed">
+                                確保數據在傳輸或轉移過程中<b>準確一致</b>。常見方法有：
+                                <br>• <b>輸入數據兩次作驗證 (Enter Data Twice)</b>：由同一個操作員重複輸入兩次密碼。
+                                <br>• <b>雙重數據輸入 (Double Data Entry)</b>：由兩個操作員分別輸入同一個檔案，再比對兩者。
+                                <br>• <b>校對數據 (Visual Check / Proofreading)</b>：將螢幕輸入內容手動比對紙本原稿。
+                            </p>
+                        </div>
+                        <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+                            <h4 class="text-sm font-bold text-indigo-300 flex items-center mb-2">
+                                <i class="fa-solid fa-binary mr-2"></i>奇偶檢測 (Parity Check) 算法
+                            </h4>
+                            <p class="text-xs text-slate-300 leading-relaxed">
+                                在二進制代碼末尾，添加一個「奇偶檢驗位 (Parity Bit)」：
+                                <br>• <b>偶數檢測 (Even Parity)</b>：使整個傳輸代碼中 $1$ 的總數為<b>偶數</b>。
+                                <br>• <b>奇數檢測 (Odd Parity)</b>：使整個傳輸代碼中 $1$ 的總數為<b>單數</b>。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CHAPTER 3 NOTE -->
+            <div id="note-chapter-3" class="chap-note bg-slate-950 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-6 hidden">
+                <div class="border-b border-slate-800 pb-4">
+                    <span class="text-indigo-400 font-bold text-sm">第三課數據表示 (Data Representation)</span>
+                    <h3 class="text-xl font-bold text-white mt-1">重點精華整理 (必考核心)</h3>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="space-y-4">
+                        <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 latex-rendered">
+                            <h4 class="text-sm font-bold text-indigo-300 flex items-center mb-2">
+                                <i class="fa-solid fa-signature mr-2"></i>二進制補碼 (Two's Complement)
+                            </h4>
+                            <p class="text-xs text-slate-300 leading-relaxed">
+                                用於在 $N$ 位元中表示<b>有符號整數 (Signed Integers)</b>：
+                                <br>• 正數與無符號整數完全一樣，首位元為 $0$。
+                                <br>• $N$ 位元二進制補碼可表示的範圍：$-2^{N-1}$ 至 $2^{N-1}-1$。
+                                <br>• 求 $-X$ 的二進制補碼的快捷步驟：
+                                <br>&nbsp;&nbsp;1. 將正數 $X$ 轉換成二進制，並在前補 $0$ 至 $N$ 位。
+                                <br>&nbsp;&nbsp;2. <b>反轉所有數位 (Invert bits)</b>：$0$ 變 $1$、$1$ 變 $0$。
+                                <br>&nbsp;&nbsp;3. <b>加 1 (+1)</b> 即得補碼。
+                                <br>例如：4-bit 系統中表示 $-3_{10}$：
+                                <br>$3_{10} = 0011_2 \xrightarrow{\text{反轉}} 1100_2 \xrightarrow{+1} 1101_2$
+                            </p>
+                        </div>
+                        <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+                            <h4 class="text-sm font-bold text-indigo-300 flex items-center mb-2">
+                                <i class="fa-solid fa-explosion mr-2"></i>溢出誤差 (Overflow Error) 原理
+                            </h4>
+                            <p class="text-xs text-slate-300 leading-relaxed">
+                                發生在計算結果<b>超出了系統所能表示的極限數值範圍</b>。
+                                <br>• <b>有符號相加</b>：若兩個正數相加得到負數，或兩個負數相加得到正數，必定發生溢出。
+                                <br>• <i>注意</i>：對於有符號數，多出一個進位位元（Carry-out）並不一定代表發生了溢出！必須判斷最終結果是否在範圍內。
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+                            <h4 class="text-sm font-bold text-indigo-300 flex items-center mb-2">
+                                <i class="fa-solid fa-calculator mr-2"></i>多媒體容量計算公式
+                            </h4>
+                            <ul class="list-disc pl-5 text-xs text-slate-300 space-y-1.5">
+                                <li><b>未經壓縮圖像 (Bitmap) 大小</b>：
+                                    <br>$$\text{解像度 (寬} \times \text{高)} \times \text{色深 (bit)} = \text{大小 (bit)}$$
+                                </li>
+                                <li><b>未經壓縮音訊 (WAV) 大小</b>：
+                                    <br>$$\text{取樣頻率 (Hz)} \times \text{位元深度 (bit)} \times \text{聲道數 (Channels)} \times \text{長度 (秒)} = \text{大小 (bit)}$$
+                                </li>
+                                <li><b>未經壓縮視訊 大小</b>：
+                                    <br>$$\text{單幀大小 (bit)} \times \text{幀速率 (fps)} \times \text{長度 (秒)} + \text{音軌大小}$$
+                                </li>
+                                <li><i>注意</i>：由位元（bit）轉換為字節（Byte）需除以 $8$，再轉換為 $\text{MB}$ 需連續除以 $1024$ 兩次（即除以 $1024^2$）。</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CHAPTER 4 NOTE -->
+            <div id="note-chapter-4" class="chap-note bg-slate-950 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-6 hidden">
+                <div class="border-b border-slate-800 pb-4">
+                    <span class="text-indigo-400 font-bold text-sm">第四課試算表 (Spreadsheets)</span>
+                    <h3 class="text-xl font-bold text-white mt-1">重點精華整理</h3>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="space-y-4">
+                        <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+                            <h4 class="text-sm font-bold text-indigo-300 flex items-center mb-2">
+                                <i class="fa-solid fa-lock mr-2"></i>相對引用與絕對引用 (Cell References)
+                            </h4>
+                            <p class="text-xs text-slate-300 leading-relaxed">
+                                在拖曳、複製、自動填滿公式時：
+                                <br>• <b>相對引用 (e.g. A1)</b>：其參照的儲存格隨著複製位置相對移動。
+                                <br>• <b>絕對引用 (e.g. $A$1)</b>：行和列都被 $ 號「鎖定」，不論公式複製到哪裡，參照的儲存格永遠固定。
+                                <br>• <b>混合引用 (e.g. $A1, A$1)</b>：只鎖定欄名（複製時行變列不變）或只鎖定列號（複製時列變行不變）。
+                            </p>
+                        </div>
+                        <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+                            <h4 class="text-sm font-bold text-indigo-300 flex items-center mb-2">
+                                <i class="fa-solid fa-code mr-2"></i>試算表必考預設函數
+                            </h4>
+                            <ul class="list-disc pl-5 text-xs text-slate-300 space-y-1.5">
+                                <li><b>SUMIF(range, criteria, [sum_range])</b>：依條件加總。例如 `SUMIF(C:C, ">=50", E:E)`。</li>
+                                <li><b>VLOOKUP(value, table, col, [approx])</b>：垂直查閱。第二個引數的對照表範圍通常需要用<b>絕對引用</b>（如 `$I$2:$J$5`），否則向下拉公式時對照表會錯位！</li>
+                                <li><b>INT(number) vs ROUNDDOWN(number, 0)</b>：`INT(-2.5) = -3`（向下至最接近整數），而 `ROUNDDOWN(-2.5, 0) = -2`（向 0 方向捨入）。</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+                            <h4 class="text-sm font-bold text-indigo-300 flex items-center mb-2">
+                                <i class="fa-solid fa-chart-pie mr-2"></i>數據分析工具：樞紐分析表與目標搜尋
+                            </h4>
+                            <p class="text-xs text-slate-300 leading-relaxed">
+                                1. <b>樞紐分析表 (Pivot Table)</b>：最適合用來<b>匯總、分類、統計、比較</b>大型和複雜的數據集（如分析不同書籍類別的銷售總額），而不需要手動編寫多重 `SUMIF` 或 `COUNTIF`。
+                                <br>2. <b>目標搜尋 (Goal Seek)</b>：在已知理想輸出目標的情況下，自動逆向計算出一個變數所需的輸入值。如：「如果我想總利潤達到 $100000$（目標），我需要賣出多少本書（變數）？」。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CHAPTER 5 NOTE -->
+            <div id="note-chapter-5" class="chap-note bg-slate-950 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-6 hidden">
+                <div class="border-b border-slate-800 pb-4">
+                    <span class="text-indigo-400 font-bold text-sm">第五課數據庫 (Database & SQL)</span>
+                    <h3 class="text-xl font-bold text-white mt-1">重點精華整理</h3>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="space-y-4">
+                        <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+                            <h4 class="text-sm font-bold text-indigo-300 flex items-center mb-2">
+                                <i class="fa-solid fa-cubes mr-2"></i>關係數據庫基本概念
+                            </h4>
+                            <p class="text-xs text-slate-300 leading-relaxed">
+                                • <b>主關鍵碼 (Primary Key)</b>：用以唯一標識每條記錄的欄位。主關鍵碼<b>不能重複</b>，也<b>不能為空值 (NULL)</b>。由多個欄位組成的主關鍵碼稱為「複合鍵 (Composite Key)」。
+                                <br>• <b>輸入遮罩 (Input Mask)</b>：限制並強制要求數據必須以特定格式輸入。如 `0000\-0000` 表示必須輸入八位數字（例如電話號碼）。
+                            </p>
+                        </div>
+                        <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+                            <h4 class="text-sm font-bold text-indigo-300 flex items-center mb-2">
+                                <i class="fa-solid fa-window-maximize mr-2"></i>Access 的四大物件物件
+                            </h4>
+                            <div class="grid grid-cols-2 gap-2 text-xs text-slate-300">
+                                <div class="bg-slate-950 p-2.5 rounded border border-slate-800"><b>資料表 (Table)</b><br>數據庫核心，以列（記錄）和行（欄位）儲存數據。</div>
+                                <div class="bg-slate-950 p-2.5 rounded border border-slate-800"><b>表單 (Form)</b><br>提供直觀的人機界面，每次只顯示並編輯一條記錄。</div>
+                                <div class="bg-slate-950 p-2.5 rounded border border-slate-800"><b>查詢 (Query)</b><br>利用 SQL 語句提取、篩選、計算、排序或刪除數據。</div>
+                                <div class="bg-slate-950 p-2.5 rounded border border-slate-800"><b>報表 (Report)</b><br>自訂排版並進行分組與匯總，專門用作輸出或列印。</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+                            <h4 class="text-sm font-bold text-indigo-300 flex items-center mb-2">
+                                <i class="fa-solid fa-code mr-2"></i>SQL 核心語法與關鍵點
+                            </h4>
+                            <ul class="list-disc pl-5 text-xs text-slate-300 space-y-1.5">
+                                <li><b>DISTINCT</b>：篩選掉重複值。例如 `SELECT DISTINCT CLASS FROM STUDENT`。</li>
+                                <li><b>Access 中的萬用字符</b>：
+                                    <br>• `*` (代表任意數量的字元)
+                                    <br>• `?` (代表只有一個字元)
+                                    <br>例如 `WHERE CNAME LIKE '*方*'` 或 `WHERE CNAME LIKE '??'`。
+                                </li>
+                                <li><b>分組篩選</b>：
+                                    <br>• <b>WHERE</b> 子句：在分組 (GROUP BY) <b>前</b>對每條記錄進行篩選。
+                                    <br>• <b>HAVING</b> 子句：在分組 (GROUP BY) <b>後</b>，對組別進行條件篩選。
+                                </li>
+                                <li><b>空值檢索</b>：必須使用 `IS NULL` / `IS NOT NULL`，千萬不能用 `= NULL`！</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== MCQ TAB ==================== -->
+        <section id="tab-mcq" class="space-y-8 hidden">
+            <!-- MCQ Header Info -->
+            <div class="bg-slate-950 border border-slate-800 rounded-3xl p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div class="space-y-1">
+                    <h2 class="text-xl font-bold text-white flex items-center">
+                        <i class="fa-solid fa-list-check text-indigo-500 mr-2.5"></i>
+                        DSE ICT 選擇題 20 題模擬測驗
+                    </h2>
+                    <p class="text-xs text-slate-400">緊密契合 PPT 教學，包含二補碼、SQL、Excel、奇偶檢測等高頻考點。</p>
+                </div>
+                <div class="flex items-center space-x-3 text-xs">
+                    <span class="px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-slate-300">
+                        進度: <span id="mcq-progress">1 / 20</span>
+                    </span>
+                    <span class="px-2.5 py-1.5 bg-yellow-500/10 border border-yellow-800/30 text-yellow-500 rounded-lg hidden" id="mcq-flag-indicator">
+                        <i class="fa-solid fa-flag mr-1"></i>已標記回顧
+                    </span>
+                </div>
+            </div>
+
+            <!-- Single Question view Card -->
+            <div id="mcq-test-container" class="space-y-6">
+                <!-- Outer quiz question card -->
+                <div class="bg-slate-950 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xl relative">
+                    <!-- Category Badge -->
+                    <span id="q-category-badge" class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold bg-indigo-500/10 text-indigo-400">
+                        數據表示
+                    </span>
+
+                    <!-- Question Text -->
+                    <div class="space-y-4">
+                        <h3 class="text-md sm:text-lg font-bold text-white leading-relaxed flex items-start" id="q-text-container">
+                            <span class="mr-2 text-indigo-500" id="q-num-label">Q1.</span>
+                            <span id="q-text">加載中...</span>
+                        </h3>
+                        <!-- Optional LaTeX Display box -->
+                        <div id="q-formula-box" class="bg-slate-900/50 p-4 rounded-xl border border-slate-800 text-slate-300 hidden text-sm overflow-auto">
+                            <!-- Custom LaTeX output -->
+                        </div>
+                    </div>
+
+                    <!-- Answers options -->
+                    <div class="grid grid-cols-1 gap-3 pt-2" id="q-options-container">
+                        <!-- Options generated by JS -->
+                    </div>
+
+                    <!-- Hint Drawer Accordion -->
+                    <div class="pt-4 border-t border-slate-900">
+                        <button onclick="toggleHint()" class="text-xs font-semibold text-yellow-500 hover:text-yellow-400 flex items-center space-x-1 transition-all">
+                            <i class="fa-solid fa-lightbulb"></i>
+                            <span>需要提示嗎？ (不扣分)</span>
+                            <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-200" id="hint-chevron"></i>
+                        </button>
+                        <div id="hint-content" class="mt-2 bg-yellow-500/5 border border-yellow-500/10 p-4 rounded-xl text-xs text-yellow-200/90 leading-relaxed hidden">
+                            <!-- Hint text -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Navigation Buttons -->
+                <div class="flex flex-wrap justify-between items-center gap-4">
+                    <div class="flex space-x-2">
+                        <button onclick="prevQuestion()" id="btn-prev" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold px-4 py-2.5 rounded-xl transition-all text-sm flex items-center space-x-1">
+                            <i class="fa-solid fa-arrow-left"></i> <span>上一題</span>
+                        </button>
+                        <button onclick="nextQuestion()" id="btn-next" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold px-4 py-2.5 rounded-xl transition-all text-sm flex items-center space-x-1">
+                            <span>下一題</span> <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="toggleFlag()" class="bg-slate-950 hover:bg-slate-900 border border-slate-800 text-slate-300 font-semibold px-4 py-2.5 rounded-xl transition-all text-sm flex items-center space-x-1">
+                            <i class="fa-solid fa-flag text-yellow-500"></i> <span id="btn-flag-text">標記回顧</span>
+                        </button>
+                        <button onclick="submitQuiz()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold px-6 py-2.5 rounded-xl transition-all text-sm shadow-lg shadow-indigo-600/25">
+                            提交試卷
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MCQ Quick Nav Panel -->
+            <div class="bg-slate-950 border border-slate-800 rounded-3xl p-6">
+                <h4 class="text-sm font-bold text-slate-300 mb-4">答題卡快速導覽</h4>
+                <div class="flex flex-wrap gap-2" id="mcq-grid-nav">
+                    <!-- JS loop 1-20 buttons -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== MC REVIEW VIEW (AFTER SUBMISSION) ==================== -->
+        <section id="tab-mcq-review" class="space-y-8 hidden">
+            <div class="bg-slate-950 border border-slate-800 rounded-3xl p-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-white flex items-center">
+                        <i class="fa-solid fa-square-poll-vertical text-indigo-500 mr-2.5"></i>選擇題評分與報告
+                    </h2>
+                    <p class="text-xs text-slate-400">您的答題表現已經分析完成。</p>
+                </div>
+                <button onclick="switchTab('dashboard')" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-5 py-2 rounded-xl text-sm shadow-md transition-all">
+                    返回儀表板
+                </button>
+            </div>
+
+            <!-- Score overview banner card -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-slate-950 border border-slate-800 p-6 rounded-2xl flex flex-col items-center justify-center text-center space-y-2">
+                    <span class="text-xs text-slate-400 uppercase tracking-wider font-semibold">您的分數</span>
+                    <h3 class="text-5xl font-extrabold text-indigo-400" id="review-score">0 / 20</h3>
+                    <p class="text-xs text-slate-300" id="review-percent">0% 答對率</p>
+                </div>
+                <div class="bg-slate-950 border border-slate-800 p-6 rounded-2xl flex flex-col items-center justify-center text-center space-y-2">
+                    <span class="text-xs text-slate-400 uppercase tracking-wider font-semibold">評級 (模擬)</span>
+                    <h3 class="text-5xl font-extrabold text-white" id="review-grade">Grade</h3>
+                    <p class="text-xs text-slate-300" id="review-grade-desc">繼續加油！</p>
+                </div>
+                <div class="bg-slate-950 border border-slate-800 p-6 rounded-2xl flex flex-col items-center justify-center text-center space-y-2">
+                    <span class="text-xs text-slate-400 uppercase tracking-wider font-semibold">測驗花費時間</span>
+                    <h3 class="text-5xl font-extrabold text-violet-400" id="review-time">00:00</h3>
+                    <p class="text-xs text-slate-300">良好掌控考試時間</p>
+                </div>
+            </div>
+
+            <!-- Category Weaknesses Analysis -->
+            <div class="bg-slate-950 border border-slate-800 p-6 rounded-3xl space-y-4">
+                <h3 class="text-lg font-bold text-white flex items-center">
+                    <i class="fa-solid fa-chart-pie text-indigo-500 mr-2"></i>各課堂強弱分析
+                </h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="review-category-stats">
+                    <!-- Stats per category will be appended by JS -->
+                </div>
+            </div>
+
+            <!-- Detailed MCQ Review Scroll List -->
+            <div class="space-y-6">
+                <h3 class="text-lg font-bold text-white flex items-center">
+                    <i class="fa-solid fa-file-invoice mr-2"></i>逐題詳細報告及官方解析
+                </h3>
+                <div class="space-y-4" id="mcq-review-list">
+                    <!-- Detailed questions with rationales appended by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== LONG QUESTIONS TAB ==================== -->
+        <section id="tab-long" class="space-y-8 hidden">
+            <!-- Header Info -->
+            <div class="bg-slate-950 border border-slate-800 rounded-3xl p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div class="space-y-1">
+                    <h2 class="text-xl font-bold text-white flex items-center">
+                        <i class="fa-solid fa-pen-to-square text-indigo-500 mr-2.5"></i>
+                        DSE ICT 5大核心課堂：模擬長題目挑戰
+                    </h2>
+                    <p class="text-xs text-slate-400">寫下您的作答後，點擊「顯示參考答案」，並對照 DSE 官方標準評分原則自行打分！</p>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 px-4 py-2 rounded-xl text-center">
+                    <span class="text-xs text-slate-400 block font-semibold">長題目總分</span>
+                    <span class="text-lg font-extrabold text-emerald-400" id="long-total-score">0 / 50</span>
+                </div>
+            </div>
+
+            <!-- List of 5 long questions -->
+            <div class="space-y-8" id="long-questions-list">
+                <!-- Javascript will inject 5 long questions -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-950 border-t border-slate-800 py-6 text-center text-xs text-slate-400">
+        <p>© 2026 DSE ICT 終極溫習系統. 伴您踏上 5** 的青雲路。由「 Revision Web Application 」精心製作。</p>
+    </footer>
+
+    <!-- Script Area containing Vanilla JS logic -->
+    <script>
+        // ==================== GLOBAL APP STATE ====================
+        let currentTab = 'dashboard';
+        let timerSeconds = 0;
+        let timerInterval = null;
+        let selectedAnswers = Array(20).fill(null);
+        let flaggedQuestions = Array(20).fill(false);
+        let showHintState = Array(20).fill(false);
+        let activeMcqIndex = 0;
+        let isMcqSubmitted = false;
+
+        // Long questions user scores
+        let longScores = Array(5).fill(0);
+        let longAnswers = Array(5).fill("");
+        let longRevealed = Array(5).fill(false);
+
+        // ==================== MOCK DATABASE FOR 20 MCQS ====================
+        const mcqDatabase = [
+            {
+                id: 1,
+                chapter: 1,
+                category: "資訊處理簡介",
+                question: "小敏正在比較公司在經營過程中的數據項目。以下關於「某公司的淨收入增長率」與「1A 班學生的身高」兩者的分類，哪項是正確的？",
+                options: [
+                    { text: "前者為數據，後者為資訊", isCorrect: false, rationale: "「身高的數值」是未經任何處理的原始數據，屬於數據項目；而增長率則是經過複雜百分比計算後的資訊。" },
+                    { text: "前者為資訊，後者為數據", isCorrect: true, rationale: "「身高的數值」是未經任何處理的原始數據，屬於數據；而「公司的淨收入增長率」則是對原始利潤數值進行百分比統計計算後的結果，屬於資訊。" },
+                    { text: "兩者皆為數據", isCorrect: false, rationale: "增長率由於經歷了百分比、比率的計算，帶有決策參考意義，已轉換為資訊。" },
+                    { text: "兩者皆為資訊", isCorrect: false, rationale: "1A班學生的個別身高單獨來看未經匯總或平均，屬於原始的事實事實，是數據。" }
+                ],
+                hint: "數據代表未經處理的原始事實；資訊是加工過且具備決策參考意義的數據結果。"
+            },
+            {
+                id: 2,
+                chapter: 1,
+                category: "資訊處理簡介",
+                question: "在一個圖書館管理資訊系統中，負責分析用戶的業務需求、規劃系統建設的時間與成本，並評估方案可行性的人員是：",
+                options: [
+                    { text: "電腦工程師 (Computer Engineer)", isCorrect: false, rationale: "電腦工程師主要職責是設計、建構和整合硬件、軟件和網絡實體。" },
+                    { text: "系統分析師 (System Analyst)", isCorrect: true, rationale: "系統分析師主要負責收集終端用戶需求，分析系統建設的時間、成本及方案可行性，隨後撰寫規格說明書。" },
+                    { text: "程式員 (Programmer)", isCorrect: false, rationale: "程式員主要負責根據系統分析師設計的規格說明書進行編程與系統開發。" },
+                    { text: "網絡管理員 (Network Administrator)", isCorrect: false, rationale: "網絡管理員負責監控及維護電腦系統之間的網絡通信和網絡設備。" }
+                ],
+                hint: "此角色位於客戶需求與程式編寫的橋樑位置，著重成本、效益、時間和可行性的前期評估。"
+            },
+            {
+                id: 3,
+                chapter: 1,
+                category: "資訊處理簡介",
+                question: "資訊處理程序共包含七個重要階段。在收集到某校學生的體育課成績後，老師對這些成績進行有效性檢驗，並將其依男女生班別分類裝入資料夾。請問這屬於哪一階段？",
+                options: [
+                    { text: "收集 (Collection)", isCorrect: false, rationale: "收集是獲取原始事實的過程，例如問卷調查、傳感器採樣。" },
+                    { text: "組織 (Organization)", isCorrect: true, rationale: "組織是指管理、分類與整理收集到的數據，其常見手段包含數據有效性檢驗與類型轉換。" },
+                    { text: "儲存 (Storage)", isCorrect: false, rationale: "儲存是指把組織好的數據寫入硬碟或USB快閃記憶體等儲存設備中保存。" },
+                    { text: "分析 (Analysis)", isCorrect: false, rationale: "分析是利用統計、圖表、模型從已處理的數據中提取更高層次規律或趨勢的過程。" }
+                ],
+                hint: "當數據剛被收集進來後，在進行實體硬碟儲存或加工計算前，需要進行的分類和檢驗程序。"
+            },
+            {
+                id: 4,
+                chapter: 2,
+                category: "數據控制及組織",
+                question: "數據錄入員在將紙本交易金額輸入數據庫時，由於視覺疲勞，將金額「$234」誤輸入為「$243」。這在數據錄入錯誤中屬於哪一種類型？",
+                options: [
+                    { text: "數據來源錯誤 (Source Error)", isCorrect: false, rationale: "數據來源錯誤是指用戶本身提供了不正確的值，例如註冊時打錯了無效的地址。" },
+                    { text: "轉錄錯誤 (Transcription Error)", isCorrect: false, rationale: "轉錄錯誤是指數據被誤讀、誤聽或打錯字（如把「冶」打成「治」）。" },
+                    { text: "換位錯誤 (Transposition Error)", isCorrect: true, rationale: "換位錯誤是指誤將相鄰的兩位數字調換位置（如 34 調轉為 43），此項錯誤精準吻合。" },
+                    { text: "長度錯誤 (Length Error)", isCorrect: false, rationale: "這不屬於長度檢查，因為兩個金額的位數完全相同（都是3位元數）。" }
+                ],
+                hint: "注意！數值的字元本身沒有變，但相鄰的兩位數字在輸入時前後順序調亂了。"
+            },
+            {
+                id: 5,
+                chapter: 2,
+                category: "數據控制及組織",
+                question: "在數據有效性檢驗中，以下哪一項在網上用戶註冊界面中，**最適合**使用「單選按鈕 (Radio Button)」來進行固定值檢查 (Fixed Value Check)？",
+                options: [
+                    { text: "用戶感興趣的課堂類別（可選多項）", isCorrect: false, rationale: "可選多個的項目應該使用複選框（Checkbox）而非單選鈕。" },
+                    { text: "用戶的出生日期", isCorrect: false, rationale: "出生日期選項非常多，最適合使用日期選擇器（Date Picker）以防出錯。" },
+                    { text: "用戶的性別（M 或 F）", isCorrect: true, rationale: "性別只有極限少數的互斥選項，使用單選按鈕（Radio Button）可以完美限制輸入值只能是 M 或 F。" },
+                    { text: "用戶的八位電話號碼", isCorrect: false, rationale: "電話號碼必須手動輸入，並通過長度與類型檢驗來確保有效性。" }
+                ],
+                hint: "單選按鈕適合用於極少數互斥（只能選一個）的特定預設值選擇。"
+            },
+            {
+                id: 6,
+                chapter: 2,
+                category: "數據控制及組織",
+                question: "某傳輸系統在數據末尾添加了一個**偶數檢測位 (Even Parity Bit)**。接收端收到了包含檢驗位在內的 8 位元代碼為 $1101\\ 1001$（最右側為檢驗位）。請問該代碼是否通過奇偶檢測？",
+                options: [
+                    { text: "通過，因為 $1101\\ 1001$ 的二進制數值為 217（奇數）", isCorrect: false, rationale: "奇偶檢測關注的是 $1$ 的總個數，而非二進制碼轉換成十進制後是奇數還是偶數。" },
+                    { text: "不通過，因為傳輸代碼中 $1$ 的個數（5個）不是偶數", isCorrect: true, rationale: "偶數檢測要求傳輸的整個二進制代碼（包括奇偶位本身）中 $1$ 的總個數必須為偶數。在 $1101\\ 1001$ 中共有 5 個 $1$，是單數，因此未通過偶數檢測。" },
+                    { text: "通過，因為原始代碼扣除檢驗位後有 4 個 $1$ 是偶數", isCorrect: false, rationale: "在偶數檢測中，必須將整個字節（含檢驗位）全部加總。若原字節有 4 個 $1$，檢驗位應為 $0$，其最終字節總數才為偶數。" },
+                    { text: "不通過，因為最後一位檢驗位的值不為 0", isCorrect: false, rationale: "檢驗位可以為 $0$ 或 $1$，取決於如何與原始碼拼湊成偶數個 $1$。" }
+                ],
+                hint: "偶數檢驗（Even Parity）指的是：傳輸的整個二進制字串中，所有為 1 的位元總數加起來必須是雙數（偶數）。"
+            },
+            {
+                id: 7,
+                chapter: 2,
+                category: "數據控制及組織",
+                question: "數據庫中頻繁被搜索的欄位，其檢索效率通常較差。請問數據庫管理員最適合在設計數據表時加上什麼功能來加快其搜尋速度？",
+                options: [
+                    { text: "主關鍵碼 (Primary Key)", isCorrect: false, rationale: "主關鍵碼是用作唯一標識一筆記錄，雖然能自動建立索引，但其主要目的是實體完整性，且每張表只能有一個。" },
+                    { text: "索引 (Index)", isCorrect: true, rationale: "為頻繁搜尋的欄位（如姓名）建立索引會創建一個索引對照表，其中僅包含索引欄位值和指向數據表記錄的指標，從而極大地加快提取速度。" },
+                    { text: "輸入遮罩 (Input Mask)", isCorrect: false, rationale: "輸入遮罩用於限制用戶輸入時的格式，屬於數據有效性檢驗，不影響查詢效率。" },
+                    { text: "外部參照 (External Reference)", isCorrect: false, rationale: "這是試算表中引用不同工作表儲存格的方法，不適用於數據庫內部查詢提速。" }
+                ],
+                hint: "就像書本後面的關鍵字索引頁，能讓你不用逐頁翻找，直接定位到對應頁碼。"
+            },
+            {
+                id: 8,
+                chapter: 2,
+                category: "數據控制及組織",
+                question: "在數據傳輸或手動錄入中，我們常使用數據驗證（Data Verification）。以下關於「輸入數據兩次作驗證」與「雙重數據輸入」的比較，哪項是正確的？",
+                options: [
+                    { text: "兩者都需要使用兩位不同的操作員在兩台終端機輸入", isCorrect: false, rationale: "「輸入數據兩次作驗證」僅需同一個操作員（如重複輸入新密碼以防打錯字）。" },
+                    { text: "「輸入數據兩次作驗證」是由同一人操作；而「雙重數據輸入」則由兩位操作員獨立輸入同一個數據並在事後比對", isCorrect: true, rationale: "這是兩者最關鍵的差別，前者的例子如更改電郵地址；後者的例子是銀行將大批支票由兩位打字員分別錄入以避免人為錯誤。" },
+                    { text: "前者屬於有效性檢驗（Validation），後者屬於驗證（Verification）", isCorrect: false, rationale: "兩者皆屬於數據驗證（Verification），旨在確保數據準確，免受錄入人為失誤影響。" },
+                    { text: "兩者皆不能檢測出打字員在輸入過程中產生的系統性誤讀", isCorrect: false, rationale: "「雙重數據輸入」由於是不同人操作，極大地避免了兩個人在同一個地方犯相同誤讀錯誤的機會。" }
+                ],
+                hint: "注意操作的人數：「雙重數據輸入」在大型銀行或保險公司中，一般為了極高精準度，會指派不同人手操作。"
+            },
+            {
+                id: 9,
+                chapter: 3,
+                category: "數據表示",
+                question: "將十進制數字 $149_{10}$ 轉換為八位元無符號二進制數字，其正確結果是：",
+                options: [
+                    { text: "$1011\\ 0101_2$", isCorrect: false, rationale: "該值在十進制中為 $128+32+16+4+1 = 181$。" },
+                    { text: "$1001\\ 0101_2$", isCorrect: true, rationale: "因為 $149_{10} = 128 + 16 + 4 + 1$，對應位值分別為 $2^7, 2^4, 2^2, 2^0$。二進制即為 $1001\\ 0101_2$。" },
+                    { text: "$1001\\ 0111_2$", isCorrect: false, rationale: "該值在十進制中為 $128+16+4+2+1 = 151$。" },
+                    { text: "$1101\\ 0101_2$", isCorrect: false, rationale: "該值在十進制中為 $128+64+16+4+1 = 213$。" }
+                ],
+                hint: "除以 2 倒取餘數，或者從高位到低位拆解成 2 的冪次方之和：$149 = 128 + 16 + 4 + 1$。"
+            },
+            {
+                id: 10,
+                chapter: 3,
+                category: "數據表示",
+                question: "在 $8$ 位元二進制補碼 (Two's Complement) 有符號整數系統中，二進制代碼 $1000\\ 0000$ 所代表的十進制數值為：",
+                options: [
+                    { text: "$0$", isCorrect: false, rationale: "八位元中 $0$ 表示為 $0000\\ 0000_2$。" },
+                    { text: "$-127$", isCorrect: false, rationale: "$-127$ 在八位元有符號二補碼中應表示為 $1000\\ 0001_2$。" },
+                    { text: "$-128$", isCorrect: true, rationale: "在 $N$ 位元二進制補碼中，首位為 $1$ 且其餘為 $0$ 代表該位數系統下的最小負數，即 $-2^{N-1}$。對於 8-bit，即為 $-2^7 = -128$。" },
+                    { text: "$128$", isCorrect: false, rationale: "在 8 位元有符號二補碼中，最大正整數為 $2^7 - 1 = 127$（$0111\\ 1111_2$），因此不可能表示 $+128$。" }
+                ],
+                hint: "在二補碼中，最高有效位（Most Significant Bit）具有負數權值，為 $-2^{N-1}$。此時它為 1，其餘位全為 0。"
+            },
+            {
+                id: 11,
+                chapter: 3,
+                category: "數據表示",
+                question: "在 $8$ 位元有符號二進制補碼 (Two's Complement) 系統中，求十進制數值 $-15_{10}$ 的二進制補碼數字：",
+                options: [
+                    { text: "$1111\\ 0001_2$", isCorrect: true, rationale: "首先將 $+15$ 寫成 8-bit 二進制為 $0000\\ 1111_2$。將所有位元取反（反碼）得到 $1111\\ 0000_2$。最後加 $1$（補碼），即為 $1111\\ 0001_2$。" },
+                    { text: "$1000\\ 1111_2$", isCorrect: false, rationale: "這僅僅是符號及大小表示法（Sign-and-Magnitude），並不是二進制補碼。" },
+                    { text: "$1111\\ 1110_2$", isCorrect: false, rationale: "這是十進制數值 $-2$ 在系統中的表示形式。" },
+                    { text: "$1111\\ 0000_2$", isCorrect: false, rationale: "這是反碼（One's Complement），尚未進行加 1 的步驟。" }
+                ],
+                hint: "先寫出 $+15$ 的二進制，然後將所有位元「取反」（0變1，1變0），最後在最低位元上「加 1」。"
+            },
+            {
+                id: 12,
+                chapter: 3,
+                category: "數據表示",
+                question: "某電腦使用 $4$ 位元二進制補碼有符號整數系統（可表示範圍：$-8$ 至 $+7$）。以下哪項計算會產生**溢出誤差 (Overflow Error)**？",
+                options: [
+                    { text: "$2 - 3 + 4 - 2$", isCorrect: false, rationale: "計算過程為：$2-3=-1$, $-1+4=3$, $3-2=1$。每一步的中間結果都在 $-8$ 至 $+7$ 之內，無溢出。" },
+                    { text: "$3 + 4 + 2 - 2$", isCorrect: true, rationale: "計算過程為：$3+4=7$，然後 $7+2=9$。由於 $9$ 超出了 4 位元有符號整數最大值（即 $+7$），此時計算過程中必定發生溢出誤差，即便最終答案 $9-2=7$ 在範圍內亦無濟於事。" },
+                    { text: "$2 + 3 - 4 - 2$", isCorrect: false, rationale: "計算過程為：$2+3=5$, $5-4=1$, $1-2=-1$。中間結果未曾超出 $-8$ 至 $+7$ 區間。" },
+                    { text: "$-2 - 3 - 3$", isCorrect: false, rationale: "$-2-3=-5$，然後 $-5-3=-8$，恰好等於該系統可表示的最小值（$-8$），處於邊界上，沒有溢出。" }
+                ],
+                hint: "記住，溢出誤差不只看最終結果。只要在運算的中間步驟中，有任何一個臨時數值超過了限制範圍（即大於7或小於-8），就會當場發生溢出！"
+            },
+            {
+                id: 13,
+                chapter: 3,
+                category: "數據表示",
+                question: "小芳有一張無壓縮的 24 位元色深（真彩色）的 Bitmap（點陣圖）圖像，其解像度為 $1024 \\times 768$ 像素。請計算出該圖像所需的儲存空間是多少？",
+                options: [
+                    { text: "$2.25\\ \\text{MB}$", isCorrect: true, rationale: "總容量 $= 1024 \\times 768 \\times 24\\ \\text{bits} = 18,874,368\\ \\text{bits}$。除以 8 換算字節 $= 2,359,296\\ \\text{Bytes}$。除以 1024 換算為 KB $= 2304\\ \\text{KB}$。再除以 1024 換算為 MB $= 2.25\\ \\text{MB}$。" },
+                    { text: "$2.36\\ \\text{MB}$", isCorrect: false, rationale: "這是錯誤地在每步使用 1000 作為容量單位的換算結果。在計算檔案大小時，1 MB 應等於 1024 KB。" },
+                    { text: "$18.0\\ \\text{MB}$", isCorrect: false, rationale: "這是在計算過程中忘記除以 8（即未將 bit 轉換成 Byte）而直接除以 1024 的錯誤容量。" },
+                    { text: "$1.125\\ \\text{MB}$", isCorrect: false, rationale: "這是當使用 12 位元色深而非 24 位元色深進行計算時得出的錯誤結果。" }
+                ],
+                hint: "計算公式為：像素數（高寬乘積） $\\times$ 色深（bits）。最後記得把 bit 轉換成 Byte（除以8），再連續除以 1024 轉換到 MB。"
+            },
+            {
+                id: 14,
+                chapter: 3,
+                category: "數據表示",
+                question: "家俊正在為班會的迎新活動錄製一首 WAV 格式的模擬音訊。取樣頻率為 $44.1\\ \\text{kHz}$，位元深度為 16 位元，立體聲雙聲道（2 聲道），錄音時長為 1 分鐘。請問該無壓縮音效檔案大小最接近：",
+                options: [
+                    { text: "$10.1\\ \\text{MB}$", isCorrect: true, rationale: "大小 $= 44100\\ \\text{Hz} \\times 16\\ \\text{bits} \\times 2\\ \\text{聲道} \\times 60\\ \\text{秒} = 84,672,000\\ \\text{bits}$。除以 8 換算為 $10,584,000\\ \\text{Bytes}$。除以 $1024^2$ 換算為 $\\text{MB}$，約等於 $10.09\\ \\text{MB}$，最接近 $10.1\\ \\text{MB}$。" },
+                    { text: "$5.04\\ \\text{MB}$", isCorrect: false, rationale: "這是在計算時漏乘了 2 聲道（立體聲）從而導致檔案大小折半的錯誤數值。" },
+                    { text: "$80.7\\ \\text{MB}$", isCorrect: false, rationale: "這是在計算 Byte 轉換時忘記除以 8 導致的錯誤結果。" },
+                    { text: "$1.26\\ \\text{MB}$", isCorrect: false, rationale: "取樣頻率應以 Hz（44100）計算，如果錯誤地以 kHz（44.1）帶入公式，會得出完全偏離的數值。" }
+                ],
+                hint: "WAV 音頻計算公式：取樣率 $\\times$ 位元深度 $\\times$ 聲道數 $\\times$ 時間（秒）。注意將 44.1 kHz 寫成 44100 Hz，時間 1 分鐘寫成 60 秒！"
+            },
+            {
+                id: 15,
+                chapter: 3,
+                category: "數據表示",
+                question: "一維條碼 (1D Barcode) 在現代零售業依然扮演著重要角色。以下關於一維條碼與二維條碼（如 QR 碼）的陳述中，哪一項是正確的？",
+                options: [
+                    { text: "條碼和 QR 碼均具備優秀的糾錯能力，容許最多 30% 數據損壞仍能讀取", isCorrect: false, rationale: "一維條碼中如果任何一個條形或空格的寬度發生破損或改變，便無法被正確掃描，它不具備 QR 碼的 30% 強大容錯恢復能力。" },
+                    { text: "一維條碼通常只能在兩個方向（0° 或 180°）下進行掃描，而 QR 碼能從任意 360° 方向解碼", isCorrect: true, rationale: "一維條碼由於其水平排列的物理特性限制，掃描器雷射線必須貫穿所有條形，故通常只能在兩個方向解碼。而 QR 碼利用其三個角上的「定位標誌」可實現任意 360° 旋轉、傾斜甚至輕度污損解碼。" },
+                    { text: "一維條碼主要是以數學公式（向量圖）儲存在電腦中", isCorrect: false, rationale: "條碼是印製在商品實體紙張上的光學圖像，被掃描時由光電感應器解碼為字串，而非以向量公式存儲於庫中。" },
+                    { text: "一維條碼可以儲存長達 1000 個字元的產品詳細描述文字", isCorrect: false, rationale: "一維條碼的長度上限一般只有約 50 個字元，通常只用來表達一串代表產品 ID 的純數字；QR 碼才可以儲存高達 1000 個以上的字元。" }
+                ],
+                hint: "想想去超市買東西時，收銀員如果拿著掃描槍斜著掃條碼，常常會掃不出，必須對準；但我們掃安心出行或網頁 QR 碼時，任意旋轉手機都能成功。"
+            },
+            {
+                id: 16,
+                chapter: 4,
+                category: "試算表",
+                question: "阿力在試算表的儲存格 C2 中輸入了以下公式：`=$B2*(1-LEFT(C$1,3))`。若他使用自動填滿手柄將該公式向右拖曳並複製到 D3 儲存格，D3 中的公式會自動調整為：",
+                options: [
+                    { text: "`=$B2*(1-LEFT(C$1,3))`", isCorrect: false, rationale: "雖然 $B 和 $1 被鎖定了，但相對引用的列數 2 還是會隨著公式複製到第三列而改變為 3。" },
+                    { text: "`=$B3*(1-LEFT(D$1,3))`", isCorrect: true, rationale: "對於 `$B2`：欄 `B` 鎖定不變，列 `2` 向下複製一格變為 `3`，故為 `$B3`；對於 `C$1`：欄 `C` 向右複製一格變為 `D`，列 `1` 鎖定不變，故為 `D$1`。兩者拼湊即為 `=$B3*(1-LEFT(D$1,3))`。" },
+                    { text: "`=B3*(1-LEFT(D$1,3))`", isCorrect: false, rationale: "在 `$B2` 中，`B` 欄前有 $ 號，應保持不變，而非相對移位。" },
+                    { text: "`=$B3*(1-LEFT(C$1,3))`", isCorrect: false, rationale: "欄 `C` 沒有 $ 號鎖定，當公式向右複製到 D 欄時，欄應自動移位成 `D`。" }
+                ],
+                hint: "鎖定規則：有 $ 號的字母或數字在複製時保持原樣，沒有 $ 號的則根據移動格數自動加減。"
+            },
+            {
+                id: 17,
+                chapter: 4,
+                category: "試算表",
+                question: "下圖試算表儲存了多名學生的成績：其中 A 欄為「學生編號」、B 欄為「姓名」、C 欄為「性別」、D 欄為「ICT得分」。若老師想要在儲存格 F1 快速計算出**所有男性（M）**學生的「平均得分」，以下哪條公式是正確的？",
+                options: [
+                    { text: "`=SUMIF(C:C, \"M\", D:D) / COUNTIF(C:C, \"M\")`", isCorrect: true, rationale: "此公式採用了 `SUMIF` 算出所有男性（C欄為\"M\"）學生的分數加總，再除以 `COUNTIF` 算出男性學生的人數，此方法完全正確且符合題意。" },
+                    { text: "`=AVERAGEIF(D:D, \"M\", C:C)`", isCorrect: false, rationale: "如果使用 AVERAGEIF，其語法格式中條件範圍（性別）與平均值範圍（分數）的次序寫顛倒了。" },
+                    { text: "`=SUMIF(C:C, \"M\") / COUNT(D:D)`", isCorrect: false, rationale: "這個公式缺少了第三個引數（加總範圍 D:D），且 `COUNT(D:D)` 會算出全體學生總數而非僅僅是男性學生人數。" },
+                    { text: "`=AVERAGE(D:D) WHERE C:C=\"M\"`", isCorrect: false, rationale: "試算表公式中不能直接嵌套 SQL 語句的 `WHERE` 子句，此語法無效。" }
+                ],
+                hint: "平均值的最基本原理：所有符合條件（男性）的分數之和，除以符合條件的人數（男性人數）。"
+            },
+            {
+                id: 18,
+                chapter: 5,
+                category: "數據庫",
+                question: "在關係數據庫 (Relational Database) 的數據表設計中，下列關於主關鍵碼 (Primary Key) 的設定規則中，哪一項是正確的？",
+                options: [
+                    { text: "主關鍵碼的值必須是數字類型，不能使用文字類型", isCorrect: false, rationale: "主關鍵碼可以是任何適當的數據類型，例如字串（簡短文字）如學生編號「034930」非常常用。" },
+                    { text: "主關鍵碼可以容許重複的值，但絕對不允許為 NULL 空值", isCorrect: false, rationale: "主關鍵碼的核心用途是唯一標識，因此不允許有任何重複的值。" },
+                    { text: "主關鍵碼在數據表中必須具有獨一無二的值，且絕對不能為 NULL 空值", isCorrect: true, rationale: "這被稱為關係數據庫中的「實體完整性 (Entity Integrity)」規則。主關鍵碼必須具有唯一性且不能為 NULL。" },
+                    { text: "每一張數據表必須有多於兩個主關鍵碼以防系統出錯", isCorrect: false, rationale: "每一張數據表有且只能有一個主關鍵碼，雖然該主關鍵碼可以由多個欄位組成（稱為複合鍵）。" }
+                ],
+                hint: "主關鍵碼是用來區分這行記錄與其他所有記錄。如果兩行記錄有相同的主鍵，或者主鍵是空的，你就無法在數據庫中定位到它。"
+            },
+            {
+                id: 19,
+                chapter: 5,
+                category: "數據庫",
+                question: "細閱以下 SQL 語句。請問這條語句的具體作用是什麼？\n`SELECT CLASSNO, CNAME FROM STUDENT WHERE CLASS = '1A' ORDER BY SCORE DESC` ",
+                options: [
+                    { text: "從 STUDENT 表中選取 1A 班的所有學生記錄的所有欄位", isCorrect: false, rationale: "這條語句使用了顯式欄位名，而不是 `SELECT *`，因此只會檢索出 `CLASSNO` 和 `CNAME` 兩個欄位。" },
+                    { text: "從 STUDENT 表中篩選出 1A 班的學生，提取學號與姓名，並按分數從高到低（遞降）排列結果", isCorrect: true, rationale: "這條語句通過 `CLASS = '1A'` 篩選 1A 班記錄，`SELECT` 了學號與姓名，最後 `ORDER BY SCORE DESC` 代表按分數進行降序（從高到低）排列輸出。" },
+                    { text: "從 STUDENT 表中選取 1A 班所有分數低於平均分的學生", isCorrect: false, rationale: "語句中並無包含任何關於分數大小（如 `<` 符號）的 WHERE 條件，`SCORE` 僅用作排序。" },
+                    { text: "從 STUDENT 表中選取所有班級的學生，按分數從低到高（遞升）排列", isCorrect: false, rationale: "語句中有 `WHERE CLASS = '1A'` 進行了班級限制，且 `DESC` 代表遞降（從高到低），而非遞升。" }
+                ],
+                hint: "解析 SQL 的關鍵在於：SELECT 後面跟的是「顯示欄位」，WHERE 後面是「過濾條件」，ORDER BY ... DESC 代表「降序排序（由高至低）」"
+            },
+            {
+                id: 20,
+                chapter: 5,
+                category: "數據庫",
+                question: "在數據庫的 SQL 進階查詢中，`GROUP BY` 與 `HAVING` 的組合極其重要。以下關於 `WHERE` 與 `HAVING` 兩者之間差別的陳述中，哪一項是正確的？",
+                options: [
+                    { text: "WHERE 子句用於對 GROUP BY 分組後的結果組進行條件篩選", isCorrect: false, rationale: "WHERE 子句不能用來篩選組別（Group），它只能篩選單獨的行記錄。" },
+                    { text: "WHERE 子句用於在分組 (GROUP BY) 前篩選單獨的行記錄；而 HAVING 子句則是在分組後，對分組後的組別結果進行條件篩選", isCorrect: true, rationale: "這是兩者最本質的區別。例如：`WHERE REGISTERED` 篩選已註冊學生，`GROUP BY CLASS HAVING COUNT(*) > 10` 篩選分組後人數大於 10 的組別。" },
+                    { text: "HAVING 子句必須放在 WHERE 子句的前面，否則 SQL 語句會報錯", isCorrect: false, rationale: "在 SQL 標準執行順序中，WHERE 子句永遠在 GROUP BY 之前，而 HAVING 子句在 GROUP BY 之後。" },
+                    { text: "兩者在所有 SQL 查詢中皆可以互換使用，效果完全等價", isCorrect: false, rationale: "兩者完全不等價。WHERE 子句不能包含任何聚合函數（如 `COUNT()`、`SUM()`），但 HAVING 子句可以。" }
+                ],
+                hint: "WHERE 用於在「未打包（分組）」前對每筆個別紀錄過濾；HAVING 用於在「已打包分組」後，對整個包裹（組）進行篩選。"
+            }
+        ];
+
+        // ==================== MOCK DATABASE FOR 5 LONG QUESTIONS ====================
+        const longDatabase = [
+            {
+                id: 1,
+                chapter: 2,
+                title: "數據驗證 (Verification) 與 數據有效性檢驗 (Validation)",
+                question: "在學校資訊系統的網上註冊表格中，用戶會被要求輸入「出生日期（Date of Birth）」及在兩個獨立欄位中輸入「密碼（Password）與確認密碼」。<br>(a) 請簡述「數據有效性檢驗 (Data Validation)」與「數據驗證 (Data Verification)」在關係數據庫系統中的主要區別。<br>(b) 請分別指出上述表格中的兩個輸入項目中，哪一個應用了「數據有效性檢驗」，哪一個應用了「數據驗證」，並詳細解釋其工作機制。",
+                rubric: [
+                    { point: "+2分", desc: "清晰說明<b>數據有效性檢驗 (Validation)</b> 是由電腦系統/程式自動執行，用以確保輸入數據<b>合理、可接受並符合預設規則</b>（例如類型、長度、格式、範圍等）。" },
+                    { point: "+2分", desc: "清晰說明<b>數據驗證 (Verification)</b> 旨在確保數據在手動錄入或傳輸時<b>準確且與原始數據一致</b>，以防止人為錄入錯誤（如手民之誤、換位錯誤）。" },
+                    { point: "+3分", desc: "指出<b>「出生日期」應用了有效性檢驗</b>。工作機制：利用系統的<b>「日期選擇器 (Date Picker)」或格式限制（如 yyyy-mm-dd）及範圍限制</b>，確保用戶不能輸入如 2025-02-31 這種不存在的日期，或未來的出生日期。這屬於<b>格式檢查、範圍檢查及類型檢查</b>。" },
+                    { point: "+3分", desc: "指出<b>「兩次密碼輸入」應用了數據驗證</b>。工作機制：利用<b>「輸入數據兩次作驗證 (Enter Data Twice)」</b>的方式。系統將比對兩個獨立欄位中的字串。若完全吻合則通過；否則拒絕，以防用戶在看不到密碼明文的情況下輸入了錯誤按鍵而不自知。" }
+                ],
+                modelAnswer: "<b>(a) 主要區別：</b><br>數據有效性檢驗（Data Validation）是由程式運行的，旨在確保輸入的數據是「合理（Reasonable）且符合系統規則（e.g. 格式、類型、範圍等）」，即防範「垃圾輸入，垃圾輸出（GIGO）」；而數據驗證（Data Verification）則是確保數據在錄入過程中保持「準確無誤與原件一致」，防止人為手民之誤（如打錯字、數字換位等）。<br><br><b>(b) 輸入項目應用：</b><br>1. <b>出生日期 ─ 應用「數據有效性檢驗」：</b> 系統限制該欄位數據類型為「日期/時間」，並使用特定的「輸入遮罩」（如 0000-00-00）或「日期選擇器」。其機制為：進行<b>格式與類型檢查</b>確保格式為 yyyy-mm-dd，並進行<b>範圍檢查</b>確保日期不早於 1900 年且不大於今天，有效阻止 2026-02-30 這類無效日期的輸入。<br>2. <b>密碼與確認密碼 ─ 應用「數據驗證」：</b> 這是經典的<b>「輸入數據兩次作驗證」</b>。因為輸入密碼時通常顯示為星號「*」，打字員極易打錯。系統機制為：在前端程式中比對兩次輸入的字串，若完全一致才允許提交，藉此驗證用戶首次輸入的數據與其大腦真正想輸入的密碼是一致的。"
+            },
+            {
+                id: 2,
+                chapter: 3,
+                title: "模擬與數碼數據的「數碼化 (Digitization)」轉化原理",
+                question: "阿明使用麥克風錄製他的歌聲並儲存到電腦中成為 MP3 格式。請詳細描述模擬音頻（模擬信號）轉換成電腦中數碼音頻（數碼信號）的「數碼化 (Digitization)」過程。您的答案必須包括「離散化」與「量化」兩個關鍵階段的詳細運作機制。",
+                rubric: [
+                    { point: "+2分", desc: "說明麥克風將<b>聲波（模擬信號，連續物理值）</b>轉化為電壓信號，隨後送入電腦聲卡（Sound Card）中的<b>模數轉換器 (ADC)</b>。" },
+                    { point: "+4分", desc: "詳細說明<b>第一階段：離散化 (Discretization) / 取樣 (Sampling)</b>。在固定的時間間隔內對連續的電壓模擬信號進行取樣。取樣的頻率稱為<b>取樣頻率 (Sampling Frequency)</b>，例如 44.1 kHz 代表每秒採集 44100 個樣本。此階段將時間上連續的模擬信號分割為時間上離散的樣本點。" },
+                    { point: "+4分", desc: "詳細說明<b>第二階段：量化 (Quantization)</b>。將離散取樣點上的電壓高度（模擬值）映射並分配到一個最接近的預設離散數值級別上，並以二進制代碼（數碼數據）形式儲存。<b>位元深度 (Bit Depth)</b>（例如 16 位元）決定了量化級別的精細度（$2^{16} = 65536$ 個級別），位元深度越高，量化誤差越小，音質越逼真。" }
+                ],
+                modelAnswer: "<b>數碼化（Digitization）過程如下：</b><br>模擬信號（例如人唱歌產生的連續聲波）首先由麥克風轉換為連續的模擬電訊號。該電訊號隨後傳輸至電腦聲效卡中的模數轉換器（ADC），經歷以下兩個核心階段：<br><br>1. <b>第一階段：離散化（Discretization）/ 取樣（Sampling）：</b><br>由於模擬信號在時間上是連續的，ADC 會以固定的、極短的時間間隔對電壓值進行測量與記錄。這個每秒鐘取樣的次數稱為<b>取樣頻率（Sampling Frequency）</b>（e.g. 44.1 kHz 意即每秒取樣 44,100 次）。此過程把在時間上連續的模擬信號切割成一系列時間上分離的獨立樣本點。<br><br>2. <b>第二階段：量化（Quantization）：</b><br>取樣得到的每個電壓高度（模擬值）仍然是無限小數。<b>量化過程將這些連續電壓值對應到有限的、不連續的預設數字級別上。</b> 系統的<b>位元深度（Bit Depth）</b>決定了預設級別的數量。例如 16 位元色深提供 $2^{16} = 65,536$ 個離散量化級。每個樣本的數值會被四捨五入到最接近的量化級上，進而轉換成二進制代碼儲存在數碼儲存媒介（如硬碟）中，完成數碼化。"
+            },
+            {
+                id: 3,
+                chapter: 3,
+                category: "數據表示",
+                title: "二補碼運算與溢出誤差分析",
+                question: "在一個 $4$ 位元有符號整數系統中，整數均使用二進制補碼 (Two's Complement) 表示法儲存。<br>(a) 請寫出該 $4$ 位元有符號數系統能表示的十進制數值範圍。<br>(b) 請寫出 $+5$ 和 $+4$ 在該系統中的 $4$ 位元二進制補碼表示。<br>(c) 展示該系統中 $+5 + (+4)$ 的二進制相加運算。並利用計算結果，詳細解釋為何會發生「溢出誤差 (Overflow Error)」。",
+                rubric: [
+                    { point: "+2分", desc: "寫出 $4$ 位元二進制補碼有符號數的表示範圍：$-2^{4-1}$ 至 $2^{4-1}-1$，即 <b>$-8$ 至 $+7$</b>。" },
+                    { point: "+2分", desc: "正確寫出 $+5$ 的二進制補碼為 <b>$0101_2$</b>，以及 $+4$ 的二進制補碼為 <b>$0100_2$</b>（首位為0表示正數）。" },
+                    { point: "+2分", desc: "展示相加運算：$0101_2 + 0100_2 = 1001_2$。寫出詳細的逐位加法進位過程。" },
+                    { point: "+4分", desc: "<b>溢出分析：</b><br>1. 兩個正數 $0101_2 (+5)$ 與 $0100_2 (+4)$ 相加，所得結果的最高有效位（符號位）變成了 $1$（即負數）。<br>2. 計算結果 $1001_2$ 在 4 位元有符號二補碼中代表的是 $-8 + 1 = -7_{10}$，這顯然是錯誤的答案（正確應為 $+9_{10}$）。<br>3. 根本原因是正確答案 $+9$ 超出了該 4 位元系統所能表示的最大範圍極限（最大只能表示 $+7$）。這屬於有符號數溢出誤差。" }
+                ],
+                modelAnswer: "<b>(a) 表示範圍：</b><br>4 位元有符號二進制補碼系統的表示範圍為：$-2^{4-1}$ 至 $+2^{4-1}-1$，即 <b>$-8$ 至 $+7$</b>（十進制）。<br><br><b>(b) 二進制補碼表示：</b><br>由於 $+5$ 和 $+4$ 均為正數，其最高有效位（MSB）為 $0$：<br>• $+5_{10} = 0101_2$<br>• $+4_{10} = 0100_2$<br><br><b>(c) 相加運算及溢出分析：</b><br>進行二進制相加：<br>$$\\begin{array}{r@{\\quad}l} & 0101_2 \\quad (+5) \\\\ + & 0100_2 \\quad (+4) \\\\ \\hline & 1001_2 \\quad (-7\\text{?}) \\end{array}$$<br><b>溢出分析：</b><br>1. <b>符號位元改變</b>：相加的兩個數均為正數（符號位為0），但相加得到的結果 $1001_2$ 符號位卻變成了 $1$（代表負數）。在有符號加法中，「正 + 正 = 負」是發生溢出誤差的特徵。<br>2. <b>數值轉換錯誤</b>：結果 $1001_2$ 在 4 補碼中，最高位的 1 權值為 $-8$，故實際值為 $-8 \\times 1 + 1 = -7_{10}$。這與正確數學答案 $+9_{10}$ 完全不符。<br>3. <b>根本原因</b>：正確答案 $+9$ 超出了該系統所能表示的最大正整數極限（即 $+7$），計算機硬件無法用 4 位元容納該數值，進位侵佔了符號位元，從而產生了<b>溢出誤差</b>。"
+            },
+            {
+                id: 4,
+                chapter: 4,
+                title: "試算表數據分析：樞紐分析表 (Pivot Table) 應用",
+                question: "一家跨國連鎖圖書公司在「活頁簿 (Workbook)」中儲存了過去一年的大量圖書銷售記錄（超過 50,000 行），包含：訂單編號、店舖地點、圖書類別、出版年份、原價、折扣率、銷售數量及總利潤。公司經理想進行分析。<br>(a) 經理想了解<b>「不同店舖地點」</b>在<b>「不同圖書類別」</b>上的<b>「總利潤」</b>。請向經理提出一個**最有效**的數據分析工具，並詳細寫出如何配置該工具的行、列和值。<br>(b) 若經理想分析「如果將兒童圖書的折扣率調低 $5\\%$，總利潤將會如何改變」，這屬於試算表中哪種數據分析工具的應用？並說明其工作原理。",
+                rubric: [
+                    { point: "+1分", desc: "在 (a) 中指出經理應使用的最有效工具是<b>「樞紐分析表 (Pivot Table)」</b>。" },
+                    { point: "+3分", desc: "詳細寫出樞紐分析表的具體配置：<br>1. 將 <b>店舖地點 (Store Location)</b> 拖曳至 <b>「行 (Rows)」欄位</b>（或列欄位）。<br>2. 將 <b>圖書類別 (Book Category)</b> 拖曳至 <b>「列 (Columns)」欄位</b>（或行欄位）。<br>3. 將 <b>總利潤 (Total Profit)</b> 拖曳至 <b>「值 (Values)」欄位</b>，並將計算方式設置為 <b>加總 (SUM)</b>。" },
+                    { point: "+2分", desc: "在 (b) 中指出這屬於模擬分析（假設分析 / What-if Analysis）中的<b>「分析藍本管理員 (Scenario Manager)」或「工作表敏感度分析」</b>。" },
+                    { point: "+4分", desc: "說明其工作原理：<br>1. 用戶在分析藍本中定義一個或多個<b>「可變儲存格 (Changing Cells)」</b>（例如：將兒童圖書的折扣率單元格從原值改為新值）。<br>2. 系統會自動拷貝當前工作表，並將新值套入公式，重新計算並輸出<b>「結果儲存格 (Result Cells)」</b>（總利潤）。<br>3. 它可以儲存不同的場景，並生成一份對比報告，讓經理直接對比多個決策方案的財務影響。" }
+                ],
+                modelAnswer: "<b>(a) 推薦工具與配置：</b><br>連鎖圖書公司經理應使用<b>樞紐分析表（Pivot Table）</b>，這是匯總和交叉對比大量數據的最佳工具。<br><b>配置步驟如下：</b><br>1. <b>行（Rows）</b>：將<b>「店舖地點」</b>欄位拖放到此處。這樣每一行就會代表一個不同的分店地點。<br>2. <b>列（Columns）</b>：將<b>「圖書類別」</b>欄位拖放到此處。這樣每一列就會代表一個不同的圖書分類（如：科技、小說、兒童書）。<br>3. <b>值（Values）</b>：將<b>「總利潤」</b>欄位拖放到此處，並將其聚合函數設置為<b>加總（SUM）</b>。系統便會自動將特定分店在特定圖書類別下的利潤總和填入交叉儲存格中，極其直觀。<br><br><b>(b) 假設分析工具與原理：</b><br>這屬於模擬分析（What-if Analysis）中的<b>分析藍本管理員（Scenario Manager）</b>。<br><b>工作原理：</b><br>1. 分析藍本管理員允許經理設定一組<b>「可變儲存格」</b>（例如：兒童書折扣率儲存格 $D2$）。<br>2. 經理可以建立並儲存不同的情境。例如場景 A「維持原狀」（折扣率為 20%），場景 B「調低折扣率」（折扣率為 15%）。<br>3. 經理設定一個<b>「結果儲存格」</b>（即總利潤所在的單元格 $H50002$）。<br>4. 系統會自動將這兩組數值代入公式，重新計算並輸出各自的總利潤，最後整合生成一份「摘要報告（Summary Report）」，讓經理能在螢幕上直接對比不同折扣方案下的利潤預估增減，輔助決策。"
+            },
+            {
+                id: 5,
+                chapter: 5,
+                category: "數據庫",
+                title: "數據庫結構設計與進階 SQL 查詢",
+                question: "學校數據庫中有一張名為 STUDENT 的數據表，儲存了全校學生的記錄，其部分欄位定義如下：<br>• `SID` (文字型，主關鍵碼，例如 '034930')<br>• `CNAME` (文字型，學生中文姓名)<br>• `CLASS` (文字型，班別，例如 '1A', '1B')<br>• `SEX` (文字型，性別，'M' 代表男，'F' 代表女)<br>• `SCORE` (數字型，ICT期末分數，0 至 100)<br>• `REGISTERED` (布爾型，TRUE 表示已註冊，FALSE 表示未註冊)<br><br>(a) 請問為何主關鍵碼 `SID` 應定義為「文字型（簡短文字）」而非「數字型」？<br>(b) 老師想寫一條 SQL 查詢，要求篩選出所有<b>已註冊 (REGISTERED = TRUE)</b> 且<b>期末分數高於 60 分 (SCORE > 60)</b> 的學生。查詢結果只需顯示<b>班別 (CLASS)、以及該班符合條件的學生人數（命名為「StudentCount」）</b>。結果需按<b>班別 (CLASS) 的字典順序遞升</b>排列。請寫出這條 SQL 語句。",
+                rubric: [
+                    { point: "+2分", desc: "在 (a) 中合理解釋：學號 `SID` 通常含有<b>前置零（Leading Zeros）</b>（例如 '034930' 中的 '0'）。若設為數字型，前置零會被系統自動刪除（變為 34930），導致數據失真且不符合學號格式。且學號無須參與任何數學運算。" },
+                    { point: "+2分", desc: "在 (b) 中，正確使用 `SELECT CLASS, COUNT(*) AS StudentCount`，包含聚合函數與重新命名。" },
+                    { point: "+2分", desc: "正確使用 `FROM STUDENT` 指明數據來源表。" },
+                    { point: "+2分", desc: "正確寫出篩選子句 `WHERE REGISTERED = TRUE AND SCORE > 60`（在 Access 中布爾值可用 TRUE，也可使用 Yes 或 -1；文字/數字條件完全正確）。" },
+                    { point: "+1分", desc: "正確使用 `GROUP BY CLASS` 進行班別分組。注意：當 SELECT 中有非聚合欄位時，必須使用 GROUP BY！" },
+                    { point: "+1分", desc: "正確寫出排序子句 `ORDER BY CLASS ASC` 或直接寫 `ORDER BY CLASS`。" }
+                ],
+                modelAnswer: "<b>(a) SID 定義為文字型的原因：</b><br>1. <b>前置零保留：</b> 學號（如 '034930'）常包含前置零「0」。如果數據類型設置為「數字型」，數據庫管理系統會自動將其簡化為數字 $34930$（前置零會丟失），導致數據格式損壞。<br>2. <b>性質上非數值：</b> 學號本身僅作為唯一識別碼，在系統中絕不會參與如加、減、乘、除等算術運算。因此，在數據庫設計的最佳實踐中，這種類型的編碼（如身分證、電話、郵編）均應定義為文字型，以優化存儲與確保格式完整性。<br><br><b>(b) SQL 查詢語句如下：</b><br>```sql\nSELECT CLASS, COUNT(*) AS StudentCount\nFROM STUDENT\nWHERE REGISTERED = TRUE AND SCORE > 60\nGROUP BY CLASS\nORDER BY CLASS ASC;\n```"
+            }
+        ];
+
+        // ==================== APP INITIALIZATION ====================
+        window.onload = function () {
+            // Start Timer
+            startTimer();
+            // Load MCQ Grid Navigator
+            loadMcqGrid();
+            // Load Current MCQ Question
+            loadQuestion(0);
+            // Load Long Questions list
+            loadLongQuestions();
+            // Update initial progress
+            updateOverallProgress();
+        };
+
+        // ==================== TIMER FUNCTION ====================
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                timerSeconds++;
+                let hrs = Math.floor(timerSeconds / 3600);
+                let mins = Math.floor((timerSeconds % 3600) / 60);
+                let secs = timerSeconds % 60;
+
+                let timeStr = 
+                    (hrs < 10 ? "0" : "") + hrs + ":" + 
+                    (mins < 10 ? "0" : "") + mins + ":" + 
+                    (secs < 10 ? "0" : "") + secs;
+                
+                document.getElementById('timer').innerText = timeStr;
+                
+                // Also update dashboard minutes
+                let totalMins = Math.floor(timerSeconds / 60);
+                document.getElementById('stat-time-value').innerText = totalMins + " 分鐘";
+            }, 1000);
+        }
+
+        // ==================== TAB SWITCHER ====================
+        function switchTab(tabId) {
+            currentTab = tabId;
+            // Hide all tabs
+            document.querySelectorAll('main > section').forEach(section => {
+                section.classList.add('hidden');
+            });
+            
+            // Show selected tab (handle review special tab)
+            let actualTabId = tabId;
+            if (tabId === 'mcq' && isMcqSubmitted) {
+                actualTabId = 'mcq-review';
+            }
+            document.getElementById('tab-' + actualTabId).classList.remove('hidden');
+
+            // Update Desktop Tab Buttons
+            document.querySelectorAll('#nav-desktop .tab-btn').forEach(btn => {
+                btn.classList.remove('text-indigo-400', 'bg-indigo-500/10');
+                btn.classList.add('text-slate-400', 'hover:text-slate-200', 'hover:bg-slate-800');
+            });
+            let activeBtn = document.getElementById('btn-tab-' + tabId);
+            if (activeBtn) {
+                activeBtn.classList.remove('text-slate-400', 'hover:text-slate-200', 'hover:bg-slate-800');
+                activeBtn.classList.add('text-indigo-400', 'bg-indigo-500/10');
+            }
+
+            // Update Mobile Tab Icons
+            document.querySelectorAll('[id^="btn-mob-"]').forEach(btn => {
+                btn.classList.remove('text-indigo-400');
+                btn.classList.add('text-slate-400');
+            });
+            let activeMobBtn = document.getElementById('btn-mob-' + tabId);
+            if (activeMobBtn) {
+                activeMobBtn.classList.remove('text-slate-400');
+                activeMobBtn.classList.add('text-indigo-400');
+            }
+
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            // Re-render LaTeX expressions if switching to active rendering tabs
+            if (typeof MathJax !== 'undefined' && MathJax.typeset) {
+                MathJax.typeset();
+            }
+        }
+
+        // Open specific chapter notes and switch to notes tab
+        function openChapterNotes(chapterNum) {
+            switchTab('revision');
+            showChapterNote(chapterNum);
+        }
+
+        function showChapterNote(chapterNum) {
+            // Hide all chapter notes
+            document.querySelectorAll('.chap-note').forEach(note => {
+                note.classList.add('hidden');
+            });
+            // Show selected chapter note
+            document.getElementById('note-chapter-' + chapterNum).classList.remove('hidden');
+
+            // Update chapter pill buttons
+            document.querySelectorAll('#chapter-note-selector .chap-pill').forEach(btn => {
+                btn.classList.remove('bg-indigo-600', 'text-white', 'shadow-md');
+                btn.classList.add('bg-slate-800', 'text-slate-400', 'hover:bg-slate-700');
+            });
+            let activePill = document.getElementById('pill-' + chapterNum);
+            activePill.classList.remove('bg-slate-800', 'text-slate-400', 'hover:bg-slate-700');
+            activePill.classList.add('bg-indigo-600', 'text-white', 'shadow-md');
+
+            if (typeof MathJax !== 'undefined' && MathJax.typeset) {
+                MathJax.typeset();
+            }
+        }
+
+        // ==================== MCQ LOGIC ====================
+        function loadMcqGrid() {
+            let container = document.getElementById('mcq-grid-nav');
+            container.innerHTML = "";
+            for (let i = 0; i < 20; i++) {
+                let btn = document.createElement('button');
+                btn.id = "mcq-nav-" + i;
+                btn.onclick = () => loadQuestion(i);
+                btn.className = "w-10 h-10 rounded-xl text-xs font-bold border transition-all flex items-center justify-center " + getGridBtnClass(i);
+                btn.innerText = (i + 1);
+                container.appendChild(btn);
+            }
+        }
+
+        function getGridBtnClass(index) {
+            if (activeMcqIndex === index) {
+                return "bg-indigo-600 text-white border-indigo-500 shadow-md";
+            }
+            if (flaggedQuestions[index]) {
+                return "bg-yellow-500/10 text-yellow-500 border-yellow-800/30";
+            }
+            if (selectedAnswers[index] !== null) {
+                return "bg-slate-800 text-slate-100 border-slate-700";
+            }
+            return "bg-slate-950 text-slate-400 border-slate-800 hover:bg-slate-900";
+        }
+
+        function loadQuestion(index) {
+            activeMcqIndex = index;
+            let q = mcqDatabase[index];
+
+            // Hide/Show navigation buttons
+            document.getElementById('btn-prev').disabled = index === 0;
+            document.getElementById('btn-next').disabled = index === 19;
+
+            // Update Question counter
+            document.getElementById('mcq-progress').innerText = (index + 1) + " / 20";
+
+            // Update Flag UI
+            document.getElementById('mcq-flag-indicator').style.display = flaggedQuestions[index] ? 'inline-flex' : 'none';
+            document.getElementById('btn-flag-text').innerText = flaggedQuestions[index] ? "取消標記" : "標記回顧";
+
+            // Update category badge
+            document.getElementById('q-category-badge').innerText = "第 " + q.chapter + " 課 • " + q.category;
+
+            // Set Question Text
+            document.getElementById('q-num-label').innerText = "Q" + (index + 1) + ".";
+            document.getElementById('q-text').innerText = q.question;
+
+            // Load Formula / LaTeX block if needed
+            let formulaBox = document.getElementById('q-formula-box');
+            if (q.id === 4) {
+                formulaBox.innerHTML = `偶數檢測（Even Parity）要求整個 8-bit 字串（原數據 + 檢驗位）中包含雙數個「1」。<br>接收到的代碼為：\\(1101\\ 1001\\)`;
+                formulaBox.classList.remove('hidden');
+            } else if (q.id === 16) {
+                formulaBox.innerHTML = `原本 C2 儲存格公式：\\(=\\$B2*(1-\\text{LEFT}(C\\$1,3))\\)<br>拖曳並複製一格到 D3。`;
+                formulaBox.classList.remove('hidden');
+            } else if (q.id === 20) {
+                formulaBox.innerHTML = `\\(\\text{SELECT CLASS, COUNT(*)}\\)<br>\\(\\text{FROM STUDENT WHERE REGISTERED}\\)<br>\\(\\text{GROUP BY CLASS HAVING COUNT(*)} > 10\\)`;
+                formulaBox.classList.remove('hidden');
+            } else {
+                formulaBox.classList.add('hidden');
+            }
+
+            // Render Options
+            let optionsContainer = document.getElementById('q-options-container');
+            optionsContainer.innerHTML = "";
+            
+            const optionLabels = ["A", "B", "C", "D"];
+            q.options.forEach((opt, idx) => {
+                let div = document.createElement('div');
+                let isSelected = selectedAnswers[index] === idx;
+                
+                div.onclick = () => selectOption(idx);
+                div.className = "flex items-center p-4 rounded-2xl border cursor-pointer transition-all " + 
+                    (isSelected ? "bg-indigo-950/40 border-indigo-500 text-indigo-200" : "bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800/80");
+                
+                div.innerHTML = `
+                    <div class="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold mr-3 ${isSelected ? 'bg-indigo-600 text-white' : 'bg-slate-950 text-slate-400'}">${optionLabels[idx]}</div>
+                    <span class="text-xs sm:text-sm flex-grow">${opt.text}</span>
+                `;
+                optionsContainer.appendChild(div);
+            });
+
+            // Set Hint Drawer
+            document.getElementById('hint-content').innerText = q.hint;
+            document.getElementById('hint-content').classList.add('hidden');
+            document.getElementById('hint-chevron').style.transform = "rotate(0deg)";
+            showHintState[index] = false;
+
+            // Refresh grid buttons style
+            loadMcqGrid();
+
+            // Render LaTeX dynamically
+            if (typeof MathJax !== 'undefined' && MathJax.typeset) {
+                MathJax.typeset();
+            }
+        }
+
+        function selectOption(optIndex) {
+            selectedAnswers[activeMcqIndex] = optIndex;
+            loadQuestion(activeMcqIndex);
+            updateOverallProgress();
+        }
+
+        function toggleFlag() {
+            flaggedQuestions[activeMcqIndex] = !flaggedQuestions[activeMcqIndex];
+            loadQuestion(activeMcqIndex);
+        }
+
+        function toggleHint() {
+            let idx = activeMcqIndex;
+            showHintState[idx] = !showHintState[idx];
+            let hintContent = document.getElementById('hint-content');
+            let chevron = document.getElementById('hint-chevron');
+            if (showHintState[idx]) {
+                hintContent.classList.remove('hidden');
+                chevron.style.transform = "rotate(180deg)";
+            } else {
+                hintContent.classList.add('hidden');
+                chevron.style.transform = "rotate(0deg)";
+            }
+        }
+
+        function prevQuestion() {
+            if (activeMcqIndex > 0) {
+                loadQuestion(activeMcqIndex - 1);
+            }
+        }
+
+        function nextQuestion() {
+            if (activeMcqIndex < 19) {
+                loadQuestion(activeMcqIndex + 1);
+            }
+        }
+
+        // Calculate progress percentage
+        function getProgress() {
+            let answered = selectedAnswers.filter(ans => ans !== null).length;
+            let longGraded = longScores.filter(s => s > 0 || longRevealed[longDatabase[longScores.indexOf(s)]?.id - 1]).length; // Count long items reviewed
+            let totalTasks = 20 + 5;
+            let completed = answered + longScores.filter((score, idx) => longRevealed[idx]).length;
+            return Math.floor((completed / totalTasks) * 100);
+        }
+
+        function updateOverallProgress() {
+            let progress = getProgress();
+            document.getElementById('overall-progress-bar').style.width = progress + "%";
+            document.getElementById('overall-progress-percent').innerText = progress + "%";
+        }
+
+        // ==================== SUBMIT MCQ TEST ====================
+        function submitQuiz() {
+            let unanswered = [];
+            selectedAnswers.forEach((ans, idx) => {
+                if (ans === null) unanswered.push(idx + 1);
+            });
+
+            if (unanswered.length > 0) {
+                // Custom confirm modal
+                let proceed = confirm("您還有 " + unanswered.length + " 題未完成（題號：" + unanswered.join(", ") + "）。確認要現在提交試卷嗎？");
+                if (!proceed) return;
+            }
+
+            isMcqSubmitted = true;
+            clearInterval(timerInterval);
+
+            // Calculate score
+            let score = 0;
+            mcqDatabase.forEach((q, idx) => {
+                let userAnsIdx = selectedAnswers[idx];
+                if (userAnsIdx !== null && q.options[userAnsIdx].isCorrect) {
+                    score++;
+                }
+            });
+
+            // Update stats
+            document.getElementById('stat-mcq-score').innerText = score + " / 20";
+            document.getElementById('stat-mcq-desc').innerText = "測驗已提交 • 獲得 " + Math.round((score/20)*100) + "% 答對率";
+
+            // Render Report Tab values
+            document.getElementById('review-score').innerText = score + " / 20";
+            document.getElementById('review-percent').innerText = Math.round((score/20)*100) + "% 答對率";
+
+            // Calculate Mock Grade
+            let grade = "F";
+            let gradeDesc = "多加把勁，重讀筆記！";
+            if (score >= 18) {
+                grade = "5**";
+                gradeDesc = "無懈可擊！你具備奪取 5** 的超凡實力！";
+            } else if (score >= 16) {
+                grade = "5*";
+                gradeDesc = "非常出色！只要注意少許陷阱題，穩拿 5*。";
+            } else if (score >= 14) {
+                grade = "5";
+                gradeDesc = "表現優異。再多溫習弱項便能衝擊星級！";
+            } else if (score >= 11) {
+                grade = "4";
+                gradeDesc = "中規中矩。基本概念扎實，但缺乏細心分析。";
+            } else if (score >= 8) {
+                grade = "3";
+                gradeDesc = "合格水平。建議對照錯題重新溫習對應課本章節。";
+            }
+            document.getElementById('review-grade').innerText = grade;
+            document.getElementById('review-grade-desc').innerText = gradeDesc;
+
+            // Formulate spent time
+            let hrs = Math.floor(timerSeconds / 3600);
+            let mins = Math.floor((timerSeconds % 3600) / 60);
+            let secs = timerSeconds % 60;
+            document.getElementById('review-time').innerText = 
+                (mins < 10 ? "0" : "") + mins + "分" + (secs < 10 ? "0" : "") + secs + "秒";
+
+            // Render chapter breakdown
+            let chapterScores = Array(5).fill(0);
+            let chapterCounts = Array(5).fill(0);
+            mcqDatabase.forEach((q, idx) => {
+                chapterCounts[q.chapter - 1]++;
+                let userAnsIdx = selectedAnswers[idx];
+                if (userAnsIdx !== null && q.options[userAnsIdx].isCorrect) {
+                    chapterScores[q.chapter - 1]++;
+                }
+            });
+
+            let breakdownContainer = document.getElementById('review-category-stats');
+            breakdownContainer.innerHTML = "";
+            const chpNames = ["資訊處理簡介", "數據控制及組織", "數據表示", "試算表", "數據庫"];
+            for (let i = 0; i < 5; i++) {
+                let s = chapterScores[i];
+                let t = chapterCounts[i];
+                let pct = Math.round((s/t)*100);
+                let colorClass = pct >= 80 ? "text-emerald-400" : pct >= 50 ? "text-yellow-500" : "text-rose-500";
+                
+                let div = document.createElement('div');
+                div.className = "bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-2 flex flex-col justify-between";
+                div.innerHTML = `
+                    <div>
+                        <span class="text-[10px] text-indigo-400 font-bold block">第 ${i+1} 課</span>
+                        <h4 class="text-xs font-semibold text-white">${chpNames[i]}</h4>
+                    </div>
+                    <div class="flex justify-between items-baseline pt-2">
+                        <span class="text-xs text-slate-400">得分:</span>
+                        <span class="text-lg font-extrabold ${colorClass}">${s} / ${t} (${pct}%)</span>
+                    </div>
+                `;
+                breakdownContainer.appendChild(div);
+            }
+
+            // Render detailed review list
+            let reviewList = document.getElementById('mcq-review-list');
+            reviewList.innerHTML = "";
+
+            mcqDatabase.forEach((q, idx) => {
+                let userAnsIdx = selectedAnswers[idx];
+                let isUserCorrect = userAnsIdx !== null && q.options[userAnsIdx].isCorrect;
+                
+                let card = document.createElement('div');
+                card.className = "bg-slate-950 border " + (isUserCorrect ? "border-emerald-950/80" : "border-rose-950/80") + " rounded-2xl p-5 space-y-4";
+                
+                let userChoiceText = userAnsIdx !== null ? `<b>您的選擇：</b> ${optionLabels(userAnsIdx)}. ${q.options[userAnsIdx].text}` : "<span class='text-rose-400'>您未作答此題</span>";
+                let correctOptIdx = q.options.findIndex(o => o.isCorrect);
+                let correctChoiceText = `<b>正確答案：</b> ${optionLabels(correctOptIdx)}. ${q.options[correctOptIdx].text}`;
+
+                card.innerHTML = `
+                    <div class="flex items-start space-x-2">
+                        <span class="text-xs font-bold px-2 py-1 rounded ${isUserCorrect ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}">
+                            ${isUserCorrect ? '<i class="fa-solid fa-circle-check"></i> 答對' : '<i class="fa-solid fa-circle-xmark"></i> 答錯'}
+                        </span>
+                        <h4 class="text-sm font-bold text-white flex-grow">Q${idx+1}. ${q.question}</h4>
+                    </div>
+                    <div class="text-xs space-y-1.5 pl-2 border-l border-slate-800">
+                        <p class="${isUserCorrect ? 'text-emerald-300' : 'text-rose-300'}">${userChoiceText}</p>
+                        ${!isUserCorrect ? `<p class="text-emerald-400">${correctChoiceText}</p>` : ''}
+                    </div>
+                    <div class="bg-slate-900/50 p-4 rounded-xl text-xs space-y-2">
+                        <p class="font-semibold text-indigo-400"><i class="fa-solid fa-graduation-cap"></i> 試題核心解析：</p>
+                        <p class="text-slate-300 leading-relaxed">${q.options[correctOptIdx].rationale}</p>
+                        ${!isUserCorrect && userAnsIdx !== null ? `
+                            <p class="text-slate-400 leading-relaxed border-t border-slate-800/60 pt-2"><i class="fa-solid fa-bug"></i> 為何不選 ${optionLabels(userAnsIdx)}：<br>${q.options[userAnsIdx].rationale}</p>
+                        ` : ''}
+                    </div>
+                `;
+                reviewList.appendChild(card);
+            });
+
+            // Switch to MCQ Review Tab
+            switchTab('mcq');
+            updateOverallProgress();
+        }
+
+        function optionLabels(idx) {
+            return ["A", "B", "C", "D"][idx];
+        }
+
+        // ==================== LONG QUESTIONS LOGIC ====================
+        function loadLongQuestions() {
+            let container = document.getElementById('long-questions-list');
+            container.innerHTML = "";
+
+            longDatabase.forEach((q, idx) => {
+                let card = document.createElement('div');
+                card.id = "long-card-" + idx;
+                card.className = "bg-slate-950 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xl";
+                
+                let isRevealed = longRevealed[idx];
+
+                card.innerHTML = `
+                    <div class="flex justify-between items-start flex-wrap gap-4 border-b border-slate-800 pb-4">
+                        <div>
+                            <span class="text-xs text-indigo-400 font-bold block">第 ${idx+1} 題 • 模擬長題目</span>
+                            <h3 class="text-md sm:text-lg font-bold text-white mt-1">${q.title}</h3>
+                        </div>
+                        <span class="text-xs px-2.5 py-1 bg-indigo-500/10 text-indigo-400 rounded-lg font-bold">滿分：10分</span>
+                    </div>
+
+                    <p class="text-xs sm:text-sm text-slate-300 leading-relaxed bg-slate-900 p-4 rounded-xl border border-slate-800/80">${q.question}</p>
+
+                    <!-- Textarea for user answer -->
+                    <div class="space-y-2">
+                        <label class="text-xs text-slate-400 font-bold block">請在此處輸入您的作答答案：</label>
+                        <textarea id="long-ans-input-${idx}" oninput="saveLongAns(${idx})" class="w-full h-32 bg-slate-900 border border-slate-800 rounded-xl p-4 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition-all placeholder:text-slate-600" placeholder="例如：(a) 數據有效性檢驗是在數據輸入時，由系統程式自動比對預設規則..." ${isRevealed ? 'disabled' : ''}>${longAnswers[idx]}</textarea>
+                    </div>
+
+                    <!-- Button to reveal answer and rubric -->
+                    <div class="flex justify-between items-center flex-wrap gap-4 pt-2">
+                        <button onclick="revealLongAnswer(${idx})" id="btn-reveal-long-${idx}" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-4 py-2.5 rounded-xl text-xs shadow-md transition-all">
+                            ${isRevealed ? "隱藏參考答案與評分細則" : "顯示評分標準及參考答案"}
+                        </button>
+                        
+                        <!-- Scoring panel -->
+                        <div id="long-scoring-panel-${idx}" class="flex items-center space-x-2 ${isRevealed ? '' : 'hidden'}">
+                            <span class="text-xs text-slate-400">對照 Rubric 自我打分：</span>
+                            <select id="long-score-sel-${idx}" onchange="gradeLongQuestion(${idx}, this.value)" class="bg-slate-900 border border-slate-700 text-slate-100 px-3 py-1.5 rounded-lg text-xs font-bold focus:outline-none focus:border-indigo-500">
+                                ${Array.from({length: 11}, (_, i) => `<option value="${i}" ${longScores[idx]===i ? 'selected':''}>${i} 分</option>`).join("")}
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Revealed Rubric & Answer Box -->
+                    <div id="long-revealed-box-${idx}" class="space-y-6 pt-6 border-t border-slate-900 ${isRevealed ? '' : 'hidden'}">
+                        <!-- Model Answer -->
+                        <div class="space-y-2">
+                            <h4 class="text-xs font-bold text-emerald-400 flex items-center">
+                                <i class="fa-solid fa-clipboard-check mr-1.5"></i> 考卷參考答案 (Model Answer)
+                            </h4>
+                            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 text-xs text-slate-300 leading-relaxed space-y-2">
+                                ${q.modelAnswer}
+                            </div>
+                        </div>
+
+                        <!-- Rubrics breakdown -->
+                        <div class="space-y-2">
+                            <h4 class="text-xs font-bold text-indigo-400 flex items-center">
+                                <i class="fa-solid fa-list-ol mr-1.5"></i> DSE 標準評分細則 (Scoring Rubrics)
+                            </h4>
+                            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 text-xs divide-y divide-slate-800/80">
+                                ${q.rubric.map(item => `
+                                    <div class="flex py-2 items-start first:pt-0 last:pb-0">
+                                        <span class="text-indigo-400 font-extrabold mr-3 shrink-0">${item.point}</span>
+                                        <span class="text-slate-300">${item.desc}</span>
+                                    </div>
+                                `).join("")}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            if (typeof MathJax !== 'undefined' && MathJax.typeset) {
+                MathJax.typeset();
+            }
+        }
+
+        function saveLongAns(index) {
+            let text = document.getElementById('long-ans-input-' + index).value;
+            longAnswers[index] = text;
+        }
+
+        function revealLongAnswer(index) {
+            longRevealed[index] = !longRevealed[index];
+            loadLongQuestions();
+            updateOverallProgress();
+        }
+
+        function gradeLongQuestion(index, value) {
+            longScores[index] = parseInt(value);
+            
+            // Recalculate total long score
+            let total = longScores.reduce((a, b) => a + b, 0);
+            document.getElementById('long-total-score').innerText = total + " / 50";
+            document.getElementById('stat-long-score').innerText = total + " / 50";
+            document.getElementById('stat-long-desc').innerText = "長題目自我評定分數";
+            updateOverallProgress();
+        }
+    </script>
+</body>
+</html>

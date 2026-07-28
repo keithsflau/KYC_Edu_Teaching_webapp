@@ -4,8 +4,8 @@ description: >
   Acts as a Hong Kong education engineer: builds curriculum-aligned interactive
   web apps for learning and revision. Combines professional engineering, pedagogy,
   and HK primary/secondary curriculum alignment. Use when creating or editing
-  educational apps in Primary_School, Secondary_School, bible_study, typing test,
-  or Music Therapy content.
+  educational apps in HK Cirriculum/, Primary_School, Secondary_School,
+  bible_study, typing test, or Music Therapy content.
 ---
 
 # 教育工程師 | Education Engineer
@@ -45,15 +45,27 @@ Task Progress:
 | Question | Examples |
 |----------|----------|
 | Audience | P1, P5, Form 3, HKDSE F6 |
-| Section | `Primary_School`, `Secondary_School`, `bible_study`, `typing test` |
+| Section | `HK Cirriculum/Primary_School`, `HK Cirriculum/Secondary_School`, `bible_study`, `typing test` |
 | Subject | General Studies, Mathematics, Biology, ICT |
 | Curriculum unit | P3 環境與健康, F4 Redox, HKDSE ICT Ch2 |
 
 Check existing plan docs before coding:
 
-- `Secondary_School/Mathematics/Form */S*_MATH_PLAN.md`
-- `Secondary_School/Chemistry/curriculum_plan.md`
-- Biology app READMEs under `Secondary_School/Biology/apps/*/README.md`
+- `HK Cirriculum/Secondary_School/Mathematics/Form */S*_MATH_PLAN.md`
+- `HK Cirriculum/Secondary_School/Chemistry/curriculum_plan.md`
+- Biology app READMEs under `HK Cirriculum/Secondary_School/Biology/apps/*/README.md`
+
+**Science lab pedagogy (read before Interactive Experiment builds):**
+
+- Chemistry (full): `HK Cirriculum/Secondary_School/Chemistry/TEACHER_LAB_PEDAGOGY.md`
+- Biology brief: `HK Cirriculum/Secondary_School/Biology/TEACHER_LAB_BRIEF.md`
+- Physics brief: `HK Cirriculum/Secondary_School/Physics/TEACHER_LAB_BRIEF.md`
+- Junior Science brief: `HK Cirriculum/Secondary_School/Junior Science/TEACHER_LAB_BRIEF.md`
+- Chinese History brief: `HK Cirriculum/Secondary_School/Chinese_History/TEACHER_LAB_BRIEF.md`
+- History brief: `HK Cirriculum/Secondary_School/History/TEACHER_LAB_BRIEF.md`
+- Geography brief: `HK Cirriculum/Secondary_School/Geography/TEACHER_LAB_BRIEF.md`
+- Christian Studies / RE brief: `HK Cirriculum/Secondary_School/Christian_Studies/TEACHER_LAB_BRIEF.md`
+- Interactive App DoD: `HK Cirriculum/CEO_INTERACTIVE_PIVOT.md` §4
 
 ### Step 2: Learning objectives
 
@@ -105,8 +117,8 @@ Follow patterns in [app-patterns.md](app-patterns.md):
 
 New lessons must appear in the subject hub:
 
-- Primary GS: add slug to `appsData` in `Primary_School/General_Studies/index.html`
-- Year-level hubs: e.g. `Primary_School/Mathematics/P1/index.html`
+- Primary GS: add slug to `appsData` in `HK Cirriculum/Primary_School/General_Studies/index.html`
+- Year-level hubs: e.g. `HK Cirriculum/Primary_School/Mathematics/P1/index.html`
 - Secondary: subject or form index page
 - Bible Study / Typing Test: respective section index
 

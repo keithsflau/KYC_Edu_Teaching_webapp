@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hess Cycle Lab | 蓋斯定律實驗</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="../../../../common/babel-react-classic.js"></script>
+  <link rel="stylesheet" href="../../../../common/subscribe-gate.css" />
+  <script>
+    window.HKC_SUBSCRIBE = {
+      appId: "f5-chem-hess-lab",
+      appNameZh: "蓋斯定律實驗",
+      appNameEn: "Hess Cycle Lab",
+      level: "F5",
+      subject: "Chemistry",
+      freeDrillLimit: 12,
+      wrongBookLimit: 10,
+      contactEmail: "support@hksteamai.com",
+      comingSoonHref: "../../../../pricing/index.html#payment-links"
+    };
+    window.__HKC_FREE_CAP = () => !(window.HkcSubscribe && HkcSubscribe.canContinueDrills());
+  </script>
+  <script src="../../../../common/subscribe-gate.js"></script>
+  <script src="../../../../common/parent-report.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+  <style>
+    :root { --accent: #e11d48; }
+    body {
+      font-family: "IBM Plex Sans", system-ui, sans-serif;
+      background:
+        radial-gradient(ellipse 70% 45% at 8% -5%, #e11d4828, transparent 55%),
+        radial-gradient(ellipse 50% 40% at 100% 0%, #64748b14, transparent 50%),
+        #f1f5f9;
+      color: #0f172a;
+      min-height: 100vh;
+    }
+    input[type="range"] { accent-color: #e11d48; width: 100%; }
+    .mono { font-family: "JetBrains Mono", ui-monospace, monospace; }
+    canvas { touch-action: none; display: block; width: 100%; height: auto; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+  </style>
+    <!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
+  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+      display: none !important;
+    }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+        if (label === "EN" || label === "\u4E2D") {
+          btn.classList.add("ncs-hide-when-ncs-fleet");
+        }
+      });
+      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+        el.classList.add("ncs-hide-when-ncs-fleet");
+      });
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel" data-presets="react-classic">
+    const { useState, useEffect, useRef, useCallback, useMemo } = React;
+    const ACCENT = "#e11d48";
+    const BACK = "../index.html";
+    const LEVEL = "F5";
+    const APP_ID = "f5-chem-hess-lab";
+
+    function LabChrome({ titleEn, titleZh, blurb, children, explore, legacy }) {
+      return (
+        <div className="max-w-6xl mx-auto px-4 py-6">
+          <header className="mb-5">
+            <a href={BACK} className="text-sm hover:underline" style={{ color: ACCENT }}>← {LEVEL} Chemistry</a>
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-white px-2 py-0.5 rounded" style={{ background: ACCENT }}>Interactive Lab</span>
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-white border text-slate-700">HKDSE · Learn = live sim</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold mt-1">{titleEn} · {titleZh}</h1>
+            <p className="text-slate-600 text-sm mt-1 max-w-2xl">{blurb}</p>
+          </header>
+          {children}
+          <p className="text-[10px] text-slate-400 mt-4">Explores: {explore} · Legacy MCQ: <a className="underline" href="_legacy_lger.html">_legacy_lger.html</a>{legacy ? "" : ""}</p>
+        </div>
+      );
+    }
+
+
+    const CYCLES = [
+      {
+        id: "formation",
+        title: "Formation route",
+        target: "C(graphite) + O₂ → CO₂",
+        deltaH: -394,
+        steps: [
+          { id: "s1", label: "C + ½O₂ → CO", dh: -111, on: false },
+          { id: "s2", label: "CO + ½O₂ → CO₂", dh: -283, on: false }
+        ]
+      },
+      {
+        id: "combust",
+        title: "Combustion cycle",
+        target: "2C + H₂ → C₂H₂ (acetylene)",
+        deltaH: 227,
+        steps: [
+          { id: "s1", label: "2C + 2O₂ → 2CO₂", dh: -788, on: false },
+          { id: "s2", label: "H₂ + ½O₂ → H₂O", dh: -286, on: false },
+          { id: "s3", label: "C₂H₂ + 2½O₂ → 2CO₂ + H₂O (rev)", dh: 1301, on: false }
+        ]
+      }
+    ];
+
+    
+    const LEARN_STEPS = [
+      {
+        id: "A1",
+        titleZh: "甚麼是蓋斯定律？",
+        titleEn: "What is Hess's Law?",
+        bodyZh: "蓋斯定律 (Hess's Law) 指出，化學反應嘅焓變 (Enthalpy change, ΔH) 只取決於反應物同產物，同反應途徑無關。",
+        bodyEn: "Enthalpy change is independent of the pathway taken.",
+        render: ({ sub, setSub }) => (
+          <div className="p-4 bg-purple-50 rounded-xl text-center space-y-2">
+            {sub === 0 ? (
+              <button type="button" className="px-4 py-2 bg-purple-200 text-purple-900 rounded-lg font-bold" onClick={() => setSub(1)}>睇下定律</button>
+            ) : (
+              <div className="text-purple-800 font-bold">ΔH(direct) = ΣΔH(indirect steps)</div>
+            )}
+          </div>
+        )
+      },
+      {
+        id: "A2",
+        titleZh: "狀態函數 (State Function)",
+        titleEn: "State Function",
+        bodyZh: "焓 (Enthalpy) 係一個狀態函數。就好似行山咁，無論你行邊條路，只要起點同終點一樣，高度差就一樣。",
+        bodyEn: "Like climbing a mountain: height difference depends only on start and end points.",
+        render: ({ sub, setSub }) => (
+          <div className="p-4 bg-rose-50 rounded-xl text-center space-y-2">
+            {sub === 0 ? (
+              <div className="flex justify-center gap-2">
+                <button type="button" className="px-4 py-2 bg-rose-200 text-rose-900 rounded-lg font-bold" onClick={() => alert("錯！路徑唔重要。")}>取決於路徑</button>
+                <button type="button" className="px-4 py-2 bg-rose-200 text-rose-900 rounded-lg font-bold" onClick={() => setSub(1)}>只取決於起點同終點</button>
+              </div>
+            ) : (
+              <div className="text-rose-800 font-bold">正確！只取決於起點同終點</div>
+            )}
+          </div>
+        )
+      },
+      {
+        id: "A3",
+        titleZh: "能量循環 (Energy Cycle)",
+        titleEn: "Energy Cycle",
+        bodyZh: "我哋可以用能量循環圖嚟計算未知嘅 ΔH。順住箭頭方向行，將所有 ΔH 加埋。",
+        bodyEn: "Follow the arrows and add the ΔH values.",
+        render: ({ sub, setSub }) => (
+          <div className="p-4 bg-amber-50 rounded-xl text-center space-y-2">
+            {sub === 0 ? (
+              <div className="flex justify-center gap-2">
+                <button type="button" className="px-4 py-2 bg-amber-200 text-amber-900 rounded-lg font-bold" onClick={() => setSub(1)}>順箭頭加埋</button>
+              </div>
+            ) : (
+              <div className="text-amber-800 font-bold">正確！ΣΔH(path) = ΔH(target)</div>
+            )}
+          </div>
+        )
+      },
+      {
+        id: "A4",
+        titleZh: "逆向反應",
+        titleEn: "Reverse Reaction",
+        bodyZh: "如果需要逆向行一個反應（箭頭方向相反），ΔH 嘅正負號就要掉轉。",
+        bodyEn: "Reverse the reaction = reverse the sign of ΔH.",
+        render: ({ sub, setSub }) => (
+          <div className="p-4 bg-emerald-50 rounded-xl text-center space-y-2">
+            {sub === 0 ? (
+              <div className="flex justify-center gap-2">
+                <button type="button" className="px-4 py-2 bg-emerald-200 text-emerald-900 rounded-lg font-bold" onClick={() => alert("錯！正負號要掉轉。")}>保持不變</button>
+                <button type="button" className="px-4 py-2 bg-emerald-200 text-emerald-900 rounded-lg font-bold" onClick={() => setSub(1)}>正負號掉轉</button>
+              </div>
+            ) : (
+              <div className="text-emerald-800 font-bold">正確！A → B (ΔH) 變成 B → A (-ΔH)</div>
+            )}
+          </div>
+        )
+      },
+      {
+        id: "A5",
+        titleZh: "改變系數",
+        titleEn: "Changing Coefficients",
+        bodyZh: "如果將方程式乘大兩倍，ΔH 都要乘大兩倍。",
+        bodyEn: "Multiply coefficients = multiply ΔH.",
+        render: ({ sub, setSub }) => (
+          <div className="p-4 bg-blue-50 rounded-xl text-center space-y-2">
+            {sub === 0 ? (
+              <div className="flex justify-center gap-2">
+                <button type="button" className="px-4 py-2 bg-blue-200 text-blue-900 rounded-lg font-bold" onClick={() => setSub(1)}>乘大兩倍</button>
+              </div>
+            ) : (
+              <div className="text-blue-800 font-bold">正確！2A → 2B 嘅 ΔH 係原來嘅兩倍</div>
+            )}
+          </div>
+        )
+      },
+      {
+        id: "A6",
+        titleZh: "互動實驗室：蓋斯定律",
+        titleEn: "Hess Cycle Lab",
+        bodyZh: "試下選擇唔同嘅反應步驟，睇下點樣組合出目標反應。記住：路徑嘅總 ΔH 必須等於目標 ΔH。",
+        bodyEn: "Select reaction steps to match the target ΔH.",
+        render: () => <HessLab />
+      },
+      {
+        id: "A7",
+        titleZh: "迷思修正",
+        titleEn: "Misconception check",
+        bodyZh: "❌ 錯：「反應步驟越多，總釋放嘅能量就越多。」 ✅ 對：無論分幾多步，總能量變化都係一樣嘅。",
+        bodyEn: "❌ Wrong: “More steps = more energy released.” ✅ Right: Total energy change is the same regardless of steps.",
+        render: () => (
+          <div className="rounded-xl border-2 border-rose-200 bg-rose-50 p-5 text-sm text-rose-900 space-y-3 shadow-sm">
+            <p className="font-black text-base">記住：</p>
+            <ol className="list-decimal list-inside space-y-2 font-medium">
+              <li>ΔH 只取決於起點同終點</li>
+              <li>逆向反應 = -ΔH</li>
+              <li>方程式乘大 = ΔH 乘大</li>
+            </ol>
+          </div>
+        )
+      },
+      {
+        id: "A8",
+        titleZh: "終極挑戰",
+        titleEn: "Final Challenge",
+        bodyZh: "已知 C + O₂ → CO₂ (ΔH = -394) 同 CO + ½O₂ → CO₂ (ΔH = -283)。求 C + ½O₂ → CO 嘅 ΔH？",
+        bodyEn: "Find ΔH for C + ½O₂ → CO.",
+        render: ({ sub, setSub }) => (
+          <div className="p-4 bg-indigo-50 rounded-xl text-center space-y-2">
+            {sub === 0 ? (
+              <div className="flex flex-col gap-2 items-center">
+                <button type="button" className="px-4 py-2 bg-indigo-200 text-indigo-900 rounded-lg font-bold" onClick={() => alert("錯！要將第二條式逆向。")}>-677</button>
+                <button type="button" className="px-4 py-2 bg-indigo-200 text-indigo-900 rounded-lg font-bold" onClick={() => setSub(1)}>-111</button>
+              </div>
+            ) : (
+              <div className="text-indigo-800 font-bold">正確！-394 - (-283) = -111 kJ</div>
+            )}
+          </div>
+        )
+      }
+    ];
+
+    let subSetter = () => {};
+
+    function LearnFromZero({ onComplete }) {
+      const [step, setStep] = useState(0);
+      const [sub, setSub] = useState(0);
+
+      subSetter = setSub;
+
+      const s = LEARN_STEPS[step];
+      const renderProps = { sub, setSub };
+
+      return (
+        <section className="bg-white border border-slate-200 shadow-sm rounded-3xl p-6 sm:p-8 space-y-6">
+          <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
+            <span className="text-xs font-bold uppercase tracking-wider bg-violet-50 text-violet-700 px-3 py-1 rounded-md" style={{ color: ACCENT }}>Teach from zero · 第 {step + 1}/{LEARN_STEPS.length} 步</span>
+          <div className="flex gap-1.5 flex-wrap ml-auto">
+              {LEARN_STEPS.map((_, i) => (
+                <span key={i} className={"w-2.5 h-2.5 rounded-full transition-colors duration-300 " + (i <= step ? "bg-violet-600 shadow-sm" : "bg-slate-200")} />
+              ))}
+            </div>
+          </div>
+          <h2 className="text-2xl font-bold text-slate-800">{s.titleZh}</h2>
+          <p className="text-sm text-slate-500 font-bold mb-2">{s.titleEn}</p>
+          <p className="text-base leading-relaxed text-slate-700 font-medium">{s.bodyZh}</p>
+          <p className="text-sm text-slate-500 leading-relaxed max-w-xl">{s.bodyEn}</p>
+          <div>{s.render(renderProps)}</div>
+          <div className="flex flex-wrap gap-2 pt-4">
+            {step > 0 && <button type="button" className="px-5 py-3 rounded-xl border border-slate-300 text-slate-700 min-h-[52px] font-bold hover:bg-slate-50 transition-colors" onClick={() => { setStep(step - 1); setSub(0); }}>← 上一步</button>}
+            {step < LEARN_STEPS.length - 1 ? (
+              <button type="button" className="px-5 py-3 rounded-xl font-bold text-white min-h-[52px] shadow-sm hover:opacity-90 transition-opacity ml-auto" style={{ background: ACCENT }} onClick={() => { setStep(step + 1); setSub(0); }}>下一步 →</button>
+            ) : (
+              <button type="button" className="px-5 py-3 rounded-xl font-bold text-white min-h-[52px] shadow-sm hover:opacity-90 transition-opacity ml-auto" style={{ background: ACCENT }} onClick={onComplete}>完成 Learn · 開始 Guided →</button>
+            )}
+          </div>
+        </section>
+      );
+    }
+
+    const GUIDED = [
+      {
+        id: "g1",
+        q: "蓋斯定律適用於咩情況？",
+        hint: "焓係狀態函數。",
+        opts: ["只適用於放熱反應", "所有化學反應", "只適用於氣體反應", "只適用於燃燒反應"],
+        a: "所有化學反應"
+      },
+      {
+        id: "g2",
+        q: "如果 A → B 嘅 ΔH 係 +50 kJ，咁 B → A 嘅 ΔH 係幾多？",
+        hint: "逆向反應正負號掉轉。",
+        opts: ["+50 kJ", "-50 kJ", "0 kJ", "無法確定"],
+        a: "-50 kJ"
+      },
+      {
+        id: "g3",
+        q: "如果將反應式乘大兩倍，ΔH 會點？",
+        hint: "ΔH 同物質嘅量成正比。",
+        opts: ["不變", "乘大兩倍", "除以二", "變成平方"],
+        a: "乘大兩倍"
+      }
+    ];
+    const EXAM = [
+      {
+        id: "e1",
+        q: "已知 S(s) + O₂(g) → SO₂(g) ΔH = -297 kJ。求 2S(s) + 2O₂(g) → 2SO₂(g) 嘅 ΔH？",
+        hint: "乘大兩倍。",
+        opts: ["-297 kJ", "-594 kJ", "+297 kJ", "+594 kJ"],
+        a: "-594 kJ"
+      },
+      {
+        id: "e2",
+        q: "已知 H₂(g) + ½O₂(g) → H₂O(l) ΔH = -286 kJ。求 H₂O(l) → H₂(g) + ½O₂(g) 嘅 ΔH？",
+        hint: "逆向反應。",
+        opts: ["-286 kJ", "+286 kJ", "0 kJ", "無法確定"],
+        a: "+286 kJ"
+      },
+      {
+        id: "e3",
+        q: "點解我哋需要用蓋斯定律？",
+        hint: "有啲反應好難直接量度。",
+        opts: ["因為佢比較準確", "因為有啲反應無法直接量度 ΔH", "因為佢可以加快反應", "因為佢可以提高產率"],
+        a: "因為有啲反應無法直接量度 ΔH"
+      }
+    ];
+
+    function UpgradeCTA({ reason, onClose, onTrial }) {
+      return (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-2xl p-5 bg-white border border-slate-200">
+            <h3 className="text-lg font-bold" style={{color: ACCENT}}>解鎖完整練習與家長進度</h3>
+            <p className="text-sm mt-2 text-slate-600">{reason || "Upgrade required"}</p>
+            <button type="button" onClick={onTrial} className="mt-4 w-full min-h-[48px] rounded-xl font-semibold text-white" style={{background: ACCENT}}>開始 14 日試用（本機）</button>
+            <button type="button" onClick={onClose} className="mt-2 w-full text-sm underline text-slate-500">繼續免費</button>
+          </div>
+        </div>
+      );
+    }
+
+    function Drill({ bank, label, onNeedUpgrade, onDone }) {
+      const [qi, setQi] = useState(0);
+      const [fb, setFb] = useState(null);
+      const [score, setScore] = useState(0);
+      const [hint, setHint] = useState(false);
+      const [first, setFirst] = useState(true);
+      const item = bank[qi];
+
+      function pick(opt) {
+        if (window.__HKC_FREE_CAP && window.__HKC_FREE_CAP()) {
+          onNeedUpgrade("今日免費練習已用完。");
+          return;
+        }
+        const ok = opt === item.a;
+        setFb(ok ? { ok: true, msg: "Correct · 正確" } : { ok: false, msg: "Not quite · 再想。Use Hint for the method." });
+        if (ok) {
+          if (first) setScore(s => s + 1);
+        } else {
+          setFirst(false);
+        }
+      }
+
+      function next() {
+        setFb(null); setHint(false); setFirst(true);
+        if (qi + 1 >= bank.length) {
+          onDone(score, bank.length);
+        } else setQi(qi + 1);
+      }
+
+      return (
+        <section className="bg-white border border-slate-200 shadow-sm rounded-2xl p-4 sm:p-5">
+          <div className="flex justify-between text-sm mb-3 text-slate-500">
+            <span>{label} · Q {qi + 1}/{bank.length}</span>
+            <span>Score {score}</span>
+          </div>
+          <h2 className="text-lg font-bold mb-1">{item?.q || "Question"}</h2>
+          <div className="grid gap-2">
+            {(item?.opts || ["A","B","C","D"]).map(o => (
+              <button key={o} type="button" disabled={fb && fb.ok} onClick={() => pick(o)}
+                className="text-left px-4 py-3 rounded-xl min-h-[48px] disabled:opacity-50 bg-slate-50 hover:bg-slate-100 border border-slate-200">{o}</button>
+            ))}
+          </div>
+          <button type="button" className="text-sm mt-3 font-semibold min-h-[44px]" style={{color: ACCENT}} onClick={() => setHint(true)}>Hint · 提示</button>
+          {hint && <p className="text-sm mt-1 p-3 rounded-xl bg-amber-50 text-amber-900 border border-amber-200">{item?.hint || "Think about it."}</p>}
+          {fb && (
+            <div className={"mt-4 p-3 rounded-xl text-sm " + (fb.ok ? "bg-emerald-50 text-emerald-800" : "bg-rose-50 text-rose-800")}>
+              {fb.msg}
+              {fb.ok && <button type="button" className="block mt-2 underline font-semibold" onClick={next}>Next →</button>}
+              {!fb.ok && <button type="button" className="block mt-2 underline font-semibold" onClick={() => setFb(null)}>Retry</button>}
+            </div>
+          )}
+        </section>
+      );
+    }
+
+    function HessLab() {
+      const canvasRef = useRef(null);
+      const [ci, setCi] = useState(0);
+      const [steps, setSteps] = useState(CYCLES[0].steps.map((s) => ({ ...s })));
+      const [explore, setExplore] = useState(0);
+      const [msg, setMsg] = useState("");
+      const cycle = CYCLES[ci];
+      const sum = steps.filter((s) => s.on).reduce((a, s) => a + s.dh, 0);
+      const complete = steps.every((s) => s.on) && Math.abs(sum - cycle.deltaH) < 2;
+
+      useEffect(() => {
+        setSteps(CYCLES[ci].steps.map((s) => ({ ...s })));
+      }, [ci]);
+
+      useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        const W = canvas.width, H = canvas.height;
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = "#f8fafc";
+        ctx.fillRect(0, 0, W, H);
+        // energy axis
+        ctx.strokeStyle = "#94a3b8";
+        ctx.beginPath();
+        ctx.moveTo(60, 40);
+        ctx.lineTo(60, H - 40);
+        ctx.lineTo(W - 40, H - 40);
+        ctx.stroke();
+        ctx.fillStyle = "#64748b";
+        ctx.font = "11px IBM Plex Sans";
+        ctx.fillText("Enthalpy", 8, 50);
+        const active = steps.filter((s) => s.on);
+        let y = H - 80;
+        let x = 100;
+        ctx.fillStyle = "#0f172a";
+        ctx.font = "bold 13px IBM Plex Sans";
+        ctx.fillText("Reactants", x, y + 4);
+        active.forEach((s, i) => {
+          const nextY = y + (s.dh > 0 ? -Math.min(120, Math.abs(s.dh) / 8) : Math.min(120, Math.abs(s.dh) / 8));
+          const nextX = x + 140;
+          ctx.strokeStyle = s.dh < 0 ? "#16a34a" : "#dc2626";
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(x + 40, y);
+          ctx.lineTo(nextX, nextY);
+          ctx.stroke();
+          ctx.fillStyle = "#0f172a";
+          ctx.font = "11px JetBrains Mono";
+          ctx.fillText((s.dh > 0 ? "+" : "") + s.dh + " kJ", (x + nextX) / 2, (y + nextY) / 2 - 6);
+          x = nextX;
+          y = nextY;
+        });
+        if (complete) {
+          ctx.fillStyle = ACCENT;
+          ctx.font = "bold 16px IBM Plex Sans";
+          ctx.fillText("ΣΔH = " + sum + " kJ ≈ target " + cycle.deltaH, 100, 36);
+        } else {
+          ctx.fillStyle = "#64748b";
+          ctx.font = "13px IBM Plex Sans";
+          ctx.fillText("Toggle steps · Hess: ΣΔH_path = ΔH_target", 100, 36);
+        }
+        ctx.fillStyle = "#0f172a";
+        ctx.fillText("Σ selected = " + sum + " kJ", W - 200, H - 20);
+      }, [steps, complete, sum, cycle]);
+
+      const toggle = (id) => {
+        setSteps((arr) => arr.map((s) => (s.id === id ? { ...s, on: !s.on } : s)));
+        setExplore((e) => e + 1);
+      };
+
+      return (
+          <div className="grid lg:grid-cols-5 gap-4">
+            <div className="lg:col-span-3 bg-white rounded-2xl border overflow-hidden">
+              <canvas ref={canvasRef} width={640} height={360} />
+            </div>
+            <div className="lg:col-span-2 space-y-3">
+              <section className="bg-white rounded-2xl border p-4">
+                <h2 className="font-bold text-sm mb-2" style={{ color: ACCENT }}>Cycle</h2>
+                <div className="flex gap-2 flex-wrap mb-3">
+                  {CYCLES.map((c, i) => (
+                    <button key={c.id} type="button" className={"px-3 py-2 rounded-lg text-sm font-semibold min-h-[44px] " + (ci === i ? "text-white" : "bg-slate-100")}
+                      style={ci === i ? { background: ACCENT } : {}} onClick={() => { setCi(i); setExplore((e) => e + 1); }}>{c.title}</button>
+                  ))}
+                </div>
+                <p className="text-xs text-slate-600 mb-2">Target: {cycle.target} · ΔH = {cycle.deltaH} kJ</p>
+                {steps.map((s) => (
+                  <label key={s.id} className="flex items-center gap-2 text-sm mb-2 cursor-pointer min-h-[40px]">
+                    <input type="checkbox" checked={s.on} onChange={() => toggle(s.id)} />
+                    <span>{s.label} <span className="mono text-xs">({s.dh > 0 ? "+" : ""}{s.dh})</span></span>
+                  </label>
+                ))}
+              </section>
+              <section className={"rounded-2xl p-4 text-sm font-semibold " + (complete ? "bg-emerald-100 text-emerald-900" : "bg-rose-50 text-rose-900")}>
+                {complete ? "✓ Hess satisfied — path independent." : "Enable all valid steps so ΣΔH matches target."}
+                {msg && <p className="font-normal text-xs mt-1">{msg}</p>}
+                <button type="button" className="mt-2 px-3 py-2 bg-white border rounded-lg text-xs min-h-[40px]"
+                  onClick={() => setMsg(complete ? "Exam tip: reverse = −ΔH; multiply coefficients." : "Check signs when reversing combustion.")}>Hint</button>
+              </section>
+            </div>
+          </div>
+      );
+    }
+
+    function App() {
+      const [mode, setMode] = useState("learn");
+      const [pay, setPay] = useState(false);
+      const [payReason, setPayReason] = useState("");
+      const [doneMsg, setDoneMsg] = useState(null);
+
+      const tabs = [
+        { id: "learn", label: "Learn · 學習" },
+        { id: "guided", label: "Guided · 引導" },
+        { id: "exam", label: "Exam · 測驗" }
+      ];
+
+      return (
+        <div className="max-w-5xl mx-auto p-4 sm:p-8">
+          <a href="../index.html" className="text-sm hover:underline font-semibold" style={{color: ACCENT}}>← F5 Chemistry Hub</a>
+          <header className="mt-4 mb-4">
+            <p className="text-xs uppercase tracking-widest font-bold" style={{color: ACCENT}}>F5 Chemistry · Hess Cycle</p>
+            <h1 className="text-2xl sm:text-3xl font-bold mt-1">Hess Cycle Lab</h1>
+            <p className="text-slate-500 mt-1">蓋斯定律實驗 · Learn → Guided → Exam</p>
+          </header>
+
+          <nav className="flex flex-wrap gap-2 mb-4">
+            {tabs.map(tab => (
+              <button key={tab.id} type="button" onClick={() => { setMode(tab.id); setDoneMsg(null); }}
+                className={"px-3.5 py-2 rounded-lg text-sm font-semibold min-h-[44px] " + (mode === tab.id ? "text-white" : "bg-white border border-slate-200 text-slate-700")}
+                style={mode === tab.id ? {background: ACCENT} : {}}>
+                {tab.label}
+              </button>
+            ))}
+          </nav>
+
+          {mode === "learn" && <LearnFromZero onComplete={() => setMode("guided")} />}
+
+          {mode === "guided" && !doneMsg && (
+            <Drill bank={GUIDED} label="Guided" onNeedUpgrade={r => { setPayReason(r); setPay(true); }}
+              onDone={(s, n) => { setDoneMsg({ s, n, next: "exam" }); }} />
+          )}
+          {mode === "exam" && !doneMsg && (
+            <Drill bank={EXAM} label="Exam" onNeedUpgrade={r => { setPayReason(r); setPay(true); }}
+              onDone={(s, n) => { setDoneMsg({ s, n, next: "learn" }); }} />
+          )}
+          {doneMsg && (mode === "guided" || mode === "exam") && (
+            <section className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 text-center">
+              <h2 className="text-2xl font-bold">Complete</h2>
+              <p className="mt-2">{doneMsg.s} / {doneMsg.n}</p>
+              <button type="button" className="mt-4 px-4 py-2 rounded-xl font-semibold min-h-[48px] text-white" style={{background: ACCENT}}
+                onClick={() => { setDoneMsg(null); setMode(doneMsg.next); }}>Continue →</button>
+            </section>
+          )}
+          {pay && <UpgradeCTA reason={payReason} onClose={() => setPay(false)} onTrial={() => { setPay(false); }} />}
+        </div>
+      );
+    }
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+
+  </script>
+<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+</body>
+</html>

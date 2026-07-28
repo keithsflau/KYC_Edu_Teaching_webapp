@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>F6 · Glucose Homeostasis | 血糖體內平衡</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="../../../../common/babel-react-classic.js"></script>
+  <link rel="stylesheet" href="../../../../common/subscribe-gate.css" />
+  <script>
+    window.HKC_SUBSCRIBE = {
+      appId: "f6-bio-glucose",
+      appNameZh: "血糖體內平衡",
+      appNameEn: "Glucose Homeostasis",
+      level: "F6",
+      subject: "Biology",
+      freeDrillLimit: 8,
+      wrongBookLimit: 10,
+      contactEmail: "support@hksteamai.com",
+      comingSoonHref: "../../../../pricing/index.html#payment-links"
+    };
+  </script>
+  <script src="../../../../common/subscribe-gate.js"></script>
+  <script src="../../../../common/parent-report.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    body { font-family: "IBM Plex Sans", system-ui, sans-serif; background: radial-gradient(ellipse 80% 50% at 10% -10%, #db277722, transparent 55%), #f8fafc; color: #0f172a; min-height: 100vh; }
+    input[type="range"] { accent-color: #db2777; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+    canvas.sim { width: 100%; border-radius: 12px; display: block; }
+  </style>
+  <!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
+  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+      display: none !important;
+    }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+        if (label === "EN" || label === "\u4E2D") {
+          btn.classList.add("ncs-hide-when-ncs-fleet");
+        }
+      });
+      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+        el.classList.add("ncs-hide-when-ncs-fleet");
+      });
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+</head>
+<body class="text-slate-800">
+  <div id="root"></div>
+  <script>
+    window.SUBSCRIBE_CONFIG = {
+      enabled: true,
+      bannerText: "解鎖完整練習與家長進度 · 全年少於一次補習堂費",
+      premiumFeatures: ["progress_sync", "parent_dashboard", "unlimited_mocks"]
+    };
+  </script>
+  <script type="text/babel" data-presets="react-classic">
+    const { useState, useEffect, useRef } = React;
+    const APP_ID = "f6_bio_glucose";
+    const ACCENT = "#db2777";
+
+    const HKC = (function () {
+      function progressView() {
+        const p = (window.HkcSubscribe && HkcSubscribe.getProgress()) || { drillsCorrect: 0, modulesCompleted: [], wrongBook: [], drillsAttempted: 0 };
+        return {
+          bestScore: p.drillsCorrect || 0,
+          sessions: (p.modulesCompleted || []).length,
+          totalCorrect: p.drillsCorrect || 0,
+          totalAttempted: p.drillsAttempted || 0,
+          wrongBook: (p.wrongBook || []).map((w, i) => ({ id: String(i) + "-" + (w.at || ""), prompt: w.label || "", hint: w.topic || "", answer: null, at: w.at })),
+          modeCleared: {}
+        };
+      }
+      return {
+        FREE_DAILY_CAP: 8,
+        MARKETING_PATH: "../../../../pricing/index.html#payment-links",
+        isPaid: () => !!(window.HkcSubscribe && HkcSubscribe.features().canDrillUnlimited && !HkcSubscribe.isClassroom()),
+        getEntitlement: () => (window.HkcSubscribe ? HkcSubscribe.getEntitlement() : { tier: "free" }),
+        remainingFree: () => { if (!window.HkcSubscribe) return 8; const r = HkcSubscribe.remainingFree(); return r === Infinity ? Infinity : r; },
+        freeCapReached: () => !(window.HkcSubscribe && HkcSubscribe.canContinueDrills()),
+        recordDrillUse: () => {},
+        loadProgress: progressView,
+        saveProgress: () => progressView(),
+        addWrong: (appId, item) => { if (window.HkcSubscribe) HkcSubscribe.recordDrill({ correct: false, label: (item.prompt || item.q || String(item.id) || "").toString().slice(0, 48), topic: (item.hint || "").toString().slice(0, 80), module: "practice" }); },
+        recordOk: (appId, item) => { if (window.HkcSubscribe) HkcSubscribe.recordDrill({ correct: true, label: (item && (item.prompt || item.q || item.id) || "drill").toString().slice(0, 48), topic: "", module: "practice" }); },
+        removeWrong: () => {},
+        recordSession: (appId, score, total) => { if (window.HkcSubscribe) HkcSubscribe.recordModule({ id: "session-" + Date.now(), label: "Session", score, total }); },
+        startTrialLocal: () => { if (window.HkcSubscribe) HkcSubscribe.setLocalEntitlement("trial", 14); }
+      };
+    })();
+
+    const TFZ_STEPS = [
+      { id: "A1", title: "Blood Glucose & Set Point", titleZh: "血糖與設定點",
+        body: "Cells need a constant supply of glucose for respiration. The normal blood glucose set point is around 90 mg/dL. If it falls too low, cells cannot respire. If it rises too high, it lowers the water potential of blood, drawing water out of cells by osmosis.",
+        bodyZh: "細胞需要源源不絕的葡萄糖進行呼吸作用。正常血糖設定點約為 90 mg/dL。若太低，細胞無法呼吸；若太高，會降低血液水勢，令細胞因滲透作用而失水。",
+        q: "Why is very high blood glucose dangerous?", qZh: "為何過高血糖會帶來危險？",
+        opts: ["It causes cells to lose water by osmosis 它導致細胞因滲透作用失水", "It freezes the blood 它令血液結冰", "It stops oxygen transport 它停止氧氣運輸"], a: "It causes cells to lose water by osmosis 它導致細胞因滲透作用失水",
+        why: "High glucose lowers the water potential of the blood plasma, causing cells to shrivel." },
+      { id: "A2", title: "The Sensor: Pancreas", titleZh: "感應器：胰臟",
+        body: "The pancreas contains clusters of cells called Islets of Langerhans. They constantly monitor the blood glucose level. α (alpha) cells detect low glucose, while β (beta) cells detect high glucose.",
+        bodyZh: "胰臟內有稱為胰島的細胞群。它們持續監測血糖水平。α（阿爾法）細胞感應低血糖，而 β（貝塔）細胞感應高血糖。",
+        q: "Which organ acts as the sensor for blood glucose?", qZh: "哪個器官是血糖的感應器？",
+        opts: ["Pancreas 胰臟", "Liver 肝臟", "Stomach 胃"], a: "Pancreas 胰臟",
+        why: "The Islets of Langerhans in the pancreas directly measure glucose in the blood flowing through it." },
+      { id: "A3", title: "High Glucose → Insulin", titleZh: "高血糖 → 胰島素",
+        body: "After a meal, blood glucose rises. The β cells of the pancreas secrete the hormone INSULIN into the blood. Insulin tells target organs (mostly the liver and muscles) to take up more glucose.",
+        bodyZh: "進食後血糖上升。胰臟的 β 細胞會分泌「胰島素」進入血液。胰島素指示靶器官（主要是肝臟和肌肉）吸收更多葡萄糖。",
+        q: "Insulin is secreted when blood glucose is...", qZh: "何時會分泌胰島素？",
+        opts: ["High (above set point) 高（高於設定點）", "Low (below set point) 低（低於設定點）", "Zero 零"], a: "High (above set point) 高（高於設定點）",
+        why: "Insulin's job is to bring high glucose BACK DOWN to normal." },
+      { id: "A4", title: "Target: The Liver", titleZh: "靶器官：肝臟",
+        body: "The liver is the main warehouse. Under insulin's signal, liver cells convert soluble glucose into insoluble GLYCOGEN for storage. When glucose leaves the blood and enters the liver, blood glucose levels drop back to normal.",
+        bodyZh: "肝臟是主要的倉庫。在胰島素信號下，肝細胞將可溶的葡萄糖轉化為不可溶的「糖原」儲存。當葡萄糖離開血液進入肝臟，血糖水平便降回正常。",
+        q: "How is glucose stored in the liver?", qZh: "葡萄糖以甚麼形式儲存在肝臟？",
+        opts: ["As insoluble glycogen 作為不可溶的糖原", "As starch 作為澱粉", "As fat 作為脂肪"], a: "As insoluble glycogen 作為不可溶的糖原",
+        why: "Animals store carbohydrates as glycogen (plants use starch)." },
+      { id: "A5", title: "Low Glucose → Glucagon", titleZh: "低血糖 → 胰高血糖素",
+        body: "During exercise or fasting, blood glucose drops. The α cells of the pancreas secrete GLUCAGON. This hormone tells the liver to break down stored glycogen back into glucose and release it into the blood.",
+        bodyZh: "運動或禁食期間，血糖下降。胰臟的 α 細胞會分泌「胰高血糖素」。這荷爾蒙指示肝臟把儲存的糖原分解回葡萄糖，並釋放回血液。",
+        q: "The effect of glucagon is to...", qZh: "胰高血糖素的作用是...",
+        opts: ["Raise blood glucose 提升血糖", "Lower blood glucose 降低血糖", "Make glycogen 製造糖原"], a: "Raise blood glucose 提升血糖",
+        why: "Glucagon converts stored glycogen to glucose, adding it to the blood." },
+      { id: "A6", title: "Negative Feedback", titleZh: "負反饋",
+        body: "When insulin lowers blood glucose back to 90 mg/dL, the pancreas stops secreting insulin. When glucagon raises it back to 90 mg/dL, glucagon secretion stops. This self-correcting loop is called NEGATIVE FEEDBACK.",
+        bodyZh: "當胰島素把血糖降回 90 mg/dL，胰臟便停止分泌胰島素。當胰高血糖素把血糖升回 90 mg/dL，胰高血糖素分泌亦停止。這種自我修正的循環稱為「負反饋」。",
+        q: "What is the purpose of negative feedback?", qZh: "負反饋的目的是甚麼？",
+        opts: ["To maintain stability around a set point 維持設定點附近的穩定", "To push levels to extremes 推向極端", "To stop all reactions 停止所有反應"], a: "To maintain stability around a set point 維持設定點附近的穩定",
+        why: "It dampens the original change, keeping conditions stable (homeostasis)." },
+      { id: "A7", title: "Diabetes Mellitus", titleZh: "糖尿病",
+        body: "If this system fails, diabetes occurs. Type 1 is caused by autoimmune destruction of β cells (no insulin produced). Type 2 is when target cells lose sensitivity to insulin. Both result in dangerously high blood glucose.",
+        bodyZh: "若系統失效便會引發糖尿病。一型是由於免疫系統破壞 β 細胞（無法製造胰島素）。二型則是靶細胞對胰島素失去敏感度。兩者均會導致血糖過高。",
+        q: "In Type 1 Diabetes, the patient cannot produce...", qZh: "一型糖尿病患者無法製造...",
+        opts: ["Insulin 胰島素", "Glucagon 胰高血糖素", "Glycogen 糖原"], a: "Insulin 胰島素",
+        why: "Type 1 patients lack β cells, so they must inject insulin after meals." }
+    ];
+
+    function LearnFromZero({ steps, onComplete }) {
+      const [i, setI] = useState(0);
+      const [picked, setPicked] = useState(null);
+      const step = steps[i];
+      const last = i === steps.length - 1;
+      function pick(opt) { if (picked) return; setPicked(opt); }
+      function next() {
+        if (last) { onComplete(); return; }
+        setI(i + 1); setPicked(null);
+      }
+      return (
+        <section className="bg-white border border-slate-200 shadow-sm rounded-2xl p-4 sm:p-6">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-black uppercase tracking-widest" style={{color: ACCENT}}>Learn From Zero · 由零開始學</p>
+            <p className="text-xs text-slate-500">{step.id} / A{steps.length}</p>
+          </div>
+          <div className="flex gap-1.5 mb-4">
+            {steps.map((s, k) => (
+              <div key={s.id} className="h-1.5 flex-1 rounded-full" style={{background: k <= i ? ACCENT : "#e2e8f0"}} />
+            ))}
+          </div>
+          <h2 className="text-xl font-bold">{step.title}</h2>
+          <p className="text-sm font-semibold text-slate-500 mt-0.5">{step.titleZh}</p>
+          <p className="text-sm mt-3 text-slate-700 leading-relaxed">{step.body}</p>
+          <p className="text-sm mt-2 text-slate-500 leading-relaxed">{step.bodyZh}</p>
+          <div className="mt-4 p-3 rounded-xl bg-pink-50 border border-pink-200">
+            <p className="text-sm font-bold">{step.q}</p>
+            <p className="text-xs text-slate-500 mb-2">{step.qZh}</p>
+            <div className="grid gap-2">
+              {step.opts.map(o => {
+                let cls = "text-left px-3 py-2.5 rounded-xl text-sm border min-h-[44px] ";
+                if (!picked) cls += "bg-white border-slate-200 hover:bg-slate-50";
+                else if (o === step.a) cls += "bg-emerald-50 border-emerald-300 text-emerald-800 font-semibold";
+                else if (o === picked) cls += "bg-rose-50 border-rose-300 text-rose-800";
+                else cls += "bg-white border-slate-200 opacity-60";
+                return <button key={o} type="button" className={cls} onClick={() => pick(o)}>{o}</button>;
+              })}
+            </div>
+            {picked && (
+              <div className="mt-3 text-sm p-3 rounded-lg bg-white/70 border border-slate-200">
+                <p className="font-semibold">{picked === step.a ? "✓ Correct · 正確" : "✗ Not quite — see why · 再想想"}</p>
+                <p className="mt-1 text-slate-600">{step.why}</p>
+                {picked === step.a && (
+                  <button type="button" onClick={next} className="mt-3 px-4 py-2.5 rounded-xl font-semibold text-white min-h-[44px]" style={{background: ACCENT}}>
+                    {last ? "Unlock the Lab → 解鎖實驗室" : "Next step →"}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </section>
+      );
+    }
+
+    function GlucoseSim() {
+      const [running, setRunning] = useState(true);
+      const cv = useRef(null), gv = useRef(null);
+      const S = useRef({ bg: 90, ins: 0, glu: 0, glycogen: 100, t: 0, hist: [], particles: [] });
+      const [stats, setStats] = useState({ bg: 90, ins: 0, glu: 0, glycogen: 100 });
+
+      useEffect(() => {
+        let raf, last = performance.now();
+        function frame(now) {
+          const dt = Math.min(0.05, (now - last) / 1000); last = now;
+          if (running) step(dt);
+          draw(cv.current, gv.current);
+          raf = requestAnimationFrame(frame);
+        }
+        raf = requestAnimationFrame(frame);
+        return () => cancelAnimationFrame(raf);
+      }, [running]);
+
+      useEffect(() => {
+        const iv = setInterval(() => {
+          setStats({
+            bg: S.current.bg,
+            ins: S.current.ins,
+            glu: S.current.glu,
+            glycogen: S.current.glycogen
+          });
+        }, 150);
+        return () => clearInterval(iv);
+      }, []);
+
+      function step(dt) {
+        const st = S.current;
+        st.t += dt;
+        
+        // natural drain
+        st.bg -= 1 * dt; 
+
+        // pancreas logic
+        let ins_sec = 0;
+        let glu_sec = 0;
+        if (st.bg > 100) {
+          ins_sec = (st.bg - 100) * 0.15;
+          st.ins += ins_sec * dt;
+        } else if (st.bg < 80) {
+          glu_sec = (80 - st.bg) * 0.15;
+          st.glu += glu_sec * dt;
+        }
+
+        // hormone decay
+        st.ins -= st.ins * 0.15 * dt;
+        st.glu -= st.glu * 0.15 * dt;
+
+        // liver logic
+        if (st.ins > 0) {
+          let uptake = st.ins * 2.0 * dt;
+          if (st.bg - uptake < 0) uptake = st.bg;
+          st.bg -= uptake;
+          st.glycogen += uptake;
+        }
+        if (st.glu > 0 && st.glycogen > 0) {
+          let release = Math.min(st.glu * 2.0 * dt, st.glycogen);
+          st.bg += release;
+          st.glycogen -= release;
+        }
+
+        if (st.bg < 0) st.bg = 0;
+        if (st.glycogen > 300) st.glycogen = 300; 
+
+        // history
+        if (!st.hist.length || st.t - st.hist[st.hist.length - 1].t > 0.5) {
+          st.hist.push({ t: st.t, bg: st.bg, ins: st.ins, glu: st.glu });
+          if (st.hist.length > 120) st.hist.shift();
+        }
+
+        // particles
+        for (let i = st.particles.length - 1; i >= 0; i--) {
+          let p = st.particles[i];
+          p.x += p.vx * dt;
+          p.y += p.vy * dt;
+          p.life -= dt;
+          if (p.life <= 0) st.particles.splice(i, 1);
+        }
+
+        if (ins_sec > 1 && Math.random() < ins_sec * dt * 2) {
+          st.particles.push({ type: 'ins', x: 100, y: 150, vx: 50 + Math.random()*50, vy: 50 + Math.random()*50, life: 3 });
+        }
+        if (glu_sec > 1 && Math.random() < glu_sec * dt * 2) {
+          st.particles.push({ type: 'glu', x: 100, y: 150, vx: 50 + Math.random()*50, vy: 50 + Math.random()*50, life: 3 });
+        }
+      }
+
+      function draw(c, g) {
+        if (c) {
+          const ctx = c.getContext("2d");
+          ctx.clearRect(0, 0, c.width, c.height);
+          ctx.fillStyle = "#f8fafc"; ctx.fillRect(0, 0, c.width, c.height);
+          
+          // Blood vessel
+          ctx.fillStyle = "#fee2e2"; 
+          ctx.fillRect(20, 260, 320, 60);
+          ctx.strokeStyle = "#ef4444"; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.moveTo(20, 260); ctx.lineTo(340, 260); ctx.moveTo(20, 320); ctx.lineTo(340, 320); ctx.stroke();
+          ctx.fillStyle = "#b91c1c"; ctx.font = "bold 12px IBM Plex Sans";
+          ctx.fillText("Bloodstream 血管", 30, 310);
+
+          // Pancreas
+          ctx.fillStyle = "#fef08a"; 
+          ctx.beginPath(); ctx.ellipse(100, 120, 60, 30, 0, 0, 7); ctx.fill();
+          ctx.strokeStyle = "#ca8a04"; ctx.stroke();
+          ctx.fillStyle = "#854d0e";
+          ctx.fillText("Pancreas 胰臟", 60, 124);
+
+          // Liver
+          ctx.fillStyle = "#fca5a5"; 
+          ctx.beginPath(); ctx.ellipse(260, 120, 70, 40, 0, 0, 7); ctx.fill();
+          ctx.strokeStyle = "#b91c1c"; ctx.stroke();
+          ctx.fillStyle = "#7f1d1d";
+          ctx.fillText("Liver 肝臟", 230, 124);
+          
+          // Glycogen
+          ctx.fillStyle = "rgba(127, 29, 29, 0.5)";
+          let glyRadius = Math.sqrt(S.current.glycogen) * 2.5;
+          if (glyRadius > 50) glyRadius = 50;
+          ctx.beginPath(); ctx.arc(260, 120, glyRadius, 0, 7); ctx.fill();
+          ctx.fillStyle = "#fff";
+          ctx.fillText("Glycogen", 235, 140);
+
+          // Glucose particles
+          ctx.fillStyle = "#db2777";
+          let bgCount = Math.floor(S.current.bg / 5);
+          for (let i = 0; i < bgCount; i++) {
+             let seed = i * 137.5;
+             let x = 30 + (seed % 280);
+             let y = 270 + ((seed * 7) % 40);
+             ctx.beginPath(); ctx.arc(x, y, 3, 0, 7); ctx.fill();
+          }
+
+          // Hormones
+          for (let p of S.current.particles) {
+            ctx.fillStyle = p.type === 'ins' ? "#3b82f6" : "#f97316";
+            ctx.fillRect(p.x, p.y, 6, 6);
+          }
+        }
+        
+        if (g) {
+          const ctx = g.getContext("2d");
+          ctx.clearRect(0, 0, g.width, g.height);
+          ctx.fillStyle = "#0f172a"; ctx.fillRect(0, 0, g.width, g.height);
+          
+          ctx.strokeStyle = "#334155"; ctx.lineWidth = 1;
+          ctx.strokeRect(40, 20, 280, 240);
+          
+          // Normal band (80-100) -> 140 to 164
+          ctx.fillStyle = "rgba(16, 185, 129, 0.2)"; 
+          ctx.fillRect(40, 140, 280, 24);
+          
+          ctx.fillStyle = "#94a3b8"; ctx.font = "11px IBM Plex Sans";
+          ctx.fillText("Blood Glucose 血糖 (mg/dL)", 46, 34);
+          ctx.fillText("200", 15, 25);
+          ctx.fillText("100", 15, 144);
+          ctx.fillText("80", 22, 168);
+          ctx.fillText("0", 25, 260);
+
+          const h = S.current.hist;
+          if (h.length > 1) {
+            let minT = h[0].t;
+            let maxT = Math.max(minT + 60, h[h.length-1].t);
+            
+            // bg
+            ctx.strokeStyle = "#db2777"; ctx.lineWidth = 2;
+            ctx.beginPath();
+            for (let pt of h) {
+              let px = 40 + ((pt.t - minT) / (maxT - minT)) * 280;
+              let py = 260 - (pt.bg / 200) * 240;
+              if (py < 20) py = 20;
+              if (py > 260) py = 260;
+              ctx.lineTo(px, py);
+            }
+            ctx.stroke();
+
+            // ins
+            ctx.strokeStyle = "#3b82f6"; ctx.lineWidth = 1;
+            ctx.beginPath();
+            for (let pt of h) {
+              let px = 40 + ((pt.t - minT) / (maxT - minT)) * 280;
+              let py = 330 - (pt.ins / 50) * 50; 
+              ctx.lineTo(px, py);
+            }
+            ctx.stroke();
+
+            // glu
+            ctx.strokeStyle = "#f97316"; ctx.lineWidth = 1;
+            ctx.beginPath();
+            for (let pt of h) {
+              let px = 40 + ((pt.t - minT) / (maxT - minT)) * 280;
+              let py = 330 - (pt.glu / 50) * 50; 
+              ctx.lineTo(px, py);
+            }
+            ctx.stroke();
+          }
+
+          ctx.fillStyle = "#3b82f6";
+          ctx.fillText("■ Insulin", 46, 290);
+          ctx.fillStyle = "#f97316";
+          ctx.fillText("■ Glucagon", 110, 290);
+        }
+      }
+
+      return (
+        <div className="space-y-3">
+          <div className="flex flex-wrap gap-2 items-center">
+            <button type="button" onClick={() => setRunning(r => !r)} className="px-3 py-2 rounded-xl text-sm font-semibold bg-slate-800 text-white min-h-[44px]">{running ? "⏸ Pause" : "▶ Play"}</button>
+            <button type="button" onClick={() => { S.current.bg += 80; }} className="px-3 py-2 rounded-xl text-sm font-semibold bg-emerald-600 text-white min-h-[44px]">🍔 Eat Meal (+Glucose)</button>
+            <button type="button" onClick={() => { S.current.bg -= 40; if (S.current.bg < 0) S.current.bg = 0; }} className="px-3 py-2 rounded-xl text-sm font-semibold bg-rose-600 text-white min-h-[44px]">🏃 Exercise (-Glucose)</button>
+            <button type="button" onClick={() => { S.current.bg = 90; S.current.ins = 0; S.current.glu = 0; S.current.glycogen = 100; S.current.hist = []; S.current.t = 0; S.current.particles = []; }} className="px-3 py-2 rounded-xl text-sm font-semibold bg-white border border-slate-200 min-h-[44px]">↺ Reset</button>
+          </div>
+          <div className="grid lg:grid-cols-2 gap-3">
+            <canvas ref={cv} className="sim" width="360" height="360" />
+            <canvas ref={gv} className="sim" width="348" height="360" />
+          </div>
+          <div className="flex flex-wrap gap-2 text-sm">
+            <span className="px-3 py-1.5 rounded-full font-bold" style={{backgroundColor: stats.bg > 100 ? "#fecdd3" : stats.bg < 80 ? "#fef08a" : "#d1fae5", color: "#0f172a"}}>
+              Blood Glucose: {stats.bg.toFixed(1)} mg/dL
+            </span>
+            <span className="px-3 py-1.5 rounded-full bg-blue-100 text-blue-800 font-semibold">Insulin: {stats.ins.toFixed(1)}</span>
+            <span className="px-3 py-1.5 rounded-full bg-orange-100 text-orange-800 font-semibold">Glucagon: {stats.glu.toFixed(1)}</span>
+            <span className="px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 font-semibold">Liver Glycogen: {stats.glycogen.toFixed(1)}</span>
+          </div>
+        </div>
+      );
+    }
+
+    const GUIDED = [
+      { id: "g1", level: 1, q: "Which organ acts as the sensor for blood glucose changes?", qZh: "哪個器官負責感應血糖變化？",
+        opts: ["Pancreas 胰臟", "Liver 肝臟", "Brain 腦部", "Kidney 腎臟"], a: "Pancreas 胰臟",
+        hint: "The Islets of Langerhans are located here. 胰島位於此處。" },
+      { id: "g2", level: 1, q: "Insulin is secreted by which specific cells?", qZh: "胰島素是由甚麼細胞分泌的？",
+        opts: ["Beta cells of pancreas 胰臟 β 細胞", "Alpha cells of pancreas 胰臟 α 細胞", "Liver cells 肝細胞", "Muscle cells 肌肉細胞"], a: "Beta cells of pancreas 胰臟 β 細胞",
+        hint: "Alpha makes glucagon, Beta makes insulin. α 製造胰高血糖素，β 製造胰島素。" },
+      { id: "g3", level: 1, q: "What is the main target organ of both insulin and glucagon?", qZh: "胰島素和胰高血糖素的主要靶器官是甚麼？",
+        opts: ["Liver 肝臟", "Stomach 胃", "Heart 心臟", "Lungs 肺部"], a: "Liver 肝臟",
+        hint: "Where is glycogen mostly stored? 糖原主要儲存在哪裡？" },
+      { id: "g4", level: 2, q: "How does insulin lower blood glucose?", qZh: "胰島素如何降低血糖？",
+        opts: ["Promotes conversion of glucose to glycogen in the liver 促進肝臟將葡萄糖轉化為糖原", "Destroys glucose molecules 破壞葡萄糖分子", "Excretes glucose in urine 排泄葡萄糖", "Stops digestion 停止消化"], a: "Promotes conversion of glucose to glycogen in the liver 促進肝臟將葡萄糖轉化為糖原",
+        hint: "Glucose is safely stored away as an insoluble carbohydrate. 儲存為不可溶碳水化合物。" },
+      { id: "g5", level: 2, q: "What triggers the secretion of glucagon?", qZh: "甚麼會觸發胰高血糖素的分泌？",
+        opts: ["Low blood glucose level 低血糖水平", "High blood glucose level 高血糖水平", "Eating a heavy meal 暴飲暴食", "High body temperature 體溫過高"], a: "Low blood glucose level 低血糖水平",
+        hint: "Glucagon is needed when glucose is GONE (low). 當缺乏葡萄糖時需要它。" },
+      { id: "g6", level: 2, q: "Negative feedback means that...", qZh: "負反饋的意思是...",
+        opts: ["The response counteracts the original stimulus 反應抵消原本的刺激", "The response amplifies the stimulus 反應增強刺激", "The body shuts down 身體停工", "Positive hormones are blocked 阻擋正面荷爾蒙"], a: "The response counteracts the original stimulus 反應抵消原本的刺激",
+        hint: "If it goes up, bring it down. If it goes down, bring it up. 高則降，低則升。" }
+    ];
+
+    const EXAM = [
+      { id: "e1", level: 3, q: "A person eats a large bowl of rice. Which sequence correctly describes their body's response?", qZh: "某人吃了一大碗飯。哪個順序正確描述其身體反應？",
+        opts: ["Blood glucose ↑ → β cells secrete insulin → Liver makes glycogen 血糖↑ → β細胞分泌胰島素 → 肝臟製造糖原", "Blood glucose ↑ → α cells secrete glucagon → Liver makes glucose 血糖↑ → α細胞分泌胰高血糖素 → 肝臟製造葡萄糖", "Blood glucose ↓ → β cells secrete insulin → Liver makes glycogen 血糖↓ → β細胞分泌胰島素 → 肝臟製造糖原", "Blood glucose ↑ → Pancreas makes glycogen → Liver secretes insulin 血糖↑ → 胰臟製造糖原 → 肝臟分泌胰島素"], a: "Blood glucose ↑ → β cells secrete insulin → Liver makes glycogen 血糖↑ → β細胞分泌胰島素 → 肝臟製造糖原",
+        hint: "High glucose triggers Beta cells. Insulin stores it. 高血糖觸發β細胞儲存。" },
+      { id: "e2", level: 3, q: "During a marathon, a runner's blood glucose drops. How does the liver respond?", qZh: "跑馬拉松時跑手血糖下降。肝臟如何反應？",
+        opts: ["It breaks down glycogen to glucose due to glucagon 受胰高血糖素影響，將糖原分解為葡萄糖", "It stores more glycogen due to insulin 受胰島素影響，儲存更多糖原", "It releases insulin into the blood 釋放胰島素到血液", "It breaks down protein 分解蛋白質"], a: "It breaks down glycogen to glucose due to glucagon 受胰高血糖素影響，將糖原分解為葡萄糖",
+        hint: "The liver releases stored energy when glucagon signals it. 胰高血糖素發信號釋放能量。" },
+      { id: "e3", level: 3, q: "Why do cells shrink if blood glucose remains constantly very high?", qZh: "為何血糖持續過高會導致細胞萎縮？",
+        opts: ["Water moves out of cells by osmosis due to lower water potential in blood 因血液水勢較低，水份經滲透作用流出細胞", "Glucose blocks the cell membrane 葡萄糖阻塞細胞膜", "Insulin physically squeezes the cells 胰島素擠壓細胞", "The pancreas absorbs all the water 胰臟吸收了所有水份"], a: "Water moves out of cells by osmosis due to lower water potential in blood 因血液水勢較低，水份經滲透作用流出細胞",
+        hint: "Solutes lower water potential. Osmosis moves water to lower potential. 溶質降低水勢。" },
+      { id: "e4", level: 4, q: "What is the primary difference between Type 1 and Type 2 diabetes?", qZh: "一型與二型糖尿病的主要分別是？",
+        opts: ["Type 1 lacks insulin production; Type 2 is resistance to insulin 一型缺乏胰島素分泌；二型是對胰島素產生抗性", "Type 1 affects the liver; Type 2 affects the pancreas 一型影響肝臟；二型影響胰臟", "Type 1 is caused by too much sugar; Type 2 is genetic 一型由過多糖分引起；二型是遺傳", "There is no physiological difference 兩者無生理分別"], a: "Type 1 lacks insulin production; Type 2 is resistance to insulin 一型缺乏胰島素分泌；二型是對胰島素產生抗性",
+        hint: "Type 1 = broken factory. Type 2 = deaf workers. 一型：工廠停工；二型：工人失聰。" },
+      { id: "e5", level: 4, q: "Which of the following is NOT an effect of insulin?", qZh: "以下哪項不是胰島素的作用？",
+        opts: ["Stimulating the breakdown of glycogen into glucose 刺激糖原分解成葡萄糖", "Increasing glucose uptake by muscle cells 增加肌肉細胞吸收葡萄糖", "Promoting conversion of glucose to fat 促進葡萄糖轉化為脂肪", "Promoting conversion of glucose to glycogen in liver 促進肝臟將葡萄糖轉化為糖原"], a: "Stimulating the breakdown of glycogen into glucose 刺激糖原分解成葡萄糖",
+        hint: "Insulin STORES energy. Breaking down glycogen is Glucagon's job. 胰島素負責儲存。" },
+      { id: "e6", level: 4, q: "If blood glucose returns to normal from a high state, insulin secretion drops. This demonstrates:", qZh: "若血糖從高位回落至正常，胰島素分泌便會下降。這展示了：",
+        opts: ["Negative feedback 負反饋", "Positive feedback 正反饋", "Enzyme denaturation 酶變性", "Osmoregulation 滲透調節"], a: "Negative feedback 負反饋",
+        hint: "The loop shuts off once the goal is achieved. 達標後關閉機制。" }
+    ];
+
+    function UpgradeCTA({ reason, onClose, onTrial }) {
+      return (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-2xl p-5 bg-white border border-slate-200">
+            <h3 className="text-lg font-bold" style={{color: ACCENT}}>解鎖完整練習與家長進度</h3>
+            <p className="text-sm mt-2 text-slate-600">{reason || window.SUBSCRIBE_CONFIG.bannerText}</p>
+            <ul className="mt-3 text-sm space-y-1 list-disc list-inside text-slate-600">
+              <li>Unlimited daily drills</li>
+              <li>Full wrong-answer book</li>
+              <li>Progress sync (coming)</li>
+            </ul>
+            <button type="button" onClick={onTrial} className="mt-4 w-full min-h-[48px] rounded-xl font-semibold text-white" style={{background: ACCENT}}>開始 14 日試用（本機）</button>
+            <a href={HKC.MARKETING_PATH} className="mt-2 block w-full min-h-[44px] text-center leading-[44px] rounded-xl border border-slate-300 text-sm">了解家長計劃</a>
+            <button type="button" onClick={onClose} className="mt-2 w-full text-sm underline text-slate-500">繼續免費</button>
+          </div>
+        </div>
+      );
+    }
+
+    function Drill({ bank, label, onNeedUpgrade, onDone }) {
+      const [qi, setQi] = useState(0);
+      const [fb, setFb] = useState(null);
+      const [score, setScore] = useState(0);
+      const [hint, setHint] = useState(false);
+      const [first, setFirst] = useState(true);
+      const item = bank[qi];
+
+      function pick(opt) {
+        if (HKC.freeCapReached()) {
+          if (window.HkcSubscribe) HkcSubscribe.showPaywall("hit_free_cap");
+          onNeedUpgrade("今日免費練習已用完。");
+          return;
+        }
+        HKC.recordDrillUse(APP_ID);
+        const ok = opt === item.a;
+        setFb(ok
+          ? { ok: true, msg: "Correct · 正確" }
+          : { ok: false, msg: "Not quite · 再想。Use Hint for the method (answer not shown)." });
+        if (ok) {
+          if (typeof HKC.recordOk === "function") HKC.recordOk(APP_ID, item);
+          if (first) setScore(s => s + 1);
+        } else {
+          HKC.addWrong(APP_ID, { id: item.id, prompt: item.q, hint: item.hint, answer: item.a });
+          setFirst(false);
+        }
+      }
+
+      function next() {
+        setFb(null); setHint(false); setFirst(true);
+        if (qi + 1 >= bank.length) {
+          HKC.recordSession(APP_ID, score, bank.length);
+          onDone(score, bank.length);
+        } else setQi(qi + 1);
+      }
+
+      return (
+        <section className="bg-white border border-slate-200 shadow-sm rounded-2xl p-4 sm:p-5">
+          <div className="flex justify-between text-sm mb-3 text-slate-500">
+            <span>{label} · Q {qi + 1}/{bank.length} · Lv {item.level}</span>
+            <span>Score {score}</span>
+          </div>
+          <h2 className="text-lg font-bold mb-1">{item.q}</h2>
+          {item.qZh ? <p className="text-sm mb-4 opacity-80" style={{color: ACCENT}}>{item.qZh}</p> : <div className="mb-4" />}
+          <div className="grid gap-2">
+            {item.opts.map(o => (
+              <button key={o} type="button" disabled={fb && fb.ok} onClick={() => pick(o)}
+                className="text-left px-4 py-3 rounded-xl min-h-[48px] disabled:opacity-50 bg-slate-50 hover:bg-slate-100 border border-slate-200">{o}</button>
+            ))}
+          </div>
+          <button type="button" className="text-sm mt-3 font-semibold min-h-[44px]" style={{color: ACCENT}} onClick={() => setHint(true)}>Hint · 提示</button>
+          {hint && <p className="text-sm mt-1 p-3 rounded-xl bg-amber-50 text-amber-900 border border-amber-200">{item.hint}</p>}
+          {fb && (
+            <div className={"mt-4 p-3 rounded-xl text-sm " + (fb.ok ? "bg-emerald-50 text-emerald-800" : "bg-rose-50 text-rose-800")}>
+              {fb.msg}
+              {fb.ok && <button type="button" className="block mt-2 underline font-semibold" onClick={next}>Next →</button>}
+              {!fb.ok && <button type="button" className="block mt-2 underline font-semibold" onClick={() => setFb(null)}>Retry</button>}
+            </div>
+          )}
+        </section>
+      );
+    }
+
+    function App() {
+      const [mode, setMode] = useState("learn");
+      const [progress, setProgress] = useState(() => HKC.loadProgress(APP_ID));
+      const [pay, setPay] = useState(false);
+      const [payReason, setPayReason] = useState("");
+      const [doneMsg, setDoneMsg] = useState(null);
+      const [tfzDone, setTfzDone] = useState(() => { try { return !!localStorage.getItem("hkc_tfz_" + APP_ID); } catch (e) { return false; } });
+
+      function refresh() { setProgress(HKC.loadProgress(APP_ID)); }
+      useEffect(() => { refresh(); }, [mode]);
+      function completeTfz() {
+        try { localStorage.setItem("hkc_tfz_" + APP_ID, "1"); } catch (e) {}
+        setTfzDone(true); setMode("lab");
+      }
+
+      const tabs = [
+        { id: "learn", label: "Learn · 學習" },
+        { id: "lab", label: tfzDone ? "Lab · 實驗" : "Lab 🔒" },
+        { id: "guided", label: "Guided · 引導" },
+        { id: "exam", label: "Exam · 測驗" },
+        { id: "review", label: "Review · 錯題" }
+      ];
+
+      return (
+        <div className="max-w-5xl mx-auto p-4 sm:p-8">
+          <a href="../../index.html" className="text-sm hover:underline font-semibold" style={{color: ACCENT}}>← Hub</a>
+          <header className="mt-4 mb-4">
+            <p className="text-xs uppercase tracking-widest font-bold" style={{color: ACCENT}}>F6 Biology · Form and Function</p>
+            <h1 className="text-2xl sm:text-3xl font-bold mt-1">Glucose Homeostasis</h1>
+            <p className="text-slate-500 mt-1">血糖體內平衡 · Learn (A1–A7) → Lab → Guided → Exam → Review</p>
+          </header>
+
+          <div className="text-sm border border-dashed rounded-lg px-3 py-2 mb-3 flex flex-wrap justify-between gap-2 items-center border-slate-300 bg-white/80">
+            <span>{HKC.isPaid() ? (HKC.getEntitlement().tier + " · unlimited") : ("Free · " + HKC.remainingFree() + "/" + HKC.FREE_DAILY_CAP + " today")} · Best {progress.bestScore}</span>
+            {!HKC.isPaid() && (
+              <button type="button" className="px-3 py-1.5 rounded-md text-xs font-semibold text-white min-h-[36px]" style={{background: ACCENT}} onClick={() => setPay(true)}>Upgrade</button>
+            )}
+          </div>
+
+          <nav className="flex flex-wrap gap-2 mb-4">
+            {tabs.map(tab => (
+              <button key={tab.id} type="button" onClick={() => { setMode(tab.id); setDoneMsg(null); }}
+                className={"px-3.5 py-2 rounded-lg text-sm font-semibold min-h-[44px] " + (mode === tab.id ? "text-white" : "bg-white border border-slate-200 text-slate-700")}
+                style={mode === tab.id ? {background: ACCENT} : {}}>
+                {tab.label}
+              </button>
+            ))}
+          </nav>
+
+          {mode === "learn" && <LearnFromZero steps={TFZ_STEPS} onComplete={completeTfz} />}
+
+          {mode === "lab" && !tfzDone && (
+            <section className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 text-center">
+              <h2 className="text-xl font-bold">Finish Learn From Zero first · 先完成 A1–A7</h2>
+              <p className="text-sm text-slate-500 mt-2">We teach the model before you play — that is how real understanding sticks. 先學模型,後做實驗。</p>
+              <button type="button" className="mt-4 px-4 py-2.5 rounded-xl font-semibold text-white min-h-[48px]" style={{background: ACCENT}} onClick={() => setMode("learn")}>Go to Learn →</button>
+            </section>
+          )}
+          {mode === "lab" && tfzDone && (
+            <section className="bg-white border border-slate-200 shadow-sm rounded-2xl p-4 sm:p-5">
+              <h2 className="font-bold text-lg mb-3">Blood Glucose Simulator · 血糖模擬器</h2>
+              <GlucoseSim />
+            </section>
+          )}
+
+          {mode === "guided" && !doneMsg && (
+            <Drill bank={GUIDED} label="Guided" onNeedUpgrade={r => { setPayReason(r); setPay(true); }}
+              onDone={(s, n) => { setDoneMsg({ s, n, next: "exam" }); refresh(); }} />
+          )}
+          {mode === "exam" && !doneMsg && (
+            <Drill bank={EXAM} label="Exam" onNeedUpgrade={r => { setPayReason(r); setPay(true); }}
+              onDone={(s, n) => { setDoneMsg({ s, n, next: "review" }); refresh(); }} />
+          )}
+          {doneMsg && (mode === "guided" || mode === "exam") && (
+            <section className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 text-center">
+              <h2 className="text-2xl font-bold">Complete</h2>
+              <p className="mt-2">{doneMsg.s} / {doneMsg.n}</p>
+              <button type="button" className="mt-4 px-4 py-2 rounded-xl font-semibold min-h-[48px] text-white" style={{background: ACCENT}}
+                onClick={() => { setDoneMsg(null); setMode(doneMsg.next); }}>Continue →</button>
+            </section>
+          )}
+          {mode === "review" && (
+            <section className="bg-white border border-slate-200 shadow-sm rounded-2xl p-4 sm:p-5 space-y-3">
+              <h2 className="font-bold text-lg">Wrong-answer book · 錯題簿</h2>
+              {(progress.wrongBook || []).length === 0 && <p className="text-sm text-slate-500">No wrong answers yet · 暫無錯題</p>}
+              {(progress.wrongBook || []).map(w => (
+                <div key={w.id} className="rounded-xl p-3 text-sm border border-slate-200">
+                  <p className="font-semibold">{w.prompt}</p>
+                  <p className="mt-1 opacity-80" style={{color: ACCENT}}>{w.hint}</p>
+                  {HKC.isPaid() && <p className="mt-1 text-emerald-500">Answer unlocked</p>}
+                  <button type="button" className="text-xs underline mt-2 text-slate-500" onClick={() => { HKC.removeWrong(APP_ID, w.id); refresh(); }}>Mark resolved</button>
+                </div>
+              ))}
+            </section>
+          )}
+          {pay && <UpgradeCTA reason={payReason} onClose={() => setPay(false)} onTrial={() => { HKC.startTrialLocal(); setPay(false); refresh(); }} />}
+        </div>
+      );
+    }
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+</body>
+</html>

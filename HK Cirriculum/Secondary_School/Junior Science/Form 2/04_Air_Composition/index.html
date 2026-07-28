@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Air Composition · 空氣成分 | S2 Junior Science</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="../../../../common/babel-react-classic.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet" />
+  <script src="../../../../common/junior-science-lger.js"></script>
+  <style>body { font-family: "Outfit", sans-serif; background: #f0f9ff; }</style>
+  <!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
+  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+      display: none !important;
+    }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+        if (label === "EN" || label === "\u4E2D") {
+          btn.classList.add("ncs-hide-when-ncs-fleet");
+        }
+      });
+      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+        el.classList.add("ncs-hide-when-ncs-fleet");
+      });
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel" data-presets="react-classic">
+    const { useState, useEffect, useRef } = React;
+    const ACCENT = "#0284c7";
+    const { Shell } = window.JSLGER;
+
+    const INHALED = { Nitrogen: 78, Oxygen: 21, "Carbon Dioxide": 0.04, Others: 0.96 };
+    const EXHALED = { Nitrogen: 78, Oxygen: 16, "Carbon Dioxide": 4, Others: 2 };
+
+    const LEARN = [
+      { titleEn: "Air is a mixture", titleZh: "空氣是混合物",
+        bodyEn: "Air is not a compound — it is a mixture of gases, mainly nitrogen and oxygen.",
+        bodyZh: "空氣不是化合物，而是主要由氮氣和氧氣組成的氣體混合物。",
+        qEn: "The most abundant gas in dry air is…", qZh: "乾燥空氣中含量最多的氣體是…",
+        opts: [{ en: "Nitrogen", zh: "氮氣" }, { en: "Oxygen", zh: "氧氣" }, { en: "Carbon dioxide", zh: "二氧化碳" }], a: 0,
+        whyEn: "About 78% N₂.", whyZh: "約 78% 氮氣。" },
+      { titleEn: "Inhaled air", titleZh: "吸入的空氣",
+        bodyEn: "We inhale air with ~21% oxygen — enough for aerobic respiration in the lungs.",
+        bodyZh: "我們吸入約含 21% 氧氣的空氣，足以在肺部進行有氧呼吸。",
+        qEn: "Approximate O₂ in inhaled air?", qZh: "吸入空氣中氧氣約…",
+        opts: ["21%", "78%", "4%"], a: 0,
+        whyEn: "Standard classroom value.", whyZh: "課室標準數值。" },
+      { titleEn: "Exhaled air", titleZh: "呼出的空氣",
+        bodyEn: "Exhaled air has less oxygen and more carbon dioxide because of respiration.",
+        bodyZh: "呼出空氣氧氣較少、二氧化碳較多，因為進行了呼吸作用。",
+        qEn: "CO₂ in exhaled air is about…", qZh: "呼出空氣中二氧化碳約…",
+        opts: ["4%", "0.04%", "21%"], a: 0,
+        whyEn: "Rises from cellular respiration.", whyZh: "因細胞呼吸而上升。" },
+      { titleEn: "Nitrogen unchanged", titleZh: "氮氣不變",
+        bodyEn: "Nitrogen (~78%) is not used in respiration, so inhaled and exhaled percentages stay similar.",
+        bodyZh: "氮氣（約 78%）不參與呼吸作用，故吸入與呼出百分比相近。",
+        qEn: "Which gas % stays almost the same?", qZh: "哪種氣體百分比幾乎不變？",
+        opts: [{ en: "Nitrogen", zh: "氮氣" }, { en: "Oxygen", zh: "氧氣" }, { en: "Carbon dioxide", zh: "二氧化碳" }], a: 0,
+        whyEn: "Inert in this context.", whyZh: "在此過程中不起反應。" },
+      { titleEn: "Water vapour", titleZh: "水蒸氣",
+        bodyEn: "Exhaled air is moist — the lungs add water vapour, so it feels warm and damp.",
+        bodyZh: "呼出空氣含有水蒸氣——肺部加入水分，故感覺溫暖潮濕。",
+        qEn: "Water vapour in exhaled air comes from…", qZh: "呼出空氣中的水蒸氣來自…",
+        opts: [{ en: "Moist lung lining", zh: "濕潤的肺內壁" }, { en: "Nitrogen reaction", zh: "氮氣反應" }, { en: "Soil", zh: "土壤" }], a: 0,
+        whyEn: "Gas exchange across moist membranes.", whyZh: "在濕潤膜上進行氣體交換。" },
+      { titleEn: "Compare in the lab", titleZh: "在實驗室比較",
+        bodyEn: "Toggle inhaled vs exhaled in the chart and explain each change using respiration.",
+        bodyZh: "在圖表中切換吸入與呼出空氣，並用呼吸作用解釋各項變化。",
+        qEn: "Oxygen falls after breathing because…", qZh: "呼吸後氧氣下降是因為…",
+        opts: [{ en: "Used in respiration", zh: "用於呼吸作用" }, { en: "Nitrogen absorbs it", zh: "氮氣吸收" }, { en: "Air shrinks", zh: "空氣收縮" }], a: 0,
+        whyEn: "O₂ is a reactant in aerobic respiration.", whyZh: "氧氣是有氧呼吸的反應物。" }
+    ];
+
+    const GUIDED = [
+      { qEn: "~78% of air is…", qZh: "空氣中約 78% 是…",
+        opts: ["N₂", "O₂", "CO₂"], a: 0, hintEn: "Most abundant.", hintZh: "含量最多。" },
+      { qEn: "Exhaled O₂ is ___ than inhaled.", qZh: "呼出氧氣比吸入…",
+        opts: [{ en: "Lower", zh: "較低" }, { en: "Higher", zh: "較高" }, { en: "Same", zh: "相同" }], a: 0, hintEn: "O₂ consumed.", hintZh: "氧氣被消耗。" },
+      { qEn: "Exhaled CO₂ is ___ than inhaled.", qZh: "呼出二氧化碳比吸入…",
+        opts: [{ en: "Higher", zh: "較高" }, { en: "Lower", zh: "較低" }, { en: "Zero", zh: "為零" }], a: 0, hintEn: "CO₂ produced.", hintZh: "二氧化碳被產生。" },
+      { qEn: "Air is best described as a…", qZh: "空氣最好描述為…",
+        opts: [{ en: "Mixture", zh: "混合物" }, { en: "Compound", zh: "化合物" }, { en: "Element", zh: "元素" }], a: 0, hintEn: "Gases retain properties.", hintZh: "各氣體保留性質。" }
+    ];
+
+    const SUMMARY = [
+      { en: "Dry air: ~78% N₂, ~21% O₂, ~0.04% CO₂.", zh: "乾燥空氣：約 78% N₂、21% O₂、0.04% CO₂。" },
+      { en: "Exhaled: lower O₂ (~16%), higher CO₂ (~4%).", zh: "呼出：氧氣較低（約 16%）、二氧化碳較高（約 4%）。" },
+      { en: "N₂ percentage barely changes.", zh: "氮氣百分比幾乎不變。" },
+      { en: "Changes due to aerobic respiration in the body.", zh: "變化源於體內有氧呼吸。" }
+    ];
+
+    const REVIEW = [
+      { qEn: "Main gas in air?", qZh: "空氣的主要成分？",
+        opts: ["Nitrogen", "Oxygen", "Argon only"], a: 0 },
+      { qEn: "Inhaled O₂ ≈", qZh: "吸入氧氣約",
+        opts: ["21%", "4%", "78%"], a: 0 },
+      { qEn: "Exhaled CO₂ ≈", qZh: "呼出二氧化碳約",
+        opts: ["4%", "0.04%", "21%"], a: 0 },
+      { qEn: "Why does O₂ drop?", qZh: "氧氣為何下降？",
+        opts: [{ en: "Respiration", zh: "呼吸作用" }, { en: "Photosynthesis in lungs", zh: "肺部光合作用" }, { en: "Evaporation", zh: "蒸發" }], a: 0 },
+      { qEn: "Air is a…", qZh: "空氣是…",
+        opts: [{ en: "Mixture", zh: "混合物" }, { en: "Single element", zh: "單一元素" }, { en: "Liquid", zh: "液體" }], a: 0 }
+    ];
+
+    function AirLab({ isZh }) {
+      const [mode, setMode] = useState("inhaled");
+      const canvasRef = useRef(null);
+      const chartRef = useRef(null);
+      const t = window.JSLGER.t;
+      const data = mode === "inhaled" ? INHALED : EXHALED;
+
+      useEffect(() => {
+        if (!canvasRef.current) return;
+        const labels = Object.keys(data);
+        const values = Object.values(data);
+        if (chartRef.current) {
+          chartRef.current.data.datasets[0].data = values;
+          chartRef.current.update();
+        } else {
+          chartRef.current = new Chart(canvasRef.current, {
+            type: "doughnut",
+            data: { labels, datasets: [{ data: values, backgroundColor: ["#bae6fd", "#3b82f6", "#ef4444", "#cbd5e1"] }] },
+            options: { plugins: { legend: { position: "bottom" } } }
+          });
+        }
+      }, [mode]);
+
+      return (
+        <div>
+          <div className="flex gap-2 mb-4">
+            {["inhaled", "exhaled"].map(m => (
+              <button key={m} type="button" onClick={() => setMode(m)}
+                className={`px-4 py-2 rounded-xl font-bold min-h-[44px] ${mode === m ? "text-white" : "bg-slate-100"}`}
+                style={mode === m ? { background: ACCENT } : {}}>
+                {m === "inhaled" ? t("吸入空氣", "Inhaled Air", isZh) : t("呼出空氣", "Exhaled Air", isZh)}
+              </button>
+            ))}
+          </div>
+          <div className="grid md:grid-cols-2 gap-6">
+            <canvas ref={canvasRef} />
+            <div className="space-y-2">
+              {Object.entries(data).map(([k, v]) => (
+                <div key={k} className="flex justify-between bg-slate-50 px-4 py-2 rounded-lg border">
+                  <span className="font-semibold">{k}</span>
+                  <span className="font-mono">{v}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function App() {
+      return (
+        <Shell
+          meta={{ appId: "s2_air_composition", titleEn: "Air Composition", titleZh: "空氣成分", unit: "Form 2 · Living Things & Air" }}
+          accent={ACCENT}
+          learnSteps={LEARN}
+          guidedBank={GUIDED}
+          reviewSummary={SUMMARY}
+          reviewQuiz={REVIEW}
+          experiment={p => <AirLab {...p} />}
+        />
+      );
+    }
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>

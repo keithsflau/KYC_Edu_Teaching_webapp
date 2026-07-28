@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - History Civilizations</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: #fffbeb;
+      }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet" />
+<!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
+  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+      display: none !important;
+    }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+        if (label === "EN" || label === "\u4E2D") {
+          btn.classList.add("ncs-hide-when-ncs-fleet");
+        }
+      });
+      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+        el.classList.add("ncs-hide-when-ncs-fleet");
+      });
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+</head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Ancient Civilizations",
+    zh: "古代文明",
+    ja: "古代文明",
+    ko: "고대 문명",
+    es: "Civilizaciones antiguas",
+    de: "Antike Zivilisationen",
+    fi: "Muinaiset sivilisaatiot",
+    fr: "Civilisations anciennes",
+    ar: "الحضارات القديمة",
+    it: "Antiche Civiltà"
+  },
+  instruction: {
+    en: "Match the Wonder to the Civilization",
+    zh: "將奇蹟與文明配對",
+    ja: "不思議と文明を一致させる",
+    ko: "불가사의와 문명을 일치시키세요",
+    es: "Empareja la Maravilla con la Civilización",
+    de: "Ordne das Wunder der Zivilisation zu",
+    fi: "Yhdistä ihme sivilisaatioon",
+    fr: "Associez la Merveille à la Civilisation",
+    ar: "طابق العجيبة بالحضارة",
+    it: "Abbina la Meraviglia alla Civiltà"
+  },
+  egypt: {
+    en: "Ancient Egypt",
+    zh: "古埃及",
+    ja: "古代エジプト",
+    ko: "고대 이집트"
+  },
+  china: {
+    en: "Ancient China",
+    zh: "古代中國",
+    ja: "古代中国",
+    ko: "고대 중국"
+  },
+  rome: {
+    en: "Ancient Rome",
+    zh: "古羅馬",
+    ja: "古代ローマ",
+    ko: "고대 로마"
+  },
+  greece: {
+    en: "Ancient Greece",
+    zh: "古希臘",
+    ja: "古代ギリシャ",
+    ko: "고대 그리스"
+  },
+  pyramids: {
+    en: "Pyramids",
+    zh: "金字塔",
+    ja: "ピラミッド",
+    ko: "피라미드"
+  },
+  wall: {
+    en: "Great Wall",
+    zh: "萬里長城",
+    ja: "万里の長城",
+    ko: "만리장성"
+  },
+  colosseum: {
+    en: "Colosseum",
+    zh: "羅馬鬥獸場",
+    ja: "コロッセオ",
+    ko: "콜로세움"
+  },
+  parthenon: {
+    en: "Parthenon",
+    zh: "帕特農神廟",
+    ja: "パルテノン神殿",
+    ko: "파르테논 신전"
+  },
+  correct: {
+    en: "Correct Match!",
+    zh: "配對正確！",
+    ja: "正しいマッチ！",
+    ko: "올바른 매치!"
+  }
+};
+const pairs = [{
+  civ: "egypt",
+  wonder: "pyramids",
+  icon: "🔺"
+}, {
+  civ: "china",
+  wonder: "wall",
+  icon: "🧱"
+}, {
+  civ: "rome",
+  wonder: "colosseum",
+  icon: "🏟️"
+}, {
+  civ: "greece",
+  wonder: "parthenon",
+  icon: "🏛️"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [selectedCiv, setSelectedCiv] = useState(null);
+  const [matched, setMatched] = useState([]);
+  const getText = key => t[key][lang] || t[key]["en"];
+
+  // Randomize visual order
+  const [civs, setCivs] = useState([]);
+  const [wonders, setWonders] = useState([]);
+  useEffect(() => {
+    setCivs([...pairs].sort(() => Math.random() - 0.5));
+    setWonders([...pairs].sort(() => Math.random() - 0.5));
+  }, []);
+  const handleCivClick = c => {
+    if (matched.includes(c.civ)) return;
+    setSelectedCiv(c);
+  };
+  const handleWonderClick = w => {
+    if (matched.includes(w.civ)) return;
+    if (!selectedCiv) return;
+    if (selectedCiv.civ === w.civ) {
+      setMatched([...matched, w.civ]);
+      setSelectedCiv(null);
+    } else {
+      setSelectedCiv(null);
+      // Error feedback
+      alert("Try again!");
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-bold mb-8 text-amber-700"
+  }, getText("title")), /*#__PURE__*/React.createElement("p", {
+    className: "mb-8 font-bold text-slate-500"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-12 w-full max-w-4xl justify-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col gap-4"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "text-center font-bold text-slate-400 mb-2"
+  }, "Civilization"), civs.map(c => /*#__PURE__*/React.createElement("button", {
+    key: c.civ,
+    onClick: () => handleCivClick(c),
+    disabled: matched.includes(c.civ),
+    className: `p-6 w-48 rounded-xl font-bold shadow-md transition-all
+                            ${matched.includes(c.civ) ? "bg-green-100 text-green-800 opacity-50" : selectedCiv && selectedCiv.civ === c.civ ? "bg-amber-500 text-white scale-105" : "bg-white hover:bg-amber-50 text-amber-900"}
+                         `
+  }, getText(c.civ)))), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col gap-4"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "text-center font-bold text-slate-400 mb-2"
+  }, "Wonder"), wonders.map(w => /*#__PURE__*/React.createElement("button", {
+    key: w.wonder,
+    onClick: () => handleWonderClick(w),
+    disabled: matched.includes(w.civ),
+    className: `p-6 w-48 rounded-xl font-bold shadow-md flex items-center gap-4 transition-all
+                            ${matched.includes(w.civ) ? "bg-green-100 text-green-800 opacity-50" : "bg-white hover:bg-slate-50 text-slate-800 border-2 border-transparent hover:border-amber-300"}
+                         `
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-2xl"
+  }, w.icon), getText(w.wonder))))), matched.length === pairs.length && matched.length > 0 && /*#__PURE__*/React.createElement("div", {
+    className: "mt-8 text-4xl font-black text-amber-600 animate-bounce"
+  }, getText("correct")));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+</body>
+</html>

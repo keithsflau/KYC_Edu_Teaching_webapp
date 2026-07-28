@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>成語跑酷 2.0 (Idiom Parkour)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Noto+Sans+TC:wght@900&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            font-family: 'Noto Sans TC', sans-serif;
+            user-select: none;
+        }
+
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .hud {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px;
+            text-shadow: 2px 2px 0 #000;
+        }
+
+        .score {
+            font-size: 3rem;
+            color: #facc15;
+            font-weight: 900;
+            font-style: italic;
+        }
+
+        .question-box {
+            position: absolute;
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            border: 3px solid #22d3ee;
+            padding: 10px 40px;
+            border-radius: 50px;
+            text-align: center;
+        }
+
+        .idiom-display {
+            font-size: 4rem;
+            color: #fff;
+            font-family: 'ZCOOL KuaiLe', cursive;
+            letter-spacing: 10px;
+        }
+
+        .missing-char {
+            color: #ef4444;
+            border-bottom: 4px solid #ef4444;
+            display: inline-block;
+            width: 60px;
+        }
+
+        .menu {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+            z-index: 50;
+        }
+
+        .title-text {
+            font-size: 5rem;
+            color: #22d3ee;
+            font-family: 'ZCOOL KuaiLe';
+            transform: skewX(-10deg);
+            text-shadow: 5px 5px 0 #3b82f6;
+        }
+
+        .btn {
+            background: #facc15;
+            padding: 15px 50px;
+            font-size: 2rem;
+            border-radius: 10px;
+            font-weight: 900;
+            transform: skewX(-10deg);
+            cursor: pointer;
+            border: none;
+            box-shadow: 5px 5px 0 #b45309;
+            transition: transform 0.1s;
+            color: #000;
+        }
+
+        .btn:active {
+            transform: skewX(-10deg) translate(2px, 2px);
+            box-shadow: 3px 3px 0 #b45309;
+        }
+
+        .speed-lines {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle, transparent 50%, rgba(255, 255, 255, 0.1) 100%);
+            opacity: 0;
+            transition: opacity 0.5s;
+            pointer-events: none;
+        }
+
+        .speed-lines.active {
+            opacity: 1;
+        }
+    </style>
+    <!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../common/ncs-i18n.css" />
+  <script src="../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+      display: none !important;
+    }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+        if (label === "EN" || label === "\u4E2D") {
+          btn.classList.add("ncs-hide-when-ncs-fleet");
+        }
+      });
+      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+        el.classList.add("ncs-hide-when-ncs-fleet");
+      });
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+</head>
+
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <div class="speed-lines" id="speedLines"></div>
+
+    <div id="ui-layer">
+        <div class="hud">
+            <div class="score">SCORE: <span id="score">0</span></div>
+            <div class="score text-red-500">SPD: <span id="speed">100</span>%</div>
+        </div>
+        <div class="question-box" id="q-box" style="display:none;">
+            <div class="idiom-display" id="idiom-text">一<span class="missing-char">?</span>驚人</div>
+        </div>
+    </div>
+
+    <div id="start-menu" class="menu">
+        <h1 class="title-text mb-4">成語跑酷 2.0</h1>
+        <p class="text-gray-400 text-xl mb-8">左右移動選擇正確文字 • 完成成語加速</p>
+        <button class="btn" onclick="startGame()">RUN!</button>
+    </div>
+
+    <div id="game-over-menu" class="menu" style="display:none;">
+        <h1 class="title-text text-red-500 mb-2">GAME OVER</h1>
+        <div class="text-4xl text-white font-bold mb-8">SCORE: <span id="final-score">0</span></div>
+        <button class="btn" onclick="startGame()">RUN AGAIN</button>
+    </div>
+
+    <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+</body>
+
+</html>
+

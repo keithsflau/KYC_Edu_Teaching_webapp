@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Titration Curve Lab | 滴定曲線實驗</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <link rel="stylesheet" href="../../../../common/subscribe-gate.css" />
+  <script>
+    window.HKC_SUBSCRIBE = {
+      appId: "f6-chem-titration-lab",
+      appNameZh: "滴定曲線實驗",
+      appNameEn: "Titration Curve Lab",
+      level: "F6",
+      subject: "Chemistry",
+      freeDrillLimit: 12,
+      wrongBookLimit: 10,
+      contactEmail: "support@hksteamai.com",
+      comingSoonHref: "#coming-soon"
+    };
+    window.__HKC_FREE_CAP = () => !(window.HkcSubscribe && HkcSubscribe.canContinueDrills());
+  </script>
+  <script src="../../../../common/subscribe-gate.js"></script>
+  <script src="../../../../common/parent-report.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+  <style>
+    :root { --accent: #16a34a; }
+    body {
+      font-family: "IBM Plex Sans", system-ui, sans-serif;
+      background:
+        radial-gradient(ellipse 70% 45% at 8% -5%, #16a34a28, transparent 55%),
+        radial-gradient(ellipse 50% 40% at 100% 0%, #64748b14, transparent 50%),
+        #f1f5f9;
+      color: #0f172a;
+      min-height: 100vh;
+    }
+    input[type="range"] { accent-color: #16a34a; width: 100%; }
+    .mono { font-family: "JetBrains Mono", ui-monospace, monospace; }
+    canvas { touch-action: none; display: block; width: 100%; height: auto; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+  </style>
+
+  <!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
+  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect, useRef, useCallback, useMemo } = React;
+    const ACCENT = "#16a34a";
+    const BACK = "../index.html";
+    const LEVEL = "F6";
+    const APP_ID = "f6-chem-titration-lab";
+
+    function LabChrome({ titleEn, titleZh, blurb, children, explore, legacy }) {
+      return (
+        <div className="max-w-6xl mx-auto px-4 py-6">
+          <header className="mb-5">
+            <a href={BACK} className="text-sm hover:underline" style={{ color: ACCENT }}>← {LEVEL} Chemistry</a>
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-white px-2 py-0.5 rounded" style={{ background: ACCENT }}>Interactive Lab</span>
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-white border text-slate-700">HKDSE · Learn = live sim</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold mt-1">{titleEn} · {titleZh}</h1>
+            <p className="text-slate-600 text-sm mt-1 max-w-2xl">{blurb}</p>
+          </header>
+          {children}
+          <p className="text-[10px] text-slate-400 mt-4">Explores: {explore} · Legacy MCQ: <a className="underline" href="_legacy_lger.html">_legacy_lger.html</a>{legacy ? "" : ""}</p>
+        </div>
+      );
+    }
+
+
+    function App() {
+      const canvasRef = useRef(null);
+      const [vol, setVol] = useState(0); // mL NaOH added
+      const [mode, setMode] = useState("SA_SB"); // SA_SB | WA_SB
+      const [explore, setExplore] = useState(0);
+      const [challenge, setChallenge] = useState(null);
+      const [msg, setMsg] = useState("");
+      const Va = 25, Ca = 0.1, Cb = 0.1;
+      const Ve = (Ca * Va) / Cb; // 25 mL
+
+      const pH = useMemo(() => {
+        const nA = Ca * Va; // mmol
+        const nB = Cb * vol;
+        if (mode === "SA_SB") {
+          if (vol < Ve - 0.05) {
+            const H = (nA - nB) / (Va + vol);
+            return -Math.log10(Math.max(H, 1e-12));
+          }
+          if (Math.abs(vol - Ve) <= 0.05) return 7;
+          const OH = (nB - nA) / (Va + vol);
+          return 14 + Math.log10(Math.max(OH, 1e-12));
+        }
+        // weak acid pedagogical curve
+        const Ka = 1.8e-5;
+        if (vol === 0) return 0.5 * (Math.log10(Ka) ? -Math.log10(Math.sqrt(Ka * Ca)) : 2.9);
+        if (vol < Ve - 0.05) {
+          const nHA = nA - nB, nAion = nB;
+          return -Math.log10(Ka) + Math.log10(Math.max(nAion, 0.01) / Math.max(nHA, 0.01));
+        }
+        if (Math.abs(vol - Ve) <= 0.05) return 8.7;
+        const OH = (nB - nA) / (Va + vol);
+        return 14 + Math.log10(Math.max(OH, 1e-12));
+      }, [vol, mode]);
+
+      const curve = useMemo(() => {
+        const pts = [];
+        for (let v = 0; v <= 50; v += 0.5) {
+          // reuse formula inline
+          const nA = Ca * Va, nB = Cb * v;
+          let ph;
+          if (mode === "SA_SB") {
+            if (v < Ve) ph = -Math.log10(Math.max((nA - nB) / (Va + v), 1e-12));
+            else if (Math.abs(v - Ve) < 0.3) ph = 7;
+            else ph = 14 + Math.log10(Math.max((nB - nA) / (Va + v), 1e-12));
+          } else {
+            const Ka = 1.8e-5;
+            if (v === 0) ph = 2.9;
+            else if (v < Ve) ph = 4.76 + Math.log10(Math.max(nB, 0.01) / Math.max(nA - nB, 0.01));
+            else if (Math.abs(v - Ve) < 0.3) ph = 8.7;
+            else ph = 14 + Math.log10(Math.max((nB - nA) / (Va + v), 1e-12));
+          }
+          pts.push({ v, ph: Math.max(0, Math.min(14, ph)) });
+        }
+        return pts;
+      }, [mode]);
+
+      useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        const W = canvas.width, H = canvas.height;
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = "#0f172a";
+        ctx.fillRect(0, 0, W, H);
+        const pad = 50;
+        const xOf = (v) => pad + ((W - pad * 2) * v) / 50;
+        const yOf = (ph) => pad + ((H - pad * 2) * (14 - ph)) / 14;
+        ctx.strokeStyle = "#475569";
+        ctx.beginPath();
+        ctx.moveTo(pad, pad);
+        ctx.lineTo(pad, H - pad);
+        ctx.lineTo(W - pad, H - pad);
+        ctx.stroke();
+        ctx.fillStyle = "#94a3b8";
+        ctx.font = "11px IBM Plex Sans";
+        ctx.fillText("V NaOH / mL", W / 2 - 30, H - 18);
+        ctx.save();
+        ctx.translate(16, H / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillText("pH", 0, 0);
+        ctx.restore();
+        ctx.strokeStyle = "#34d399";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        curve.forEach((p, i) => {
+          const x = xOf(p.v), y = yOf(p.ph);
+          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+        // marker
+        ctx.fillStyle = "#f472b6";
+        ctx.beginPath();
+        ctx.arc(xOf(vol), yOf(pH), 7, 0, Math.PI * 2);
+        ctx.fill();
+        // flask colour
+        const ind = pH < 8.2 ? "#fce7f3" : "#f9a8d4";
+        ctx.fillStyle = ind;
+        ctx.fillRect(W - 120, 60, 70, 100);
+        ctx.strokeStyle = "#e2e8f0";
+        ctx.strokeRect(W - 120, 60, 70, 100);
+        ctx.fillStyle = "#e2e8f0";
+        ctx.font = "10px IBM Plex Sans";
+        ctx.fillText("Phenol.", W - 110, 175);
+        ctx.fillText("pH " + pH.toFixed(2), W - 115, 50);
+      }, [curve, vol, pH]);
+
+      const bump = () => setExplore((e) => e + 1);
+      const startCh = () => {
+        if (window.__HKC_FREE_CAP && window.__HKC_FREE_CAP()) { setMsg("Free limit."); return; }
+        if (window.HkcSubscribe) HkcSubscribe.recordDrillAttempt();
+        setChallenge({ text: "Reach the steep equivalence region (24–26 mL) for SA/SB.", check: () => mode === "SA_SB" && vol >= 24 && vol <= 26 });
+        setMsg("Add titrant carefully near end-point.");
+      };
+      const checkCh = () => {
+        if (!challenge) return;
+        if (challenge.check()) { setMsg("✓ Equivalence: moles acid = moles alkali; pH jump."); setChallenge(null); }
+        else setMsg("Move volume near 25 mL on strong–strong curve.");
+      };
+
+      return (
+        <LabChrome titleEn="Titration Curve Lab" titleZh="滴定曲線實驗" blurb="Add NaOH · live pH curve · compare strong vs weak analyte · indicator colour." explore={explore}>
+          <div className="grid lg:grid-cols-5 gap-4">
+            <div className="lg:col-span-3 rounded-2xl overflow-hidden border">
+              <canvas ref={canvasRef} width={640} height={400} />
+            </div>
+            <div className="lg:col-span-2 space-y-3">
+              <section className="bg-white rounded-2xl border p-4">
+                <div className="flex gap-2 mb-3">
+                  {[
+                    { id: "SA_SB", label: "Strong acid–strong base" },
+                    { id: "WA_SB", label: "Weak acid–strong base" }
+                  ].map((m) => (
+                    <button key={m.id} type="button" className={"px-2 py-2 rounded-lg text-xs font-semibold min-h-[44px] flex-1 " + (mode === m.id ? "text-white" : "bg-slate-100")}
+                      style={mode === m.id ? { background: ACCENT } : {}} onClick={() => { setMode(m.id); setVol(0); bump(); }}>{m.label}</button>
+                  ))}
+                </div>
+                <label className="text-xs font-semibold">Volume NaOH = {vol.toFixed(1)} mL (Ve≈{Ve})</label>
+                <input type="range" min="0" max="50" step="0.1" value={vol} onChange={(e) => { setVol(+e.target.value); bump(); }} />
+                <button type="button" className="mt-2 w-full border rounded-lg py-2 text-sm min-h-[44px]" onClick={() => { setVol((v) => Math.min(50, +(v + 0.1).toFixed(1))); bump(); }}>+0.1 mL (near end-point)</button>
+              </section>
+              <section className="bg-slate-900 text-emerald-50 rounded-2xl p-4 mono text-sm">
+                pH = <strong>{pH.toFixed(2)}</strong> · phenolphthalein {pH >= 8.2 ? "PINK" : "colourless"}
+              </section>
+              <section className="bg-white rounded-2xl border p-4">
+                <p className="text-sm mb-2">{challenge ? challenge.text : "Find the equivalence jump."}</p>
+                <div className="flex gap-2">
+                  <button type="button" className="px-3 py-2 text-white rounded-lg text-sm font-semibold min-h-[44px]" style={{ background: ACCENT }} onClick={startCh}>New challenge</button>
+                  {challenge && <button type="button" className="px-3 py-2 bg-emerald-600 text-white rounded-lg text-sm font-semibold min-h-[44px]" onClick={checkCh}>Check</button>}
+                </div>
+                {msg && <p className="text-xs mt-2">{msg}</p>}
+              </section>
+            </div>
+          </div>
+        </LabChrome>
+      );
+    }
+
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>

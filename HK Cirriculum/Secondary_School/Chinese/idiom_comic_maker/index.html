@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>成語四格漫畫大師</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+        }
+
+        .canvas-container {
+            cursor: crosshair;
+        }
+
+        .tool-btn.active {
+            ring: 2px solid #fbbf24;
+            transform: scale(1.1);
+        }
+
+        .pattern-bg {
+            background-color: #fdfbf7;
+            background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+    </style>
+    <!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../common/ncs-i18n.css" />
+  <script src="../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+      display: none !important;
+    }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+        if (label === "EN" || label === "\u4E2D") {
+          btn.classList.add("ncs-hide-when-ncs-fleet");
+        }
+      });
+      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+        el.classList.add("ncs-hide-when-ncs-fleet");
+      });
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+</head>
+
+<body class="bg-gradient-to-br from-amber-50 to-orange-100 min-h-screen p-4 text-slate-800">
+
+    <!-- Header -->
+    <header
+        class="max-w-6xl mx-auto flex items-center justify-between mb-6 bg-white/80 backdrop-blur rounded-2xl p-4 shadow-lg border border-amber-200">
+        <div class="flex items-center gap-4">
+            <div class="bg-red-600 text-white p-3 rounded-lg shadow font-bold text-2xl">成語</div>
+            <div>
+                <h1 class="text-2xl font-bold text-slate-800">四格漫畫大師</h1>
+                <p class="text-slate-500 text-sm">創意 • 挑戰 • 學習</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-6">
+            <div class="text-center">
+                <div class="text-xs text-slate-500 uppercase tracking-wide">計時器</div>
+                <div id="timer" class="text-3xl font-mono font-bold text-red-600">00:00</div>
+            </div>
+            <button onclick="toggleGameMode()" id="gameBtn"
+                class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl shadow-lg transition flex items-center gap-2 font-bold">
+                <span>🎯 開始挑戰</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="max-w-6xl mx-auto flex gap-6 items-start">
+
+        <!-- Left Sidebar: Tools -->
+        <div class="w-24 flex flex-col gap-4 sticky top-6">
+
+            <!-- Brush / Eraser -->
+            <div class="bg-white rounded-2xl p-3 shadow-lg border border-amber-100 flex flex-col gap-3">
+                <button onclick="setTool('brush')" id="btn-brush"
+                    class="tool-btn active w-full aspect-square rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-2xl"
+                    title="畫筆">🖌️</button>
+                <button onclick="setTool('eraser')" id="btn-eraser"
+                    class="tool-btn w-full aspect-square rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-2xl"
+                    title="擦膠">🧼</button>
+                <div class="h-px bg-slate-200 my-1"></div>
+                <button onclick="undo()"
+                    class="w-full aspect-square rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-xl"
+                    title="復原">↩️</button>
+                <button onclick="clearCurrentCanvas()"
+                    class="w-full aspect-square rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-xl text-red-500"
+                    title="清除">🗑️</button>
+            </div>
+
+            <!-- Colors -->
+            <div class="bg-white rounded-2xl p-3 shadow-lg border border-amber-100 flex flex-col gap-2">
+                <button onclick="setColor('#000000')"
+                    class="w-full aspect-square rounded-full bg-black border-2 border-slate-200 shadow-sm"></button>
+                <button onclick="setColor('#ef4444')"
+                    class="w-full aspect-square rounded-full bg-red-500 border-2 border-white shadow-sm"></button>
+                <button onclick="setColor('#3b82f6')"
+                    class="w-full aspect-square rounded-full bg-blue-500 border-2 border-white shadow-sm"></button>
+                <button onclick="setColor('#22c55e')"
+                    class="w-full aspect-square rounded-full bg-green-500 border-2 border-white shadow-sm"></button>
+                <button onclick="setColor('#eab308')"
+                    class="w-full aspect-square rounded-full bg-yellow-500 border-2 border-white shadow-sm"></button>
+                <button onclick="setColor('#a855f7')"
+                    class="w-full aspect-square rounded-full bg-purple-500 border-2 border-white shadow-sm"></button>
+                <input type="color" onchange="setColor(this.value)"
+                    class="w-full aspect-square cursor-pointer rounded-full opacity-0 absolute bottom-0">
+            </div>
+
+            <!-- Brush Size -->
+            <div class="bg-white rounded-2xl p-3 shadow-lg border border-amber-100 flex flex-col items-center gap-2">
+                <input type="range" min="1" max="20" value="3" oninput="setSize(this.value)"
+                    class="w-full h-24 writing-mode-vertical" style="writing-mode: vertical-lr; direction: rtl;">
+                <div id="size-indicator" class="w-3 h-3 rounded-full bg-black"></div>
+            </div>
+
+        </div>
+
+        <!-- Center: Canvas Area -->
+        <div class="flex-1">
+
+            <!-- Topic Banner -->
+            <div
+                class="bg-white rounded-2xl p-6 shadow-lg border border-amber-100 mb-6 text-center relative overflow-hidden group">
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500">
+                </div>
+                <h2 class="text-4xl font-bold text-slate-800 mb-2" id="current-idiom">自由創作模式</h2>
+                <p class="text-slate-500" id="current-meaning">點擊「開始挑戰」來隨機抽取成語題目！</p>
+                <button onclick="nextTopic()"
+                    class="hidden group-hover:block absolute right-4 top-1/2 -translate-y-1/2 bg-slate-100 hover:bg-slate-200 p-2 rounded-full text-slate-600 transition">🎲</button>
+            </div>
+
+            <!-- Canvas Grid -->
+            <div class="grid grid-cols-2 gap-4" id="canvas-grid">
+                <!-- Canvases will be enhanced by JS -->
+                <div class="relative group bg-white p-2 rounded-xl shadow-sm border border-slate-200">
+                    <div class="absolute top-3 left-3 bg-slate-100 text-slate-500 text-xs font-bold px-2 py-1 rounded">
+                        1. 起</div>
+                    <canvas id="c1" width="400" height="300"
+                        class="w-full h-auto bg-white pattern-bg cursor-crosshair touch-none border border-slate-100"></canvas>
+                </div>
+                <div class="relative group bg-white p-2 rounded-xl shadow-sm border border-slate-200">
+                    <div class="absolute top-3 left-3 bg-slate-100 text-slate-500 text-xs font-bold px-2 py-1 rounded">
+                        2. 承</div>
+                    <canvas id="c2" width="400" height="300"
+                        class="w-full h-auto bg-white pattern-bg cursor-crosshair touch-none border border-slate-100"></canvas>
+                </div>
+                <div class="relative group bg-white p-2 rounded-xl shadow-sm border border-slate-200">
+                    <div class="absolute top-3 left-3 bg-slate-100 text-slate-500 text-xs font-bold px-2 py-1 rounded">
+                        3. 轉</div>
+                    <canvas id="c3" width="400" height="300"
+                        class="w-full h-auto bg-white pattern-bg cursor-crosshair touch-none border border-slate-100"></canvas>
+                </div>
+                <div class="relative group bg-white p-2 rounded-xl shadow-sm border border-slate-200">
+                    <div class="absolute top-3 left-3 bg-slate-100 text-slate-500 text-xs font-bold px-2 py-1 rounded">
+                        4. 合</div>
+                    <canvas id="c4" width="400" height="300"
+                        class="w-full h-auto bg-white pattern-bg cursor-crosshair touch-none border border-slate-100"></canvas>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right: Stickers & Finish -->
+        <div class="w-64 flex flex-col gap-4 sticky top-6">
+
+            <div class="bg-white rounded-2xl p-4 shadow-lg border border-amber-100">
+                <h3 class="font-bold text-slate-700 mb-3 flex items-center gap-2">
+                    <span>😊</span> 表情貼紙
+                </h3>
+                <div class="grid grid-cols-4 gap-2 text-2xl h-64 overflow-y-auto content-start" id="sticker-grid">
+                    <!-- Stickers populated by JS -->
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-4 shadow-lg border border-amber-100">
+                <h3 class="font-bold text-slate-700 mb-3 flex items-center gap-2">
+                    <span>💭</span> 對話氣泡
+                </h3>
+                <div class="grid grid-cols-2 gap-2" id="bubble-grid">
+                    <button onclick="setTool('stamp', '🗨️')"
+                        class="hover:bg-slate-50 p-2 rounded text-3xl">🗨️</button>
+                    <button onclick="setTool('stamp', '💭')" class="hover:bg-slate-50 p-2 rounded text-3xl">💭</button>
+                    <button onclick="setTool('stamp', '❗')" class="hover:bg-slate-50 p-2 rounded text-3xl">❗</button>
+                    <button onclick="setTool('stamp', '❓')" class="hover:bg-slate-50 p-2 rounded text-3xl">❓</button>
+                </div>
+            </div>
+
+            <button onclick="downloadComics()"
+                class="bg-green-600 hover:bg-green-700 text-white px-6 py-4 rounded-xl shadow-lg transition flex items-center justify-center gap-2 font-bold w-full">
+                <span>💾 下載作品</span>
+            </button>
+
+        </div>
+
+    </div>
+
+    <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+</body>
+
+</html>
+
