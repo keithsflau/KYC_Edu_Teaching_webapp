@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>牛頓擺：點解唔可以一粒飛兩倍快 · 中二科學</title>
+<meta name="description" content="中二科學．單元十一 力與運動。拉起兩粒就彈出兩粒——但一粒用兩倍速飛出去，動量一樣係守恆嘅。點解唔係咁？動能話你知。" />
+<link rel="stylesheet" href="../../Form%203/_kit/js3-kit.css" />
+<script src="../../Form%203/_kit/js3-kit.js" defer></script>
+<script src="./engine.js" defer></script>
+<!--
+  REBUILT 2026-08-14.
+
+  What was here: a 7,163,182-byte index.html — a runaway generator had emitted
+  the same option object thousands of times into one array and then died
+  mid-string, leaving an unterminated string literal 4,030,493 characters into
+  line 11. The TypeScript parser reports 182,998 diagnostics on the text/babel
+  block; the tail of the runaway had degenerated to  { en: ", zh:", zh: ", zh:" }
+  and finally  { en: "}]  — there was no salvageable content in it. Babel threw
+  before React mounted, so the "live" hub card served a blank page.
+
+  Unlike its neighbour BioCycle, this folder never had any source: every commit
+  in the history contains index.html and nothing else. There was nothing to
+  rebuild FROM, so the page is rebuilt from the physics instead.
+
+  The engine is in ./engine.js and requires cleanly in Node. Its central claim
+  is proved, not asserted: candidates() forces every candidate outcome to
+  conserve momentum (u = n*v/k) and then reports the energy ratio, so the
+  student can see that "one ball at n times the speed" is not a near miss — it
+  carries exactly n times the kinetic energy, and n = 1 is the only case where
+  that is not a violation.
+
+  Single language (zh-Hant) for now, per standard 1d: the language bar is
+  omitted rather than linking six files that do not exist yet.
+-->
+<style>
+  .cradlebox { width: 100%; display: block; border-radius: 12px;
+               border: 1px solid var(--line-2); background: #eef2f6; touch-action: none; }
+  .figcap { font-size: .72rem; color: var(--muted); margin: 4px 0 0; line-height: 1.45; }
+  .moderow { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 12px; }
+  .modebtn { min-height: 44px; flex: 1 1 30%; padding: 0 10px; border-radius: 10px; cursor: pointer;
+             border: 1px solid var(--line-2); background: var(--card); font: inherit;
+             font-size: .8rem; font-weight: 800; color: var(--ink-2);
+             display: inline-flex; align-items: center; justify-content: center; }
+  .modebtn[aria-pressed="true"] { background: var(--a); border-color: var(--a); color: #fff; }
+  .modebtn:focus-visible { outline: 3px solid var(--b); outline-offset: 2px; }
+  .ledger { width: 100%; border-collapse: collapse; font-size: .78rem; min-width: 340px; }
+  .ledger th, .ledger td { border: 1px solid var(--line-2); padding: .4rem .5rem; text-align: left; }
+  .ledger th { background: var(--a-soft); font-weight: 800; color: var(--a-ink); }
+  .ledger td.no { color: var(--bad); font-weight: 700; }
+  .ledger td.yes { color: var(--ok); font-weight: 700; }
+  .ledger tr.hit td { background: var(--ok-soft); }
+  @media (prefers-reduced-motion: reduce) { * { transition-duration: .001ms !important; } }
+</style>
+</head>
+<body>
+<div class="js3-wrap">
+
+  <div class="js3-topbar">
+    <a class="js3-back" href="../index.html">← 返回中二科學</a>
+  </div>
+
+  <header class="js3-head">
+    <span class="js3-badge">單元十一 力與運動</span>
+    <h1 class="js3-title">牛頓擺：點解唔可以一粒飛兩倍快</h1>
+    <p class="js3-sub">拉起兩粒，彈出兩粒。但係一粒用兩倍速飛出去，動量一樣守恆得完美無缺 ——
+      咁點解大自然唔揀嗰個？答案唔喺動量度。</p>
+  </header>
+
+  <div class="js3-stages" id="stages"></div>
+  <main id="stageHost"></main>
+  <footer class="js3-cite" id="footCite"></footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  function boot() {
+    var K = window.Js3Kit, P = window.JS2_CRADLE;
+    if (!K || !P) { setTimeout(boot, 30); return; }
+    var el = K.el, mount = K.mount, sig = K.sig, clamp = K.clamp;
+
+    /* 呢個 app 用嘅實物參數：枱面玩具嘅真實尺寸 */
+    var L_REAL = 0.20;      /* 繩長 m */
+    var M_BALL = 0.050;     /* 每粒 kg */
+    var N_BALLS = 5;
+    var G = P.G;
+
+    /* ==================================================================
+       圖：全部都係由引擎嘅數計出嚟再畫，唔係擺設
+       ================================================================== */
+    function svgWrap(w, h, inner, aria) {
+      return '<svg viewBox="0 0 ' + w + ' ' + h + '" xmlns="http://www.w3.org/2000/svg" ' +
+             'role="img" aria-label="' + aria + '" style="width:100%;height:auto;display:block;' +
+             'border:1px solid #d7dde3;border-radius:10px;background:#fff">' + inner + '</svg>';
+    }
+
+    /* 圖 1：一個擺，高度 h 同速率 v */
+    function figPendulum() {
+      var w = 460, h = 210, px = 230, py = 26, Lp = 130, th = 35;
+      var a = th * Math.PI / 180;
+      var bx = px - Lp * Math.sin(a), by = py + Lp * Math.cos(a);
+      var lowY = py + Lp;
+      var hh = P.liftHeight(L_REAL, th), v = P.impactSpeed(L_REAL, th);
+      var s = '';
+      s += '<line x1="70" y1="' + py + '" x2="390" y2="' + py + '" stroke="#475569" stroke-width="4"/>';
+      s += '<line x1="' + px + '" y1="' + py + '" x2="' + px + '" y2="' + lowY + '" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="4 3"/>';
+      s += '<circle cx="' + px + '" cy="' + lowY + '" r="15" fill="#cbd5e1" opacity="0.55"/>';
+      s += '<line x1="' + px + '" y1="' + py + '" x2="' + bx.toFixed(1) + '" y2="' + by.toFixed(1) + '" stroke="#334155" stroke-width="1.8"/>';
+      s += '<circle cx="' + bx.toFixed(1) + '" cy="' + by.toFixed(1) + '" r="15" fill="#0ea5e9" stroke="#0369a1" stroke-width="1.5"/>';
+      /* 高度差 */
+      s += '<line x1="' + (bx - 34).toFixed(1) + '" y1="' + by.toFixed(1) + '" x2="' + (bx - 34).toFixed(1) + '" y2="' + lowY + '" stroke="#b45309" stroke-width="1.6"/>';
+      s += '<line x1="' + (bx - 40).toFixed(1) + '" y1="' + by.toFixed(1) + '" x2="' + (bx - 28).toFixed(1) + '" y2="' + by.toFixed(1) + '" stroke="#b45309" stroke-width="1.6"/>';
+      s += '<line x1="' + (bx - 40).toFixed(1) + '" y1="' + lowY + '" x2="' + (bx - 28).toFixed(1) + '" y2="' + lowY + '" stroke="#b45309" stroke-width="1.6"/>';
+      s += '<text x="' + (bx - 46).toFixed(1) + '" y="' + ((by + lowY) / 2).toFixed(1) + '" font-size="12" fill="#b45309" text-anchor="end" font-weight="800">h</text>';
+      s += '<path d="M ' + px + ' ' + (py + 44) + ' A 44 44 0 0 0 ' + (px - 44 * Math.sin(a)).toFixed(1) + ' ' + (py + 44 * Math.cos(a)).toFixed(1) + '" fill="none" stroke="#7c3aed" stroke-width="1.5"/>';
+      s += '<text x="' + (px - 30) + '" y="' + (py + 60) + '" font-size="12" fill="#7c3aed" font-weight="800">θ=' + th + '°</text>';
+      s += '<text x="14" y="' + (h - 46) + '" font-size="12" fill="#334155" font-weight="700">h = L(1 − cos θ) = ' + (hh * 100).toFixed(2) + ' cm</text>';
+      s += '<text x="14" y="' + (h - 28) + '" font-size="12" fill="#0369a1" font-weight="700">v = √(2gh) = ' + v.toFixed(3) + ' m/s</text>';
+      s += '<text x="14" y="' + (h - 10) + '" font-size="11" fill="#64748b">m 喺兩邊消晒 —— 粒波幾重都係呢個速率</text>';
+      return svgWrap(w, h, s, '一個擺由 35 度放手，落到最低點速率 ' + v.toFixed(2) + ' 米每秒。');
+    }
+
+    /* 圖 2：兩粒等質量彈性碰撞 = 速度對調 */
+    function figSwap() {
+      var w = 460, h = 170, s = '';
+      function row(y, label, v1, v2) {
+        s += '<text x="12" y="' + (y - 22) + '" font-size="12" fill="#334155" font-weight="800">' + label + '</text>';
+        s += '<circle cx="150" cy="' + y + '" r="17" fill="#0ea5e9" stroke="#0369a1" stroke-width="1.5"/>';
+        s += '<circle cx="230" cy="' + y + '" r="17" fill="#f59e0b" stroke="#b45309" stroke-width="1.5"/>';
+        [[150, v1], [230, v2]].forEach(function (p) {
+          var cx = p[0], vv = p[1];
+          if (Math.abs(vv) < 1e-9) {
+            s += '<text x="' + cx + '" y="' + (y + 38) + '" font-size="11" fill="#94a3b8" text-anchor="middle">v = 0</text>';
+          } else {
+            s += '<line x1="' + (cx + 20) + '" y1="' + y + '" x2="' + (cx + 20 + 46 * vv) + '" y2="' + y + '" stroke="#be123c" stroke-width="2.4"/>';
+            s += '<path d="M ' + (cx + 20 + 46 * vv) + ' ' + y + ' l -7 -5 l 0 10 z" fill="#be123c"/>';
+            s += '<text x="' + cx + '" y="' + (y + 38) + '" font-size="11" fill="#be123c" text-anchor="middle" font-weight="700">v</text>';
+          }
+        });
+      }
+      row(46, '撞之前', 1, 0);
+      row(126, '撞之後', 0, 1);
+      s += '<text x="330" y="46" font-size="11.5" fill="#64748b">藍色停低</text>';
+      s += '<text x="330" y="126" font-size="11.5" fill="#64748b">橙色接晒</text>';
+      s += '<text x="12" y="' + (h - 8) + '" font-size="11" fill="#0f766e" font-weight="700">等質量 + 彈性 → 速度整個對調，唔係「分一半」</text>';
+      return svgWrap(w, h, s, '兩粒等質量嘅波彈性碰撞，速度完全對調。');
+    }
+
+    /* 圖 3/4：兩條守恆定律嘅對照 —— 呢幅圖係成個 app 嘅重心 */
+    function figLedger(n) {
+      var v = 1;
+      var cs = P.candidates(n, v).filter(function (c) { return c.k <= Math.max(3, n + 2); });
+      var w = 470, rowH = 40, h = 54 + cs.length * rowH + 26, s = '';
+      s += '<text x="12" y="20" font-size="12" fill="#334155" font-weight="800">' + n + ' 粒以 v 撞入去，假設有 k 粒以 u 彈出</text>';
+      s += '<text x="12" y="38" font-size="11" fill="#64748b">每個候選都已經夾到動量啱晒（u = ' + n + 'v/k），跟住淨係睇動能</text>';
+      s += '<text x="16" y="66" font-size="11" fill="#475569" font-weight="800">結果</text>';
+      s += '<text x="176" y="66" font-size="11" fill="#475569" font-weight="800">動量</text>';
+      s += '<text x="286" y="66" font-size="11" fill="#475569" font-weight="800">動能</text>';
+      cs.forEach(function (c, i) {
+        var y = 84 + i * rowH, hit = c.energyOK;
+        if (hit) s += '<rect x="8" y="' + (y - 18) + '" width="' + (w - 16) + '" height="' + (rowH - 4) + '" rx="7" fill="#dcfce7" stroke="#86efac"/>';
+        s += '<text x="16" y="' + y + '" font-size="11.5" fill="#0f172a" font-weight="700">' + c.k + ' 粒 · u = ' + c.u.toFixed(2) + 'v</text>';
+        s += '<text x="176" y="' + y + '" font-size="11.5" fill="#16a34a" font-weight="700">✓ ×1.00</text>';
+        s += '<text x="286" y="' + y + '" font-size="11.5" fill="' + (hit ? '#16a34a' : '#dc2626') + '" font-weight="700">' +
+             (hit ? '✓' : '✗') + ' ×' + c.energyRatio.toFixed(2) + '</text>';
+        if (!hit) s += '<text x="366" y="' + y + '" font-size="10" fill="#dc2626">' +
+             (c.energyRatio > 1 ? '憑空多咗能量' : '能量唔見咗') + '</text>';
+        else s += '<text x="366" y="' + y + '" font-size="10" fill="#16a34a" font-weight="700">大自然揀呢個</text>';
+      });
+      s += '<text x="12" y="' + (h - 8) + '" font-size="11" fill="#0f766e" font-weight="700">兩式相除 → u = v，回代 → k = ' + n + '。唯一解，冇得揀。</text>';
+      return svgWrap(w, h, s, n + ' 粒入嘅候選結果表，只有 ' + n + ' 粒以原速彈出同時滿足動量同動能守恆。');
+    }
+
+    /* ==================================================================
+       LEARN — 五步，每步一幅同步嘅圖、一條帶單位嘅例題、一條練習
+       ================================================================== */
+    var v35 = P.impactSpeed(L_REAL, 35);
+    var LEARN = [
+      {
+        t: "一個擺，先由高度講起",
+        fig: figPendulum,
+        body: "拉起一粒波，其實係將佢舉高咗 h = L(1 − cos θ)。放手嗰陣重力位能變成動能：" +
+              "mgh = ½mv²。兩邊嘅 m 消得晒，所以撞落去嗰一刻嘅速率同粒波幾重完全無關 —— " +
+              "v = √(2gh)。",
+        worked: "例：L = 20.0 cm = 0.200 m，θ = 35°。\n" +
+                "h = 0.200 × (1 − cos 35°) = 0.200 × 0.1808 = " + (P.liftHeight(L_REAL, 35) * 100).toFixed(2) + " cm\n" +
+                "v = √(2 × 9.81 m/s² × " + P.liftHeight(L_REAL, 35).toFixed(4) + " m) = " + v35.toFixed(3) + " m/s",
+        q: "同一個擺，換咗一粒重一倍嘅波，喺同一個角度放手。撞落去嗰刻嘅速率會點？",
+        opts: ["一樣", "快一倍", "慢一半", "快 √2 倍"],
+        a: 0,
+        why: "一樣。mgh = ½mv² 入面兩個 m 消咗，剩低 v = √(2gh)，成條式冇質量。重嘅波動量同動能都大啲，但速率一樣。"
+      },
+      {
+        t: "兩粒撞埋：速度對調",
+        fig: figSwap,
+        body: "兩粒等質量嘅波做彈性碰撞，結果唔係「分一半速度」，而係整個對調：" +
+              "本來郁嗰粒完全停低，本來停嗰粒用原本嘅速率走。" +
+              "牛頓擺入面一排波就係咁一對對傳落去，所以個「訊號」可以由頭傳到尾。",
+        worked: "解出嚟嘅：由 mu₁ + mu₂ = mv₁ + mv₂ 同 ½mu₁² + ½mu₂² = ½mv₁² + ½mv₂²，\n" +
+                "得 v₁ = u₂、v₂ = u₁。（另一個數學解係「冇撞過」，物理上剔除。）",
+        q: "一粒 1.0 m/s 嘅波，撞向一粒靜止、質量一樣嘅波（彈性）。撞完之後？",
+        opts: ["兩粒各 0.5 m/s", "第一粒停低，第二粒 1.0 m/s", "兩粒都 1.0 m/s", "第一粒彈返轉頭 1.0 m/s"],
+        a: 1,
+        why: "速度對調。「各 0.5」動量啱（0.5+0.5=1）但動能得一半（2×½m(0.5)² = ¼mv² 對比 ½mv²），所以唔係彈性碰撞嘅答案。"
+      },
+      {
+        t: "動量守恆 —— 但佢管唔到晒",
+        fig: function () { return figLedger(2); },
+        body: "拉起 2 粒、每粒速率 v 撞入去，總動量係 2mv。" +
+              "而家問：彈出嚟嘅可唔可以係「1 粒用 2v」？計一計動量：1 × m × 2v = 2mv。" +
+              "完全守恆。動量呢一關，佢過到。好多人喺呢度就收工，然後解釋唔到點解現實唔係咁。",
+        worked: "候選（全部已經夾啱動量）：\n" +
+                "  1 粒用 2.00v → p = 2mv ✓\n" +
+                "  2 粒用 1.00v → p = 2mv ✓\n" +
+                "  4 粒用 0.50v → p = 2mv ✓\n" +
+                "三個都過到動量呢關。淨係靠動量，你分唔出邊個先啱。",
+        q: "拉起 2 粒。「1 粒用兩倍速飛出去」呢個結果，動量守唔守恆？",
+        opts: ["守恆", "唔守恆，少咗一半", "唔守恆，多咗一倍", "要知道質量先講得"],
+        a: 0,
+        why: "守恆。1 × m × 2v = 2mv，同入嚟嗰陣一模一樣。呢個正正係點解「動量守恆」單獨解釋唔到牛頓擺 —— 佢容許咗一個唔會發生嘅結果。"
+      },
+      {
+        t: "加埋動能，答案即刻唯一",
+        fig: function () { return figLedger(2); },
+        body: "彈性碰撞仲要守動能。入嚟嘅動能係 2 × ½mv² = mv²。" +
+              "「1 粒用 2v」帶走嘅係 ½m(2v)² = 2mv² —— 係入嚟嗰陣嘅兩倍。" +
+              "咁多出嚟嘅能量邊度嚟？冇邊度。所以呢個結果唔係「差少少」，係憑空製造能量。",
+        worked: "設 k 粒以速率 u 彈出：\n" +
+                "  動量： k·u = n·v\n" +
+                "  動能： k·u² = n·v²\n" +
+                "第二式除第一式： u = v。回代第一式： k = n。\n" +
+                "唯一解，冇第二個。呢個就係「拉幾多粒，出返幾多粒」嘅全部原因。",
+        q: "拉起 2 粒，如果真係「1 粒用 2v」飛出去，動能會變成入嚟嗰陣嘅幾多倍？",
+        opts: ["1 倍（守恆）", "2 倍", "4 倍", "0.5 倍"],
+        a: 1,
+        why: "2 倍。½m(2v)² = 2mv²，而入嚟係 2 × ½mv² = mv²。速率入面嗰個平方就係關鍵：速度加倍，動能係四倍，但因為得返一粒，淨係 2 倍。"
+      },
+      {
+        t: "點解真實嘅牛頓擺會停",
+        fig: function () {
+          var e = 0.98, b = P.bouncesUntil(L_REAL, 35, e, 5);
+          var w = 460, h = 180, mL = 46, mT = 16, pw = w - mL - 16, ph = h - mT - 40, s = '';
+          var pts = [];
+          for (var i = 0; i <= b; i++) {
+            var vv = P.afterBounces(P.impactSpeed(L_REAL, 35), e, i);
+            pts.push([i, P.swingAngle(L_REAL, vv)]);
+          }
+          s += '<line x1="' + mL + '" y1="' + (mT + ph) + '" x2="' + (mL + pw) + '" y2="' + (mT + ph) + '" stroke="#94a3b8"/>';
+          s += '<line x1="' + mL + '" y1="' + mT + '" x2="' + mL + '" y2="' + (mT + ph) + '" stroke="#94a3b8"/>';
+          var d = pts.map(function (p, i) {
+            return (i ? 'L' : 'M') + (mL + pw * p[0] / b).toFixed(1) + ' ' + (mT + ph * (1 - p[1] / 35)).toFixed(1);
+          }).join(' ');
+          s += '<path d="' + d + '" fill="none" stroke="#0ea5e9" stroke-width="2.4"/>';
+          [0, 35].forEach(function (a2) {
+            s += '<text x="' + (mL - 6) + '" y="' + (mT + ph * (1 - a2 / 35) + 4) + '" font-size="10" fill="#64748b" text-anchor="end">' + a2 + '°</text>';
+          });
+          s += '<text x="' + (mL + pw / 2) + '" y="' + (h - 18) + '" font-size="11" fill="#334155" text-anchor="middle" font-weight="700">碰撞次數</text>';
+          s += '<text x="' + (mL + 8) + '" y="' + (mT + 14) + '" font-size="11" fill="#0369a1" font-weight="700">e = 0.98：' + b + ' 次之後跌到 5° 以下</text>';
+          return svgWrap(w, h, s, '恢復係數 0.98 之下，擺角由 35 度經 ' + b + ' 次碰撞衰減到 5 度以下。');
+        },
+        body: "真實嘅碰撞唔係完美彈性。恢復係數 e 大約 0.98 – 0.99：每撞一次速率乘 e，" +
+              "而動能乘 e²。走咗嘅能量變成聲、變成金屬入面嘅振動同熱。" +
+              "所以理論話「永遠彈落去」，枱面嗰個玩具幾分鐘就停 —— 兩者冇矛盾，" +
+              "e = 1 只係一個理想化。",
+        worked: "e = 0.98，撞一次剩低 e² = " + (0.98 * 0.98).toFixed(4) + " 即 96.0% 嘅動能。\n" +
+                "撞 " + P.bouncesUntil(L_REAL, 35, 0.98, 5) + " 次之後，擺角由 35° 跌到 5° 以下。",
+        q: "恢復係數 e = 0.98，即係每次碰撞之後動能剩返幾多？",
+        opts: ["98%", "96%", "99%", "49%"],
+        a: 1,
+        why: "96%。速率乘 e，但動能同速率嘅平方成正比，所以動能乘 e² = 0.98² = 0.9604。呢個平方就係點解個擺跌得比你估計快。"
+      }
+    ];
+
+    /* ================== GUIDED ================== */
+    var GUIDED = [
+      { topic: "唯一解", stem: "牛頓擺有 5 粒。拉起 3 粒放手，會有幾多粒彈出去？",
+        opts: ["1 粒，用三倍速", "2 粒", "3 粒，用原速", "5 粒都郁"], a: 2,
+        why: "3 粒，速率同入嚟嗰陣一樣。k·u = 3v 同 k·u² = 3v² 兩式相除即得 u = v，再得 k = 3。" },
+      { topic: "邊條定律做主", stem: "「拉 2 粒出 2 粒」呢件事，淨係用動量守恆解釋得到嗎？",
+        opts: ["可以，動量守恆已經夠", "唔可以，動量容許咗『1 粒用 2v』", "唔可以，因為動量根本唔守恆", "要睇質量先答到"], a: 1,
+        why: "唔可以。『1 粒用 2v』嘅動量係 2mv，同入嚟一樣，動量呢關佢過到。剔走佢嘅係動能：佢帶走 2 倍嘅動能。" },
+      { topic: "平方", stem: "一粒波速率變成兩倍，佢嘅動能會變成幾多倍？",
+        opts: ["2 倍", "4 倍", "√2 倍", "冇變"], a: 1,
+        why: "4 倍。E = ½mv²，v 加倍就係 2² = 4 倍。呢個平方係成個牛頓擺論證嘅樞紐。" },
+      { topic: "質量", stem: "將五粒波全部換成重一倍嘅，喺同一角度放手。撞擊速率會點？",
+        opts: ["快一倍", "一樣", "慢一半", "快 √2 倍"], a: 1,
+        why: "一樣。v = √(2gL(1 − cos θ)) 入面冇質量。動量同動能都大咗一倍，但速率唔變。" },
+      { topic: "角度", stem: "L = 0.200 m，由 60° 放手。撞擊速率大約幾多？（g = 9.81 m/s²）",
+        opts: ["0.99 m/s", "1.40 m/s", "0.70 m/s", "1.98 m/s"], a: 0,
+        why: "h = 0.200(1 − cos 60°) = 0.200 × 0.5 = 0.100 m，v = √(2 × 9.81 × 0.100) = " +
+             P.impactSpeed(0.200, 60).toFixed(2) + " m/s。" },
+      { topic: "現實", stem: "點解真實嘅牛頓擺會慢慢停低？",
+        opts: ["動量唔守恆", "碰撞唔係完美彈性，動能變成聲同熱", "重力慢慢變細", "繩會變長"], a: 1,
+        why: "碰撞唔係完美彈性（e ≈ 0.98），加上空氣阻力。動量對成個系統（連地球）依然守恆，走咗嘅係動能。" }
+    ];
+
+    var REVIEW = [
+      { stem: "牛頓擺入面，決定咗『幾多粒出、幾快』嘅係邊組條件？",
+        opts: ["淨係動量守恆", "淨係動能守恆", "動量同動能一齊", "重力嘅大小"], a: 2,
+        why: "兩條一齊。淨得動量有無限個解；兩條夾埋，k = n、u = v 係唯一解。" },
+      { stem: "拉起 2 粒。「4 粒以 v/2 彈出」呢個結果違反咗乜？",
+        opts: ["動量", "動能（少咗一半）", "兩樣都違反", "冇違反"], a: 1,
+        why: "動量啱（4 × v/2 = 2v），但動能係 4 × ½m(v/2)² = ½mv²，而入嚟係 mv² —— 得一半。" },
+      { stem: "撞擊速率 v = √(2gL(1 − cos θ)) 入面，點解冇質量？",
+        opts: ["因為質量太細", "因為 mgh = ½mv² 兩邊嘅 m 消咗", "因為波係金屬", "式寫漏咗"], a: 1,
+        why: "mgh = ½mv²，兩邊同時除 m，剩低 gh = ½v²。所有自由落體式都係咁。" }
+    ];
+
+    var SUMMARY = [
+      "拉起 n 粒，一定係 n 粒以原速彈出 —— 唔係一粒飛快啲。",
+      "「1 粒用 n 倍速」動量係守恆嘅；剔走佢嘅係動能，佢帶走 n 倍。",
+      "k·u = n·v 同 k·u² = n·v² 兩式相除得 u = v，回代得 k = n：唯一解。",
+      "撞擊速率 v = √(2gL(1 − cos θ))，同質量無關。",
+      "真實擺會停，因為 e < 1：每撞一次動能乘 e²。"
+    ];
+
+    /* ==================================================================
+       畫個擺 —— 呢個係 1b 要求嘅「現象本身」
+       ================================================================== */
+    function Cradle(host) {
+      var cv = el("canvas", { class: "cradlebox" });
+      host.appendChild(cv);
+      var ctx = cv.getContext("2d");
+      var st = { n: 2, theta0: 35, e: 0.98, side: -1, mode: "release", amp: 35, t: 0, running: true, impacts: 0 };
+      var omega = Math.sqrt(G / L_REAL);
+      var raf = null, last = 0;
+
+      function reset(keep) {
+        st.side = -1; st.mode = "release"; st.amp = st.theta0; st.t = 0;
+        st.impacts = 0; st.running = true;
+        if (!keep) draw();
+      }
+
+      function step(dt) {
+        if (!st.running) return;
+        st.t += dt;
+        var quarter = (Math.PI / 2) / omega, half = Math.PI / omega;
+        var lim = st.mode === "release" ? quarter : half;
+        if (st.t >= lim) {
+          /* 撞擊：速率乘 e，換邊 */
+          var v = P.impactSpeed(L_REAL, st.amp) * st.e;
+          st.amp = P.swingAngle(L_REAL, v);
+          st.impacts++;
+          st.side = -st.side;
+          st.mode = "swing";
+          st.t = 0;
+          if (st.amp < 2) { st.running = false; st.amp = 0; }
+        }
+      }
+
+      function currentAngle() {
+        if (!st.running) return 0;
+        if (st.mode === "release") return st.amp * Math.cos(omega * st.t);
+        return st.amp * Math.abs(Math.sin(omega * st.t));
+      }
+
+      function draw() {
+        var dpr = Math.min(2, window.devicePixelRatio || 1);
+        var W = cv.clientWidth || 460, H = Math.round(W * 0.62);
+        if (cv.width !== Math.round(W * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+        cv.style.height = H + "px";
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, W, H);
+
+        /* 幾何：要保證擺到最大角（70°）嗰陣，最外邊嗰粒波仍然完整留喺畫布入面。
+           最左邊嘅波心 = cx − 4r − Lp·sin70°，再減 r 就係佢個邊。
+           取 r = W/30、Lp = 0.33W，喺 W = 384 之下仲有 8.9 px 空位。
+           框寬 5.4r：靜止時最外邊嘅波邊喺 5r，唔會壓住支柱。 */
+        var r = Math.min(18, W / 30);
+        var py = H * 0.13, Lp = W * 0.33;
+        var cx = W / 2;
+        var ang = currentAngle();
+
+        /* 框 */
+        ctx.strokeStyle = "#475569"; ctx.lineWidth = 5; ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(cx - 5.4 * r, py); ctx.lineTo(cx + 5.4 * r, py); ctx.stroke();
+        ctx.lineWidth = 4; ctx.strokeStyle = "#64748b";
+        [-1, 1].forEach(function (sgn) {
+          ctx.beginPath();
+          ctx.moveTo(cx + sgn * 5.4 * r, py);
+          ctx.lineTo(cx + sgn * 5.4 * r, py + Lp + 2.2 * r);
+          ctx.stroke();
+        });
+        ctx.beginPath();
+        ctx.moveTo(cx - 6.2 * r, py + Lp + 2.2 * r); ctx.lineTo(cx + 6.2 * r, py + Lp + 2.2 * r); ctx.stroke();
+
+        for (var i = 0; i < N_BALLS; i++) {
+          var pxi = cx + (i - (N_BALLS - 1) / 2) * 2 * r;
+          var lifted = st.side < 0 ? (i < st.n) : (i >= N_BALLS - st.n);
+          var a = lifted ? (st.side < 0 ? -ang : ang) * Math.PI / 180 : 0;
+          var bxp = pxi + Lp * Math.sin(a), byp = py + Lp * Math.cos(a);
+
+          ctx.strokeStyle = "#94a3b8"; ctx.lineWidth = 1.4;
+          ctx.beginPath(); ctx.moveTo(pxi, py); ctx.lineTo(bxp, byp); ctx.stroke();
+
+          var g = ctx.createRadialGradient(bxp - r * 0.35, byp - r * 0.4, r * 0.15, bxp, byp, r);
+          if (lifted && st.running) { g.addColorStop(0, "#7dd3fc"); g.addColorStop(1, "#0369a1"); }
+          else { g.addColorStop(0, "#e2e8f0"); g.addColorStop(1, "#64748b"); }
+          ctx.fillStyle = g;
+          ctx.beginPath(); ctx.arc(bxp, byp, r, 0, 2 * Math.PI); ctx.fill();
+          ctx.strokeStyle = "rgba(15,23,42,.35)"; ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+
+        /* 標註 */
+        ctx.fillStyle = "#0f172a";
+        ctx.font = "700 12px system-ui, sans-serif";
+        ctx.textAlign = "left";
+        ctx.fillText("拉起 " + st.n + " 粒 → 彈出 " + st.n + " 粒", 10, 18);
+        ctx.fillStyle = "#64748b";
+        ctx.font = "11px system-ui, sans-serif";
+        ctx.fillText("碰撞 " + st.impacts + " 次 · 現時擺角 " + st.amp.toFixed(1) + "°" +
+                     (st.running ? "" : " · 已停"), 10, 34);
+      }
+
+      function loop(ts) {
+        if (!last) last = ts;
+        var dt = Math.min(0.05, (ts - last) / 1000);
+        last = ts;
+        step(dt); draw();
+        raf = requestAnimationFrame(loop);
+      }
+      if (!K.reducedMotion()) raf = requestAnimationFrame(loop); else draw();
+
+      return {
+        state: st,
+        reset: reset,
+        redraw: draw,
+        stop: function () { if (raf) cancelAnimationFrame(raf); }
+      };
+    }
+
+    /* ==================================================================
+       階段
+       ================================================================== */
+    var STAGES = [
+      { id: "learn", labelKey: "由零開始學" },
+      { id: "guided", labelKey: "引導練習" },
+      { id: "exp", labelKey: "實驗室" },
+      { id: "rev", labelKey: "總結測驗" }
+    ];
+    var unlocked = { learn: true, guided: false, exp: false, rev: false };
+    var active = "learn";
+    var learnIdx = 0, learnPicked = null;
+    var guidedIdx = 0, guidedPicked = null, guidedScore = 0;
+    var revIdx = 0, revPicked = null, revScore = 0;
+    var cradle = null;
+
+    var bar = K.stageBar(document.getElementById("stages"), STAGES, function (id) {
+      if (!unlocked[id]) return;
+      go(id);
+    });
+    /* stageBar 用 data-i18n 做 label；呢一版係單語，直接寫死文字 */
+    Array.prototype.forEach.call(document.querySelectorAll("#stages .l"), function (n, i) {
+      n.textContent = STAGES[i].labelKey;
+    });
+
+    var host = document.getElementById("stageHost");
+
+    function go(id) {
+      if (cradle) { cradle.stop(); cradle = null; }
+      active = id;
+      bar.render(active, unlocked);
+      render();
+    }
+
+    function optionList(opts, picked, correct, onPick) {
+      return el("div", { class: "js3-opts" }, opts.map(function (o, i) {
+        var cls = "js3-opt";
+        if (picked !== null) {
+          if (i === correct) cls += " right";
+          else if (i === picked) cls += " wrong";
+        }
+        var b = el("button", {
+          type: "button", class: cls, "aria-pressed": picked === i ? "true" : "false"
+        }, [
+          el("span", { class: "gl", text: "ABCD".charAt(i) }),
+          el("span", { text: o })
+        ]);
+        if (picked === null) b.addEventListener("click", function () { onPick(i); });
+        else b.disabled = true;
+        return b;
+      }));
+    }
+
+    function renderLearn() {
+      var s = LEARN[learnIdx];
+      var figHost = el("div");
+      figHost.innerHTML = s.fig();
+      var kids = [
+        el("div", { class: "js3-progress" }, LEARN.map(function (_, k) {
+          return el("div", { class: "js3-bar", style: "background:" + (k <= learnIdx ? "var(--a)" : "#e2e8f0") });
+        })),
+        el("p", { class: "js3-caption", text: "第 " + (learnIdx + 1) + " / " + LEARN.length + " 步" }),
+        el("h2", { class: "js3-title", style: "font-size:1.15rem;margin:.3rem 0 .5rem", text: s.t }),
+        figHost,
+        el("p", { style: "font-size:.9rem;line-height:1.85;color:var(--ink-2);margin:.8rem 0 0", text: s.body }),
+        el("div", { class: "js3-note b", style: "white-space:pre-line;font-size:.83rem;line-height:1.8", text: s.worked }),
+        el("p", { style: "font-weight:800;font-size:.9rem;margin:1rem 0 0", text: s.q }),
+        optionList(s.opts, learnPicked, s.a, function (i) { learnPicked = i; render(); })
+      ];
+      if (learnPicked !== null) {
+        kids.push(K.verdict(learnPicked === s.a ? "right" : "wrong",
+          learnPicked === s.a ? "✓" : "✗",
+          learnPicked === s.a ? "啱" : "唔啱", s.why));
+        kids.push(el("button", {
+          type: "button", class: "js3-btn", style: "margin-top:.8rem",
+          text: learnIdx === LEARN.length - 1 ? "完成，去引導練習 →" : "下一步 →",
+          onclick: function () {
+            if (learnIdx === LEARN.length - 1) { unlocked.guided = true; go("guided"); return; }
+            learnIdx++; learnPicked = null; render();
+          }
+        }));
+      }
+      return el("section", { class: "js3-card" }, kids);
+    }
+
+    function renderDrill(bank, idx, picked, score, onPick, onNext, title, nextId) {
+      var q = bank[idx];
+      var kids = [
+        el("p", { class: "js3-caption", text: title + " · 第 " + (idx + 1) + " / " + bank.length + " 題 · 已答對 " + score }),
+        q.topic ? el("span", { class: "js3-badge", text: q.topic }) : null,
+        el("p", { style: "font-weight:800;font-size:.95rem;margin:.5rem 0 0;line-height:1.7", text: q.stem }),
+        optionList(q.opts, picked, q.a, onPick)
+      ];
+      if (picked !== null) {
+        kids.push(K.verdict(picked === q.a ? "right" : "wrong", picked === q.a ? "✓" : "✗",
+          picked === q.a ? "啱" : "唔啱", q.why));
+        kids.push(el("button", {
+          type: "button", class: "js3-btn", style: "margin-top:.8rem",
+          text: idx === bank.length - 1 ? "完成 →" : "下一題 →",
+          onclick: onNext
+        }));
+      }
+      return el("section", { class: "js3-card" }, kids);
+    }
+
+    function renderExp() {
+      var box = el("div");
+      var readHost = el("div", { class: "js3-readouts three" });
+      var ledgerHost = el("div", { class: "js3-tablewrap" });
+      var capHost = el("p", { class: "figcap" });
+
+      function refresh() {
+        var stt = cradle.state;
+        var v = P.impactSpeed(L_REAL, stt.theta0);
+        var p = stt.n * M_BALL * v;
+        var E = 0.5 * stt.n * M_BALL * v * v;
+        mount(readHost, [
+          K.readout("撞擊速率 v", v.toFixed(3), "m/s"),
+          K.readout("總動量 p = nmv", p.toFixed(4), "kg·m/s"),
+          K.readout("總動能 E = ½nmv²", (E * 1000).toFixed(2), "mJ")
+        ]);
+        var cs = P.candidates(stt.n, v).filter(function (c) { return c.k <= Math.max(3, stt.n + 2); });
+        var rows = cs.map(function (c) {
+          return el("tr", { class: c.energyOK ? "hit" : "" }, [
+            el("td", { text: c.k + " 粒 · " + c.u.toFixed(3) + " m/s" }),
+            el("td", { class: "yes", text: "✓ ×" + c.momentumRatio.toFixed(3) }),
+            el("td", { class: c.energyOK ? "yes" : "no", text: (c.energyOK ? "✓" : "✗") + " ×" + c.energyRatio.toFixed(3) }),
+            el("td", { text: c.energyOK ? "大自然揀呢個" : (c.energyRatio > 1 ? "憑空多咗能量" : "能量唔見咗") })
+          ]);
+        });
+        mount(ledgerHost, [el("table", { class: "ledger" }, [
+          el("thead", null, [el("tr", null, [
+            el("th", { text: "假設嘅結果" }), el("th", { text: "動量" }),
+            el("th", { text: "動能" }), el("th", { text: "判斷" })
+          ])]),
+          el("tbody", null, rows)
+        ])]);
+        capHost.textContent = "拉起 " + stt.n + " 粒、由 " + stt.theta0 + "° 放手：撞擊速率 " +
+          v.toFixed(3) + " m/s。表入面每一行嘅動量都係 ×1.000 —— 全部都夾啱咗動量。" +
+          "只有「" + stt.n + " 粒以原速」嗰行嘅動能都係 ×1.000。";
+      }
+
+      box.appendChild(el("p", {
+        style: "font-size:.88rem;line-height:1.8;color:var(--ink-2);margin:0 0 .8rem",
+        text: "拉起唔同數量嘅波，睇實際彈出幾多粒。右邊個表同步計出：如果換咗第二個結果，" +
+              "動量同動能會點。動量嗰欄永遠係 ✓ —— 呢個就係重點。"
+      }));
+
+      var cradleHost = el("div");
+      box.appendChild(cradleHost);
+      box.appendChild(capHost);
+
+      var ctrls = el("div", { class: "js3-ctrls" }, [
+        K.slider({
+          label: "拉起幾多粒 n", value: 2, min: 1, max: 3, step: 1,
+          format: function (v) { return v + " 粒"; },
+          onInput: function (v) { cradle.state.n = v; cradle.reset(true); refresh(); }
+        }),
+        K.slider({
+          label: "放手角度 θ", value: 35, min: 10, max: 70, step: 1,
+          format: function (v) { return v + "°"; },
+          onInput: function (v) { cradle.state.theta0 = v; cradle.reset(true); refresh(); }
+        }),
+        K.slider({
+          label: "恢復係數 e", value: 0.98, min: 0.80, max: 1.00, step: 0.01,
+          format: function (v) { return v.toFixed(2); },
+          onInput: function (v) { cradle.state.e = v; cradle.reset(true); refresh(); }
+        })
+      ]);
+      box.appendChild(ctrls);
+      box.appendChild(el("button", {
+        type: "button", class: "js3-btn", style: "margin:.2rem 0 1rem", text: "再放手一次",
+        onclick: function () { cradle.reset(true); refresh(); }
+      }));
+      box.appendChild(readHost);
+      box.appendChild(el("p", {
+        style: "font-weight:800;font-size:.9rem;margin:1.1rem 0 .3rem",
+        text: "如果彈出嚟嘅唔係 n 粒，會點？"
+      }));
+      box.appendChild(ledgerHost);
+      box.appendChild(el("button", {
+        type: "button", class: "js3-btn", style: "margin-top:1rem", text: "去總結測驗 →",
+        onclick: function () { unlocked.rev = true; go("rev"); }
+      }));
+
+      var sec = el("section", { class: "js3-card" }, [box]);
+      setTimeout(function () { cradle = Cradle(cradleHost); refresh(); }, 0);
+      return sec;
+    }
+
+    function renderRev() {
+      if (revIdx >= REVIEW.length) {
+        return el("section", { class: "js3-card" }, [
+          el("h2", { class: "js3-title", style: "font-size:1.15rem", text: "總結" }),
+          el("ul", { class: "js3-list" }, SUMMARY.map(function (x) { return el("li", { text: x }); })),
+          K.verdict(revScore === REVIEW.length ? "right" : "warn", revScore === REVIEW.length ? "✓" : "!",
+            "測驗：" + revScore + " / " + REVIEW.length,
+            revScore === REVIEW.length ? "全對。你捉到個重點：動量單獨解釋唔到牛頓擺。"
+              : "答錯咗嘅，返上去『由零開始學』第 3、4 步再睇一次個對照表。"),
+          el("button", {
+            type: "button", class: "js3-btn", style: "margin-top:.9rem", text: "再做一次",
+            onclick: function () { revIdx = 0; revPicked = null; revScore = 0; render(); }
+          })
+        ]);
+      }
+      return renderDrill(REVIEW, revIdx, revPicked, revScore,
+        function (i) { revPicked = i; if (i === REVIEW[revIdx].a) revScore++; render(); },
+        function () { revIdx++; revPicked = null; render(); },
+        "總結測驗");
+    }
+
+    function render() {
+      if (active === "learn") mount(host, [renderLearn()]);
+      else if (active === "guided") {
+        if (guidedIdx >= GUIDED.length) {
+          unlocked.exp = true;
+          mount(host, [el("section", { class: "js3-card" }, [
+            K.verdict(guidedScore >= 4 ? "right" : "warn", guidedScore >= 4 ? "✓" : "!",
+              "引導練習：" + guidedScore + " / " + GUIDED.length,
+              guidedScore >= 4 ? "夠喇，入實驗室。" : "可以再做一次，或者直接入實驗室睇個對照表。"),
+            el("button", {
+              type: "button", class: "js3-btn", style: "margin-top:.8rem", text: "入實驗室 →",
+              onclick: function () { unlocked.exp = true; go("exp"); }
+            }),
+            el("button", {
+              type: "button", class: "js3-btn ghost", style: "margin-top:.5rem", text: "再做一次",
+              onclick: function () { guidedIdx = 0; guidedPicked = null; guidedScore = 0; render(); }
+            })
+          ])]);
+        } else {
+          mount(host, [renderDrill(GUIDED, guidedIdx, guidedPicked, guidedScore,
+            function (i) { guidedPicked = i; if (i === GUIDED[guidedIdx].a) guidedScore++; render(); },
+            function () { guidedIdx++; guidedPicked = null; render(); },
+            "引導練習")]);
+        }
+      }
+      else if (active === "exp") mount(host, [renderExp()]);
+      else mount(host, [renderRev()]);
+      bar.render(active, unlocked);
+    }
+
+    mount(document.getElementById("footCite"), [
+      el("p", { text: "課程依據：中二科學．單元十一「力與運動」—— 動量、動能、彈性碰撞同能量轉換。" }),
+      el("p", {
+        text: "頁內所有數值由 ./engine.js 計出（g = 9.80665 m/s²，繩長 0.200 m，每粒 50.0 g）。" +
+              "候選結果表嘅 u 係由動量守恆倒推（u = nv/k），所以動量欄必然係 ×1.000；" +
+              "動能欄係獨立計出嚟嘅結果，唔係寫死。"
+      }),
+      el("p", { text: "engine.js 可喺 Node 直接 require，並附有 18 項對照檢查（擺、碰撞鏈、兩條守恆定律、衰減）。" }),
+      el("p", { style: "text-align:center;opacity:.7;margin-top:.8rem", text: "@HKSTEAMAI All Copy-Right Reserved." })
+    ]);
+
+    go("learn");
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
+  else boot();
+})();
+</script>
+</body>
+</html>

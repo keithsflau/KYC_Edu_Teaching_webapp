@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+  <head>
+  <meta charset="UTF-8" />
+  <title>HKDSE Ch3: Email Protocols</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script
+
+      crossorigin
+
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+
+    ></script>
+
+    <script
+
+      crossorigin
+
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+
+    ></script>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+
+      body {
+
+        background-color: #0f172a;
+
+        color: #e2e8f0;
+
+        font-family: sans-serif;
+
+      }
+
+    </style>
+
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet" />
+<!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../../../../common/ncs-i18n.css" />
+  <script src="../../../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+      display: none !important;
+    }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+        if (label === "EN" || label === "\u4E2D") {
+          btn.classList.add("ncs-hide-when-ncs-fleet");
+        }
+      });
+      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+        el.classList.add("ncs-hide-when-ncs-fleet");
+      });
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+  <!-- ICT family kit: React adapter for the vanilla Lucide UMD, and the wire
+       between this app's own TEXT dictionary and the fleet language switcher. -->
+  <script src="../../../../common/ict-i18n.js"></script>
+</head>
+
+  <body class="p-4 flex justify-center min-h-screen">
+
+    <div id="root" class="w-full max-w-4xl"></div>
+
+    <script>
+
+const {
+
+  useState
+
+} = React;
+
+const createLucideIcon = name => {
+
+  const iconData = window.lucide?.icons[name];
+
+  if (!iconData) return props => /*#__PURE__*/React.createElement("span", null, "?");
+
+  return ({
+
+    size,
+
+    className,
+
+    ...props
+
+  }) => React.createElement("svg", {
+
+    width: size || 24,
+
+    height: size || 24,
+
+    fill: "none",
+
+    stroke: "currentColor",
+
+    strokeWidth: 2,
+
+    strokeLinecap: "round",
+
+    strokeLinejoin: "round",
+
+    className: `lucide lucide-${name.toLowerCase()} ${className || ""}`,
+
+    viewBox: "0 0 24 24",
+
+    ...props
+
+  }, iconData.map(([tag, attrs], i) => React.createElement(tag, {
+
+    ...attrs,
+
+    key: i
+
+  })));
+
+};
+
+const Icon = ({
+
+  name,
+
+  ...p
+
+}) => {
+
+  const C = createLucideIcon(name);
+
+  return /*#__PURE__*/React.createElement(C, p);
+
+};
+
+const TEXT = {
+
+  en: {
+
+    title: "HKDSE Ch3: Email Protocols",
+
+    subtitle: "POP3 vs IMAP Simulation",
+
+    server: "Mail Server",
+
+    client1: "Device 1 (Phone)",
+
+    client2: "Device 2 (Laptop)",
+
+    protocol: "Protocol:",
+
+    pop3: "POP3",
+
+    imap: "IMAP",
+
+    check: "Check Mail",
+
+    delete: "Delete Mail",
+
+    status: "Status",
+
+    msgPop3: "POP3: Downloads email and DELETES from server (usually).",
+
+    msgImap: "IMAP: Syncs email. Keeps copy on server. Viewable on multiple devices.",
+
+    inbox: "Inbox",
+
+    empty: "Empty",
+
+    mail1: "Subject: Homework",
+
+    mail2: "Subject: DSE Exam",
+
+    statSync: "Synced",
+
+    statDownloaded: "Downloaded & Removed"
+
+  },
+
+  "zh-Hant": {
+
+    title: "HKDSE 第三章：電郵協定",
+
+    subtitle: "POP3 與 IMAP 模擬",
+
+    server: "郵件伺服器",
+
+    client1: "裝置 1 (手機)",
+
+    client2: "裝置 2 (手提電腦)",
+
+    protocol: "協定：",
+
+    pop3: "POP3",
+
+    imap: "IMAP",
+
+    check: "檢查郵件",
+
+    delete: "刪除郵件",
+
+    status: "狀態",
+
+    msgPop3: "POP3：下載郵件後通常會從伺服器刪除。",
+
+    msgImap: "IMAP：同步郵件。伺服器保留副本。多裝置可見。",
+
+    inbox: "收件箱",
+
+    empty: "空",
+
+    mail1: "標題：功課",
+
+    mail2: "標題：DSE 考試",
+
+    statSync: "已同步",
+
+    statDownloaded: "已下載並移除"
+
+  }
+
+};
+
+const INITIAL_SERVER = [{
+
+  id: 1,
+
+  subject: "mail1",
+
+  read: false
+
+}, {
+
+  id: 2,
+
+  subject: "mail2",
+
+  read: false
+
+}];
+
+const App = () => {
+
+  const [lang, setLang] = IctI18n.useLang(React, "en");
+
+  const t = TEXT[lang];
+
+  const [protocol, setProtocol] = useState("pop3");
+
+
+
+  // System State
+
+  const [serverMails, setServerMails] = useState(INITIAL_SERVER);
+
+  const [client1Mails, setClient1Mails] = useState([]);
+
+  const [client2Mails, setClient2Mails] = useState([]);
+
+  const [msg, setMsg] = useState("");
+
+  const reset = () => {
+
+    setServerMails(INITIAL_SERVER);
+
+    setClient1Mails([]);
+
+    setClient2Mails([]);
+
+    setMsg("");
+
+  };
+
+  const checkMail = clientNum => {
+
+    if (protocol === "pop3") {
+
+      // POP3: Move from Server to Client
+
+      if (serverMails.length === 0) {
+
+        setMsg(lang === "en" ? "Server is empty! No mail to download." : "伺服器已空！沒有郵件可下載。");
+
+        return;
+
+      }
+
+      const newMails = [...serverMails];
+
+      // Simulate downloading all
+
+      if (clientNum === 1) {
+
+        setClient1Mails([...client1Mails, ...newMails]);
+
+        setMsg(lang === "en" ? "Downloaded to Device 1. Removed from Server." : "已下載至裝置 1。已從伺服器移除。");
+
+      } else {
+
+        setClient2Mails([...client2Mails, ...newMails]);
+
+        setMsg(lang === "en" ? "Downloaded to Device 2. Removed from Server." : "已下載至裝置 2。已從伺服器移除。");
+
+      }
+
+      setServerMails([]); // Delete from server
+
+    } else {
+
+      // IMAP: Sync (Copy)
+
+      if (serverMails.length === 0) {
+
+        setMsg(lang === "en" ? "Server is empty!" : "伺服器已空！");
+
+        return;
+
+      }
+
+      if (clientNum === 1) {
+
+        setClient1Mails(serverMails); // Sync state
+
+        setMsg(lang === "en" ? "Synced with Device 1." : "已與裝置 1 同步。");
+
+      } else {
+
+        setClient2Mails(serverMails);
+
+        setMsg(lang === "en" ? "Synced with Device 2." : "已與裝置 2 同步。");
+
+      }
+
+    }
+
+  };
+
+  const deleteMail = (id, fromClientNum) => {
+
+    if (protocol === "imap") {
+
+      // IMAP Delete: Deletes everywhere
+
+      setServerMails(serverMails.filter(m => m.id !== id));
+
+      setClient1Mails(client1Mails.filter(m => m.id !== id));
+
+      setClient2Mails(client2Mails.filter(m => m.id !== id));
+
+      setMsg(lang === "en" ? "Deleted from Server & All Devices (Sync)." : "已從伺服器及所有裝置刪除 (同步)。");
+
+    } else {
+
+      // POP3 Delete: Deletes local copy only
+
+      if (fromClientNum === 1) {
+
+        setClient1Mails(client1Mails.filter(m => m.id !== id));
+
+      } else {
+
+        setClient2Mails(client2Mails.filter(m => m.id !== id));
+
+      }
+
+      setMsg(lang === "en" ? "Deleted from local device only." : "僅從本地裝置刪除。");
+
+    }
+
+  };
+
+  const MailItem = ({
+
+    mail,
+
+    onDelete,
+
+    clientNum
+
+  }) => /*#__PURE__*/React.createElement("div", {
+
+    className: "bg-white text-slate-900 p-2 rounded mb-2 flex justify-between items-center text-sm shadow"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "flex items-center gap-2"
+
+  }, /*#__PURE__*/React.createElement(Icon, {
+
+    name: "Mail",
+
+    size: 14,
+
+    className: "text-blue-500"
+
+  }), /*#__PURE__*/React.createElement("span", null, t[mail.subject])), onDelete && /*#__PURE__*/React.createElement("button", {
+
+    onClick: () => deleteMail(mail.id, clientNum),
+
+    className: "text-red-500 hover:text-red-700"
+
+  }, /*#__PURE__*/React.createElement(Icon, {
+
+    name: "Trash2",
+
+    size: 14
+
+  })));
+
+  return /*#__PURE__*/React.createElement("div", {
+
+    className: "space-y-6"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "flex justify-between items-center bg-slate-800 p-4 rounded-xl border border-slate-700"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "flex items-center gap-3"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "p-2 bg-blue-600 rounded-lg"
+
+  }, /*#__PURE__*/React.createElement(Icon, {
+
+    name: "Globe",
+
+    className: "text-white"
+
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h1", {
+
+    className: "text-xl font-bold text-white"
+
+  }, t.title), /*#__PURE__*/React.createElement("p", {
+
+    className: "text-slate-400 text-xs"
+
+  }, t.subtitle))), /*#__PURE__*/React.createElement("button", {
+
+    onClick: () => setLang(l => l === "en" ? "tc" : "en"),
+
+    className: "px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-white font-bold border border-slate-500"
+
+  }, lang === "en" ? "中文" : "English")), /*#__PURE__*/React.createElement("div", {
+
+    className: "bg-slate-900 p-4 rounded-xl border border-slate-700 flex flex-col items-center"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "flex items-center gap-4 mb-4"
+
+  }, /*#__PURE__*/React.createElement("span", {
+
+    className: "text-white font-bold"
+
+  }, t.protocol), /*#__PURE__*/React.createElement("div", {
+
+    className: "flex bg-slate-800 rounded p-1"
+
+  }, /*#__PURE__*/React.createElement("button", {
+
+    onClick: () => {
+
+      setProtocol("pop3");
+
+      reset();
+
+    },
+
+    className: `px-4 py-1 rounded ${protocol === "pop3" ? "bg-blue-600 text-white" : "text-slate-400"}`
+
+  }, t.pop3), /*#__PURE__*/React.createElement("button", {
+
+    onClick: () => {
+
+      setProtocol("imap");
+
+      reset();
+
+    },
+
+    className: `px-4 py-1 rounded ${protocol === "imap" ? "bg-blue-600 text-white" : "text-slate-400"}`
+
+  }, t.imap))), /*#__PURE__*/React.createElement("div", {
+
+    className: "text-yellow-400 text-xs text-center max-w-lg mb-4"
+
+  }, protocol === "pop3" ? t.msgPop3 : t.msgImap, /*#__PURE__*/React.createElement("div", {
+
+    className: "text-white mt-1 font-bold"
+
+  }, msg)), /*#__PURE__*/React.createElement("div", {
+
+    className: "grid grid-cols-3 gap-4 w-full h-[350px]"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "bg-slate-800 rounded-xl border border-slate-700 p-4 flex flex-col relative"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-900 text-blue-200 px-2 py-1 rounded text-xs font-bold border border-blue-700 whitespace-nowrap"
+
+  }, t.client1), /*#__PURE__*/React.createElement("div", {
+
+    className: "flex-1 overflow-auto mt-4 space-y-2 border border-slate-600 rounded p-2 bg-slate-900/50"
+
+  }, client1Mails.length === 0 && /*#__PURE__*/React.createElement("div", {
+
+    className: "text-slate-600 text-xs text-center mt-4"
+
+  }, t.empty), client1Mails.map(m => /*#__PURE__*/React.createElement(MailItem, {
+
+    key: m.id,
+
+    mail: m,
+
+    onDelete: true,
+
+    clientNum: 1
+
+  }))), /*#__PURE__*/React.createElement("button", {
+
+    onClick: () => checkMail(1),
+
+    className: "mt-2 w-full py-2 bg-blue-600 hover:bg-blue-500 text-white rounded font-bold text-xs flex justify-center gap-1"
+
+  }, /*#__PURE__*/React.createElement(Icon, {
+
+    name: "Download",
+
+    size: 14
+
+  }), " ", t.check)), /*#__PURE__*/React.createElement("div", {
+
+    className: "bg-gray-800 rounded-xl border-2 border-slate-600 p-4 flex flex-col items-center relative shadow-2xl"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "absolute -top-3 left-1/2 -translate-x-1/2 bg-slate-200 text-slate-900 px-3 py-1 rounded text-xs font-bold whitespace-nowrap border border-white"
+
+  }, t.server), /*#__PURE__*/React.createElement(Icon, {
+
+    name: "Server",
+
+    size: 48,
+
+    className: "text-slate-500 mt-4 mb-2"
+
+  }), /*#__PURE__*/React.createElement("div", {
+
+    className: "w-full flex-1 overflow-auto border border-slate-600 rounded p-2 bg-black"
+
+  }, serverMails.length === 0 && /*#__PURE__*/React.createElement("div", {
+
+    className: "text-slate-600 text-xs text-center mt-4"
+
+  }, t.empty), serverMails.map(m => /*#__PURE__*/React.createElement(MailItem, {
+
+    key: m.id,
+
+    mail: m
+
+  }))), /*#__PURE__*/React.createElement("button", {
+
+    onClick: reset,
+
+    className: "mt-2 text-xs text-slate-500 hover:text-white underline"
+
+  }, "Reset Demo")), /*#__PURE__*/React.createElement("div", {
+
+    className: "bg-slate-800 rounded-xl border border-slate-700 p-4 flex flex-col relative"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "absolute -top-3 left-1/2 -translate-x-1/2 bg-purple-900 text-purple-200 px-2 py-1 rounded text-xs font-bold border border-purple-700 whitespace-nowrap"
+
+  }, t.client2), /*#__PURE__*/React.createElement("div", {
+
+    className: "flex-1 overflow-auto mt-4 space-y-2 border border-slate-600 rounded p-2 bg-slate-900/50"
+
+  }, client2Mails.length === 0 && /*#__PURE__*/React.createElement("div", {
+
+    className: "text-slate-600 text-xs text-center mt-4"
+
+  }, t.empty), client2Mails.map(m => /*#__PURE__*/React.createElement(MailItem, {
+
+    key: m.id,
+
+    mail: m,
+
+    onDelete: true,
+
+    clientNum: 2
+
+  }))), /*#__PURE__*/React.createElement("button", {
+
+    onClick: () => checkMail(2),
+
+    className: "mt-2 w-full py-2 bg-blue-600 hover:bg-blue-500 text-white rounded font-bold text-xs flex justify-center gap-1"
+
+  }, /*#__PURE__*/React.createElement(Icon, {
+
+    name: "Download",
+
+    size: 14
+
+  }), " ", t.check)))));
+
+};
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+
+root.render(/*#__PURE__*/React.createElement(App, null));
+
+</script>
+
+  <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+</body>
+
+</html>
+

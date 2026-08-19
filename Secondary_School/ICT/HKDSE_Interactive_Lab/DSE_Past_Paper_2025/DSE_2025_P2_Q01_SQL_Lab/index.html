@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+  <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>HKDSE Past Paper 2025 Paper 2 Q1 - SQL Lab</title>
+
+
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script
+
+      crossorigin
+
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+
+    ></script>
+
+    <script
+
+      crossorigin
+
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+
+    ></script>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <link
+
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap"
+
+      rel="stylesheet"
+
+    />
+
+    <style>
+
+      body {
+
+        font-family: "Inter", sans-serif;
+
+        background-color: #0f172a;
+
+        color: #e2e8f0;
+
+      }
+
+      .mono {
+
+        font-family: "JetBrains Mono", monospace;
+
+      }
+
+      .sql-keyword {
+
+        color: #f472b6;
+
+        font-weight: bold;
+
+      }
+
+      .sql-string {
+
+        color: #facc15;
+
+      }
+
+      .table-row-anim {
+
+        animation: fade-in 0.3s ease-out;
+
+      }
+
+      @keyframes fade-in {
+
+        from {
+
+          opacity: 0;
+
+          transform: translateX(-10px);
+
+        }
+
+        to {
+
+          opacity: 1;
+
+          transform: translateX(0);
+
+        }
+
+      }
+
+    </style>
+
+  <!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../../../common/ncs-i18n.css" />
+  <script src="../../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+      display: none !important;
+    }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+        if (label === "EN" || label === "\u4E2D") {
+          btn.classList.add("ncs-hide-when-ncs-fleet");
+        }
+      });
+      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+        el.classList.add("ncs-hide-when-ncs-fleet");
+      });
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+</head>
+
+  <body class="min-h-screen p-6 lg:p-12 bg-slate-900">
+
+    <div id="root" class="w-full max-w-6xl mx-auto"></div>
+
+
+
+    <script>
+
+const {
+
+  useState,
+
+  useMemo,
+
+  useEffect
+
+} = React;
+
+
+
+// --- LUCIDE ICON SHIM ---
+
+const LucideIcon = ({
+
+  name,
+
+  size = 24,
+
+  className = ""
+
+}) => {
+
+  const formatName = n => n.split("-").map(p => p.charAt(0).toUpperCase() + p.slice(1)).join("");
+
+  const iconName = formatName(name);
+
+  const [svgHtml, setSvgHtml] = useState("");
+
+  useEffect(() => {
+
+    if (window.lucide && window.lucide.icons && window.lucide.icons[iconName] && typeof window.lucide.icons[iconName].toSvg === "function") {
+
+      setSvgHtml(window.lucide.icons[iconName].toSvg({
+
+        width: size,
+
+        height: size,
+
+        class: className
+
+      }));
+
+    }
+
+  }, [name, size, className, iconName]);
+
+  return /*#__PURE__*/React.createElement("span", {
+
+    dangerouslySetInnerHTML: {
+
+      __html: svgHtml
+
+    },
+
+    style: {
+
+      display: "inline-flex"
+
+    }
+
+  });
+
+};
+
+const Database = p => /*#__PURE__*/React.createElement(LucideIcon, {
+
+  name: "database",
+
+  ...p
+
+});
+
+const Table = p => /*#__PURE__*/React.createElement(LucideIcon, {
+
+  name: "table",
+
+  ...p
+
+});
+
+const Terminal = p => /*#__PURE__*/React.createElement(LucideIcon, {
+
+  name: "terminal",
+
+  ...p
+
+});
+
+const Play = p => /*#__PURE__*/React.createElement(LucideIcon, {
+
+  name: "play",
+
+  ...p
+
+});
+
+const Search = p => /*#__PURE__*/React.createElement(LucideIcon, {
+
+  name: "search",
+
+  ...p
+
+});
+
+// --- END SHIM ---
+
+
+
+const INITIAL_DATA = [{
+
+  CL: "2A",
+
+  CNO: 22,
+
+  SER: "Flag selling",
+
+  HR: 15
+
+}, {
+
+  CL: "3D",
+
+  CNO: 3,
+
+  SER: "Flag selling",
+
+  HR: 15
+
+}, {
+
+  CL: "2C",
+
+  CNO: 2,
+
+  SER: "Library assistant",
+
+  HR: 40
+
+}, {
+
+  CL: "2C",
+
+  CNO: 5,
+
+  SER: "IT prefect",
+
+  HR: 35
+
+}, {
+
+  CL: "3D",
+
+  CNO: 10,
+
+  SER: "Flag selling",
+
+  HR: 15
+
+}];
+
+const executeSQL = (query, data) => {
+
+  try {
+
+    const q = query.trim().toUpperCase();
+
+    if (q.startsWith("SELECT")) {
+
+      if (q.includes("GROUP BY")) {
+
+        if (q.includes("SUM(HR)") && q.includes("CL")) {
+
+          const groups = {};
+
+          data.forEach(row => {
+
+            if (!groups[row.CL]) groups[row.CL] = 0;
+
+            groups[row.CL] += row.HR;
+
+          });
+
+          return Object.keys(groups).map(cl => ({
+
+            CL: cl,
+
+            "SUM(HR)": groups[cl]
+
+          }));
+
+        }
+
+      }
+
+      const selectPart = q.substring(q.indexOf("SELECT") + 6, q.indexOf("FROM")).split(",").map(s => s.trim());
+
+      let filteredData = [...data];
+
+      if (q.includes("WHERE")) {
+
+        const wherePart = query.substring(query.toUpperCase().indexOf("WHERE") + 5).split(/AND/i);
+
+        filteredData = filteredData.filter(row => {
+
+          return wherePart.every(condition => {
+
+            const cond = condition.trim();
+
+            if (cond.toUpperCase().includes("LIKE")) {
+
+              const [field, pattern] = cond.split(/LIKE/i).map(s => s.trim().replace(/['"]/g, ""));
+
+              if (pattern.includes("_")) {
+
+                const regex = new RegExp("^" + pattern.replace("_", ".") + "$");
+
+                return regex.test(row[field]);
+
+              }
+
+              return row[field].includes(pattern.replace(/%/g, ""));
+
+            } else if (cond.includes("=")) {
+
+              const [field, val] = cond.split("=").map(s => s.trim().replace(/['"]/g, ""));
+
+              return String(row[field]) === val;
+
+            }
+
+            return true;
+
+          });
+
+        });
+
+      }
+
+      if (selectPart[0] === "*") return filteredData;
+
+      return filteredData.map(row => {
+
+        const newRow = {};
+
+        selectPart.forEach(field => {
+
+          if (row[field] !== undefined) newRow[field] = row[field];
+
+        });
+
+        return newRow;
+
+      });
+
+    }
+
+    return [];
+
+  } catch (e) {
+
+    console.error(e);
+
+    return [];
+
+  }
+
+};
+
+const App = () => {
+
+  const [query, setQuery] = useState("SELECT CL, CNO FROM SS WHERE SER='Flag selling' AND CL LIKE '2_'");
+
+  const [result, setResult] = useState(null);
+
+  const [error, setError] = useState(null);
+
+  const runQuery = () => {
+
+    setError(null);
+
+    const res = executeSQL(query, INITIAL_DATA);
+
+    setResult(res);
+
+  };
+
+  const presetQueries = [{
+
+    label: "Q7(d)(i) Pattern Match",
+
+    sql: "SELECT CL, CNO FROM SS WHERE SER='Flag selling' AND CL LIKE '2_'"
+
+  }, {
+
+    label: "Q7(d)(ii) Aggregation",
+
+    sql: "SELECT CL, SUM(HR) FROM SS GROUP BY CL"
+
+  }, {
+
+    label: "Show All Records",
+
+    sql: "SELECT * FROM SS"
+
+  }];
+
+  return /*#__PURE__*/React.createElement("div", {
+
+    className: "grid grid-cols-1 xl:grid-cols-2 gap-8"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "space-y-6"
+
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h1", {
+
+    className: "text-3xl font-bold text-white flex items-center gap-3 mb-2"
+
+  }, /*#__PURE__*/React.createElement(Database, {
+
+    className: "text-pink-500"
+
+  }), " SQL Sandbox"), /*#__PURE__*/React.createElement("div", {
+
+    className: "text-slate-400 text-sm"
+
+  }, "Paper 1B Q7: Service Record Database")), /*#__PURE__*/React.createElement("div", {
+
+    className: "flex flex-wrap gap-2"
+
+  }, presetQueries.map((p, i) => /*#__PURE__*/React.createElement("button", {
+
+    key: i,
+
+    onClick: () => {
+
+      setQuery(p.sql);
+
+      setResult(null);
+
+    },
+
+    className: "px-3 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-full text-xs text-cyan-300 transition-colors"
+
+  }, p.label))), /*#__PURE__*/React.createElement("div", {
+
+    className: "bg-slate-950 p-4 rounded-xl border border-slate-700 shadow-2xl"
+
+  }, /*#__PURE__*/React.createElement("label", {
+
+    className: "text-xs text-slate-500 font-bold uppercase mb-2 block tracking-wider"
+
+  }, "SQL Query Editor"), /*#__PURE__*/React.createElement("textarea", {
+
+    value: query,
+
+    onChange: e => setQuery(e.target.value),
+
+    className: "w-full bg-transparent text-white font-mono text-lg h-32 focus:outline-none resize-none",
+
+    spellCheck: "false"
+
+  }), /*#__PURE__*/React.createElement("div", {
+
+    className: "flex justify-end mt-2 pt-2 border-t border-slate-800"
+
+  }, /*#__PURE__*/React.createElement("button", {
+
+    onClick: runQuery,
+
+    className: "flex items-center gap-2 bg-pink-600 hover:bg-pink-500 text-white px-6 py-2 rounded-lg font-bold transition-all shadow-lg shadow-pink-900/40 transform active:scale-95"
+
+  }, /*#__PURE__*/React.createElement(Play, {
+
+    size: 18
+
+  }), " Execute"))), /*#__PURE__*/React.createElement("div", {
+
+    className: "bg-slate-900/50 p-4 rounded-xl border border-slate-800"
+
+  }, /*#__PURE__*/React.createElement("h3", {
+
+    className: "text-slate-400 text-sm font-bold mb-4 flex items-center gap-2"
+
+  }, /*#__PURE__*/React.createElement(Table, {
+
+    size: 16
+
+  }), " Source Table: SS (Service Records)"), /*#__PURE__*/React.createElement("div", {
+
+    className: "overflow-x-auto"
+
+  }, /*#__PURE__*/React.createElement("table", {
+
+    className: "w-full text-sm text-left text-slate-400"
+
+  }, /*#__PURE__*/React.createElement("thead", {
+
+    className: "text-xs text-slate-500 uppercase bg-slate-800/50"
+
+  }, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+
+    className: "px-4 py-2"
+
+  }, "CL"), /*#__PURE__*/React.createElement("th", {
+
+    className: "px-4 py-2"
+
+  }, "CNO"), /*#__PURE__*/React.createElement("th", {
+
+    className: "px-4 py-2"
+
+  }, "SER"), /*#__PURE__*/React.createElement("th", {
+
+    className: "px-4 py-2"
+
+  }, "HR"))), /*#__PURE__*/React.createElement("tbody", null, INITIAL_DATA.map((row, i) => /*#__PURE__*/React.createElement("tr", {
+
+    key: i,
+
+    className: "border-b border-slate-800/50 hover:bg-slate-800/30"
+
+  }, /*#__PURE__*/React.createElement("td", {
+
+    className: "px-4 py-2 font-mono text-cyan-400"
+
+  }, row.CL), /*#__PURE__*/React.createElement("td", {
+
+    className: "px-4 py-2 font-mono"
+
+  }, row.CNO), /*#__PURE__*/React.createElement("td", {
+
+    className: "px-4 py-2"
+
+  }, row.SER), /*#__PURE__*/React.createElement("td", {
+
+    className: "px-4 py-2 font-mono"
+
+  }, row.HR)))))))), /*#__PURE__*/React.createElement("div", {
+
+    className: "bg-slate-950 rounded-2xl border border-slate-800 p-1 lg:p-6 flex flex-col min-h-[500px]"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "flex items-center gap-2 mb-4 px-4 lg:px-0"
+
+  }, /*#__PURE__*/React.createElement(Terminal, {
+
+    className: "text-cyan-400",
+
+    size: 20
+
+  }), " ", /*#__PURE__*/React.createElement("span", {
+
+    className: "text-white font-bold"
+
+  }, "Query Result")), /*#__PURE__*/React.createElement("div", {
+
+    className: "flex-1 bg-slate-900 rounded-xl overflow-hidden border border-slate-800 relative"
+
+  }, !result && !error && /*#__PURE__*/React.createElement("div", {
+
+    className: "absolute inset-0 flex items-center justify-center text-slate-600 italic"
+
+  }, "Run a query to see results..."), result && result.length > 0 && /*#__PURE__*/React.createElement("div", {
+
+    className: "overflow-auto max-h-full"
+
+  }, /*#__PURE__*/React.createElement("table", {
+
+    className: "w-full text-left text-white"
+
+  }, /*#__PURE__*/React.createElement("thead", {
+
+    className: "bg-slate-800 text-xs uppercase text-slate-400 sticky top-0"
+
+  }, /*#__PURE__*/React.createElement("tr", null, Object.keys(result[0]).map(key => /*#__PURE__*/React.createElement("th", {
+
+    key: key,
+
+    className: "px-6 py-3 font-bold tracking-wider"
+
+  }, key)))), /*#__PURE__*/React.createElement("tbody", {
+
+    className: "divide-y divide-slate-800"
+
+  }, result.map((row, i) => /*#__PURE__*/React.createElement("tr", {
+
+    key: i,
+
+    className: "hover:bg-slate-800/50 table-row-anim"
+
+  }, Object.values(row).map((val, j) => /*#__PURE__*/React.createElement("td", {
+
+    key: j,
+
+    className: "px-6 py-4 font-mono text-sm text-cyan-200"
+
+  }, val))))), /*#__PURE__*/React.createElement("tfoot", {
+
+    className: "bg-slate-800/30 text-xs text-slate-500"
+
+  }, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+
+    colSpan: "100%",
+
+    className: "px-6 py-2"
+
+  }, result.length, " row(s) returned"))))), result && result.length === 0 && /*#__PURE__*/React.createElement("div", {
+
+    className: "absolute inset-0 flex items-center justify-center text-slate-500"
+
+  }, "No records found."))));
+
+};
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+
+root.render(/*#__PURE__*/React.createElement(App, null));
+
+</script>
+
+  
+
+      
+
+      <!-- Footer -->
+
+      <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+</body>
+
+</html>
+

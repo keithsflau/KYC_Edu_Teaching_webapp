@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+  <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>HKDSE Past Paper 2025 Paper 1B Q7 - Logic Gate Simulator</title>
+
+    <!-- Tailwind CSS -->
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Lucide Icons -->
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Google Fonts -->
+
+    <link
+
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap"
+
+      rel="stylesheet"
+
+    />
+
+    <style>
+
+      body {
+
+        font-family: "Inter", sans-serif;
+
+        background-color: #0f172a;
+
+        color: #e2e8f0;
+
+        overflow: hidden;
+
+      }
+
+      .mono {
+
+        font-family: "JetBrains Mono", monospace;
+
+      }
+
+      .glass-panel {
+
+        background: rgba(30, 41, 59, 0.7);
+
+        backdrop-filter: blur(10px);
+
+        border: 1px solid rgba(148, 163, 184, 0.1);
+
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+
+      }
+
+      .grid-bg {
+
+        background-size: 20px 20px;
+
+        background-image: linear-gradient(
+
+            to right,
+
+            rgba(51, 65, 85, 0.3) 1px,
+
+            transparent 1px
+
+          ),
+
+          linear-gradient(to bottom, rgba(51, 65, 85, 0.3) 1px, transparent 1px);
+
+      }
+
+      .gate-node {
+
+        cursor: pointer;
+
+        transition: all 0.2s ease;
+
+      }
+
+      .gate-node:hover {
+
+        filter: drop-shadow(0 0 5px rgba(56, 189, 248, 0.5));
+
+      }
+
+      .wire {
+
+        pointer-events: none;
+
+      }
+
+      .wire-path {
+
+        fill: none;
+
+        stroke-width: 3;
+
+        transition: stroke 0.3s ease;
+
+      }
+
+      .input-handle,
+
+      .output-handle {
+
+        cursor: crosshair;
+
+      }
+
+      .input-handle:hover,
+
+      .output-handle:hover {
+
+        fill: #fff;
+
+      }
+
+    </style>
+
+  <!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../../../common/ncs-i18n.css" />
+  <script src="../../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+      display: none !important;
+    }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+        if (label === "EN" || label === "\u4E2D") {
+          btn.classList.add("ncs-hide-when-ncs-fleet");
+        }
+      });
+      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+        el.classList.add("ncs-hide-when-ncs-fleet");
+      });
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+</head>
+
+  <body>
+
+    <div id="root"></div>
+
+
+
+    <script>
+
+const {
+
+  useState,
+
+  useEffect,
+
+  useRef,
+
+  useMemo
+
+} = React;
+
+
+
+// --- Logic Models ---
+
+const GATE_TYPES = {
+
+  AND: {
+
+    inputs: 2,
+
+    color: "#3b82f6",
+
+    icon: "AND"
+
+  },
+
+  OR: {
+
+    inputs: 2,
+
+    color: "#22c55e",
+
+    icon: "OR"
+
+  },
+
+  NOT: {
+
+    inputs: 1,
+
+    color: "#ef4444",
+
+    icon: "NOT"
+
+  },
+
+  NAND: {
+
+    inputs: 2,
+
+    color: "#f59e0b",
+
+    icon: "NAND"
+
+  },
+
+  NOR: {
+
+    inputs: 2,
+
+    color: "#8b5cf6",
+
+    icon: "NOR"
+
+  },
+
+  XOR: {
+
+    inputs: 2,
+
+    color: "#ec4899",
+
+    icon: "XOR"
+
+  }
+
+};
+
+
+
+// --- Helper Functions ---
+
+const evaluate = (type, inputs) => {
+
+  const a = inputs[0];
+
+  const b = inputs[1] || false;
+
+  switch (type) {
+
+    case "AND":
+
+      return a && b;
+
+    case "OR":
+
+      return a || b;
+
+    case "NOT":
+
+      return !a;
+
+    case "NAND":
+
+      return !(a && b);
+
+    case "NOR":
+
+      return !(a || b);
+
+    case "XOR":
+
+      return a ? !b : b;
+
+    case "INPUT":
+
+      return a;
+
+    default:
+
+      return false;
+
+  }
+
+};
+
+const generateId = () => Math.random().toString(36).substr(2, 9);
+
+
+
+// --- Components ---
+
+
+
+const GateNode = ({
+
+  node,
+
+  isSelected,
+
+  onMouseDown,
+
+  onHandleMouseDown
+
+}) => {
+
+  const config = GATE_TYPES[node.type] || {
+
+    inputs: 0,
+
+    color: "#fff"
+
+  };
+
+  const width = 80;
+
+  const height = 60;
+
+  const inputSpacing = height / (config.inputs + 1);
+
+  return /*#__PURE__*/React.createElement("g", {
+
+    transform: `translate(${node.x}, ${node.y})`,
+
+    onMouseDown: e => onMouseDown(e, node.id),
+
+    className: "gate-node"
+
+  }, /*#__PURE__*/React.createElement("rect", {
+
+    x: "0",
+
+    y: "0",
+
+    width: width,
+
+    height: height,
+
+    rx: "8",
+
+    fill: "#1e293b",
+
+    stroke: isSelected ? "#38bdf8" : config.color,
+
+    strokeWidth: isSelected ? 3 : 2
+
+  }), /*#__PURE__*/React.createElement("text", {
+
+    x: width / 2,
+
+    y: height / 2 + 5,
+
+    textAnchor: "middle",
+
+    fill: "#fff",
+
+    fontSize: "14",
+
+    fontWeight: "bold",
+
+    className: "pointer-events-none select-none"
+
+  }, node.type), Array.from({
+
+    length: config.inputs
+
+  }).map((_, i) => /*#__PURE__*/React.createElement("circle", {
+
+    key: `in-${i}`,
+
+    cx: 0,
+
+    cy: inputSpacing * (i + 1),
+
+    r: 6,
+
+    fill: "#64748b",
+
+    stroke: "#0f172a",
+
+    strokeWidth: "2",
+
+    className: "input-handle",
+
+    onMouseDown: e => onHandleMouseDown(e, node.id, "input", i)
+
+  })), /*#__PURE__*/React.createElement("circle", {
+
+    cx: width,
+
+    cy: height / 2,
+
+    r: 6,
+
+    fill: node.value ? "#34d399" : "#475569",
+
+    stroke: "#0f172a",
+
+    strokeWidth: "2",
+
+    className: "output-handle",
+
+    onMouseDown: e => onHandleMouseDown(e, node.id, "output", 0)
+
+  }));
+
+};
+
+const InputSwitch = ({
+
+  node,
+
+  onMouseDown,
+
+  onToggle,
+
+  onHandleMouseDown
+
+}) => {
+
+  return /*#__PURE__*/React.createElement("g", {
+
+    transform: `translate(${node.x}, ${node.y})`,
+
+    onMouseDown: e => onMouseDown(e, node.id),
+
+    className: "gate-node"
+
+  }, /*#__PURE__*/React.createElement("rect", {
+
+    x: "0",
+
+    y: "0",
+
+    width: "60",
+
+    height: "40",
+
+    rx: "8",
+
+    fill: node.value ? "#059669" : "#334155",
+
+    stroke: "#fff",
+
+    strokeWidth: "1"
+
+  }), /*#__PURE__*/React.createElement("text", {
+
+    x: "30",
+
+    y: "25",
+
+    textAnchor: "middle",
+
+    fill: "#fff",
+
+    fontWeight: "bold",
+
+    className: "pointer-events-none select-none"
+
+  }, node.value ? "1" : "0"), /*#__PURE__*/React.createElement("rect", {
+
+    x: "0",
+
+    y: "0",
+
+    width: "60",
+
+    height: "40",
+
+    rx: "8",
+
+    fill: "transparent",
+
+    onClick: e => {
+
+      e.stopPropagation();
+
+      onToggle(node.id);
+
+    }
+
+  }), /*#__PURE__*/React.createElement("circle", {
+
+    cx: "60",
+
+    cy: "20",
+
+    r: 6,
+
+    fill: node.value ? "#34d399" : "#475569",
+
+    stroke: "#0f172a",
+
+    strokeWidth: "2",
+
+    className: "output-handle",
+
+    onMouseDown: e => onHandleMouseDown(e, node.id, "output", 0)
+
+  }));
+
+};
+
+const OutputBulb = ({
+
+  node,
+
+  onMouseDown,
+
+  onHandleMouseDown
+
+}) => {
+
+  return /*#__PURE__*/React.createElement("g", {
+
+    transform: `translate(${node.x}, ${node.y})`,
+
+    onMouseDown: e => onMouseDown(e, node.id),
+
+    className: "gate-node"
+
+  }, /*#__PURE__*/React.createElement("circle", {
+
+    cx: "0",
+
+    cy: "25",
+
+    r: 6,
+
+    fill: "#64748b",
+
+    stroke: "#0f172a",
+
+    strokeWidth: "2",
+
+    className: "input-handle",
+
+    onMouseDown: e => onHandleMouseDown(e, node.id, "input", 0)
+
+  }), /*#__PURE__*/React.createElement("path", {
+
+    d: "M 20 25 A 15 15 0 0 1 50 25 A 15 15 0 0 1 20 25 M 25 50 L 45 50 L 35 25 Z",
+
+    fill: node.value ? "#facc15" : "#334155",
+
+    stroke: node.value ? "#fef08a" : "#475569",
+
+    strokeWidth: "2"
+
+  }), /*#__PURE__*/React.createElement("text", {
+
+    x: "35",
+
+    y: "65",
+
+    textAnchor: "middle",
+
+    fill: "#94a3b8",
+
+    fontSize: "10"
+
+  }, node.label || "OUT"), node.value && /*#__PURE__*/React.createElement("circle", {
+
+    cx: "35",
+
+    cy: "25",
+
+    r: "20",
+
+    fill: "rgba(250, 204, 21, 0.3)",
+
+    filter: "blur(8px)",
+
+    className: "pointer-events-none"
+
+  }));
+
+};
+
+const Wire = ({
+
+  start,
+
+  end,
+
+  active
+
+}) => {
+
+  const pathRef = useRef(null);
+
+  const controlPointOffset = Math.abs(end.x - start.x) * 0.5;
+
+  const p1 = {
+
+    x: start.x + controlPointOffset,
+
+    y: start.y
+
+  };
+
+  const p2 = {
+
+    x: end.x - controlPointOffset,
+
+    y: end.y
+
+  };
+
+  const d = `M ${start.x} ${start.y} C ${p1.x} ${p1.y}, ${p2.x} ${p2.y}, ${end.x} ${end.y}`;
+
+  return /*#__PURE__*/React.createElement("path", {
+
+    d: d,
+
+    className: "wire-path",
+
+    stroke: active ? "#34d399" : "#475569",
+
+    filter: active ? "drop-shadow(0 0 4px #34d399)" : "none"
+
+  });
+
+};
+
+const App = () => {
+
+  const [nodes, setNodes] = useState([{
+
+    id: "in1",
+
+    type: "INPUT",
+
+    x: 50,
+
+    y: 100,
+
+    value: false
+
+  }, {
+
+    id: "in2",
+
+    type: "INPUT",
+
+    x: 50,
+
+    y: 250,
+
+    value: false
+
+  }, {
+
+    id: "out1",
+
+    type: "OUTPUT",
+
+    x: 600,
+
+    y: 175,
+
+    value: false
+
+  }]);
+
+  const [connections, setConnections] = useState([]);
+
+  const [draggingId, setDraggingId] = useState(null);
+
+  const [dragOffset, setDragOffset] = useState({
+
+    x: 0,
+
+    y: 0
+
+  });
+
+  const [drawingWire, setDrawingWire] = useState(null);
+
+  const [scale, setScale] = useState(1);
+
+  const [selectedId, setSelectedId] = useState(null);
+
+  const svgRef = useRef(null);
+
+
+
+  // --- Simulation Logic ---
+
+  useEffect(() => {
+
+    const simulate = () => {
+
+      let changed = false;
+
+      const newNodes = [...nodes];
+
+      const nodeMap = new Map(newNodes.map(n => [n.id, n]));
+
+      const incoming = new Map();
+
+      newNodes.forEach(n => {
+
+        if (GATE_TYPES[n.type]) {
+
+          incoming.set(n.id, Array(GATE_TYPES[n.type].inputs).fill(false));
+
+        } else if (n.type === "OUTPUT") {
+
+          incoming.set(n.id, [false]);
+
+        }
+
+      });
+
+      connections.forEach(conn => {
+
+        const sourceNode = nodeMap.get(conn.fromNode);
+
+        if (sourceNode && incoming.has(conn.toNode)) {
+
+          incoming.get(conn.toNode)[conn.toIdx] = sourceNode.value;
+
+        }
+
+      });
+
+      newNodes.forEach(n => {
+
+        if (n.type === "INPUT") return;
+
+        const inputs = incoming.get(n.id) || [];
+
+        let newValue = false;
+
+        if (GATE_TYPES[n.type]) newValue = evaluate(n.type, inputs);else if (n.type === "OUTPUT") newValue = inputs[0];
+
+        if (n.value !== newValue) {
+
+          n.value = newValue;
+
+          changed = true;
+
+        }
+
+      });
+
+      if (changed) setNodes(newNodes);
+
+    };
+
+    const timer = setInterval(simulate, 50);
+
+    return () => clearInterval(timer);
+
+  }, [nodes, connections]);
+
+
+
+  // --- Interaction Callbacks ---
+
+  const getMousePos = e => {
+
+    const rect = svgRef.current.getBoundingClientRect();
+
+    return {
+
+      x: (e.clientX - rect.left) / scale,
+
+      y: (e.clientY - rect.top) / scale
+
+    };
+
+  };
+
+  const handleMouseDown = (e, id) => {
+
+    e.stopPropagation();
+
+    setSelectedId(id);
+
+    setDraggingId(id);
+
+    const pos = getMousePos(e);
+
+    const node = nodes.find(n => n.id === id);
+
+    setDragOffset({
+
+      x: pos.x - node.x,
+
+      y: pos.y - node.y
+
+    });
+
+  };
+
+  const handleMouseMove = e => {
+
+    const pos = getMousePos(e);
+
+    if (draggingId) {
+
+      setNodes(nodes.map(n => n.id === draggingId ? {
+
+        ...n,
+
+        x: pos.x - dragOffset.x,
+
+        y: pos.y - dragOffset.y
+
+      } : n));
+
+    }
+
+    if (drawingWire) {
+
+      setDrawingWire({
+
+        ...drawingWire,
+
+        currentPos: pos
+
+      });
+
+    }
+
+  };
+
+  const handleMouseUp = () => {
+
+    setDraggingId(null);
+
+    setDrawingWire(null);
+
+  };
+
+  const handleHandleMouseDown = (e, nodeId, type, idx) => {
+
+    e.stopPropagation();
+
+    const pos = getMousePos(e);
+
+    if (type === "output") {
+
+      setDrawingWire({
+
+        fromNode: nodeId,
+
+        fromIdx: idx,
+
+        currentPos: pos
+
+      });
+
+    } else if (type === "input") {
+
+      setConnections(connections.filter(c => !(c.toNode === nodeId && c.toIdx === idx)));
+
+    }
+
+  };
+
+  const handleHandleMouseUp = (e, nodeId, type, idx) => {
+
+    e.stopPropagation();
+
+    if (drawingWire && type === "input") {
+
+      if (drawingWire.fromNode === nodeId) return;
+
+      const exists = connections.some(c => c.toNode === nodeId && c.toIdx === idx);
+
+      if (exists) {
+
+        setConnections(connections.filter(c => !(c.toNode === nodeId && c.toIdx === idx)).concat({
+
+          fromNode: drawingWire.fromNode,
+
+          fromIdx: drawingWire.fromIdx,
+
+          toNode: nodeId,
+
+          toIdx: idx
+
+        }));
+
+      } else {
+
+        setConnections([...connections, {
+
+          fromNode: drawingWire.fromNode,
+
+          fromIdx: drawingWire.fromIdx,
+
+          toNode: nodeId,
+
+          toIdx: idx
+
+        }]);
+
+      }
+
+    }
+
+    setDrawingWire(null);
+
+  };
+
+  const addNode = type => {
+
+    const id = generateId();
+
+    const pos = {
+
+      x: 100 + Math.random() * 50,
+
+      y: 100 + Math.random() * 50
+
+    };
+
+    const newNode = {
+
+      id,
+
+      type,
+
+      x: pos.x,
+
+      y: pos.y,
+
+      value: false,
+
+      label: type === "OUTPUT" ? `Out ${nodes.filter(n => n.type === "OUTPUT").length + 1}` : null
+
+    };
+
+    setNodes([...nodes, newNode]);
+
+  };
+
+  const deleteSelected = () => {
+
+    if (!selectedId) return;
+
+    setNodes(nodes.filter(n => n.id !== selectedId));
+
+    setConnections(connections.filter(c => c.fromNode !== selectedId && c.toNode !== selectedId));
+
+    setSelectedId(null);
+
+  };
+
+  useEffect(() => {
+
+    const handleKeyDown = e => {
+
+      if (e.key === "Delete" || e.key === "Backspace") deleteSelected();
+
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => window.removeEventListener("keydown", handleKeyDown);
+
+  }, [selectedId, nodes]);
+
+  const getHandlePos = (nodeId, type, idx) => {
+
+    const node = nodes.find(n => n.id === nodeId);
+
+    if (!node) return {
+
+      x: 0,
+
+      y: 0
+
+    };
+
+    if (node.type === "INPUT") return {
+
+      x: node.x + 60,
+
+      y: node.y + 20
+
+    };
+
+    if (node.type === "OUTPUT") return {
+
+      x: node.x,
+
+      y: node.y + 25
+
+    };
+
+    const width = 80;
+
+    const height = 60;
+
+    if (type === "output") return {
+
+      x: node.x + width,
+
+      y: node.y + height / 2
+
+    };else {
+
+      const config = GATE_TYPES[node.type];
+
+      const inputSpacing = height / (config.inputs + 1);
+
+      return {
+
+        x: node.x,
+
+        y: node.y + inputSpacing * (idx + 1)
+
+      };
+
+    }
+
+  };
+
+  return /*#__PURE__*/React.createElement("div", {
+
+    className: "flex h-screen w-screen text-white select-none"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "w-64 glass-panel flex flex-col p-4 z-10"
+
+  }, /*#__PURE__*/React.createElement("h1", {
+
+    className: "text-xl font-bold mb-6 text-cyan-400"
+
+  }, "ICT Logic Lab"), /*#__PURE__*/React.createElement("div", {
+
+    className: "space-y-4 mb-8"
+
+  }, /*#__PURE__*/React.createElement("p", {
+
+    className: "text-xs text-slate-400 uppercase tracking-widest font-semibold"
+
+  }, "Gates"), /*#__PURE__*/React.createElement("div", {
+
+    className: "grid grid-cols-2 gap-2"
+
+  }, Object.keys(GATE_TYPES).map(type => /*#__PURE__*/React.createElement("button", {
+
+    key: type,
+
+    onClick: () => addNode(type),
+
+    className: "p-2 bg-slate-800 rounded hover:bg-slate-700 text-sm border border-slate-700 flex flex-col items-center"
+
+  }, /*#__PURE__*/React.createElement("span", {
+
+    className: `font-bold`,
+
+    style: {
+
+      color: GATE_TYPES[type].color
+
+    }
+
+  }, type))))), /*#__PURE__*/React.createElement("div", {
+
+    className: "space-y-4"
+
+  }, /*#__PURE__*/React.createElement("p", {
+
+    className: "text-xs text-slate-400 uppercase tracking-widest font-semibold"
+
+  }, "IO"), /*#__PURE__*/React.createElement("div", {
+
+    className: "grid grid-cols-2 gap-2"
+
+  }, /*#__PURE__*/React.createElement("button", {
+
+    onClick: () => addNode("INPUT"),
+
+    className: "p-2 bg-blue-900/50 rounded hover:bg-blue-900 border border-blue-800 text-sm"
+
+  }, "Switch 0/1"), /*#__PURE__*/React.createElement("button", {
+
+    onClick: () => addNode("OUTPUT"),
+
+    className: "p-2 bg-yellow-900/50 rounded hover:bg-yellow-900 border border-yellow-800 text-sm"
+
+  }, "Light Bulb"))), /*#__PURE__*/React.createElement("div", {
+
+    className: "mt-auto pt-4 border-t border-slate-700"
+
+  }, /*#__PURE__*/React.createElement("p", {
+
+    className: "text-xs text-slate-500 mb-2"
+
+  }, "Controls"), /*#__PURE__*/React.createElement("ul", {
+
+    className: "text-xs text-slate-400 space-y-1"
+
+  }, /*#__PURE__*/React.createElement("li", null, "Drag to move"), /*#__PURE__*/React.createElement("li", null, "Click socket to wire"), /*#__PURE__*/React.createElement("li", null, "Del/Backspace to delete")), selectedId && /*#__PURE__*/React.createElement("button", {
+
+    onClick: deleteSelected,
+
+    className: "mt-4 w-full py-2 bg-red-900/50 text-red-200 rounded hover:bg-red-900 transition-colors text-sm"
+
+  }, "Delete Selected"))), /*#__PURE__*/React.createElement("div", {
+
+    className: "flex-1 relative grid-bg overflow-hidden",
+
+    onMouseMove: handleMouseMove,
+
+    onMouseUp: handleMouseUp,
+
+    onClick: () => setSelectedId(null)
+
+  }, /*#__PURE__*/React.createElement("svg", {
+
+    ref: svgRef,
+
+    className: "w-full h-full absolute inset-0",
+
+    style: {
+
+      cursor: draggingId ? "grabbing" : "default"
+
+    }
+
+  }, connections.map((conn, i) => {
+
+    const start = getHandlePos(conn.fromNode, "output", conn.fromIdx);
+
+    const end = getHandlePos(conn.toNode, "input", conn.toIdx);
+
+    const sourceNode = nodes.find(n => n.id === conn.fromNode);
+
+    return /*#__PURE__*/React.createElement(Wire, {
+
+      key: i,
+
+      start: start,
+
+      end: end,
+
+      active: sourceNode ? sourceNode.value : false
+
+    });
+
+  }), drawingWire && /*#__PURE__*/React.createElement(Wire, {
+
+    start: getHandlePos(drawingWire.fromNode, "output", drawingWire.fromIdx),
+
+    end: drawingWire.currentPos,
+
+    active: false
+
+  }), nodes.map(node => {
+
+    if (node.type === "INPUT") return /*#__PURE__*/React.createElement(InputSwitch, {
+
+      key: node.id,
+
+      node: node,
+
+      onMouseDown: handleMouseDown,
+
+      onToggle: id => {
+
+        const n = nodes.find(x => x.id === id);
+
+        n.value = !n.value;
+
+        setNodes([...nodes]);
+
+      },
+
+      onHandleMouseDown: handleHandleMouseDown
+
+    });
+
+    if (node.type === "OUTPUT") return /*#__PURE__*/React.createElement(OutputBulb, {
+
+      key: node.id,
+
+      node: node,
+
+      onMouseDown: handleMouseDown,
+
+      onHandleMouseDown: (e, id, type, idx) => handleHandleMouseUp(e, id, type, idx)
+
+    });
+
+    return /*#__PURE__*/React.createElement(GateNode, {
+
+      key: node.id,
+
+      node: node,
+
+      isSelected: selectedId === node.id,
+
+      onMouseDown: handleMouseDown,
+
+      onHandleMouseDown: (e, id, type, idx) => {
+
+        if (type === "input") handleHandleMouseUp(e, id, type, idx);else handleHandleMouseDown(e, id, type, idx);
+
+      }
+
+    });
+
+  })), /*#__PURE__*/React.createElement("div", {
+
+    className: "absolute top-4 right-4 bg-slate-900/80 p-4 rounded border border-slate-700 max-w-sm"
+
+  }, /*#__PURE__*/React.createElement("h3", {
+
+    className: "text-cyan-400 font-bold mb-2"
+
+  }, "Instructions"), /*#__PURE__*/React.createElement("p", {
+
+    className: "text-sm text-slate-300"
+
+  }, "Build logic circuits to verify truth tables. This tool helps visualize Boolean algebra concepts found in HKDSE ICT Paper 1."))));
+
+};
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+
+root.render(/*#__PURE__*/React.createElement(App, null));
+
+</script>
+
+  
+
+      
+
+      <!-- Footer -->
+
+      <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+</body>
+
+</html>
+

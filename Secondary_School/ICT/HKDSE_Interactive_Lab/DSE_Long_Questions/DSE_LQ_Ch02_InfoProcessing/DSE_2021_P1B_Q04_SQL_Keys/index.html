@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+  <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>HKDSE Past Paper 2021 Paper 1B Q4 - SQL & Keys</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script
+
+      crossorigin
+
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+
+    ></script>
+
+    <script
+
+      crossorigin
+
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+
+    ></script>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+
+      body {
+
+        background-color: #0f172a;
+
+        color: #e2e8f0;
+
+        font-family: "Inter", sans-serif;
+
+      }
+
+    </style>
+
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet" />
+<!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../../../../common/ncs-i18n.css" />
+  <script src="../../../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+      display: none !important;
+    }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+        if (label === "EN" || label === "\u4E2D") {
+          btn.classList.add("ncs-hide-when-ncs-fleet");
+        }
+      });
+      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+        el.classList.add("ncs-hide-when-ncs-fleet");
+      });
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+  <!-- ICT family kit: React adapter for the vanilla Lucide UMD, and the wire
+       between this app's own TEXT dictionary and the fleet language switcher. -->
+  <script src="../../../../common/ict-lucide.js"></script>
+  <script src="../../../../common/ict-i18n.js"></script>
+</head>
+
+  <body class="p-4 md:p-8">
+
+    <div id="root" class="max-w-4xl mx-auto"></div>
+
+    <script>
+
+const {
+
+  useState
+
+} = React;
+
+const {
+
+  Database,
+
+  Key,
+
+  Play,
+
+  AlertTriangle,
+
+  CheckCircle
+
+} = IctLucide;
+
+const TEXT = {
+
+  en: {
+
+    title: "HKDSE Past Paper 2021 Paper 1B Q4: SQL & Data Control",
+
+    subtitle: "Database Integrity, Primary Keys, and SQL Queries.",
+
+    tab_keys: "Part A: Primary Keys",
+
+    tab_sql: "Part B: SQL Query",
+
+    scenario: "Scenario: A school database tracks Students and Activities.",
+
+    tbl_student: "Student Table",
+
+    tbl_activity: "Activity Table",
+
+    tbl_enroll: "Enrollment Table",
+
+    pk_inst: "Identify the PRIMARY KEY for the Enrollment Table.",
+
+    pk_opt1: "Student_ID only",
+
+    pk_opt2: "Activity_ID only",
+
+    pk_opt3: "Student_ID + Activity_ID (Composite)",
+
+    pk_feedback_correct: "Correct! A student can join many activities, and an activity has many students.",
+
+    pk_feedback_wrong: "Incorrect. One ID alone is not unique in this table.",
+
+    sql_inst: "Write a SQL query to list 'Chess Club' members.",
+
+    sql_hint: "SELECT Student_Name FROM ... WHERE Activity_Name = 'Chess Club' ...",
+
+    run: "Run Query",
+
+    res: "Result:",
+
+    error: "Syntax Error in Query."
+
+  },
+
+  "zh-Hant": {
+
+    title: "HKDSE Past Paper 2021 Paper 1B Q4: SQL 與數據控制",
+
+    subtitle: "數據庫完整性、主鍵與 SQL 查詢。",
+
+    tab_keys: "甲部: 主鍵 (Primary Keys)",
+
+    tab_sql: "乙部: SQL 查詢",
+
+    scenario: "情境：學校數據庫記錄學生與活動。",
+
+    tbl_student: "學生表 (Student)",
+
+    tbl_activity: "活動表 (Activity)",
+
+    tbl_enroll: "報名表 (Enrollment)",
+
+    pk_inst: "找出報名表的主鍵 (Primary Key)。",
+
+    pk_opt1: "僅 Student_ID",
+
+    pk_opt2: "僅 Activity_ID",
+
+    pk_opt3: "Student_ID + Activity_ID (複合鍵)",
+
+    pk_feedback_correct: "正確！學生可參加多項活動，活動亦有多名學生。",
+
+    pk_feedback_wrong: "不正確。單一 ID 在此表中並非唯一。",
+
+    sql_inst: "編寫 SQL 查詢以列出 '棋藝學會 (Chess Club)' 的成員。",
+
+    sql_hint: "SELECT Student_Name FROM ... WHERE Activity_Name = 'Chess Club' ...",
+
+    run: "執行查詢",
+
+    res: "結果:",
+
+    error: "查詢語法錯誤。"
+
+  }
+
+};
+
+const DB = [{
+
+  sid: "S01",
+
+  name: "Alice",
+
+  activity: "Chess Club"
+
+}, {
+
+  sid: "S02",
+
+  name: "Bob",
+
+  activity: "Football"
+
+}, {
+
+  sid: "S03",
+
+  name: "Charlie",
+
+  activity: "Chess Club"
+
+}, {
+
+  sid: "S04",
+
+  name: "David",
+
+  activity: "Choir"
+
+}];
+
+const App = () => {
+
+  const [lang, setLang] = IctI18n.useLang(React, "en");
+
+  const [tab, setTab] = useState("keys");
+
+  const [pkAns, setPkAns] = useState(null);
+
+  const [query, setQuery] = useState("SELECT * FROM Enrollment WHERE Activity = 'Chess Club'");
+
+  const [result, setResult] = useState(null);
+
+  const t = TEXT[lang];
+
+  const checkPK = ans => {
+
+    setPkAns(ans);
+
+  };
+
+  const runSQL = () => {
+
+    if (query.toLowerCase().includes("chess club")) {
+
+      setResult(DB.filter(r => r.activity === "Chess Club"));
+
+    } else {
+
+      setResult([]);
+
+    }
+
+  };
+
+  return /*#__PURE__*/React.createElement("div", {
+
+    className: "min-h-screen bg-slate-900 p-4"
+
+  }, /*#__PURE__*/React.createElement("header", {
+
+    className: "flex justify-between items-center mb-8 border-b border-slate-700 pb-4"
+
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h1", {
+
+    className: "text-2xl font-bold text-white flex items-center gap-2"
+
+  }, /*#__PURE__*/React.createElement(Database, {
+
+    className: "text-blue-400"
+
+  }), " ", t.title), /*#__PURE__*/React.createElement("p", {
+
+    className: "text-slate-400 mt-1"
+
+  }, t.subtitle)), /*#__PURE__*/React.createElement("button", {
+
+    onClick: () => setLang(l => l === "en" ? "tc" : "en"),
+
+    className: "px-3 py-1 bg-slate-800 rounded border border-slate-600"
+
+  }, lang === "en" ? "中文" : "ENG")), /*#__PURE__*/React.createElement("div", {
+
+    className: "flex gap-4 mb-6"
+
+  }, /*#__PURE__*/React.createElement("button", {
+
+    onClick: () => setTab("keys"),
+
+    className: `px-4 py-2 rounded font-bold ${tab === "keys" ? "bg-blue-600 text-white" : "bg-slate-700 text-slate-300"}`
+
+  }, t.tab_keys), /*#__PURE__*/React.createElement("button", {
+
+    onClick: () => setTab("sql"),
+
+    className: `px-4 py-2 rounded font-bold ${tab === "sql" ? "bg-indigo-600 text-white" : "bg-slate-700 text-slate-300"}`
+
+  }, t.tab_sql)), /*#__PURE__*/React.createElement("div", {
+
+    className: "bg-slate-800 p-6 rounded-xl border border-slate-700 mb-6"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "flex items-center gap-2 text-yellow-400 mb-2 font-bold"
+
+  }, /*#__PURE__*/React.createElement(Database, {
+
+    size: 16
+
+  }), " ", t.scenario), /*#__PURE__*/React.createElement("div", {
+
+    className: "grid grid-cols-3 gap-4 text-xs md:text-sm font-mono text-slate-300"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "bg-slate-900 p-3 rounded border border-slate-600"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "font-bold text-white border-b border-slate-700 mb-2"
+
+  }, t.tbl_student), /*#__PURE__*/React.createElement("div", null, "Student_ID (PK)"), /*#__PURE__*/React.createElement("div", null, "Name"), /*#__PURE__*/React.createElement("div", null, "Class")), /*#__PURE__*/React.createElement("div", {
+
+    className: "bg-slate-900 p-3 rounded border border-slate-600"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "font-bold text-white border-b border-slate-700 mb-2"
+
+  }, t.tbl_activity), /*#__PURE__*/React.createElement("div", null, "Activity_ID (PK)"), /*#__PURE__*/React.createElement("div", null, "Activity_Name"), /*#__PURE__*/React.createElement("div", null, "Fee")), /*#__PURE__*/React.createElement("div", {
+
+    className: "bg-slate-900 p-3 rounded border border-slate-600 border-yellow-500/50"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "font-bold text-white border-b border-slate-700 mb-2"
+
+  }, t.tbl_enroll), /*#__PURE__*/React.createElement("div", {
+
+    className: "text-yellow-400 font-bold"
+
+  }, "??? (PK)"), /*#__PURE__*/React.createElement("div", null, "Student_ID (FK)"), /*#__PURE__*/React.createElement("div", null, "Activity_ID (FK)"), /*#__PURE__*/React.createElement("div", null, "Join_Date")))), tab === "keys" && /*#__PURE__*/React.createElement("div", {
+
+    className: "bg-white text-slate-900 p-6 rounded-xl shadow-lg"
+
+  }, /*#__PURE__*/React.createElement("h2", {
+
+    className: "text-xl font-bold mb-4 flex gap-2"
+
+  }, /*#__PURE__*/React.createElement(Key, null), " ", t.pk_inst), /*#__PURE__*/React.createElement("div", {
+
+    className: "space-y-3"
+
+  }, [1, 2, 3].map(opt => /*#__PURE__*/React.createElement("button", {
+
+    key: opt,
+
+    onClick: () => checkPK(opt),
+
+    className: `w-full text-left p-4 rounded border-2 transition-all ${pkAns === opt ? opt === 3 ? "border-green-500 bg-green-50" : "border-red-500 bg-red-50" : "border-slate-200 hover:border-blue-300"}`
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "font-bold text-lg"
+
+  }, t["pk_opt" + opt]), pkAns === opt && /*#__PURE__*/React.createElement("div", {
+
+    className: `mt-2 text-sm ${opt === 3 ? "text-green-700" : "text-red-600"}`
+
+  }, opt === 3 ? t.pk_feedback_correct : t.pk_feedback_wrong))))), tab === "sql" && /*#__PURE__*/React.createElement("div", {
+
+    className: "bg-base-100 text-slate-200"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "bg-slate-800 p-6 rounded-xl border border-slate-700"
+
+  }, /*#__PURE__*/React.createElement("h2", {
+
+    className: "text-xl font-bold mb-4 flex gap-2 text-white"
+
+  }, /*#__PURE__*/React.createElement(Play, null), " ", t.sql_inst), /*#__PURE__*/React.createElement("textarea", {
+
+    value: query,
+
+    onChange: e => setQuery(e.target.value),
+
+    className: "w-full h-32 bg-black text-green-400 font-mono p-4 rounded border border-slate-600 focus:outline-none focus:border-green-500"
+
+  }), /*#__PURE__*/React.createElement("button", {
+
+    onClick: runSQL,
+
+    className: "mt-4 px-6 py-2 bg-green-600 hover:bg-green-500 text-white font-bold rounded flex items-center gap-2"
+
+  }, /*#__PURE__*/React.createElement(Play, {
+
+    size: 16
+
+  }), " ", t.run), result && /*#__PURE__*/React.createElement("div", {
+
+    className: "mt-6"
+
+  }, /*#__PURE__*/React.createElement("h3", {
+
+    className: "font-bold mb-2"
+
+  }, t.res), /*#__PURE__*/React.createElement("table", {
+
+    className: "w-full text-left text-sm"
+
+  }, /*#__PURE__*/React.createElement("thead", {
+
+    className: "text-slate-500 border-b border-slate-600"
+
+  }, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+
+    className: "pb-2"
+
+  }, "SID"), /*#__PURE__*/React.createElement("th", {
+
+    className: "pb-2"
+
+  }, "Name"), /*#__PURE__*/React.createElement("th", {
+
+    className: "pb-2"
+
+  }, "Activity"))), /*#__PURE__*/React.createElement("tbody", null, result.map((r, i) => /*#__PURE__*/React.createElement("tr", {
+
+    key: i,
+
+    className: "border-b border-slate-700/50"
+
+  }, /*#__PURE__*/React.createElement("td", {
+
+    className: "py-2 font-mono text-slate-400"
+
+  }, r.sid), /*#__PURE__*/React.createElement("td", {
+
+    className: "py-2 text-white font-bold"
+
+  }, r.name), /*#__PURE__*/React.createElement("td", {
+
+    className: "py-2 text-yellow-400"
+
+  }, r.activity))), result.length === 0 && /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+
+    colSpan: "3",
+
+    className: "py-4 text-slate-500 italic"
+
+  }, "No matches."))))))));
+
+};
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+
+root.render(/*#__PURE__*/React.createElement(App, null));
+
+</script>
+
+  <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+</body>
+
+</html>
+

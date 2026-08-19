@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HKDSE ICT - Array Trace Visualizer</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: #0f172a;
+        color: #e2e8f0;
+      }
+      .mono {
+        font-family: "JetBrains Mono", monospace;
+      }
+      .cell {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .cell-active {
+        transform: scale(1.1);
+        box-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
+        z-index: 10;
+        border-color: #38bdf8;
+      }
+      .cell-changed {
+        animation: flash-green 0.5s;
+        background-color: rgba(34, 197, 94, 0.2) !important;
+      }
+      @keyframes flash-green {
+        0% {
+          background-color: #22c55e;
+        }
+        100% {
+          background-color: rgba(34, 197, 94, 0.2);
+        }
+      }
+    </style>
+  <!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
+  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+      display: none !important;
+    }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+        if (label === "EN" || label === "\u4E2D") {
+          btn.classList.add("ncs-hide-when-ncs-fleet");
+        }
+      });
+      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+        el.classList.add("ncs-hide-when-ncs-fleet");
+      });
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+</head>
+  <body class="min-h-screen flex items-center justify-center p-8 bg-slate-900">
+    <div id="root" class="w-full h-full"></div>
+
+    <script>
+const {
+  useState,
+  useEffect,
+  useRef
+} = React;
+
+// --- LUCIDE ICON SHIM ---
+const LucideIcon = ({
+  name,
+  size = 24,
+  className = ""
+}) => {
+  const formatName = n => n.split("-").map(p => p.charAt(0).toUpperCase() + p.slice(1)).join("");
+  const iconName = formatName(name);
+  const [svgHtml, setSvgHtml] = useState("");
+  useEffect(() => {
+    if (window.lucide && window.lucide.icons && window.lucide.icons[iconName] && typeof window.lucide.icons[iconName].toSvg === "function") {
+      setSvgHtml(window.lucide.icons[iconName].toSvg({
+        width: size,
+        height: size,
+        class: className
+      }));
+    }
+  }, [name, size, className, iconName]);
+  return /*#__PURE__*/React.createElement("span", {
+    dangerouslySetInnerHTML: {
+      __html: svgHtml
+    },
+    style: {
+      display: "inline-flex"
+    }
+  });
+};
+const Play = p => /*#__PURE__*/React.createElement(LucideIcon, {
+  name: "play",
+  ...p
+});
+const Pause = p => /*#__PURE__*/React.createElement(LucideIcon, {
+  name: "pause",
+  ...p
+});
+const RotateCcw = p => /*#__PURE__*/React.createElement(LucideIcon, {
+  name: "rotate-ccw",
+  ...p
+});
+const SkipForward = p => /*#__PURE__*/React.createElement(LucideIcon, {
+  name: "skip-forward",
+  ...p
+});
+const Code = p => /*#__PURE__*/React.createElement(LucideIcon, {
+  name: "code",
+  ...p
+}); // unused but safe
+// --- END SHIM ---
+
+const App = () => {
+  const [s1, setS1] = useState(["S", "T", "E", "A", "M"]);
+  const [s2, setS2] = useState(["", "", "", "", ""]);
+  const [i, setI] = useState(-1);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [finished, setFinished] = useState(false);
+  const timerRef = useRef(null);
+  const reset = () => {
+    setS2(["", "", "", "", ""]);
+    setI(-1);
+    setIsPlaying(false);
+    setFinished(false);
+    clearInterval(timerRef.current);
+  };
+  const step = () => {
+    setI(prev => {
+      const nextI = prev + 1;
+      if (nextI > 4) {
+        setIsPlaying(false);
+        setFinished(true);
+        clearInterval(timerRef.current);
+        return prev;
+      }
+      const targetIdx = 4 - nextI;
+      const val = s1[nextI];
+      setS2(currentS2 => {
+        const newS2 = [...currentS2];
+        newS2[targetIdx] = val;
+        return newS2;
+      });
+      return nextI;
+    });
+  };
+  const togglePlay = () => {
+    if (finished) reset();
+    setIsPlaying(!isPlaying);
+  };
+  useEffect(() => {
+    if (isPlaying) timerRef.current = setInterval(step, 1000);
+    return () => clearInterval(timerRef.current);
+  }, [isPlaying]);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "max-w-5xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-12"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "space-y-8"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h1", {
+    className: "text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-500 mb-2"
+  }, "Array Trace Visualizer"), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-400"
+  }, "Paper 1B Q6 (STEAM Array Reversal)")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-950 p-6 rounded-xl border border-slate-800 font-mono text-sm shadow-inner relative overflow-hidden"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-0 right-0 p-2 bg-slate-900 text-xs text-slate-500 rounded-bl-lg"
+  }, "Pseudocode"), /*#__PURE__*/React.createElement("pre", {
+    className: "text-slate-300"
+  }, `s1 = [ 'S', 'T', 'E', 'A', 'M' ]
+s2 = [ ' ', ' ', ' ', ' ', ' ' ]
+
+`, /*#__PURE__*/React.createElement("span", {
+    className: i >= 0 && i <= 4 ? "bg-slate-800 text-cyan-400 font-bold block w-full px-1" : ""
+  }, "for i = 0 to 4:"), /*#__PURE__*/React.createElement("span", {
+    className: i >= 0 && i <= 4 ? "bg-slate-800 text-cyan-200 font-bold block w-full px-4" : "block px-4"
+  }, "s2[4 - i] = s1[i]")), i >= 0 && i <= 4 && /*#__PURE__*/React.createElement("div", {
+    className: "mt-4 pt-4 border-t border-slate-800 text-cyan-400"
+  }, "> i = ", /*#__PURE__*/React.createElement("span", {
+    className: "text-white font-bold"
+  }, i), /*#__PURE__*/React.createElement("br", null), "> Target Index (4 - i) =", " ", /*#__PURE__*/React.createElement("span", {
+    className: "text-white font-bold"
+  }, 4 - i), /*#__PURE__*/React.createElement("br", null), "> Copying", " ", /*#__PURE__*/React.createElement("span", {
+    className: "text-yellow-400 font-bold"
+  }, "'", s1[i], "'"))), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: togglePlay,
+    className: "flex-1 py-3 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg font-bold flex items-center justify-center gap-2 transition-all"
+  }, isPlaying ? /*#__PURE__*/React.createElement(Pause, {
+    size: 20
+  }) : finished ? /*#__PURE__*/React.createElement(RotateCcw, {
+    size: 20
+  }) : /*#__PURE__*/React.createElement(Play, {
+    size: 20
+  }), isPlaying ? "Pause" : finished ? "Restart" : "Auto Play"), /*#__PURE__*/React.createElement("button", {
+    onClick: step,
+    disabled: finished || isPlaying,
+    className: "px-6 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-bold disabled:opacity-50"
+  }, /*#__PURE__*/React.createElement(SkipForward, {
+    size: 20
+  })))), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col justify-center space-y-12 relative"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h3", {
+    className: "text-slate-400 font-bold mb-2 ml-1"
+  }, "Array s1 (Source)"), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-2"
+  }, s1.map((val, idx) => /*#__PURE__*/React.createElement("div", {
+    key: idx,
+    className: "flex flex-col items-center gap-1"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: `w-14 h-14 flex items-center justify-center text-xl font-bold rounded-lg border-2 cell mono ${i === idx ? "cell-active bg-cyan-900/50 text-cyan-200" : "bg-slate-800 border-slate-700 text-slate-500"}`
+  }, val), /*#__PURE__*/React.createElement("span", {
+    className: "text-xs text-slate-600 font-mono"
+  }, idx))))), i >= 0 && i <= 4 && /*#__PURE__*/React.createElement("div", {
+    className: "absolute left-10 top-[110px] w-full h-[60px] pointer-events-none transition-all duration-300"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2 text-cyan-500 bg-slate-900/80 px-4 py-1 rounded-full border border-cyan-500/30 absolute left-4 animate-bounce"
+  }, /*#__PURE__*/React.createElement(ArrowRightIcon, {
+    size: 16,
+    className: "rotate-90"
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "text-xs font-mono"
+  }, "Move s1[", i, "] to s2[", 4 - i, "]"))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h3", {
+    className: "text-slate-400 font-bold mb-2 ml-1"
+  }, "Array s2 (Destination)"), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-2"
+  }, s2.map((val, idx) => /*#__PURE__*/React.createElement("div", {
+    key: idx,
+    className: "flex flex-col items-center gap-1"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: `w-14 h-14 flex items-center justify-center text-xl font-bold rounded-lg border-2 cell mono ${i >= 0 && idx === 4 - i ? "cell-active cell-changed bg-green-900/50 text-green-200 border-green-500" : "bg-slate-800 border-slate-700 text-slate-300"} ${val ? "border-slate-500 bg-slate-700" : ""}`
+  }, val), /*#__PURE__*/React.createElement("span", {
+    className: "text-xs text-slate-600 font-mono"
+  }, idx))))), finished && /*#__PURE__*/React.createElement("div", {
+    className: "p-4 bg-green-900/20 border border-green-500/50 rounded-lg text-green-400 text-center animate-pulse"
+  }, "Array Reversal Complete!")));
+};
+const ArrowRightIcon = ({
+  size,
+  className
+}) => /*#__PURE__*/React.createElement("svg", {
+  width: size,
+  height: size,
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: "2",
+  strokeLinecap: "round",
+  strokeLinejoin: "round",
+  className: className
+}, /*#__PURE__*/React.createElement("line", {
+  x1: "5",
+  y1: "12",
+  x2: "19",
+  y2: "12"
+}), /*#__PURE__*/React.createElement("polyline", {
+  points: "12 5 19 12 12 19"
+}));
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+</body>
+</html>

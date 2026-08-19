@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+  <head>
+  <meta charset="UTF-8" />
+  <title>HKDSE Ch3: Floating Point Representation</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script
+
+      crossorigin
+
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+
+    ></script>
+
+    <script
+
+      crossorigin
+
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+
+    ></script>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+
+      body {
+
+        background-color: #0f172a;
+
+        color: #e2e8f0;
+
+        font-family: sans-serif;
+
+      }
+
+    </style>
+
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet" />
+<!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../../../../common/ncs-i18n.css" />
+  <script src="../../../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+      display: none !important;
+    }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+        if (label === "EN" || label === "\u4E2D") {
+          btn.classList.add("ncs-hide-when-ncs-fleet");
+        }
+      });
+      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+        el.classList.add("ncs-hide-when-ncs-fleet");
+      });
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+  <!-- ICT family kit: React adapter for the vanilla Lucide UMD, and the wire
+       between this app's own TEXT dictionary and the fleet language switcher. -->
+  <script src="../../../../common/ict-i18n.js"></script>
+</head>
+
+  <body class="p-4 flex justify-center min-h-screen">
+
+    <div id="root" class="w-full max-w-4xl"></div>
+
+    <script>
+
+const {
+
+  useState
+
+} = React;
+
+const createLucideIcon = name => {
+
+  const iconData = window.lucide?.icons[name];
+
+  if (!iconData) return props => /*#__PURE__*/React.createElement("span", null, "?");
+
+  return ({
+
+    size,
+
+    className,
+
+    ...props
+
+  }) => React.createElement("svg", {
+
+    width: size || 24,
+
+    height: size || 24,
+
+    fill: "none",
+
+    stroke: "currentColor",
+
+    strokeWidth: 2,
+
+    strokeLinecap: "round",
+
+    strokeLinejoin: "round",
+
+    className: `lucide lucide-${name.toLowerCase()} ${className || ""}`,
+
+    viewBox: "0 0 24 24",
+
+    ...props
+
+  }, iconData.map(([tag, attrs], i) => React.createElement(tag, {
+
+    ...attrs,
+
+    key: i
+
+  })));
+
+};
+
+const Icon = ({
+
+  name,
+
+  ...p
+
+}) => {
+
+  const C = createLucideIcon(name);
+
+  return /*#__PURE__*/React.createElement(C, p);
+
+};
+
+const TEXT = {
+
+  en: {
+
+    title: "HKDSE Ch3: Floating Point Rep.",
+
+    subtitle: "Sign, Exponent (Excess-4), Mantissa",
+
+    sign: "Sign Bit",
+
+    exp: "Exponent (3 bit)",
+
+    man: "Mantissa (4 bit)",
+
+    val: "Decimal Value",
+
+    formula: "Formula: (-1)^S × 1.M × 2^(E - Excess)",
+
+    excess: "Excess Value: 4",
+
+    calc: "Calculation:",
+
+    desc: "Toggle bits to see how the computer stores real numbers (Simplified 8-bit model).",
+
+    pos: "Positive",
+
+    neg: "Negative"
+
+  },
+
+  "zh-Hant": {
+
+    title: "HKDSE 第三章：浮點數表示法",
+
+    subtitle: "符號、指數 (Excess-4)、尾數",
+
+    sign: "符號位 (Sign)",
+
+    exp: "指數 (Exponent 3-bit)",
+
+    man: "尾數 (Mantissa 4-bit)",
+
+    val: "十進制數值",
+
+    formula: "公式：(-1)^S × 1.M × 2^(E - Excess)",
+
+    excess: "超碼值 (Excess)：4",
+
+    calc: "計算過程：",
+
+    desc: "切換位元以查看電腦如何儲存實數 (簡化 8 位模型)。",
+
+    pos: "正數",
+
+    neg: "負數"
+
+  }
+
+};
+
+const App = () => {
+
+  const [lang, setLang] = IctI18n.useLang(React, "en");
+
+  const t = TEXT[lang];
+
+  const [sign, setSign] = useState(0);
+
+  const [exp, setExp] = useState([1, 0, 0]); // 4 -> Excess4 -> 2^0
+
+  const [man, setMan] = useState([0, 0, 0, 0]); // 1.0000
+
+
+
+  const toggleExp = i => setExp(prev => prev.map((b, idx) => idx === i ? 1 - b : b));
+
+  const toggleMan = i => setMan(prev => prev.map((b, idx) => idx === i ? 1 - b : b));
+
+
+
+  // Calculate Value
+
+  // Exponent Value (Unsigned)
+
+  const expVal = parseInt(exp.join(""), 2);
+
+  const realExp = expVal - 4; // Excess-4
+
+
+
+  // Mantissa Value (1.xxxx)
+
+  let manVal = 1.0;
+
+  man.forEach((b, i) => {
+
+    if (b) manVal += Math.pow(2, -(i + 1));
+
+  });
+
+  const finalVal = (sign ? -1 : 1) * manVal * Math.pow(2, realExp);
+
+  return /*#__PURE__*/React.createElement("div", {
+
+    className: "space-y-6"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "flex justify-between items-center bg-slate-800 p-4 rounded-xl border border-slate-700"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "flex items-center gap-3"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "p-2 bg-pink-600 rounded-lg"
+
+  }, /*#__PURE__*/React.createElement(Icon, {
+
+    name: "Binary",
+
+    className: "text-white"
+
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h1", {
+
+    className: "text-xl font-bold text-white"
+
+  }, t.title), /*#__PURE__*/React.createElement("p", {
+
+    className: "text-slate-400 text-xs"
+
+  }, t.subtitle))), /*#__PURE__*/React.createElement("button", {
+
+    onClick: () => setLang(l => l === "en" ? "tc" : "en"),
+
+    className: "px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-white font-bold border border-slate-500"
+
+  }, lang === "en" ? "中文" : "English")), /*#__PURE__*/React.createElement("div", {
+
+    className: "bg-slate-900 border border-slate-700 rounded-xl p-8 flex flex-col items-center gap-8"
+
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+
+    className: "text-slate-400 text-sm mb-2 text-center"
+
+  }, t.desc), /*#__PURE__*/React.createElement("div", {
+
+    className: "flex gap-4 items-end justify-center font-mono"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "flex flex-col items-center gap-2"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "text-xs text-red-400 font-bold"
+
+  }, t.sign), /*#__PURE__*/React.createElement("button", {
+
+    onClick: () => setSign(1 - sign),
+
+    className: `w-12 h-16 text-2xl font-bold rounded border-2 ${sign ? "bg-red-900/50 border-red-500 text-red-300" : "bg-slate-800 border-slate-600 text-slate-500"}`
+
+  }, sign)), /*#__PURE__*/React.createElement("div", {
+
+    className: "flex flex-col items-center gap-2"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "text-xs text-green-400 font-bold"
+
+  }, t.exp), /*#__PURE__*/React.createElement("div", {
+
+    className: "flex gap-1"
+
+  }, exp.map((b, i) => /*#__PURE__*/React.createElement("button", {
+
+    key: i,
+
+    onClick: () => toggleExp(i),
+
+    className: `w-10 h-16 text-2xl font-bold rounded border-2 ${b ? "bg-green-900/50 border-green-500 text-green-300" : "bg-slate-800 border-slate-600 text-slate-500"}`
+
+  }, b)))), /*#__PURE__*/React.createElement("div", {
+
+    className: "flex flex-col items-center gap-2"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "text-xs text-blue-400 font-bold"
+
+  }, t.man), /*#__PURE__*/React.createElement("div", {
+
+    className: "flex gap-1"
+
+  }, man.map((b, i) => /*#__PURE__*/React.createElement("button", {
+
+    key: i,
+
+    onClick: () => toggleMan(i),
+
+    className: `w-10 h-16 text-2xl font-bold rounded border-2 ${b ? "bg-blue-900/50 border-blue-500 text-blue-300" : "bg-slate-800 border-slate-600 text-slate-500"}`
+
+  }, b)))))), /*#__PURE__*/React.createElement("div", {
+
+    className: "w-full bg-slate-800 p-6 rounded-xl border border-slate-600"
+
+  }, /*#__PURE__*/React.createElement("h2", {
+
+    className: "text-white font-bold mb-4"
+
+  }, t.val, ":", " ", /*#__PURE__*/React.createElement("span", {
+
+    className: "text-4xl text-yellow-400 ml-2"
+
+  }, finalVal.toFixed(6).replace(/\.?0+$/, ""))), /*#__PURE__*/React.createElement("div", {
+
+    className: "space-y-2 text-sm text-slate-300 font-mono bg-slate-900 p-4 rounded"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "border-b border-slate-700 pb-2 mb-2 text-slate-500"
+
+  }, t.formula), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
+
+    className: "text-red-400"
+
+  }, "Sign (", sign, ")"), " =", " ", sign ? `-1 (${t.neg})` : `+1 (${t.pos})`), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
+
+    className: "text-green-400"
+
+  }, "Exponent (", exp.join(""), "₂)"), " ", "= ", expVal, " - ", t.excess, " =", " ", /*#__PURE__*/React.createElement("span", {
+
+    className: "text-white font-bold"
+
+  }, realExp)), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
+
+    className: "text-blue-400"
+
+  }, "Mantissa (1.", man.join(""), "₂)"), " ", "=", " ", /*#__PURE__*/React.createElement("span", {
+
+    className: "text-white font-bold"
+
+  }, manVal.toFixed(4))), /*#__PURE__*/React.createElement("div", {
+
+    className: "mt-2 pt-2 border-t border-slate-700 text-yellow-300 font-bold"
+
+  }, "Result = ", sign ? "-" : "", "1 × ", manVal.toFixed(4), " × 2^", realExp, " = ", finalVal)))));
+
+};
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+
+root.render(/*#__PURE__*/React.createElement(App, null));
+
+</script>
+
+  <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+</body>
+
+</html>
+

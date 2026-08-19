@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+  <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>HKDSE Past Paper 2025 Paper 1A Q8 - Web Upload Logic</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script
+
+      crossorigin
+
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+
+    ></script>
+
+    <script
+
+      crossorigin
+
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+
+    ></script>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <link
+
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap"
+
+      rel="stylesheet"
+
+    />
+
+    <style>
+
+      body {
+
+        font-family: "Inter", sans-serif;
+
+        background-color: #0f172a;
+
+        color: #e2e8f0;
+
+      }
+
+      .browser-mockup {
+
+        border-radius: 8px;
+
+        overflow: hidden;
+
+        border: 1px solid #334155;
+
+      }
+
+      .browser-header {
+
+        background: #1e293b;
+
+        padding: 8px 12px;
+
+        display: flex;
+
+        align-items: center;
+
+        gap: 8px;
+
+      }
+
+      .browser-dot {
+
+        width: 10px;
+
+        height: 10px;
+
+        border-radius: 50%;
+
+      }
+
+      .switch {
+
+        position: relative;
+
+        display: inline-block;
+
+        width: 44px;
+
+        height: 24px;
+
+      }
+
+      .switch input {
+
+        opacity: 0;
+
+        width: 0;
+
+        height: 0;
+
+      }
+
+      .slider {
+
+        position: absolute;
+
+        cursor: pointer;
+
+        top: 0;
+
+        left: 0;
+
+        right: 0;
+
+        bottom: 0;
+
+        background-color: #334155;
+
+        transition: 0.4s;
+
+        border-radius: 34px;
+
+        border: 1px solid #475569;
+
+      }
+
+      .slider:before {
+
+        position: absolute;
+
+        content: "";
+
+        height: 18px;
+
+        width: 18px;
+
+        left: 2px;
+
+        bottom: 2px;
+
+        background-color: white;
+
+        transition: 0.4s;
+
+        border-radius: 50%;
+
+      }
+
+      input:checked + .slider {
+
+        background-color: #38bdf8;
+
+        border-color: #0ea5e9;
+
+      }
+
+      input:checked + .slider:before {
+
+        transform: translateX(20px);
+
+      }
+
+    </style>
+
+  <!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../../../common/ncs-i18n.css" />
+  <script src="../../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+      display: none !important;
+    }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+        if (label === "EN" || label === "\u4E2D") {
+          btn.classList.add("ncs-hide-when-ncs-fleet");
+        }
+      });
+      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+        el.classList.add("ncs-hide-when-ncs-fleet");
+      });
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+</head>
+
+  <body class="min-h-screen p-4 md:p-8 flex flex-col items-center">
+
+    <div id="root" class="w-full max-w-5xl"></div>
+
+
+
+    <script>
+
+const {
+
+  useState,
+
+  useEffect
+
+} = React;
+
+
+
+// Lucide Icon Shim
+
+const LucideIcon = ({
+
+  name,
+
+  size = 20,
+
+  className = ""
+
+}) => {
+
+  const formatName = n => n.split("-").map(p => p.charAt(0).toUpperCase() + p.slice(1)).join("");
+
+  const iconName = formatName(name);
+
+  const [svgHtml, setSvgHtml] = useState("");
+
+  useEffect(() => {
+
+    if (window.lucide?.icons[iconName]?.toSvg) {
+
+      setSvgHtml(window.lucide.icons[iconName].toSvg({
+
+        width: size,
+
+        height: size,
+
+        class: className
+
+      }));
+
+    }
+
+  }, [name]);
+
+  return /*#__PURE__*/React.createElement("span", {
+
+    dangerouslySetInnerHTML: {
+
+      __html: svgHtml
+
+    },
+
+    style: {
+
+      display: "inline-flex"
+
+    }
+
+  });
+
+};
+
+const App = () => {
+
+  // Three Actions
+
+  const [actions, setActions] = useState({
+
+    checkTypos: true,
+
+    compress: false,
+
+    linkMedia: true
+
+  });
+
+  const [viewState, setViewState] = useState("idle"); // idle, uploading, viewed
+
+  const [feedback, setFeedback] = useState(null);
+
+  const toggle = key => setActions(prev => ({
+
+    ...prev,
+
+    [key]: !prev[key]
+
+  }));
+
+  const handleUpload = () => {
+
+    setViewState("uploading");
+
+    setTimeout(() => {
+
+      setViewState("viewed");
+
+
+
+      // Logic: The Question asks what the teacher does NOT do for DIRECT VIEWING.
+
+      // If Compress is ON, the teacher DID it -> Result: Browser fails to view directly.
+
+      // This proves why "Compressing" is the answer (the thing NOT to do).
+
+
+
+      if (actions.compress) {
+
+        setFeedback({
+
+          success: false,
+
+          msg: "Browser Cannot View!",
+
+          detail: "Browsers cannot directly render a .zip file. Students would have to download and extract it first. For direct viewing, do NOT compress."
+
+        });
+
+      } else {
+
+        setFeedback({
+
+          success: true,
+
+          msg: "Success! Page Viewed.",
+
+          detail: "By uploading the HTML directly (without zipping), students can view it instantly."
+
+        });
+
+      }
+
+    }, 1500);
+
+  };
+
+  return /*#__PURE__*/React.createElement("div", {
+
+    className: "space-y-8 animate-fade-in w-full max-w-5xl mx-auto"
+
+  }, /*#__PURE__*/React.createElement("header", {
+
+    className: "text-center space-y-2"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-900/30 border border-cyan-500/30 text-cyan-400 text-sm font-bold mb-4"
+
+  }, /*#__PURE__*/React.createElement("span", {
+
+    className: "w-2 h-2 rounded-full bg-cyan-400 animate-pulse"
+
+  }), "HKDSE Past Paper 2025 Paper 1A Q8"), /*#__PURE__*/React.createElement("h1", {
+
+    className: "text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-amber-400"
+
+  }, "Web Upload Simulator"), /*#__PURE__*/React.createElement("p", {
+
+    className: "text-slate-400 max-w-xl mx-auto"
+
+  }, "A teacher uploads HTML files for students to view DIRECTLY in a browser.", /*#__PURE__*/React.createElement("br", null), "Which step should be avoided?")), /*#__PURE__*/React.createElement("div", {
+
+    className: "grid grid-cols-1 md:grid-cols-2 gap-8"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "bg-slate-900 p-8 rounded-2xl border border-slate-800 shadow-xl space-y-6"
+
+  }, /*#__PURE__*/React.createElement("h2", {
+
+    className: "text-white font-bold flex items-center gap-2 border-b border-slate-800 pb-2"
+
+  }, /*#__PURE__*/React.createElement(LucideIcon, {
+
+    name: "upload-cloud",
+
+    className: "text-cyan-400"
+
+  }), "Teacher's Upload Settings"), /*#__PURE__*/React.createElement("div", {
+
+    className: "space-y-4"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "flex items-center justify-between bg-slate-950 p-4 rounded-lg border border-slate-800"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "flex items-center gap-3"
+
+  }, /*#__PURE__*/React.createElement(LucideIcon, {
+
+    name: "spell-check",
+
+    className: "text-green-400"
+
+  }), /*#__PURE__*/React.createElement("span", {
+
+    className: "text-sm font-bold text-slate-300"
+
+  }, "1. Check for Typos")), /*#__PURE__*/React.createElement("label", {
+
+    className: "switch"
+
+  }, /*#__PURE__*/React.createElement("input", {
+
+    type: "checkbox",
+
+    checked: actions.checkTypos,
+
+    onChange: () => toggle("checkTypos")
+
+  }), /*#__PURE__*/React.createElement("span", {
+
+    className: "slider"
+
+  }))), /*#__PURE__*/React.createElement("div", {
+
+    className: "flex items-center justify-between bg-slate-950 p-4 rounded-lg border border-slate-800 ring-1 ring-orange-500/30"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "flex items-center gap-3"
+
+  }, /*#__PURE__*/React.createElement(LucideIcon, {
+
+    name: "file-archive",
+
+    className: "text-orange-400"
+
+  }), /*#__PURE__*/React.createElement("div", {
+
+    className: "flex flex-col"
+
+  }, /*#__PURE__*/React.createElement("span", {
+
+    className: "text-sm font-bold text-slate-300"
+
+  }, "2. Compress (Zip) Files"), /*#__PURE__*/React.createElement("span", {
+
+    className: "text-xs text-slate-500"
+
+  }, "Before uploading"))), /*#__PURE__*/React.createElement("label", {
+
+    className: "switch"
+
+  }, /*#__PURE__*/React.createElement("input", {
+
+    type: "checkbox",
+
+    checked: actions.compress,
+
+    onChange: () => toggle("compress")
+
+  }), /*#__PURE__*/React.createElement("span", {
+
+    className: "slider bg-slate-700"
+
+  }))), /*#__PURE__*/React.createElement("div", {
+
+    className: "flex items-center justify-between bg-slate-950 p-4 rounded-lg border border-slate-800"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "flex items-center gap-3"
+
+  }, /*#__PURE__*/React.createElement(LucideIcon, {
+
+    name: "link",
+
+    className: "text-blue-400"
+
+  }), /*#__PURE__*/React.createElement("span", {
+
+    className: "text-sm font-bold text-slate-300"
+
+  }, "3. Link Multimedia")), /*#__PURE__*/React.createElement("label", {
+
+    className: "switch"
+
+  }, /*#__PURE__*/React.createElement("input", {
+
+    type: "checkbox",
+
+    checked: actions.linkMedia,
+
+    onChange: () => toggle("linkMedia")
+
+  }), /*#__PURE__*/React.createElement("span", {
+
+    className: "slider"
+
+  })))), /*#__PURE__*/React.createElement("button", {
+
+    onClick: handleUpload,
+
+    disabled: viewState === "uploading",
+
+    className: "w-full py-4 bg-cyan-600 hover:bg-cyan-500 disabled:bg-slate-700 text-white font-bold rounded-lg shadow-lg shadow-cyan-900/20 transition-all flex items-center justify-center gap-2"
+
+  }, viewState === "uploading" ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(LucideIcon, {
+
+    name: "loader-2",
+
+    className: "animate-spin"
+
+  }), " ", "Uploading...") : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(LucideIcon, {
+
+    name: "globe"
+
+  }), " Upload & View"))), /*#__PURE__*/React.createElement("div", {
+
+    className: "space-y-4"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "browser-mockup bg-white h-[400px] flex flex-col shadow-2xl"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "browser-header"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "browser-dot bg-red-500"
+
+  }), /*#__PURE__*/React.createElement("div", {
+
+    className: "browser-dot bg-yellow-500"
+
+  }), /*#__PURE__*/React.createElement("div", {
+
+    className: "browser-dot bg-green-500"
+
+  }), /*#__PURE__*/React.createElement("div", {
+
+    className: "bg-slate-700 flex-1 rounded px-3 py-1 text-xs text-slate-300 font-mono truncate ml-2"
+
+  }, actions.compress ? "https://school.edu/notes.zip" : "https://school.edu/notes.html")), /*#__PURE__*/React.createElement("div", {
+
+    className: "flex-1 bg-white relative overflow-hidden"
+
+  }, viewState === "idle" && /*#__PURE__*/React.createElement("div", {
+
+    className: "absolute inset-0 flex items-center justify-center text-slate-400"
+
+  }, "Waiting for upload..."), viewState === "uploading" && /*#__PURE__*/React.createElement("div", {
+
+    className: "absolute inset-0 flex flex-col items-center justify-center bg-slate-50 gap-4"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "w-12 h-12 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"
+
+  }), /*#__PURE__*/React.createElement("span", {
+
+    className: "text-slate-500 font-bold"
+
+  }, "Loading...")), viewState === "viewed" && (actions.compress ?
+
+  /*#__PURE__*/
+
+  // ZIP VIEW (Browser can't render)
+
+  React.createElement("div", {
+
+    className: "absolute inset-0 flex flex-col items-center justify-center bg-slate-100 p-8 text-center space-y-4"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center text-orange-500"
+
+  }, /*#__PURE__*/React.createElement(LucideIcon, {
+
+    name: "file-archive",
+
+    size: 40
+
+  })), /*#__PURE__*/React.createElement("h3", {
+
+    className: "text-xl font-bold text-slate-800"
+
+  }, "Cannot Open File"), /*#__PURE__*/React.createElement("p", {
+
+    className: "text-slate-500 text-sm"
+
+  }, "Browsers cannot display ", /*#__PURE__*/React.createElement("strong", null, ".zip"), " files directly.", /*#__PURE__*/React.createElement("br", null), "Do you want to download ", /*#__PURE__*/React.createElement("strong", null, "notes.zip"), "?"), /*#__PURE__*/React.createElement("div", {
+
+    className: "flex gap-2 mt-2"
+
+  }, /*#__PURE__*/React.createElement("button", {
+
+    className: "px-4 py-2 bg-blue-600 text-white rounded text-sm font-bold shadow"
+
+  }, "Download"), /*#__PURE__*/React.createElement("button", {
+
+    className: "px-4 py-2 bg-slate-200 text-slate-600 rounded text-sm font-bold"
+
+  }, "Cancel"))) :
+
+  /*#__PURE__*/
+
+  // HTML VIEW (Success)
+
+  React.createElement("div", {
+
+    className: "absolute inset-0 p-8 overflow-y-auto"
+
+  }, /*#__PURE__*/React.createElement("h1", {
+
+    className: "text-3xl font-bold text-slate-900 mb-4 border-b pb-2"
+
+  }, "History Notes"), /*#__PURE__*/React.createElement("p", {
+
+    className: "text-lg text-slate-700 leading-relaxed mb-4"
+
+  }, actions.checkTypos ? "The Industrial Revolution was a period of major industrialization." // Correct
+
+  : "The Industral Revoluton was a perod of major industralizaton." // Typos
+
+  ), actions.linkMedia ? /*#__PURE__*/React.createElement("div", {
+
+    className: "aspect-video bg-slate-200 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 text-slate-400"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "flex flex-col items-center gap-2"
+
+  }, /*#__PURE__*/React.createElement(LucideIcon, {
+
+    name: "play-circle",
+
+    size: 40
+
+  }), /*#__PURE__*/React.createElement("span", {
+
+    className: "text-xs font-bold"
+
+  }, "Video Player Loaded"))) : /*#__PURE__*/React.createElement("div", {
+
+    className: "p-4 bg-red-50 text-red-500 border border-red-200 rounded text-sm text-center"
+
+  }, "[Multimedia Missing]"))))), feedback && /*#__PURE__*/React.createElement("div", {
+
+    className: `p-6 rounded-xl border flex items-start gap-4 animate-fade-in ${feedback.success ? "bg-green-900/20 border-green-500/30 text-green-300" : "bg-red-900/20 border-red-500/30 text-red-300"}`
+
+  }, /*#__PURE__*/React.createElement(LucideIcon, {
+
+    name: feedback.success ? "check-circle" : "alert-octagon",
+
+    size: 24,
+
+    className: "shrink-0 mt-1"
+
+  }), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+
+    className: "font-bold text-lg"
+
+  }, feedback.msg), /*#__PURE__*/React.createElement("p", {
+
+    className: "opacity-90 leading-snug"
+
+  }, feedback.detail), !feedback.success && /*#__PURE__*/React.createElement("p", {
+
+    className: "mt-2 text-xs font-bold bg-red-950/50 p-2 rounded border border-red-500/20"
+
+  }, "Answer Key: B (Teacher should NOT compress the file)"))))));
+
+};
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+
+root.render(/*#__PURE__*/React.createElement(App, null));
+
+</script>
+
+  
+
+      
+
+      <!-- Footer -->
+
+      <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+</body>
+
+</html>
+

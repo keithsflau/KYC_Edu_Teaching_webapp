@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+
+
+<html lang="en">
+
+
+  <head>
+
+  <meta charset="UTF-8" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+
+    <title>HKDSE Past Paper 2013 Paper 1B Q2 - URL vs QR Code</title>
+
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+
+    <script
+
+
+      crossorigin
+
+
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+
+
+    ></script>
+
+
+    <script
+
+
+      crossorigin
+
+
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+
+
+    ></script>
+
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+
+    <style>
+
+
+      body {
+
+
+        background-color: #0f172a;
+
+
+        color: #e2e8f0;
+
+
+        font-family: "Inter", sans-serif;
+
+
+      }
+
+
+    </style>
+
+
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet" />
+
+
+<!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../../../../common/ncs-i18n.css" />
+  <script src="../../../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+      display: none !important;
+    }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+        if (label === "EN" || label === "\u4E2D") {
+          btn.classList.add("ncs-hide-when-ncs-fleet");
+        }
+      });
+      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+        el.classList.add("ncs-hide-when-ncs-fleet");
+      });
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+  <!-- ICT family kit: React adapter for the vanilla Lucide UMD, and the wire
+       between this app's own TEXT dictionary and the fleet language switcher. -->
+  <script src="../../../../common/ict-lucide.js"></script>
+  <script src="../../../../common/ict-i18n.js"></script>
+</head>
+
+
+  <body class="p-4 md:p-8">
+
+
+    <div id="root" class="max-w-4xl mx-auto"></div>
+
+
+    <script>
+
+
+const {
+
+
+  useState,
+
+
+  useEffect,
+
+
+  useRef
+
+
+} = React;
+
+
+const {
+
+
+  QrCode,
+
+
+  Keyboard,
+
+
+  Timer,
+
+
+  RotateCcw,
+
+
+  CheckCircle,
+
+
+  Smartphone
+
+
+} = IctLucide;
+
+
+const TEXT = {
+
+
+  en: {
+
+
+    title: "HKDSE Past Paper 2013 Paper 1B Q2: Input Methods Comparison",
+
+
+    subtitle: "Manual Entry (URL) vs Automated Entry (QR Code). Compare accuracy and speed.",
+
+
+    instructions: "Try to input the URL below using both methods.",
+
+
+    target_url: "https://www.hkeaa.edu.hk/en/hkdse/assessment/subject_information/category_a_subjects/hkdse_subj.html?A2&1",
+
+
+    method_manual: "Method A: Manual Typing",
+
+
+    method_qr: "Method B: QR Code Scan",
+
+
+    start_typing: "Start Typing",
+
+
+    scan: "Scan QR Code",
+
+
+    time: "Time Taken",
+
+
+    accuracy: "Accuracy",
+
+
+    error_calc: "Errors",
+
+
+    reset: "Reset",
+
+
+    result_manual: "Manual: Slow, Prone to Error.",
+
+
+    result_qr: "QR: Fast, Accurate, Requires Camera.",
+
+
+    simulating: "Simulating Scan..."
+
+
+  },
+
+
+  "zh-Hant": {
+
+
+    title: "HKDSE Past Paper 2013 Paper 1B Q2: 輸入方法比較",
+
+
+    subtitle: "手動輸入 (URL) vs 自動輸入 (QR Code)。比較準確度和速度。",
+
+
+    instructions: "嘗試使用兩種方法輸入下方的 URL。",
+
+
+    target_url: "https://www.hkeaa.edu.hk/en/hkdse/assessment/subject_information/category_a_subjects/hkdse_subj.html?A2&1",
+
+
+    method_manual: "方法 A: 手動輸入",
+
+
+    method_qr: "方法 B: QR Code 掃描",
+
+
+    start_typing: "開始輸入",
+
+
+    scan: "掃描 QR Code",
+
+
+    time: "所需時間",
+
+
+    accuracy: "準確度",
+
+
+    error_calc: "錯誤",
+
+
+    reset: "重置",
+
+
+    result_manual: "手動: 慢，容易出錯。",
+
+
+    result_qr: "QR: 快，準確，需要鏡頭。",
+
+
+    simulating: "正在模擬掃描..."
+
+
+  }
+
+
+};
+
+
+const App = () => {
+
+
+  const [lang, setLang] = IctI18n.useLang(React, "en");
+
+
+  const [inputA, setInputA] = useState("");
+
+
+  const [inputB, setInputB] = useState("");
+
+
+  const [startTimeA, setStartTimeA] = useState(null);
+
+
+  const [endTimeA, setEndTimeA] = useState(null);
+
+
+  const [scanning, setScanning] = useState(false);
+
+
+  const [scanned, setScanned] = useState(false);
+
+
+  const t = TEXT[lang];
+
+
+
+
+
+  // Manual Typing Logic
+
+
+  const handleChangeA = e => {
+
+
+    if (!startTimeA) setStartTimeA(Date.now());
+
+
+    setInputA(e.target.value);
+
+
+    if (e.target.value === t.target_url) {
+
+
+      setEndTimeA(Date.now());
+
+
+    }
+
+
+  };
+
+
+  const timeA = startTimeA && endTimeA ? ((endTimeA - startTimeA) / 1000).toFixed(2) : "0.00";
+
+
+  const errorsA = inputA.split("").filter((c, i) => c !== t.target_url[i]).length + Math.max(0, t.target_url.length - inputA.length);
+
+
+  const isMatchA = inputA === t.target_url;
+
+
+
+
+
+  // QR Scan Logic
+
+
+  const handleScan = () => {
+
+
+    setScanning(true);
+
+
+    setTimeout(() => {
+
+
+      setScanning(false);
+
+
+      setScanned(true);
+
+
+      setInputB(t.target_url);
+
+
+    }, 1500); // 1.5s simulated scan
+
+
+  };
+
+
+  return /*#__PURE__*/React.createElement("div", {
+
+
+    className: "min-h-screen bg-slate-900 p-4"
+
+
+  }, /*#__PURE__*/React.createElement("header", {
+
+
+    className: "flex justify-between items-center mb-8 border-b border-slate-700 pb-4"
+
+
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h1", {
+
+
+    className: "text-2xl font-bold text-white flex items-center gap-2"
+
+
+  }, /*#__PURE__*/React.createElement(QrCode, {
+
+
+    className: "text-blue-400"
+
+
+  }), " vs", " ", /*#__PURE__*/React.createElement(Keyboard, {
+
+
+    className: "text-pink-400"
+
+
+  })), /*#__PURE__*/React.createElement("p", {
+
+
+    className: "text-slate-400 mt-1"
+
+
+  }, t.title)), /*#__PURE__*/React.createElement("button", {
+
+
+    onClick: () => setLang(l => l === "en" ? "tc" : "en"),
+
+
+    className: "px-3 py-1 bg-slate-800 rounded border border-slate-600"
+
+
+  }, lang === "en" ? "中文" : "ENG")), /*#__PURE__*/React.createElement("div", {
+
+
+    className: "bg-slate-800 p-4 rounded-xl mb-6 border border-slate-600"
+
+
+  }, /*#__PURE__*/React.createElement("label", {
+
+
+    className: "text-slate-400 text-sm block mb-1"
+
+
+  }, "Target URL (Goal):"), /*#__PURE__*/React.createElement("code", {
+
+
+    className: "block bg-black p-3 rounded text-green-400 break-all font-mono text-sm md:text-base select-all"
+
+
+  }, t.target_url)), /*#__PURE__*/React.createElement("div", {
+
+
+    className: "grid grid-cols-1 md:grid-cols-2 gap-8"
+
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+
+    className: "bg-slate-800/50 p-6 rounded-xl border border-pink-500/30 relative"
+
+
+  }, /*#__PURE__*/React.createElement("h2", {
+
+
+    className: "text-xl font-bold text-pink-400 mb-4 flex gap-2 items-center"
+
+
+  }, /*#__PURE__*/React.createElement(Keyboard, null), " ", t.method_manual), /*#__PURE__*/React.createElement("textarea", {
+
+
+    value: inputA,
+
+
+    onChange: handleChangeA,
+
+
+    placeholder: "Type the URL here...",
+
+
+    className: "w-full h-32 bg-slate-900 border border-slate-600 rounded p-2 text-white font-mono text-sm break-all focus:border-pink-500 focus:outline-none",
+
+
+    disabled: isMatchA
+
+
+  }), /*#__PURE__*/React.createElement("div", {
+
+
+    className: "mt-4 grid grid-cols-2 gap-4 text-sm"
+
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+
+    className: "bg-slate-900 p-2 rounded border border-slate-700"
+
+
+  }, /*#__PURE__*/React.createElement("span", {
+
+
+    className: "text-slate-500 block"
+
+
+  }, t.time), /*#__PURE__*/React.createElement("span", {
+
+
+    className: "text-xl font-mono text-white"
+
+
+  }, timeA, "s")), /*#__PURE__*/React.createElement("div", {
+
+
+    className: "bg-slate-900 p-2 rounded border border-slate-700"
+
+
+  }, /*#__PURE__*/React.createElement("span", {
+
+
+    className: "text-slate-500 block"
+
+
+  }, t.error_calc), /*#__PURE__*/React.createElement("span", {
+
+
+    className: `text-xl font-mono ${errorsA === 0 ? "text-green-400" : "text-red-400"}`
+
+
+  }, errorsA))), isMatchA && /*#__PURE__*/React.createElement("div", {
+
+
+    className: "absolute inset-0 bg-green-900/80 flex items-center justify-center rounded-xl backdrop-blur-sm"
+
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+
+    className: "text-center"
+
+
+  }, /*#__PURE__*/React.createElement(CheckCircle, {
+
+
+    size: 48,
+
+
+    className: "text-white mx-auto mb-2"
+
+
+  }), /*#__PURE__*/React.createElement("h3", {
+
+
+    className: "text-white font-bold"
+
+
+  }, "Complete!"), /*#__PURE__*/React.createElement("p", {
+
+
+    className: "text-green-200 text-sm"
+
+
+  }, t.result_manual)))), /*#__PURE__*/React.createElement("div", {
+
+
+    className: "bg-slate-800/50 p-6 rounded-xl border border-blue-500/30 relative"
+
+
+  }, /*#__PURE__*/React.createElement("h2", {
+
+
+    className: "text-xl font-bold text-blue-400 mb-4 flex gap-2 items-center"
+
+
+  }, /*#__PURE__*/React.createElement(QrCode, null), " ", t.method_qr), /*#__PURE__*/React.createElement("div", {
+
+
+    className: "h-32 flex items-center justify-center bg-black rounded border border-slate-700 relative overflow-hidden group cursor-pointer",
+
+
+    onClick: !scanned ? handleScan : null
+
+
+  }, !scanned && !scanning && /*#__PURE__*/React.createElement("div", {
+
+
+    className: "text-center"
+
+
+  }, /*#__PURE__*/React.createElement(Smartphone, {
+
+
+    size: 32,
+
+
+    className: "text-slate-500 mx-auto mb-2 group-hover:text-white transition-colors"
+
+
+  }), /*#__PURE__*/React.createElement("span", {
+
+
+    className: "text-slate-500 text-sm"
+
+
+  }, t.scan)), scanning && /*#__PURE__*/React.createElement("div", {
+
+
+    className: "w-full h-1 bg-green-500 absolute top-0 animate-[scan_1.5s_linear_infinite] shadow-[0_0_10px_#0f0]"
+
+
+  }), scanned && /*#__PURE__*/React.createElement("div", {
+
+
+    className: "text-green-400 font-bold flex gap-2 items-center"
+
+
+  }, /*#__PURE__*/React.createElement(CheckCircle, null), " Scanned")), /*#__PURE__*/React.createElement("div", {
+
+
+    className: "mt-4 grid grid-cols-2 gap-4 text-sm"
+
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+
+    className: "bg-slate-900 p-2 rounded border border-slate-700"
+
+
+  }, /*#__PURE__*/React.createElement("span", {
+
+
+    className: "text-slate-500 block"
+
+
+  }, t.time), /*#__PURE__*/React.createElement("span", {
+
+
+    className: "text-xl font-mono text-white"
+
+
+  }, scanned ? "1.50" : "0.00", "s")), /*#__PURE__*/React.createElement("div", {
+
+
+    className: "bg-slate-900 p-2 rounded border border-slate-700"
+
+
+  }, /*#__PURE__*/React.createElement("span", {
+
+
+    className: "text-slate-500 block"
+
+
+  }, t.accuracy), /*#__PURE__*/React.createElement("span", {
+
+
+    className: "text-xl font-mono text-green-400"
+
+
+  }, scanned ? "100%" : "-"))), scanned && /*#__PURE__*/React.createElement("div", {
+
+
+    className: "mt-4 p-2 bg-slate-900 rounded border border-blue-900 text-xs text-blue-200"
+
+
+  }, t.result_qr, " URL:", " ", /*#__PURE__*/React.createElement("span", {
+
+
+    className: "text-slate-400 truncate block"
+
+
+  }, inputB)))), /*#__PURE__*/React.createElement("button", {
+
+
+    onClick: () => {
+
+
+      setInputA("");
+
+
+      setInputB("");
+
+
+      setStartTimeA(null);
+
+
+      setEndTimeA(null);
+
+
+      setScanned(false);
+
+
+      setScanning(false);
+
+
+    },
+
+
+    className: "mt-8 mx-auto block px-6 py-2 bg-slate-700 hover:bg-slate-600 rounded-full text-white flex gap-2 items-center"
+
+
+  }, /*#__PURE__*/React.createElement(RotateCcw, {
+
+
+    size: 16
+
+
+  }), " ", t.reset), /*#__PURE__*/React.createElement("style", null, `@keyframes scan { 0% { top: 0; } 100% { top: 100%; } }`));
+
+
+};
+
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+
+
+root.render(/*#__PURE__*/React.createElement(App, null));
+
+
+</script>
+
+
+    <script src="../../../../../../common/learn-from-zero.js"></script>
+
+
+  <script src="../../../../../../common/interactive-lab-kit.js"></script>
+
+
+<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+
+</body>
+
+
+</html>
+
+

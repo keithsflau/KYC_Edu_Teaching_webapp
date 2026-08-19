@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+  <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>HKDSE Past Paper 2023 Paper 1B Q3 - Insertion Sort</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script
+
+      crossorigin
+
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+
+    ></script>
+
+    <script
+
+      crossorigin
+
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+
+    ></script>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+
+      body {
+
+        background-color: #0f172a;
+
+        color: #e2e8f0;
+
+        font-family: "Inter", sans-serif;
+
+      }
+
+    </style>
+
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet" />
+<!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../../../../common/ncs-i18n.css" />
+  <script src="../../../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+      display: none !important;
+    }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+        if (label === "EN" || label === "\u4E2D") {
+          btn.classList.add("ncs-hide-when-ncs-fleet");
+        }
+      });
+      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+        el.classList.add("ncs-hide-when-ncs-fleet");
+      });
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+  <!-- ICT family kit: React adapter for the vanilla Lucide UMD, and the wire
+       between this app's own TEXT dictionary and the fleet language switcher. -->
+  <script src="../../../../common/ict-lucide.js"></script>
+  <script src="../../../../common/ict-i18n.js"></script>
+</head>
+
+  <body class="p-4 md:p-8">
+
+    <div id="root" class="max-w-4xl mx-auto"></div>
+
+    <script>
+
+const {
+
+  useState
+
+} = React;
+
+const {
+
+  ArrowRight,
+
+  RotateCcw,
+
+  Play,
+
+  Code,
+
+  LayoutList
+
+} = IctLucide;
+
+const TEXT = {
+
+  en: {
+
+    title: "HKDSE Past Paper 2023 Paper 1B Q3: Insertion Sort",
+
+    subtitle: "Algorithm Trace & Dry Run Table.",
+
+    tab_vis: "Visualizer",
+
+    tab_dry: "Dry Run Table",
+
+    inst: "Visualize how Insertion Sort builds a sorted array one item at a time.",
+
+    unsorted: "Unsorted Part",
+
+    sorted: "Sorted Part",
+
+    current: "Current Key:",
+
+    step: "Step",
+
+    reset: "Reset",
+
+    play: "Auto Play",
+
+    next: "Next Step",
+
+    desc: "Insertion Sort takes the 'Key' element and inserts it into the correct position in the 'Sorted Part'.",
+
+    dry_title: "Dry Run Trace",
+
+    pass: "Pass",
+
+    array_state: "Array State"
+
+  },
+
+  "zh-Hant": {
+
+    title: "HKDSE Past Paper 2023 Paper 1B Q3: 插入排序 (Insertion Sort)",
+
+    subtitle: "演算法追蹤與測試 (Dry Run)。",
+
+    tab_vis: "可視化工具",
+
+    tab_dry: "測試列表 (Dry Run)",
+
+    inst: "觀察插入排序如何逐個建立已排序數組。",
+
+    unsorted: "未排序部分",
+
+    sorted: "已排序部分",
+
+    current: "當前鍵值 (Key):",
+
+    step: "步驟",
+
+    reset: "重置",
+
+    play: "自動播放",
+
+    next: "下一步",
+
+    desc: "插入排序取出 '鍵值' (Key) 並將其插入到 '已排序部分' 的正確位置。",
+
+    dry_title: "流程追蹤表",
+
+    pass: "遍歷 (Pass)",
+
+    array_state: "數組狀態"
+
+  }
+
+};
+
+const INIT_ARR = [45, 12, 88, 30, 5, 20];
+
+const App = () => {
+
+  const [lang, setLang] = IctI18n.useLang(React, "en");
+
+  const [tab, setTab] = useState("vis");
+
+  const [arr, setArr] = useState([...INIT_ARR]);
+
+  const [history, setHistory] = useState([[...INIT_ARR]]);
+
+  const [step, setStep] = useState(0);
+
+  const [i, setI] = useState(1); // Outer loop index (starts at 1)
+
+  const [sortedIndex, setSortedIndex] = useState(1); // Visual separator
+
+  const t = TEXT[lang];
+
+  const reset = () => {
+
+    setArr([...INIT_ARR]);
+
+    setHistory([[...INIT_ARR]]);
+
+    setStep(0);
+
+    setI(1);
+
+    setSortedIndex(1);
+
+  };
+
+  const nextStep = () => {
+
+    if (i >= arr.length) return;
+
+    const currentArr = [...arr];
+
+    const key = currentArr[i];
+
+    let j = i - 1;
+
+
+
+    // Move calculation logic: this step performs ONE complete insertion (Pass)
+
+    // In a real step-by-step visualizer, we might show j moving.
+
+    // For clarity here, we show the state AFTER the insertion of index i.
+
+
+
+    while (j >= 0 && currentArr[j] > key) {
+
+      currentArr[j + 1] = currentArr[j];
+
+      j = j - 1;
+
+    }
+
+    currentArr[j + 1] = key;
+
+    setArr(currentArr);
+
+    setHistory([...history, [...currentArr]]);
+
+    setI(i + 1);
+
+    setSortedIndex(i + 1);
+
+    setStep(step + 1);
+
+  };
+
+  return /*#__PURE__*/React.createElement("div", {
+
+    className: "min-h-screen bg-slate-900 p-4"
+
+  }, /*#__PURE__*/React.createElement("header", {
+
+    className: "flex justify-between items-center mb-8 border-b border-slate-700 pb-4"
+
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h1", {
+
+    className: "text-2xl font-bold text-white flex items-center gap-2"
+
+  }, /*#__PURE__*/React.createElement(Code, {
+
+    className: "text-yellow-400"
+
+  }), " ", t.title), /*#__PURE__*/React.createElement("p", {
+
+    className: "text-slate-400 mt-1"
+
+  }, t.subtitle)), /*#__PURE__*/React.createElement("button", {
+
+    onClick: () => setLang(l => l === "en" ? "tc" : "en"),
+
+    className: "px-3 py-1 bg-slate-800 rounded border border-slate-600"
+
+  }, lang === "en" ? "中文" : "ENG")), /*#__PURE__*/React.createElement("div", {
+
+    className: "flex gap-4 mb-6"
+
+  }, /*#__PURE__*/React.createElement("button", {
+
+    onClick: () => setTab("vis"),
+
+    className: `px-4 py-2 rounded font-bold ${tab === "vis" ? "bg-yellow-600 text-black" : "bg-slate-700 text-slate-300"}`
+
+  }, t.tab_vis), /*#__PURE__*/React.createElement("button", {
+
+    onClick: () => setTab("dry"),
+
+    className: `px-4 py-2 rounded font-bold ${tab === "dry" ? "bg-blue-600 text-white" : "bg-slate-700 text-slate-300"}`
+
+  }, t.tab_dry)), tab === "vis" && /*#__PURE__*/React.createElement("div", {
+
+    className: "bg-slate-800 p-6 rounded-xl border border-slate-700"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "flex justify-between items-center mb-8"
+
+  }, /*#__PURE__*/React.createElement("h2", {
+
+    className: "text-xl font-bold text-white"
+
+  }, t.inst), /*#__PURE__*/React.createElement("div", {
+
+    className: "space-x-2"
+
+  }, /*#__PURE__*/React.createElement("button", {
+
+    onClick: reset,
+
+    className: "px-4 py-2 bg-slate-700 rounded hover:bg-slate-600 flex items-center gap-2"
+
+  }, /*#__PURE__*/React.createElement(RotateCcw, {
+
+    size: 16
+
+  }), " ", t.reset), /*#__PURE__*/React.createElement("button", {
+
+    onClick: nextStep,
+
+    disabled: i >= arr.length,
+
+    className: "px-4 py-2 bg-green-600 text-white rounded font-bold hover:bg-green-500 disabled:opacity-50 flex items-center gap-2"
+
+  }, /*#__PURE__*/React.createElement(Play, {
+
+    size: 16
+
+  }), " ", t.next))), /*#__PURE__*/React.createElement("div", {
+
+    className: "relative flex justify-center items-center gap-4 bg-slate-900 p-8 rounded-xl mb-6 min-h-[150px] overflow-x-auto"
+
+  }, arr.map((val, idx) => /*#__PURE__*/React.createElement(React.Fragment, {
+
+    key: idx
+
+  }, idx === sortedIndex && /*#__PURE__*/React.createElement("div", {
+
+    className: "w-1 h-32 bg-yellow-500 mx-2 animate-pulse relative"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "absolute -top-6 left-1/2 -translate-x-1/2 text-yellow-500 text-xs whitespace-nowrap font-bold"
+
+  }, "Split")), /*#__PURE__*/React.createElement("div", {
+
+    className: `w-16 h-16 flex items-center justify-center rounded-xl text-2xl font-bold border-2 transition-all duration-500 ${idx < sortedIndex ? "bg-green-900 border-green-500 text-green-300 shadow-[0_0_15px_rgba(34,197,94,0.3)]" : idx === i ? "bg-blue-900 border-blue-500 text-white scale-110 shadow-xl" : "bg-slate-800 border-slate-600 text-slate-400"}`
+
+  }, val, idx === i && /*#__PURE__*/React.createElement("div", {
+
+    className: "absolute -bottom-8 text-xs text-blue-400 font-normal"
+
+  }, "Key"))))), /*#__PURE__*/React.createElement("div", {
+
+    className: "bg-slate-700 p-4 rounded text-slate-200 text-sm"
+
+  }, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("span", {
+
+    className: "text-yellow-400 font-bold"
+
+  }, t.desc)), /*#__PURE__*/React.createElement("div", {
+
+    className: "flex gap-4 mt-2"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "flex items-center gap-2"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "w-3 h-3 bg-green-900 border border-green-500 rounded"
+
+  }), " ", t.sorted), /*#__PURE__*/React.createElement("div", {
+
+    className: "flex items-center gap-2"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "w-3 h-3 bg-slate-800 border border-slate-600 rounded"
+
+  }), " ", t.unsorted)))), tab === "dry" && /*#__PURE__*/React.createElement("div", {
+
+    className: "bg-white text-slate-900 p-6 rounded-xl shadow-lg"
+
+  }, /*#__PURE__*/React.createElement("h2", {
+
+    className: "text-xl font-bold mb-4 flex gap-2"
+
+  }, /*#__PURE__*/React.createElement(LayoutList, null), " ", t.dry_title), /*#__PURE__*/React.createElement("table", {
+
+    className: "w-full text-center border-collapse"
+
+  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", {
+
+    className: "bg-slate-100 text-slate-600 border-b-2 border-slate-300"
+
+  }, /*#__PURE__*/React.createElement("th", {
+
+    className: "p-3"
+
+  }, t.pass), /*#__PURE__*/React.createElement("th", {
+
+    className: "p-3 text-left pl-8"
+
+  }, t.array_state))), /*#__PURE__*/React.createElement("tbody", null, history.map((row, idx) => /*#__PURE__*/React.createElement("tr", {
+
+    key: idx,
+
+    className: "border-b hover:bg-slate-50"
+
+  }, /*#__PURE__*/React.createElement("td", {
+
+    className: "p-3 font-bold text-slate-500"
+
+  }, idx === 0 ? "Start" : idx), /*#__PURE__*/React.createElement("td", {
+
+    className: "p-3"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "flex gap-2 justify-start pl-4"
+
+  }, row.map((v, k) => /*#__PURE__*/React.createElement("span", {
+
+    key: k,
+
+    className: "w-10 h-10 flex items-center justify-center bg-slate-200 rounded font-mono font-bold text-slate-700 border border-slate-300"
+
+  }, v))))))))));
+
+};
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+
+root.render(/*#__PURE__*/React.createElement(App, null));
+
+</script>
+
+  <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+</body>
+
+</html>
+

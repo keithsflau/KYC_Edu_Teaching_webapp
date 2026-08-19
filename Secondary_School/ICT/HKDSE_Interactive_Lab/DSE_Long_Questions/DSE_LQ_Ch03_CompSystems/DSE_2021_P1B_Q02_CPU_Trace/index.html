@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+  <head>
+  <meta charset="UTF-8" />
+  <title>HKDSE Ch3: CPU Trace Table Challenge</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script
+
+      crossorigin
+
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+
+    ></script>
+
+    <script
+
+      crossorigin
+
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+
+    ></script>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+
+      body {
+
+        background-color: #0f172a;
+
+        color: #e2e8f0;
+
+        font-family: sans-serif;
+
+      }
+
+      .register {
+
+        transition: all 0.3s;
+
+      }
+
+      .highlight {
+
+        background-color: #f59e0b;
+
+        color: black;
+
+        font-weight: bold;
+
+        transform: scale(1.05);
+
+      }
+
+    </style>
+
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet" />
+<!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../../../../common/ncs-i18n.css" />
+  <script src="../../../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+      display: none !important;
+    }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+        if (label === "EN" || label === "\u4E2D") {
+          btn.classList.add("ncs-hide-when-ncs-fleet");
+        }
+      });
+      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+        el.classList.add("ncs-hide-when-ncs-fleet");
+      });
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+  <!-- ICT family kit: React adapter for the vanilla Lucide UMD, and the wire
+       between this app's own TEXT dictionary and the fleet language switcher. -->
+  <script src="../../../../common/ict-i18n.js"></script>
+</head>
+
+  <body class="p-4 flex justify-center min-h-screen">
+
+    <div id="root" class="w-full max-w-4xl"></div>
+
+    <script>
+
+const {
+
+  useState
+
+} = React;
+
+const createLucideIcon = name => {
+
+  const iconData = window.lucide?.icons[name];
+
+  if (!iconData) return props => /*#__PURE__*/React.createElement("span", null, "?");
+
+  return ({
+
+    size,
+
+    className,
+
+    ...props
+
+  }) => React.createElement("svg", {
+
+    width: size || 24,
+
+    height: size || 24,
+
+    fill: "none",
+
+    stroke: "currentColor",
+
+    strokeWidth: 2,
+
+    strokeLinecap: "round",
+
+    strokeLinejoin: "round",
+
+    className: `lucide lucide-${name.toLowerCase()} ${className || ""}`,
+
+    viewBox: "0 0 24 24",
+
+    ...props
+
+  }, iconData.map(([tag, attrs], i) => React.createElement(tag, {
+
+    ...attrs,
+
+    key: i
+
+  })));
+
+};
+
+const Icon = ({
+
+  name,
+
+  ...p
+
+}) => {
+
+  const C = createLucideIcon(name);
+
+  return /*#__PURE__*/React.createElement(C, p);
+
+};
+
+const TEXT = {
+
+  en: {
+
+    title: "HKDSE Ch3: CPU Trace Table",
+
+    subtitle: "Mastering the Fetch-Decode-Execute Cycle",
+
+    ram: "Main Memory (RAM)",
+
+    registers: "CPU Registers",
+
+    pc: "Program Counter (PC)",
+
+    mar: "MAR",
+
+    mdr: "MDR",
+
+    cir: "CIR",
+
+    acc: "Accumulator (ACC)",
+
+    addr: "Addr",
+
+    content: "Content",
+
+    step: "Step",
+
+    next: "Next Step",
+
+    reset: "Reset",
+
+    desc: "Trace the execution of the following program. Watch how registers change.",
+
+    cycle: "Current Cycle:",
+
+    fetch: "FETCH",
+
+    decode: "DECODE",
+
+    execute: "EXECUTE",
+
+    explanation: "Explanation",
+
+    msgFetch1: "PC (10) copied to MAR.",
+
+    msgFetch2: "Content of address 10 (LOAD 200) fetched to MDR.",
+
+    msgFetch3: "MDR copied to CIR. PC incremented to 11.",
+
+    msgExec: "Instruction executing..."
+
+  },
+
+  "zh-Hant": {
+
+    title: "HKDSE 第三章：CPU 追蹤表",
+
+    subtitle: "掌握提取-解碼-執行週期",
+
+    ram: "主記憶體 (RAM)",
+
+    registers: "CPU 寄存器",
+
+    pc: "程序計數器 (PC)",
+
+    mar: "記憶體地址寄存器 (MAR)",
+
+    mdr: "記憶體數據寄存器 (MDR)",
+
+    cir: "指令寄存器 (CIR)",
+
+    acc: "累加器 (ACC)",
+
+    addr: "地址",
+
+    content: "內容",
+
+    step: "步驟",
+
+    next: "下一步",
+
+    reset: "重置",
+
+    desc: "追蹤以下程式的執行。觀察寄存器的變化。",
+
+    cycle: "當前週期：",
+
+    fetch: "提取 (FETCH)",
+
+    decode: "解碼 (DECODE)",
+
+    execute: "執行 (EXECUTE)",
+
+    explanation: "解釋",
+
+    msgFetch1: "PC (10) 複製到 MAR。",
+
+    msgFetch2: "地址 10 的內容 (LOAD 200) 提取到 MDR。",
+
+    msgFetch3: "MDR 複製到 CIR。PC 增加至 11。",
+
+    msgExec: "指令正在執行..."
+
+  }
+
+};
+
+const INITIAL_RAM = [{
+
+  addr: 10,
+
+  val: "LOAD 200"
+
+}, {
+
+  addr: 11,
+
+  val: "ADD 201"
+
+}, {
+
+  addr: 12,
+
+  val: "STORE 202"
+
+},
+
+// Data
+
+{
+
+  addr: 200,
+
+  val: 5
+
+}, {
+
+  addr: 201,
+
+  val: 3
+
+}, {
+
+  addr: 202,
+
+  val: 0
+
+}];
+
+const STEPS = [
+
+// Instruction 1: LOAD 200 (PC=10 -> 11)
+
+{
+
+  pc: 10,
+
+  mar: 0,
+
+  mdr: 0,
+
+  cir: "",
+
+  acc: 0,
+
+  phase: "START",
+
+  ram: INITIAL_RAM,
+
+  msg: "Ready."
+
+}, {
+
+  pc: 10,
+
+  mar: 10,
+
+  mdr: 0,
+
+  cir: "",
+
+  acc: 0,
+
+  phase: "FETCH",
+
+  ram: INITIAL_RAM,
+
+  msg: "PC -> MAR"
+
+},
+
+// 1
+
+{
+
+  pc: 10,
+
+  mar: 10,
+
+  mdr: "LOAD 200",
+
+  cir: "",
+
+  acc: 0,
+
+  phase: "FETCH",
+
+  ram: INITIAL_RAM,
+
+  msg: "RAM[10] -> MDR"
+
+},
+
+// 2
+
+{
+
+  pc: 11,
+
+  mar: 10,
+
+  mdr: "LOAD 200",
+
+  cir: "LOAD 200",
+
+  acc: 0,
+
+  phase: "DECODE",
+
+  ram: INITIAL_RAM,
+
+  msg: "MDR -> CIR, PC++"
+
+},
+
+// 3
+
+{
+
+  pc: 11,
+
+  mar: 200,
+
+  mdr: "LOAD 200",
+
+  cir: "LOAD 200",
+
+  acc: 0,
+
+  phase: "EXECUTE",
+
+  ram: INITIAL_RAM,
+
+  msg: "Operand Addr -> MAR"
+
+},
+
+// 4
+
+{
+
+  pc: 11,
+
+  mar: 200,
+
+  mdr: 5,
+
+  cir: "LOAD 200",
+
+  acc: 0,
+
+  phase: "EXECUTE",
+
+  ram: INITIAL_RAM,
+
+  msg: "RAM[200] -> MDR"
+
+},
+
+// 5
+
+{
+
+  pc: 11,
+
+  mar: 200,
+
+  mdr: 5,
+
+  cir: "LOAD 200",
+
+  acc: 5,
+
+  phase: "EXECUTE",
+
+  ram: INITIAL_RAM,
+
+  msg: "MDR -> ACC"
+
+},
+
+// 6
+
+
+
+// Instruction 2: ADD 201 (PC=11 -> 12)
+
+{
+
+  pc: 11,
+
+  mar: 11,
+
+  mdr: 5,
+
+  cir: "LOAD 200",
+
+  acc: 5,
+
+  phase: "FETCH",
+
+  ram: INITIAL_RAM,
+
+  msg: "PC -> MAR"
+
+},
+
+// 7
+
+{
+
+  pc: 11,
+
+  mar: 11,
+
+  mdr: "ADD 201",
+
+  cir: "LOAD 200",
+
+  acc: 5,
+
+  phase: "FETCH",
+
+  ram: INITIAL_RAM,
+
+  msg: "RAM[11] -> MDR"
+
+}, {
+
+  pc: 12,
+
+  mar: 11,
+
+  mdr: "ADD 201",
+
+  cir: "ADD 201",
+
+  acc: 5,
+
+  phase: "DECODE",
+
+  ram: INITIAL_RAM,
+
+  msg: "MDR -> CIR, PC++"
+
+}, {
+
+  pc: 12,
+
+  mar: 201,
+
+  mdr: "ADD 201",
+
+  cir: "ADD 201",
+
+  acc: 5,
+
+  phase: "EXECUTE",
+
+  ram: INITIAL_RAM,
+
+  msg: "Operand Addr -> MAR"
+
+}, {
+
+  pc: 12,
+
+  mar: 201,
+
+  mdr: 3,
+
+  cir: "ADD 201",
+
+  acc: 5,
+
+  phase: "EXECUTE",
+
+  ram: INITIAL_RAM,
+
+  msg: "RAM[201] -> MDR"
+
+}, {
+
+  pc: 12,
+
+  mar: 201,
+
+  mdr: 3,
+
+  cir: "ADD 201",
+
+  acc: 8,
+
+  phase: "EXECUTE",
+
+  ram: INITIAL_RAM,
+
+  msg: "ACC + MDR -> ACC"
+
+},
+
+// 12
+
+
+
+// Instruction 3: STORE 202 (PC=12 -> 13)
+
+{
+
+  pc: 12,
+
+  mar: 12,
+
+  mdr: 3,
+
+  cir: "ADD 201",
+
+  acc: 8,
+
+  phase: "FETCH",
+
+  ram: INITIAL_RAM,
+
+  msg: "PC -> MAR"
+
+},
+
+// 13
+
+{
+
+  pc: 12,
+
+  mar: 12,
+
+  mdr: "STORE 202",
+
+  cir: "ADD 201",
+
+  acc: 8,
+
+  phase: "FETCH",
+
+  ram: INITIAL_RAM,
+
+  msg: "RAM[12] -> MDR"
+
+}, {
+
+  pc: 13,
+
+  mar: 12,
+
+  mdr: "STORE 202",
+
+  cir: "STORE 202",
+
+  acc: 8,
+
+  phase: "DECODE",
+
+  ram: INITIAL_RAM,
+
+  msg: "MDR -> CIR, PC++"
+
+}, {
+
+  pc: 13,
+
+  mar: 202,
+
+  mdr: "STORE 202",
+
+  cir: "STORE 202",
+
+  acc: 8,
+
+  phase: "EXECUTE",
+
+  ram: INITIAL_RAM,
+
+  msg: "Operand Addr -> MAR"
+
+}, {
+
+  pc: 13,
+
+  mar: 202,
+
+  mdr: 8,
+
+  cir: "STORE 202",
+
+  acc: 8,
+
+  phase: "EXECUTE",
+
+  ram: INITIAL_RAM,
+
+  msg: "ACC -> MDR"
+
+}, {
+
+  pc: 13,
+
+  mar: 202,
+
+  mdr: 8,
+
+  cir: "STORE 202",
+
+  acc: 8,
+
+  phase: "EXECUTE",
+
+  ram: INITIAL_RAM.map(m => m.addr === 202 ? {
+
+    ...m,
+
+    val: 8
+
+  } : m),
+
+  msg: "MDR -> RAM[202]"
+
+} // 18 (Done)
+
+];
+
+const App = () => {
+
+  const [lang, setLang] = IctI18n.useLang(React, "en");
+
+  const t = TEXT[lang];
+
+  const [step, setStep] = useState(0);
+
+  const curr = STEPS[step];
+
+  const prev = step > 0 ? STEPS[step - 1] : STEPS[0];
+
+  const isChanged = key => step > 0 && curr[key] !== prev[key];
+
+  return /*#__PURE__*/React.createElement("div", {
+
+    className: "space-y-6"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "flex justify-between items-center bg-slate-800 p-4 rounded-xl border border-slate-700"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "flex items-center gap-3"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "p-2 bg-green-600 rounded-lg"
+
+  }, /*#__PURE__*/React.createElement(Icon, {
+
+    name: "Cpu",
+
+    className: "text-white"
+
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h1", {
+
+    className: "text-xl font-bold text-white"
+
+  }, t.title), /*#__PURE__*/React.createElement("p", {
+
+    className: "text-slate-400 text-xs"
+
+  }, t.subtitle))), /*#__PURE__*/React.createElement("button", {
+
+    onClick: () => setLang(l => l === "en" ? "tc" : "en"),
+
+    className: "px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-white font-bold border border-slate-500"
+
+  }, lang === "en" ? "中文" : "English")), /*#__PURE__*/React.createElement("div", {
+
+    className: "grid grid-cols-1 md:grid-cols-3 gap-6"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "bg-slate-900 border border-slate-700 rounded-xl p-4"
+
+  }, /*#__PURE__*/React.createElement("h2", {
+
+    className: "text-white font-bold mb-4 flex items-center gap-2"
+
+  }, /*#__PURE__*/React.createElement(Icon, {
+
+    name: "Grid"
+
+  }), " ", t.ram), /*#__PURE__*/React.createElement("table", {
+
+    className: "w-full text-sm text-slate-300"
+
+  }, /*#__PURE__*/React.createElement("thead", {
+
+    className: "bg-slate-800 text-slate-400"
+
+  }, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+
+    className: "p-2 text-left"
+
+  }, t.addr), /*#__PURE__*/React.createElement("th", {
+
+    className: "p-2 text-left"
+
+  }, t.content))), /*#__PURE__*/React.createElement("tbody", null, curr.ram.map((cell, i) => /*#__PURE__*/React.createElement("tr", {
+
+    key: i,
+
+    className: `border-b border-slate-800 ${step === 18 && cell.addr === 202 ? "bg-green-900/50" : ""}`
+
+  }, /*#__PURE__*/React.createElement("td", {
+
+    className: "p-2 font-mono text-blue-400"
+
+  }, cell.addr), /*#__PURE__*/React.createElement("td", {
+
+    className: "p-2 font-mono"
+
+  }, cell.val)))))), /*#__PURE__*/React.createElement("div", {
+
+    className: "md:col-span-2 space-y-6"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "bg-slate-800 p-6 rounded-xl border border-slate-700"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "flex justify-between mb-4"
+
+  }, /*#__PURE__*/React.createElement("h2", {
+
+    className: "text-white font-bold flex items-center gap-2"
+
+  }, /*#__PURE__*/React.createElement(Icon, {
+
+    name: "Zap"
+
+  }), " ", t.registers), /*#__PURE__*/React.createElement("div", {
+
+    className: "px-3 py-1 rounded bg-blue-900 text-blue-300 font-bold text-sm"
+
+  }, t.cycle, " ", curr.phase)), /*#__PURE__*/React.createElement("div", {
+
+    className: "grid grid-cols-2 gap-4"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: `register p-4 rounded-lg bg-slate-700 border border-slate-600 ${isChanged("pc") ? "highlight" : ""}`
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "text-xs text-slate-400"
+
+  }, t.pc), /*#__PURE__*/React.createElement("div", {
+
+    className: "text-2xl font-mono text-white"
+
+  }, curr.pc)), /*#__PURE__*/React.createElement("div", {
+
+    className: `register p-4 rounded-lg bg-slate-700 border border-slate-600 ${isChanged("acc") ? "highlight" : ""}`
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "text-xs text-slate-400"
+
+  }, t.acc), /*#__PURE__*/React.createElement("div", {
+
+    className: "text-2xl font-mono text-white"
+
+  }, curr.acc)), /*#__PURE__*/React.createElement("div", {
+
+    className: `register p-4 rounded-lg bg-slate-700 border border-slate-600 ${isChanged("mar") ? "highlight" : ""}`
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "text-xs text-slate-400"
+
+  }, t.mar), /*#__PURE__*/React.createElement("div", {
+
+    className: "text-2xl font-mono text-white"
+
+  }, curr.mar)), /*#__PURE__*/React.createElement("div", {
+
+    className: `register p-4 rounded-lg bg-slate-700 border border-slate-600 ${isChanged("mdr") ? "highlight" : ""}`
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "text-xs text-slate-400"
+
+  }, t.mdr), /*#__PURE__*/React.createElement("div", {
+
+    className: "text-2xl font-mono text-white"
+
+  }, curr.mdr)), /*#__PURE__*/React.createElement("div", {
+
+    className: `col-span-2 register p-4 rounded-lg bg-slate-700 border border-slate-600 ${isChanged("cir") ? "highlight" : ""}`
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "text-xs text-slate-400"
+
+  }, t.cir), /*#__PURE__*/React.createElement("div", {
+
+    className: "text-2xl font-mono text-white"
+
+  }, curr.cir || "-")))), /*#__PURE__*/React.createElement("div", {
+
+    className: "bg-slate-900 border border-slate-700 rounded-xl p-4 flex flex-col gap-4"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "text-slate-300 text-sm"
+
+  }, /*#__PURE__*/React.createElement("span", {
+
+    className: "font-bold text-yellow-400"
+
+  }, t.explanation, ":"), " ", curr.msg), /*#__PURE__*/React.createElement("div", {
+
+    className: "flex gap-4"
+
+  }, /*#__PURE__*/React.createElement("button", {
+
+    onClick: () => setStep(0),
+
+    className: "px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded font-bold"
+
+  }, t.reset), /*#__PURE__*/React.createElement("button", {
+
+    onClick: () => setStep(s => Math.min(STEPS.length - 1, s + 1)),
+
+    disabled: step === STEPS.length - 1,
+
+    className: "flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded font-bold disabled:opacity-50"
+
+  }, /*#__PURE__*/React.createElement(Icon, {
+
+    name: "Play",
+
+    size: 16,
+
+    className: "inline mr-2"
+
+  }), " ", t.next, " (", step, "/", STEPS.length - 1, ")"))))));
+
+};
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+
+root.render(/*#__PURE__*/React.createElement(App, null));
+
+</script>
+
+  <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+</body>
+
+</html>
+

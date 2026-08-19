@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+  <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>HKDSE Past Paper 2014 Paper 1B Q1 - Menu Ordering System</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script
+
+      crossorigin
+
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+
+    ></script>
+
+    <script
+
+      crossorigin
+
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+
+    ></script>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+
+      body {
+
+        background-color: #0f172a;
+
+        color: #e2e8f0;
+
+        font-family: "Inter", sans-serif;
+
+      }
+
+    </style>
+
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet" />
+<!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../../../../common/ncs-i18n.css" />
+  <script src="../../../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+      display: none !important;
+    }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+        if (label === "EN" || label === "\u4E2D") {
+          btn.classList.add("ncs-hide-when-ncs-fleet");
+        }
+      });
+      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+        el.classList.add("ncs-hide-when-ncs-fleet");
+      });
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+  <!-- ICT family kit: React adapter for the vanilla Lucide UMD, and the wire
+       between this app's own TEXT dictionary and the fleet language switcher. -->
+  <script src="../../../../common/ict-lucide.js"></script>
+  <script src="../../../../common/ict-i18n.js"></script>
+</head>
+
+  <body class="p-4 md:p-8">
+
+    <div id="root" class="max-w-4xl mx-auto"></div>
+
+    <script>
+
+const {
+
+  useState
+
+} = React;
+
+const {
+
+  Utensils,
+
+  AlertCircle,
+
+  CheckCircle,
+
+  Calculator,
+
+  FileSpreadsheet
+
+} = IctLucide;
+
+const TEXT = {
+
+  en: {
+
+    title: "HKDSE Past Paper 2014 Paper 1B Q1: Lunch Order System",
+
+    subtitle: "Spreadsheet operations: Data Validation and Order Calculations.",
+
+    menu_title: "School Lunch Menu",
+
+    orders: "Class Orders",
+
+    item: "Item",
+
+    price: "Price",
+
+    qty: "Quantity",
+
+    subtotal: "Subtotal",
+
+    total: "Total Amount",
+
+    setA: "Set A: Chicken Rice",
+
+    setB: "Set B: Beef Noodles",
+
+    setC: "Set C: Veggie Pasta",
+
+    validation_error: "Error: Please enter a valid NUMBER (e.g., 5, not 'five').",
+
+    range_error: "Error: Quantity must be non-negative.",
+
+    instruction: "Enter quantities for each set. Try examining 'valid' vs 'invalid' inputs.",
+
+    status_valid: "Valid Input",
+
+    status_invalid: "Invalid Input"
+
+  },
+
+  "zh-Hant": {
+
+    title: "HKDSE Past Paper 2014 Paper 1B Q1: 午餐訂購系統",
+
+    subtitle: "試算表操作：數據驗證與訂單計算。",
+
+    menu_title: "學校午餐餐單",
+
+    orders: "班級訂單",
+
+    item: "項目",
+
+    price: "價格",
+
+    qty: "數量",
+
+    subtotal: "小計",
+
+    total: "總金額",
+
+    setA: "套餐 A: 雞皇飯",
+
+    setB: "套餐 B: 牛肉麵",
+
+    setC: "套餐 C: 雜菜意粉",
+
+    validation_error: "錯誤: 請輸入有效的 數字 (例如 5，而不是 'five')。",
+
+    range_error: "錯誤: 數量必須為非負數。",
+
+    instruction: "輸入每個套餐的數量。嘗試測試 '有效' 與 '無效' 的輸入。",
+
+    status_valid: "輸入有效",
+
+    status_invalid: "輸入無效"
+
+  }
+
+};
+
+const MENU = [{
+
+  id: "A",
+
+  price: 25
+
+}, {
+
+  id: "B",
+
+  price: 28
+
+}, {
+
+  id: "C",
+
+  price: 22
+
+}];
+
+const App = () => {
+
+  const [lang, setLang] = IctI18n.useLang(React, "en");
+
+  // Quantities as strings initially to allow invalid input testing
+
+  const [inputs, setInputs] = useState({
+
+    A: "0",
+
+    B: "0",
+
+    C: "0"
+
+  });
+
+  const [errors, setErrors] = useState({
+
+    A: null,
+
+    B: null,
+
+    C: null
+
+  });
+
+  const t = TEXT[lang];
+
+  const handleChange = (id, val) => {
+
+    setInputs({
+
+      ...inputs,
+
+      [id]: val
+
+    });
+
+
+
+    // Validation Logic (Spreadsheet style)
+
+    let error = null;
+
+    const num = Number(val);
+
+    if (val.trim() === "") {
+
+      // Empty is ok (treated as 0)
+
+    } else if (isNaN(num)) {
+
+      error = t.validation_error;
+
+    } else if (!Number.isInteger(num)) {
+
+      error = "Error: Integer required.";
+
+    } else if (num < 0) {
+
+      error = t.range_error;
+
+    }
+
+    setErrors(prev => ({
+
+      ...prev,
+
+      [id]: error
+
+    }));
+
+  };
+
+  const calculateTotal = () => {
+
+    let sum = 0;
+
+    let valid = true;
+
+    MENU.forEach(item => {
+
+      const val = Number(inputs[item.id]);
+
+      if (errors[item.id] || isNaN(val)) valid = false;else sum += val * item.price;
+
+    });
+
+    return valid ? `$${sum}` : "ERROR";
+
+  };
+
+  const getItemName = id => {
+
+    if (id === "A") return t.setA;
+
+    if (id === "B") return t.setB;
+
+    if (id === "C") return t.setC;
+
+  };
+
+  return /*#__PURE__*/React.createElement("div", {
+
+    className: "min-h-screen bg-slate-900 p-4"
+
+  }, /*#__PURE__*/React.createElement("header", {
+
+    className: "flex justify-between items-center mb-8 border-b border-slate-700 pb-4"
+
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h1", {
+
+    className: "text-2xl font-bold text-white flex items-center gap-2"
+
+  }, /*#__PURE__*/React.createElement(Utensils, {
+
+    className: "text-orange-400"
+
+  }), " ", t.title), /*#__PURE__*/React.createElement("p", {
+
+    className: "text-slate-400 mt-1"
+
+  }, t.subtitle)), /*#__PURE__*/React.createElement("button", {
+
+    onClick: () => setLang(l => l === "en" ? "tc" : "en"),
+
+    className: "px-3 py-1 bg-slate-800 rounded border border-slate-600"
+
+  }, lang === "en" ? "中文" : "ENG")), /*#__PURE__*/React.createElement("p", {
+
+    className: "text-center text-slate-300 mb-6"
+
+  }, t.instruction), /*#__PURE__*/React.createElement("div", {
+
+    className: "max-w-3xl mx-auto bg-white text-slate-900 rounded-xl shadow-2xl overflow-hidden"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "bg-green-600 p-4 text-white flex justify-between items-center"
+
+  }, /*#__PURE__*/React.createElement("h2", {
+
+    className: "font-bold text-xl flex items-center gap-2"
+
+  }, /*#__PURE__*/React.createElement(FileSpreadsheet, null), " ", t.menu_title), /*#__PURE__*/React.createElement("span", {
+
+    className: "text-sm opacity-80 font-mono"
+
+  }, "ExamMode: Start")), /*#__PURE__*/React.createElement("div", {
+
+    className: "p-6"
+
+  }, /*#__PURE__*/React.createElement("table", {
+
+    className: "w-full text-left border-collapse"
+
+  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", {
+
+    className: "border-b-2 border-slate-200 text-slate-500 uppercase text-xs tracking-wider"
+
+  }, /*#__PURE__*/React.createElement("th", {
+
+    className: "p-3"
+
+  }, t.item), /*#__PURE__*/React.createElement("th", {
+
+    className: "p-3 text-right"
+
+  }, t.price), /*#__PURE__*/React.createElement("th", {
+
+    className: "p-3 w-48"
+
+  }, t.qty, " (Input)"), /*#__PURE__*/React.createElement("th", {
+
+    className: "p-3 text-right"
+
+  }, t.subtotal))), /*#__PURE__*/React.createElement("tbody", null, MENU.map(item => {
+
+    const val = Number(inputs[item.id]);
+
+    const isErr = !!errors[item.id];
+
+    const sub = isErr ? "---" : val * item.price;
+
+    return /*#__PURE__*/React.createElement("tr", {
+
+      key: item.id,
+
+      className: "border-b border-slate-100 hover:bg-slate-50"
+
+    }, /*#__PURE__*/React.createElement("td", {
+
+      className: "p-3 font-medium"
+
+    }, /*#__PURE__*/React.createElement("span", {
+
+      className: "inline-block w-6 h-6 bg-slate-200 rounded text-center mr-2"
+
+    }, item.id), getItemName(item.id)), /*#__PURE__*/React.createElement("td", {
+
+      className: "p-3 text-right font-mono"
+
+    }, "$", item.price), /*#__PURE__*/React.createElement("td", {
+
+      className: "p-3 relative"
+
+    }, /*#__PURE__*/React.createElement("input", {
+
+      type: "text",
+
+      value: inputs[item.id],
+
+      onChange: e => handleChange(item.id, e.target.value),
+
+      className: `w-full p-2 border rounded font-mono focus:outline-none focus:ring-2 ${isErr ? "border-red-500 ring-red-200 bg-red-50" : "border-slate-300 ring-blue-100"}`
+
+    }), isErr && /*#__PURE__*/React.createElement("div", {
+
+      className: "absolute top-12 left-0 z-10 bg-red-600 text-white text-xs p-2 rounded shadow-lg w-64 flex items-start gap-2 animate-bounce"
+
+    }, /*#__PURE__*/React.createElement(AlertCircle, {
+
+      size: 14,
+
+      className: "min-w-[14px] mt-0.5"
+
+    }), errors[item.id])), /*#__PURE__*/React.createElement("td", {
+
+      className: "p-3 text-right font-mono font-bold text-slate-700"
+
+    }, sub === "---" ? sub : `$${sub}`));
+
+  })), /*#__PURE__*/React.createElement("tfoot", null, /*#__PURE__*/React.createElement("tr", {
+
+    className: "bg-slate-100"
+
+  }, /*#__PURE__*/React.createElement("td", {
+
+    colSpan: "3",
+
+    className: "p-4 text-right font-bold text-lg"
+
+  }, t.total, ":"), /*#__PURE__*/React.createElement("td", {
+
+    className: "p-4 text-right font-bold text-2xl text-green-600 font-mono"
+
+  }, calculateTotal())))), /*#__PURE__*/React.createElement("div", {
+
+    className: "mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800"
+
+  }, /*#__PURE__*/React.createElement("strong", null, "Teacher's Note (Validation Type):"), " ", /*#__PURE__*/React.createElement("br", null), "This simulation uses ", /*#__PURE__*/React.createElement("code", null, "Data Type Check"), " (Number vs Text) and ", /*#__PURE__*/React.createElement("code", null, "Range Check"), " (Non-negative). In Excel, this is configured via ", /*#__PURE__*/React.createElement("em", null, "Data ", ">", " Data Validation"), "."))));
+
+};
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+
+root.render(/*#__PURE__*/React.createElement(App, null));
+
+</script>
+
+  <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+</body>
+
+</html>
+

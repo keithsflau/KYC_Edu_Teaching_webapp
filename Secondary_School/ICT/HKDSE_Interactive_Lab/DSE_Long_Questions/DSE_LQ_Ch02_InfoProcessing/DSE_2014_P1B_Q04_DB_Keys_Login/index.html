@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+
+
+<html lang="en">
+
+
+  <head>
+
+  <meta charset="UTF-8" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+
+    <title>HKDSE Past Paper 2014 Paper 1B Q4 - Database Keys & Login</title>
+
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+
+    <script
+
+
+      crossorigin
+
+
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+
+
+    ></script>
+
+
+    <script
+
+
+      crossorigin
+
+
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+
+
+    ></script>
+
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+
+    <style>
+
+
+      body {
+
+
+        background-color: #0f172a;
+
+
+        color: #e2e8f0;
+
+
+        font-family: "Inter", sans-serif;
+
+
+      }
+
+
+    </style>
+
+
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet" />
+
+
+<!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../../../../common/ncs-i18n.css" />
+  <script src="../../../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+      display: none !important;
+    }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+        if (label === "EN" || label === "\u4E2D") {
+          btn.classList.add("ncs-hide-when-ncs-fleet");
+        }
+      });
+      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+        el.classList.add("ncs-hide-when-ncs-fleet");
+      });
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+  <!-- ICT family kit: React adapter for the vanilla Lucide UMD, and the wire
+       between this app's own TEXT dictionary and the fleet language switcher. -->
+  <script src="../../../../common/ict-lucide.js"></script>
+  <script src="../../../../common/ict-i18n.js"></script>
+</head>
+
+
+  <body class="p-4 md:p-8">
+
+
+    <div id="root" class="max-w-3xl mx-auto"></div>
+
+
+    <script>
+
+
+const {
+
+
+  useState
+
+
+} = React;
+
+
+const {
+
+
+  Key,
+
+
+  Fingerprint,
+
+
+  Lock,
+
+
+  ShieldCheck,
+
+
+  Database,
+
+
+  ArrowRight
+
+
+} = IctLucide;
+
+
+const TEXT = {
+
+
+  en: {
+
+
+    title: "HKDSE Past Paper 2014 Paper 1B Q4: Database Security & Keys",
+
+
+    subtitle: "Design a secure Login System using Primary Keys and SQL.",
+
+
+    step1: "1. Select a Primary Key",
+
+
+    step2: "2. Construct Login SQL",
+
+
+    step3: "3. System Validation",
+
+
+    fields: ["Name", "Email", "Class", "Phone"],
+
+
+    pk_hint: "Choose a field that is UNIQUE and NOT NULL.",
+
+
+    sql_hint: "Fill in the blanks to verify user credentials.",
+
+
+    success: "System Secure! Access Granted.",
+
+
+    fail: "Security Risk Detected.",
+
+
+    why_fail: {
+
+
+      Name: "Names can be duplicated (e.g. two John Smiths).",
+
+
+      Class: "Many students belong to the same class.",
+
+
+      Phone: "Phone numbers can change or be shared.",
+
+
+      Email: "Correct! Emails are unique per user."
+
+
+    },
+
+
+    login_btn: "Attempt Login"
+
+
+  },
+
+
+  "zh-Hant": {
+
+
+    title: "HKDSE Past Paper 2014 Paper 1B Q4: 數據庫安全與鍵",
+
+
+    subtitle: "使用主鍵 (Primary Key) 和 SQL 設計安全登入系統。",
+
+
+    step1: "1. 選擇主鍵",
+
+
+    step2: "2. 構建登入 SQL",
+
+
+    step3: "3. 系統驗證",
+
+
+    fields: ["姓名 (Name)", "電郵 (Email)", "班別 (Class)", "電話 (Phone)"],
+
+
+    pk_hint: "選擇一個 唯一 (Unique) 且 非空 (Not Null) 的欄位。",
+
+
+    sql_hint: "填充空格以驗證用戶憑證。",
+
+
+    success: "系統安全！准許進入。",
+
+
+    fail: "檢測到安全風險。",
+
+
+    why_fail: {
+
+
+      Name: "姓名可能重複 (例如兩個陳大文)。",
+
+
+      Class: "許多學生屬於同一班別。",
+
+
+      Phone: "電話號碼可能會更改或共用。",
+
+
+      Email: "正確！每個用戶的電郵都是唯一的。"
+
+
+    },
+
+
+    login_btn: "嘗試登入"
+
+
+  }
+
+
+};
+
+
+const App = () => {
+
+
+  const [lang, setLang] = IctI18n.useLang(React, "en");
+
+
+  const [selectedPK, setSelectedPK] = useState("");
+
+
+  const [sqlField, setSqlField] = useState("");
+
+
+  const [sqlOp, setSqlOp] = useState("=");
+
+
+  const [status, setStatus] = useState("idle"); // idle, success, fail
+
+
+  const t = TEXT[lang];
+
+
+  const validate = () => {
+
+
+    const isPkCorrect = selectedPK.includes("Email") || selectedPK.includes("電郵");
+
+
+    const isSqlCorrect = sqlField.toUpperCase() === "EMAIL" || sqlField.includes("Email") || sqlField.includes("電郵");
+
+
+    if (isPkCorrect && isSqlCorrect) {
+
+
+      setStatus("success");
+
+
+    } else {
+
+
+      setStatus("fail");
+
+
+    }
+
+
+  };
+
+
+  const getFailReason = () => {
+
+
+    if (!selectedPK) return "Please select a Primary Key.";
+
+
+    const key = Object.keys(t.why_fail).find(k => selectedPK.includes(k) || t.why_fail[k] === selectedPK);
+
+
+    // Simple mapping for demo
+
+
+    if (selectedPK.includes("Name") || selectedPK.includes("姓名")) return t.why_fail.Name;
+
+
+    if (selectedPK.includes("Class") || selectedPK.includes("班別")) return t.why_fail.Class;
+
+
+    if (selectedPK.includes("Phone") || selectedPK.includes("電話")) return t.why_fail.Phone;
+
+
+    if (selectedPK.includes("Email") || selectedPK.includes("電郵")) return null;
+
+
+    return "Invalid Configuration";
+
+
+  };
+
+
+  return /*#__PURE__*/React.createElement("div", {
+
+
+    className: "min-h-screen bg-slate-900 p-4"
+
+
+  }, /*#__PURE__*/React.createElement("header", {
+
+
+    className: "flex justify-between items-center mb-8 border-b border-slate-700 pb-4"
+
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+
+    className: "flex items-center gap-3"
+
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+
+    className: "p-2 bg-blue-900 rounded-lg"
+
+
+  }, /*#__PURE__*/React.createElement(Key, {
+
+
+    className: "text-blue-400"
+
+
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h1", {
+
+
+    className: "text-xl font-bold text-white"
+
+
+  }, t.title), /*#__PURE__*/React.createElement("p", {
+
+
+    className: "text-sm text-slate-400"
+
+
+  }, t.subtitle))), /*#__PURE__*/React.createElement("button", {
+
+
+    onClick: () => setLang(l => l === "en" ? "tc" : "en"),
+
+
+    className: "btn-lang px-3 py-1 rounded border border-slate-600 text-slate-300"
+
+
+  }, lang === "en" ? "中文" : "ENG")), /*#__PURE__*/React.createElement("div", {
+
+
+    className: "space-y-8"
+
+
+  }, /*#__PURE__*/React.createElement("section", {
+
+
+    className: "bg-slate-800 p-6 rounded-xl border border-slate-700"
+
+
+  }, /*#__PURE__*/React.createElement("h2", {
+
+
+    className: "text-lg font-bold text-green-400 mb-4 flex gap-2 items-center"
+
+
+  }, /*#__PURE__*/React.createElement(Database, {
+
+
+    size: 20
+
+
+  }), " ", t.step1), /*#__PURE__*/React.createElement("p", {
+
+
+    className: "text-slate-400 mb-4 text-sm"
+
+
+  }, t.pk_hint), /*#__PURE__*/React.createElement("div", {
+
+
+    className: "grid grid-cols-2 md:grid-cols-4 gap-4"
+
+
+  }, t.fields.map(f => /*#__PURE__*/React.createElement("button", {
+
+
+    key: f,
+
+
+    onClick: () => setSelectedPK(f),
+
+
+    className: `p-4 rounded-lg border-2 text-center transition-all ${selectedPK === f ? "border-blue-500 bg-blue-900/30 text-white" : "border-slate-600 bg-slate-900 text-slate-400 hover:border-slate-500"}`
+
+
+  }, f))), selectedPK && (selectedPK.includes("Email") || selectedPK.includes("電郵") ? /*#__PURE__*/React.createElement("div", {
+
+
+    className: "mt-4 text-green-400 text-sm flex items-center gap-2"
+
+
+  }, /*#__PURE__*/React.createElement(ShieldCheck, {
+
+
+    size: 16
+
+
+  }), " ", t.why_fail.Email) : /*#__PURE__*/React.createElement("div", {
+
+
+    className: "mt-4 text-red-400 text-sm flex items-center gap-2"
+
+
+  }, /*#__PURE__*/React.createElement(Lock, {
+
+
+    size: 16
+
+
+  }), " ", getFailReason()))), /*#__PURE__*/React.createElement("section", {
+
+
+    className: "bg-slate-800 p-6 rounded-xl border border-slate-700"
+
+
+  }, /*#__PURE__*/React.createElement("h2", {
+
+
+    className: "text-lg font-bold text-yellow-400 mb-4 flex gap-2 items-center"
+
+
+  }, /*#__PURE__*/React.createElement(Fingerprint, {
+
+
+    size: 20
+
+
+  }), " ", t.step2), /*#__PURE__*/React.createElement("div", {
+
+
+    className: "bg-slate-900 p-4 rounded font-mono text-sm md:text-base border border-slate-600"
+
+
+  }, /*#__PURE__*/React.createElement("span", {
+
+
+    className: "text-purple-400"
+
+
+  }, "SELECT"), " *", " ", /*#__PURE__*/React.createElement("span", {
+
+
+    className: "text-purple-400"
+
+
+  }, "FROM"), " Users ", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("span", {
+
+
+    className: "text-purple-400"
+
+
+  }, "WHERE"), /*#__PURE__*/React.createElement("input", {
+
+
+    type: "text",
+
+
+    placeholder: "Field?",
+
+
+    value: sqlField,
+
+
+    onChange: e => setSqlField(e.target.value),
+
+
+    className: "mx-2 bg-slate-800 border-b border-white text-white w-24 text-center focus:outline-none"
+
+
+  }), sqlOp, " 'user_input' ", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("span", {
+
+
+    className: "text-purple-400"
+
+
+  }, "AND"), " Password = 'hash_value'")), /*#__PURE__*/React.createElement("div", {
+
+
+    className: "flex justify-end"
+
+
+  }, /*#__PURE__*/React.createElement("button", {
+
+
+    onClick: validate,
+
+
+    className: "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-3 px-8 rounded-full shadow-lg flex items-center gap-2 transition-transform active:scale-95"
+
+
+  }, t.login_btn, " ", /*#__PURE__*/React.createElement(ArrowRight, {
+
+
+    size: 20
+
+
+  }))), status !== "idle" && /*#__PURE__*/React.createElement("div", {
+
+
+    className: `p-6 rounded-xl border ${status === "success" ? "bg-green-900/20 border-green-500/50" : "bg-red-900/20 border-red-500/50"} animation-fade-in`
+
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+
+    className: "flex items-center gap-4"
+
+
+  }, status === "success" ? /*#__PURE__*/React.createElement(ShieldCheck, {
+
+
+    className: "text-green-500",
+
+
+    size: 40
+
+
+  }) : /*#__PURE__*/React.createElement(AlertCircle, {
+
+
+    className: "text-red-500",
+
+
+    size: 40
+
+
+  }), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h3", {
+
+
+    className: `text-xl font-bold ${status === "success" ? "text-green-400" : "text-red-400"}`
+
+
+  }, status === "success" ? t.success : t.fail), status === "fail" && /*#__PURE__*/React.createElement("p", {
+
+
+    className: "text-slate-400 text-sm mt-1"
+
+
+  }, getFailReason() || "Check SQL Syntax (Field Name)."))))));
+
+
+};
+
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+
+
+root.render(/*#__PURE__*/React.createElement(App, null));
+
+
+</script>
+
+
+    <script src="../../../../../../common/learn-from-zero.js"></script>
+
+
+  <script src="../../../../../../common/interactive-lab-kit.js"></script>
+
+
+<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+
+</body>
+
+
+</html>
+
+

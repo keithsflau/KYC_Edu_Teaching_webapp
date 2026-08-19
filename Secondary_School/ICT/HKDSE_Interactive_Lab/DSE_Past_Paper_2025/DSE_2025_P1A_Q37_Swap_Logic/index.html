@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+  <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>HKDSE Past Paper 2025 Paper 1A Q37 - Swap Logic</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script
+
+      crossorigin
+
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+
+    ></script>
+
+    <script
+
+      crossorigin
+
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+
+    ></script>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <link
+
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap"
+
+      rel="stylesheet"
+
+    />
+
+    <style>
+
+      body {
+
+        font-family: "Inter", sans-serif;
+
+        background-color: #0f172a;
+
+        color: #e2e8f0;
+
+      }
+
+    </style>
+
+  <!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../../../common/ncs-i18n.css" />
+  <script src="../../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+      display: none !important;
+    }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+        if (label === "EN" || label === "\u4E2D") {
+          btn.classList.add("ncs-hide-when-ncs-fleet");
+        }
+      });
+      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+        el.classList.add("ncs-hide-when-ncs-fleet");
+      });
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+</head>
+
+  <body class="min-h-screen p-4 md:p-8 flex flex-col items-center">
+
+    <div id="root" class="w-full max-w-5xl"></div>
+
+
+
+    <script>
+
+const {
+
+  useState,
+
+  useEffect,
+
+  useRef
+
+} = React;
+
+
+
+// Lucide Icon Shim
+
+const LucideIcon = ({
+
+  name,
+
+  size = 20,
+
+  className = ""
+
+}) => {
+
+  const formatName = n => n.split("-").map(p => p.charAt(0).toUpperCase() + p.slice(1)).join("");
+
+  const iconName = formatName(name);
+
+  const [svgHtml, setSvgHtml] = useState("");
+
+  useEffect(() => {
+
+    if (window.lucide?.icons[iconName]?.toSvg) {
+
+      setSvgHtml(window.lucide.icons[iconName].toSvg({
+
+        width: size,
+
+        height: size,
+
+        class: className
+
+      }));
+
+    }
+
+  }, [name]);
+
+  return /*#__PURE__*/React.createElement("span", {
+
+    dangerouslySetInnerHTML: {
+
+      __html: svgHtml
+
+    },
+
+    style: {
+
+      display: "inline-flex"
+
+    }
+
+  });
+
+};
+
+const VariableBox = ({
+
+  label,
+
+  value,
+
+  color
+
+}) => /*#__PURE__*/React.createElement("div", {
+
+  className: `flex flex-col items-center p-4 rounded-xl border ${color} bg-slate-900 shadow-xl transition-all w-24 md:w-32`
+
+}, /*#__PURE__*/React.createElement("div", {
+
+  className: "text-slate-400 text-xs font-bold font-mono mb-2"
+
+}, label), /*#__PURE__*/React.createElement("div", {
+
+  className: "text-3xl font-bold text-white font-mono"
+
+}, value));
+
+const App = () => {
+
+  const [step, setStep] = useState(0);
+
+  const [xVal, setXVal] = useState(0);
+
+  const [yVal, setYVal] = useState(1);
+
+  const [tempVal, setTempVal] = useState(null);
+
+  const [highlight, setHighlight] = useState(null); // 'calc', 'assignX', 'assignY'
+
+
+
+  // Trace Steps
+
+  const steps = [{
+
+    i: 1,
+
+    temp: 1,
+
+    x: 1,
+
+    y: 1
+
+  }, {
+
+    i: 2,
+
+    temp: 2,
+
+    x: 1,
+
+    y: 2
+
+  }, {
+
+    i: 3,
+
+    temp: 3,
+
+    x: 2,
+
+    y: 3
+
+  }, {
+
+    i: 4,
+
+    temp: 5,
+
+    x: 3,
+
+    y: 5
+
+  }, {
+
+    i: 5,
+
+    temp: 8,
+
+    x: 5,
+
+    y: 8
+
+  }];
+
+  const performStep = sIdx => {
+
+    // Animate trace for one iteration
+
+    const s = steps[sIdx];
+
+
+
+    // 1. Highlight Temp Calculation
+
+    setHighlight("calc");
+
+    setTempVal(s.temp);
+
+    setTimeout(() => {
+
+      // 2. Highlight X Assignment
+
+      setHighlight("assignX");
+
+      setXVal(s.x);
+
+      setTimeout(() => {
+
+        // 3. Highlight Y Assignment
+
+        setHighlight("assignY");
+
+        setYVal(s.y);
+
+        setTimeout(() => {
+
+          setHighlight(null);
+
+          setStep(sIdx + 1);
+
+        }, 800);
+
+      }, 800);
+
+    }, 800);
+
+  };
+
+  const nextLoop = () => {
+
+    if (step < 5) {
+
+      performStep(step);
+
+    }
+
+  };
+
+  const reset = () => {
+
+    setStep(0);
+
+    setXVal(0);
+
+    setYVal(1);
+
+    setTempVal(null);
+
+    setHighlight(null);
+
+  };
+
+  return /*#__PURE__*/React.createElement("div", {
+
+    className: "space-y-8 animate-fade-in w-full max-w-4xl mx-auto p-4 flex flex-col items-center"
+
+  }, /*#__PURE__*/React.createElement("header", {
+
+    className: "text-center space-y-4 max-w-3xl w-full"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-900/30 border border-cyan-500/30 text-cyan-400 text-sm font-bold"
+
+  }, /*#__PURE__*/React.createElement("span", {
+
+    className: "w-2 h-2 rounded-full bg-cyan-400 animate-pulse"
+
+  }), "HKDSE Past Paper 2025 Paper 1A Q37"), /*#__PURE__*/React.createElement("div", {
+
+    className: "bg-slate-800/50 p-6 rounded-2xl border border-slate-700 text-left flex flex-col md:flex-row gap-8 items-center"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "font-mono bg-slate-950 p-4 rounded-lg border-l-4 border-orange-500 text-xs md:text-sm shadow-inner whitespace-nowrap"
+
+  }, "X ← 0, Y ← 1", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("span", {
+
+    className: "text-pink-400"
+
+  }, "For"), " i ← 1 to 5", /*#__PURE__*/React.createElement("br", null), "\xA0\xA0TMP ← X + Y", /*#__PURE__*/React.createElement("br", null), "\xA0\xA0X ← Y", /*#__PURE__*/React.createElement("br", null), "\xA0\xA0Y ← TMP", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("span", {
+
+    className: "text-green-400"
+
+  }, "Output"), " X"), /*#__PURE__*/React.createElement("div", {
+
+    className: "flex-1"
+
+  }, /*#__PURE__*/React.createElement("h2", {
+
+    className: "text-lg font-bold text-white mb-2"
+
+  }, "Question (題目)"), /*#__PURE__*/React.createElement("p", {
+
+    className: "text-slate-300 text-sm leading-relaxed mb-4"
+
+  }, "What is the final output of X?", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("span", {
+
+    className: "text-slate-500"
+
+  }, "X 的最終輸出是多少？")), /*#__PURE__*/React.createElement("div", {
+
+    className: "flex gap-2"
+
+  }, /*#__PURE__*/React.createElement("button", {
+
+    onClick: nextLoop,
+
+    disabled: step >= 5 || highlight,
+
+    className: "flex-1 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 text-white font-bold rounded-lg shadow-lg flex items-center justify-center gap-2"
+
+  }, /*#__PURE__*/React.createElement(LucideIcon, {
+
+    name: "step-forward",
+
+    size: 16
+
+  }), step >= 5 ? "Done" : `Run Loop i=${step + 1}`), /*#__PURE__*/React.createElement("button", {
+
+    onClick: reset,
+
+    className: "px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg"
+
+  }, /*#__PURE__*/React.createElement(LucideIcon, {
+
+    name: "rotate-ccw",
+
+    size: 16
+
+  })))))), /*#__PURE__*/React.createElement("div", {
+
+    className: "relative w-full max-w-2xl h-64 bg-slate-900/50 border border-slate-800 rounded-3xl flex items-center justify-center gap-8 md:gap-16"
+
+  }, /*#__PURE__*/React.createElement(VariableBox, {
+
+    label: "X",
+
+    value: xVal,
+
+    color: highlight === "assignX" ? "border-yellow-400 bg-yellow-900/20 scale-110" : "border-slate-600"
+
+  }), /*#__PURE__*/React.createElement(VariableBox, {
+
+    label: "Y",
+
+    value: yVal,
+
+    color: highlight === "assignY" ? "border-cyan-400 bg-cyan-900/20 scale-110" : "border-slate-600"
+
+  }), /*#__PURE__*/React.createElement("div", {
+
+    className: `absolute top-4 left-1/2 -translate-x-1/2 transition-all duration-300 ${tempVal !== null ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4"}`
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: `px-4 py-2 rounded-full border ${highlight === "calc" ? "bg-purple-600 border-purple-400 text-white scale-110" : "bg-slate-800 border-slate-600 text-slate-400"} font-bold font-mono text-sm shadow-xl`
+
+  }, "TMP = ", tempVal)), /*#__PURE__*/React.createElement("svg", {
+
+    className: "absolute inset-0 w-full h-full pointer-events-none stroke-current",
+
+    style: {
+
+      strokeWidth: 2
+
+    }
+
+  }, /*#__PURE__*/React.createElement("path", {
+
+    d: "M 30% 50% Q 50% 30% 50% 20%",
+
+    className: `${highlight === "calc" ? "text-purple-500" : "text-slate-800"} transition-colors`,
+
+    fill: "none",
+
+    markerEnd: "url(#arrowhead)"
+
+  }), /*#__PURE__*/React.createElement("path", {
+
+    d: "M 70% 50% Q 50% 30% 50% 20%",
+
+    className: `${highlight === "calc" ? "text-purple-500" : "text-slate-800"} transition-colors`,
+
+    fill: "none"
+
+  }), /*#__PURE__*/React.createElement("path", {
+
+    d: "M 65% 50% L 35% 50%",
+
+    className: `${highlight === "assignX" ? "text-yellow-500" : "text-slate-800"} transition-colors`,
+
+    fill: "none",
+
+    markerEnd: "url(#arrowhead)"
+
+  }), /*#__PURE__*/React.createElement("path", {
+
+    d: "M 50% 20% Q 50% 30% 65% 45%",
+
+    className: `${highlight === "assignY" ? "text-cyan-500" : "text-slate-800"} transition-colors`,
+
+    fill: "none",
+
+    markerEnd: "url(#arrowhead)"
+
+  }), /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("marker", {
+
+    id: "arrowhead",
+
+    markerWidth: "10",
+
+    markerHeight: "7",
+
+    refX: "9",
+
+    refY: "3.5",
+
+    orient: "auto"
+
+  }, /*#__PURE__*/React.createElement("polygon", {
+
+    points: "0 0, 10 3.5, 0 7",
+
+    fill: "currentColor",
+
+    className: "text-slate-500"
+
+  }))))), step >= 5 && /*#__PURE__*/React.createElement("div", {
+
+    className: "animate-fade-in p-6 bg-green-900/20 border border-green-500/50 rounded-2xl text-center w-full max-w-sm"
+
+  }, /*#__PURE__*/React.createElement("p", {
+
+    className: "text-green-400 font-bold mb-1"
+
+  }, "Final Output (X)"), /*#__PURE__*/React.createElement("p", {
+
+    className: "text-5xl font-mono font-bold text-white mb-2"
+
+  }, xVal), /*#__PURE__*/React.createElement("p", {
+
+    className: "text-xs text-slate-400"
+
+  }, "Correct Answer: C (5)")));
+
+};
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+
+root.render(/*#__PURE__*/React.createElement(App, null));
+
+</script>
+
+  
+
+      
+
+      <!-- Footer -->
+
+      <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+</body>
+
+</html>
+

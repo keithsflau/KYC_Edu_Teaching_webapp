@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BioCycle：植物幾時放 CO₂，幾時吸 CO₂ · 中二科學</title>
+<meta name="description" content="中二科學．單元七 生物與空氣。植物廿四小時都喺度呼吸。補償點 —— 光合作用啱啱等於呼吸嗰一刻 —— 係由式解出嚟，唔係講出嚟。" />
+<link rel="stylesheet" href="../../Form%203/_kit/js3-kit.css" />
+<script src="../../Form%203/_kit/js3-kit.js" defer></script>
+<script src="./engine.js" defer></script>
+<!--
+  REBUILT 2026-08-14.
+
+  What was here: a 7,430,184-byte index.html. A generator had looped, emitting
+  the same option object 8,192 times into one `opts` array and then dying
+  mid-string, leaving an unterminated string literal 4,268,061 characters into
+  line 11. The TypeScript parser reports 182,415 diagnostics on the text/babel
+  block. The surviving "content" was not worth keeping either — every option in
+  the first array was the identical string "CO₂ from air", and the Chinese was
+  byte-identical to the English. Babel threw before React mounted, so the
+  "live" hub card served a blank page.
+
+  Why this is not a `vite build` of the folder's own source
+  --------------------------------------------------------
+  The React/Vite source in this folder (App.tsx, components/, utils/biology.ts)
+  IS intact, and it builds — `vite build` was run on this tree and exited 0,
+  emitting a 536 kB bundle and a 3.16 kB stylesheet. But the result is not
+  shippable, and that was measured rather than assumed:
+
+  (The build output was afterwards reverted, so dist/ here is still the
+  committed one. Nothing on the site loads dist/; this page does not.)
+
+    * The built CSS is 3.16 kB and contains ZERO Tailwind utilities — checked
+      for `.flex{` and `bg-slate-900`, both absent. vite.html never loaded
+      Tailwind, so every one of the app's utility classes is dead and the page
+      renders unstyled. Opened in the browser to confirm: serif fallback text,
+      no layout.
+    * It is English-only, which fails standard 1d (index.html must be zh-Hant).
+    * It has no Learn stage at all, which fails standard 1c.
+
+  So the page is rebuilt from the biology instead, to the standard. The Vite
+  source is left untouched as the record of where the simulation came from —
+  utils/biology.ts is the ancestor of ./engine.js, which keeps its topic (the
+  hydrogencarbonate-indicator day cycle) and fixes its model: the original made
+  photosynthesis LINEAR in light, which saturating pigments do not do.
+
+  ./engine.js requires cleanly in Node and carries 24 checks. Its central
+  quantity, the compensation point, is solved in closed form
+  (I_c = R*Ik/(Pmax - R) = 30.0 umol/m2/s) and the two times of day at which
+  the plant is exactly in balance (06:04.6 and 17:55.4) are solved from it —
+  neither is a constant typed into the page.
+
+  Single language (zh-Hant) for now, per standard 1d: the language bar is
+  omitted rather than linking six files that do not exist yet.
+-->
+<style>
+  .biobox { width: 100%; display: block; border-radius: 12px;
+            border: 1px solid var(--line-2); background: #eaf2f8; touch-action: none; }
+  .figcap { font-size: .72rem; color: var(--muted); margin: 4px 0 0; line-height: 1.45; }
+  .ledger { width: 100%; border-collapse: collapse; font-size: .78rem; min-width: 320px; }
+  .ledger th, .ledger td { border: 1px solid var(--line-2); padding: .4rem .5rem; text-align: left; }
+  .ledger th { background: var(--a-soft); font-weight: 800; color: var(--a-ink); }
+  .ledger td.no { color: var(--bad); font-weight: 700; }
+  .ledger td.yes { color: var(--ok); font-weight: 700; }
+  .swatch { width: 13px; height: 13px; border-radius: 3px; display: inline-block;
+            border: 1px solid rgba(0,0,0,.3); vertical-align: -2px; margin-right: 5px; }
+  @media (prefers-reduced-motion: reduce) { * { transition-duration: .001ms !important; } }
+</style>
+</head>
+<body>
+<div class="js3-wrap">
+
+  <div class="js3-topbar">
+    <a class="js3-back" href="../index.html">← 返回中二科學</a>
+  </div>
+
+  <header class="js3-head">
+    <span class="js3-badge">單元七 生物與空氣</span>
+    <h1 class="js3-title">BioCycle：植物幾時放 CO₂，幾時吸 CO₂</h1>
+    <p class="js3-sub">「植物日頭光合作用，夜晚先呼吸」—— 呢句係錯嘅。
+      呼吸廿四小時冇停過。日頭見唔到，係因為光合作用大過佢。</p>
+  </header>
+
+  <div class="js3-stages" id="stages"></div>
+  <main id="stageHost"></main>
+  <footer class="js3-cite" id="footCite"></footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  function boot() {
+    var K = window.Js3Kit, B = window.JS2_BIOCYCLE;
+    if (!K || !B) { setTimeout(boot, 30); return; }
+    var el = K.el, mount = K.mount;
+
+    var D = B.DEFAULTS;
+    var Ic = B.compensationIrradiance();
+    var CT = B.compensationTimes();
+
+    function hhmm(t) {
+      var h = Math.floor(t), m = Math.round((t - h) * 60);
+      if (m === 60) { h++; m = 0; }
+      return (h < 10 ? "0" : "") + h + ":" + (m < 10 ? "0" : "") + m;
+    }
+
+    function svgWrap(w, h, inner, aria) {
+      return '<svg viewBox="0 0 ' + w + ' ' + h + '" xmlns="http://www.w3.org/2000/svg" ' +
+             'role="img" aria-label="' + aria + '" style="width:100%;height:auto;display:block;' +
+             'border:1px solid #d7dde3;border-radius:10px;background:#fff">' + inner + '</svg>';
+    }
+
+    /* 圖 1：一日之內，呼吸係一條直線 */
+    function figRespiration() {
+      var w = 470, h = 200, mL = 46, mT = 16, pw = w - mL - 18, ph = h - mT - 40, s = '';
+      var Pm = D.Pmax;
+      function X(t) { return mL + pw * t / 24; }
+      function Y(v) { return mT + ph * (1 - v / Pm); }
+      /* 夜晚陰影 */
+      s += '<rect x="' + mL + '" y="' + mT + '" width="' + (X(D.sunrise) - mL).toFixed(1) + '" height="' + ph + '" fill="#1e293b" opacity="0.07"/>';
+      s += '<rect x="' + X(D.sunset).toFixed(1) + '" y="' + mT + '" width="' + (mL + pw - X(D.sunset)).toFixed(1) + '" height="' + ph + '" fill="#1e293b" opacity="0.07"/>';
+      s += '<line x1="' + mL + '" y1="' + (mT + ph) + '" x2="' + (mL + pw) + '" y2="' + (mT + ph) + '" stroke="#94a3b8"/>';
+      s += '<line x1="' + mL + '" y1="' + mT + '" x2="' + mL + '" y2="' + (mT + ph) + '" stroke="#94a3b8"/>';
+      /* 光合作用 */
+      var d = [];
+      for (var t = 0; t <= 24; t += 0.25) d.push((t ? 'L' : 'M') + X(t).toFixed(1) + ' ' + Y(B.grossPhotosynthesis(B.irradiance(t))).toFixed(1));
+      s += '<path d="' + d.join(' ') + '" fill="none" stroke="#16a34a" stroke-width="2.4"/>';
+      /* 呼吸：直線 */
+      s += '<line x1="' + mL + '" y1="' + Y(D.R).toFixed(1) + '" x2="' + (mL + pw) + '" y2="' + Y(D.R).toFixed(1) + '" stroke="#dc2626" stroke-width="2.4" stroke-dasharray="6 3"/>';
+      s += '<text x="' + (mL + 6) + '" y="' + (Y(D.R) - 6).toFixed(1) + '" font-size="10.5" fill="#dc2626" font-weight="800">呼吸 R = ' + D.R.toFixed(1) + '（廿四小時不變）</text>';
+      s += '<text x="' + X(12).toFixed(1) + '" y="' + (Y(B.grossPhotosynthesis(B.irradiance(12))) - 8).toFixed(1) + '" font-size="10.5" fill="#16a34a" font-weight="800" text-anchor="middle">光合作用 P</text>';
+      [0, 6, 12, 18, 24].forEach(function (t) {
+        s += '<text x="' + X(t).toFixed(1) + '" y="' + (mT + ph + 15) + '" font-size="10" fill="#64748b" text-anchor="middle">' + t + ':00</text>';
+      });
+      s += '<text x="' + (mL - 6) + '" y="' + (Y(0) + 4) + '" font-size="10" fill="#64748b" text-anchor="end">0</text>';
+      s += '<text x="' + (mL - 6) + '" y="' + (Y(Pm) + 4) + '" font-size="10" fill="#64748b" text-anchor="end">' + Pm + '</text>';
+      s += '<text x="' + (mL + pw / 2) + '" y="' + (h - 6) + '" font-size="10.5" fill="#334155" text-anchor="middle" font-weight="700">速率 µmol CO₂ m⁻² s⁻¹</text>';
+      return svgWrap(w, h, s, '一日之內光合作用速率由零升到高峰再落返零，而呼吸速率係一條水平線，廿四小時不變。');
+    }
+
+    /* 圖 2：飽和曲線 */
+    function figSaturation() {
+      var w = 470, h = 200, mL = 46, mT = 16, pw = w - mL - 18, ph = h - mT - 40, s = '';
+      var Imx = 900;
+      function X(I) { return mL + pw * I / Imx; }
+      function Y(v) { return mT + ph * (1 - v / D.Pmax); }
+      s += '<line x1="' + mL + '" y1="' + (mT + ph) + '" x2="' + (mL + pw) + '" y2="' + (mT + ph) + '" stroke="#94a3b8"/>';
+      s += '<line x1="' + mL + '" y1="' + mT + '" x2="' + mL + '" y2="' + (mT + ph) + '" stroke="#94a3b8"/>';
+      s += '<line x1="' + mL + '" y1="' + Y(D.Pmax).toFixed(1) + '" x2="' + (mL + pw) + '" y2="' + Y(D.Pmax).toFixed(1) + '" stroke="#94a3b8" stroke-dasharray="4 3"/>';
+      s += '<text x="' + (mL + pw - 4) + '" y="' + (Y(D.Pmax) - 5).toFixed(1) + '" font-size="10" fill="#64748b" text-anchor="end">Pmax = ' + D.Pmax + '（永遠追唔到）</text>';
+      var d = [];
+      for (var I = 0; I <= Imx; I += 5) d.push((I ? 'L' : 'M') + X(I).toFixed(1) + ' ' + Y(B.grossPhotosynthesis(I)).toFixed(1));
+      s += '<path d="' + d.join(' ') + '" fill="none" stroke="#16a34a" stroke-width="2.6"/>';
+      /* Ik */
+      s += '<line x1="' + X(D.Ik).toFixed(1) + '" y1="' + Y(D.Pmax / 2).toFixed(1) + '" x2="' + X(D.Ik).toFixed(1) + '" y2="' + (mT + ph) + '" stroke="#0369a1" stroke-width="1.3" stroke-dasharray="4 3"/>';
+      s += '<circle cx="' + X(D.Ik).toFixed(1) + '" cy="' + Y(D.Pmax / 2).toFixed(1) + '" r="4" fill="#0369a1"/>';
+      s += '<text x="' + (X(D.Ik) + 7).toFixed(1) + '" y="' + (Y(D.Pmax / 2) - 5).toFixed(1) + '" font-size="10.5" fill="#0369a1" font-weight="800">Ik = ' + D.Ik + " → P 啱啱一半</text>";
+      /* 補償點 */
+      s += '<circle cx="' + X(Ic).toFixed(1) + '" cy="' + Y(D.R).toFixed(1) + '" r="4.5" fill="#b45309"/>';
+      s += '<text x="' + (X(Ic) + 8).toFixed(1) + '" y="' + (Y(D.R) + 14).toFixed(1) + '" font-size="10.5" fill="#b45309" font-weight="800">補償點 I_c = ' + Ic.toFixed(1) + '</text>';
+      s += '<line x1="' + mL + '" y1="' + Y(D.R).toFixed(1) + '" x2="' + (mL + pw) + '" y2="' + Y(D.R).toFixed(1) + '" stroke="#dc2626" stroke-width="1.6" stroke-dasharray="6 3"/>';
+      s += '<text x="' + (mL + pw / 2) + '" y="' + (h - 6) + '" font-size="10.5" fill="#334155" text-anchor="middle" font-weight="700">光強 I µmol photons m⁻² s⁻¹</text>';
+      return svgWrap(w, h, s, '光合作用速率隨光強上升但會飽和，喺半飽和光強 ' + D.Ik + ' 嗰度速率啱啱係最大值嘅一半。');
+    }
+
+    /* 圖 3：淨交換同補償點時間 */
+    function figNet() {
+      var w = 470, h = 210, mL = 52, mT = 16, pw = w - mL - 18, ph = h - mT - 46, s = '';
+      var lo = -3, hi = 10;
+      function X(t) { return mL + pw * t / 24; }
+      function Y(v) { return mT + ph * (1 - (v - lo) / (hi - lo)); }
+      s += '<rect x="' + mL + '" y="' + mT + '" width="' + pw + '" height="' + (Y(0) - mT).toFixed(1) + '" fill="#16a34a" opacity="0.06"/>';
+      s += '<rect x="' + mL + '" y="' + Y(0).toFixed(1) + '" width="' + pw + '" height="' + (mT + ph - Y(0)).toFixed(1) + '" fill="#dc2626" opacity="0.07"/>';
+      s += '<text x="' + (mL + 8) + '" y="' + (mT + 16) + '" font-size="10.5" fill="#15803d" font-weight="800">淨吸入 CO₂（指示劑轉紫）</text>';
+      s += '<text x="' + (mL + 8) + '" y="' + (mT + ph - 8) + '" font-size="10.5" fill="#b91c1c" font-weight="800">淨放出 CO₂（指示劑轉黃）</text>';
+      var d = [];
+      for (var t = 0; t <= 24; t += 0.1) d.push((t ? 'L' : 'M') + X(t).toFixed(1) + ' ' + Y(B.netExchange(B.irradiance(t))).toFixed(1));
+      s += '<path d="' + d.join(' ') + '" fill="none" stroke="#0f172a" stroke-width="2.4"/>';
+      s += '<line x1="' + mL + '" y1="' + Y(0).toFixed(1) + '" x2="' + (mL + pw) + '" y2="' + Y(0).toFixed(1) + '" stroke="#475569" stroke-width="1.4"/>';
+      CT.forEach(function (t) {
+        s += '<circle cx="' + X(t).toFixed(1) + '" cy="' + Y(0).toFixed(1) + '" r="5" fill="#b45309"/>';
+        s += '<line x1="' + X(t).toFixed(1) + '" y1="' + mT + '" x2="' + X(t).toFixed(1) + '" y2="' + (mT + ph) + '" stroke="#b45309" stroke-width="1.1" stroke-dasharray="3 3"/>';
+        s += '<text x="' + X(t).toFixed(1) + '" y="' + (mT + ph + 28) + '" font-size="10.5" fill="#b45309" text-anchor="middle" font-weight="800">' + hhmm(t) + '</text>';
+      });
+      [0, 6, 12, 18, 24].forEach(function (t) {
+        s += '<text x="' + X(t).toFixed(1) + '" y="' + (mT + ph + 14) + '" font-size="10" fill="#64748b" text-anchor="middle">' + t + ':00</text>';
+      });
+      s += '<text x="12" y="' + (mT + ph / 2) + '" font-size="10.5" fill="#334155" text-anchor="middle" font-weight="700" transform="rotate(-90 12 ' + (mT + ph / 2) + ')">淨交換 P − R</text>';
+      return svgWrap(w, h, s, '淨交換曲線喺 ' + hhmm(CT[0]) + ' 同 ' + hhmm(CT[1]) + ' 兩次穿過零線，就係補償點。');
+    }
+
+    /* 圖 4：三支試管 */
+    function figTubes() {
+      var w = 470, h = 190, s = '';
+      var items = [
+        { x: 90, bal: -5000, t: "夜晚：呼吸勝出", sub: "CO₂ 積落嚟" },
+        { x: 235, bal: 0, t: "補償點：啱啱打和", sub: "P = R，冇淨交換" },
+        { x: 380, bal: 5000, t: "正午：光合作用勝出", sub: "CO₂ 被用走" }
+      ];
+      items.forEach(function (it) {
+        var col = B.indicatorColour(it.bal);
+        s += '<rect x="' + (it.x - 20) + '" y="34" width="40" height="96" rx="6" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.6"/>';
+        s += '<rect x="' + (it.x - 17) + '" y="52" width="34" height="75" rx="4" fill="' + col + '"/>';
+        s += '<ellipse cx="' + it.x + '" cy="52" rx="17" ry="4" fill="rgba(255,255,255,.45)"/>';
+        s += '<text x="' + it.x + '" y="150" font-size="10.5" fill="#0f172a" text-anchor="middle" font-weight="800">' + it.t + '</text>';
+        s += '<text x="' + it.x + '" y="165" font-size="9.5" fill="#64748b" text-anchor="middle">' + it.sub + '</text>';
+        s += '<text x="' + it.x + '" y="180" font-size="9" fill="#94a3b8" text-anchor="middle">' + B.indicatorLabel(it.bal) + '</text>';
+      });
+      s += '<text x="14" y="20" font-size="11" fill="#334155" font-weight="800">碳酸氫鹽指示劑：顏色講緊「積落嚟嘅 CO₂」，唔係即時速率</text>';
+      return svgWrap(w, h, s, '三支試管：夜晚變黃、補償點紅色、正午變紫。');
+    }
+
+    /* ================== LEARN ================== */
+    var LEARN = [
+      {
+        t: "呼吸從來冇停過",
+        fig: figRespiration,
+        body: "最多人記錯嘅一句係「植物日頭光合作用，夜晚先呼吸」。" +
+              "睇下幅圖：紅色嗰條係呼吸，佢係一條水平線 —— 由零時到廿四時都係 " + D.R.toFixed(1) + "，冇跌過落零。" +
+              "綠色嗰條先至係光合作用，佢跟住太陽升跌。日頭之所以「見唔到」呼吸，" +
+              "係因為光合作用大過佢，兩者相減之後剩低嘅係淨吸入。",
+        worked: "夜晚（I = 0）：\n" +
+                "  P = " + B.grossPhotosynthesis(0).toFixed(1) + " µmol CO₂ m⁻² s⁻¹\n" +
+                "  R = " + D.R.toFixed(1) + "\n" +
+                "  淨 = P − R = " + B.netExchange(0).toFixed(1) + " —— 負數，即係向外放 CO₂",
+        q: "半夜三點，一棵健康嘅植物喺度做緊乜？",
+        opts: ["淨係呼吸，冇光合作用", "淨係光合作用", "兩樣都停晒", "兩樣都全速進行"],
+        a: 0,
+        why: "淨係呼吸。冇光就冇光合作用（P = 0），但呼吸廿四小時都喺度行 —— 所以夜晚植物係淨放出 CO₂ 嘅。"
+      },
+      {
+        t: "光加倍，唔等於做多一倍嘢",
+        fig: figSaturation,
+        body: "光合作用對光強唔係一條斜線，而係一條會飽和嘅曲線：" +
+              "P = Pmax · I/(I + Ik)。葉綠素同酵素數量有限，光再多都用唔晒，" +
+              "所以速率會頂住喺 Pmax。Ik 叫半飽和光強 —— 喺嗰個光強，速率啱啱係最大值嘅一半。",
+        worked: "Ik = " + D.Ik + "，Pmax = " + D.Pmax + "：\n" +
+                "  I = " + D.Ik + " → P = " + B.grossPhotosynthesis(D.Ik).toFixed(2) + " （啱啱一半 ✓）\n" +
+                "  I = " + (2 * D.Ik) + " → P = " + B.grossPhotosynthesis(2 * D.Ik).toFixed(2) + "\n" +
+                "  光加倍，速率只係由 " + B.grossPhotosynthesis(D.Ik).toFixed(2) + " 升到 " +
+                B.grossPhotosynthesis(2 * D.Ik).toFixed(2) + "，即 " +
+                (B.grossPhotosynthesis(2 * D.Ik) / B.grossPhotosynthesis(D.Ik)).toFixed(2) + " 倍，唔係 2 倍。",
+        q: "光強由 Ik 加到 2Ik（即加一倍），光合作用速率會變成幾多倍？",
+        opts: ["2 倍", "約 1.33 倍", "4 倍", "冇變"],
+        a: 1,
+        why: "約 1.33 倍。P(Ik) = Pmax/2 = " + B.grossPhotosynthesis(D.Ik).toFixed(2) +
+             "，P(2Ik) = 2Pmax/3 = " + B.grossPhotosynthesis(2 * D.Ik).toFixed(2) +
+             "。因為曲線飽和，加光嘅回報越嚟越細。"
+      },
+      {
+        t: "淨交換：兩條線相減",
+        fig: figNet,
+        body: "學生真正睇到嘅（試管、指示劑、氣泡）唔係 P 亦唔係 R，而係兩者之差：淨交換 = P − R。" +
+              "淨交換大過零，植物由水入面攞走 CO₂；細過零，就係還返 CO₂ 出去。" +
+              "黑色嗰條線一日之內穿過零線兩次。",
+        worked: "正午（I = " + D.Imax.toFixed(0) + "）：\n" +
+                "  P = " + B.grossPhotosynthesis(B.irradiance(12)).toFixed(2) + "，R = " + D.R.toFixed(1) +
+                "，淨 = +" + B.netExchange(B.irradiance(12)).toFixed(2) + "\n" +
+                "全日積分：淨 = +" + Math.round(B.dailyNet()).toLocaleString("en-US") +
+                " µmol CO₂ m⁻² 每日 —— 正數，所以植物先至長得大。",
+        q: "指示劑由紅轉紫，代表咗乜？",
+        opts: ["光合作用速率高", "呼吸停咗", "淨交換係正數，CO₂ 被攞走咗", "水溫升高"],
+        a: 2,
+        why: "代表淨交換係正數。留意呢個唔等於「呼吸停咗」—— 呼吸照行，只係光合作用大過佢。"
+      },
+      {
+        t: "補償點：啱啱打和嗰一刻",
+        fig: figNet,
+        body: "P 同 R 相等嗰一刻叫補償點。喺呢一點，植物既冇吸入亦冇放出 CO₂ —— " +
+              "但兩個過程都全速進行緊，只係啱啱抵消。呢個唔係「乜都停咗」。" +
+              "補償點嘅光強可以直接解出嚟。",
+        worked: "解 P(I) = R：\n" +
+                "  Pmax·I/(I + Ik) = R\n" +
+                "  I·(Pmax − R) = R·Ik\n" +
+                "  I_c = R·Ik/(Pmax − R) = " + D.R + "×" + D.Ik + "/(" + D.Pmax + "−" + D.R + ") = " +
+                Ic.toFixed(1) + " µmol m⁻² s⁻¹\n" +
+                "再解 I(t) = I_c，得一日兩次：" + hhmm(CT[0]) + " 同 " + hhmm(CT[1]) + "。",
+        q: "喺補償點，植物嘅呼吸速率係幾多？",
+        opts: ["零", "同光合作用速率一樣", "最大值", "負數"],
+        a: 1,
+        why: "同光合作用速率一樣（都係 " + D.R.toFixed(1) + "）。補償點嘅定義就係 P = R。呼吸冇停 —— 佢一直都係 " +
+             D.R.toFixed(1) + "，只不過而家啱啱俾光合作用抵消晒。"
+      },
+      {
+        t: "點解試管會變色",
+        fig: figTubes,
+        body: "碳酸氫鹽指示劑對溶液入面嘅 CO₂ 敏感：CO₂ 多就偏黃，同大氣平衡就紅，CO₂ 少就偏紫。" +
+              "重點係：顏色反映嘅係「積落嚟嘅總數」，唔係「而家嗰一刻嘅速率」。" +
+              "所以朝早過咗補償點之後，試管唔會即刻變紫 —— 要等淨吸入慢慢抵消返夜晚積落嘅 CO₂。",
+        worked: "夜晚 12 個鐘，淨速率 −" + D.R.toFixed(1) + "：\n" +
+                "  積落嚟 = " + D.R.toFixed(1) + " × 12 × 3600 = " + (D.R * 12 * 3600).toLocaleString("en-US") +
+                " µmol m⁻² 嘅 CO₂ → 試管偏黃\n" +
+                "跟住日頭要先追返呢個數，顏色先由黃行返去紅、再去紫。",
+        q: "朝早啱啱過咗補償點，試管會即刻變紫嗎？",
+        opts: ["會，即刻變", "唔會，要先抵消返夜晚積落嘅 CO₂", "唔會，因為指示劑壞咗", "會，因為呼吸停咗"],
+        a: 1,
+        why: "唔會。過補償點只係話「由而家開始淨吸入」，但夜晚積咗一晚嘅 CO₂ 仲喺度。顏色係總數嘅指標（積分），唔係速率嘅指標。"
+      }
+    ];
+
+    var GUIDED = [
+      { topic: "呼吸", stem: "以下邊句啱？", opts: ["植物淨係夜晚呼吸", "植物廿四小時都呼吸", "植物淨係日頭呼吸", "植物唔會呼吸"], a: 1,
+        why: "廿四小時都呼吸。呼吸係所有活細胞攞能量嘅方法，冇得停。日頭淨係俾光合作用蓋過咗。" },
+      { topic: "補償點", stem: "補償點嘅定義係？", opts: ["光合作用最快嗰一刻", "呼吸停止嗰一刻", "光合作用速率等於呼吸速率", "試管變紫嗰一刻"], a: 2,
+        why: "P = R。淨交換係零，但兩個過程都照樣全速進行。" },
+      { topic: "飽和", stem: "點解光強加到好高之後，光合作用速率唔再上升？", opts: ["因為冇 CO₂", "因為葉綠素同酵素數量有限，已經飽和", "因為植物瞓着咗", "因為呼吸增加咗"], a: 1,
+        why: "飽和。P = Pmax·I/(I+Ik) 呢條式喺 I 好大嗰陣趨近 Pmax，加幾多光都追唔到。" },
+      { topic: "計算", stem: "Pmax = 12、Ik = 150、R = 2。補償點光強 I_c 係幾多？",
+        opts: ["30 µmol m⁻² s⁻¹", "150 µmol m⁻² s⁻¹", "12 µmol m⁻² s⁻¹", "75 µmol m⁻² s⁻¹"], a: 0,
+        why: "I_c = R·Ik/(Pmax − R) = 2×150/(12−2) = 300/10 = 30 µmol m⁻² s⁻¹。" },
+      { topic: "指示劑", stem: "試管入面嘅碳酸氫鹽指示劑變咗黃色，代表？",
+        opts: ["CO₂ 減少咗", "CO₂ 積多咗", "溫度升高", "有氧氣"], a: 1,
+        why: "黃色代表 CO₂ 多咗，即係呢段時間內呼吸勝過光合作用（例如成晚放喺黑暗度）。" },
+      { topic: "對照實驗", stem: "同樣嘅試管，一支放植物、一支冇植物，兩支都放喺黑暗度。點解要set 冇植物嗰支？",
+        opts: ["用嚟好睇啲", "做對照，證明顏色變化係植物造成，唔係指示劑自己變", "用嚟量溫度", "唔需要"], a: 1,
+        why: "對照組。冇植物嗰支應該唔變色；佢一變色就話俾你聽個變化唔係植物造成，實驗結論企唔穩。" }
+    ];
+
+    var REVIEW = [
+      { stem: "夜晚植物同空氣之間嘅淨 CO₂ 交換係點？",
+        opts: ["淨吸入", "淨放出", "冇交換", "睇溫度"], a: 1,
+        why: "淨放出。P = 0 而 R = " + D.R.toFixed(1) + "，所以淨 = −" + D.R.toFixed(1) + "。" },
+      { stem: "喺補償點，以下邊樣係零？",
+        opts: ["呼吸速率", "光合作用速率", "淨交換 P − R", "光強"], a: 2,
+        why: "淨交換係零。P 同 R 都唔係零，佢哋啱啱相等。" },
+      { stem: "光強加一倍，光合作用速率會點？",
+        opts: ["一定加一倍", "加少過一倍，因為曲線飽和", "減半", "唔變"], a: 1,
+        why: "加少過一倍。由 Ik 到 2Ik，速率只升到 " + (B.grossPhotosynthesis(2 * D.Ik) / B.grossPhotosynthesis(D.Ik)).toFixed(2) + " 倍。" }
+    ];
+
+    var SUMMARY = [
+      "呼吸廿四小時進行，從來冇停 —— 日頭淨係俾光合作用蓋過。",
+      "光合作用對光強係飽和曲線 P = Pmax·I/(I + Ik)，唔係直線。",
+      "補償點 P = R，解得 I_c = R·Ik/(Pmax − R) = " + Ic.toFixed(1) + " µmol m⁻² s⁻¹。",
+      "一日兩次補償點：" + hhmm(CT[0]) + " 同 " + hhmm(CT[1] ) + "。",
+      "指示劑顏色反映積落嚟嘅 CO₂ 總數，唔係即時速率。"
+    ];
+
+    /* ==================================================================
+       實驗室：真係將個現象畫出嚟（標準 1b）
+       ================================================================== */
+    function Lab(host) {
+      var cv = el("canvas", { class: "biobox" });
+      host.appendChild(cv);
+      var ctx = cv.getContext("2d");
+      var st = { t: 6.0, balance: -D.R * 12 * 3600, playing: true, speed: 1.2, dark: false };
+      var bubbles = [];
+      var raf = null, last = 0;
+
+      function I() { return st.dark ? 0 : B.irradiance(st.t); }
+
+      function tick(dt) {
+        if (st.playing) {
+          st.t = (st.t + dt * st.speed) % 24;
+          var net = B.netExchange(I());
+          st.balance += net * dt * st.speed * 3600;
+          st.balance = Math.max(-30000, Math.min(30000, st.balance));
+          if (net > 0 && Math.random() < net * dt * 2.2) {
+            bubbles.push({ x: (Math.random() - 0.5) * 22, y: 0, r: 1.4 + Math.random() * 1.8 });
+          }
+        }
+        bubbles.forEach(function (b) { b.y += dt * 42; });
+        bubbles = bubbles.filter(function (b) { return b.y < 70; });
+      }
+
+      function draw() {
+        var dpr = Math.min(2, window.devicePixelRatio || 1);
+        var W = cv.clientWidth || 460, H = Math.round(W * 0.60);
+        if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) {
+          cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+        }
+        cv.style.height = H + "px";
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, W, H);
+
+        var Inow = I(), day = Math.min(1, Inow / D.Imax);
+
+        /* 天空：由光強決定 */
+        var sky = ctx.createLinearGradient(0, 0, 0, H);
+        function mixc(a, b, f) { return [0, 1, 2].map(function (i) { return Math.round(a[i] + (b[i] - a[i]) * f); }); }
+        var top = mixc([15, 23, 42], [125, 200, 247], Math.pow(day, 0.55));
+        var bot = mixc([30, 41, 59], [219, 240, 252], Math.pow(day, 0.55));
+        sky.addColorStop(0, "rgb(" + top.join(",") + ")");
+        sky.addColorStop(1, "rgb(" + bot.join(",") + ")");
+        ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+
+        /* 太陽／月亮：位置跟時間 */
+        var arc = (st.t - D.sunrise) / (D.sunset - D.sunrise);
+        var isDay = st.t > D.sunrise && st.t < D.sunset && !st.dark;
+        var ox = W * (0.12 + 0.76 * (isDay ? arc : ((st.t + 6) % 24) / 24));
+        var oy = H * 0.30 - H * 0.20 * Math.sin(Math.PI * (isDay ? arc : ((st.t + 6) % 24) / 24));
+        ctx.beginPath(); ctx.arc(ox, oy, isDay ? 15 : 11, 0, 2 * Math.PI);
+        ctx.fillStyle = isDay ? "#fbbf24" : "#e2e8f0"; ctx.fill();
+        if (isDay) { ctx.strokeStyle = "rgba(251,191,36,.35)"; ctx.lineWidth = 7; ctx.stroke(); }
+
+        /* 試管 */
+        var tw = Math.min(74, W * 0.19), th = H * 0.62;
+        var tx = W * 0.30 - tw / 2, ty = H * 0.24;
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect ? ctx.roundRect(tx, ty, tw, th, [8, 8, tw / 2, tw / 2])
+                      : ctx.rect(tx, ty, tw, th);
+        ctx.fillStyle = "rgba(248,250,252,.92)"; ctx.fill();
+        ctx.clip();
+        /* 指示劑 */
+        ctx.fillStyle = B.indicatorColour(st.balance);
+        ctx.fillRect(tx, ty + 12, tw, th - 12);
+        /* 水草 */
+        var stemX = tx + tw / 2, baseY = ty + th - 8;
+        ctx.strokeStyle = "rgba(20,83,45,.92)"; ctx.lineWidth = 3.4; ctx.lineCap = "round";
+        ctx.beginPath(); ctx.moveTo(stemX, baseY);
+        ctx.quadraticCurveTo(stemX + 9, baseY - th * 0.34, stemX - 3, baseY - th * 0.62);
+        ctx.stroke();
+        for (var k = 0; k < 5; k++) {
+          var ly = baseY - th * (0.10 + k * 0.125), lx = stemX + (k % 2 ? -12 : 12);
+          ctx.beginPath();
+          ctx.ellipse(lx, ly, 10, 4.6, (k % 2 ? -0.5 : 0.5), 0, 2 * Math.PI);
+          ctx.fillStyle = "rgba(22,163,74,.95)"; ctx.fill();
+        }
+        /* 氣泡：只有淨吸入嗰陣先會有 */
+        ctx.fillStyle = "rgba(255,255,255,.85)";
+        bubbles.forEach(function (b) {
+          ctx.beginPath();
+          ctx.arc(stemX + b.x, baseY - 6 - b.y, b.r, 0, 2 * Math.PI);
+          ctx.fill();
+        });
+        ctx.restore();
+        ctx.strokeStyle = "#64748b"; ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect ? ctx.roundRect(tx, ty, tw, th, [8, 8, tw / 2, tw / 2]) : ctx.rect(tx, ty, tw, th);
+        ctx.stroke();
+
+        /* 速率條 */
+        var bx = W * 0.52, bw = W * 0.40, byy = H * 0.30, bh = 15;
+        var Pv = B.grossPhotosynthesis(Inow), Rv = D.R, net = Pv - Rv;
+        function bar(y, val, max, col, label) {
+          ctx.fillStyle = "rgba(255,255,255,.55)"; ctx.fillRect(bx, y, bw, bh);
+          ctx.fillStyle = col; ctx.fillRect(bx, y, bw * Math.min(1, Math.abs(val) / max), bh);
+          ctx.fillStyle = "#0f172a"; ctx.font = "700 10.5px system-ui, sans-serif";
+          ctx.textAlign = "left";
+          ctx.fillText(label + " " + val.toFixed(2), bx, y - 3);
+        }
+        bar(byy, Pv, D.Pmax, "#16a34a", "光合作用 P");
+        bar(byy + 34, Rv, D.Pmax, "#dc2626", "呼吸 R");
+        bar(byy + 68, net, D.Pmax, net >= 0 ? "#7c3aed" : "#f59e0b", "淨 P−R");
+
+        /* 文字 */
+        ctx.fillStyle = "#0f172a"; ctx.font = "800 13px system-ui, sans-serif"; ctx.textAlign = "left";
+        ctx.fillText(hhmm(st.t) + (st.dark ? "（黑暗對照）" : ""), 10, 20);
+        ctx.font = "11px system-ui, sans-serif"; ctx.fillStyle = "#334155";
+        ctx.fillText("光強 I = " + Inow.toFixed(0) + " µmol m⁻² s⁻¹", 10, 36);
+        ctx.fillText("指示劑：" + ({ yellow: "黃 · CO₂ 多咗", red: "紅 · 同大氣平衡", purple: "紫 · CO₂ 少咗" })[B.indicatorLabel(st.balance)], 10, H - 10);
+      }
+
+      function loop(ts) {
+        if (!last) last = ts;
+        var dt = Math.min(0.05, (ts - last) / 1000);
+        last = ts; tick(dt); draw();
+        raf = requestAnimationFrame(loop);
+      }
+      if (!K.reducedMotion()) raf = requestAnimationFrame(loop); else draw();
+      return { state: st, redraw: draw, stop: function () { if (raf) cancelAnimationFrame(raf); } };
+    }
+
+    /* ================== 階段機制（同牛頓擺同一個骨架） ================== */
+    var STAGES = [
+      { id: "learn", labelKey: "由零開始學" },
+      { id: "guided", labelKey: "引導練習" },
+      { id: "exp", labelKey: "實驗室" },
+      { id: "rev", labelKey: "總結測驗" }
+    ];
+    var unlocked = { learn: true, guided: false, exp: false, rev: false };
+    var active = "learn";
+    var learnIdx = 0, learnPicked = null;
+    var guidedIdx = 0, guidedPicked = null, guidedScore = 0;
+    var revIdx = 0, revPicked = null, revScore = 0;
+    var lab = null;
+
+    var bar = K.stageBar(document.getElementById("stages"), STAGES, function (id) {
+      if (unlocked[id]) go(id);
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("#stages .l"), function (n, i) {
+      n.textContent = STAGES[i].labelKey;
+    });
+
+    var host = document.getElementById("stageHost");
+
+    function go(id) {
+      if (lab) { lab.stop(); lab = null; }
+      active = id; bar.render(active, unlocked); render();
+    }
+
+    function optionList(opts, picked, correct, onPick) {
+      return el("div", { class: "js3-opts" }, opts.map(function (o, i) {
+        var cls = "js3-opt";
+        if (picked !== null) {
+          if (i === correct) cls += " right";
+          else if (i === picked) cls += " wrong";
+        }
+        var b = el("button", {
+          type: "button", class: cls, "aria-pressed": picked === i ? "true" : "false",
+          onclick: picked === null ? function () { onPick(i); } : null
+        }, [el("span", { class: "gl", text: "ABCD".charAt(i) }), el("span", { text: o })]);
+        if (picked !== null) b.disabled = true;
+        return b;
+      }));
+    }
+
+    function renderLearn() {
+      var s = LEARN[learnIdx];
+      var figHost = el("div");
+      figHost.innerHTML = s.fig();
+      var kids = [
+        el("div", { class: "js3-progress" }, LEARN.map(function (_, k) {
+          return el("div", { class: "js3-bar", style: "background:" + (k <= learnIdx ? "var(--a)" : "#e2e8f0") });
+        })),
+        el("p", { class: "js3-caption", text: "第 " + (learnIdx + 1) + " / " + LEARN.length + " 步" }),
+        el("h2", { class: "js3-title", style: "font-size:1.15rem;margin:.3rem 0 .5rem", text: s.t }),
+        figHost,
+        el("p", { style: "font-size:.9rem;line-height:1.85;color:var(--ink-2);margin:.8rem 0 0", text: s.body }),
+        el("div", { class: "js3-note b", style: "white-space:pre-line;font-size:.83rem;line-height:1.8", text: s.worked }),
+        el("p", { style: "font-weight:800;font-size:.9rem;margin:1rem 0 0", text: s.q }),
+        optionList(s.opts, learnPicked, s.a, function (i) { learnPicked = i; render(); })
+      ];
+      if (learnPicked !== null) {
+        kids.push(K.verdict(learnPicked === s.a ? "right" : "wrong", learnPicked === s.a ? "✓" : "✗",
+          learnPicked === s.a ? "啱" : "唔啱", s.why));
+        kids.push(el("button", {
+          type: "button", class: "js3-btn", style: "margin-top:.8rem",
+          text: learnIdx === LEARN.length - 1 ? "完成，去引導練習 →" : "下一步 →",
+          onclick: function () {
+            if (learnIdx === LEARN.length - 1) { unlocked.guided = true; go("guided"); return; }
+            learnIdx++; learnPicked = null; render();
+          }
+        }));
+      }
+      return el("section", { class: "js3-card" }, kids);
+    }
+
+    function renderDrill(bank, idx, picked, score, onPick, onNext, title) {
+      var q = bank[idx];
+      var kids = [
+        el("p", { class: "js3-caption", text: title + " · 第 " + (idx + 1) + " / " + bank.length + " 題 · 已答對 " + score }),
+        q.topic ? el("span", { class: "js3-badge", text: q.topic }) : null,
+        el("p", { style: "font-weight:800;font-size:.95rem;margin:.5rem 0 0;line-height:1.7", text: q.stem }),
+        optionList(q.opts, picked, q.a, onPick)
+      ];
+      if (picked !== null) {
+        kids.push(K.verdict(picked === q.a ? "right" : "wrong", picked === q.a ? "✓" : "✗",
+          picked === q.a ? "啱" : "唔啱", q.why));
+        kids.push(el("button", {
+          type: "button", class: "js3-btn", style: "margin-top:.8rem",
+          text: idx === bank.length - 1 ? "完成 →" : "下一題 →", onclick: onNext
+        }));
+      }
+      return el("section", { class: "js3-card" }, kids);
+    }
+
+    function renderExp() {
+      var box = el("div");
+      var readHost = el("div", { class: "js3-readouts three" });
+      var capHost = el("p", { class: "figcap" });
+      var labHost = el("div");
+
+      function refresh() {
+        var s = lab.state;
+        var Inow = s.dark ? 0 : B.irradiance(s.t);
+        var Pv = B.grossPhotosynthesis(Inow), net = Pv - D.R;
+        mount(readHost, [
+          K.readout("光合作用 P", Pv.toFixed(2), "µmol m⁻²s⁻¹"),
+          K.readout("呼吸 R", D.R.toFixed(2), "µmol m⁻²s⁻¹"),
+          K.readout("淨交換 P−R", (net >= 0 ? "+" : "") + net.toFixed(2), "µmol m⁻²s⁻¹")
+        ]);
+        /* I_c 唔關 Imax 事（I_c = R·Ik/(Pmax−R)），但「幾點到達補償點」關事，
+           所以拉動 Imax 之後一定要重新解一次，唔可以用開頭嗰個。 */
+        var ct = B.compensationTimes();
+        capHost.textContent = "補償點光強 I_c = " + Ic.toFixed(1) +
+          " µmol m⁻² s⁻¹（由 R·Ik/(Pmax−R) 解出，同正午光強無關）。" +
+          (ct.length === 2
+            ? "喺而家嘅正午光強之下，一日兩次到達：" + hhmm(ct[0]) + " 同 " + hhmm(ct[1]) + "。"
+            : "而家嘅正午光強低過 I_c，所以成日都到唔到補償點 —— 植物全日淨放出 CO₂。") +
+          "氣泡只會喺淨交換係正數嗰陣出現 —— 佢哋就係光合作用放出嘅氧氣。";
+      }
+
+      box.appendChild(el("p", {
+        style: "font-size:.88rem;line-height:1.8;color:var(--ink-2);margin:0 0 .8rem",
+        text: "睇住一日過去：試管入面嘅指示劑顏色跟住積落嚟嘅 CO₂ 變。" +
+              "留意紅色嗰條「呼吸」條子由頭到尾都冇縮過 —— 佢廿四小時都係一樣。"
+      }));
+      box.appendChild(labHost);
+      box.appendChild(capHost);
+
+      var ctrls = el("div", { class: "js3-ctrls" }, [
+        K.slider({
+          label: "時間", value: 6, min: 0, max: 23.9, step: 0.1,
+          format: function (v) { return hhmm(v); },
+          onInput: function (v) { lab.state.t = v; lab.state.playing = false; refresh(); }
+        }),
+        K.slider({
+          label: "正午光強 Imax", value: D.Imax, min: 100, max: 2000, step: 50,
+          format: function (v) { return v + " µmol"; },
+          onInput: function (v) { D.Imax = v; refresh(); }
+        })
+      ]);
+      box.appendChild(ctrls);
+
+      box.appendChild(el("div", { class: "js3-btnrow" }, [
+        el("button", {
+          type: "button", class: "js3-btn", text: "▶ 播放 / 暫停",
+          onclick: function () { lab.state.playing = !lab.state.playing; }
+        }),
+        el("button", {
+          type: "button", class: "js3-btn ghost", text: "黑暗對照組",
+          onclick: function () { lab.state.dark = !lab.state.dark; refresh(); }
+        }),
+        el("button", {
+          type: "button", class: "js3-btn ghost", text: "重設試管",
+          onclick: function () { lab.state.balance = 0; refresh(); }
+        })
+      ]));
+      box.appendChild(readHost);
+
+      box.appendChild(el("p", {
+        style: "font-weight:800;font-size:.9rem;margin:1.1rem 0 .3rem", text: "指示劑顏色對照"
+      }));
+      box.appendChild(el("div", { class: "js3-tablewrap" }, [
+        el("table", { class: "ledger" }, [
+          el("thead", null, [el("tr", null, [
+            el("th", { text: "顏色" }), el("th", { text: "CO₂" }), el("th", { text: "邊個過程勝出" })
+          ])]),
+          el("tbody", null, [
+            [-6000, "CO₂ 多咗", "呼吸（例如成晚黑暗）"],
+            [0, "同大氣平衡", "啱啱打和 —— 補償點"],
+            [6000, "CO₂ 少咗", "光合作用（日頭）"]
+          ].map(function (r) {
+            return el("tr", null, [
+              el("td", null, [
+                el("span", { class: "swatch", style: "background:" + B.indicatorColour(r[0]) }),
+                B.indicatorLabel(r[0])
+              ]),
+              el("td", { text: r[1] }), el("td", { text: r[2] })
+            ]);
+          }))
+        ])
+      ]));
+
+      box.appendChild(el("button", {
+        type: "button", class: "js3-btn", style: "margin-top:1rem", text: "去總結測驗 →",
+        onclick: function () { unlocked.rev = true; go("rev"); }
+      }));
+
+      var sec = el("section", { class: "js3-card" }, [box]);
+      setTimeout(function () { lab = Lab(labHost); refresh(); }, 0);
+      return sec;
+    }
+
+    function renderRev() {
+      if (revIdx >= REVIEW.length) {
+        return el("section", { class: "js3-card" }, [
+          el("h2", { class: "js3-title", style: "font-size:1.15rem", text: "總結" }),
+          el("ul", { class: "js3-list" }, SUMMARY.map(function (x) { return el("li", { text: x }); })),
+          K.verdict(revScore === REVIEW.length ? "right" : "warn", revScore === REVIEW.length ? "✓" : "!",
+            "測驗：" + revScore + " / " + REVIEW.length,
+            revScore === REVIEW.length ? "全對。你記住咗最緊要嗰句：呼吸從來冇停過。"
+              : "答錯咗嘅，返上去第 1 同第 4 步再睇一次。"),
+          el("button", {
+            type: "button", class: "js3-btn", style: "margin-top:.9rem", text: "再做一次",
+            onclick: function () { revIdx = 0; revPicked = null; revScore = 0; render(); }
+          })
+        ]);
+      }
+      return renderDrill(REVIEW, revIdx, revPicked, revScore,
+        function (i) { revPicked = i; if (i === REVIEW[revIdx].a) revScore++; render(); },
+        function () { revIdx++; revPicked = null; render(); }, "總結測驗");
+    }
+
+    function render() {
+      if (active === "learn") mount(host, [renderLearn()]);
+      else if (active === "guided") {
+        if (guidedIdx >= GUIDED.length) {
+          unlocked.exp = true;
+          mount(host, [el("section", { class: "js3-card" }, [
+            K.verdict(guidedScore >= 4 ? "right" : "warn", guidedScore >= 4 ? "✓" : "!",
+              "引導練習：" + guidedScore + " / " + GUIDED.length,
+              guidedScore >= 4 ? "夠喇，入實驗室。" : "可以再做一次，或者直接入實驗室睇住個現象再諗。"),
+            el("button", {
+              type: "button", class: "js3-btn", style: "margin-top:.8rem", text: "入實驗室 →",
+              onclick: function () { unlocked.exp = true; go("exp"); }
+            }),
+            el("button", {
+              type: "button", class: "js3-btn ghost", style: "margin-top:.5rem", text: "再做一次",
+              onclick: function () { guidedIdx = 0; guidedPicked = null; guidedScore = 0; render(); }
+            })
+          ])]);
+        } else {
+          mount(host, [renderDrill(GUIDED, guidedIdx, guidedPicked, guidedScore,
+            function (i) { guidedPicked = i; if (i === GUIDED[guidedIdx].a) guidedScore++; render(); },
+            function () { guidedIdx++; guidedPicked = null; render(); }, "引導練習")]);
+        }
+      }
+      else if (active === "exp") mount(host, [renderExp()]);
+      else mount(host, [renderRev()]);
+      bar.render(active, unlocked);
+    }
+
+    mount(document.getElementById("footCite"), [
+      el("p", { text: "課程依據：中二科學．單元七「生物與空氣」—— 光合作用、呼吸作用、碳酸氫鹽指示劑實驗同對照組設計。" }),
+      el("p", {
+        text: "全部數值由 ./engine.js 計出。光合作用用直角雙曲線 P = Pmax·I/(I + Ik)（Pmax = " +
+              D.Pmax + "、Ik = " + D.Ik + "、R = " + D.R + " µmol CO₂ m⁻² s⁻¹）；" +
+              "補償點 I_c = R·Ik/(Pmax − R) = " + Ic.toFixed(1) + " µmol m⁻² s⁻¹ 係解出嚟嘅，" +
+              "一日兩次到達嘅時間 " + hhmm(CT[0]) + " / " + hhmm(CT[1]) + " 亦然。"
+      }),
+      el("p", { text: "engine.js 可喺 Node 載入（呢個資料夾係 ESM，由 globalThis.JS2_BIOCYCLE 攞 API），並附有 24 項對照檢查。" }),
+      el("p", { style: "text-align:center;opacity:.7;margin-top:.8rem", text: "@HKSTEAMAI All Copy-Right Reserved." })
+    ]);
+
+    go("learn");
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
+  else boot();
+})();
+</script>
+</body>
+</html>

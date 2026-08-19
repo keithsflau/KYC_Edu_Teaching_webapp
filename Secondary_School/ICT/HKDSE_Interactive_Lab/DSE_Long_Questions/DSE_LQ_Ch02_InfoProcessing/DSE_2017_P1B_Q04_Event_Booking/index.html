@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+
+
+<html lang="en">
+
+
+  <head>
+
+  <meta charset="UTF-8" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+
+    <title>HKDSE Past Paper 2017 Paper 1B Q4 - Event Booking System</title>
+
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+
+    <script
+
+
+      crossorigin
+
+
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+
+
+    ></script>
+
+
+    <script
+
+
+      crossorigin
+
+
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+
+
+    ></script>
+
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+
+    <style>
+
+
+      body {
+
+
+        background-color: #0f172a;
+
+
+        color: #e2e8f0;
+
+
+        font-family: "Inter", sans-serif;
+
+
+      }
+
+
+    </style>
+
+
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet" />
+
+
+<!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../../../../common/ncs-i18n.css" />
+  <script src="../../../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+      display: none !important;
+    }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+        if (label === "EN" || label === "\u4E2D") {
+          btn.classList.add("ncs-hide-when-ncs-fleet");
+        }
+      });
+      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+        el.classList.add("ncs-hide-when-ncs-fleet");
+      });
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+  <!-- ICT family kit: React adapter for the vanilla Lucide UMD, and the wire
+       between this app's own TEXT dictionary and the fleet language switcher. -->
+  <script src="../../../../common/ict-lucide.js"></script>
+  <script src="../../../../common/ict-i18n.js"></script>
+</head>
+
+
+  <body class="p-4 md:p-8">
+
+
+    <div id="root" class="max-w-4xl mx-auto"></div>
+
+
+    <script>
+
+
+const {
+
+
+  useState
+
+
+} = React;
+
+
+const {
+
+
+  Calendar,
+
+
+  Database,
+
+
+  Key,
+
+
+  CheckCircle,
+
+
+  XCircle,
+
+
+  ShieldCheck
+
+
+} = IctLucide;
+
+
+const TEXT = {
+
+
+  en: {
+
+
+    title: "HKDSE Past Paper 2017 Paper 1B Q4: Event Booking System",
+
+
+    subtitle: "Database Concepts: Primary Keys, Composite Keys, and Input Validation.",
+
+
+    step1: "1. Define Primary Key",
+
+
+    step2: "2. Input Validation",
+
+
+    step3: "3. Booking Test",
+
+
+    desc_pk: "A single event has multiple seats. A single seat exists in multiple events. What uniquely identifies a booking?",
+
+
+    fields: ["Event_ID", "Date", "Seat_No", "Price", "Member_ID"],
+
+
+    select_pk: "Select fields to form the PRIMARY KEY:",
+
+
+    valid_pk: "Correct! Composite Key (Event_ID + Seat_No) makes it unique.",
+
+
+    invalid_pk: "Incorrect. This combination is not unique.",
+
+
+    lbl_seat: "Seat No Input (Format: A1-Z99):",
+
+
+    val_msg_valid: "Valid Format.",
+
+
+    val_msg_invalid: "Invalid Format! Must be Letter+Number (e.g., B12).",
+
+
+    book_btn: "Book Seat",
+
+
+    booked: "Booked!",
+
+
+    err_duplicate: "Error: Seat already booked (PK Constraint Violation)."
+
+
+  },
+
+
+  "zh-Hant": {
+
+
+    title: "HKDSE Past Paper 2017 Paper 1B Q4: 活動訂票系統",
+
+
+    subtitle: "數據庫概念：主鍵、複合鍵與輸入驗證。",
+
+
+    step1: "1. 定義主鍵 (Primary Key)",
+
+
+    step2: "2. 輸入驗證 (Validation)",
+
+
+    step3: "3. 訂票測試",
+
+
+    desc_pk: "一個活動有多個座位。一個座位存在於多個活動中。什麼能唯一標識一個預訂？",
+
+
+    fields: ["Event_ID (活動編號)", "Date (日期)", "Seat_No (座位編號)", "Price (價格)", "Member_ID (會員編號)"],
+
+
+    select_pk: "選擇欄位以組成 主鍵 (Primary Key):",
+
+
+    valid_pk: "正確！複合鍵 (Event_ID + Seat_No) 確保唯一性。",
+
+
+    invalid_pk: "不正確。此組合並非唯一。",
+
+
+    lbl_seat: "座位編號輸入 (格式: A1-Z99):",
+
+
+    val_msg_valid: "格式有效。",
+
+
+    val_msg_invalid: "格式無效！必須為 字母+數字 (例如 B12)。",
+
+
+    book_btn: "預訂座位",
+
+
+    booked: "預訂成功！",
+
+
+    err_duplicate: "錯誤: 座位已被預訂 (違反主鍵約束)。"
+
+
+  }
+
+
+};
+
+
+const App = () => {
+
+
+  const [lang, setLang] = IctI18n.useLang(React, "en");
+
+
+  const t = TEXT[lang];
+
+
+
+
+
+  // Step 1: PK
+
+
+  const [selectedKeys, setSelectedKeys] = useState([]);
+
+
+  const [pkFeedback, setPkFeedback] = useState("");
+
+
+
+
+
+  // Step 2: Validation
+
+
+  const [seatInput, setSeatInput] = useState("");
+
+
+  const [isValidFormat, setIsValidFormat] = useState(null);
+
+
+
+
+
+  // Step 3: Booking (Mock DB)
+
+
+  const [bookings, setBookings] = useState([{
+
+
+    event: "E01",
+
+
+    seat: "A1"
+
+
+  }]);
+
+
+  const [bookMsg, setBookMsg] = useState("");
+
+
+  const toggleKey = f => {
+
+
+    if (selectedKeys.includes(f)) setSelectedKeys(prev => prev.filter(k => k !== f));else setSelectedKeys(prev => [...prev, f]);
+
+
+  };
+
+
+  const checkPK = () => {
+
+
+    // Correct: Event_ID + Seat_No (or Date + Seat_No if Event_ID implies Date)
+
+
+    // Let's assume Event_ID + Seat_No is the target.
+
+
+    const hasEvent = selectedKeys.some(k => k.includes("Event_ID"));
+
+
+    const hasSeat = selectedKeys.some(k => k.includes("Seat_No"));
+
+
+    const count = selectedKeys.length;
+
+
+    if (hasEvent && hasSeat && count === 2) {
+
+
+      setPkFeedback("valid");
+
+
+    } else {
+
+
+      setPkFeedback("invalid");
+
+
+    }
+
+
+  };
+
+
+  const validateSeat = val => {
+
+
+    setSeatInput(val);
+
+
+    // Regex: 1 Letter + 1-2 Digits
+
+
+    const regex = /^[A-Z][1-9][0-9]?$/;
+
+
+    setIsValidFormat(regex.test(val));
+
+
+  };
+
+
+  const attemptBooking = () => {
+
+
+    if (!isValidFormat) return;
+
+
+    const newBooking = {
+
+
+      event: "E01",
+
+
+      seat: seatInput
+
+
+    };
+
+
+    const exists = bookings.some(b => b.event === newBooking.event && b.seat === newBooking.seat);
+
+
+    if (exists) {
+
+
+      setBookMsg("error");
+
+
+    } else {
+
+
+      setBookings([...bookings, newBooking]);
+
+
+      setBookMsg("success");
+
+
+    }
+
+
+  };
+
+
+  return /*#__PURE__*/React.createElement("div", {
+
+
+    className: "min-h-screen bg-slate-900 p-4"
+
+
+  }, /*#__PURE__*/React.createElement("header", {
+
+
+    className: "flex justify-between items-center mb-8 border-b border-slate-700 pb-4"
+
+
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h1", {
+
+
+    className: "text-2xl font-bold text-white flex items-center gap-2"
+
+
+  }, /*#__PURE__*/React.createElement(Calendar, {
+
+
+    className: "text-purple-400"
+
+
+  }), " ", t.title), /*#__PURE__*/React.createElement("p", {
+
+
+    className: "text-slate-400 mt-1"
+
+
+  }, t.subtitle)), /*#__PURE__*/React.createElement("button", {
+
+
+    onClick: () => setLang(l => l === "en" ? "tc" : "en"),
+
+
+    className: "px-3 py-1 bg-slate-800 rounded border border-slate-600"
+
+
+  }, lang === "en" ? "中文" : "ENG")), /*#__PURE__*/React.createElement("div", {
+
+
+    className: "space-y-8"
+
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+
+    className: "bg-slate-800 p-6 rounded-xl border border-slate-700"
+
+
+  }, /*#__PURE__*/React.createElement("h2", {
+
+
+    className: "text-xl font-bold text-white mb-4 flex gap-2"
+
+
+  }, /*#__PURE__*/React.createElement(Key, {
+
+
+    className: "text-yellow-500"
+
+
+  }), " ", t.step1), /*#__PURE__*/React.createElement("p", {
+
+
+    className: "text-slate-300 mb-4"
+
+
+  }, t.desc_pk), /*#__PURE__*/React.createElement("div", {
+
+
+    className: "flex flex-wrap gap-3 mb-4"
+
+
+  }, t.fields.map(f => /*#__PURE__*/React.createElement("button", {
+
+
+    key: f,
+
+
+    onClick: () => toggleKey(f),
+
+
+    className: `px-4 py-2 rounded-lg border transition-all ${selectedKeys.includes(f) ? "bg-yellow-500 text-slate-900 border-yellow-400 font-bold" : "bg-slate-700 text-slate-400 border-slate-600"}`
+
+
+  }, f))), /*#__PURE__*/React.createElement("button", {
+
+
+    onClick: checkPK,
+
+
+    className: "bg-blue-600 px-6 py-2 rounded text-white font-bold hover:bg-blue-700"
+
+
+  }, "Check Answer"), pkFeedback === "valid" && /*#__PURE__*/React.createElement("div", {
+
+
+    className: "mt-4 p-3 bg-green-900/30 text-green-400 border border-green-800 rounded flex items-center gap-2"
+
+
+  }, /*#__PURE__*/React.createElement(CheckCircle, null), " ", t.valid_pk), pkFeedback === "invalid" && /*#__PURE__*/React.createElement("div", {
+
+
+    className: "mt-4 p-3 bg-red-900/30 text-red-400 border border-red-800 rounded flex items-center gap-2"
+
+
+  }, /*#__PURE__*/React.createElement(XCircle, null), " ", t.invalid_pk)), /*#__PURE__*/React.createElement("div", {
+
+
+    className: "bg-slate-800 p-6 rounded-xl border border-slate-700"
+
+
+  }, /*#__PURE__*/React.createElement("h2", {
+
+
+    className: "text-xl font-bold text-white mb-4 flex gap-2"
+
+
+  }, /*#__PURE__*/React.createElement(ShieldCheck, {
+
+
+    className: "text-green-500"
+
+
+  }), " ", t.step2, " &", " ", t.step3), /*#__PURE__*/React.createElement("div", {
+
+
+    className: "grid grid-cols-1 md:grid-cols-2 gap-8"
+
+
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+
+
+    className: "block text-slate-400 mb-2"
+
+
+  }, t.lbl_seat), /*#__PURE__*/React.createElement("input", {
+
+
+    type: "text",
+
+
+    value: seatInput,
+
+
+    onChange: e => validateSeat(e.target.value.toUpperCase()),
+
+
+    className: "w-full bg-slate-900 border border-slate-600 p-3 rounded text-white font-mono text-lg focus:border-blue-500 focus:outline-none",
+
+
+    placeholder: "E.g. A1"
+
+
+  }), seatInput && /*#__PURE__*/React.createElement("div", {
+
+
+    className: `mt-2 text-sm ${isValidFormat ? "text-green-400" : "text-red-400"}`
+
+
+  }, isValidFormat ? t.val_msg_valid : t.val_msg_invalid), /*#__PURE__*/React.createElement("button", {
+
+
+    onClick: attemptBooking,
+
+
+    disabled: !isValidFormat,
+
+
+    className: `w-full mt-4 py-3 rounded font-bold ${isValidFormat ? "bg-purple-600 hover:bg-purple-700 text-white" : "bg-slate-700 text-slate-500 cursor-not-allowed"}`
+
+
+  }, t.book_btn, " (Event 'E01')"), bookMsg === "success" && /*#__PURE__*/React.createElement("div", {
+
+
+    className: "mt-4 p-3 bg-green-600 text-white rounded text-center animate-pulse"
+
+
+  }, t.booked), bookMsg === "error" && /*#__PURE__*/React.createElement("div", {
+
+
+    className: "mt-4 p-3 bg-red-600 text-white rounded text-center"
+
+
+  }, t.err_duplicate)), /*#__PURE__*/React.createElement("div", {
+
+
+    className: "bg-slate-900 p-4 rounded border border-slate-600 font-mono text-xs md:text-sm"
+
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+
+    className: "text-slate-500 mb-2 border-b border-slate-700 pb-1"
+
+
+  }, "DATABASE STATE (Table: Bookings)"), /*#__PURE__*/React.createElement("div", {
+
+
+    className: "grid grid-cols-2 text-slate-400 mb-1"
+
+
+  }, /*#__PURE__*/React.createElement("span", null, "Event_ID (PK)"), /*#__PURE__*/React.createElement("span", null, "Seat_No (PK)")), bookings.map((b, i) => /*#__PURE__*/React.createElement("div", {
+
+
+    key: i,
+
+
+    className: "grid grid-cols-2 text-green-400 border-t border-slate-800 py-1"
+
+
+  }, /*#__PURE__*/React.createElement("span", null, b.event), /*#__PURE__*/React.createElement("span", null, b.seat))))))));
+
+
+};
+
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+
+
+root.render(/*#__PURE__*/React.createElement(App, null));
+
+
+</script>
+
+
+    <script src="../../../../../../common/learn-from-zero.js"></script>
+
+
+  <script src="../../../../../../common/interactive-lab-kit.js"></script>
+
+
+<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+
+</body>
+
+
+</html>
+
+

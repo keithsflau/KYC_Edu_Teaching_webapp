@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+  <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>HKDSE Past Paper 2020 Paper 1B Q5 - Bit Pattern</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script
+
+      crossorigin
+
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+
+    ></script>
+
+    <script
+
+      crossorigin
+
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+
+    ></script>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+
+      body {
+
+        background-color: #0f172a;
+
+        color: #e2e8f0;
+
+        font-family: "Inter", sans-serif;
+
+      }
+
+    </style>
+
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet" />
+<!-- NCS i18n fleet kit (auto-injected) -->
+  <link rel="stylesheet" href="../../../../../../common/ncs-i18n.css" />
+  <script src="../../../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+      display: none !important;
+    }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+        var label = (btn.textContent || "").trim();
+        if (label === "EN" || label === "\u4E2D") {
+          btn.classList.add("ncs-hide-when-ncs-fleet");
+        }
+      });
+      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+        el.classList.add("ncs-hide-when-ncs-fleet");
+      });
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+  <!-- ICT family kit: React adapter for the vanilla Lucide UMD, and the wire
+       between this app's own TEXT dictionary and the fleet language switcher. -->
+  <script src="../../../../common/ict-lucide.js"></script>
+  <script src="../../../../common/ict-i18n.js"></script>
+</head>
+
+  <body class="p-4 md:p-8">
+
+    <div id="root" class="max-w-4xl mx-auto"></div>
+
+    <script>
+
+const {
+
+  useState
+
+} = React;
+
+const {
+
+  Grid,
+
+  Cpu,
+
+  Save,
+
+  Trash2,
+
+  ArrowRight
+
+} = IctLucide;
+
+const TEXT = {
+
+  en: {
+
+    title: "HKDSE Past Paper 2020 Paper 1B Q5: Bit Pattern & Display",
+
+    subtitle: "Control an LED Grid using 8-bit patterns. Calculate storage size.",
+
+    grid_title: "8x8 LED Matrix Design",
+
+    row: "Row",
+
+    binary: "Binary (8-bit)",
+
+    hex: "Hex",
+
+    val: "Value",
+
+    clear: "Clear All",
+
+    save_frame: "Save Frame to Memory",
+
+    storage_calc: "Storage Calculation",
+
+    num_frames: "Frames Recorded:",
+
+    size_byte: "Size (Bytes):",
+
+    size_bits: "Size (Bits):",
+
+    compression: "Compression Idea:",
+
+    comp_desc: "Run-Length Encoding (RLE) could group consecutive same-colored pixels.",
+
+    inst: "Click cells to toggle LEDs. Observe the binary codes update in real-time."
+
+  },
+
+  "zh-Hant": {
+
+    title: "HKDSE Past Paper 2020 Paper 1B Q5: 位元模式與顯示板",
+
+    subtitle: "使用 8 位代碼控制 LED 點陣。計算儲存容量。",
+
+    grid_title: "8x8 LED 點陣設計",
+
+    row: "行",
+
+    binary: "二進制 (8-bit)",
+
+    hex: "十六進制",
+
+    val: "數值",
+
+    clear: "清除所有",
+
+    save_frame: "儲存畫面至記憶體",
+
+    storage_calc: "容量計算",
+
+    num_frames: "已錄製畫面:",
+
+    size_byte: "大小 (Bytes):",
+
+    size_bits: "大小 (Bits):",
+
+    compression: "壓縮概念:",
+
+    comp_desc: "行程編碼 (RLE) 可將連續的相同顏色像素分組以節省空間。",
+
+    inst: "點擊方格切換 LED。觀察二進制代碼即時更新。"
+
+  }
+
+};
+
+const SIZE = 8;
+
+const App = () => {
+
+  const [lang, setLang] = IctI18n.useLang(React, "en");
+
+  const [grid, setGrid] = useState(Array(SIZE).fill(0)); // 8 Integers (rows)
+
+  const [frames, setFrames] = useState([]);
+
+  const t = TEXT[lang];
+
+  const toggleBit = (r, c) => {
+
+    // c goes 0..7 from Left to Right. But usually bit 7 is left?
+
+    // Let's assume MSB is Left (c=0 -> bit 7).
+
+    // bit position = 7 - c
+
+    const bitPos = 7 - c;
+
+    const newGrid = [...grid];
+
+    // Toggle bit
+
+    newGrid[r] ^= 1 << bitPos;
+
+    setGrid(newGrid);
+
+  };
+
+  const getBit = (r, c) => {
+
+    const bitPos = 7 - c;
+
+    return grid[r] >> bitPos & 1;
+
+  };
+
+  const saveFrame = () => {
+
+    setFrames([...frames, [...grid]]);
+
+    // Optional: Flash effect or validation
+
+  };
+
+  const clear = () => setGrid(Array(SIZE).fill(0));
+
+  const totalBytes = frames.length * SIZE; // 8 bytes per frame
+
+
+
+  return /*#__PURE__*/React.createElement("div", {
+
+    className: "min-h-screen bg-slate-900 p-4"
+
+  }, /*#__PURE__*/React.createElement("header", {
+
+    className: "flex justify-between items-center mb-8 border-b border-slate-700 pb-4"
+
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h1", {
+
+    className: "text-2xl font-bold text-white flex items-center gap-2"
+
+  }, /*#__PURE__*/React.createElement(Cpu, {
+
+    className: "text-red-400"
+
+  }), " ", t.title), /*#__PURE__*/React.createElement("p", {
+
+    className: "text-slate-400 mt-1"
+
+  }, t.subtitle)), /*#__PURE__*/React.createElement("button", {
+
+    onClick: () => setLang(l => l === "en" ? "tc" : "en"),
+
+    className: "px-3 py-1 bg-slate-800 rounded border border-slate-600"
+
+  }, lang === "en" ? "中文" : "ENG")), /*#__PURE__*/React.createElement("p", {
+
+    className: "text-center text-slate-400 mb-6"
+
+  }, t.inst), /*#__PURE__*/React.createElement("div", {
+
+    className: "flex flex-col md:flex-row gap-8 justify-center items-start"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-2xl"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "flex justify-between mb-4"
+
+  }, /*#__PURE__*/React.createElement("h2", {
+
+    className: "text-xl font-bold text-white flex items-center gap-2"
+
+  }, /*#__PURE__*/React.createElement(Grid, null), " ", t.grid_title), /*#__PURE__*/React.createElement("button", {
+
+    onClick: clear,
+
+    className: "text-red-400 text-sm hover:text-red-300 flex items-center gap-1"
+
+  }, /*#__PURE__*/React.createElement(Trash2, {
+
+    size: 14
+
+  }), " ", t.clear)), /*#__PURE__*/React.createElement("div", {
+
+    className: "inline-block bg-black p-2 rounded border border-slate-600"
+
+  }, grid.map((rowVal, r) => /*#__PURE__*/React.createElement("div", {
+
+    key: r,
+
+    className: "flex gap-1 mb-1 last:mb-0"
+
+  }, [...Array(SIZE)].map((_, c) => {
+
+    const on = getBit(r, c) === 1;
+
+    return /*#__PURE__*/React.createElement("div", {
+
+      key: c,
+
+      onClick: () => toggleBit(r, c),
+
+      className: `w-8 h-8 rounded-full border border-slate-700 cursor-pointer hover:border-white transition-all ${on ? "bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.8)]" : "bg-slate-900"}`
+
+    });
+
+  }))))), /*#__PURE__*/React.createElement("div", {
+
+    className: "flex-1 max-w-md space-y-6"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "bg-white text-slate-900 p-4 rounded-xl shadow-lg"
+
+  }, /*#__PURE__*/React.createElement("table", {
+
+    className: "w-full text-sm font-mono text-center"
+
+  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", {
+
+    className: "border-b bg-slate-100 text-slate-500"
+
+  }, /*#__PURE__*/React.createElement("th", {
+
+    className: "p-2"
+
+  }, t.row), /*#__PURE__*/React.createElement("th", {
+
+    className: "p-2"
+
+  }, t.binary), /*#__PURE__*/React.createElement("th", {
+
+    className: "p-2"
+
+  }, t.hex), /*#__PURE__*/React.createElement("th", {
+
+    className: "p-2"
+
+  }, t.val))), /*#__PURE__*/React.createElement("tbody", null, grid.map((val, r) => /*#__PURE__*/React.createElement("tr", {
+
+    key: r,
+
+    className: "border-b last:border-0 hover:bg-slate-50"
+
+  }, /*#__PURE__*/React.createElement("td", {
+
+    className: "p-1 font-bold text-slate-400"
+
+  }, r + 1), /*#__PURE__*/React.createElement("td", {
+
+    className: "p-1"
+
+  }, val.toString(2).padStart(8, "0")), /*#__PURE__*/React.createElement("td", {
+
+    className: "p-1 text-blue-600 font-bold"
+
+  }, "0x", val.toString(16).toUpperCase().padStart(2, "0")), /*#__PURE__*/React.createElement("td", {
+
+    className: "p-1 text-slate-400"
+
+  }, val)))))), /*#__PURE__*/React.createElement("div", {
+
+    className: "bg-slate-800 p-6 rounded-xl border border-slate-700 text-white"
+
+  }, /*#__PURE__*/React.createElement("h3", {
+
+    className: "font-bold flex items-center gap-2 mb-4"
+
+  }, /*#__PURE__*/React.createElement(Save, {
+
+    size: 18
+
+  }), " ", t.storage_calc), /*#__PURE__*/React.createElement("button", {
+
+    onClick: saveFrame,
+
+    className: "w-full bg-blue-600 hover:bg-blue-500 py-2 rounded font-bold mb-4 flex justify-center gap-2"
+
+  }, /*#__PURE__*/React.createElement(Cpu, null), " ", t.save_frame), /*#__PURE__*/React.createElement("div", {
+
+    className: "space-y-2 text-sm text-slate-300 font-mono"
+
+  }, /*#__PURE__*/React.createElement("div", {
+
+    className: "flex justify-between"
+
+  }, /*#__PURE__*/React.createElement("span", null, t.num_frames), /*#__PURE__*/React.createElement("span", {
+
+    className: "text-white font-bold"
+
+  }, frames.length)), /*#__PURE__*/React.createElement("div", {
+
+    className: "flex justify-between"
+
+  }, /*#__PURE__*/React.createElement("span", null, t.size_byte), /*#__PURE__*/React.createElement("span", {
+
+    className: "text-green-400 font-bold"
+
+  }, totalBytes, " B")), /*#__PURE__*/React.createElement("div", {
+
+    className: "border-t border-slate-600 pt-2 text-xs text-slate-500"
+
+  }, "Calculation: Rows (8) * Frames (", frames.length, ") =", " ", totalBytes, " Bytes"))))));
+
+};
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+
+root.render(/*#__PURE__*/React.createElement(App, null));
+
+</script>
+
+  <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+</body>
+
+</html>
+
