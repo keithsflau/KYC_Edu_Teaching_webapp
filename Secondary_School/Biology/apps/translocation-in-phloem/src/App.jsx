@@ -188,14 +188,13 @@ export default function App() {
 
         {/* Right Column: Simulation View */}
         <div className="lg:col-span-2 order-1 lg:order-2">
-           <div className="relative bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden h-[600px] flex justify-center">
+           <div className="sim-stage">
               
-              {/* --- Background / Tissues --- */}
-              <div className="absolute inset-0 flex justify-center gap-8 p-10">
+              <div className="sim-row">
                  
                  {/* Xylem Vessel */}
-                 <div className="relative w-20 h-full bg-blue-100 rounded-lg flex flex-col items-center border border-blue-200">
-                    <div className="absolute top-2 text-xs font-bold text-blue-400 tracking-wider">XYLEM</div>
+                 <div className="vessel-xylem">
+                    <div className="vessel-label xylem">XYLEM</div>
                     {/* Water Flow Animation (Continuous) */}
                     <div className="absolute inset-0 overflow-hidden">
                        <motion.div 
@@ -211,7 +210,7 @@ export default function App() {
                  </div>
 
                  {/* Lateral Connections (Membrane) */}
-                 <div className="w-12 h-full flex flex-col justify-between py-20 relative">
+                 <div className="vessel-mid">
                      {/* Top arrow (Step 2: Xylem -> Phloem) */}
                      {phase >= 2 && (
                        <motion.div 
@@ -238,8 +237,8 @@ export default function App() {
                  </div>
 
                  {/* Phloem Vessel */}
-                 <div className="relative w-24 h-full bg-green-50 rounded-lg border border-green-200 flex flex-col">
-                    <div className="absolute top-2 w-full text-center text-xs font-bold text-green-600 tracking-wider z-10">PHLOEM</div>
+                 <div className="vessel-phloem">
+                    <div className="vessel-label phloem">PHLOEM</div>
                     
                     {/* Sieve Plates */}
                     {[20, 40, 60, 80].map((top, i) => (
@@ -280,10 +279,10 @@ export default function App() {
                  </div>
 
                  {/* Source & Sink Cells */}
-                 <div className="w-32 h-full flex flex-col justify-between py-10">
+                 <div className="source-sink-col">
                     
                     {/* Source Cell */}
-                    <div className="h-32 bg-emerald-100 rounded-2xl border-2 border-emerald-400 p-3 relative flex flex-col items-center justify-center shadow-sm">
+                    <div className="source-cell relative shadow-sm">
                        <span className="text-sm font-bold text-emerald-800">SOURCE</span>
                        <span className="text-xs text-emerald-600">(Leaf Cell)</span>
                        <div className="grid grid-cols-3 gap-1 mt-2">
@@ -309,7 +308,7 @@ export default function App() {
                     </div>
 
                     {/* Sink Cell */}
-                    <div className="h-32 bg-amber-100 rounded-2xl border-2 border-amber-400 p-3 relative flex flex-col items-center justify-center shadow-sm">
+                    <div className="sink-cell relative shadow-sm">
                        <span className="text-sm font-bold text-amber-800">SINK</span>
                        <span className="text-xs text-amber-600">(Root/Fruit)</span>
                        {/* Accumulation visualization */}

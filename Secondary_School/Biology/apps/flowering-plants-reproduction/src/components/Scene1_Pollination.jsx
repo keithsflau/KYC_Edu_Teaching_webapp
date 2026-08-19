@@ -53,16 +53,16 @@ export default function Scene1_Pollination({ onNext }) {
           </g>
 
           {/* Labels */}
-          <text x="50" y="60" className="text-sm font-semibold fill-emerald-800">Stigma</text>
+          <text x="50" y="60" fill="#166534" fontSize="13" fontWeight="600">Stigma</text>
           <line x1="100" y1="55" x2="115" y2="55" stroke="#065f46" strokeWidth="1" />
 
-          <text x="50" y="200" className="text-sm font-semibold fill-emerald-800">Style</text>
+          <text x="50" y="200" fill="#166534" fontSize="13" fontWeight="600">Style</text>
           <line x1="90" y1="195" x2="120" y2="195" stroke="#065f46" strokeWidth="1" />
 
-          <text x="230" y="350" className="text-sm font-semibold fill-emerald-800">Ovary</text>
+          <text x="230" y="350" fill="#166534" fontSize="13" fontWeight="600">Ovary</text>
           <line x1="225" y1="345" x2="200" y2="360" stroke="#065f46" strokeWidth="1" />
           
-          <text x="230" y="400" className="text-sm font-semibold fill-emerald-800">Ovule</text>
+          <text x="230" y="400" fill="#166534" fontSize="13" fontWeight="600">Ovule</text>
           <line x1="225" y1="395" x2="180" y2="400" stroke="#065f46" strokeWidth="1" />
 
           {/* Pollen Tube Path Animation */}
