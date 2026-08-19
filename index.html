@@ -506,20 +506,17 @@ gsap.registerPlugin(ScrollTrigger);
 
     function preloadFrames() {
       let loaded = 0;
-      return Promise.all(FRAME_PATHS.map((src, i) => new Promise((resolve) => {
+      return Promise.all(FRAME_PATHS.map((src, i) => new Promise((resolve, reject) => {
         const img = new Image();
-        const done = () => {
+        img.onload = () => {
+          images[i] = img;
           loaded++;
           const pct = Math.round((loaded / FRAME_PATHS.length) * 100);
           loaderFill.style.width = pct + '%';
           loaderText.textContent = pct + '%';
           resolve();
         };
-        img.onload = () => {
-          images[i] = img;
-          done();
-        };
-        img.onerror = done;
+        img.onerror = reject;
         img.src = src;
       })));
     }
