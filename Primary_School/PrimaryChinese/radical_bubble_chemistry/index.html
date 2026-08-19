@@ -1,0 +1,652 @@
+﻿<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>部首碰碰球 - Radical Bubble Chemistry</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', 'Microsoft YaHei', 'SimHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        #root {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .game-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            max-width: 900px;
+            width: 100%;
+            margin: 20px;
+        }
+
+        .game-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .game-title {
+            font-size: 2.5em;
+            color: #333;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .score-board {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            color: #555;
+        }
+
+        .score-item {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .instructions {
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        canvas {
+            display: block;
+            border: 3px solid #667eea;
+            border-radius: 15px;
+            background: linear-gradient(180deg, #e0f2fe 0%, #bae6fd 100%);
+            cursor: crosshair;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .next-radical {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 1.1em;
+            color: #555;
+        }
+
+        .next-radical-label {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .next-radical-char {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            line-height: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50%;
+            font-size: 1.5em;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+
+    <script>
+const {
+  useState,
+  useEffect,
+  useRef
+} = React;
+
+// Radical compatibility map
+const RADICAL_MAP = {
+  '氵': ['可', '工', '羊', '每', '胡'],
+  '亻': ['門', '呆', '也', '白', '木'],
+  '口': ['天', '鳥', '今', '斤', '勿'],
+  '木': ['子', '寸', '兆', '白', '每'],
+  '火': ['少', '丁', '土', '因', '頁']
+};
+
+// Character results (for display when merging)
+const CHARACTER_RESULTS = {
+  '氵可': '河',
+  '氵工': '江',
+  '氵羊': '洋',
+  '氵每': '海',
+  '氵胡': '湖',
+  '亻門': '們',
+  '亻呆': '保',
+  '亻也': '他',
+  '亻白': '伯',
+  '亻木': '休',
+  '口天': '吳',
+  '口鳥': '鳴',
+  '口今': '吟',
+  '口斤': '聽',
+  '口勿': '吻',
+  '木子': '李',
+  '木寸': '村',
+  '木兆': '桃',
+  '木白': '柏',
+  '木每': '梅',
+  '火少': '炒',
+  '火丁': '燈',
+  '火土': '灶',
+  '火因': '煙',
+  '火頁': '煩'
+};
+
+// Get all radicals for random selection
+const ALL_RADICALS = Object.keys(RADICAL_MAP);
+const ALL_PARTS = [...new Set(Object.values(RADICAL_MAP).flat())];
+
+// Physics constants
+const GRAVITY = 0.15;
+const FRICTION = 0.98;
+const RESTITUTION = 0.8; // Bounciness
+const BUBBLE_RADIUS = 25;
+const SHOOTER_SPEED = 12;
+class Vector2 {
+  constructor(x = 0, y = 0) {
+    this.x = x;
+    this.y = y;
+  }
+  add(other) {
+    return new Vector2(this.x + other.x, this.y + other.y);
+  }
+  subtract(other) {
+    return new Vector2(this.x - other.x, this.y - other.y);
+  }
+  multiply(scalar) {
+    return new Vector2(this.x * scalar, this.y * scalar);
+  }
+  dot(other) {
+    return this.x * other.x + this.y * other.y;
+  }
+  length() {
+    return Math.sqrt(this.x * this.x + this.y * this.y);
+  }
+  normalize() {
+    const len = this.length();
+    return len > 0 ? new Vector2(this.x / len, this.y / len) : new Vector2(0, 0);
+  }
+  distance(other) {
+    return this.subtract(other).length();
+  }
+}
+class Bubble {
+  constructor(x, y, radical, isPlayerBubble = false) {
+    this.pos = new Vector2(x, y);
+    this.vel = new Vector2(0, 0);
+    this.radius = BUBBLE_RADIUS;
+    this.radical = radical;
+    this.isPlayerBubble = isPlayerBubble;
+    this.active = true;
+    this.isMerging = false;
+    this.mergeAnimation = null;
+    this.alpha = 1;
+    this.rotation = 0; // Rotation angle in radians
+    this.rotationSpeed = isPlayerBubble ? (Math.random() - 0.5) * 0.3 : 0; // Random rotation speed for player bubbles
+  }
+  update() {
+    if (!this.active) return;
+
+    // Apply gravity (only to non-player bubbles)
+    if (!this.isPlayerBubble) {
+      this.vel.y += GRAVITY;
+    }
+
+    // Apply friction
+    this.vel = this.vel.multiply(FRICTION);
+
+    // Update position
+    this.pos = this.pos.add(this.vel);
+
+    // Update rotation for player bubbles
+    if (this.isPlayerBubble) {
+      this.rotation += this.rotationSpeed;
+    }
+
+    // Update merge animation
+    if (this.mergeAnimation) {
+      this.mergeAnimation.timer--;
+      this.alpha = this.mergeAnimation.timer / this.mergeAnimation.duration;
+      if (this.mergeAnimation.timer <= 0) {
+        this.active = false;
+      }
+    }
+  }
+  checkWallCollision(canvasWidth, canvasHeight) {
+    // Left and right walls
+    if (this.pos.x - this.radius <= 0) {
+      this.pos.x = this.radius;
+      this.vel.x *= -RESTITUTION;
+    } else if (this.pos.x + this.radius >= canvasWidth) {
+      this.pos.x = canvasWidth - this.radius;
+      this.vel.x *= -RESTITUTION;
+    }
+
+    // Top and bottom walls
+    if (this.pos.y - this.radius <= 0) {
+      this.pos.y = this.radius;
+      this.vel.y *= -RESTITUTION;
+    } else if (this.pos.y + this.radius >= canvasHeight) {
+      this.pos.y = canvasHeight - this.radius;
+      this.vel.y *= -RESTITUTION;
+    }
+  }
+  checkBubbleCollision(other) {
+    if (!this.active || !other.active || this.isMerging || other.isMerging) return false;
+    const dist = this.pos.distance(other.pos);
+    const minDist = this.radius + other.radius;
+    if (dist < minDist) {
+      // Collision detected - resolve elastic collision
+      const collisionNormal = this.pos.subtract(other.pos).normalize();
+      const relativeVelocity = this.vel.subtract(other.vel);
+      const velocityAlongNormal = relativeVelocity.dot(collisionNormal);
+
+      // Don't resolve if velocities are separating
+      if (velocityAlongNormal > 0) return false;
+
+      // Calculate impulse scalar
+      const impulseScalar = -(1 + RESTITUTION) * velocityAlongNormal;
+      const impulse = collisionNormal.multiply(impulseScalar);
+
+      // Apply impulse (assuming equal mass)
+      this.vel = this.vel.add(impulse.multiply(0.5));
+      other.vel = other.vel.subtract(impulse.multiply(0.5));
+
+      // Separate bubbles to prevent overlap
+      const overlap = minDist - dist;
+      const separation = collisionNormal.multiply(overlap * 0.5);
+      this.pos = this.pos.add(separation);
+      other.pos = other.pos.subtract(separation);
+      return true;
+    }
+    return false;
+  }
+  draw(ctx) {
+    if (!this.active) return;
+    ctx.save();
+    ctx.globalAlpha = this.alpha;
+
+    // Draw bubble with glossy effect
+    const gradient = ctx.createRadialGradient(this.pos.x - this.radius * 0.3, this.pos.y - this.radius * 0.3, 0, this.pos.x, this.pos.y, this.radius);
+    if (this.isPlayerBubble) {
+      gradient.addColorStop(0, '#ffd700');
+      gradient.addColorStop(0.5, '#ffed4e');
+      gradient.addColorStop(1, '#ffa500');
+    } else {
+      gradient.addColorStop(0, '#ffffff');
+      gradient.addColorStop(0.3, '#e3f2fd');
+      gradient.addColorStop(0.7, '#90caf9');
+      gradient.addColorStop(1, '#42a5f5');
+    }
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(this.pos.x, this.pos.y, this.radius, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw border
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Draw highlight
+    const highlightGradient = ctx.createRadialGradient(this.pos.x - this.radius * 0.4, this.pos.y - this.radius * 0.4, 0, this.pos.x - this.radius * 0.4, this.pos.y - this.radius * 0.4, this.radius * 0.6);
+    highlightGradient.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
+    highlightGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    ctx.fillStyle = highlightGradient;
+    ctx.fill();
+
+    // Apply rotation for player bubbles
+    if (this.isPlayerBubble && this.rotation !== 0) {
+      ctx.translate(this.pos.x, this.pos.y);
+      ctx.rotate(this.rotation);
+      ctx.translate(-this.pos.x, -this.pos.y);
+    }
+
+    // Draw radical text
+    ctx.fillStyle = '#333';
+    ctx.font = 'bold 24px "Microsoft JhengHei", "Microsoft YaHei", "SimHei", Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(this.radical, this.pos.x, this.pos.y);
+
+    // Draw merge animation character if merging
+    if (this.mergeAnimation) {
+      ctx.fillStyle = '#ff6b6b';
+      ctx.font = 'bold 32px "Microsoft JhengHei", "Microsoft YaHei", "SimHei", Arial';
+      ctx.fillText(this.mergeAnimation.character, this.pos.x, this.pos.y - 40);
+    }
+    ctx.restore();
+  }
+}
+function RadicalBubbleChemistry() {
+  const canvasRef = useRef(null);
+  const animationFrameRef = useRef(null);
+  const [score, setScore] = useState(0);
+  const [combo, setCombo] = useState(0);
+  const [nextRadical, setNextRadical] = useState(ALL_RADICALS[0]);
+  const nextRadicalRef = useRef(ALL_RADICALS[0]);
+  const [gameState, setGameState] = useState('ready'); // ready, playing, paused
+
+  const bubblesRef = useRef([]);
+  const shooterPosRef = useRef({
+    x: 0,
+    y: 0
+  });
+  const aimAngleRef = useRef(0);
+  const mousePosRef = useRef({
+    x: 0,
+    y: 0
+  });
+  const canShootRef = useRef(true);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    canvas.width = 800;
+    canvas.height = 600;
+
+    // Initialize shooter position
+    shooterPosRef.current = {
+      x: canvas.width / 2,
+      y: 50
+    };
+
+    // Initialize bubbles
+    initializeBubbles(canvas.width, canvas.height);
+
+    // Start game loop
+    const gameLoop = () => {
+      update(canvas.width, canvas.height);
+      draw(ctx, canvas.width, canvas.height);
+      animationFrameRef.current = requestAnimationFrame(gameLoop);
+    };
+    gameLoop();
+
+    // Mouse move handler
+    const handleMouseMove = e => {
+      const rect = canvas.getBoundingClientRect();
+      mousePosRef.current = {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      };
+    };
+
+    // Mouse click handler
+    const handleClick = e => {
+      if (!canShootRef.current || gameState !== 'playing') return;
+      shootBubble(canvas.width, canvas.height);
+    };
+    canvas.addEventListener('mousemove', handleMouseMove);
+    canvas.addEventListener('click', handleClick);
+    return () => {
+      cancelAnimationFrame(animationFrameRef.current);
+      canvas.removeEventListener('mousemove', handleMouseMove);
+      canvas.removeEventListener('click', handleClick);
+    };
+  }, [gameState]);
+  const initializeBubbles = (width, height) => {
+    bubblesRef.current = [];
+
+    // Create random bubbles in the field
+    for (let i = 0; i < 12; i++) {
+      const x = Math.random() * (width - 100) + 50;
+      const y = Math.random() * (height - 200) + 150;
+      const part = ALL_PARTS[Math.floor(Math.random() * ALL_PARTS.length)];
+      const bubble = new Bubble(x, y, part, false);
+
+      // Give them some initial random velocity
+      bubble.vel = new Vector2((Math.random() - 0.5) * 2, (Math.random() - 0.5) * 2);
+      bubblesRef.current.push(bubble);
+    }
+  };
+  const shootBubble = (width, height) => {
+    if (!canShootRef.current) return;
+    const shooter = shooterPosRef.current;
+    const angle = aimAngleRef.current;
+    const bubble = new Bubble(shooter.x, shooter.y, nextRadicalRef.current, true);
+    bubble.vel = new Vector2(Math.cos(angle) * SHOOTER_SPEED, Math.sin(angle) * SHOOTER_SPEED);
+    bubblesRef.current.push(bubble);
+    canShootRef.current = false;
+
+    // Set next radical
+    const newRadical = ALL_RADICALS[Math.floor(Math.random() * ALL_RADICALS.length)];
+    setNextRadical(newRadical);
+    nextRadicalRef.current = newRadical;
+
+    // Allow shooting again after a delay
+    setTimeout(() => {
+      canShootRef.current = true;
+    }, 500);
+  };
+  const checkMerges = () => {
+    const bubbles = bubblesRef.current;
+    for (let i = 0; i < bubbles.length; i++) {
+      const bubble = bubbles[i];
+      if (!bubble.active || !bubble.isPlayerBubble || bubble.isMerging) continue;
+      for (let j = 0; j < bubbles.length; j++) {
+        const other = bubbles[j];
+        if (i === j || !other.active || other.isPlayerBubble || other.isMerging) continue;
+        const dist = bubble.pos.distance(other.pos);
+        const minDist = bubble.radius + other.radius;
+
+        // Allow a small overlap buffer for easier merging
+        if (dist < minDist + 5) {
+          // Check if they can merge
+          const radical = bubble.radical;
+          const part = other.radical;
+          if (RADICAL_MAP[radical] && RADICAL_MAP[radical].includes(part)) {
+            // Merge!
+            const mergeKey = radical + part;
+            const character = CHARACTER_RESULTS[mergeKey] || '?';
+            bubble.isMerging = true;
+            other.active = false; // Immediately remove the part bubble
+
+            // Create merge animation
+            bubble.mergeAnimation = {
+              character: character,
+              timer: 30,
+              duration: 30
+            };
+
+            // Remove player bubble after animation
+            setTimeout(() => {
+              bubble.active = false;
+            }, 500);
+
+            // Update score
+            setScore(prev => prev + 100);
+            setCombo(prev => {
+              const newCombo = prev + 1;
+              if (newCombo > 0) {
+                setScore(prevScore => prevScore + newCombo * 10);
+              }
+              return newCombo;
+            });
+
+            // Reset combo after delay
+            setTimeout(() => {
+              setCombo(0);
+            }, 2000);
+            return; // Only merge once per frame
+          }
+        }
+      }
+    }
+  };
+  const update = (width, height) => {
+    if (gameState !== 'playing') return;
+    const bubbles = bubblesRef.current;
+
+    // Update aim angle
+    const dx = mousePosRef.current.x - shooterPosRef.current.x;
+    const dy = mousePosRef.current.y - shooterPosRef.current.y;
+    aimAngleRef.current = Math.atan2(dy, dx);
+
+    // Update all bubbles
+    bubbles.forEach(bubble => {
+      bubble.update();
+      bubble.checkWallCollision(width, height);
+    });
+
+    // Check for merges first!
+    checkMerges();
+
+    // Check bubble-to-bubble collisions
+    for (let i = 0; i < bubbles.length; i++) {
+      for (let j = i + 1; j < bubbles.length; j++) {
+        bubbles[i].checkBubbleCollision(bubbles[j]);
+      }
+    }
+
+    // Remove inactive bubbles
+    bubblesRef.current = bubbles.filter(b => b.active || b.mergeAnimation);
+  };
+  const draw = (ctx, width, height) => {
+    // Clear canvas
+    ctx.clearRect(0, 0, width, height);
+
+    // Draw background grid (subtle)
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+    ctx.lineWidth = 1;
+    for (let x = 0; x < width; x += 50) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, height);
+      ctx.stroke();
+    }
+    for (let y = 0; y < height; y += 50) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(width, y);
+      ctx.stroke();
+    }
+
+    // Draw shooter
+    const shooter = shooterPosRef.current;
+    const angle = aimAngleRef.current;
+
+    // Draw shooter base
+    ctx.fillStyle = '#333';
+    ctx.beginPath();
+    ctx.arc(shooter.x, shooter.y, 15, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw aim line
+    if (canShootRef.current && gameState === 'playing') {
+      ctx.strokeStyle = 'rgba(255, 215, 0, 0.5)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.moveTo(shooter.x, shooter.y);
+      ctx.lineTo(shooter.x + Math.cos(angle) * 100, shooter.y + Math.sin(angle) * 100);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // Draw next bubble preview
+    if (canShootRef.current && gameState === 'playing') {
+      const previewBubble = new Bubble(shooter.x, shooter.y, nextRadicalRef.current, true);
+      previewBubble.radius = BUBBLE_RADIUS * 0.7;
+      previewBubble.draw(ctx);
+    }
+
+    // Draw all bubbles
+    bubblesRef.current.forEach(bubble => {
+      bubble.draw(ctx);
+    });
+  };
+  const startGame = () => {
+    setGameState('playing');
+    setScore(0);
+    setCombo(0);
+    canShootRef.current = true;
+    const canvas = canvasRef.current;
+    if (canvas) {
+      initializeBubbles(canvas.width, canvas.height);
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "game-container"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "game-header"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "game-title"
+  }, "部首碰碰球"), /*#__PURE__*/React.createElement("div", {
+    className: "score-board"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "score-item"
+  }, "得分: ", score), /*#__PURE__*/React.createElement("div", {
+    className: "score-item"
+  }, "連擊: ", combo)), /*#__PURE__*/React.createElement("div", {
+    className: "instructions"
+  }, gameState === 'ready' && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("p", null, "點擊「開始遊戲」開始！"), /*#__PURE__*/React.createElement("p", null, "用滑鼠瞄準，點擊發射氣泡。合併相容的部首形成漢字！")), gameState === 'playing' && /*#__PURE__*/React.createElement("p", null, "移動滑鼠瞄準，點擊發射。合併部首得分！")), gameState === 'ready' && /*#__PURE__*/React.createElement("button", {
+    onClick: startGame,
+    style: {
+      padding: '10px 30px',
+      fontSize: '1.2em',
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      color: 'white',
+      border: 'none',
+      borderRadius: '10px',
+      cursor: 'pointer',
+      marginTop: '10px',
+      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.2)'
+    }
+  }, "開始遊戲"), gameState === 'playing' && /*#__PURE__*/React.createElement("div", {
+    className: "next-radical"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "next-radical-label"
+  }, "下一個部首:"), /*#__PURE__*/React.createElement("span", {
+    className: "next-radical-char"
+  }, nextRadical))), /*#__PURE__*/React.createElement("canvas", {
+    ref: canvasRef
+  }));
+}
+ReactDOM.render(/*#__PURE__*/React.createElement(RadicalBubbleChemistry, null), document.getElementById('root'));
+</script>
+    <footer
+        style="text-align: center; padding: 16px; color: #64748b; font-size: 12px; font-family: 'Microsoft JhengHei', 'Microsoft YaHei', sans-serif; background: rgba(255,255,255,0.8); margin-top: 20px;">
+        <p style="font-style: italic; margin-bottom: 4px;">
+            But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+            understanding. Jeremiah 10:12
+        </p>
+        <p style="font-size: 11px; margin-bottom: 4px; margin-top: 8px;">
+            「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p style="font-size: 11px; margin-top: 8px; padding-top: 8px; border-top: 1px solid #cbd5e1;">
+            @ 2025 Primary Chinese Learning Resources | Prepared by SF Lau
+        </p>
+    </footer>
+
+</body>
+
+</html>
+

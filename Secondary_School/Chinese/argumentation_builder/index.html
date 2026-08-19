@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>議論文積木 2.0 (Argument Tower)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: #e2e8f0;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(to bottom, #87ceeb 0%, #e0f2fe 100%);
+            overflow: hidden;
+        }
+
+        /* Crane */
+        #crane {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 10px;
+            height: 100px;
+            background: #333;
+            transition: left 0.5s;
+            z-index: 20;
+        }
+
+        #claw {
+            position: absolute;
+            bottom: -20px;
+            left: -15px;
+            width: 40px;
+            height: 20px;
+            border: 4px solid #333;
+            border-top: none;
+        }
+
+        /* Ground */
+        #ground {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 100px;
+            background: #475569;
+            z-index: 10;
+            border-top: 10px solid #334155;
+        }
+
+        /* Blocks */
+        .block {
+            position: absolute;
+            width: 300px;
+            height: 60px;
+            background: #fff;
+            border: 4px solid #000;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+            padding: 10px;
+            box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s;
+            cursor: pointer;
+            z-index: 5;
+            text-align: center;
+        }
+
+        .block.intro {
+            background: #fca5a5;
+            border-color: #991b1b;
+            color: #7f1d1d;
+        }
+
+        .block.point {
+            background: #fcd34d;
+            border-color: #92400e;
+            color: #78350f;
+        }
+
+        .block.evidence {
+            background: #86efac;
+            border-color: #166534;
+            color: #14532d;
+        }
+
+        .block.reasoning {
+            background: #93c5fd;
+            border-color: #1e40af;
+            color: #1e3a8a;
+        }
+
+        .block.conclusion {
+            background: #d8b4fe;
+            border-color: #6b21a8;
+            color: #581c87;
+        }
+
+        .block.falling {
+            transition: top 0.5s ease-in;
+        }
+
+        .block.placed {
+            transition: transform 0.2s;
+        }
+
+        /* UI */
+        .sidebar {
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 350px;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(5px);
+            padding: 20px;
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+            z-index: 30;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .block-pool {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            background: #f1f5f9;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .pool-item {
+            background: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border: 2px solid #cbd5e1;
+            cursor: grab;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .pool-item:hover {
+            transform: scale(1.02);
+            border-color: #94a3b8;
+        }
+
+        .pool-item:active {
+            cursor: grabbing;
+        }
+
+        .architect-bubble {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: white;
+            padding: 15px 25px;
+            border-radius: 20px;
+            border: 3px solid #000;
+            font-weight: bold;
+            max-width: 400px;
+            box-shadow: 5px 5px 0 #000;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            z-index: 40;
+            transform: translateY(150%);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .architect-bubble.show {
+            transform: translateY(0);
+        }
+
+        .architect-face {
+            font-size: 3rem;
+            background: #fbbf24;
+            border-radius: 50%;
+            padding: 5px;
+            border: 3px solid #000;
+        }
+
+        /* Effects */
+        .dust {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #cbd5e1;
+            border-radius: 50%;
+            animation: dust 0.5s ease-out forwards;
+        }
+
+        @keyframes dust {
+            0% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+
+            100% {
+                transform: translate(var(--tx), -20px) scale(2);
+                opacity: 0;
+            }
+        }
+
+        .win-screen {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            color: white;
+        }
+
+        .level-badge {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: #fff;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 900;
+            box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.1);
+            z-index: 25;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="game-container">
+        <div class="level-badge">LEVEL <span id="level-display">1</span></div>
+
+        <!-- The Crane -->
+        <div id="crane">
+            <div id="claw"></div>
+        </div>
+
+        <!-- Using a container for building physics visuals -->
+        <div id="building-site"
+            class="absolute bottom-[100px] left-1/2 transform -translate-x-1/2 w-[400px] h-[600px] flex flex-col-reverse items-center justify-start">
+            <!-- Blocks will be appended here -->
+        </div>
+
+        <!-- Ground -->
+        <div id="ground"></div>
+
+        <!-- UI -->
+        <div class="sidebar">
+            <h2 class="text-2xl font-black mb-4 text-slate-700">建材倉庫</h2>
+            <div class="text-sm text-slate-500 mb-2">點擊選擇積木進行吊運堆疊</div>
+            <div id="block-pool" class="block-pool">
+                <!-- Pool Items -->
+            </div>
+            <div class="bg-white p-4 rounded-xl border-2 border-slate-200">
+                <div class="text-xs font-bold text-slate-400 mb-1">穩定度 (STABILITY)</div>
+                <div class="w-full h-4 bg-slate-200 rounded-full overflow-hidden">
+                    <div id="stability-bar" class="w-full h-full bg-green-500 transition-all"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Architect Feedback -->
+        <div id="architect" class="architect-bubble">
+            <div class="architect-face">👷‍♂️</div>
+            <div id="architect-msg">工程開始！請按邏輯順序堆疊「議論文大廈」。</div>
+        </div>
+
+        <!-- Win Screen -->
+        <div id="win-screen" class="win-screen">
+            <div class="text-6xl mb-4">🏗️ 驗收合格！</div>
+            <div class="text-2xl mb-8">結構穩固，邏輯清晰！</div>
+            <button onclick="nextLevel()"
+                class="bg-yellow-400 text-black px-8 py-4 rounded-xl font-bold text-2xl hover:scale-105 transition-transform">下一層樓</button>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * ARGUMENTATION BUILDER 2.0 (Tower Construction)
+         */
+
+        const LEVELS = [
+            {
+                title: "閱讀的好處",
+                blocks: [
+                    { id: 1, type: "intro", text: "引言：閱讀是不可或缺的能力，好處多不勝數。" },
+                    { id: 2, type: "point", text: "論點一：閱讀能增進知識，擴闊視野。" },
+                    { id: 3, type: "evidence", text: "論據：透過書籍可學習歷史、科學等各方面知識。" },
+                    { id: 4, type: "reasoning", text: "論證：知識就是力量，多閱讀能讓人見識廣博。" },
+                    { id: 5, type: "point", text: "論點二：閱讀能提升語文能力。" },
+                    { id: 6, type: "conclusion", text: "結語：我們應養成良好的閱讀習慣。" }
+                ],
+                solution: [1, 2, 3, 4, 5, 6]
+            },
+            {
+                title: "手機的利弊",
+                blocks: [
+                    { id: 1, type: "intro", text: "引言：智能手機已成為生活必需品，但利弊並存。" },
+                    { id: 2, type: "point", text: "優點：帶來生活便利與通訊效率。" },
+                    { id: 3, type: "evidence", text: "例子：隨時查閱資料、使用地圖導航。" },
+                    { id: 4, type: "point", text: "缺點：過度依賴會影響健康與社交。" },
+                    { id: 5, type: "evidence", text: "例子：聚餐時只顧滑手機，忽略身邊人。" },
+                    { id: 6, type: "conclusion", text: "總結：應適度使用，做手機的主人。" }
+                ],
+                solution: [1, 2, 3, 4, 5, 6]
+            },
+            // Level 3
+            {
+                title: "穿著校服",
+                blocks: [
+                    { id: 1, type: "intro", text: "引言：學校規定學生穿著校服，這項政策值得支持。" },
+                    { id: 2, type: "point", text: "論點：穿著校服能培養團隊精神和歸屬感。" },
+                    { id: 3, type: "evidence", text: "論據：整齊劃一的服裝讓學生感到自己是群體的一份子。" },
+                    { id: 4, type: "reasoning", text: "論證：這種心理認同有助於建立良好的校園風氣。" },
+                    { id: 5, type: "point", text: "論點：校服能減少學生之間的攀比心態。" },
+                    { id: 6, type: "conclusion", text: "結語：穿校服利多於弊，應予以保留。" }
+                ],
+                solution: [1, 2, 3, 4, 5, 6]
+            },
+            // Level 4
+            {
+                title: "做家務的益處",
+                blocks: [
+                    { id: 1, type: "intro", text: "引言：讓小孩子分擔家務，對其成長大有裨益。" },
+                    { id: 2, type: "point", text: "論點：做家務能培養責任感和自理能力。" },
+                    { id: 3, type: "evidence", text: "論據：例如整理房間、洗碗等工作需要耐心完成。" },
+                    { id: 4, type: "reasoning", text: "論證：從小習慣照顧自己，長大後更能獨立生活。" },
+                    { id: 5, type: "point", text: "論點：共同分擔家務能促進家庭和諧。" },
+                    { id: 6, type: "conclusion", text: "結語：家長應鼓勵子女參與家務勞動。" }
+                ],
+                solution: [1, 2, 3, 4, 5, 6]
+            },
+            // Level 5
+            {
+                title: "環保生活",
+                blocks: [
+                    { id: 1, type: "intro", text: "引言：地球資源有限，實踐環保生活刻不容緩。" },
+                    { id: 2, type: "point", text: "論點：減少使用即棄塑膠能減輕對環境的破壞。" },
+                    { id: 3, type: "evidence", text: "例子：自備水樽和購物袋，減少製造垃圾。" },
+                    { id: 4, type: "reasoning", text: "論證：源頭減廢是最有效的環保手段。" },
+                    { id: 5, type: "point", text: "論點：節約能源能減緩全球暖化。" },
+                    { id: 6, type: "conclusion", text: "結語：環保應從日常生活的小事做起。" }
+                ],
+                solution: [1, 2, 3, 4, 5, 6]
+            },
+            // Level 6
+            {
+                title: "運動的重要性",
+                blocks: [
+                    { id: 1, type: "intro", text: "引言：強健的體魄是成功的基石，運動至關重要。" },
+                    { id: 2, type: "point", text: "論點：恆常運動能增強心肺功能，預防疾病。" },
+                    { id: 3, type: "evidence", text: "數據：研究顯示每週運動三次的人患病率較低。" },
+                    { id: 4, type: "reasoning", text: "論證：身體健康才能有精力應付學業和工作。" },
+                    { id: 5, type: "point", text: "論點：運動能幫助釋放壓力，保持心理健康。" },
+                    { id: 6, type: "conclusion", text: "結語：我們應在此忙碌的生活中抽空運動。" }
+                ],
+                solution: [1, 2, 3, 4, 5, 6]
+            },
+            // Level 7
+            {
+                title: "學業與興趣",
+                blocks: [
+                    { id: 1, type: "intro", text: "引言：許多學生如果在學業和興趣之間掙扎，其實兩者可並存。" },
+                    { id: 2, type: "point", text: "論點：發展興趣能調劑身心，反而有助學業。" },
+                    { id: 3, type: "evidence", text: "例子：愛因斯坦熱愛小提琴，這啟發了他的科學思考。" },
+                    { id: 4, type: "reasoning", text: "論證：適當的放鬆能提高學習效率。" },
+                    { id: 5, type: "point", text: "論點：興趣能培養專注力和堅毅精神。" },
+                    { id: 6, type: "conclusion", text: "結語：只要分配得宜，學業與興趣可以雙贏。" }
+                ],
+                solution: [1, 2, 3, 4, 5, 6]
+            },
+            // Level 8
+            {
+                title: "誠信的重要",
+                blocks: [
+                    { id: 1, type: "intro", text: "引言：誠信是立身處世之本，比金錢更珍貴。" },
+                    { id: 2, type: "point", text: "論點：誠實的人能贏得他人的信任和尊重。" },
+                    { id: 3, type: "evidence", text: "故事：曾子殺豬教子的故事展現了守信的價值。" },
+                    { id: 4, type: "reasoning", text: "論證：失去誠信，就如同大廈失去地基，無法立足。" },
+                    { id: 5, type: "point", text: "論點：社會運作需要建立在互信的基礎之上。" },
+                    { id: 6, type: "conclusion", text: "結語：我們必須時刻堅守誠信原則。" }
+                ],
+                solution: [1, 2, 3, 4, 5, 6]
+            },
+            // Level 9
+            {
+                title: "網絡欺凌",
+                blocks: [
+                    { id: 1, type: "intro", text: "引言：互聯網普及帶來了便利，也衍生了網絡欺凌問題。" },
+                    { id: 2, type: "point", text: "論點：網絡語言暴力對受害者造成嚴重的心理傷害。" },
+                    { id: 3, type: "evidence", text: "新聞：不少年輕人因受網絡攻擊而患上抑鬱症。" },
+                    { id: 4, type: "reasoning", text: "論證：躲在螢幕後的惡意攻擊比肢體暴力更難防範。" },
+                    { id: 5, type: "point", text: "論點：我們要學會負責任地使用社交網絡。" },
+                    { id: 6, type: "conclusion", text: "結語：杜絕網絡欺凌，共建友善網上環境。" }
+                ],
+                solution: [1, 2, 3, 4, 5, 6]
+            },
+            // Level 10
+            {
+                title: "尊重他人",
+                blocks: [
+                    { id: 1, type: "intro", text: "引言：尊重是人與人相處的潤滑劑。" },
+                    { id: 2, type: "point", text: "論點：懂得尊重他人，才能獲得他人的尊重。" },
+                    { id: 3, type: "evidence", text: "名言：敬人者人恆敬之。" },
+                    { id: 4, type: "reasoning", text: "論證：尊重意味著接納不同的意見和包容差異。" },
+                    { id: 5, type: "point", text: "論點：互相尊重的社會能減少衝突和紛爭。" },
+                    { id: 6, type: "conclusion", text: "結語：讓我們從禮貌待人開始學習尊重。" }
+                ],
+                solution: [1, 2, 3, 4, 5, 6]
+            },
+            // Level 11
+            {
+                title: "挫折的意義",
+                blocks: [
+                    { id: 1, type: "intro", text: "引言：人生不如意事十常八九，關鍵在於如何面對。" },
+                    { id: 2, type: "point", text: "論點：挫折是成長的養分，能磨練意志。" },
+                    { id: 3, type: "evidence", text: "例子：愛迪生發明電燈前經歷了無數次失敗。" },
+                    { id: 4, type: "reasoning", text: "論證：失敗為成功之母，從錯誤中學習比順境更多。" },
+                    { id: 5, type: "point", text: "論點：戰勝挫折能帶來巨大的成就感和自信。" },
+                    { id: 6, type: "conclusion", text: "結語：勇於面對挫折，便能邁向成功。" }
+                ],
+                solution: [1, 2, 3, 4, 5, 6]
+            },
+            // Level 12
+            {
+                title: "合作的力量",
+                blocks: [
+                    { id: 1, type: "intro", text: "引言：俗語說「團結就是力量」，合作在現代社會尤為重要。" },
+                    { id: 2, type: "point", text: "論點：團隊合作能集思廣益，解決複雜問題。" },
+                    { id: 3, type: "evidence", text: "例子：許多偉大的科研成果都是團隊共同努力的結晶。" },
+                    { id: 4, type: "reasoning", text: "論證：三個臭皮匠，勝過一個諸葛亮。" },
+                    { id: 5, type: "point", text: "論點：分工合作能提高工作效率。" },
+                    { id: 6, type: "conclusion", text: "結語：學會與人合作，能創造更大的價值。" }
+                ],
+                solution: [1, 2, 3, 4, 5, 6]
+            },
+            // Level 13
+            {
+                title: "節約用水",
+                blocks: [
+                    { id: 1, type: "intro", text: "引言：水是生命之源，但並非取之不盡。" },
+                    { id: 2, type: "point", text: "論點：珍惜水資源是每個地球公民的責任。" },
+                    { id: 3, type: "evidence", text: "現象：全球許多地區正面臨嚴重的缺水危機。" },
+                    { id: 4, type: "reasoning", text: "論證：如果現在不節約，將來可能無水可用。" },
+                    { id: 5, type: "point", text: "論點：節約用水能減少能源消耗和碳排放。" },
+                    { id: 6, type: "conclusion", text: "結語：請從縮短淋浴時間等小事做起。" }
+                ],
+                solution: [1, 2, 3, 4, 5, 6]
+            },
+            // Level 14
+            {
+                title: "準時的習慣",
+                blocks: [
+                    { id: 1, type: "intro", text: "引言：守時是一種美德，也反映了一個人的素養。" },
+                    { id: 2, type: "point", text: "論點：準時是對他人時間的尊重。" },
+                    { id: 3, type: "evidence", text: "例子：遲到會令會議延誤，浪費大家的時間。" },
+                    { id: 4, type: "reasoning", text: "論證：守信守時能建立良好的個人信譽。" },
+                    { id: 5, type: "point", text: "論點：養成準時習慣有助於規劃生活，提高效率。" },
+                    { id: 6, type: "conclusion", text: "結語：做個守時的人，利人又利己。" }
+                ],
+                solution: [1, 2, 3, 4, 5, 6]
+            },
+            // Level 15
+            {
+                title: "健康飲食",
+                blocks: [
+                    { id: 1, type: "intro", text: "引言：民以食為天，飲食健康直接影響生活質素。" },
+                    { id: 2, type: "point", text: "論點：均衡飲食能提供身體所需的營養。" },
+                    { id: 3, type: "evidence", text: "指引：按照食物金字塔進食，多菜少肉。" },
+                    { id: 4, type: "reasoning", text: "論證：營養失衡會導致肥胖或免疫力下降。" },
+                    { id: 5, type: "point", text: "論點：減少攝取糖分和鹽分能預防慢性病。" },
+                    { id: 6, type: "conclusion", text: "結語：建立健康飲食習慣，是對自己身體負責。" }
+                ],
+                solution: [1, 2, 3, 4, 5, 6]
+            },
+            // Level 16
+            {
+                title: "科技的兩面",
+                blocks: [
+                    { id: 1, type: "intro", text: "引言：科技日新月異，徹底改變了人類的生活模式。" },
+                    { id: 2, type: "point", text: "優點：科技提高了生產力和生活品質。" },
+                    { id: 3, type: "evidence", text: "例子：互聯網縮短了人與人的距離，醫療科技延長壽命。" },
+                    { id: 4, type: "point", text: "隱憂：科技發展也帶來了私隱和倫理問題。" },
+                    { id: 5, type: "evidence", text: "例子：人工智能可能會取代部分人類的工作。" },
+                    { id: 6, type: "conclusion", text: "總結：我們應善用科技，同時警惕其潛在風險。" }
+                ],
+                solution: [1, 2, 3, 4, 5, 6]
+            },
+            // Level 17
+            {
+                title: "義工服務",
+                blocks: [
+                    { id: 1, type: "intro", text: "引言：參與義工服務是回饋社會的最佳方式。" },
+                    { id: 2, type: "point", text: "論點：做義工能幫助弱勢社群，傳遞愛心。" },
+                    { id: 3, type: "evidence", text: "例子：探訪獨居長者，為他們帶來溫暖。" },
+                    { id: 4, type: "reasoning", text: "論證：助人為快樂之本，施比受更有福。" },
+                    { id: 5, type: "point", text: "論點：參與義工能擴闊視野，認識不同階層的人。" },
+                    { id: 6, type: "conclusion", text: "結語：鼓勵大家投身義工行列，共建關愛社會。" }
+                ],
+                solution: [1, 2, 3, 4, 5, 6]
+            },
+            // Level 18
+            {
+                title: "理想與現實",
+                blocks: [
+                    { id: 1, type: "intro", text: "引言：每個人都有理想，但現實往往充滿挑戰。" },
+                    { id: 2, type: "point", text: "論點：堅持理想能賦予生活目標和動力。" },
+                    { id: 3, type: "evidence", text: "例子：許多運動員克服傷患，最終站在頒獎台上。" },
+                    { id: 4, type: "point", text: "論點：面對現實則需要腳踏實地的努力。" },
+                    { id: 5, type: "reasoning", text: "論證：空有理想而不行動，只會淪為空想。" },
+                    { id: 6, type: "conclusion", text: "結語：在仰望星空的同時，也要腳踏實地。" }
+                ],
+                solution: [1, 2, 3, 4, 5, 6]
+            },
+            // Level 19
+            {
+                title: "傳統節日",
+                blocks: [
+                    { id: 1, type: "intro", text: "引言：傳統節日承載著豐富的文化內涵。" },
+                    { id: 2, type: "point", text: "論點：節日慶祝活動能凝聚家庭和社區。" },
+                    { id: 3, type: "evidence", text: "例子：中秋節一家團圓賞月，增進親情。" },
+                    { id: 4, type: "reasoning", text: "論證：這些儀式感讓現代人不要忘記根源。" },
+                    { id: 5, type: "point", text: "論點：傳統節日是文化傳承的重要載體。" },
+                    { id: 6, type: "conclusion", text: "結語：我們應重視並傳承優秀的節日文化。" }
+                ],
+                solution: [1, 2, 3, 4, 5, 6]
+            },
+            // Level 20
+            {
+                title: "終身學習",
+                blocks: [
+                    { id: 1, type: "intro", text: "引言：在這知識爆炸的時代，學習不應止於校園。" },
+                    { id: 2, type: "point", text: "論點：終身學習能讓我們適應快速變化的社會。" },
+                    { id: 3, type: "evidence", text: "現象：許多新興行業需要不斷學習新技能才能勝任。" },
+                    { id: 4, type: "reasoning", text: "論證：學無止境，持續進修能提升個人競爭力。" },
+                    { id: 5, type: "point", text: "論點：學習新事物能豐富精神生活，保持年輕心態。" },
+                    { id: 6, type: "conclusion", text: "結語：活到老，學到老，讓生命不斷增值。" }
+                ],
+                solution: [1, 2, 3, 4, 5, 6]
+            }
+        ];
+
+        let state = {
+            levelIdx: 0,
+            placedBlocks: [],
+            stability: 100,
+            isAnimating: false
+        };
+
+        function init() {
+            loadLevel(state.levelIdx);
+            showArchitect("歡迎來到邏輯工地！請依序建立地基(引言)、支柱(論點)和屋頂(結論)。", 3000);
+        }
+
+        function loadLevel(idx) {
+            if (idx >= LEVELS.length) {
+                alert("全數通關！你是邏輯建築大師！");
+                location.reload();
+                return;
+            }
+
+            state.placedBlocks = [];
+            state.stability = 100;
+            updateStability(0);
+
+            const level = LEVELS[idx];
+            document.getElementById('level-display').textContent = idx + 1;
+            document.getElementById('building-site').innerHTML = ''; // Clear site
+
+            // Shuffle pool
+            const pool = document.getElementById('block-pool');
+            pool.innerHTML = '';
+            const shuffled = [...level.blocks].sort(() => Math.random() - 0.5);
+
+            shuffled.forEach(b => {
+                const item = document.createElement('div');
+                item.className = `pool-item border-l-4`;
+                if (b.type === 'intro') item.classList.add('border-red-500');
+                if (b.type === 'point') item.classList.add('border-yellow-500');
+                if (b.type === 'evidence') item.classList.add('border-green-500');
+                if (b.type === 'reasoning') item.classList.add('border-blue-500');
+                if (b.type === 'conclusion') item.classList.add('border-purple-500');
+
+                item.textContent = b.text;
+                item.onclick = () => spawnBlock(b, item);
+                pool.appendChild(item);
+            });
+
+            document.getElementById('win-screen').style.display = 'none';
+        }
+
+        function spawnBlock(blockData, uiItem) {
+            if (state.isAnimating) return;
+            state.isAnimating = true;
+
+            // Create visual block at crane
+            const block = document.createElement('div');
+            block.className = `block ${blockData.type}`;
+            block.textContent = blockData.text;
+            block.style.top = '100px'; // Crane height
+            block.style.left = '50%';
+            block.style.transform = 'translate(-50%, 0)';
+            document.getElementById('game-container').appendChild(block);
+
+            // Animate Drop
+            // Calculate target Y position (bottom up)
+            const buildingSite = document.getElementById('building-site');
+            const existing = buildingSite.children.length;
+            // Each block 60px height + margin. Site is flex-reverse.
+            // Actually we can just append to site and animate 'falling' by CSS or JS.
+
+            // Let's emulate a drop physics simply
+            // Move block to site coordinates
+            const startY = 100;
+            const endY = window.innerHeight - 100 - (existing * 70) - 60;
+
+            // Animate falling
+            let currentY = startY;
+            const dropInterval = setInterval(() => {
+                currentY += 15; // Speed
+                block.style.top = currentY + 'px';
+
+                if (currentY >= endY) {
+                    clearInterval(dropInterval);
+                    landBlock(block, blockData, uiItem);
+                }
+            }, 16);
+        }
+
+        function landBlock(blockEl, blockData, uiItem) {
+            // 1. Remove from pool visually
+            uiItem.style.opacity = '0.5';
+            uiItem.style.pointerEvents = 'none';
+
+            // 2. Add to stack logic
+            state.placedBlocks.push(blockData.id);
+
+            // 3. Move element to container for auto-layout stability
+            blockEl.remove(); // Remove moving one
+
+            const staticBlock = document.createElement('div');
+            staticBlock.className = `block ${blockData.type} placed`;
+            staticBlock.textContent = blockData.text;
+            staticBlock.style.position = 'relative'; // Flex layout
+            staticBlock.style.top = 'auto';
+            staticBlock.style.left = 'auto';
+            staticBlock.style.transform = 'none';
+            staticBlock.style.width = '100%';
+            staticBlock.style.marginBottom = '10px';
+
+            document.getElementById('building-site').appendChild(staticBlock); // Adds to bottom because flex-col-reverse
+
+            spawnDust();
+            checkStability(staticBlock);
+
+            state.isAnimating = false;
+        }
+
+        function checkStability(blockEl) {
+            const level = LEVELS[state.levelIdx];
+            const currentIdx = state.placedBlocks.length - 1;
+            const correctId = level.solution[currentIdx];
+
+            if (state.placedBlocks[currentIdx] !== correctId) {
+                // WRONG BLOCK
+                state.stability -= 30; // Big penalty
+                updateStability();
+
+                // Visual wobble
+                blockEl.style.transform = `rotate(${Math.random() * 10 - 5}deg) translateX(${Math.random() * 20 - 10}px)`;
+                showArchitect("小心！這塊積木邏輯不對，大樓快倒了！", 2000);
+
+                if (state.stability <= 0) {
+                    collapseTower();
+                }
+            } else {
+                // CORRECT
+                showArchitect("結構穩固！", 1000);
+                blockEl.style.transform = 'none'; // Perfect fit
+
+                if (state.placedBlocks.length === level.solution.length) {
+                    setTimeout(() => {
+                        document.getElementById('win-screen').style.display = 'flex';
+                    }, 500);
+                }
+            }
+        }
+
+        function updateStability() {
+            const bar = document.getElementById('stability-bar');
+            bar.style.width = Math.max(0, state.stability) + '%';
+            if (state.stability < 40) bar.classList.replace('bg-green-500', 'bg-red-500');
+            else bar.classList.replace('bg-red-500', 'bg-green-500');
+        }
+
+        function collapseTower() {
+            const site = document.getElementById('building-site');
+            Array.from(site.children).forEach((child, i) => {
+                child.style.transition = 'all 1s';
+                child.style.transform = `rotate(${Math.random() * 90 - 45}deg) translate(${Math.random() * 200 - 100}px, 500px)`;
+                child.style.opacity = '0';
+            });
+
+            showArchitect("大樓倒塌了！邏輯結構必須嚴謹！即將重試...", 3000);
+            setTimeout(() => {
+                loadLevel(state.levelIdx);
+            }, 3000);
+        }
+
+        function spawnDust() {
+            // Simple particle effect
+            /* In full implementation this spawns dust divs at the block base */
+        }
+
+        function showArchitect(msg, duration) {
+            const bubble = document.getElementById('architect');
+            const txt = document.getElementById('architect-msg');
+            txt.textContent = msg;
+            bubble.classList.add('show');
+            if (duration) setTimeout(() => bubble.classList.remove('show'), duration);
+        }
+
+        function nextLevel() {
+            state.levelIdx++;
+            loadLevel(state.levelIdx);
+        }
+
+        init();
+
+    </script>
+
+</body>
+
+</html>
+

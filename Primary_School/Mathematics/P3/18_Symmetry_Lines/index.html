@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>小三數學：對稱線 | Symmetry Lines</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #f0fdf4 0%, #86efac 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState
+} = React;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Symmetry Lines",
+    zh: "對稱線",
+    ja: "対称線",
+    ko: "대칭선",
+    es: "Líneas de simetría",
+    de: "Symmetrieachsen",
+    fi: "Symmetria-akselit",
+    fr: "Axes de symétrie",
+    ar: "خطوط التماثل",
+    it: "Assi di simmetria"
+  },
+  lineCount: {
+    en: "Lines of Symmetry: {n}",
+    zh: "對稱線數量：{n}",
+    ja: "対称線の数: {n}",
+    ko: "대칭선의 수: {n}",
+    es: "Líneas de simetría: {n}",
+    de: "Anzahl der Symmetrieachsen: {n}",
+    fi: "Symmetria-akselien määrä: {n}",
+    fr: "Nombre d'axes de symétrie : {n}",
+    ar: "عدد خطوط التماثل: {n}",
+    it: "Numero di assi di simmetria: {n}"
+  },
+  infinite: {
+    en: "Infinite",
+    zh: "無限",
+    ja: "無限",
+    ko: "무한",
+    es: "Infinito",
+    de: "Unendlich",
+    fi: "Ääretön",
+    fr: "Infini",
+    ar: "لا نهائي",
+    it: "Infinito"
+  },
+  meaningTitle: {
+    en: "Meaning of Symmetry",
+    zh: "對稱的意思",
+    ja: "対称の意味",
+    ko: "대칭의 의미",
+    es: "Significado de la simetría",
+    de: "Bedeutung von Symmetrie",
+    fi: "Symmetrian merkitys",
+    fr: "Signification de la symétrie",
+    ar: "معنى التماثل",
+    it: "Significato della simmetria"
+  },
+  meaningText: {
+    en: "When folded along the line of symmetry, both sides overlap perfectly.",
+    zh: "沿著對稱線摺疊後，兩邊完全重疊",
+    ja: "対称線に沿って折ると、両側が完全に重なります。",
+    ko: "대칭선을 따라 접으면 양쪽이 완전히 겹칩니다.",
+    es: "Al doblar a lo largo de la línea de simetría, ambos lados se superponen perfectamente.",
+    de: "Wenn man entlang der Symmetrieachse faltet, überlappen sich beide Seiten perfekt.",
+    fi: "Kun taitetaan symmetria-akselia pitkin, molemmat puolet menevät täysin päällekkäin.",
+    fr: "Une fois plié le long de l'axe de symétrie, les deux côtés se chevauchent parfaitement.",
+    ar: "عند الطي على طول خط التماثل، يتطابق الجانبان تمامًا.",
+    it: "Quando piegato lungo l'asse di simmetria, entrambi i lati si sovrappongono perfettamente."
+  },
+  shapes: {
+    square: {
+      en: "Square",
+      zh: "正方形",
+      ja: "正方形",
+      ko: "정사각형",
+      es: "Cuadrado",
+      de: "Quadrat",
+      fi: "Neliö",
+      fr: "Carré",
+      ar: "مربع",
+      it: "Quadrato"
+    },
+    circle: {
+      en: "Circle",
+      zh: "圓形",
+      ja: "円",
+      ko: "원",
+      es: "Círculo",
+      de: "Kreis",
+      fi: "Ympyrä",
+      fr: "Cercle",
+      ar: "دائرة",
+      it: "Cerchio"
+    },
+    triangle: {
+      en: "Triangle",
+      zh: "三角形",
+      ja: "三角形",
+      ko: "삼각형",
+      es: "Triángulo",
+      de: "Dreieck",
+      fi: "Kolmio",
+      fr: "Triangle",
+      ar: "مثلث",
+      it: "Triangolo"
+    },
+    heart: {
+      en: "Heart",
+      zh: "心形",
+      ja: "ハート",
+      ko: "하트",
+      es: "Corazón",
+      de: "Herz",
+      fi: "Sydän",
+      fr: "Cœur",
+      ar: "قلب",
+      it: "Cuore"
+    },
+    letterA: {
+      en: "Letter A",
+      zh: "字母A",
+      ja: "文字A",
+      ko: "문자 A",
+      es: "Letra A",
+      de: "Buchstabe A",
+      fi: "Kirjain A",
+      fr: "Lettre A",
+      ar: "الحرف A",
+      it: "Lettera A"
+    }
+  }
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const shapes = [{
+    key: "square",
+    lines: 4,
+    emoji: "⬜"
+  }, {
+    key: "circle",
+    lines: "infinite",
+    emoji: "🔵"
+  }, {
+    key: "triangle",
+    lines: 3,
+    emoji: "🔺"
+  }, {
+    key: "heart",
+    lines: 1,
+    emoji: "❤️"
+  }, {
+    key: "letterA",
+    lines: 1,
+    emoji: "A"
+  }];
+  const [current, setCurrent] = useState(0);
+  const s = shapes[current];
+  const getShapeName = key => t.shapes[key][lang] || t.shapes[key]["en"];
+  const getLineCountText = () => {
+    let text = t.lineCount[lang] || t.lineCount["en"];
+    let count = s.lines === "infinite" ? t.infinite[lang] || t.infinite["en"] : s.lines;
+    return text.replace("{n}", count);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-8 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-6xl font-black text-green-900 mb-8 mt-8 text-center"
+  }, "🪞 ", t.title[lang] || t.title["en"]), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/90 backdrop-blur-md rounded-3xl p-8 shadow-2xl max-w-5xl w-full"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 md:grid-cols-5 gap-4 mb-8"
+  }, shapes.map((sh, i) => /*#__PURE__*/React.createElement("button", {
+    key: i,
+    onClick: () => setCurrent(i),
+    className: `py-4 rounded-xl font-bold transition-all ${current === i ? "bg-green-500 text-white scale-105" : "bg-green-100 hover:bg-green-200"}`
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl mb-2"
+  }, sh.emoji), /*#__PURE__*/React.createElement("div", {
+    className: "text-sm"
+  }, getShapeName(sh.key))))), /*#__PURE__*/React.createElement("div", {
+    className: "text-center mb-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-8xl mb-6"
+  }, s.emoji), /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black text-green-600"
+  }, getLineCountText())), /*#__PURE__*/React.createElement("div", {
+    className: "bg-green-50 p-6 rounded-xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "font-bold text-green-800 text-lg mb-2"
+  }, "💡 ", t.meaningTitle[lang] || t.meaningTitle["en"]), /*#__PURE__*/React.createElement("div", {
+    className: "text-green-700"
+  }, t.meaningText[lang] || t.meaningText["en"]))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

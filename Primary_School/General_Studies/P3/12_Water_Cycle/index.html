@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小三常識：水循環 | Water Cycle</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(180deg, #bae6fd 0%, #3b82f6 100%);
+        overflow: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "The Water Cycle",
+    zh: "水循環",
+    ja: "水の循環",
+    ko: "물의 순환",
+    es: "El Ciclo del Agua",
+    de: "Der Wasserkreislauf",
+    fi: "Veden kiertokulku",
+    fr: "Le cycle de l'eau",
+    ar: "دورة المياه",
+    it: "Il Ciclo dell'Acqua"
+  },
+  instruction: {
+    en: "Drag the labels to the right spot!",
+    zh: "將標籤拖放到正確位置！",
+    ja: "ラベルを正しい場所にドラッグしてください！",
+    ko: "라벨을 올바른 위치로 드래그하세요!",
+    es: "¡Arrastra las etiquetas al lugar correcto!",
+    de: "Ziehe die Etiketten an die richtige Stelle!",
+    fi: "Vedä etiketit oikeaan paikkaan!",
+    fr: "Faites glisser les étiquettes au bon endroit !",
+    ar: "اسحب الملصقات إلى المكان الصحيح!",
+    it: "Trascina le etichette nel posto giusto!"
+  },
+  sun: {
+    en: "Sun",
+    zh: "太陽",
+    ja: "太陽",
+    ko: "태양",
+    es: "Sol",
+    de: "Sonne",
+    fi: "Aurinko",
+    fr: "Soleil",
+    ar: "شمس",
+    it: "Sole"
+  },
+  evaporation: {
+    en: "Evaporation",
+    zh: "蒸發",
+    ja: "蒸発",
+    ko: "증발",
+    es: "Evaporación",
+    de: "Verdunstung",
+    fi: "Haihtuminen",
+    fr: "Évaporation",
+    ar: "تبخر",
+    it: "Evaporazione"
+  },
+  condensation: {
+    en: "Condensation",
+    zh: "凝結",
+    ja: "凝縮",
+    ko: "응결",
+    es: "Condensación",
+    de: "Kondensation",
+    fi: "Tiivistyminen",
+    fr: "Condensation",
+    ar: "تكثيف",
+    it: "Condensazione"
+  },
+  cloud: {
+    en: "Cloud",
+    zh: "雲",
+    ja: "雲",
+    ko: "구름",
+    es: "Nube",
+    de: "Wolke",
+    fi: "Pilvi",
+    fr: "Nuage",
+    ar: "سحابة",
+    it: "Nuvola"
+  },
+  rain: {
+    en: "Precipitation",
+    zh: "降雨",
+    ja: "降水",
+    ko: "강수",
+    es: "Precipitación",
+    de: "Niederschlag",
+    fi: "Sade",
+    fr: "Précipitations",
+    ar: "هطول",
+    it: "Precipitazione"
+  },
+  river: {
+    en: "Collection",
+    zh: "河流/海洋",
+    ja: "集水",
+    ko: "수집",
+    es: "Recolección",
+    de: "Sammlung",
+    fi: "Kerääntyminen",
+    fr: "Collection",
+    ar: "تجميع",
+    it: "Raccolta"
+  },
+  desc_sun: {
+    en: "Heats the water",
+    zh: "加熱海水",
+    ja: "水を温める",
+    ko: "물을 데움",
+    es: "Calienta el agua",
+    de: "Erwärmt das Wasser",
+    fi: "Lämmittää veden",
+    fr: "Chauffe l'eau",
+    ar: "يسخن الماء",
+    it: "Riscalda l'acqua"
+  },
+  desc_evap: {
+    en: "Water turns to vapor",
+    zh: "水變成水蒸氣",
+    ja: "水が蒸気になる",
+    ko: "물이 증기로 변함",
+    es: "El agua se convierte en vapor",
+    de: "Wasser wird zu Dampf",
+    fi: "Vesi muuttuu höyryksi",
+    fr: "L'eau se transforme en vapeur",
+    ar: "يتحول الماء إلى بخار",
+    it: "L'acqua si trasforma in vapore"
+  },
+  desc_cond: {
+    en: "Vapor turns to drops",
+    zh: "水蒸氣變成水點",
+    ja: "蒸気が水滴になる",
+    ko: "증기가 물방울로 변함",
+    es: "Vapor se convierte en gotas",
+    de: "Dampf wird zu Tropfen",
+    fi: "Höyry muuttuu pisaroiksi",
+    fr: "La vapeur se transforme en gouttes",
+    ar: "يتحول البخار إلى قطرات",
+    it: "Il vapore si trasforma in gocce"
+  },
+  desc_cloud: {
+    en: "Tiny drops gather",
+    zh: "小水點聚集",
+    ja: "小さな水滴が集まる",
+    ko: "작은 물방울이 모임",
+    es: "Pequeñas gotas se juntan",
+    de: "Winzige Tropfen sammeln sich",
+    fi: "Pienet pisarat kerääntyvät",
+    fr: "De minuscules gouttes se rassemblent",
+    ar: "تتجمع القطرات الصغيرة",
+    it: "Piccole gocce si radunano"
+  },
+  desc_rain: {
+    en: "Water falls down",
+    zh: "雨水落下",
+    ja: "水が落ちる",
+    ko: "물이 떨어짐",
+    es: "El agua cae",
+    de: "Wasser fällt herunter",
+    fi: "Vesi sataa alas",
+    fr: "L'eau tombe",
+    ar: "يسقط الماء",
+    it: "L'acqua cade giù"
+  },
+  desc_river: {
+    en: "Water flows back",
+    zh: "雨水匯聚",
+    ja: "水が戻る",
+    ko: "물이 다시 흐름",
+    es: "El agua fluye de vuelta",
+    de: "Wasser fließt zurück",
+    fi: "Vesi virtaa takaisin",
+    fr: "L'eau reflue",
+    ar: "الماء يتدفق مرة أخرى",
+    it: "L'acqua scorre indietro"
+  },
+  completed: {
+    en: "Cycle Complete!",
+    zh: "循環完成！",
+    ja: "サイクル完了！",
+    ko: "순환 완료!",
+    es: "¡Ciclo Completo!",
+    de: "Kreislauf abgeschlossen!",
+    fi: "Kierto valmis!",
+    fr: "Cycle terminé !",
+    ar: "اكتملت الدورة!",
+    it: "Ciclo Completo!"
+  },
+  reset: {
+    en: "Reset",
+    zh: "重置",
+    ja: "リセット",
+    ko: "초기화",
+    es: "Reiniciar",
+    de: "Zurücksetzen",
+    fi: "Nollaa",
+    fr: "Réinitialiser",
+    ar: "إعادة تعيين",
+    it: "Reimposta"
+  }
+};
+const stages = [{
+  id: "sun",
+  x: 15,
+  y: 15,
+  w: 15,
+  h: 15,
+  icon: "☀️"
+}, {
+  id: "evaporation",
+  x: 30,
+  y: 60,
+  w: 20,
+  h: 20,
+  icon: "♨️"
+},
+// Rising arrows
+{
+  id: "condensation",
+  x: 40,
+  y: 30,
+  w: 15,
+  h: 15,
+  icon: "🌫️"
+}, {
+  id: "cloud",
+  x: 60,
+  y: 20,
+  w: 20,
+  h: 15,
+  icon: "☁️"
+}, {
+  id: "rain",
+  x: 75,
+  y: 45,
+  w: 15,
+  h: 25,
+  icon: "🌧️"
+}, {
+  id: "river",
+  x: 60,
+  y: 80,
+  w: 25,
+  h: 15,
+  icon: "🌊"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [placed, setPlaced] = useState({});
+  const [dragging, setDragging] = useState(null);
+  const [completed, setCompleted] = useState(false);
+  const getText = key => t[key][lang] || t[key]["en"];
+  useEffect(() => {
+    if (Object.keys(placed).length === stages.length) {
+      setCompleted(true);
+    }
+  }, [placed]);
+  const handleDrop = stageId => {
+    if (dragging && dragging.id === stageId) {
+      setPlaced(prev => ({
+        ...prev,
+        [stageId]: true
+      }));
+      setDragging(null);
+    }
+  };
+  const reset = () => {
+    setPlaced({});
+    setCompleted(false);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 flex flex-col items-center select-none font-sans cursor-default"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-white mb-2 mt-8 drop-shadow-md z-10"
+  }, "💧 ", getText("title")), /*#__PURE__*/React.createElement("p", {
+    className: "font-bold text-white/90 mb-4 z-10 bg-black/20 px-4 py-1 rounded-full"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col md:flex-row gap-8 w-full max-w-6xl items-center md:items-start flex-1"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "relative w-full aspect-[16/9] bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-white/50"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 bg-sky-200"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-0 w-full h-[30%] bg-blue-500"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "animate-wave w-[200%] h-full bg-[url('data:image/svg+xml;utf8,<svg width=\\'100\\' height=\\'20\\' viewBox=\\'0 0 100 20\\' xmlns=\\'http://www.w3.org/2000/svg\\'><path d=\\'M0 10 Q25 0 50 10 T100 10\\' fill=\\'none\\' stroke=\\'white\\' stroke-width=\\'2\\'/></svg>')] opacity-30"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-[20%] right-0 w-[40%] h-[50%] bg-emerald-600 rounded-tl-full"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-[5%] left-[5%] text-[8rem] opacity-50"
+  }, "☀️"), stages.map(s => /*#__PURE__*/React.createElement("div", {
+    key: s.id,
+    className: `absolute border-4 border-dashed rounded-xl transition-all flex items-center justify-center z-20 
+                                 ${placed[s.id] ? "border-transparent bg-white/80" : "border-white/50 bg-black/10 hover:bg-white/20"}
+                             `,
+    style: {
+      left: `${s.x}%`,
+      top: `${s.y}%`,
+      width: `${s.w}%`,
+      height: `${s.h}%`
+    },
+    onDragOver: e => e.preventDefault(),
+    onDrop: () => handleDrop(s.id)
+  }, placed[s.id] ? /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      scale: 0
+    },
+    animate: {
+      scale: 1
+    },
+    className: "text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl lg:text-5xl"
+  }, s.icon), /*#__PURE__*/React.createElement("div", {
+    className: "font-bold text-slate-800 text-xs md:text-sm lg:text-base leading-tight mt-1"
+  }, getText(s.id))) : /*#__PURE__*/React.createElement("div", {
+    className: "text-white/50 text-2xl animate-pulse"
+  }, "?"))), Object.keys(placed).length > 2 && /*#__PURE__*/React.createElement("svg", {
+    className: "absolute inset-0 pointer-events-none opacity-50",
+    viewBox: "0 0 100 100"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M25 80 Q25 50 35 40",
+    stroke: "white",
+    strokeWidth: "1",
+    fill: "none",
+    strokeDasharray: "5,5",
+    className: "animate-dash"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M45 35 Q55 25 65 25",
+    stroke: "white",
+    strokeWidth: "1",
+    fill: "none",
+    strokeDasharray: "5,5"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M75 35 Q80 50 82 70",
+    stroke: "blue",
+    strokeWidth: "1",
+    fill: "none",
+    strokeDasharray: "5,5"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M80 85 Q60 90 40 85",
+    stroke: "blue",
+    strokeWidth: "1",
+    fill: "none",
+    strokeDasharray: "5,5"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/20 backdrop-blur-md rounded-3xl p-6 w-full md:w-64 flex flex-col gap-4 border-2 border-white/30 z-20"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-white font-bold text-center border-b border-white/30 pb-2"
+  }, "Labels"), stages.map(s => !placed[s.id] && /*#__PURE__*/React.createElement("div", {
+    key: s.id,
+    draggable: true,
+    onDragStart: () => setDragging(s),
+    className: "bg-white rounded-xl p-3 shadow-lg cursor-grab active:cursor-grabbing hover:scale-105 transition-transform flex items-center gap-3"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-3xl"
+  }, s.icon), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "font-bold text-slate-800 leading-tight"
+  }, getText(s.id)), /*#__PURE__*/React.createElement("div", {
+    className: "text-[10px] text-slate-500 font-bold"
+  }, getText(`desc_${s.id === "sun" ? "sun" : s.id === "evaporation" ? "evap" : s.id === "condensation" ? "cond" : s.id === "rain" ? "rain" : s.id === "river" ? "river" : "cloud"}`))))), completed && /*#__PURE__*/React.createElement("div", {
+    className: "text-center animate-fade-in"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-5xl mb-2"
+  }, "🎉"), /*#__PURE__*/React.createElement("div", {
+    className: "font-black text-white text-xl mb-4"
+  }, getText("completed")), /*#__PURE__*/React.createElement("button", {
+    onClick: reset,
+    className: "bg-white text-blue-600 px-6 py-2 rounded-full font-bold shadow-lg hover:bg-blue-50"
+  }, getText("reset"))))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

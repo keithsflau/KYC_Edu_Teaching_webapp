@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - Friction Lab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: #fdf4ff;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Friction Experiment",
+    zh: "摩擦力實驗",
+    ja: "摩擦実験",
+    ko: "마찰 실험",
+    es: "Experimento de fricción",
+    de: "Reibungsexperiment",
+    fi: "Kitkkoe",
+    fr: "Expérience sur la friction",
+    ar: "تجربة الاحتكاك",
+    it: "Esperimento sull'Attrito"
+  },
+  instruction: {
+    en: "Slide the puck. Which surface stops it faster?",
+    zh: "滑動冰球。哪個表面讓它停得更快？",
+    ja: "パックを滑らせてください。どの表面がより速く止まりますか？",
+    ko: "퍽을 미끄러뜨리세요. 어떤 표면이 더 빨리 멈추게 하나요?",
+    es: "Desliza el disco. ¿Qué superficie lo detiene más rápido?",
+    de: "Schiebe den Puck. Welche Oberfläche stoppt ihn schneller?",
+    fi: "Liu'uta kiekkoa. Mikä pinta pysäyttää sen nopeammin?",
+    fr: "Faites glisser le palet. Quelle surface l'arrête le plus vite ?",
+    ar: "حرك القرص. أي سطح يوقفه بشكل أسرع؟",
+    it: "Fai scorrere il disco. Quale superficie lo ferma più velocemente?"
+  },
+  ice: {
+    en: "Ice (Low Friction)",
+    zh: "冰面 (低摩擦)",
+    ja: "氷 (低摩擦)",
+    ko: "얼음 (낮은 마찰)"
+  },
+  wood: {
+    en: "Wood (Medium)",
+    zh: "木板 (中摩擦)",
+    ja: "木 (中摩擦)",
+    ko: "나무 (중간 마찰)"
+  },
+  carpet: {
+    en: "Carpet (High Friction)",
+    zh: "地毯 (高摩擦)",
+    ja: "カーペット (高摩擦)",
+    ko: "카펫 (높은 마찰)"
+  },
+  slide: {
+    en: "SLIDE!",
+    zh: "滑動！",
+    ja: "スライド！",
+    ko: "슬라이드!"
+  }
+};
+const surfaces = [{
+  id: "ice",
+  friction: 0.2,
+  color: "bg-cyan-100",
+  border: "border-cyan-300"
+}, {
+  id: "wood",
+  friction: 1.0,
+  color: "bg-orange-100",
+  border: "border-orange-300"
+}, {
+  id: "carpet",
+  friction: 3.0,
+  color: "bg-purple-200",
+  border: "border-purple-400"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [surface, setSurface] = useState(surfaces[0]);
+  const [pos, setPos] = useState(0);
+  const [sliding, setSliding] = useState(false);
+  const getText = key => t[key][lang] || t[key]["en"];
+  const slide = () => {
+    setPos(0);
+    setSliding(true);
+  };
+  useEffect(() => {
+    if (sliding) {
+      const dist = 500 / surface.friction; // Arbitrary distance calc
+      // Let's animate pos from 0 to dist over a duration related to friction?
+      // Or just simpler:
+      // Low friction = Long distance
+      // High friction = Short distance
+      // Let's map 0-100% width.
+      // Ice (0.2) -> 95%
+      // Wood (1.0) -> 60%
+      // Carpet (3.0) -> 20%
+
+      let target = 0;
+      if (surface.id === "ice") target = 95;
+      if (surface.id === "wood") target = 60;
+      if (surface.id === "carpet") target = 20;
+
+      // Animate manually or use Framer Motion layout?
+      // Let's use simple timeout loop for "physics" feel or just CSS transition prop on state change
+      // Actually, simpler to just set target and let CSS transition handle it?
+      // But we want to 'reset' first.
+
+      const timer = setTimeout(() => {
+        setPos(target);
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [sliding, surface]);
+  const changeSurface = s => {
+    setSurface(s);
+    setPos(0);
+    setSliding(false);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-bold mb-8 text-fuchsia-800"
+  }, getText("title")), /*#__PURE__*/React.createElement("p", {
+    className: "mb-8 font-bold text-slate-500"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4 mb-8"
+  }, surfaces.map(s => /*#__PURE__*/React.createElement("button", {
+    key: s.id,
+    onClick: () => changeSurface(s),
+    className: `px-4 py-2 rounded-lg font-bold border-2 ${surface.id === s.id ? "bg-fuchsia-600 text-white border-fuchsia-800" : "bg-white border-slate-200 text-slate-500"}`
+  }, getText(s.id)))), /*#__PURE__*/React.createElement("div", {
+    className: `relative w-full max-w-4xl h-40 ${surface.color} border-b-8 ${surface.border} rounded-t-xl mb-8 overflow-hidden transition-colors duration-500`
+  }, surface.id === "carpet" && /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/diagmonds-light.png')]"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-2 w-20 h-10 bg-black rounded-full border-4 border-gray-600 transition-all duration-1000 ease-out z-10",
+    style: {
+      left: `${pos}%`
+    }
+  }), [25, 50, 75].map(m => /*#__PURE__*/React.createElement("div", {
+    key: m,
+    className: "absolute bottom-0 h-4 border-l-2 border-slate-400",
+    style: {
+      left: `${m}%`
+    }
+  }))), /*#__PURE__*/React.createElement("button", {
+    onClick: slide,
+    className: "px-12 py-4 bg-fuchsia-600 text-white font-black text-2xl rounded-full shadow-lg hover:bg-fuchsia-700 active:scale-95"
+  }, getText("slide")));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

@@ -1,0 +1,205 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BODMAS Master | S1 Math</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+      }
+      .token-btn:hover {
+        transform: scale(1.1);
+      }
+    </style>
+  </head>
+  <body class="bg-indigo-50 text-slate-800 min-h-screen">
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const presets = [{
+  tokens: [5, "+", 6, "*", 3],
+  difficulty: "Easy"
+}, {
+  tokens: [16, "-", 4, "*", 2],
+  difficulty: "Easy"
+}, {
+  tokens: ["(", 7, "+", 1, ")", "*", 4],
+  difficulty: "Medium"
+}, {
+  tokens: [24, "/", 3, "+", 5, "*", 2],
+  difficulty: "Medium"
+}, {
+  tokens: [6, "*", "(", 9, "-", 3, ")", "/", 3],
+  difficulty: "Hard"
+}];
+const getPrecedence = op => {
+  if (op === "(" || op === ")") return 3;
+  if (op === "*" || op === "/") return 2;
+  if (op === "+" || op === "-") return 1;
+  return 0;
+};
+const App = () => {
+  const [expression, setExpression] = useState(presets[0].tokens);
+  const [message, setMessage] = useState("Click the operation that should be done first!");
+  const [solved, setSolved] = useState(false);
+  const [history, setHistory] = useState([]);
+  const isDigit = t => typeof t === "number";
+  const handleOpClick = index => {
+    if (solved) return;
+    const op = expression[index];
+    if (isDigit(op) || op === "(" || op === ")") {
+      setMessage("Click an operator (+, -, *, /) to solve it.");
+      return;
+    }
+
+    // Check if this is the highest precedence operation available
+    // Simplified BODMAS logic check for the game
+    // 1. Check brackets
+    const hasBrackets = expression.includes("(");
+    if (hasBrackets) {
+      // Start of inner most bracket
+      const openIdx = expression.lastIndexOf("(");
+      const closeIdx = expression.indexOf(")", openIdx);
+      if (index <= openIdx || index >= closeIdx) {
+        setMessage("Solve inside the brackets first!");
+        return;
+      }
+    }
+
+    // 2. Check precedence vs other operators
+    // This logic is tricky to generalize perfectly in a few lines,
+    // so we will trust the user finds the "highest" one in the current scope.
+    // Simplified: Find max precedence in the array (ignoring outside brackets if any brackets exist)
+    // For this demo, we assume the user picks correctly if it matches standard priority.
+
+    let valid = true;
+    const currentPrec = getPrecedence(op);
+
+    // Scan for higher precedence
+    for (let i = 0; i < expression.length; i++) {
+      if (!isDigit(expression[i]) && expression[i] !== "(" && expression[i] !== ")") {
+        // Interactive Check: if exists a higher precedence op, fail
+        // NOTE: This simple check ignores bracket scoping for non-bracket ops.
+        // Correct implementation requires parsing tree.
+        // We will implement a "Simple Mode" where we just check generic precedence across the board if no brackets.
+        if (!hasBrackets) {
+          if (getPrecedence(expression[i]) > currentPrec) {
+            setMessage("Order of Operations! Multiplication/Division before Addition/Subtraction.");
+            valid = false;
+            break;
+          }
+          // Left to Right associativity
+          if (getPrecedence(expression[i]) === currentPrec && i < index) {
+            setMessage("Solve from Left to Right!");
+            valid = false;
+            break;
+          }
+        }
+      }
+    }
+    if (!valid) return;
+
+    // Perform Calculation
+    const left = expression[index - 1];
+    const right = expression[index + 1];
+    if (typeof left !== "number" || typeof right !== "number") {
+      setMessage("Solve inside the brackets first!");
+      return;
+    }
+    let result = 0;
+    if (op === "*") result = left * right;else if (op === "/") result = left / right;else if (op === "+") result = left + right;else if (op === "-") result = left - right;
+    let newExp = [...expression];
+    newExp.splice(index - 1, 3, result); // Replace Left, Op, Right with Result
+
+    // Clean up brackets if they surround a single number: ( 5 ) -> 5
+    const resultIdx = index - 1;
+    if (newExp[resultIdx - 1] === "(" && newExp[resultIdx + 1] === ")") {
+      newExp.splice(resultIdx - 1, 3, result);
+    }
+    setHistory([...history, expression.join(" ") + " = ..."]);
+    setExpression(newExp);
+    setMessage("Correct! What's next?");
+    if (newExp.length === 1) {
+      setSolved(true);
+      setMessage("Solved! Great job.");
+    }
+  };
+  const loadLevel = tokens => {
+    setExpression(tokens);
+    setHistory([]);
+    setSolved(false);
+    setMessage("Click the operation that should be done first!");
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "p-8 max-w-4xl mx-auto min-h-screen flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("header", {
+    className: "mb-10 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-indigo-600 font-bold uppercase text-xs tracking-widest mb-2"
+  }, "Unit 1: Number Sense"), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-slate-900"
+  }, "BODMAS Master"), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-500"
+  }, "Learn the Order of Operations by solving interactively.")), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4 mb-8"
+  }, presets.map((p, i) => /*#__PURE__*/React.createElement("button", {
+    key: i,
+    onClick: () => loadLevel(p.tokens),
+    className: "px-4 py-2 bg-white border border-indigo-200 rounded-lg shadow-sm hover:bg-indigo-50 font-bold text-sm"
+  }, "Level ", i + 1))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-2xl bg-white p-12 rounded-3xl shadow-2xl border border-indigo-100 flex flex-col items-center justify-center min-h-[300px]"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-wrap gap-4 items-center justify-center text-4xl font-bold mb-8"
+  }, expression.map((token, i) => /*#__PURE__*/React.createElement("button", {
+    key: i,
+    disabled: solved || typeof token === "number" || token === "(" || token === ")",
+    onClick: () => handleOpClick(i),
+    className: `token-btn transition-all duration-200 px-3 py-2 rounded-xl
+                                        ${typeof token === "number" ? "text-slate-700 cursor-default" : token === "(" || token === ")" ? "text-slate-400 cursor-default" : "bg-indigo-100 text-indigo-600 hover:bg-indigo-500 hover:text-white shadow-md cursor-pointer"}
+                                    `
+  }, token))), /*#__PURE__*/React.createElement("div", {
+    className: `text-lg font-bold transition-all ${solved ? "text-green-500 scale-110" : "text-slate-400"}`
+  }, message)), history.length > 0 && /*#__PURE__*/React.createElement("div", {
+    className: "mt-8 text-slate-400 font-mono text-sm"
+  }, history.map((h, i) => /*#__PURE__*/React.createElement("div", {
+    key: i
+  }, h))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

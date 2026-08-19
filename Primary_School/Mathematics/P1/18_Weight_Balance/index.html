@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小一數學：輕重比較 | Comparing Weight</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #fef2f2 0%, #ef4444 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "⚖️ Comparing Weight",
+    zh: "⚖️ 輕重比較",
+    ja: "⚖️ 重さの比較",
+    ko: "⚖️ 무게 비교",
+    es: "⚖️ Comparar peso",
+    de: "⚖️ Gewichtsvergleich",
+    fi: "⚖️ Painon vertailu",
+    fr: "⚖️ Comparaison de poids",
+    ar: "⚖️ مقارنة الوزن",
+    it: "⚖️ Confronto di peso"
+  },
+  question: {
+    en: "Which side is {q}?",
+    zh: "哪一邊較{q}?",
+    ja: "どちら側が{q}ですか？",
+    ko: "어느 쪽이 더 {q}?",
+    es: "¿Qué lado es más {q}?",
+    de: "Welche Seite ist {q}?",
+    fi: "Kumpi puoli on {q}?",
+    fr: "Quel côté est plus {q} ?",
+    ar: "أي جانب هو {q}؟",
+    it: "Quale lato è più {q}?"
+  },
+  Heavier: {
+    en: "heavier",
+    zh: "重",
+    ja: "重い",
+    ko: "무거운가요",
+    es: "pesado",
+    de: "schwerer",
+    fi: "painavampi",
+    fr: "lourd",
+    ar: "أثقل",
+    it: "pesante"
+  },
+  Lighter: {
+    en: "lighter",
+    zh: "輕",
+    ja: "軽い",
+    ko: "가벼운가요",
+    es: "ligero",
+    de: "leichter",
+    fi: "kevyempi",
+    fr: "léger",
+    ar: "أخف",
+    it: "leggero"
+  }
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [wA, setWA] = useState(1);
+  const [wB, setWB] = useState(3);
+  const [question, setQuestion] = useState("Heavier");
+  const [feedback, setFeedback] = useState("");
+
+  // Angle calc: if A heavier, angle -ve (tilt left down).
+  // Wait, normally rotate negative is counter-clockwise (left up).
+  // Let's stick to the visual logic: if A > B, it goes down.
+  // CSS rotate: positive is clockwise.
+  // If A is heavier (left pan), beam should rotate counter-clockwise (left down)?
+  // No, left side is -x. A rotation of -20deg lifts left side UP in standard CSS if origin center.
+  // Wait. Standard clock: 12 is top. 9 is left.
+  // rotate(-20deg) moves 9 towards 8 (down). So left side goes down. Correct.
+  const angle = wA > wB ? -20 : wB > wA ? 20 : 0;
+  const newRound = () => {
+    let a = Math.floor(Math.random() * 5) + 1;
+    let b = Math.floor(Math.random() * 5) + 1;
+    if (a === b) b = a === 5 ? 4 : a + 1;
+    setWA(a);
+    setWB(b);
+    setQuestion(Math.random() > 0.5 ? "Heavier" : "Lighter");
+    setFeedback("");
+  };
+  useEffect(newRound, []);
+  const check = choice => {
+    const isAHeavy = wA > wB;
+    let correct = false;
+    if (question === "Heavier") {
+      if (choice === "A" && isAHeavy || choice === "B" && !isAHeavy) correct = true;
+    } else {
+      if (choice === "A" && !isAHeavy || choice === "B" && isAHeavy) correct = true;
+    }
+    if (correct) {
+      setFeedback("CORRECT");
+      setTimeout(newRound, 1500);
+    } else {
+      setFeedback("WRONG");
+    }
+  };
+  const getQ = () => {
+    let txt = t.question[lang] || t.question["en"];
+    let qWord = t[question][lang] || t[question]["en"];
+    return txt.replace("{q}", qWord);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-8 flex flex-col items-center justify-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-5xl font-black text-red-900 mb-8 max-w-2xl text-center"
+  }, t.title[lang] || t.title["en"]), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/90 rounded-3xl p-8 shadow-2xl w-full max-w-3xl text-center border-4 border-red-200"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "text-3xl font-bold text-slate-700 mb-16"
+  }, getQ()), /*#__PURE__*/React.createElement("div", {
+    className: "relative h-48 mb-12 flex justify-center items-end"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-8 h-24 bg-slate-700 mx-auto rounded-t-xl absolute bottom-0 left-1/2 -translate-x-1/2"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "w-[80%] h-4 bg-red-400 rounded-full absolute top-12 left-[10%] transition-transform duration-700 ease-in-out z-10",
+    style: {
+      transform: `rotate(${angle}deg)`
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => check("A"),
+    className: "absolute -left-8 -top-24 w-24 h-24 flex flex-col items-center justify-end hover:scale-110 transition-transform origin-bottom"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl filter drop-shadow-xl",
+    style: {
+      transform: `rotate(${-angle}deg)`
+    }
+  }, wA > wB ? "🐘" : "🪶"), /*#__PURE__*/React.createElement("div", {
+    className: "w-24 h-2 bg-slate-400 mt-2",
+    style: {
+      transform: `rotate(${-angle}deg)`
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "w-1 h-20 bg-slate-300 mx-auto -mt-24 rounded-full",
+    style: {
+      transform: `rotate(${-angle}deg)`
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "font-bold text-red-600 mt-2 bg-white px-2 rounded-lg relative z-20 shadow text-xl",
+    style: {
+      transform: `rotate(${-angle}deg)`
+    }
+  }, "A")), /*#__PURE__*/React.createElement("button", {
+    onClick: () => check("B"),
+    className: "absolute -right-8 -top-24 w-24 h-24 flex flex-col items-center justify-end hover:scale-110 transition-transform origin-bottom"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl filter drop-shadow-xl",
+    style: {
+      transform: `rotate(${-angle}deg)`
+    }
+  }, wB > wA ? "🐘" : "🪶"), /*#__PURE__*/React.createElement("div", {
+    className: "w-24 h-2 bg-slate-400 mt-2",
+    style: {
+      transform: `rotate(${-angle}deg)`
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "w-1 h-20 bg-slate-300 mx-auto -mt-24 rounded-full",
+    style: {
+      transform: `rotate(${-angle}deg)`
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "font-bold text-red-600 mt-2 bg-white px-2 rounded-lg relative z-20 shadow text-xl",
+    style: {
+      transform: `rotate(${-angle}deg)`
+    }
+  }, "B")))), /*#__PURE__*/React.createElement("div", {
+    className: "h-16"
+  }, feedback === "CORRECT" && /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black text-green-500 animate-bounce"
+  }, get("correct", lang)), feedback === "WRONG" && /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black text-red-500 animate-shake"
+  }, get("wrong", lang)))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

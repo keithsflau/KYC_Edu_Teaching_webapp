@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小四數學：繪製四邊形 | Draw Quadrilaterals</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #f3e8ff 0%, #a855f7 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useRef
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Draw Quadrilaterals",
+    zh: "動手畫四邊形",
+    ja: "四角形を描く",
+    ko: "사각형 그리기",
+    es: "Dibujar Cuadriláteros",
+    de: "Vierecke zeichnen",
+    fi: "Piirrä nelikulmioita",
+    fr: "Dessiner des quadrilatères",
+    ar: "رسم الأشكال الرباعية",
+    it: "Disegna quadrilateri"
+  },
+  trapezium: {
+    en: "Trapezium",
+    zh: "梯形",
+    ja: "台形",
+    ko: "사다리꼴",
+    es: "Trapecio",
+    de: "Trapez",
+    fi: "Puolisuunnikas",
+    fr: "Trapèze",
+    ar: "شبه منحرف",
+    it: "Trapezio"
+  },
+  parallelogram: {
+    en: "Parallelogram",
+    zh: "平行四邊形",
+    ja: "平行四辺形",
+    ko: "평행사변형",
+    es: "Paralelogramo",
+    de: "Parallelogramm",
+    fi: "Suunnikas",
+    fr: "Parallélogramme",
+    ar: "متوازي الأضلاع",
+    it: "Parallelogramma"
+  },
+  topWidth: {
+    en: "Top Width",
+    zh: "上底長度",
+    ja: "上底の幅",
+    ko: "윗변 길이",
+    es: "Ancho Superior",
+    de: "Obere Breite",
+    fi: "Yläleveys",
+    fr: "Largeur supérieure",
+    ar: "العرض العلوي",
+    it: "Larghezza superiore"
+  },
+  bottomWidth: {
+    en: "Bottom Width",
+    zh: "下底長度",
+    ja: "下底の幅",
+    ko: "아랫변 길이",
+    es: "Ancho Inferior",
+    de: "Untere Breite",
+    fi: "Alaleveys",
+    fr: "Largeur inférieure",
+    ar: "العرض السفلي",
+    it: "Larghezza inferiore"
+  },
+  skew: {
+    en: "Skew",
+    zh: "平移 (Skew)",
+    ja: "スキュー",
+    ko: "기울기",
+    es: "Inclinación",
+    de: "Neigung",
+    fi: "Viistous",
+    fr: "Inclinaison",
+    ar: "انحراف",
+    it: "Inclinazione"
+  },
+  trapDesc: {
+    en: "Trapezium: Only one pair of parallel sides.",
+    zh: "梯形：只有一組對邊平行。",
+    ja: "台形：平行な辺は1組だけです。",
+    ko: "사다리꼴: 평행한 변이 한 쌍뿐입니다.",
+    es: "Trapecio: Solo un par de lados paralelos.",
+    de: "Trapez: Nur ein Paar parallele Seiten.",
+    fi: "Puolisuunnikas: Vain yksi pari samansuuntaisia sivuja.",
+    fr: "Trapèze : Une seule paire de côtés parallèles.",
+    ar: "شبه منحرف: زوج واحد فقط من الأضلاع المتوازية.",
+    it: "Trapezio: Solo una coppia di lati paralleli."
+  },
+  paraDesc: {
+    en: "Parallelogram: Two pairs of parallel sides.",
+    zh: "平行四邊形：兩組對邊分別平行。",
+    ja: "平行四辺形：2組の対辺がそれぞれ平行です。",
+    ko: "평행사변형: 두 쌍의 대변이 각각 평행합니다.",
+    es: "Paralelogramo: Dos pares de lados paralelos.",
+    de: "Parallelogramm: Zwei Paare paralleler Seiten.",
+    fi: "Suunnikas: Kaksi paria samansuuntaisia sivuja.",
+    fr: "Parallélogramme : Deux paires de côtés parallèles.",
+    ar: "متوازي الأضلاع: زوجان من الأضلاع المتوازية.",
+    it: "Parallelogramma: Due coppie di lati paralleli."
+  }
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const getText = key => t[key][lang] || t[key]["en"];
+
+  // Simple Drawing Board - 4 points
+  const [points, setPoints] = useState([{
+    x: 100,
+    y: 100
+  }, {
+    x: 300,
+    y: 100
+  }, {
+    x: 300,
+    y: 300
+  }, {
+    x: 100,
+    y: 300
+  }]);
+  const [type, setType] = useState("trapezium");
+  const [topWidth, setTopWidth] = useState(150);
+  const [bottomWidth, setBottomWidth] = useState(250);
+  const [height, setHeight] = useState(200);
+  const [skew, setSkew] = useState(50); // Skew for parallelogram/rhombus/trapezium
+
+  // Center: 300, 300
+  const cx = 300;
+  const cy = 300;
+  let p1, p2, p3, p4;
+  if (type === "trapezium") {
+    p1 = {
+      x: cx - topWidth / 2 + skew,
+      y: cy - height / 2
+    };
+    p2 = {
+      x: cx + topWidth / 2 + skew,
+      y: cy - height / 2
+    };
+    p3 = {
+      x: cx + bottomWidth / 2,
+      y: cy + height / 2
+    };
+    p4 = {
+      x: cx - bottomWidth / 2,
+      y: cy + height / 2
+    };
+  } else if (type === "rhombus") {
+    // Rhombus: equal sides. Skew changes angles.
+    // Simplified: Parallelogram with fixed logic
+    const size = 150;
+    p1 = {
+      x: cx - size + skew,
+      y: cy - size
+    };
+    p2 = {
+      x: cx + size + skew,
+      y: cy - size
+    };
+    p3 = {
+      x: cx + size - skew,
+      y: cy + size
+    };
+    p4 = {
+      x: cx - size - skew,
+      y: cy + size
+    };
+  }
+  const path = `M${p1.x},${p1.y} L${p2.x},${p2.y} L${p3.x},${p3.y} L${p4.x},${p4.y} Z`;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-8 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-purple-900 mb-8 mt-8"
+  }, "✏️ ", getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/95 backdrop-blur-md rounded-3xl p-8 shadow-2xl max-w-5xl w-full flex flex-col md:flex-row gap-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 bg-slate-50 border-2 border-slate-200 rounded-2xl relative h-[500px] flex items-center justify-center overflow-hidden"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 grid grid-cols-12 grid-rows-12 pointer-events-none opacity-20"
+  }, [...Array(144)].map((_, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "border border-slate-400"
+  }))), /*#__PURE__*/React.createElement("svg", {
+    width: "600",
+    height: "600",
+    className: "absolute"
+  }, /*#__PURE__*/React.createElement(motion.path, {
+    d: path,
+    fill: "rgba(168, 85, 247, 0.3)",
+    stroke: "#7e22ce",
+    strokeWidth: "4",
+    layoutId: "shape"
+  }), [p1, p2, p3, p4].map((p, i) => /*#__PURE__*/React.createElement("circle", {
+    key: i,
+    cx: p.x,
+    cy: p.y,
+    r: "6",
+    fill: "#7e22ce"
+  })))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full md:w-80 space-y-8 p-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-2"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setType("trapezium"),
+    className: `flex-1 py-2 rounded-lg font-bold ${type === "trapezium" ? "bg-purple-600 text-white" : "bg-slate-200"}`
+  }, getText("trapezium")), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setType("rhombus"),
+    className: `flex-1 py-2 rounded-lg font-bold ${type === "rhombus" ? "bg-purple-600 text-white" : "bg-slate-200"}`
+  }, getText("parallelogram"))), type === "trapezium" && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "font-bold text-slate-600"
+  }, getText("topWidth")), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "50",
+    max: "300",
+    value: topWidth,
+    onChange: e => setTopWidth(parseInt(e.target.value, 10)),
+    className: "w-full accent-purple-600"
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "font-bold text-slate-600"
+  }, getText("bottomWidth")), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "50",
+    max: "300",
+    value: bottomWidth,
+    onChange: e => setBottomWidth(parseInt(e.target.value, 10)),
+    className: "w-full accent-purple-600"
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "font-bold text-slate-600"
+  }, getText("skew")), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "-100",
+    max: "100",
+    value: skew,
+    onChange: e => setSkew(parseInt(e.target.value, 10)),
+    className: "w-full accent-purple-600"
+  }))), type === "rhombus" && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "font-bold text-slate-600"
+  }, getText("skew")), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "-100",
+    max: "100",
+    value: skew,
+    onChange: e => setSkew(parseInt(e.target.value, 10)),
+    className: "w-full accent-purple-600"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-purple-50 p-4 rounded-xl text-purple-900 border border-purple-200"
+  }, type === "trapezium" ? getText("trapDesc") : getText("paraDesc")))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

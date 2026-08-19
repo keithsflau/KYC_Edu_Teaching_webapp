@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小四數學：格仔周界 | Grid Perimeter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #f0f9ff 0%, #0ea5e9 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState
+} = React;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Grid Perimeter Challenge",
+    zh: "格仔周界挑戰",
+    ja: "グリッド周囲チャレンジ",
+    ko: "그리드 둘레 도전",
+    es: "Desafío de Perímetro de Cuadrícula",
+    de: "Gitterumfang-Herausforderung",
+    fi: "Ruudukon piirihaaste",
+    fr: "Défi de périmètre de grille",
+    ar: "تحدي محيط الشبكة",
+    it: "Sfida perimetro griglia"
+  },
+  perimeter: {
+    en: "Perimeter",
+    zh: "周界 (Perimeter)",
+    ja: "周囲",
+    ko: "둘레",
+    es: "Perímetro",
+    de: "Umfang",
+    fi: "Piiri",
+    fr: "Périmètre",
+    ar: "المحيط",
+    it: "Perimetro"
+  },
+  reset: {
+    en: "Reset",
+    zh: "清除重來",
+    ja: "リセット",
+    ko: "초기화",
+    es: "Reiniciar",
+    de: "Zurücksetzen",
+    fi: "Nollaa",
+    fr: "Réinitialiser",
+    ar: "إعادة تعيين",
+    it: "Reimposta"
+  },
+  tip: {
+    en: "Tip: Click cells to form shapes and see how the perimeter changes!",
+    zh: "Tip: 點擊格子組成圖形，看看周界如何變化！",
+    ja: "ヒント：セルをクリックして図形を作成し、周囲がどのように変化するかを確認してください！",
+    ko: "팁: 셀을 클릭하여 도형을 만들고 둘레가 어떻게 변하는지 확인하세요!",
+    es: "Consejo: ¡Haz clic en las celdas para formar formas y observa cómo cambia el perímetro!",
+    de: "Tipp: Klicken Sie auf Zellen, um Formen zu bilden, und sehen Sie, wie sich der Umfang ändert!",
+    fi: "Vinkki: Napsauta soluja muodostaaksesi muotoja ja katso, miten piiri muuttuu!",
+    fr: "Astuce : Cliquez sur les cellules pour former des formes et voyez comment le périmètre change !",
+    ar: "نصيحة: انقر فوق الخلايا لتشكيل الأشكال وانظر كيف يتغير المحيط!",
+    it: "Suggerimento: clicca sulle celle per formare forme e guarda come cambia il perimetro!"
+  }
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const getText = key => t[key][lang] || t[key]["en"];
+
+  // 8x8 Grid
+  // User clicks squares to fill them
+  // App calculates perimeter of the conglomerate shape
+
+  const [grid, setGrid] = useState(Array(8).fill().map(() => Array(8).fill(false)));
+  const toggle = (r, c) => {
+    const newG = [...grid];
+    newG[r] = [...newG[r]];
+    newG[r][c] = !newG[r][c];
+    setGrid(newG);
+  };
+  const calculatePerimeter = () => {
+    let p = 0;
+    for (let r = 0; r < 8; r++) {
+      for (let c = 0; c < 8; c++) {
+        if (grid[r][c]) {
+          // Check 4 neighbors. If neighbor is empty or out of bounds, add 1 side.
+          if (r === 0 || !grid[r - 1][c]) p++; // Top
+          if (r === 7 || !grid[r + 1][c]) p++; // Bottom
+          if (c === 0 || !grid[r][c - 1]) p++; // Left
+          if (c === 7 || !grid[r][c + 1]) p++; // Right
+        }
+      }
+    }
+    return p;
+  };
+  const perimeter = calculatePerimeter();
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-8 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-white mb-8 mt-8"
+  }, "📏 ", getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/95 backdrop-blur-md rounded-3xl p-8 shadow-2xl flex flex-col md:flex-row gap-12 items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-sky-100 p-2 rounded-xl grid grid-cols-8 gap-1 shadow-inner border-4 border-sky-300"
+  }, grid.map((row, r) => row.map((active, c) => /*#__PURE__*/React.createElement("div", {
+    key: `${r}-${c}`,
+    onClick: () => toggle(r, c),
+    className: `w-12 h-12 rounded-sm cursor-pointer transition-all ${active ? "bg-sky-500 shadow-lg scale-95" : "bg-white hover:bg-sky-200"}`
+  })))), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-sky-50 p-6 rounded-2xl w-64 text-center border-2 border-sky-200"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-xl font-bold text-sky-800 mb-2"
+  }, getText("perimeter")), /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl font-black text-sky-600"
+  }, perimeter, " ", /*#__PURE__*/React.createElement("span", {
+    className: "text-2xl"
+  }, "cm"))), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setGrid(Array(8).fill().map(() => Array(8).fill(false))),
+    className: "px-8 py-3 bg-red-400 text-white rounded-xl font-bold hover:bg-red-500 shadow-lg"
+  }, getText("reset")), /*#__PURE__*/React.createElement("div", {
+    className: "text-sky-100 font-bold text-sm max-w-[200px] text-center"
+  }, getText("tip")))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

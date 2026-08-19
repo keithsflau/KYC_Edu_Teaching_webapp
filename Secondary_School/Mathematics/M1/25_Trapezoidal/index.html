@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Trapezoidal Rule | M1 Calculus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <script
+      type="text/javascript"
+      id="MathJax-script"
+      async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+    ></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+      }
+      .glass {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <div id="root" class="flex-grow flex flex-col"></div>
+    <script>
+const {
+  useState,
+  useEffect,
+  useMemo
+} = React;
+const translations = {
+  en: {
+    unit: "Module 1: Calculus",
+    title: "Trapezoidal Rule",
+    desc: "Estimate area under curve using trapezoids.",
+    function: "Function",
+    interval: "Interval [a, b]",
+    subintervals: "Sub-intervals (n)",
+    width: "Width (Δx)",
+    estimate: "Trapezoidal Estimate",
+    exact: "Exact Integral",
+    error: "Error",
+    langBtn: "中文"
+  },
+  zh: {
+    unit: "單元一：微積分",
+    title: "梯形法則",
+    desc: "使用梯形估算曲線下面積。",
+    function: "函數",
+    interval: "區間 [a, b]",
+    subintervals: "子區間 (n)",
+    width: "寬度 (Δx)",
+    estimate: "梯形估算值",
+    exact: "精確積分值",
+    error: "誤差",
+    langBtn: "English"
+  }
+};
+const App = () => {
+  const [lang, setLang] = useState("en");
+  const t = translations[lang];
+  const [n, setN] = useState(6);
+  const a = 0;
+  const b = 4;
+
+  // Function: f(x) = -0.5x^2 + 2x + 1 (Concave down parabola)
+  const f = x => -0.5 * x * x + 2 * x + 1;
+
+  // Exact Int from 0 to 4:
+  // [-1/6 x^3 + x^2 + x] from 0 to 4 = -64/6 + 16 + 4 = 28/3
+  const exactArea = 28 / 3;
+
+  // Trapezoidal calc
+  const dx = (b - a) / n;
+  const trapezoidalSum = useMemo(() => {
+    let sum = 0.5 * (f(a) + f(b));
+    for (let i = 1; i < n; i++) {
+      sum += f(a + i * dx);
+    }
+    return sum * dx;
+  }, [n]);
+
+  // Graph
+  const w = 500,
+    h = 300;
+  const xRange = 5;
+  const yRange = 5;
+  const scaleX = w / xRange;
+  const scaleY = h / yRange;
+  const toScreen = (x, y) => ({
+    x: x * scaleX,
+    y: h - y * scaleY
+  });
+  const curvePath = useMemo(() => {
+    let d = "";
+    for (let x = 0; x <= b; x += 0.05) {
+      const pt = toScreen(x, f(x));
+      d += (d ? "L" : "M") + `${pt.x.toFixed(1)},${pt.y.toFixed(1)} `;
+    }
+    return d;
+  }, []);
+
+  // Trapezoids SVG
+  const trapezoids = [];
+  for (let i = 0; i < n; i++) {
+    const x1 = a + i * dx;
+    const x2 = a + (i + 1) * dx;
+    const y1 = f(x1);
+    const y2 = f(x2);
+    const p1 = toScreen(x1, 0); // Bottom left
+    const p2 = toScreen(x2, 0); // Bottom right
+    const p3 = toScreen(x2, y2); // Top right
+    const p4 = toScreen(x1, y1); // Top left
+
+    trapezoids.push(/*#__PURE__*/React.createElement("polygon", {
+      key: i,
+      points: `${p1.x},${p1.y} ${p2.x},${p2.y} ${p3.x},${p3.y} ${p4.x},${p4.y}`,
+      fill: "rgba(132, 204, 22, 0.2)",
+      stroke: "#84cc16",
+      strokeWidth: "1"
+    }));
+  }
+  return /*#__PURE__*/React.createElement("div", {
+    className: "flex-grow flex flex-col items-center justify-center p-8 select-none"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 right-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLang(l => l === "en" ? "zh" : "en"),
+    className: "px-3 py-1 bg-slate-800 border border-slate-600 rounded-full text-xs font-bold text-emerald-400 hover:bg-slate-700 hover:text-white transition flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-language"
+  }), t.langBtn)), /*#__PURE__*/React.createElement("header", {
+    className: "mb-8 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-lime-500 font-bold uppercase tracking-widest text-xs mb-2"
+  }, t.unit), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-white mb-2"
+  }, t.title), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-400 font-mono text-lg"
+  }, t.desc)), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col lg:flex-row gap-8 w-full max-w-6xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass p-4 rounded-3xl flex-[2] border border-lime-500/30"
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: w,
+    height: h,
+    className: "bg-slate-900 rounded-xl mx-auto overflow-hidden"
+  }, /*#__PURE__*/React.createElement("line", {
+    x1: "0",
+    y1: h,
+    x2: w,
+    y2: h,
+    stroke: "#475569",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "0",
+    y1: "0",
+    x2: "0",
+    y2: h,
+    stroke: "#475569",
+    strokeWidth: "2"
+  }), trapezoids, /*#__PURE__*/React.createElement("path", {
+    d: curvePath,
+    stroke: "#84cc16",
+    strokeWidth: "3",
+    fill: "none"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "glass p-6 rounded-3xl flex-1 space-y-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-800 p-4 rounded-xl font-mono text-center border border-slate-700 text-lime-400"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold text-slate-500 uppercase mb-1"
+  }, t.function), "f(x) = -0.5x² + 2x + 1"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "text-xs font-bold text-slate-400 block mb-2 uppercase"
+  }, t.subintervals), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "1",
+    max: "10",
+    value: n,
+    onChange: e => setN(Number(e.target.value)),
+    className: "w-full accent-lime-500"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between text-sm font-mono mt-1"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-lime-400"
+  }, "n = ", n), /*#__PURE__*/React.createElement("span", {
+    className: "text-slate-500"
+  }, "Δx = ", dx.toFixed(2)))), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-800 p-4 rounded-xl border border-lime-500/30 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold text-lime-500 uppercase mb-1"
+  }, t.estimate), /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-mono font-bold text-white"
+  }, trapezoidalSum.toFixed(4))), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 bg-slate-800 p-3 rounded-xl border border-slate-700 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-[10px] font-bold text-slate-400 uppercase"
+  }, t.exact), /*#__PURE__*/React.createElement("div", {
+    className: "font-mono text-slate-300"
+  }, exactArea.toFixed(4))), /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 bg-slate-800 p-3 rounded-xl border border-rose-500/30 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-[10px] font-bold text-rose-400 uppercase"
+  }, t.error), /*#__PURE__*/React.createElement("div", {
+    className: "font-mono text-rose-400"
+  }, Math.abs(trapezoidalSum - exactArea).toFixed(4))))), /*#__PURE__*/React.createElement("div", {
+    className: "text-[10px] text-slate-500 text-center font-mono"
+  }, "Area ≈ 0.5 × Δx × [y₀ + 2(y₁ + ... + yₙ₋₁) + yₙ]"))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

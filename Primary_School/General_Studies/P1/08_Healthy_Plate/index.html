@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小一常識：健康餐盤大挑戰 | Healthy Plate</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #dcfce7 0%, #22c55e 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect,
+  useRef
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Healthy Eating Challenge",
+    zh: "健康餐盤大挑戰",
+    ja: "健康的な食事チャレンジ",
+    ko: "건강한 식습관 챌린지",
+    es: "Desafío de alimentación saludable",
+    de: "Herausforderung gesundes Essen",
+    fi: "Terveellisen syömisen haaste",
+    fr: "Défi alimentation saine",
+    ar: "تحدي الأكل الصحي",
+    it: "Sfida alimentazione sana"
+  },
+  instruction: {
+    en: "Sort the food into the correct basket!",
+    zh: "把食物分類到正確的籃子裡！",
+    ja: "食べ物を正しいバスケットに分類しよう！",
+    ko: "음식을 올바른 바구니에 분류하세요!",
+    es: "¡Clasifica la comida en la canasta correcta!",
+    de: "Sorteiere das Essen in den richtigen Korb!",
+    fi: "Lajittele ruoka oikeaan koriin!",
+    fr: "Triez la nourriture dans le bon panier !",
+    ar: "فرز الطعام في السلة الصحيحة!",
+    it: "Ordina il cibo nel cestino corretto!"
+  },
+  most: {
+    en: "Eat Most",
+    zh: "多吃",
+    es: "Comer más",
+    de: "Am meisten essen",
+    fi: "Syö eniten",
+    fr: "Manger le plus",
+    ar: "كل أكثر",
+    it: "Mangia di più"
+  },
+  moderate: {
+    en: "Eat Moderately",
+    zh: "適量吃",
+    es: "Comer moderadamente",
+    de: "Mäßig essen",
+    fi: "Syö kohtuullisesti",
+    fr: "Manger modérément",
+    ar: "كل باعتدال",
+    it: "Mangia moderatamente"
+  },
+  less: {
+    en: "Eat Less",
+    zh: "少吃",
+    es: "Comer menos",
+    de: "Weniger essen",
+    fi: "Syö vähemmän",
+    fr: "Manger moins",
+    ar: "كل أقل",
+    it: "Mangia di meno"
+  },
+  correct: {
+    en: "Yummy!",
+    zh: "好極了！",
+    es: "¡Delicioso!",
+    de: "Lecker!",
+    fi: "Nam!",
+    fr: "Miam !",
+    ar: "لذيذ!",
+    it: "Gnam!"
+  },
+  wrong: {
+    en: "Oops!",
+    zh: "哎呀！",
+    es: "¡Ups!",
+    de: "Hoppla!",
+    fi: "Hups!",
+    fr: "Oups !",
+    ar: "عفوًا!",
+    it: "Ops!"
+  },
+  score: {
+    en: "Score",
+    zh: "分數",
+    es: "Puntuación",
+    de: "Punktzahl",
+    fi: "Pisteet",
+    fr: "Score",
+    ar: "نتيجة",
+    it: "Punteggio"
+  },
+  gameover: {
+    en: "Time's Up!",
+    zh: "時間到！",
+    es: "¡Se acabó el tiempo!",
+    de: "Die Zeit ist um!",
+    fi: "Aika loppui!",
+    fr: "Temps écoulé !",
+    ar: "انتهى الوقت!",
+    it: "Tempo scaduto!"
+  },
+  restart: {
+    en: "Play Again",
+    zh: "再玩一次",
+    es: "Jugar de nuevo",
+    de: "Nochmal spielen",
+    fi: "Pelaa uudelleen",
+    fr: "Rejouer",
+    ar: "العب مرة أخرى",
+    it: "Gioca di nuovo"
+  }
+};
+const foods = [{
+  id: "rice",
+  icon: "🍚",
+  type: "most"
+}, {
+  id: "bread",
+  icon: "🍞",
+  type: "most"
+}, {
+  id: "noodles",
+  icon: "🍜",
+  type: "most"
+}, {
+  id: "corn",
+  icon: "🌽",
+  type: "most"
+}, {
+  id: "broccoli",
+  icon: "🥦",
+  type: "most"
+}, {
+  id: "carrot",
+  icon: "🥕",
+  type: "most"
+}, {
+  id: "fish",
+  icon: "🐟",
+  type: "moderate"
+}, {
+  id: "meat",
+  icon: "🥩",
+  type: "moderate"
+}, {
+  id: "egg",
+  icon: "🥚",
+  type: "moderate"
+}, {
+  id: "chicken",
+  icon: "🍗",
+  type: "moderate"
+}, {
+  id: "candy",
+  icon: "🍬",
+  type: "less"
+}, {
+  id: "chocolate",
+  icon: "🍫",
+  type: "less"
+}, {
+  id: "chips",
+  icon: "🥔",
+  type: "less"
+}, {
+  id: "soda",
+  icon: "🥤",
+  type: "less"
+}, {
+  id: "fries",
+  icon: "🍟",
+  type: "less"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [currentItem, setCurrentItem] = useState(null);
+  const [score, setScore] = useState(0);
+  const [feedback, setFeedback] = useState(null); // 'correct' | 'wrong'
+  const lockRef = useRef(false);
+
+  const getText = key => t[key][lang] || t[key]["en"];
+  useEffect(() => {
+    spawnItem();
+  }, []);
+  const spawnItem = () => {
+    const item = foods[Math.floor(Math.random() * foods.length)];
+    setCurrentItem({
+      ...item,
+      uid: Date.now()
+    });
+    lockRef.current = false;
+  };
+  const handleSort = type => {
+    if (!currentItem || lockRef.current) return;
+    lockRef.current = true;
+    if (currentItem.type === type) {
+      setScore(s => s + 10);
+      setFeedback("correct");
+      setTimeout(() => {
+        setFeedback(null);
+        spawnItem();
+      }, 500);
+    } else {
+      setScore(s => Math.max(0, s - 5));
+      setFeedback("wrong");
+      setTimeout(() => {
+        setFeedback(null);
+        lockRef.current = false;
+      }, 500);
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-green-900 mb-4 mt-8 drop-shadow-sm text-center"
+  }, "🥣 ", getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/90 px-6 py-2 rounded-full mb-4 font-bold text-green-800 shadow-md"
+  }, getText("score"), ": ", score), /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 w-full max-w-2xl flex flex-col items-center justify-center relative min-h-[300px]"
+  }, /*#__PURE__*/React.createElement(AnimatePresence, {
+    mode: "wait"
+  }, currentItem && /*#__PURE__*/React.createElement(motion.div, {
+    key: currentItem.uid,
+    initial: {
+      scale: 0,
+      y: -50
+    },
+    animate: {
+      scale: 1,
+      y: 0
+    },
+    exit: {
+      scale: 0,
+      opacity: 0
+    },
+    className: "bg-white rounded-full p-8 shadow-2xl border-4 border-white cursor-grab active:cursor-grabbing",
+    drag: true,
+    dragConstraints: {
+      left: 0,
+      right: 0,
+      top: 0,
+      bottom: 0
+    } // Just for feel
+    ,
+    dragElastic: 0.2,
+    onDragEnd: (e, info) => {
+      // Simple proximity check? Or just buttons for simplicity on mobile web
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-9xl filter drop-shadow-lg"
+  }, currentItem.icon))), feedback && /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      scale: 0.5,
+      opacity: 0
+    },
+    animate: {
+      scale: 1.2,
+      opacity: 1
+    },
+    exit: {
+      opacity: 0
+    },
+    className: `absolute text-4xl font-black ${feedback === "correct" ? "text-green-600" : "text-red-500"}`
+  }, getText(feedback))), /*#__PURE__*/React.createElement("p", {
+    className: "font-bold text-green-800 mb-4"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-3 gap-4 w-full max-w-4xl mb-8"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => handleSort("most"),
+    className: "flex flex-col items-center bg-green-100 hover:bg-green-200 border-4 border-green-400 rounded-3xl p-4 transition-transform active:scale-95 group"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl mb-2 group-hover:scale-110 transition-transform"
+  }, "🥦"), /*#__PURE__*/React.createElement("span", {
+    className: "font-black text-green-800 text-lg md:text-xl"
+  }, getText("most"))), /*#__PURE__*/React.createElement("button", {
+    onClick: () => handleSort("moderate"),
+    className: "flex flex-col items-center bg-yellow-100 hover:bg-yellow-200 border-4 border-yellow-400 rounded-3xl p-4 transition-transform active:scale-95 group"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl mb-2 group-hover:scale-110 transition-transform"
+  }, "🐟"), /*#__PURE__*/React.createElement("span", {
+    className: "font-black text-yellow-800 text-lg md:text-xl"
+  }, getText("moderate"))), /*#__PURE__*/React.createElement("button", {
+    onClick: () => handleSort("less"),
+    className: "flex flex-col items-center bg-red-100 hover:bg-red-200 border-4 border-red-400 rounded-3xl p-4 transition-transform active:scale-95 group"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl mb-2 group-hover:scale-110 transition-transform"
+  }, "🍭"), /*#__PURE__*/React.createElement("span", {
+    className: "font-black text-red-800 text-lg md:text-xl"
+  }, getText("less")))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

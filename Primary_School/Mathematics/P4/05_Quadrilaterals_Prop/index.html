@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小四數學：四邊形家族 | Quadrilaterals</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+      crossorigin
+    ></script>
+    <script
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+      crossorigin
+    ></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #ddd6fe 0%, #c4b5fd 100%);
+        min-height: 100vh;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Quadrilateral Family",
+    zh: "四邊形家族",
+    ja: "四角形の家族",
+    ko: "사각형 가족",
+    es: "Familia de Cuadriláteros",
+    de: "Viereck-Familie",
+    fi: "Nelikulmioperhe",
+    fr: "Famille des quadrilatères",
+    ar: "عائلة الأشكال الرباعية",
+    it: "Famiglia dei quadrilateri"
+  },
+  square: {
+    en: "Square",
+    zh: "正方形",
+    ja: "正方形",
+    ko: "정사각형",
+    es: "Cuadrado",
+    de: "Quadrat",
+    fi: "Neliö",
+    fr: "Carré",
+    ar: "مربع",
+    it: "Quadrato"
+  },
+  rectangle: {
+    en: "Rectangle",
+    zh: "長方形",
+    ja: "長方形",
+    ko: "직사각형",
+    es: "Rectángulo",
+    de: "Rechteck",
+    fi: "Suorakulmio",
+    fr: "Rectangle",
+    ar: "مستطيل",
+    it: "Rettangolo"
+  },
+  parallelogram: {
+    en: "Parallelogram",
+    zh: "平行四邊形",
+    ja: "平行四辺形",
+    ko: "평행사변형",
+    es: "Paralelogramo",
+    de: "Parallelogramm",
+    fi: "Suunnikas",
+    fr: "Parallélogramme",
+    ar: "متوازي الاضلاع",
+    it: "Parallelogramma"
+  },
+  rhombus: {
+    en: "Rhombus",
+    zh: "菱形",
+    ja: "菱形",
+    ko: "마름모",
+    es: "Rombo",
+    de: "Raute",
+    fi: "Vinoneliö",
+    fr: "Losange",
+    ar: "معين",
+    it: "Rombo"
+  },
+  trapezium: {
+    en: "Trapezium",
+    zh: "梯形",
+    ja: "台形",
+    ko: "사다리꼴",
+    es: "Trapecio",
+    de: "Trapez",
+    fi: "Puolisuunnikas",
+    fr: "Trapèze",
+    ar: "شبه منحرف",
+    it: "Trapezio"
+  },
+  properties: {
+    en: "Properties:",
+    zh: "特性：",
+    ja: "特性：",
+    ko: "특성:",
+    es: "Propiedades:",
+    de: "Eigenschaften:",
+    fi: "Ominaisuudet:",
+    fr: "Propriétés :",
+    ar: "الخصائص:",
+    it: "Proprietà:"
+  },
+  propSquare1: {
+    en: "Four equal sides",
+    zh: "四邊相等",
+    ja: "4つの辺が等しい",
+    ko: "네 변의 길이가 같음",
+    es: "Cuatro lados iguales",
+    de: "Vier gleiche Seiten",
+    fi: "Neljä yhtä suurta sivua",
+    fr: "Quatre côtés égaux",
+    ar: "أربعة أضلاع متساوية",
+    it: "Quattro lati uguali"
+  },
+  propSquare2: {
+    en: "Four right angles (90°)",
+    zh: "四個直角",
+    ja: "4つの直角",
+    ko: "네 개의 직각",
+    es: "Cuatro ángulos rectos",
+    de: "Vier rechte Winkel",
+    fi: "Neljä suoraa kulmaa",
+    fr: "Quatre angles droits",
+    ar: "أربع زوايا قائمة",
+    it: "Quattro angoli retti"
+  },
+  propParallel2: {
+    en: "Two pairs of parallel sides",
+    zh: "兩組對邊平行",
+    ja: "2組の対辺が平行",
+    ko: "두 쌍의 대변이 평행",
+    es: "Dos pares de lados paralelos",
+    de: "Zwei Paare paralleler Seiten",
+    fi: "Kaksi paria yhdensuuntaisia sivuja",
+    fr: "Deux paires de côtés parallèles",
+    ar: "زوجان من الأضلاع المتوازية",
+    it: "Due coppie di lati paralleli"
+  },
+  propRect1: {
+    en: "Opposite sides equal",
+    zh: "對邊相等",
+    ja: "対辺が等しい",
+    ko: "대변의 길이가 같음",
+    es: "Lados opuestos iguales",
+    de: "Gegenüberliegende Seiten gleich",
+    fi: "Vastakkaiset sivut yhtä suuret",
+    fr: "Côtés opposés égaux",
+    ar: "الأضلاع المتقابلة متساوية",
+    it: "Lati opposti uguali"
+  },
+  propOppAngles: {
+    en: "Opposite angles equal",
+    zh: "對角相等",
+    ja: "対角が等しい",
+    ko: "대각의 크기가 같음",
+    es: "Ángulos opuestos iguales",
+    de: "Gegenüberliegende Winkel gleich",
+    fi: "Vastakkaiset kulmat yhtä suuret",
+    fr: "Angles opposés égaux",
+    ar: "الزوايا المتقابلة متساوية",
+    it: "Angoli opposti uguali"
+  },
+  propNoRight: {
+    en: "No right angles (usually)",
+    zh: "沒有直角(通常)",
+    ja: "直角なし（通常）",
+    ko: "직각이 아님 (보통)",
+    es: "Sin ángulos rectos (usualmente)",
+    de: "Keine rechten Winkel (normalerweise)",
+    fi: "Ei suoria kulmia (yleensä)",
+    fr: "Pas d'angles droits (généralement)",
+    ar: "لا توجد زوايا قائمة (عادة)",
+    it: "Nessun angolo retto (di solito)"
+  },
+  propTrap1: {
+    en: "Only one pair of parallel sides",
+    zh: "只有一組對邊平行",
+    ja: "1組の対辺のみ平行",
+    ko: "한 쌍의 대변만 평행",
+    es: "Solo un par de lados paralelos",
+    de: "Nur ein Paar paralleler Seiten",
+    fi: "Vain yksi pari yhdensuuntaisia sivuja",
+    fr: "Une seule paire de côtés parallèles",
+    ar: "زوج واحد فقط من الأضلاع المتوازية",
+    it: "Solo una coppia di lati paralleli"
+  }
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [shape, setShape] = useState("square");
+  const getText = key => t[key][lang] || t[key]["en"];
+  const shapes = [{
+    id: "square",
+    nameKey: "square",
+    props: ["propSquare1", "propSquare2", "propParallel2"]
+  }, {
+    id: "rectangle",
+    nameKey: "rectangle",
+    props: ["propRect1", "propSquare2", "propParallel2"]
+  }, {
+    id: "parallelogram",
+    nameKey: "parallelogram",
+    props: ["propRect1", "propOppAngles", "propParallel2", "propNoRight"]
+  }, {
+    id: "rhombus",
+    nameKey: "rhombus",
+    props: ["propSquare1", "propOppAngles", "propParallel2"]
+  }, {
+    id: "trapezium",
+    nameKey: "trapezium",
+    props: ["propTrap1"]
+  }];
+  const current = shapes.find(s => s.id === shape);
+
+  // SVG Paths calculation
+  const size = 200;
+  const center = 250;
+  const top = 150;
+  const getPath = id => {
+    switch (id) {
+      case "square":
+        return `M150,150 L350,150 L350,350 L150,350 Z`;
+      // 200x200
+      case "rectangle":
+        return `M100,150 L400,150 L400,350 L100,350 Z`;
+      // 300x200
+      case "parallelogram":
+        return `M150,150 L400,150 L350,350 L100,350 Z`;
+      // Skewed
+      case "rhombus":
+        return `M250,100 L400,250 L250,400 L100,250 Z`;
+      // Diamond
+      case "trapezium":
+        return `M180,150 L320,150 L400,350 L100,350 Z`;
+      // Trapezoid
+      default:
+        return "";
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-8 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-violet-900 mb-8 mt-8"
+  }, "🔶 ", getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/90 backdrop-blur-md rounded-3xl p-8 shadow-2xl w-full max-w-5xl flex flex-col lg:flex-row gap-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "lg:w-1/3 space-y-3"
+  }, shapes.map(s => /*#__PURE__*/React.createElement("button", {
+    key: s.id,
+    onClick: () => setShape(s.id),
+    className: `w-full py-4 px-6 rounded-xl font-bold text-left transition-all ${shape === s.id ? "bg-violet-600 text-white shadow-lg scale-105" : "bg-violet-50 text-violet-800 hover:bg-violet-100"}`
+  }, getText(s.nameKey)))), /*#__PURE__*/React.createElement("div", {
+    className: "lg:w-2/3 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "relative w-[500px] h-[500px] bg-slate-50 rounded-3xl border-2 border-slate-200 mb-8 flex items-center justify-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 opacity-30",
+    style: {
+      backgroundImage: "radial-gradient(#a78bfa 2px, transparent 2px)",
+      backgroundSize: "25px 25px"
+    }
+  }), /*#__PURE__*/React.createElement("svg", {
+    width: "500",
+    height: "500",
+    className: "relative z-10 drop-shadow-xl"
+  }, /*#__PURE__*/React.createElement(motion.path, {
+    d: getPath(shape),
+    fill: "rgba(139, 92, 246, 0.2)",
+    stroke: "#7c3aed",
+    strokeWidth: "5",
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+    initial: {
+      pathLength: 0,
+      opacity: 0
+    },
+    animate: {
+      pathLength: 1,
+      opacity: 1,
+      d: getPath(shape)
+    },
+    transition: {
+      duration: 0.5
+    }
+  }))), /*#__PURE__*/React.createElement(motion.div, {
+    key: shape,
+    initial: {
+      opacity: 0,
+      y: 20
+    },
+    animate: {
+      opacity: 1,
+      y: 0
+    },
+    className: "bg-violet-100 p-6 rounded-2xl w-full"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-2xl font-black text-violet-900 mb-4"
+  }, getText(current.nameKey), " ", getText("properties")), /*#__PURE__*/React.createElement("ul", {
+    className: "space-y-2"
+  }, current.props.map((p, i) => /*#__PURE__*/React.createElement("li", {
+    key: i,
+    className: "flex items-center gap-3 text-lg font-bold text-violet-800"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "w-6 h-6 rounded-full bg-violet-400 flex items-center justify-center text-white text-xs"
+  }, "✓"), getText(p))))))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

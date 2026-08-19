@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Linear Systems 2D | M2 Matrix</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+      }
+      .glass {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .draggable {
+        cursor: move;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <div id="root" class="flex-grow flex flex-col"></div>
+    <script>
+const {
+  useState,
+  useRef
+} = React;
+const translations = {
+  en: {
+    unit: "Unit 4: Matrices",
+    title: "Linear Systems (2D)",
+    subtitle: "Visual Intersection",
+    intersectPt: "Intersection Point",
+    parallel: "PARALLEL",
+    langBtn: "中文"
+  },
+  zh: {
+    unit: "第四單元：矩陣",
+    title: "線性方程組 (2D)",
+    subtitle: "交點視覺化",
+    intersectPt: "交點",
+    parallel: "平行 (無交點)",
+    langBtn: "English"
+  }
+};
+const App = () => {
+  // System of 2 lines. Each line defined by two points for UI handles.
+  // Line 1: points p1, p2
+  // Line 2: points q1, q2
+
+  const [lang, setLang] = useState("en");
+  const t = translations[lang];
+  const [p1, setP1] = useState({
+    x: -5,
+    y: -1
+  });
+  const [p2, setP2] = useState({
+    x: 3,
+    y: 4
+  });
+  const [q1, setQ1] = useState({
+    x: -2,
+    y: 5
+  });
+  const [q2, setQ2] = useState({
+    x: 4,
+    y: -2
+  });
+  const [dragging, setDragging] = useState(null); // 'p1','p2','q1','q2'
+
+  // Coords
+  const w = 600,
+    h = 600;
+  const range = 10;
+  const scale = w / (2 * range);
+  const originX = w / 2,
+    originY = h / 2;
+  const toScreen = (x, y) => ({
+    x: originX + x * scale,
+    y: originY - y * scale
+  });
+  const fromScreen = (sx, sy) => ({
+    x: (sx - originX) / scale,
+    y: (originY - sy) / scale
+  });
+  const handleMouseMove = e => {
+    if (!dragging) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const pt = fromScreen(e.clientX - rect.left, e.clientY - rect.top);
+
+    // Snap
+    if (Math.abs(pt.x - Math.round(pt.x)) < 0.2) pt.x = Math.round(pt.x);
+    if (Math.abs(pt.y - Math.round(pt.y)) < 0.2) pt.y = Math.round(pt.y);
+    if (dragging === "p1") setP1(pt);
+    if (dragging === "p2") setP2(pt);
+    if (dragging === "q1") setQ1(pt);
+    if (dragging === "q2") setQ2(pt);
+  };
+
+  // Intersection Solve
+  const dx1 = p2.x - p1.x,
+    dy1 = p2.y - p1.y;
+  const dx2 = q2.x - q1.x,
+    dy2 = q2.y - q1.y;
+  const det = dx1 * -dy2 - -dx2 * dy1;
+  let sol = null;
+  if (Math.abs(det) < 0.001) {
+    // Parallel logic
+  } else {
+    const rhsX = q1.x - p1.x;
+    const rhsY = q1.y - p1.y;
+    const t = (rhsX * -dy2 - -dx2 * rhsY) / det;
+    sol = {
+      x: p1.x + t * dx1,
+      y: p1.y + t * dy1
+    };
+  }
+
+  // Render Lines
+  const ext = 20;
+  const pExt1 = {
+    x: p1.x - dx1 * ext,
+    y: p1.y - dy1 * ext
+  };
+  const pExt2 = {
+    x: p2.x + dx1 * ext,
+    y: p2.y + dy1 * ext
+  };
+  const qExt1 = {
+    x: q1.x - dx2 * ext,
+    y: q1.y - dy2 * ext
+  };
+  const qExt2 = {
+    x: q2.x + dx2 * ext,
+    y: q2.y + dy2 * ext
+  };
+  const LineHandle = ({
+    pt,
+    color,
+    id
+  }) => /*#__PURE__*/React.createElement("circle", {
+    cx: toScreen(pt.x, pt.y).x,
+    cy: toScreen(pt.x, pt.y).y,
+    r: "8",
+    fill: color,
+    stroke: "white",
+    strokeWidth: "2",
+    className: "draggable hover:scale-125 transition-transform",
+    onMouseDown: () => setDragging(id)
+  });
+  return /*#__PURE__*/React.createElement("div", {
+    className: "flex-grow flex flex-col items-center justify-center p-8 select-none",
+    onMouseUp: () => setDragging(null)
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 right-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLang(l => l === "en" ? "zh" : "en"),
+    className: "px-3 py-1 bg-slate-800 border border-slate-600 rounded-full text-xs font-bold text-emerald-400 hover:bg-slate-700 hover:text-white transition flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-language"
+  }), t.langBtn)), /*#__PURE__*/React.createElement("header", {
+    className: "mb-8 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-emerald-500 font-bold uppercase tracking-widest text-xs mb-2"
+  }, t.unit), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-white mb-2"
+  }, t.title), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-400 font-mono text-lg"
+  }, t.subtitle)), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col lg:flex-row gap-8 w-full max-w-6xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 glass p-6 rounded-3xl relative"
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: "100%",
+    height: "600",
+    viewBox: "0 0 600 600",
+    className: "overflow-hidden bg-slate-900 rounded-xl cursor-crosshair",
+    onMouseMove: handleMouseMove
+  }, /*#__PURE__*/React.createElement("line", {
+    x1: originX,
+    y1: "0",
+    x2: originX,
+    y2: h,
+    stroke: "#334155",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "0",
+    y1: originY,
+    x2: w,
+    y2: originY,
+    stroke: "#334155",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: toScreen(pExt1.x, pExt1.y).x,
+    y1: toScreen(pExt1.x, pExt1.y).y,
+    x2: toScreen(pExt2.x, pExt2.y).x,
+    y2: toScreen(pExt2.x, pExt2.y).y,
+    stroke: "#ec4899",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: toScreen(qExt1.x, qExt1.y).x,
+    y1: toScreen(qExt1.x, qExt1.y).y,
+    x2: toScreen(qExt2.x, qExt2.y).x,
+    y2: toScreen(qExt2.x, qExt2.y).y,
+    stroke: "#38bdf8",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement(LineHandle, {
+    pt: p1,
+    color: "#ec4899",
+    id: "p1"
+  }), /*#__PURE__*/React.createElement(LineHandle, {
+    pt: p2,
+    color: "#ec4899",
+    id: "p2"
+  }), /*#__PURE__*/React.createElement(LineHandle, {
+    pt: q1,
+    color: "#38bdf8",
+    id: "q1"
+  }), /*#__PURE__*/React.createElement(LineHandle, {
+    pt: q2,
+    color: "#38bdf8",
+    id: "q2"
+  }), sol && /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("circle", {
+    cx: toScreen(sol.x, sol.y).x,
+    cy: toScreen(sol.x, sol.y).y,
+    r: "10",
+    fill: "transparent",
+    stroke: "#10b981",
+    strokeWidth: "3"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: toScreen(sol.x, sol.y).x,
+    cy: toScreen(sol.x, sol.y).y,
+    r: "4",
+    fill: "#10b981"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: toScreen(sol.x, sol.y).x + 15,
+    y: toScreen(sol.x, sol.y).y,
+    fill: "#10b981",
+    fontWeight: "bold"
+  }, "(", sol.x.toFixed(2), ", ", sol.y.toFixed(2), ")")))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full lg:w-80 space-y-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass p-6 rounded-2xl"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-lg font-bold text-white mb-4"
+  }, t.intersectPt), /*#__PURE__*/React.createElement("div", {
+    className: `p-4 rounded-xl text-center mb-4 ${sol ? "bg-emerald-900/30 border border-emerald-500/30" : "bg-rose-900/30 border border-rose-500/30"}`
+  }, sol ? /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-mono text-emerald-400 font-bold"
+  }, sol.x.toFixed(2), ", ", sol.y.toFixed(2)) : /*#__PURE__*/React.createElement("div", {
+    className: "text-xl font-mono text-rose-400 font-bold"
+  }, t.parallel))))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

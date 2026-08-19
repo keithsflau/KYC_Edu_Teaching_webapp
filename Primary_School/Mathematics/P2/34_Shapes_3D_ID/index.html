@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小二數學：立體圖形 | 3D Shapes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #fae8ff 0%, #c026d3 100%);
+      }
+      .scene {
+        perspective: 600px;
+        width: 200px;
+        height: 200px;
+        margin: 0 auto;
+      }
+      .cube,
+      .prism {
+        transform-style: preserve-3d;
+        animation: rotate 10s infinite linear;
+      }
+      @keyframes rotate {
+        0% {
+          transform: rotateX(-20deg) rotateY(0deg);
+        }
+        100% {
+          transform: rotateX(-20deg) rotateY(360deg);
+        }
+      }
+      .face {
+        position: absolute;
+        border: 2px solid rgba(0, 0, 0, 0.2);
+        opacity: 0.8;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "🧊 3D Shapes",
+    zh: "🧊 立體圖形",
+    ja: "🧊 3D図形",
+    ko: "🧊 입체 도형",
+    es: "🧊 Formas 3D",
+    de: "🧊 3D-Formen",
+    fi: "🧊 3D-muodot",
+    fr: "🧊 Formes 3D",
+    ar: "🧊 أشكال ثلاثية الأبعاد",
+    it: "🧊 Forme 3D"
+  },
+  whatShape: {
+    en: "What shape is this?",
+    zh: "這是甚麼圖形？",
+    ja: "これは何の形ですか？",
+    ko: "이것은 어떤 모양입니까?",
+    es: "¿Qué forma es esta?",
+    de: "Welche Form ist das?",
+    fi: "Mikä muoto tämä on?",
+    fr: "Quelle est cette forme ?",
+    ar: "ما هذا الشكل؟",
+    it: "Che forma è questa?"
+  },
+  check: {
+    en: "Check",
+    zh: "檢查",
+    ja: "確認",
+    ko: "확인",
+    es: "Comprobar",
+    de: "Prüfen",
+    fi: "Tarkista",
+    fr: "Vérifier",
+    ar: "تحقق",
+    it: "Controlla"
+  }
+};
+const shapesData = [{
+  id: "cube",
+  name: {
+    zh: "正方體",
+    en: "Cube",
+    ja: "立方体"
+  },
+  type: "cube"
+}, {
+  id: "cuboid",
+  name: {
+    zh: "長方體",
+    en: "Cuboid",
+    ja: "直方体"
+  },
+  type: "cuboid"
+}, {
+  id: "cylinder",
+  name: {
+    zh: "圓柱體",
+    en: "Cylinder",
+    ja: "円柱"
+  },
+  type: "cylinder"
+}, {
+  id: "sphere",
+  name: {
+    zh: "球體",
+    en: "Sphere",
+    ja: "球"
+  },
+  type: "sphere"
+}, {
+  id: "cone",
+  name: {
+    zh: "圓錐體",
+    en: "Cone",
+    ja: "円錐"
+  },
+  type: "cone"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [current, setCurrent] = useState(null);
+  const [options, setOptions] = useState([]);
+  const [feedback, setFeedback] = useState("");
+  const next = () => {
+    setFeedback("");
+    const c = shapesData[Math.floor(Math.random() * shapesData.length)];
+    setCurrent(c);
+    // Generate options
+    let opts = shapesData.filter(s => s.id !== c.id);
+    opts.sort(() => Math.random() - 0.5);
+    opts = opts.slice(0, 3);
+    opts.push(c);
+    opts.sort(() => Math.random() - 0.5);
+    setOptions(opts);
+  };
+  useEffect(next, []);
+  const check = sel => {
+    if (sel.id === current.id) {
+      setFeedback("CORRECT");
+      setTimeout(next, 1500);
+    } else {
+      setFeedback("WRONG");
+    }
+  };
+  if (!current) return /*#__PURE__*/React.createElement("div", null, "Loading...");
+  const getShapeName = s => s.name[lang] || s.name["en"];
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-8 flex flex-col items-center justify-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-fuchsia-900 mb-8 max-w-2xl text-center"
+  }, t.title[lang] || t.title["en"]), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/90 rounded-3xl p-8 shadow-2xl w-full max-w-4xl text-center border-4 border-fuchsia-300"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "h-64 flex items-center justify-center mb-8 bg-fuchsia-50 rounded-2xl overflow-hidden relative"
+  }, current.type === "cube" && /*#__PURE__*/React.createElement("div", {
+    className: "scene"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "cube w-32 h-32 relative top-16 left-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "face bg-red-400 w-32 h-32 translate-z-[64px]",
+    style: {
+      transform: "translateZ(64px)"
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "face bg-red-500 w-32 h-32",
+    style: {
+      transform: "rotateY(90deg) translateZ(64px)"
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "face bg-red-400 w-32 h-32",
+    style: {
+      transform: "rotateY(180deg) translateZ(64px)"
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "face bg-red-500 w-32 h-32",
+    style: {
+      transform: "rotateY(-90deg) translateZ(64px)"
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "face bg-red-600 w-32 h-32",
+    style: {
+      transform: "rotateX(90deg) translateZ(64px)"
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "face bg-red-600 w-32 h-32",
+    style: {
+      transform: "rotateX(-90deg) translateZ(64px)"
+    }
+  }))), current.type === "cuboid" && /*#__PURE__*/React.createElement("div", {
+    className: "scene"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "cube w-48 h-24 relative top-20 left-0"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "face bg-blue-400 w-48 h-24",
+    style: {
+      transform: "translateZ(32px)"
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "face bg-blue-500 w-16 h-24",
+    style: {
+      transform: "rotateY(90deg) translateZ(216px)",
+      left: "-64px"
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-[10rem]"
+  }, "📦"))), current.type === "cylinder" && /*#__PURE__*/React.createElement("div", {
+    className: "text-[10rem]"
+  }, "🛢️"), current.type === "sphere" && /*#__PURE__*/React.createElement("div", {
+    className: "text-[10rem]"
+  }, "⚽"), current.type === "cone" && /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center justify-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 0,
+      height: 0,
+      borderLeft: "70px solid transparent",
+      borderRight: "70px solid transparent",
+      borderBottom: "140px solid #f59e0b",
+      filter: "drop-shadow(4px 6px 0 #d97706)"
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "w-36 h-4 bg-amber-600 rounded-full -mt-1"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "text-xl text-slate-500 mb-8 font-bold"
+  }, t.whatShape[lang] || t.whatShape["en"]), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-1 md:grid-cols-2 gap-4"
+  }, options.map((opt, i) => /*#__PURE__*/React.createElement("button", {
+    key: i,
+    onClick: () => check(opt),
+    className: "bg-white hover:bg-fuchsia-100 border-2 border-fuchsia-200 rounded-xl p-4 text-xl font-bold text-slate-700 shadow-sm transition-all active:scale-95"
+  }, getShapeName(opt)))), /*#__PURE__*/React.createElement("div", {
+    className: "h-16 mt-6"
+  }, feedback === "CORRECT" && /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black text-green-500 animate-bounce"
+  }, get("correct", lang)), feedback === "WRONG" && /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black text-red-500 animate-shake"
+  }, get("wrong", lang)))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

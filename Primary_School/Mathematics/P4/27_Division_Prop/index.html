@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小四數學：除法性質 | Division Properties</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #fecdd3 0%, #f43f5e 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState
+} = React;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Is Division Commutative?",
+    zh: "除法可以交換嗎？",
+    ja: "割り算は交換可能ですか？",
+    ko: "나눗셈은 교환법칙이 성립합니까?",
+    es: "¿Es Conmutativa la División?",
+    de: "Ist Division kommutativ?",
+    fi: "Onko jakolasku vaihdannainen?",
+    fr: "La division est-elle commutative ?",
+    ar: "هل القسمة تبادلية؟",
+    it: "La divisione è commutativa?"
+  },
+  case1: {
+    en: "Case 1: {A} ÷ {B}",
+    zh: "情況一：{A} ÷ {B}",
+    ja: "ケース 1：{A} ÷ {B}",
+    ko: "경우 1: {A} ÷ {B}",
+    es: "Caso 1: {A} ÷ {B}",
+    de: "Fall 1: {A} ÷ {B}",
+    fi: "Tapaus 1: {A} ÷ {B}",
+    fr: "Cas 1 : {A} ÷ {B}",
+    ar: "المحاولة 1: {A} ÷ {B}",
+    it: "Caso 1: {A} ÷ {B}"
+  },
+  splitInto: {
+    en: "Split into {n} ➜",
+    zh: "分成 {n} 份 ➜",
+    ja: "{n} に分割 ➜",
+    ko: "{n} 등분 ➜",
+    es: "Dividir en {n} ➜",
+    de: "Aufteilen in {n} ➜",
+    fi: "Jaa {n} osaan ➜",
+    fr: "Diviser en {n} ➜",
+    ar: "تقسيم إلى {n} ➜",
+    it: "Dividi in {n} ➜"
+  },
+  integer: {
+    en: "= {n} (Integer)",
+    zh: "= {n} (整數)",
+    ja: "= {n} (整数)",
+    ko: "= {n} (정수)",
+    es: "= {n} (Entero)",
+    de: "= {n} (Ganze Zahl)",
+    fi: "= {n} (Kokonaisluku)",
+    fr: "= {n} (Entier)",
+    ar: "= {n} (عدد صحيح)",
+    it: "= {n} (Intero)"
+  },
+  case2: {
+    en: "Case 2: {B} ÷ {A}",
+    zh: "情況二：{B} ÷ {A}",
+    ja: "ケース 2：{B} ÷ {A}",
+    ko: "경우 2: {B} ÷ {A}",
+    es: "Caso 2: {B} ÷ {A}",
+    de: "Fall 2: {B} ÷ {A}",
+    fi: "Tapaus 2: {B} ÷ {A}",
+    fr: "Cas 2 : {B} ÷ {A}",
+    ar: "المحاولة 2: {B} ÷ {A}",
+    it: "Caso 2: {B} ÷ {A}"
+  },
+  notEnough: {
+    en: "Not enough! Less than 1 per group!",
+    zh: "不夠分！每份連一個也沒有！",
+    ja: "足りません！各グループに1つ未満です！",
+    ko: "충분하지 않습니다! 그룹당 1개 미만입니다!",
+    es: "¡No es suficiente! ¡Menos de 1 por grupo!",
+    de: "Nicht genug! Weniger als 1 pro Gruppe!",
+    fi: "Ei riitä! Vähemmän kuin 1 per ryhmä!",
+    fr: "Pas assez ! Moins de 1 par groupe !",
+    ar: "غير كاف! أقل من 1 لكل مجموعة!",
+    it: "Non abbastanza! Meno di 1 per gruppo!"
+  },
+  decimal: {
+    en: "= {n}... (Decimal/Fraction)",
+    zh: "= {n}... (小數/分數)",
+    ja: "= {n}... (小数/分数)",
+    ko: "= {n}... (소수/분수)",
+    es: "= {n}... (Decimal/Fracción)",
+    de: "= {n}... (Dezimal/Bruch)",
+    fi: "= {n}... (Desimaali/Murtoluku)",
+    fr: "= {n}... (Décimal/Fraction)",
+    ar: "= {n}... (عشري/كسر)",
+    it: "= {n}... (Decimale/Frazione)"
+  },
+  conclusion: {
+    en: "Conclusion: Division is NOT commutative!",
+    zh: "結論：除法不遵守交換律！",
+    ja: "結論：割り算は交換法則に従いません！",
+    ko: "결론: 나눗셈은 교환법칙이 성립하지 않습니다!",
+    es: "Conclusión: ¡La división NO es conmutativa!",
+    de: "Fazit: Division ist NICHT kommutativ!",
+    fi: "Johtopäätös: Jakolasku EI ole vaihdannainen!",
+    fr: "Conclusion : La division N'EST PAS commutative !",
+    ar: "الخلاصة: القسمة ليست تبادلية!",
+    it: "Conclusione: La divisione NON è commutativa!"
+  }
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const getText = key => t[key][lang] || t[key]["en"];
+
+  // Demonstrate 12 / 4 != 4 / 12
+  const A = 12;
+  const B = 4;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-8 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-rose-900 mb-8 mt-8"
+  }, "🚫 ", getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/95 backdrop-blur-md rounded-3xl p-8 shadow-2xl max-w-4xl w-full flex flex-col gap-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-green-50 p-6 rounded-2xl border-2 border-green-200"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-2xl font-black text-green-700 mb-4"
+  }, getText("case1").replace("{A}", A).replace("{B}", B)), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-wrap gap-4 items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-wrap w-48 gap-1 p-2 bg-white rounded-lg border border-slate-200"
+  }, [...Array(A)].map((_, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "w-6 h-6 bg-green-500 rounded-full"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "text-xl font-bold"
+  }, getText("splitInto").replace("{n}", B)), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4"
+  }, [...Array(B)].map((_, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "p-2 border-2 border-green-400 rounded-lg bg-white"
+  }, [...Array(A / B)].map((_, j) => /*#__PURE__*/React.createElement("div", {
+    key: j,
+    className: "w-4 h-4 bg-green-500 rounded-full inline-block m-0.5"
+  }))))), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-black text-green-800"
+  }, getText("integer").replace("{n}", A / B)))), /*#__PURE__*/React.createElement("div", {
+    className: "text-center text-4xl font-black text-rose-500"
+  }, "≠"), /*#__PURE__*/React.createElement("div", {
+    className: "bg-red-50 p-6 rounded-2xl border-2 border-red-200"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-2xl font-black text-red-700 mb-4"
+  }, getText("case2").replace("{B}", B).replace("{A}", A)), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-wrap gap-4 items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-wrap w-24 gap-1 p-2 bg-white rounded-lg border border-slate-200"
+  }, [...Array(B)].map((_, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "w-6 h-6 bg-red-500 rounded-full"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "text-xl font-bold"
+  }, getText("splitInto").replace("{n}", A), "？！"), /*#__PURE__*/React.createElement("div", {
+    className: "text-red-800 font-bold text-lg"
+  }, getText("notEnough"), /*#__PURE__*/React.createElement("br", null), B, " ÷ ", A, " ", getText("decimal").replace("{n}", (B / A).toFixed(2))))), /*#__PURE__*/React.createElement("div", {
+    className: "text-center font-bold text-slate-600 text-xl"
+  }, getText("conclusion"))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

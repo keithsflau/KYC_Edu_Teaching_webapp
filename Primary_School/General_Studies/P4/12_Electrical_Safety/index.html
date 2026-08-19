@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - Electrical Safety</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: #ef4444;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Electrical Safety Hunt",
+    zh: "家居用電安全",
+    ja: "電気安全ハント",
+    ko: "전기 안전 찾기",
+    es: "Caza de seguridad eléctrica",
+    de: "Suche nach elektrischer Sicherheit",
+    fi: "Sähköturvallisuuden metsästys",
+    fr: "Chasse à la sécurité électrique",
+    ar: "البحث عن السلامة الكهربائية",
+    it: "Caccia alla Sicurezza Elettrica"
+  },
+  instruction: {
+    en: "Tap the dangerous spots! (3 Hazards)",
+    zh: "點擊危險的地方！(3個隱患)",
+    ja: "危険な場所をタップしてください！(3つの危険)",
+    ko: "위험한 곳을 탭하세요! (3가지 위험)",
+    es: "¡Toca los lugares peligrosos! (3 peligros)",
+    de: "Tippe auf die gefährlichen Stellen! (3 Gefahren)",
+    fi: "Napauta vaarallisia paikkoja! (3 vaaraa)",
+    fr: "Tapez sur les endroits dangereux ! (3 dangers)",
+    ar: "اضغط على الأماكن الخطرة! (3 مخاطر)",
+    it: "Tocca i punti pericolosi! (3 Pericoli)"
+  },
+  found: {
+    en: "Danger Found!",
+    zh: "發現危險！",
+    ja: "危険発見！",
+    ko: "위험 발견!",
+    es: "¡Peligro encontrado!",
+    de: "Gefahr gefunden!",
+    fi: "Vaara löydetty!",
+    fr: "Danger trouvé !",
+    ar: "تم العثور على خطر!",
+    it: "Pericolo Trovato!"
+  },
+  wet_hands: {
+    en: "Don't touch switches with wet hands!",
+    zh: "切勿濕手觸摸開關！",
+    ja: "濡れた手でスイッチに触れないでください！",
+    ko: "젖은 손으로 스위치를 만지지 마세요!",
+    es: "¡No toques los interruptores con las manos mojadas!",
+    de: "Berühre Schalter nicht mit nassen Händen!",
+    fi: "Älä koske katkaisijoihin märin käsin!",
+    fr: "Ne touchez pas les interrupteurs avec les mains mouillées !",
+    ar: "لا تلمس المفاتيح ويديك مبتلة!",
+    it: "Non toccare gli interruttori con le mani bagnate!"
+  },
+  overload: {
+    en: "Avoid overloading sockets!",
+    zh: "避免插座過載！",
+    ja: "コンセントの過負荷を避けてください！",
+    ko: "소켓 과부하를 피하세요!",
+    es: "¡Evita sobrecargar los enchufes!",
+    de: "Vermeide Überlastung der Steckdosen!",
+    fi: "Vältä pistorasioiden ylikuormitusta!",
+    fr: "Évitez de surcharger les prises !",
+    ar: "تجنب التحميل الزائد للمقابس!",
+    it: "Evita di sovraccaricare le prese!"
+  },
+  frayed: {
+    en: "Replace damaged wires!",
+    zh: "更換損壞的電線！",
+    ja: "損傷したワイヤーを交換してください！",
+    ko: "손상된 전선은 교체하세요!",
+    es: "¡Reemplaza los cables dañados!",
+    de: "Ersetze beschädigte Kabel!",
+    fi: "Vaihda vaurioituneet johdot!",
+    fr: "Remplacez les fils endommagés !",
+    ar: "استبدل الأسلاك التالفة!",
+    it: "Sostituisci i fili danneggiati!"
+  },
+  complete: {
+    en: "Safety Check Complete!",
+    zh: "安全檢查完成！",
+    ja: "安全確認完了！",
+    ko: "안전 점검 완료!",
+    es: "¡Control de seguridad completado!",
+    de: "Sicherheitsüberprüfung abgeschlossen!",
+    fi: "Turvallisuustarkastus valmis!",
+    fr: "Contrôle de sécurité terminé !",
+    ar: "اكتمل فحص السلامة!",
+    it: "Controllo Sicurezza Completato!"
+  },
+  reset: {
+    en: "Play Again",
+    zh: "再玩一次",
+    ja: "もう一度プレイ",
+    ko: "다시 하기",
+    es: "Jugar de Nuevo",
+    de: "Nochmal spielen",
+    fi: "Pelaa uudelleen",
+    fr: "Rejouer",
+    ar: "العب مرة أخرى",
+    it: "Gioca di Nuovo"
+  }
+};
+const hazards = [{
+  id: "wet_hands",
+  x: 20,
+  y: 40,
+  w: 20,
+  h: 20,
+  icon: "🖐️💦",
+  msg: "wet_hands"
+}, {
+  id: "overload",
+  x: 70,
+  y: 70,
+  w: 15,
+  h: 15,
+  icon: "🔌🔥",
+  msg: "overload"
+}, {
+  id: "frayed",
+  x: 45,
+  y: 80,
+  w: 20,
+  h: 10,
+  icon: "⚡🐍",
+  msg: "frayed"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [found, setFound] = useState([]); // ids
+  const [showPopup, setShowPopup] = useState(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+  const handleHazardClick = h => {
+    if (found.includes(h.id)) return;
+    setFound([...found, h.id]);
+    setShowPopup(h);
+  };
+  const closePopup = () => setShowPopup(null);
+  const reset = () => {
+    setFound([]);
+    setShowPopup(null);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4 bg-orange-50 font-sans"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-bold mb-4 text-red-600"
+  }, "⚠️ ", getText("title")), /*#__PURE__*/React.createElement("p", {
+    className: "mb-4 font-bold text-slate-600"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "relative w-full max-w-4xl h-[600px] bg-white rounded-3xl border-4 border-slate-300 shadow-xl overflow-hidden cursor-crosshair"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 bg-yellow-50"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-0 w-full h-1/4 bg-amber-200 border-t-4 border-amber-300"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-10 left-10 w-40 h-32 bg-amber-700 rounded-lg"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-20 right-20 w-60 h-40 bg-black rounded-xl border-4 border-gray-600"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-[280px] right-[100px] w-12 h-16 bg-white border border-gray-400"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-[150px] left-[100px]"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-12 h-12 bg-white border border-gray-300 shadow-sm rounded flex items-center justify-center"
+  }, "I/O"), !found.includes("wet_hands") && /*#__PURE__*/React.createElement(motion.div, {
+    whileHover: {
+      scale: 1.1
+    },
+    className: "absolute -top-4 -right-8 text-4xl cursor-pointer",
+    onClick: () => handleHazardClick(hazards[0])
+  }, "🖐️💦"), found.includes("wet_hands") && /*#__PURE__*/React.createElement("div", {
+    className: "absolute -top-10 -right-10 text-6xl text-green-500"
+  }, "✅")), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-[300px] right-[100px]"
+  }, !found.includes("overload") && /*#__PURE__*/React.createElement(motion.div, {
+    animate: {
+      scale: [1, 1.1, 1]
+    },
+    transition: {
+      repeat: Infinity,
+      duration: 2
+    },
+    className: "absolute -top-10 -left-10 text-5xl cursor-pointer",
+    onClick: () => handleHazardClick(hazards[1])
+  }, "🔌🔌🔥"), found.includes("overload") && /*#__PURE__*/React.createElement("div", {
+    className: "absolute -top-10 -left-10 text-6xl text-green-500"
+  }, "✅")), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-[50px] left-[300px]"
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: "200",
+    height: "50",
+    className: "pointer-events-none"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M0,25 Q100,0 200,25",
+    stroke: "black",
+    strokeWidth: "4",
+    fill: "none"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M90,10 L110,15",
+    stroke: "red",
+    strokeWidth: "2"
+  }), " "), !found.includes("frayed") && /*#__PURE__*/React.createElement(motion.div, {
+    className: "absolute left-[80px] -top-8 text-4xl cursor-pointer",
+    onClick: () => handleHazardClick(hazards[2])
+  }, "⚡"), found.includes("frayed") && /*#__PURE__*/React.createElement("div", {
+    className: "absolute left-[80px] -top-10 text-6xl text-green-500"
+  }, "✅")), showPopup && /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 bg-black/70 flex items-center justify-center z-50 p-8"
+  }, /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      scale: 0
+    },
+    animate: {
+      scale: 1
+    },
+    className: "bg-white p-8 rounded-3xl text-center max-w-lg border-8 border-red-500"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-8xl mb-4"
+  }, "⚠️"), /*#__PURE__*/React.createElement("h2", {
+    className: "text-3xl font-black text-red-600 mb-4"
+  }, getText("found")), /*#__PURE__*/React.createElement("p", {
+    className: "text-2xl font-bold text-slate-800 mb-8"
+  }, getText(showPopup.msg)), /*#__PURE__*/React.createElement("button", {
+    onClick: closePopup,
+    className: "bg-red-500 text-white px-8 py-3 rounded-full font-bold text-xl hover:bg-red-600"
+  }, "OK"))), found.length === 3 && !showPopup && /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 bg-green-500/90 flex flex-col items-center justify-center text-white z-40"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-9xl mb-4"
+  }, "🛡️"), /*#__PURE__*/React.createElement("h2", {
+    className: "text-5xl font-black mb-8 text-center px-4"
+  }, getText("complete")), /*#__PURE__*/React.createElement("button", {
+    onClick: reset,
+    className: "bg-white text-green-600 px-10 py-4 rounded-full font-black text-2xl shadow-xl hover:scale-105 transition-transform"
+  }, getText("reset")))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

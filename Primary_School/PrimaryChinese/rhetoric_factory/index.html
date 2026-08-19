@@ -1,0 +1,564 @@
+﻿<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>修辭工廠流水線 - Rhetoric Factory</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: 'Microsoft YaHei', 'SimHei', Arial, sans-serif;
+        }
+        #gameCanvas {
+            display: block;
+            cursor: crosshair;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script>
+const {
+  useState,
+  useEffect,
+  useRef
+} = React;
+
+// Game Data
+const SIMILES = ["月亮像一個大圓盤", "他的臉紅得像蘋果", "時間如流水般逝去", "她的聲音似銀鈴般清脆", "生活像一盒巧克力"];
+const METAPHORS = ["母親是避風港", "這孩子是個搗蛋鬼", "社會是個大染缸", "希望是黑暗中的燈塔", "人生是一場馬拉松"];
+
+// Helper function to detect rhetoric type
+function detectRhetoricType(text) {
+  if (text.includes('像') || text.includes('如') || text.includes('似')) {
+    return 'simile';
+  } else if (text.includes('是') || text.includes('變成')) {
+    return 'metaphor';
+  }
+  return null;
+}
+
+// Package class
+class Package {
+  constructor(x, y, text) {
+    this.x = x;
+    this.y = y;
+    this.text = text;
+    this.width = 120;
+    this.height = 60;
+    this.type = detectRhetoricType(text);
+    this.grabbed = false;
+    this.velocity = 0;
+  }
+  update(deltaTime, conveyorSpeed) {
+    if (!this.grabbed) {
+      this.y += conveyorSpeed * deltaTime;
+    }
+  }
+  draw(ctx) {
+    ctx.save();
+
+    // Package box
+    ctx.fillStyle = '#FFFFFF';
+    ctx.strokeStyle = '#333333';
+    ctx.lineWidth = 2;
+    ctx.fillRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
+    ctx.strokeRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
+
+    // Text
+    ctx.fillStyle = '#000000';
+    ctx.font = '14px "Microsoft YaHei", "SimHei", Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(this.text, this.x, this.y);
+    ctx.restore();
+  }
+  getBounds() {
+    return {
+      x: this.x - this.width / 2,
+      y: this.y - this.height / 2,
+      width: this.width,
+      height: this.height
+    };
+  }
+}
+
+// Robot Arm class with inverse kinematics
+class RobotArm {
+  constructor(baseX, baseY) {
+    this.baseX = baseX;
+    this.baseY = baseY;
+    this.upperArmLength = 200;
+    this.forearmLength = 180;
+    this.clawLength = 30;
+    this.clawOpen = true;
+    this.targetX = baseX;
+    this.targetY = baseY - 150;
+    this.upperArmAngle = 0;
+    this.forearmAngle = 0;
+  }
+  update(targetX, targetY) {
+    this.targetX = targetX;
+    this.targetY = targetY;
+    this.solveIK();
+  }
+  solveIK() {
+    const dx = this.targetX - this.baseX;
+    const dy = this.targetY - this.baseY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    // Limit reach
+    const maxReach = this.upperArmLength + this.forearmLength;
+    if (distance > maxReach) {
+      const scale = maxReach / distance;
+      this.targetX = this.baseX + dx * scale;
+      this.targetY = this.baseY + dy * scale;
+    }
+
+    // Calculate angles using law of cosines
+    const a = this.upperArmLength;
+    const b = this.forearmLength;
+    const c = Math.sqrt((this.targetX - this.baseX) ** 2 + (this.targetY - this.baseY) ** 2);
+    const cosB = (a * a + c * c - b * b) / (2 * a * c);
+    const cosC = (a * a + b * b - c * c) / (2 * a * b);
+    const angleB = Math.acos(Math.max(-1, Math.min(1, cosB)));
+    const angleC = Math.acos(Math.max(-1, Math.min(1, cosC)));
+    const targetAngle = Math.atan2(this.targetY - this.baseY, this.targetX - this.baseX);
+    this.upperArmAngle = targetAngle - angleB;
+    this.forearmAngle = this.upperArmAngle + Math.PI - angleC;
+  }
+  getClawPosition() {
+    const upperArmEndX = this.baseX + Math.cos(this.upperArmAngle) * this.upperArmLength;
+    const upperArmEndY = this.baseY + Math.sin(this.upperArmAngle) * this.upperArmLength;
+    const clawX = upperArmEndX + Math.cos(this.forearmAngle) * this.forearmLength;
+    const clawY = upperArmEndY + Math.sin(this.forearmAngle) * this.forearmLength;
+    return {
+      x: clawX,
+      y: clawY
+    };
+  }
+  draw(ctx) {
+    ctx.save();
+
+    // Base
+    ctx.fillStyle = '#444444';
+    ctx.beginPath();
+    ctx.arc(this.baseX, this.baseY, 15, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Upper arm
+    const upperArmEndX = this.baseX + Math.cos(this.upperArmAngle) * this.upperArmLength;
+    const upperArmEndY = this.baseY + Math.sin(this.upperArmAngle) * this.upperArmLength;
+    ctx.strokeStyle = '#666666';
+    ctx.lineWidth = 12;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(this.baseX, this.baseY);
+    ctx.lineTo(upperArmEndX, upperArmEndY);
+    ctx.stroke();
+
+    // Joint
+    ctx.fillStyle = '#555555';
+    ctx.beginPath();
+    ctx.arc(upperArmEndX, upperArmEndY, 10, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Forearm
+    const clawPos = this.getClawPosition();
+    ctx.beginPath();
+    ctx.moveTo(upperArmEndX, upperArmEndY);
+    ctx.lineTo(clawPos.x, clawPos.y);
+    ctx.stroke();
+
+    // Claw
+    ctx.fillStyle = '#FF6600';
+    const clawOpenAngle = this.clawOpen ? 0.3 : 0;
+    ctx.save();
+    ctx.translate(clawPos.x, clawPos.y);
+    ctx.rotate(this.forearmAngle);
+
+    // Left claw finger
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(this.clawLength, -this.clawLength * Math.sin(clawOpenAngle));
+    ctx.lineWidth = 6;
+    ctx.stroke();
+
+    // Right claw finger
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(this.clawLength, this.clawLength * Math.sin(clawOpenAngle));
+    ctx.stroke();
+    ctx.restore();
+    ctx.restore();
+  }
+}
+
+// Bin class
+class Bin {
+  constructor(x, y, width, height, label, color) {
+    this.x = x;
+    this.y = y;
+    this.width = width;
+    this.height = height;
+    this.label = label;
+    this.color = color;
+  }
+  draw(ctx) {
+    ctx.save();
+
+    // Bin body
+    ctx.fillStyle = this.color;
+    ctx.fillRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
+
+    // Border
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
+
+    // Label
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 18px "Microsoft YaHei", "SimHei", Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(this.label, this.x, this.y);
+    ctx.restore();
+  }
+  contains(x, y) {
+    return x >= this.x - this.width / 2 && x <= this.x + this.width / 2 && y >= this.y - this.height / 2 && y <= this.y + this.height / 2;
+  }
+}
+
+// Main Game Component
+function RhetoricFactory() {
+  const canvasRef = useRef(null);
+  const [gameState, setGameState] = useState('menu'); // 'menu', 'playing', 'gameOver'
+  const [score, setScore] = useState(0);
+  const [lives, setLives] = useState(5);
+  const [wrongCount, setWrongCount] = useState(0);
+  const [level, setLevel] = useState(1);
+  const gameRef = useRef({
+    packages: [],
+    robotArm: null,
+    leftBin: null,
+    rightBin: null,
+    conveyorSpeed: 50,
+    lastSpawnTime: 0,
+    spawnInterval: 2000,
+    lastLevelUpTime: 0,
+    grabbedPackage: null,
+    mouseX: 0,
+    mouseY: 0,
+    feedback: null,
+    feedbackTime: 0
+  });
+  useEffect(() => {
+    if (gameState !== 'playing') return;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+
+    // Initialize game objects
+    const game = gameRef.current;
+    game.robotArm = new RobotArm(canvas.width / 2, canvas.height - 50);
+    game.leftBin = new Bin(canvas.width * 0.25, canvas.height - 150, 150, 80, '明喻 (Simile)', '#3B82F6');
+    game.rightBin = new Bin(canvas.width * 0.75, canvas.height - 150, 150, 80, '暗喻 (Metaphor)', '#EF4444');
+    game.lastSpawnTime = Date.now();
+    game.lastLevelUpTime = Date.now();
+    let lastTime = Date.now();
+    let animationFrameId;
+    function gameLoop() {
+      const currentTime = Date.now();
+      const deltaTime = (currentTime - lastTime) / 1000;
+      lastTime = currentTime;
+
+      // Level up every 10 seconds
+      if (currentTime - game.lastLevelUpTime > 10000) {
+        game.conveyorSpeed += 10;
+        game.spawnInterval = Math.max(1000, game.spawnInterval - 100);
+        game.lastLevelUpTime = currentTime;
+        setLevel(prev => prev + 1);
+      }
+
+      // Spawn packages
+      if (currentTime - game.lastSpawnTime > game.spawnInterval) {
+        const allSentences = [...SIMILES, ...METAPHORS];
+        const randomText = allSentences[Math.floor(Math.random() * allSentences.length)];
+        const spawnX = canvas.width / 2 + (Math.random() - 0.5) * 200;
+        game.packages.push(new Package(spawnX, -30, randomText));
+        game.lastSpawnTime = currentTime;
+      }
+
+      // Update robot arm
+      game.robotArm.update(game.mouseX, game.mouseY);
+      game.robotArm.clawOpen = game.grabbedPackage === null;
+
+      // Update packages
+      game.packages.forEach((pkg, index) => {
+        if (!pkg.grabbed) {
+          pkg.update(deltaTime, game.conveyorSpeed);
+        } else if (game.grabbedPackage === pkg) {
+          const clawPos = game.robotArm.getClawPosition();
+          pkg.x = clawPos.x;
+          pkg.y = clawPos.y;
+        }
+
+        // Check if package fell off
+        if (pkg.y > canvas.height + 50 && !pkg.grabbed) {
+          game.packages.splice(index, 1);
+          setScore(prev => prev - 20);
+          setLives(prev => {
+            const newLives = prev - 1;
+            if (newLives <= 0) {
+              setGameState('gameOver');
+            }
+            return newLives;
+          });
+        }
+      });
+
+      // Check for package drops in bins
+      if (game.grabbedPackage) {
+        const pkg = game.grabbedPackage;
+        const clawPos = game.robotArm.getClawPosition();
+        if (game.leftBin.contains(clawPos.x, clawPos.y)) {
+          if (pkg.type === 'simile') {
+            setScore(prev => prev + 100);
+            game.feedback = {
+              text: '+100',
+              color: '#10B981',
+              x: clawPos.x,
+              y: clawPos.y
+            };
+            game.feedbackTime = currentTime;
+          } else {
+            setScore(prev => prev - 50);
+            setWrongCount(prev => {
+              const newCount = prev + 1;
+              if (newCount >= 3) {
+                setGameState('gameOver');
+              }
+              return newCount;
+            });
+            game.feedback = {
+              text: '-50',
+              color: '#EF4444',
+              x: clawPos.x,
+              y: clawPos.y
+            };
+            game.feedbackTime = currentTime;
+          }
+          game.packages = game.packages.filter(p => p !== pkg);
+          game.grabbedPackage = null;
+        } else if (game.rightBin.contains(clawPos.x, clawPos.y)) {
+          if (pkg.type === 'metaphor') {
+            setScore(prev => prev + 100);
+            game.feedback = {
+              text: '+100',
+              color: '#10B981',
+              x: clawPos.x,
+              y: clawPos.y
+            };
+            game.feedbackTime = currentTime;
+          } else {
+            setScore(prev => prev - 50);
+            setWrongCount(prev => {
+              const newCount = prev + 1;
+              if (newCount >= 3) {
+                setGameState('gameOver');
+              }
+              return newCount;
+            });
+            game.feedback = {
+              text: '-50',
+              color: '#EF4444',
+              x: clawPos.x,
+              y: clawPos.y
+            };
+            game.feedbackTime = currentTime;
+          }
+          game.packages = game.packages.filter(p => p !== pkg);
+          game.grabbedPackage = null;
+        }
+      }
+
+      // Render
+      render(ctx, canvas, game);
+
+      // Clear old feedback
+      if (game.feedback && currentTime - game.feedbackTime > 1000) {
+        game.feedback = null;
+      }
+      if (gameState === 'playing') {
+        animationFrameId = requestAnimationFrame(gameLoop);
+      }
+    }
+    animationFrameId = requestAnimationFrame(gameLoop);
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [gameState]);
+  function render(ctx, canvas, game) {
+    // Clear canvas
+    ctx.fillStyle = '#1F2937';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Draw conveyor belt
+    ctx.fillStyle = '#FBBF24';
+    ctx.fillRect(0, canvas.height * 0.3, canvas.width, 40);
+
+    // Caution stripes
+    ctx.fillStyle = '#000000';
+    for (let x = 0; x < canvas.width; x += 40) {
+      ctx.fillRect(x, canvas.height * 0.3, 20, 40);
+    }
+
+    // Draw bins
+    game.leftBin.draw(ctx);
+    game.rightBin.draw(ctx);
+
+    // Draw packages
+    game.packages.forEach(pkg => pkg.draw(ctx));
+
+    // Draw robot arm
+    game.robotArm.draw(ctx);
+
+    // Draw feedback
+    if (game.feedback) {
+      ctx.save();
+      ctx.fillStyle = game.feedback.color;
+      ctx.font = 'bold 24px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(game.feedback.text, game.feedback.x, game.feedback.y - 30);
+      ctx.restore();
+    }
+  }
+  function handleResize() {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+  }
+  useEffect(() => {
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  function handleMouseMove(e) {
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    gameRef.current.mouseX = e.clientX - rect.left;
+    gameRef.current.mouseY = e.clientY - rect.top;
+  }
+  function handleMouseDown(e) {
+    if (gameState !== 'playing') return;
+    const game = gameRef.current;
+    const clawPos = game.robotArm.getClawPosition();
+    const grabDistance = 50;
+
+    // Find closest package
+    let closestPackage = null;
+    let closestDistance = Infinity;
+    game.packages.forEach(pkg => {
+      const dx = clawPos.x - pkg.x;
+      const dy = clawPos.y - pkg.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      if (distance < grabDistance && distance < closestDistance) {
+        closestDistance = distance;
+        closestPackage = pkg;
+      }
+    });
+    if (closestPackage) {
+      closestPackage.grabbed = true;
+      game.grabbedPackage = closestPackage;
+    }
+  }
+  function handleMouseUp() {
+    const game = gameRef.current;
+    if (game.grabbedPackage) {
+      game.grabbedPackage.grabbed = false;
+      game.grabbedPackage = null;
+    }
+  }
+  function startGame() {
+    setGameState('playing');
+    setScore(0);
+    setLives(5);
+    setWrongCount(0);
+    setLevel(1);
+    gameRef.current.packages = [];
+    gameRef.current.conveyorSpeed = 50;
+    gameRef.current.spawnInterval = 2000;
+    gameRef.current.lastSpawnTime = Date.now();
+    gameRef.current.lastLevelUpTime = Date.now();
+    gameRef.current.grabbedPackage = null;
+    gameRef.current.feedback = null;
+  }
+  return /*#__PURE__*/React.createElement("div", {
+    className: "relative w-screen h-screen bg-gray-900"
+  }, /*#__PURE__*/React.createElement("canvas", {
+    ref: canvasRef,
+    id: "gameCanvas",
+    className: "absolute top-0 left-0",
+    onMouseMove: handleMouseMove,
+    onMouseDown: handleMouseDown,
+    onMouseUp: handleMouseUp
+  }), gameState === 'playing' && /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 left-4 text-white bg-black bg-opacity-50 p-4 rounded-lg"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xl font-bold"
+  }, "分數: ", score), /*#__PURE__*/React.createElement("div", {
+    className: "text-lg"
+  }, "生命: ", lives), /*#__PURE__*/React.createElement("div", {
+    className: "text-lg"
+  }, "錯誤: ", wrongCount, "/3"), /*#__PURE__*/React.createElement("div", {
+    className: "text-lg"
+  }, "等級: ", level)), gameState === 'menu' && /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 flex items-center justify-center bg-black bg-opacity-75 z-10"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-center text-white p-8 bg-gray-800 rounded-lg max-w-md"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-bold mb-4"
+  }, "修辭工廠流水線"), /*#__PURE__*/React.createElement("h2", {
+    className: "text-2xl mb-6"
+  }, "Rhetoric Factory"), /*#__PURE__*/React.createElement("p", {
+    className: "mb-4 text-lg"
+  }, "使用滑鼠控制機械手臂，將句子分類到正確的箱子："), /*#__PURE__*/React.createElement("ul", {
+    className: "text-left mb-6 space-y-2"
+  }, /*#__PURE__*/React.createElement("li", null, "• ", /*#__PURE__*/React.createElement("span", {
+    className: "text-blue-400"
+  }, "明喻 (Simile)"), " - 使用「像」、「如」"), /*#__PURE__*/React.createElement("li", null, "• ", /*#__PURE__*/React.createElement("span", {
+    className: "text-red-400"
+  }, "暗喻 (Metaphor)"), " - 使用「是」、「變成」")), /*#__PURE__*/React.createElement("p", {
+    className: "mb-6 text-sm"
+  }, "滑鼠移動：控制手臂 | 滑鼠點擊：抓取/釋放"), /*#__PURE__*/React.createElement("button", {
+    onClick: startGame,
+    className: "bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg text-xl transition"
+  }, "開始遊戲"))), gameState === 'gameOver' && /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 flex items-center justify-center bg-black bg-opacity-75 z-10"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-center text-white p-8 bg-gray-800 rounded-lg max-w-md"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-bold mb-4 text-red-500"
+  }, "遊戲結束"), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl mb-6"
+  }, "最終分數: ", score), /*#__PURE__*/React.createElement("div", {
+    className: "text-xl mb-6"
+  }, "等級: ", level), /*#__PURE__*/React.createElement("button", {
+    onClick: startGame,
+    className: "bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg text-xl transition"
+  }, "再玩一次"))));
+}
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(/*#__PURE__*/React.createElement(RhetoricFactory, null));
+</script>
+
+</body>
+</html>
+

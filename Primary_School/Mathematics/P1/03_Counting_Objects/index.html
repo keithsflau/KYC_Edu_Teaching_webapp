@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小一數學：數物件 | Counting Objects</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #fffbeb 0%, #fcd34d 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "🧸 Counting Objects",
+    zh: "🧸 數一數",
+    ja: "🧸 物を数える",
+    ko: "🧸 물건 세기",
+    es: "🧸 Contar Objetos",
+    de: "🧸 Objekte zählen",
+    fi: "🧸 Esineiden laskeminen",
+    fr: "🧸 Compter les objets",
+    ar: "🧸 عد الأشياء",
+    it: "🧸 Contare gli oggetti"
+  },
+  howMany: {
+    en: "How many {obj}?",
+    zh: "有多少個 {obj}?",
+    ja: "{obj} はいくつ?",
+    ko: "{obj} 개수는?",
+    es: "¿Cuántos {obj}?",
+    de: "Wie viele {obj}?",
+    fi: "Kuinka monta {obj}?",
+    fr: "Combien de {obj}?",
+    ar: "كم عدد {obj}؟",
+    it: "Quanti {obj}?"
+  }
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [target, setTarget] = useState(3);
+  const [options, setOptions] = useState([]);
+  const [score, setScore] = useState(0);
+  const [feedback, setFeedback] = useState("");
+  const objects = ["🚗", "🎈", "🐶", "🐱", "🍦", "⭐", "⚽", "🍪"];
+  const [currentObj, setCurrentObj] = useState("🚗");
+  const generateQuestion = () => {
+    const ans = Math.floor(Math.random() * 9) + 1; // 1-9
+    setTarget(ans);
+    setCurrentObj(objects[Math.floor(Math.random() * objects.length)]);
+    let opts = [ans];
+    while (opts.length < 3) {
+      const r = Math.floor(Math.random() * 9) + 1;
+      if (!opts.includes(r)) opts.push(r);
+    }
+    setOptions(opts.sort(() => Math.random() - 0.5));
+    setFeedback("");
+  };
+  useEffect(() => {
+    generateQuestion();
+  }, []);
+  const checkOne = val => {
+    if (feedback) return;
+    if (val === target) {
+      setFeedback("CORRECT");
+      setScore(prev => prev + 1);
+      setTimeout(generateQuestion, 1500);
+    } else {
+      setFeedback("WRONG");
+    }
+  };
+  const getQ = () => {
+    let txt = t.howMany[lang] || t.howMany["en"];
+    return txt.replace("{obj}", currentObj);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-8 flex flex-col items-center justify-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-5xl font-black text-amber-600 mb-4"
+  }, t.title[lang] || t.title["en"]), /*#__PURE__*/React.createElement("p", {
+    className: "text-2xl text-amber-700 font-bold mb-8"
+  }, get("score", lang), ": ", score), /*#__PURE__*/React.createElement("div", {
+    className: `bg-white rounded-3xl p-8 shadow-xl w-full max-w-2xl text-center border-4 ${feedback === "CORRECT" ? "border-green-400" : feedback === "WRONG" ? "border-red-400" : "border-amber-200"} transition-colors duration-300`
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "text-2xl font-bold text-slate-600 mb-6"
+  }, getQ()), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-wrap justify-center gap-4 mb-12 min-h-[140px]"
+  }, Array.from({
+    length: target
+  }).map((_, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "text-6xl animate-bounce",
+    style: {
+      animationDelay: `${i * 0.1}s`
+    }
+  }, currentObj))), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-center gap-8"
+  }, options.map((opt, i) => /*#__PURE__*/React.createElement("button", {
+    key: i,
+    onClick: () => checkOne(opt),
+    className: "w-24 h-24 rounded-2xl bg-amber-100 text-amber-600 font-black text-5xl border-b-8 border-amber-300 active:border-b-0 active:translate-y-2 transition-all hover:bg-amber-200"
+  }, opt))), /*#__PURE__*/React.createElement("div", {
+    className: "h-16 mt-6"
+  }, feedback === "CORRECT" && /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-black text-green-500"
+  }, get("correct", lang)), feedback === "WRONG" && /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-black text-red-500"
+  }, get("wrong", lang)))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

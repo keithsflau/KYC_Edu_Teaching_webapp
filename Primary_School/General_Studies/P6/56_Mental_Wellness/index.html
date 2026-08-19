@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - Mental Wellness</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: #f0fdfa;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Positive Mindset",
+    zh: "正向思維",
+    ja: "ポジティブな考え方",
+    ko: "긍정적인 마인드",
+    es: "Mentalidad positiva",
+    de: "Positive Denkweise",
+    fi: "Positiivinen ajattelutapa",
+    fr: "Esprit positif",
+    ar: "عقلية إيجابية",
+    it: "Mentalità Positiva"
+  },
+  instruction: {
+    en: "Keep the Positive thoughts, discard the Negative ones!",
+    zh: "保留正面想法，丟棄負面想法！",
+    ja: "ポジティブな考えを保ち、ネガティブなものを捨てましょう！",
+    ko: "긍정적인 생각은 간직하고 부정적인 생각은 버리세요!",
+    es: "¡Mantén los pensamientos positivos, desecha los negativos!",
+    de: "Behalte die positiven Gedanken, verwerfe die negativen!",
+    fi: "Pidä positiiviset ajatukset, hylkää negatiiviset!",
+    fr: "Gardez les pensées positives, rejetez les négatives !",
+    ar: "احتفظ بالأفكار الإيجابية وتخلص من الأفكار السلبية!",
+    it: "Tieni i pensieri positivi, scarta quelli negativi!"
+  },
+  keep: {
+    en: "Keep",
+    zh: "保留",
+    ja: "キープ",
+    ko: "유지"
+  },
+  discard: {
+    en: "Discard",
+    zh: "丟棄",
+    ja: "捨てる",
+    ko: "버리기"
+  },
+  pos1: {
+    en: "I can do it!",
+    zh: "我做得到！",
+    ja: "私ならできる！",
+    ko: "난 할 수 있어!"
+  },
+  pos2: {
+    en: "Mistakes help me learn.",
+    zh: "錯誤幫助我學習。",
+    ja: "間違いは学びになる。",
+    ko: "실수는 배움에 도움이 돼."
+  },
+  neg1: {
+    en: "I am useless.",
+    zh: "我沒用。",
+    ja: "私は役に立たない。",
+    ko: "난 쓸모없어."
+  },
+  neg2: {
+    en: "This is too hard.",
+    zh: "這太難了。",
+    ja: "難しすぎる。",
+    ko: "이건 너무 어려워."
+  },
+  score: {
+    en: "Mindset Score",
+    zh: "心態分數",
+    ja: "マインドセットスコア",
+    ko: "마인드 점수"
+  }
+};
+const thoughts = [{
+  id: "pos1",
+  type: "pos"
+}, {
+  id: "neg1",
+  type: "neg"
+}, {
+  id: "pos2",
+  type: "pos"
+}, {
+  id: "neg2",
+  type: "neg"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [idx, setIdx] = useState(0);
+  const [score, setScore] = useState(0);
+  const getText = key => t[key][lang] || t[key]["en"];
+  const current = thoughts[idx % thoughts.length];
+  const handle = action => {
+    // Keep POS, Discard NEG = Correct
+    const isPos = current.type === "pos";
+    const correct = isPos && action === "keep" || !isPos && action === "discard";
+    if (correct) setScore(s => s + 10);
+    setIdx(idx + 1);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-bold mb-8 text-teal-600"
+  }, getText("title")), /*#__PURE__*/React.createElement("p", {
+    className: "mb-8 font-bold text-slate-500"
+  }, getText("instruction")), /*#__PURE__*/React.createElement(motion.div, {
+    key: idx // Re-render on new thought
+    ,
+    initial: {
+      scale: 0.5,
+      opacity: 0
+    },
+    animate: {
+      scale: 1,
+      opacity: 1
+    },
+    className: `w-80 h-64 rounded-3xl shadow-xl flex items-center justify-center p-8 text-center border-4 ${current.type === "pos" ? "bg-yellow-100 border-yellow-300" : "bg-gray-200 border-gray-400"}`
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-bold text-slate-800"
+  }, "\"", getText(current.id), "\"")), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-8 mt-12 w-full max-w-md"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => handle("discard"),
+    className: "flex-1 py-4 bg-red-500 text-white rounded-xl font-bold text-xl hover:bg-red-600 shadow-lg active:scale-95"
+  }, "🗑️ ", getText("discard")), /*#__PURE__*/React.createElement("button", {
+    onClick: () => handle("keep"),
+    className: "flex-1 py-4 bg-green-500 text-white rounded-xl font-bold text-xl hover:bg-green-600 shadow-lg active:scale-95"
+  }, "❤️ ", getText("keep"))), /*#__PURE__*/React.createElement("div", {
+    className: "mt-8 text-2xl font-bold text-teal-800"
+  }, getText("score"), ": ", score));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小三常識：節日日曆 | Festival Calendar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: radial-gradient(circle at center, #f5d0fe 0%, #c026d3 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Festival Calendar",
+    zh: "節日日曆",
+    ja: "フェスティバルカレンダー",
+    ko: "축제 달력",
+    es: "Calendario de Festivales",
+    de: "Festkalender",
+    fi: "Juhlakalenteri",
+    fr: "Calendrier des festivals",
+    ar: "تقويم المهرجانات",
+    it: "Calendario dei Festival"
+  },
+  instruction: {
+    en: "Sort festivals by order of the year!",
+    zh: "按時間順序排列節日！",
+    ja: "今年の順番に並べて！",
+    ko: "올해 순서대로 축제를 정렬하세요!",
+    es: "¡Ordena los festivales por orden del año!",
+    de: "Sortiere die Feste nach der Reihenfolge im Jahr!",
+    fi: "Lajittele juhlat vuoden järjestyksessä!",
+    fr: "Triez les festivals par ordre chronologique !",
+    ar: "رتب المهرجانات حسب ترتيب السنة!",
+    it: "Ordina i festival in ordine annuale!"
+  },
+  cny: {
+    en: "Lunar New Year",
+    zh: "農曆新年",
+    ja: "旧正月",
+    ko: "설날",
+    es: "Año Nuevo Lunar",
+    de: "Mondneujahr",
+    fi: "Kiinalainen uusivuosi",
+    fr: "Nouvel An lunaire",
+    ar: "رأس السنة القمرية",
+    it: "Capodanno Lunare"
+  },
+  easter: {
+    en: "Easter",
+    zh: "復活節",
+    ja: "イースター",
+    ko: "부활절",
+    es: "Pascua",
+    de: "Ostern",
+    fi: "Pääsiäinen",
+    fr: "Pâques",
+    ar: "عيد الفصح",
+    it: "Pasqua"
+  },
+  dragon: {
+    en: "Dragon Boat Festival",
+    zh: "端午節",
+    ja: "端午の節句",
+    ko: "단오절",
+    es: "Festival del Bote del Dragón",
+    de: "Drachenbootfest",
+    fi: "Lohikäärmevenejuhla",
+    fr: "Fête des bateaux-dragons",
+    ar: "مهرجان قوارب التنين",
+    it: "Festa delle Barche Drago"
+  },
+  midautumn: {
+    en: "Mid-Autumn Festival",
+    zh: "中秋節",
+    ja: "中秋節",
+    ko: "추석",
+    es: "Festival del Medio Otoño",
+    de: "Mondfest",
+    fi: "Keskisyksyn juhla",
+    fr: "Fête de la mi-automne",
+    ar: "مهرجان منتصف الخريف",
+    it: "Festa di Metà Autunno"
+  },
+  xmas: {
+    en: "Christmas",
+    zh: "聖誕節",
+    ja: "クリスマス",
+    ko: "크리스마스",
+    es: "Navidad",
+    de: "Weihnachten",
+    fi: "Joulu",
+    fr: "Noël",
+    ar: "عيد الميلاد",
+    it: "Natale"
+  },
+  janfeb: {
+    en: "Jan/Feb",
+    zh: "一月/二月",
+    ja: "1月/2月",
+    ko: "1월/2월",
+    es: "Ene/Feb",
+    de: "Jan/Feb",
+    fi: "Tammi/Helmi",
+    fr: "Jan/Fév",
+    ar: "يناير/فبراير",
+    it: "Gen/Feb"
+  },
+  marapr: {
+    en: "Mar/Apr",
+    zh: "三月/四月",
+    ja: "3月/4月",
+    ko: "3월/4월",
+    es: "Mar/Abr",
+    de: "Mär/Apr",
+    fi: "Maalis/Huhti",
+    fr: "Mar/Avr",
+    ar: "مارس/أبريل",
+    it: "Mar/Apr"
+  },
+  mayjun: {
+    en: "May/Jun",
+    zh: "五月/六月",
+    ja: "5月/6月",
+    ko: "5월/6월",
+    es: "May/Jun",
+    de: "Mai/Jun",
+    fi: "Touko/Kesä",
+    fr: "Mai/Juin",
+    ar: "مايو/يونيو",
+    it: "Mag/Giu"
+  },
+  septoct: {
+    en: "Sep/Oct",
+    zh: "九月/十月",
+    ja: "9月/10月",
+    ko: "9월/10월",
+    es: "Sep/Oct",
+    de: "Sep/Okt",
+    fi: "Syys/Loka",
+    fr: "Sep/Oct",
+    ar: "سبتمبر/أكتوبر",
+    it: "Set/Ott"
+  },
+  dec: {
+    en: "December",
+    zh: "十二月",
+    ja: "12月",
+    ko: "12월",
+    es: "Diciembre",
+    de: "Dezember",
+    fi: "Joulukuu",
+    fr: "Décembre",
+    ar: "ديسمبر",
+    it: "Dicembre"
+  },
+  check: {
+    en: "Check Order",
+    zh: "檢查順序",
+    ja: "順序を確認",
+    ko: "순서 확인",
+    es: "Verificar Orden",
+    de: "Reihenfolge prüfen",
+    fi: "Tarkista järjestys",
+    fr: "Vérifier l'ordre",
+    ar: "تحقق من الترتيب",
+    it: "Controlla Ordine"
+  },
+  perfect: {
+    en: "Perfect Order!",
+    zh: "順序正確！",
+    ja: "完璧な順序！",
+    ko: "완벽한 순서입니다!",
+    es: "¡Orden Perfecto!",
+    de: "Perfekte Reihenfolge!",
+    fi: "Täydellinen järjestys!",
+    fr: "Ordre parfait !",
+    ar: "ترتيب مثالي!",
+    it: "Ordine Perfetto!"
+  },
+  wrong: {
+    en: "Wrong Order!",
+    zh: "順序錯誤！",
+    ja: "間違った順序！",
+    ko: "잘못된 순서입니다!",
+    es: "¡Orden Incorrecto!",
+    de: "Falsche Reihenfolge!",
+    fi: "Väärä järjestys!",
+    fr: "Mauvais ordre !",
+    ar: "ترتيب خاطئ!",
+    it: "Ordine Errato!"
+  },
+  reset: {
+    en: "Play Again",
+    zh: "再玩一次",
+    ja: "もう一度プレイ",
+    ko: "다시 하기",
+    es: "Jugar de Nuevo",
+    de: "Nochmal spielen",
+    fi: "Pelaa uudelleen",
+    fr: "Rejouer",
+    ar: "العب مرة أخرى",
+    it: "Gioca di Nuovo"
+  }
+};
+const correctOrder = ["cny", "easter", "dragon", "midautumn", "xmas"];
+const festivals = [{
+  id: "cny",
+  icon: "🧧",
+  time: "janfeb"
+}, {
+  id: "easter",
+  icon: "🐰",
+  time: "marapr"
+}, {
+  id: "dragon",
+  icon: "🚣",
+  time: "mayjun"
+}, {
+  id: "midautumn",
+  icon: "🥮",
+  time: "septoct"
+}, {
+  id: "xmas",
+  icon: "🎄",
+  time: "dec"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [line, setLine] = useState([]);
+  const [pool, setPool] = useState([]);
+  const [feedback, setFeedback] = useState(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+  useEffect(() => {
+    initGame();
+  }, []);
+  const initGame = () => {
+    setPool([...festivals].sort(() => Math.random() - 0.5));
+    setLine([]);
+    setFeedback(null);
+  };
+  const moveToLine = item => {
+    if (feedback === "perfect") return;
+    setLine(prev => [...prev, item]);
+    setPool(prev => prev.filter(i => i.id !== item.id));
+    setFeedback(null);
+  };
+  const moveToPool = item => {
+    if (feedback === "perfect") return;
+    setPool(prev => [...prev, item]);
+    setLine(prev => prev.filter(i => i.id !== item.id));
+    setFeedback(null);
+  };
+  const check = () => {
+    if (line.length !== correctOrder.length) return;
+    const isCorrect = line.every((item, i) => item.id === correctOrder[i]);
+    if (isCorrect) {
+      setFeedback("perfect");
+    } else {
+      setFeedback("wrong");
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 flex flex-col items-center select-none font-sans overflow-hidden"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-fuchsia-900 mb-2 mt-8 drop-shadow-sm bg-white/50 px-6 py-2 rounded-full"
+  }, "🗓️ ", getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "font-bold text-fuchsia-900 mb-6 bg-white/40 px-4 py-1 rounded-full"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-6xl min-h-[220px] bg-white/80 rounded-3xl p-6 border-4 border-fuchsia-400 mb-8 relative shadow-lg"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-1/2 left-0 w-full h-2 bg-fuchsia-200"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-wrap items-center justify-center gap-4 relative z-10 w-full min-h-[160px]"
+  }, /*#__PURE__*/React.createElement(AnimatePresence, null, line.map((item, index) => /*#__PURE__*/React.createElement(motion.div, {
+    layoutId: item.id,
+    key: item.id,
+    className: "relative group"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute -top-10 left-1/2 -translate-x-1/2 bg-fuchsia-600 text-white text-xs font-bold px-2 py-1 rounded shadow opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap"
+  }, getText(item.time)), /*#__PURE__*/React.createElement("button", {
+    onClick: () => moveToPool(item),
+    className: "bg-white p-4 rounded-xl shadow-lg border-2 border-fuchsia-400 hover:scale-110 transition-transform flex flex-col items-center w-28 md:w-36 h-36 justify-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl mb-2"
+  }, item.icon), /*#__PURE__*/React.createElement("div", {
+    className: "text-sm font-bold text-center leading-tight"
+  }, getText(item.id))), /*#__PURE__*/React.createElement("div", {
+    className: "absolute -top-3 -right-3 bg-fuchsia-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold shadow-md"
+  }, index + 1)))), line.length === 0 && /*#__PURE__*/React.createElement("div", {
+    className: "text-fuchsia-800/30 text-3xl font-black animate-pulse"
+  }, "Drag Here"))), /*#__PURE__*/React.createElement("div", {
+    className: "h-16 mb-4"
+  }, feedback ? /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4 items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: `px-8 py-2 rounded-2xl font-black text-2xl shadow-xl ${feedback === "perfect" ? "bg-green-500 text-white" : "bg-red-500 text-white"}`
+  }, getText(feedback)), feedback === "perfect" && /*#__PURE__*/React.createElement("button", {
+    onClick: initGame,
+    className: "bg-blue-600 text-white px-8 py-2 rounded-2xl font-black text-2xl shadow-xl hover:bg-blue-700 animate-bounce"
+  }, getText("reset"), " 🔄")) : line.length === correctOrder.length && /*#__PURE__*/React.createElement("button", {
+    onClick: check,
+    className: "bg-fuchsia-600 text-white px-10 py-3 rounded-full font-black text-2xl shadow-xl hover:bg-fuchsia-700"
+  }, getText("check"))), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-wrap justify-center gap-4 bg-fuchsia-200/50 p-6 rounded-3xl w-full max-w-4xl border-t-4 border-fuchsia-300"
+  }, /*#__PURE__*/React.createElement(AnimatePresence, null, pool.map(item => /*#__PURE__*/React.createElement(motion.button, {
+    key: item.id,
+    layoutId: item.id,
+    onClick: () => moveToLine(item),
+    className: "bg-white p-4 rounded-xl shadow border-2 border-white hover:border-fuchsia-500 active:scale-95 transition-all w-28 h-28 flex flex-col items-center justify-center gap-1",
+    initial: {
+      opacity: 0
+    },
+    animate: {
+      opacity: 1
+    },
+    exit: {
+      opacity: 0
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl md:text-5xl"
+  }, item.icon), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold text-center leading-tight text-fuchsia-900"
+  }, getText(item.id)))))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

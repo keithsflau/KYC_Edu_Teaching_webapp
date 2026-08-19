@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - Light Spectrum</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: #111827;
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Rainbow Maker",
+    zh: "彩虹製造機",
+    ja: "虹メーカー",
+    ko: "무지개 메이커",
+    es: "Creador de arcoíris",
+    de: "Regenbogen-Maschine",
+    fi: "Sateenkaarikone",
+    fr: "Faiseur d'arc-en-ciel",
+    ar: "صانع قوس قزح",
+    it: "Creatore di Arcobaleni"
+  },
+  instruction: {
+    en: "Arrange colors in the correct order (Red to Violet).",
+    zh: "按正確順序排列顏色（紅色到紫色）。",
+    ja: "色を正しい順序（赤から紫）に並べてください。",
+    ko: "색상을 올바른 순서(빨강에서 보라)로 배열하세요.",
+    es: "Organiza los colores en el orden correcto (de rojo a violeta).",
+    de: "Ordne die Farben in der richtigen Reihenfolge (Rot bis Violett).",
+    fi: "Järjestä värit oikeaan järjestykseen (punaisesta violettiin).",
+    fr: "Disposez les couleurs dans le bon ordre (du rouge au violet).",
+    ar: "رتب الألوان بالترتيب الصحيح (من الأحمر إلى البنفسجي).",
+    it: "Disponi i colori nell'ordine corretto (da Rosso a Violetto)."
+  },
+  check: {
+    en: "Check",
+    zh: "檢查",
+    ja: "確認",
+    ko: "확인"
+  },
+  correct: {
+    en: "Beautiful!",
+    zh: "美麗極了！",
+    ja: "美しい！",
+    ko: "아름다워요!"
+  },
+  wrong: {
+    en: "Try Again",
+    zh: "再試一次",
+    ja: "もう一度",
+    ko: "다시 시도"
+  }
+};
+
+// VIBGYOR reversed -> ROYGBIV
+const colors = [{
+  id: "red",
+  hex: "#ef4444"
+}, {
+  id: "orange",
+  hex: "#f97316"
+}, {
+  id: "yellow",
+  hex: "#eab308"
+}, {
+  id: "green",
+  hex: "#22c55e"
+}, {
+  id: "blue",
+  hex: "#3b82f6"
+}, {
+  id: "indigo",
+  hex: "#6366f1"
+}, {
+  id: "violet",
+  hex: "#a855f7"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [order, setOrder] = useState([...colors].sort(() => Math.random() - 0.5));
+  const [feedback, setFeedback] = useState("");
+  const getText = key => t[key][lang] || t[key]["en"];
+  const handleDragStart = (e, index) => {
+    e.dataTransfer.setData("index", index);
+  };
+  const handleDrop = (e, targetIndex) => {
+    const draggedIndex = Number(e.dataTransfer.getData("index"));
+    if (draggedIndex === targetIndex) return;
+    const newOrder = [...order];
+    const temp = newOrder[draggedIndex];
+    newOrder[draggedIndex] = newOrder[targetIndex];
+    newOrder[targetIndex] = temp;
+    setOrder(newOrder);
+    setFeedback("");
+  };
+  const check = () => {
+    const correct = order.every((col, i) => col.id === colors[i].id);
+    setFeedback(correct ? "correct" : "wrong");
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-bold mb-8 bg-gradient-to-r from-red-500 via-green-500 to-purple-500 text-transparent bg-clip-text"
+  }, getText("title")), /*#__PURE__*/React.createElement("p", {
+    className: "mb-8 text-slate-400 font-bold"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col w-full max-w-lg mb-8 bg-slate-800 p-4 rounded-xl gap-1"
+  }, order.map((col, idx) => /*#__PURE__*/React.createElement("div", {
+    key: col.id,
+    draggable: true,
+    onDragStart: e => handleDragStart(e, idx),
+    onDragOver: e => e.preventDefault(),
+    onDrop: e => handleDrop(e, idx),
+    className: "h-12 w-full rounded-md cursor-grab active:cursor-grabbing border-2 border-transparent hover:border-white transition-all shadow-lg",
+    style: {
+      backgroundColor: col.hex
+    }
+  }))), /*#__PURE__*/React.createElement("button", {
+    onClick: check,
+    className: "px-8 py-3 bg-white text-slate-900 font-bold rounded-lg hover:bg-slate-200"
+  }, getText("check")), feedback && /*#__PURE__*/React.createElement("div", {
+    className: `mt-4 text-2xl font-black ${feedback === "correct" ? "text-green-400" : "text-red-400"}`
+  }, getText(feedback)));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

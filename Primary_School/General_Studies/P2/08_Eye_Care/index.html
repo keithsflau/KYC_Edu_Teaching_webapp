@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小二常識：護眼小特工 | Eye Care</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #ecfccb 0%, #d9f99d 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Eye Care Agent",
+    zh: "護眼小特工",
+    ja: "アイケア",
+    ko: "눈 관리 요원",
+    es: "Agente de Cuidado Ocular",
+    de: "Augenpflege-Agent",
+    fi: "Silmienhoitoagentti",
+    fr: "Agent de Soins Oculaires",
+    ar: "وكيل رعاية العيون",
+    it: "Agente Cura Occhi"
+  },
+  instruction: {
+    en: "Adjust settings to protect your eyes!",
+    zh: "調整環境來保護眼睛！",
+    ja: "目を守るために設定を調整しましょう！",
+    ko: "눈을 보호하기 위해 설정을 조정하세요!",
+    es: "¡Ajusta la configuración para proteger tus ojos!",
+    de: "Einstellungen anpassen, um deine Augen zu schützen!",
+    fi: "Säädä asetuksia suojataksesi silmiäsi!",
+    fr: "Ajustez les paramètres pour protéger vos yeux !",
+    ar: "اضبط الإعدادات لحماية عينيك!",
+    it: "Regola le impostazioni per proteggere i tuoi occhi!"
+  },
+  distance: {
+    en: "Distance",
+    zh: "距離",
+    ja: "距離",
+    ko: "거리",
+    es: "Distancia",
+    de: "Abstand",
+    fi: "Etäisyys",
+    fr: "Distance",
+    ar: "مسافة",
+    it: "Distanza"
+  },
+  light: {
+    en: "Light",
+    zh: "光線",
+    ja: "光",
+    ko: "빛",
+    es: "Luz",
+    de: "Licht",
+    fi: "Valo",
+    fr: "Lumière",
+    ar: "ضوء",
+    it: "Luce"
+  },
+  posture: {
+    en: "Posture",
+    zh: "坐姿",
+    ja: "姿勢",
+    ko: "자세",
+    es: "Postura",
+    de: "Haltung",
+    fi: "Ryhti",
+    fr: "Posture",
+    ar: "وضعية",
+    it: "Postura"
+  },
+  check: {
+    en: "Check",
+    zh: "檢查",
+    ja: "確認",
+    ko: "확인",
+    es: "Comprobar",
+    de: "Prüfen",
+    fi: "Tarkista",
+    fr: "Vérifier",
+    ar: "تحقق",
+    it: "Controlla"
+  },
+  correct: {
+    en: "Perfect! Your eyes are safe.",
+    zh: "完美！這樣才護眼。",
+    ja: "完璧！目は安全です。",
+    ko: "완벽해요! 눈이 안전합니다.",
+    es: "¡Perfecto! Tus ojos están seguros.",
+    de: "Perfekt! Deine Augen sind sicher.",
+    fi: "Täydellistä! Silmäsi ovat turvassa.",
+    fr: "Parfait ! Vos yeux sont en sécurité.",
+    ar: "مثالي! عيناك بأمان.",
+    it: "Perfetto! I tuoi occhi sono al sicuro."
+  },
+  wrong: {
+    en: "Something is not right...",
+    zh: "好像有些地方不對...",
+    ja: "何かがおかしい...",
+    ko: "뭔가 잘못되었습니다...",
+    es: "Algo no está bien...",
+    de: "Etwas stimmt nicht...",
+    fi: "Jokin ei ole oikein...",
+    fr: "Quelque chose ne va pas...",
+    ar: "شيء ما ليس صحيحا...",
+    it: "Qualcosa non va..."
+  },
+  tooClose: {
+    en: "Too Close",
+    zh: "太近",
+    ja: "近すぎる",
+    ko: "너무 가까워요",
+    es: "Demasiado Cerca",
+    de: "Zu nah",
+    fi: "Liian lähellä",
+    fr: "Trop près",
+    ar: "قريب جدا",
+    it: "Troppo Vicino"
+  },
+  goodDist: {
+    en: "Good Distance",
+    zh: "適中",
+    ja: "良い距離",
+    ko: "적당한 거리",
+    es: "Buena Distancia",
+    de: "Guter Abstand",
+    fi: "Hyvä etäisyys",
+    fr: "Bonne distance",
+    ar: "مسافة جيدة",
+    it: "Buona Distanza"
+  },
+  dim: {
+    en: "Too Dark",
+    zh: "太暗",
+    ja: "暗すぎる",
+    ko: "너무 어두워요",
+    es: "Muy Oscuro",
+    de: "Zu dunkel",
+    fi: "Liian pimeä",
+    fr: "Trop sombre",
+    ar: "مظلم جدا",
+    it: "Troppo Scuro"
+  },
+  bright: {
+    en: "Good Light",
+    zh: "光亮",
+    ja: "良い光",
+    ko: "밝아요",
+    es: "Buena Luz",
+    de: "Gutes Licht",
+    fi: "Hyvä valo",
+    fr: "Bonne lumière",
+    ar: "ضوء جيد",
+    it: "Buona Luce"
+  },
+  slouch: {
+    en: "Slouching",
+    zh: "彎腰",
+    ja: "前かがみ",
+    ko: "구부정함",
+    es: "Encorvado",
+    de: "Krumm",
+    fi: "Lysähtänyt",
+    fr: "Avachi",
+    ar: "ترهل",
+    it: "Ingobbito"
+  },
+  messy: {
+    en: "Lying Down",
+    zh: "躺著",
+    ja: "寝転がる",
+    ko: "누움",
+    es: "Acostado",
+    de: "Liegen",
+    fi: "Makaaminen",
+    fr: "Couché",
+    ar: "الاستلقاء",
+    it: "Sdraiato"
+  },
+  straight: {
+    en: "Straight Back",
+    zh: "挺直",
+    ja: "まっすぐ",
+    ko: "바른 자세",
+    es: "Espalda Recta",
+    de: "Gerade",
+    fi: "Suora selkä",
+    fr: "Dos droit",
+    ar: "ظهر مستقيم",
+    it: "Schiena Dritta"
+  },
+  rest: {
+    en: "Time to Rest! Look at Green.",
+    zh: "休息時間！看看綠色植物。",
+    ja: "休憩時間！緑を見て。",
+    ko: "휴식 시간! 녹색을 보세요.",
+    es: "¡Hora de descansar! Mira algo verde.",
+    de: "Zeit zum Ausruhen! Schau ins Grüne.",
+    fi: "Lepo aika! Katso vihreää.",
+    fr: "Temps de repos ! Regardez du vert.",
+    ar: "وقت الراحة! انظر إلى اللون الأخضر.",
+    it: "Tempo di Riposo! Guarda il Verde."
+  }
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+
+  // 0: Bad, 1: Good, 2: Bad (for some)
+  const [distVal, setDistVal] = useState(0); // 0: Close, 1: Good
+  const [lightVal, setLightVal] = useState(0); // 0: Dim, 1: Broken?, 2: bright
+  const [postureVal, setPostureVal] = useState(0); // 0, 1, 2
+
+  const [status, setStatus] = useState(null);
+  const isAllGood = distVal === 1 && lightVal === 1 && postureVal === 1;
+  const getText = key => t[key][lang] || t[key]["en"];
+  const check = () => {
+    if (isAllGood) setStatus("correct");else setStatus("wrong");
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-lime-800 mb-4 mt-8 drop-shadow-sm bg-white/50 px-6 py-2 rounded-full"
+  }, "👀 ", getText("title")), /*#__PURE__*/React.createElement("p", {
+    className: "font-bold text-lime-900 mb-6 bg-lime-200 px-4 py-1 rounded"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "relative w-full max-w-lg aspect-square bg-white rounded-3xl shadow-xl overflow-hidden border-8 border-lime-200 mb-8 transition-colors duration-500",
+    style: {
+      filter: lightVal === 0 ? "brightness(0.4)" : "brightness(1)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 bg-amber-50"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-0 w-full h-[30%] bg-amber-200"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-[20%] right-0 w-[60%] h-[30%] bg-amber-800 rounded-l-lg shadow-lg"
+  }), /*#__PURE__*/React.createElement(motion.div, {
+    className: "absolute bottom-[20%] right-[20%]",
+    animate: {
+      x: distVal === 0 ? 50 : 0,
+      // 0 is closer to book on desk? No, char needs to be left of desk usually.
+      // Let's reorient: Desk on Right. Character sits on Left facing Right.
+      // distVal 0 (Close) -> Moving Head closer to Book.
+      rotate: postureVal === 0 ? 20 : postureVal === 2 ? -45 : 0,
+      // Slouch vs Lying vs Straight
+      y: postureVal === 2 ? 50 : 0
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-24 h-32 bg-blue-500 rounded-3xl relative"
+  }, /*#__PURE__*/React.createElement(motion.div, {
+    className: "w-20 h-20 bg-amber-200 rounded-full absolute -top-16 left-2 border-4 border-amber-300",
+    animate: {
+      x: distVal === 0 ? 30 : 0,
+      // Lean forward
+      rotate: distVal === 0 ? 10 : 0
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-6 right-4 w-2 h-2 bg-black rounded-full"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-8 right-[-20px] w-20 h-4 bg-blue-600 rounded-full origin-left rotate-[-10deg]"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-10 right-[-30px] w-12 h-16 bg-white border-2 border-slate-300 transform rotate-[-10deg]"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-8 h-1 bg-slate-200 m-1"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "w-8 h-1 bg-slate-200 m-1"
+  })))), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-10 right-10 w-24 h-32 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-16 h-8 bg-green-600 rounded-t-full"
+  }), " ", /*#__PURE__*/React.createElement("div", {
+    className: "w-2 h-24 bg-slate-400"
+  }), " ", /*#__PURE__*/React.createElement("div", {
+    className: "w-12 h-4 bg-green-600 rounded-full"
+  }), " ", lightVal === 1 && /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-8 w-40 h-60 bg-yellow-400/30 clip-path-triangle-wide pointer-events-none mix-blend-overlay"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-lg bg-white/80 p-6 rounded-3xl backdrop-blur space-y-6"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "font-bold text-slate-700 mb-2 flex justify-between"
+  }, /*#__PURE__*/React.createElement("span", null, "📏 ", getText("distance")), /*#__PURE__*/React.createElement("span", {
+    className: distVal === 1 ? "text-green-600" : "text-red-500"
+  }, distVal === 0 ? getText("tooClose") : getText("goodDist"))), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "0",
+    max: "1",
+    step: "1",
+    value: distVal,
+    onChange: e => setDistVal(parseInt(e.target.value, 10)),
+    className: "w-full h-4 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-lime-600"
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "font-bold text-slate-700 mb-2 flex justify-between"
+  }, /*#__PURE__*/React.createElement("span", null, "💡 ", getText("light")), /*#__PURE__*/React.createElement("span", {
+    className: lightVal === 1 ? "text-green-600" : "text-red-500"
+  }, lightVal === 0 ? getText("dim") : getText("bright"))), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "0",
+    max: "1",
+    step: "1",
+    value: lightVal,
+    onChange: e => setLightVal(parseInt(e.target.value, 10)),
+    className: "w-full h-4 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-yellow-500"
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "font-bold text-slate-700 mb-2 flex justify-between"
+  }, /*#__PURE__*/React.createElement("span", null, "🪑 ", getText("posture")), /*#__PURE__*/React.createElement("span", {
+    className: postureVal === 1 ? "text-green-600" : "text-red-500"
+  }, postureVal === 0 ? getText("slouch") : postureVal === 1 ? getText("straight") : getText("messy"))), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-2"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setPostureVal(0),
+    className: `flex-1 py-2 rounded-lg font-bold border-2 ${postureVal === 0 ? "bg-slate-200 border-slate-400" : "bg-white border-slate-100"}`
+  }, getText("slouch")), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setPostureVal(1),
+    className: `flex-1 py-2 rounded-lg font-bold border-2 ${postureVal === 1 ? "bg-lime-100 border-lime-400" : "bg-white border-slate-100"}`
+  }, getText("straight")), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setPostureVal(2),
+    className: `flex-1 py-2 rounded-lg font-bold border-2 ${postureVal === 2 ? "bg-slate-200 border-slate-400" : "bg-white border-slate-100"}`
+  }, getText("messy")))), status && /*#__PURE__*/React.createElement("div", {
+    className: `p-4 rounded-2xl font-black text-center text-xl shadow w-full ${status === "correct" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"}`
+  }, getText(status)), /*#__PURE__*/React.createElement("button", {
+    onClick: check,
+    className: "w-full bg-lime-600 text-white py-4 rounded-2xl font-black text-xl hover:bg-lime-700 shadow-xl border-b-4 border-lime-800 active:border-b-0 active:translate-y-1"
+  }, getText("check"))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

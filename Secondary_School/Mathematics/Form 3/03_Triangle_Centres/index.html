@@ -1,0 +1,1090 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Form 3 Math: Interactive Learning of Triangle Centers</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: #f5f7fb;
+      color: #1f2a44;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    header {
+      background: linear-gradient(135deg, #4f8ef5, #6bc4f7);
+      color: #fff;
+      padding: 24px 32px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.9rem;
+      letter-spacing: 1px;
+    }
+
+    main {
+      flex: 1;
+      padding: 24px 32px 48px;
+      display: grid;
+      gap: 24px;
+      grid-template-columns: minmax(400px, 900px) minmax(380px, 500px) minmax(320px, 400px);
+      align-items: start;
+    }
+
+    section {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 2px 12px rgba(15, 50, 95, 0.12);
+    }
+
+    #canvasWrapper {
+      position: relative;
+    }
+
+    canvas {
+      width: 100%;
+      height: auto;
+      border-radius: 12px;
+      background: #ffffff;
+      box-shadow: inset 0 0 0 1px rgba(79, 142, 245, 0.15);
+      cursor: grab;
+    }
+
+    canvas:active {
+      cursor: grabbing;
+    }
+
+    .panel-title {
+      font-weight: 700;
+      margin-bottom: 12px;
+      font-size: 1.05rem;
+    }
+
+    .toggle-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+
+    .toggle-group label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: rgba(79, 142, 245, 0.08);
+      transition: background 0.2s ease;
+    }
+
+    .toggle-group label:hover {
+      background: rgba(79, 142, 245, 0.18);
+    }
+
+    input[type="checkbox"] {
+      accent-color: #4f8ef5;
+      width: 18px;
+      height: 18px;
+    }
+
+    .info-box {
+      background: #f0f6ff;
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 16px;
+      line-height: 1.6;
+    }
+
+    .info-box strong {
+      color: #1f5dc0;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .shape-button {
+      flex: 1;
+      min-width: 140px;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: #fff;
+    }
+
+    .shape-button.equilateral {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .shape-button.equilateral:hover {
+      background: linear-gradient(135deg, #5568d3 0%, #653a8f 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .shape-button.isosceles {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+
+    .shape-button.isosceles:hover {
+      background: linear-gradient(135deg, #e081f0 0%, #e4465b 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(240, 147, 251, 0.4);
+    }
+
+    .four-centers-line {
+      background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin-top: 16px;
+      border-left: 4px solid #f39c12;
+      display: none;
+    }
+
+    .four-centers-line.show {
+      display: block;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .four-centers-line strong {
+      color: #d35400;
+      font-size: 1rem;
+    }
+
+    .four-centers-line p {
+      margin: 6px 0 0 0;
+      color: #7f4a00;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .tooltip {
+      position: absolute;
+      pointer-events: none;
+      background: rgba(0, 25, 66, 0.92);
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      line-height: 1.5;
+      max-width: 220px;
+      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.25));
+      transform: translate(-50%, calc(-100% - 16px));
+      z-index: 10;
+      white-space: pre-line;
+    }
+
+    .tooltip::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: -8px;
+      border-width: 8px 8px 0 8px;
+      border-style: solid;
+      border-color: rgba(0, 25, 66, 0.92) transparent transparent transparent;
+    }
+
+    .task-panel h3 {
+      margin-top: 0;
+      margin-bottom: 10px;
+      font-size: 1rem;
+      color: #1f5dc0;
+    }
+
+    .task-panel p {
+      margin: 0 0 8px;
+      line-height: 1.6;
+    }
+
+    .task-panel ul {
+      padding-left: 18px;
+      margin: 0;
+      line-height: 1.6;
+    }
+
+    .quiz-card {
+      background: #fff6f0;
+      border-radius: 12px;
+      padding: 18px;
+      border: 1px solid rgba(255, 153, 76, 0.35);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .quiz-card h4 {
+      margin: 0;
+      color: #e0671f;
+    }
+
+    .quiz-options label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .quiz-options input[type="radio"] {
+      accent-color: #e0671f;
+    }
+
+    .feedback {
+      font-weight: 600;
+      min-height: 1.2em;
+    }
+
+    .feedback.correct {
+      color: #16873d;
+    }
+
+    .feedback.incorrect {
+      color: #c62828;
+    }
+
+
+    .data-group {
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(79, 142, 245, 0.15);
+    }
+
+    .data-group:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+
+    .data-group h4 {
+      margin: 0 0 12px 0;
+      font-size: 0.95rem;
+      color: #1f5dc0;
+      font-weight: 700;
+    }
+
+    .data-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      font-size: 0.875rem;
+    }
+
+    .data-item-label {
+      color: #4f5b77;
+      font-weight: 500;
+    }
+
+    .data-item-value {
+      color: #1f2a44;
+      font-weight: 600;
+      font-family: 'Courier New', monospace;
+      text-align: right;
+    }
+
+    .data-item.highlight {
+      background: rgba(79, 142, 245, 0.15);
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin: 2px 0;
+      border-left: 3px solid #4f8ef5;
+    }
+
+    .data-item.highlight .data-item-label,
+    .data-item.highlight .data-item-value {
+      color: #1f5dc0;
+      font-weight: 700;
+    }
+
+    .coordinate-item {
+      display: grid;
+      grid-template-columns: auto 1fr 1fr;
+      gap: 8px;
+      padding: 4px 0;
+      font-size: 0.875rem;
+    }
+
+    .coordinate-label {
+      color: #4f5b77;
+      font-weight: 600;
+      min-width: 20px;
+    }
+
+    .coordinate-value {
+      color: #1f2a44;
+      font-family: 'Courier New', monospace;
+      text-align: right;
+    }
+
+    footer {
+      padding: 16px 32px 24px;
+      font-size: 0.85rem;
+      color: #4f5b77;
+      text-align: center;
+    }
+
+    @media (max-width: 1700px) {
+      main {
+        grid-template-columns: minmax(400px, 900px) minmax(380px, 500px) 1fr;
+      }
+      
+      #viewArea {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 960px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+
+      canvas {
+        min-height: 400px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>Form 3 Math: Interactive Learning of Triangle Centers</h1>
+  </header>
+
+  <main>
+    <section id="canvasWrapper">
+      <div class="panel-title">Drag vertices to observe changes in the four centers</div>
+      <div class="button-group">
+        <button id="btnEquilateral" class="shape-button equilateral">等邊三角形 (Equilateral)</button>
+        <button id="btnIsosceles" class="shape-button isosceles">等腰三角形 (Isosceles)</button>
+      </div>
+      <canvas id="geoCanvas" width="800" height="600"></canvas>
+      <div id="tooltip" class="tooltip" style="display:none;"></div>
+    </section>
+
+    <section>
+      <div class="panel-title">Learning Tips & Tasks</div>
+
+      <div class="info-box">
+        <strong>Interaction Tips:</strong>
+        Try changing the triangle to isosceles or obtuse, and notice how the positions of the four centers change. You
+        can use the buttons on the right to hide/show different centers to focus your observation.
+      </div>
+
+      <div class="toggle-group">
+        <!-- Teachers can modify label text as needed -->
+        <label><input type="checkbox" id="toggleCircumcenter" checked /> Circumcenter (O)</label>
+        <label><input type="checkbox" id="toggleIncenter" checked /> Incenter (I)</label>
+        <label><input type="checkbox" id="toggleCentroid" checked /> Centroid (G)</label>
+        <label><input type="checkbox" id="toggleOrthocenter" checked /> Orthocenter (H)</label>
+      </div>
+
+      <div class="task-panel">
+        <h3>Suggested Interactive Tasks</h3>
+        <p>1. Adjust the triangle to find when the circumcenter is outside the triangle, and explain why.</p>
+        <p>2. Which part of the triangle is the incenter closely related to? Observe and describe.</p>
+        <p>3. Explain the relationship between the centroid and the three medians of the triangle in your own words.</p>
+        <p>4. Try adjusting the triangle to a right-angled triangle, and observe the relative positions of the
+          orthocenter and circumcenter.</p>
+      </div>
+
+      <div class="task-panel" style="margin-top:18px;">
+        <h3>Challenge (Customizable by Teacher)</h3>
+        <ul>
+          <li>Think: What is special about the four centers in an equilateral triangle?</li>
+          <li>Explore: Drag one vertex very far away, how does the distance between the four centers change?</li>
+        </ul>
+      </div>
+
+      <div class="quiz-card" style="margin-top:18px;">
+        <h4>Quick Quiz: Which of these centers lie inside every triangle? (Select all that apply)</h4>
+        <div class="quiz-options">
+          <label><input type="checkbox" name="quiz" value="circum"> Circumcenter</label>
+          <label><input type="checkbox" name="quiz" value="in"> Incenter</label>
+          <label><input type="checkbox" name="quiz" value="centroid"> Centroid</label>
+          <label><input type="checkbox" name="quiz" value="ortho"> Orthocenter</label>
+        </div>
+        <button id="checkAnswer"
+          style="align-self:flex-start;padding:8px 14px;border-radius:8px;border:none;background:#e0671f;color:#fff;font-weight:600;cursor:pointer;">Check
+          Answer</button>
+        <div id="quizFeedback" class="feedback"></div>
+      </div>
+    </section>
+
+    <section id="viewArea" class="view-area">
+      <div class="panel-title">檢視區 (Viewing Area)</div>
+      
+      <div class="data-group">
+        <h4>頂點座標 (Vertices)</h4>
+        <div id="verticesData"></div>
+      </div>
+
+      <div class="data-group">
+        <h4>邊長 (Side Lengths)</h4>
+        <div id="sideLengthsData"></div>
+        <div id="fourCentersLine" class="four-centers-line">
+          <strong>四心共線 (Four Centers Collinear)</strong>
+          <p>在等腰三角形中，四個中心（外心、內心、重心、垂心）位於同一條直線上，這條直線是對稱軸。</p>
+        </div>
+      </div>
+
+      <div class="data-group">
+        <h4>三角形屬性 (Triangle Properties)</h4>
+        <div id="trianglePropertiesData"></div>
+      </div>
+
+      <div class="data-group">
+        <h4>四個中心座標 (Four Centers)</h4>
+        <div id="centersData"></div>
+      </div>
+
+      <div class="data-group">
+        <h4>中心距離 (Distances Between Centers)</h4>
+        <div id="centerDistancesData"></div>
+      </div>
+    </section>
+  
+</main>
+
+          <!-- Footer -->
+    <footer style="text-align: center; padding: 1rem; color: #707070; font-size: 0.875rem;">
+        <p style="font-style: italic; margin-bottom: 0.25rem;">But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his understanding. Jeremiah 10:12</p>
+        <p style="font-size: 0.75rem; margin-bottom: 0.25rem; margin-top: 0.5rem;">「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12</p>
+        <p style="font-size: 0.75rem; margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid #d1d5db;">@ 2025 Generated by Gemini Pro 3.0  Prepared by SF Lau</p>
+    </footer>
+
+  <script>
+    // -----------------------------
+    // Geometric Calculations and Interactive Logic
+    // -----------------------------
+    const canvas = document.getElementById("geoCanvas");
+    const ctx = canvas.getContext("2d");
+    const tooltip = document.getElementById("tooltip");
+
+    // 初始三角形頂點位置
+    const points = [
+      { x: 130, y: 380, label: "A", color: "#ff6b6b" },
+      { x: 470, y: 340, label: "B", color: "#ffa94d" },
+      { x: 280, y: 110, label: "C", color: "#4dabf7" }
+    ];
+
+    // 四心的顯示控制
+    const centerToggles = {
+      circumcenter: document.getElementById("toggleCircumcenter"),
+      incenter: document.getElementById("toggleIncenter"),
+      centroid: document.getElementById("toggleCentroid"),
+      orthocenter: document.getElementById("toggleOrthocenter")
+    };
+
+    // Four Centers Definitions
+    const centerDefinitions = {
+      circumcenter: "Circumcenter O: The intersection of the perpendicular bisectors of the three sides,\nequidistant from the three vertices.",
+      incenter: "Incenter I: The intersection of the angle bisectors of the three internal angles,\nequidistant from the three sides, is the center of the incircle.",
+      centroid: "Centroid G: The intersection of the three medians,\neach median is divided by the centroid in a 2:1 ratio.",
+      orthocenter: "Orthocenter H: The intersection of the three altitudes,\nits position changes with the shape of the triangle."
+    };
+
+    // Interactive Drag Control
+    let dragTarget = null;
+    let isDragging = false;
+
+    function distance(p1, p2) {
+      return Math.hypot(p1.x - p2.x, p1.y - p2.y);
+    }
+
+    function computeTriangleData() {
+      const [A, B, C] = points;
+
+      const sideLengths = {
+        AB: distance(A, B),
+        BC: distance(B, C),
+        CA: distance(C, A)
+      };
+      const perimeter = sideLengths.AB + sideLengths.BC + sideLengths.CA;
+      const semiPerimeter = perimeter / 2;
+      const doubleArea =
+        A.x * (B.y - C.y) + B.x * (C.y - A.y) + C.x * (A.y - B.y);
+      const area = Math.abs(doubleArea) / 2;
+      const inradius =
+        perimeter > 0 && semiPerimeter > 0 ? area / semiPerimeter : 0;
+
+      // 形心
+      const centroid = {
+        x: (A.x + B.x + C.x) / 3,
+        y: (A.y + B.y + C.y) / 3,
+        label: "G",
+        color: "#2d6cdf"
+      };
+
+      // 內心
+      const a = sideLengths.BC;
+      const b = sideLengths.CA;
+      const c = sideLengths.AB;
+      const safePerimeter = perimeter === 0 ? 1 : perimeter;
+      const incenter = {
+        x: (a * A.x + b * B.x + c * C.x) / safePerimeter,
+        y: (a * A.y + b * B.y + c * C.y) / safePerimeter,
+        label: "I",
+        color: "#12b886",
+        radius: inradius
+      };
+
+      // 外心（利用向量公式）
+      const d = 2 * (A.x * (B.y - C.y) + B.x * (C.y - A.y) + C.x * (A.y - B.y));
+      let circumcenter = null;
+      if (Math.abs(d) > 1e-6) {
+        const ux =
+          ((A.x * A.x + A.y * A.y) * (B.y - C.y) +
+            (B.x * B.x + B.y * B.y) * (C.y - A.y) +
+            (C.x * C.x + C.y * C.y) * (A.y - B.y)) / d;
+        const uy =
+          ((A.x * A.x + A.y * A.y) * (C.x - B.x) +
+            (B.x * B.x + B.y * B.y) * (A.x - C.x) +
+            (C.x * C.x + C.y * C.y) * (B.x - A.x)) / d;
+        circumcenter = {
+          x: ux,
+          y: uy,
+          label: "O",
+          color: "#845ef7",
+          radius: distance({ x: ux, y: uy }, A)
+        };
+      }
+
+      // 垂心（向量法：H = A + B + C - 2*O, 需利用外接圓心）
+      let orthocenter = null;
+      if (circumcenter) {
+        orthocenter = {
+          x: A.x + B.x + C.x - 2 * circumcenter.x,
+          y: A.y + B.y + C.y - 2 * circumcenter.y,
+          label: "H",
+          color: "#f03e3e"
+        };
+      }
+
+      return {
+        centers: { centroid, incenter, circumcenter, orthocenter },
+        sideLengths
+      };
+    }
+
+    function drawTriangle() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // 補助網格
+      drawGrid();
+
+      // 三角形邊
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+      ctx.lineTo(points[1].x, points[1].y);
+      ctx.lineTo(points[2].x, points[2].y);
+      ctx.closePath();
+      ctx.fillStyle = "rgba(79, 142, 245, 0.08)";
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = "rgba(45, 108, 223, 0.5)";
+      ctx.stroke();
+
+      // 頂點
+      points.forEach((pt) => drawPoint(pt));
+
+      // 四心
+      const triangleData = computeTriangleData();
+      const centers = triangleData.centers;
+      const hoverInfo = detectHover(centers);
+
+      drawSideLengths(triangleData.sideLengths);
+      if (centerToggles.circumcenter.checked && centers.circumcenter?.radius) {
+        drawCircumcircle(centers.circumcenter);
+      }
+      if (centerToggles.incenter.checked && centers.incenter?.radius) {
+        drawIncircle(centers.incenter);
+      }
+      drawCenters(centers, hoverInfo);
+
+      if (hoverInfo) {
+        showTooltip(hoverInfo);
+      } else {
+        tooltip.style.display = "none";
+      }
+
+      // Update viewing area
+      updateViewArea(triangleData);
+    }
+
+    function updateViewArea(triangleData) {
+      const { centers, sideLengths } = triangleData;
+      const [A, B, C] = points;
+      
+      // Calculate additional properties
+      const perimeter = sideLengths.AB + sideLengths.BC + sideLengths.CA;
+      const semiPerimeter = perimeter / 2;
+      const doubleArea = A.x * (B.y - C.y) + B.x * (C.y - A.y) + C.x * (A.y - B.y);
+      const area = Math.abs(doubleArea) / 2;
+      const inradius = perimeter > 0 && semiPerimeter > 0 ? area / semiPerimeter : 0;
+      const circumradius = centers.circumcenter ? centers.circumcenter.radius : 0;
+
+      // Update vertices data
+      const verticesHtml = points.map(pt => `
+        <div class="coordinate-item">
+          <span class="coordinate-label">${pt.label}:</span>
+          <span class="coordinate-value">x = ${pt.x.toFixed(1)}</span>
+          <span class="coordinate-value">y = ${pt.y.toFixed(1)}</span>
+        </div>
+      `).join('');
+      document.getElementById('verticesData').innerHTML = verticesHtml;
+
+      // Update side lengths with highlight for equal sides
+      const tolerance = 0.01; // Tolerance for floating point comparison
+      const sides = [
+        { label: 'AB', value: sideLengths.AB },
+        { label: 'BC', value: sideLengths.BC },
+        { label: 'CA', value: sideLengths.CA }
+      ];
+      
+      // Find equal sides
+      const equalGroups = [];
+      const processed = new Set();
+      for (let i = 0; i < sides.length; i++) {
+        if (processed.has(i)) continue;
+        const group = [i];
+        for (let j = i + 1; j < sides.length; j++) {
+          if (processed.has(j)) continue;
+          if (Math.abs(sides[i].value - sides[j].value) < tolerance) {
+            group.push(j);
+            processed.add(j);
+          }
+        }
+        if (group.length > 1) {
+          equalGroups.push(...group);
+        }
+        processed.add(i);
+      }
+      
+      const sideLengthsHtml = sides.map((side, index) => {
+        const isEqual = equalGroups.includes(index);
+        const highlightClass = isEqual ? ' highlight' : '';
+        return `
+          <div class="data-item${highlightClass}">
+            <span class="data-item-label">${side.label}</span>
+            <span class="data-item-value">${side.value.toFixed(2)}</span>
+          </div>
+        `;
+      }).join('') + `
+        <div class="data-item">
+          <span class="data-item-label">周長 (Perimeter)</span>
+          <span class="data-item-value">${perimeter.toFixed(2)}</span>
+        </div>
+      `;
+      document.getElementById('sideLengthsData').innerHTML = sideLengthsHtml;
+
+      // Check if two sides are equal (isosceles triangle) and show four centers collinear message
+      const fourCentersLineEl = document.getElementById('fourCentersLine');
+      // Check if exactly two sides are equal (not all three)
+      const uniqueLengths = new Set(sides.map(s => s.value.toFixed(2)));
+      const hasTwoEqualSides = uniqueLengths.size === 2; // Exactly two different side lengths means two sides are equal
+      if (hasTwoEqualSides) {
+        fourCentersLineEl.classList.add('show');
+      } else {
+        fourCentersLineEl.classList.remove('show');
+      }
+
+      // Update triangle properties
+      const propertiesHtml = `
+        <div class="data-item">
+          <span class="data-item-label">面積 (Area)</span>
+          <span class="data-item-value">${area.toFixed(2)}</span>
+        </div>
+        <div class="data-item">
+          <span class="data-item-label">半周長 (Semi-perimeter)</span>
+          <span class="data-item-value">${semiPerimeter.toFixed(2)}</span>
+        </div>
+        <div class="data-item">
+          <span class="data-item-label">內切圓半徑 (Inradius)</span>
+          <span class="data-item-value">${inradius.toFixed(2)}</span>
+        </div>
+        <div class="data-item">
+          <span class="data-item-label">外接圓半徑 (Circumradius)</span>
+          <span class="data-item-value">${circumradius.toFixed(2)}</span>
+        </div>
+      `;
+      document.getElementById('trianglePropertiesData').innerHTML = propertiesHtml;
+
+      // Update centers coordinates
+      const centersList = [
+        { key: 'centroid', center: centers.centroid, label: 'G (形心)' },
+        { key: 'incenter', center: centers.incenter, label: 'I (內心)' },
+        { key: 'circumcenter', center: centers.circumcenter, label: 'O (外心)' },
+        { key: 'orthocenter', center: centers.orthocenter, label: 'H (垂心)' }
+      ];
+      
+      const centersHtml = centersList.map(({ key, center, label }) => {
+        if (!center) {
+          return `
+            <div class="coordinate-item">
+              <span class="coordinate-label">${label}:</span>
+              <span class="coordinate-value" style="grid-column: 2 / 4; color: #999;">未定義</span>
+            </div>
+          `;
+        }
+        return `
+          <div class="coordinate-item">
+            <span class="coordinate-label">${label}:</span>
+            <span class="coordinate-value">x = ${center.x.toFixed(1)}</span>
+            <span class="coordinate-value">y = ${center.y.toFixed(1)}</span>
+          </div>
+        `;
+      }).join('');
+      document.getElementById('centersData').innerHTML = centersHtml;
+
+      // Update distances between centers
+      const centerDistances = [];
+      const centerNames = {
+        centroid: 'G',
+        incenter: 'I',
+        circumcenter: 'O',
+        orthocenter: 'H'
+      };
+      
+      const centerArray = Object.entries(centers).filter(([key, center]) => center !== null);
+      for (let i = 0; i < centerArray.length; i++) {
+        for (let j = i + 1; j < centerArray.length; j++) {
+          const [key1, center1] = centerArray[i];
+          const [key2, center2] = centerArray[j];
+          const dist = distance(center1, center2);
+          centerDistances.push({
+            label: `${centerNames[key1]} - ${centerNames[key2]}`,
+            value: dist.toFixed(2)
+          });
+        }
+      }
+
+      const distancesHtml = centerDistances.length > 0 
+        ? centerDistances.map(d => `
+            <div class="data-item">
+              <span class="data-item-label">${d.label}</span>
+              <span class="data-item-value">${d.value}</span>
+            </div>
+          `).join('')
+        : '<div class="data-item"><span class="data-item-value" style="color: #999;">需要至少兩個中心</span></div>';
+      
+      document.getElementById('centerDistancesData').innerHTML = distancesHtml;
+    }
+
+    function drawGrid() {
+      const step = 40;
+      ctx.save();
+      ctx.strokeStyle = "rgba(173, 197, 255, 0.25)";
+      ctx.lineWidth = 1;
+      for (let x = step; x < canvas.width; x += step) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+      }
+      for (let y = step; y < canvas.height; y += step) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawPoint(pt) {
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, 10, 0, Math.PI * 2);
+      ctx.fillStyle = pt.color;
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = "#ffffff";
+      ctx.stroke();
+
+      ctx.font = "16px 'Noto Sans TC', sans-serif";
+      ctx.fillStyle = "#1f2a44";
+      ctx.fillText(pt.label, pt.x + 12, pt.y - 12);
+    }
+
+    function drawSideLengths(lengths) {
+      if (
+        !Number.isFinite(lengths.AB) ||
+        !Number.isFinite(lengths.BC) ||
+        !Number.isFinite(lengths.CA)
+      ) {
+        return;
+      }
+
+      ctx.font = "14px 'Noto Sans TC', sans-serif";
+      ctx.textBaseline = "middle";
+
+      const labels = [
+        {
+          text: `AB = ${lengths.AB.toFixed(1)}`,
+          position: { x: (points[0].x + points[1].x) / 2, y: (points[0].y + points[1].y) / 2 }
+        },
+        {
+          text: `BC = ${lengths.BC.toFixed(1)}`,
+          position: { x: (points[1].x + points[2].x) / 2, y: (points[1].y + points[2].y) / 2 }
+        },
+        {
+          text: `CA = ${lengths.CA.toFixed(1)}`,
+          position: { x: (points[2].x + points[0].x) / 2, y: (points[2].y + points[0].y) / 2 }
+        }
+      ];
+
+      labels.forEach(({ text, position }) => drawLabel(text, position.x, position.y));
+      ctx.textBaseline = "alphabetic";
+    }
+
+    function drawLabel(text, x, y) {
+      ctx.save();
+      ctx.font = "14px 'Noto Sans TC', sans-serif";
+      const padding = 6;
+      const metrics = ctx.measureText(text);
+      const labelWidth = metrics.width;
+      const labelHeight = 20;
+      ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
+      ctx.fillRect(
+        x - labelWidth / 2 - padding,
+        y - labelHeight / 2,
+        labelWidth + padding * 2,
+        labelHeight
+      );
+      ctx.strokeStyle = "rgba(39, 64, 96, 0.25)";
+      ctx.strokeRect(
+        x - labelWidth / 2 - padding,
+        y - labelHeight / 2,
+        labelWidth + padding * 2,
+        labelHeight
+      );
+      ctx.fillStyle = "#274060";
+      ctx.fillText(text, x - labelWidth / 2, y + 1);
+      ctx.restore();
+    }
+
+    function drawIncircle(incenter) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(incenter.x, incenter.y, incenter.radius, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(18, 184, 134, 0.6)";
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 6]);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawCircumcircle(circumcenter) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(circumcenter.x, circumcenter.y, circumcenter.radius, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(132, 94, 247, 0.6)";
+      ctx.lineWidth = 2;
+      ctx.setLineDash([10, 6]);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawCenters(centers, hoverInfo) {
+      const radius = 8;
+
+      Object.entries(centers).forEach(([key, center]) => {
+        if (!center) return;
+        if (!centerToggles[key].checked) return;
+
+        ctx.beginPath();
+        ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
+        ctx.fillStyle = center.color;
+        ctx.fill();
+
+        ctx.lineWidth = hoverInfo && hoverInfo.key === key ? 3 : 2;
+        ctx.strokeStyle = "#ffffff";
+        ctx.stroke();
+
+        ctx.font = "14px 'Noto Sans TC', sans-serif";
+        ctx.fillStyle = "#1f2a44";
+        ctx.fillText(center.label, center.x + 10, center.y - 10);
+      });
+    }
+
+    function detectHover(centers) {
+      const mouse = currentMousePos;
+      if (!mouse) return null;
+
+      const radius = 12;
+      for (const [key, center] of Object.entries(centers)) {
+        if (!center || !centerToggles[key].checked) continue;
+        if (distance(center, mouse) < radius) {
+          return { key, center };
+        }
+      }
+      return null;
+    }
+
+    function showTooltip({ key, center }) {
+      tooltip.style.display = "block";
+      tooltip.textContent = centerDefinitions[key];
+      tooltip.style.left = `${center.x}px`;
+      tooltip.style.top = `${center.y}px`;
+    }
+
+    let currentMousePos = null;
+
+    canvas.addEventListener("mousedown", (event) => {
+      const { x, y } = getMousePos(event);
+      dragTarget = points.find((pt) => distance(pt, { x, y }) < 15);
+      isDragging = Boolean(dragTarget);
+    });
+
+    canvas.addEventListener("mousemove", (event) => {
+      const { x, y } = getMousePos(event);
+      currentMousePos = { x, y };
+
+      if (isDragging && dragTarget) {
+        dragTarget.x = x;
+        dragTarget.y = y;
+      }
+    });
+
+    canvas.addEventListener("mouseup", () => {
+      isDragging = false;
+      dragTarget = null;
+    });
+
+    canvas.addEventListener("mouseleave", () => {
+      isDragging = false;
+      dragTarget = null;
+      currentMousePos = null;
+      tooltip.style.display = "none";
+    });
+
+    function getMousePos(event) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: ((event.clientX - rect.left) / rect.width) * canvas.width,
+        y: ((event.clientY - rect.top) / rect.height) * canvas.height
+      };
+    }
+
+    Object.values(centerToggles).forEach((checkbox) =>
+      checkbox.addEventListener("change", () => drawTriangle())
+    );
+
+    function animate() {
+      drawTriangle();
+      requestAnimationFrame(animate);
+    }
+    animate();
+
+    // -----------------------------
+    // Shape Buttons Logic
+    // -----------------------------
+    const btnEquilateral = document.getElementById("btnEquilateral");
+    const btnIsosceles = document.getElementById("btnIsosceles");
+
+    // Set triangle to equilateral (all sides equal)
+    btnEquilateral.addEventListener("click", () => {
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const sideLength = 250; // Side length of the equilateral triangle
+      const height = (Math.sqrt(3) / 2) * sideLength; // Height of equilateral triangle
+      
+      // Calculate vertices for equilateral triangle
+      // A at top, B and C at bottom
+      points[0].x = centerX; // A (top)
+      points[0].y = centerY - height * 2/3;
+      points[1].x = centerX - sideLength / 2; // B (bottom left)
+      points[1].y = centerY + height / 3;
+      points[2].x = centerX + sideLength / 2; // C (bottom right)
+      points[2].y = centerY + height / 3;
+      
+      drawTriangle();
+    });
+
+    // Set triangle to isosceles (two sides equal)
+    btnIsosceles.addEventListener("click", () => {
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const baseLength = 280;
+      const equalSideLength = 300;
+      const height = Math.sqrt(equalSideLength * equalSideLength - (baseLength / 2) * (baseLength / 2));
+      
+      // Calculate vertices for isosceles triangle
+      // A at top (apex), B and C at bottom (base)
+      points[0].x = centerX; // A (apex)
+      points[0].y = centerY - height * 0.4;
+      points[1].x = centerX - baseLength / 2; // B (bottom left)
+      points[1].y = centerY + height * 0.6;
+      points[2].x = centerX + baseLength / 2; // C (bottom right)
+      points[2].y = centerY + height * 0.6;
+      
+      drawTriangle();
+    });
+
+    // -----------------------------
+    // Quiz Interaction Logic
+    // -----------------------------
+    const checkButton = document.getElementById("checkAnswer");
+    const feedback = document.getElementById("quizFeedback");
+
+    checkButton.addEventListener("click", () => {
+      const selected = Array.from(document.querySelectorAll('input[name="quiz"]:checked')).map(
+        (input) => input.value
+      );
+      if (selected.length === 0) {
+        feedback.textContent = "Please select at least one answer.";
+        feedback.className = "feedback incorrect";
+        return;
+      }
+
+      const correctSet = ["in", "centroid"];
+      const allCorrect = correctSet.every((ans) => selected.includes(ans));
+      const extraChoices = selected.filter((ans) => !correctSet.includes(ans));
+
+      if (allCorrect && extraChoices.length === 0 && selected.length === correctSet.length) {
+        feedback.textContent = "Correct! The Incenter and Centroid always lie inside any triangle.";
+        feedback.className = "feedback correct";
+      } else if (allCorrect && extraChoices.length === 0) {
+        feedback.textContent = "Good! There is one more correct answer, try selecting all of them.";
+        feedback.className = "feedback incorrect";
+      } else if (extraChoices.length > 0) {
+        feedback.textContent = "Try again! Notice which centers are sometimes outside the triangle.";
+        feedback.className = "feedback incorrect";
+      } else {
+        feedback.textContent = "Close! Think about which other center must be inside the triangle.";
+        feedback.className = "feedback incorrect";
+      }
+    });
+  </script>
+
+</body>
+
+</html>
+
+

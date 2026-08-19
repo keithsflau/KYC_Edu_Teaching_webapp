@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小五數學：小數乘整數 | Decimal × Whole Number</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(30, 58, 138, 0.4);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(147, 197, 253, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Decimal × Whole Number",
+    zh: "小數乘整數",
+    ja: "小数 × 整数",
+    ko: "소수 × 정수",
+    es: "Decimal × Número Entero",
+    de: "Dezimalzahl × Ganze Zahl",
+    fi: "Desimaali × Kokonaisluku",
+    fr: "Décimal × Nombre entier",
+    ar: "عشري × عدد صحيح",
+    it: "Decimale × Numero Intero"
+  },
+  stepsTitle: {
+    en: "Steps:",
+    zh: "計算步驟:",
+    ja: "計算手順:",
+    ko: "계산 단계:",
+    es: "Pasos:",
+    de: "Schritte:",
+    fi: "Vaiheet:",
+    fr: "Étapes :",
+    ar: "خطوات:",
+    it: "Passaggi:"
+  },
+  step1: {
+    en: "{decimal} has {decPlaces} decimal place(s)",
+    zh: "{decimal} 有 {decPlaces} 位小數",
+    ja: "{decimal} には小数点以下 {decPlaces} 桁があります",
+    ko: "{decimal}에는 {decPlaces} 자리 소수가 있습니다",
+    es: "{decimal} tiene {decPlaces} lugar(es) decimal(es)",
+    de: "{decimal} hat {decPlaces} Dezimalstelle(n)",
+    fi: "{decimal}:ssa on {decPlaces} desimaalipaikka(a)",
+    fr: "{decimal} a {decPlaces} décimale(s)",
+    ar: "{decimal} لديه {decPlaces} منازل عشرية",
+    it: "{decimal} ha {decPlaces} cifre decimali"
+  },
+  step2: {
+    en: "Ignore decimal point: {asWhole} × {whole} = {productWhole}",
+    zh: "暫時忽略小數點: {asWhole} × {whole} = {productWhole}",
+    ja: "小数点を無視: {asWhole} × {whole} = {productWhole}",
+    ko: "소수점 무시: {asWhole} × {whole} = {productWhole}",
+    es: "Ignorar punto decimal: {asWhole} × {whole} = {productWhole}",
+    de: "Dezimalpunkt ignorieren: {asWhole} × {whole} = {productWhole}",
+    fi: "Ohita desimaalipilkku: {asWhole} × {whole} = {productWhole}",
+    fr: "Ignorer la virgule : {asWhole} × {whole} = {productWhole}",
+    ar: "تجاهل النقطة: {asWhole} × {whole} = {productWhole}",
+    it: "Ignora punto: {asWhole} × {whole} = {productWhole}"
+  },
+  step3: {
+    en: "Put back {decPlaces} decimal place(s)",
+    zh: "補回 {decPlaces} 位小數",
+    ja: "小数点以下 {decPlaces} 桁を戻す",
+    ko: "소수점 {decPlaces} 자리를 되돌림",
+    es: "Reponer {decPlaces} lugar(es)",
+    de: "{decPlaces} Stellen zurücksetzen",
+    fi: "Palauta {decPlaces} desimaalia",
+    fr: "Remettre {decPlaces} décimale(s)",
+    ar: "أعد {decPlaces} خانة",
+    it: "Rimetti {decPlaces} cifre"
+  },
+  answer: {
+    en: "Answer",
+    zh: "答案",
+    ja: "答え",
+    ko: "정답",
+    es: "Respuesta",
+    de: "Antwort",
+    fi: "Vastaus",
+    fr: "Réponse",
+    ar: "إجابة",
+    it: "Risposta"
+  },
+  tipTitle: {
+    en: "Tip:",
+    zh: "技巧:",
+    ja: "ヒント:",
+    ko: "팁:",
+    es: "Consejo:",
+    de: "Tipp:",
+    fi: "Vinkki:",
+    fr: "Astuce :",
+    ar: "نصيحة:",
+    it: "Suggerimento:"
+  },
+  tipText: {
+    en: "Multiply as whole numbers first. The answer has the same number of decimal places as the decimal number!",
+    zh: "先當作整數相乘，答案的小數位數與題目中的小數相同！",
+    ja: "まず整数として掛け算します。答えの小数点以下の桁数は、元の小数と同じになります！",
+    ko: "먼저 정수처럼 곱하세요. 정답은 십진수와 동일한 소수 자릿수를 가집니다!",
+    es: "Multiplica primero como números enteros. ¡La respuesta tiene el mismo número de lugares decimales que el número decimal!",
+    de: "Multipliziere zuerst wie ganze Zahlen. Die Antwort hat die gleiche Anzahl an Dezimalstellen wie die Dezimalzahl!",
+    fi: "Kerro ensin kokonaislukuina. Vastauksessa on sama määrä desimaalipaikkoja kuin desimaaliluvussa!",
+    fr: "Multipliez d'abord comme des nombres entiers. La réponse a le même nombre de décimales que le nombre décimal !",
+    ar: "اضرب كأعداد صحيحة أولاً. الإجابة لها نفس عدد المنازل العشرية مثل الرقم العشري!",
+    it: "Moltiplica prima come numeri interi. La risposta ha lo stesso numero di cifre decimali del numero decimale!"
+  }
+};
+const getText = (key, lang, params = {}) => {
+  let text = t[key]?.[lang] || t[key]?.["en"] || key;
+  for (const param in params) {
+    text = text.replace(`{${param}}`, params[param]);
+  }
+  return text;
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [decimal, setDecimal] = useState(2.35);
+  const [whole, setWhole] = useState(4);
+  const decStr = decimal.toString();
+  const decPlaces = decStr.includes(".") ? decStr.split(".")[1].length : 0;
+  const asWhole = Math.round(decimal * Math.pow(10, decPlaces));
+  const productWhole = asWhole * whole;
+  const result = decimal * whole;
+
+  // Ensure display precision is correct avoiding float errors
+  const resultStr = result.toFixed(decPlaces);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-4xl flex justify-between items-center mb-10"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-black text-blue-400 drop-shadow-[0_0_15px_rgba(96,165,250,0.5)]"
+  }, "✖️ ", getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-800/80 p-1.5 rounded-xl border border-white/10 flex flex-wrap justify-end gap-1 max-w-[50%]"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-blue-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white hover:bg-white/5"}`
+  }, l)))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-3xl flex flex-col gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-8 rounded-3xl flex flex-col md:flex-row items-center justify-center gap-8 border-blue-500/30"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    step: "0.01",
+    value: decimal,
+    onChange: e => setDecimal(parseFloat(e.target.value) || 0),
+    className: "bg-slate-900/50 border-b-2 border-blue-400 text-3xl font-mono font-black text-center w-32 p-2 outline-none focus:border-blue-300 text-blue-200"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs text-blue-400 mt-1 uppercase tracking-wider text-center"
+  }, decPlaces, " d.p.")), /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black text-slate-500"
+  }, "×"), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    min: "1",
+    max: "50",
+    value: whole,
+    onChange: e => setWhole(parseInt(e.target.value, 10) || 1),
+    className: "bg-slate-900/50 border-b-2 border-green-400 text-3xl font-mono font-black text-center w-24 p-2 outline-none focus:border-green-300 text-green-200"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 rounded-2xl flex flex-col gap-4"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-blue-300 font-bold uppercase tracking-widest text-sm border-b border-white/10 pb-2"
+  }, getText("stepsTitle", lang)), /*#__PURE__*/React.createElement(StepItem, {
+    num: "1",
+    text: getText("step1", lang, {
+      decimal,
+      decPlaces
+    }),
+    highlight: decPlaces,
+    color: "text-blue-200"
+  }), /*#__PURE__*/React.createElement(StepItem, {
+    num: "2",
+    text: getText("step2", lang, {
+      asWhole,
+      whole,
+      productWhole
+    }),
+    highlight: productWhole,
+    color: "text-yellow-200"
+  }), /*#__PURE__*/React.createElement(StepItem, {
+    num: "3",
+    text: getText("step3", lang, {
+      decPlaces
+    }),
+    highlight: decPlaces,
+    color: "text-pink-200"
+  })), /*#__PURE__*/React.createElement(motion.div, {
+    key: result,
+    initial: {
+      scale: 0.9,
+      opacity: 0
+    },
+    animate: {
+      scale: 1,
+      opacity: 1
+    },
+    className: "bg-gradient-to-r from-blue-600/20 to-indigo-600/20 border border-blue-400/30 p-8 rounded-3xl text-center flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-blue-300 font-bold uppercase tracking-widest text-sm mb-2"
+  }, getText("answer", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl font-black text-white font-mono drop-shadow-[0_0_10px_rgba(59,130,246,0.6)]"
+  }, resultStr)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-amber-500/10 border border-amber-500/20 p-4 rounded-xl flex gap-3 text-amber-200 text-sm"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-2xl"
+  }, "💡"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "font-bold mb-1 uppercase"
+  }, getText("tipTitle", lang)), getText("tipText", lang)))));
+}
+const StepItem = ({
+  num,
+  text,
+  highlight,
+  color
+}) => /*#__PURE__*/React.createElement("div", {
+  className: `flex gap-4 items-center ${color}`
+}, /*#__PURE__*/React.createElement("div", {
+  className: "w-8 h-8 rounded-full bg-slate-900/50 flex items-center justify-center font-bold text-sm border border-white/10 shrink-0"
+}, num), /*#__PURE__*/React.createElement("div", {
+  className: "font-mono text-lg"
+}, text));
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

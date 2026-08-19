@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fractional Distillation | 原油分餾模擬</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+      }
+      .tower-gradient {
+        background: linear-gradient(
+          to top,
+          #451a03 0%,
+          #ca8a04 40%,
+          #fef08a 100%
+        );
+      }
+      .bubble {
+        position: absolute;
+        background: rgba(255, 255, 255, 0.4);
+        border-radius: 50%;
+        animation: rise linear infinite;
+      }
+      @keyframes rise {
+        0% {
+          transform: translateY(0) scale(1);
+          opacity: 0;
+        }
+        10% {
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(-400px) scale(1.5);
+          opacity: 0;
+        }
+      }
+      .fraction-plate {
+        transition: all 0.3s ease;
+      }
+      .fraction-plate:hover {
+        background: rgba(255, 255, 255, 0.2);
+        padding-left: 10px;
+      }
+    </style>
+  </head>
+  <body class="bg-slate-950 text-white min-h-screen flex flex-col">
+    <header
+      class="bg-slate-900/50 backdrop-blur border-b border-slate-800 px-6 py-4 flex justify-between items-center sticky top-0 z-20"
+    >
+      <div class="flex items-center gap-4">
+        <a
+          href="../../index.html"
+          class="text-slate-400 hover:text-white transition-colors"
+        >
+          <svg
+            class="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M10 19l-7-7m0 0l7-7m-7 7h18"
+            />
+          </svg>
+        </a>
+        <div>
+          <h1
+            class="text-xl font-bold bg-gradient-to-r from-orange-400 to-yellow-200 bg-clip-text text-transparent"
+          >
+            Fractional Distillation
+            <span class="text-slate-500 text-sm ml-2">原油分餾</span>
+          </h1>
+          <p class="text-xs text-slate-400">
+            Separating Crude Oil by Boiling Point
+          </p>
+        </div>
+      </div>
+      <div
+        class="px-3 py-1 bg-orange-900/30 border border-orange-500/30 rounded-full text-orange-300 text-xs"
+      >
+        Module 4: Fossil Fuels
+      </div>
+    </header>
+
+    <main
+      class="flex-grow flex flex-col lg:flex-row max-w-7xl mx-auto w-full p-4 lg:p-8 gap-8"
+    >
+      <!-- Tower Visualization -->
+      <div class="flex-grow relative flex justify-center perspective-1000">
+        <!-- Crude Oil Inlet -->
+        <div
+          class="absolute bottom-12 left-0 lg:left-20 flex items-center md:hidden lg:flex"
+        >
+          <div
+            class="w-24 h-8 bg-slate-700 rounded-l-lg flex items-center justify-center text-xs text-slate-300"
+          >
+            Crude Oil
+          </div>
+          <div class="w-12 h-4 bg-slate-800 relative overflow-hidden">
+            <div class="absolute inset-0 bg-black/60 animate-pulse"></div>
+          </div>
+        </div>
+
+        <!-- The Tower -->
+        <div
+          class="relative w-48 lg:w-64 h-[600px] border-x-4 border-slate-700 bg-slate-900/80 rounded-t-3xl overflow-hidden shadow-2xl backdrop-blur-sm"
+        >
+          <!-- Temperature Gradient Overlay -->
+          <div class="absolute inset-0 opacity-20 tower-gradient"></div>
+
+          <!-- Bubbles Container -->
+          <div
+            id="bubbles-layer"
+            class="absolute inset-0 overflow-hidden pointer-events-none"
+          ></div>
+
+          <!-- Fraction Outlets (Visual) -->
+          <div
+            class="absolute top-[5%] right-0 w-8 h-2 bg-yellow-100 shadow-[0_0_10px_yellow]"
+          ></div>
+          <div class="absolute top-[20%] right-0 w-8 h-2 bg-yellow-300"></div>
+          <div class="absolute top-[35%] right-0 w-8 h-2 bg-yellow-500"></div>
+          <div class="absolute top-[50%] right-0 w-8 h-2 bg-orange-400"></div>
+          <div class="absolute top-[65%] right-0 w-8 h-2 bg-orange-600"></div>
+          <div class="absolute top-[80%] right-0 w-8 h-2 bg-orange-800"></div>
+          <div class="absolute top-[95%] right-0 w-8 h-2 bg-stone-800"></div>
+
+          <!-- Labels inside tower -->
+          <div
+            class="absolute top-2 left-1/2 -translate-x-1/2 text-[10px] text-blue-200 font-mono"
+          >
+            Cool (25°C)
+          </div>
+          <div
+            class="absolute bottom-2 left-1/2 -translate-x-1/2 text-[10px] text-red-400 font-mono"
+          >
+            Hot (400°C)
+          </div>
+        </div>
+
+        <!-- Interactivity Layer (Clickable Zones) -->
+        <div
+          class="absolute inset-0 flex flex-col items-center pt-[calc(600px*0.05)] h-[600px] w-48 lg:w-64 mx-auto z-10"
+        >
+          <!-- Zones matched to fractions -->
+          <button
+            onclick="selectFraction(0)"
+            class="w-full h-[15%] hover:bg-white/10 transition-colors group relative border-b border-white/5 border-dashed"
+          >
+            <span
+              class="hidden group-hover:block absolute right-2 top-1 text-xs text-yellow-200"
+              >< 40°C</span
+            >
+          </button>
+          <button
+            onclick="selectFraction(1)"
+            class="w-full h-[15%] hover:bg-white/10 transition-colors group relative border-b border-white/5 border-dashed"
+          >
+            <span
+              class="hidden group-hover:block absolute right-2 top-1 text-xs text-yellow-500"
+              >40-70°C</span
+            >
+          </button>
+          <button
+            onclick="selectFraction(2)"
+            class="w-full h-[15%] hover:bg-white/10 transition-colors group relative border-b border-white/5 border-dashed"
+          >
+            <span
+              class="hidden group-hover:block absolute right-2 top-1 text-xs text-orange-300"
+              >70-170°C</span
+            >
+          </button>
+          <button
+            onclick="selectFraction(3)"
+            class="w-full h-[15%] hover:bg-white/10 transition-colors group relative border-b border-white/5 border-dashed"
+          >
+            <span
+              class="hidden group-hover:block absolute right-2 top-1 text-xs text-orange-500"
+              >170-250°C</span
+            >
+          </button>
+          <button
+            onclick="selectFraction(4)"
+            class="w-full h-[15%] hover:bg-white/10 transition-colors group relative border-b border-white/5 border-dashed"
+          >
+            <span
+              class="hidden group-hover:block absolute right-2 top-1 text-xs text-orange-700"
+              >250-350°C</span
+            >
+          </button>
+          <button
+            onclick="selectFraction(5)"
+            class="w-full h-[15%] hover:bg-white/10 transition-colors group relative border-b border-white/5 border-dashed"
+          >
+            <span
+              class="hidden group-hover:block absolute right-2 top-1 text-xs text-orange-900"
+              >> 350°C</span
+            >
+          </button>
+          <button
+            onclick="selectFraction(6)"
+            class="w-full h-[10%] hover:bg-white/10 transition-colors group relative"
+          >
+            <span
+              class="hidden group-hover:block absolute right-2 top-1 text-xs text-stone-500"
+              >Residue</span
+            >
+          </button>
+        </div>
+      </div>
+
+      <!-- Info Panel -->
+      <div class="w-full lg:w-96 flex flex-col gap-6">
+        <div
+          class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl relative overflow-hidden"
+        >
+          <div
+            class="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"
+          ></div>
+
+          <h2
+            class="text-sm font-bold text-slate-500 uppercase tracking-widest mb-4"
+          >
+            Selected Fraction
+          </h2>
+
+          <div id="info-content" class="transition-all duration-300">
+            <div class="flex items-center justify-between mb-4">
+              <div id="f-name" class="text-2xl font-bold text-white">
+                Select a Zone
+              </div>
+              <div id="f-temp" class="text-sm font-mono text-orange-400">
+                ---
+              </div>
+            </div>
+
+            <div class="space-y-4">
+              <div>
+                <div class="text-xs text-slate-400 mb-1">
+                  Carbon Chain Length (碳鏈長度)
+                </div>
+                <div class="h-2 bg-slate-800 rounded-full overflow-hidden">
+                  <div
+                    id="f-c-bar"
+                    class="h-full bg-gradient-to-r from-blue-500 to-green-500 w-0 transition-all duration-500"
+                  ></div>
+                </div>
+                <div
+                  id="f-c-text"
+                  class="text-right text-xs text-slate-300 mt-1"
+                >
+                  ---
+                </div>
+              </div>
+
+              <div
+                class="bg-slate-800/50 rounded-lg p-3 border border-slate-700"
+              >
+                <div class="text-xs text-slate-500 uppercase mb-1">
+                  Major Uses (主要用途)
+                </div>
+                <div id="f-uses" class="text-sm text-slate-200">
+                  Click on the distillation tower sections to see details about
+                  each fraction.
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2 text-xs">
+                <div class="bg-slate-800 p-2 rounded text-center">
+                  <div class="text-slate-500">Viscosity (黏度)</div>
+                  <div id="f-visc" class="font-bold text-slate-200">---</div>
+                </div>
+                <div class="bg-slate-800 p-2 rounded text-center">
+                  <div class="text-slate-500">Flammability (易燃性)</div>
+                  <div id="f-flam" class="font-bold text-slate-200">---</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Trends Chart (Simplified visual) -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+          <h3 class="text-xs font-bold text-slate-500 uppercase mb-4">
+            Trends with increasing carbon chain length
+          </h3>
+          <div class="space-y-3 text-sm">
+            <div class="flex items-center gap-2">
+              <div
+                class="w-6 h-6 rounded bg-red-500/20 text-red-500 flex items-center justify-center font-bold"
+              >
+                ↑
+              </div>
+              <div class="flex-grow text-slate-300">Boiling Point (沸點)</div>
+              <div class="text-red-400 font-bold">Increases</div>
+            </div>
+            <div class="flex items-center gap-2">
+              <div
+                class="w-6 h-6 rounded bg-red-500/20 text-red-500 flex items-center justify-center font-bold"
+              >
+                ↑
+              </div>
+              <div class="flex-grow text-slate-300">Viscosity (黏度)</div>
+              <div class="text-red-400 font-bold">Increases</div>
+            </div>
+            <div class="flex items-center gap-2">
+              <div
+                class="w-6 h-6 rounded bg-blue-500/20 text-blue-500 flex items-center justify-center font-bold"
+              >
+                ↓
+              </div>
+              <div class="flex-grow text-slate-300">Flammability (易燃性)</div>
+              <div class="text-blue-400 font-bold">Decreases</div>
+            </div>
+            <div class="flex items-center gap-2">
+              <div
+                class="w-6 h-6 rounded bg-blue-500/20 text-blue-500 flex items-center justify-center font-bold"
+              >
+                ↓
+              </div>
+              <div class="flex-grow text-slate-300">Volatility (揮發性)</div>
+              <div class="text-blue-400 font-bold">Decreases</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      const FRACTIONS = [
+        {
+          name: "Refinery Gas (煉油氣)",
+          temp: "< 40°C",
+          carbons: "C1 - C4",
+          cVal: 10,
+          uses: "Fuel for cooking (LPG) and heating.<br>家用燃料 (石油氣)。",
+          visc: "Low",
+          flam: "Very High",
+        },
+        {
+          name: "Petrol / Gasoline (汽油)",
+          temp: "40 - 70°C",
+          carbons: "C5 - C10",
+          cVal: 25,
+          uses: "Fuel for cars (Motor vehicles).<br>汽車燃料。",
+          visc: "Low",
+          flam: "High",
+        },
+        {
+          name: "Naphtha (石腦油)",
+          temp: "70 - 170°C",
+          carbons: "C8 - C12",
+          cVal: 35,
+          uses: "Raw material for making chemicals and plastics.<br>製造化學品及塑膠的原料。",
+          visc: "Low-Med",
+          flam: "High",
+        },
+        {
+          name: "Kerosene / Paraffin (煤油)",
+          temp: "170 - 250°C",
+          carbons: "C10 - C16",
+          cVal: 45,
+          uses: "Fuel for jet aircrafts and heating.<br>飛機燃料。",
+          visc: "Medium",
+          flam: "Moderate",
+        },
+        {
+          name: "Diesel Oil (柴油)",
+          temp: "250 - 350°C",
+          carbons: "C14 - C20",
+          cVal: 60,
+          uses: "Fuel for lorries, buses and trains.<br>重型車輛 (貨車/巴士) 燃料。",
+          visc: "High",
+          flam: "Low",
+        },
+        {
+          name: "Fuel Oil (燃油)",
+          temp: "350 - 500°C",
+          carbons: "C20 - C70",
+          cVal: 85,
+          uses: "Fuel for ships and power stations.<br>船隻及發電廠燃料。",
+          visc: "Very High",
+          flam: "Very Low",
+        },
+        {
+          name: "Bitumen (瀝青)",
+          temp: "> 500°C",
+          carbons: "> C70",
+          cVal: 100,
+          uses: "Surfacing roads and roofing.<br>鋪設路面及屋頂防水。",
+          visc: "Solid/Thick",
+          flam: "None",
+        },
+      ];
+
+      function selectFraction(index) {
+        const data = FRACTIONS[index];
+
+        document.getElementById("f-name").innerHTML = data.name;
+        document.getElementById("f-temp").innerHTML = data.temp;
+        document.getElementById("f-c-text").innerHTML = data.carbons;
+        document.getElementById("f-c-bar").style.width = data.cVal + "%";
+        document.getElementById("f-uses").innerHTML = data.uses;
+        document.getElementById("f-visc").innerHTML = data.visc;
+        document.getElementById("f-flam").innerHTML = data.flam;
+
+        // Highlight Logic could be added here
+      }
+
+      // Bubbles Animation
+      const bubblesContainer = document.getElementById("bubbles-layer");
+      function createBubble() {
+        const b = document.createElement("div");
+        b.classList.add("bubble");
+        const size = Math.random() * 10 + 5;
+        b.style.width = size + "px";
+        b.style.height = size + "px";
+        b.style.left = Math.random() * 100 + "%";
+        b.style.bottom = "-20px";
+        b.style.animationDuration = Math.random() * 2 + 3 + "s";
+
+        bubblesContainer.appendChild(b);
+
+        setTimeout(() => {
+          b.remove();
+        }, 5000);
+      }
+
+      setInterval(createBubble, 200);
+
+      // Initial Select
+      selectFraction(0);
+    </script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

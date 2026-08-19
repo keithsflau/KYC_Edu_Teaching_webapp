@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>04 香港地質與地貌 | 動態地球</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../shared/earth.css">
+</head>
+<body>
+  <nav class="lesson-nav">
+    <a href="../../index.html" class="lesson-nav__back">← 動態地球</a>
+    <span class="lesson-nav__title">04 · 香港地質</span>
+    <span style="width:4rem"></span>
+  </nav>
+  <div class="layout layout--wide">
+    <div class="viz-panel">
+      <div class="boot" id="boot">載入 DEM 與衛星瓦片…<br><small>需網絡 · 建議以 http(s) 開啟</small></div>
+      <div class="viz-toolbar">
+        <button class="btn is-active" id="btn-hypso" type="button">立體色階</button>
+        <button class="btn" id="btn-sat" type="button">衛星影像</button>
+      </div>
+      <div class="viz-canvas" id="viz"></div>
+    </div>
+    <aside class="side-panel side-panel--wide" id="lesson-panel"></aside>
+  </div>
+  <div class="lesson-pager" id="lesson-pager" style="max-width:56rem;margin:0 auto;padding:1rem 1.25rem 2rem"></div>
+
+  <script src="../../../../History/3D_War/dse-wars/lib/three.min.js"></script>
+  <script src="../../../../History/3D_War/dse-wars/lib/OrbitControls.js"></script>
+  <script src="../../shared/earth-engine.js"></script>
+  <script src="../../shared/curriculum-data.js"></script>
+  <script src="../../shared/lesson-content.js"></script>
+  <script src="../../shared/lesson-exercises.js"></script>
+  <script src="../../shared/lesson-ui.js"></script>
+  <script>
+    const boot = document.getElementById('boot');
+    let terrain;
+
+    LessonUI.initLesson('hk_geology', {
+      title: '香港地質與地貌',
+      lead: 'AWS Terrarium DEM + Sentinel-2 衛星立體地形。配合岩石分布、構造與 DSE 地質圖解讀要點。',
+      pager: {
+        prev: '../03_rock_cycle/index.html',
+        prevLabel: '岩石循環',
+        next: '../05_landform_processes/index.html',
+        nextLabel: '地貌營力',
+      },
+    });
+
+    const rockCard = LessonUI.el('div', 'card');
+    rockCard.innerHTML = '<h3>岩石類型分布</h3><table class="data-table"><tr><th>類型</th><th>比例</th><th>主要地區</th></tr>' +
+      DYNAMIC_EARTH.hkRocks.map((r) =>
+        `<tr><td><strong style="color:${r.color}">${r.name}</strong><br><small>${r.en}</small></td><td>${r.pct}</td><td>${r.areas}</td></tr>`
+      ).join('') + '</table>';
+    document.querySelectorAll('.lesson-pane')[0].appendChild(rockCard);
+
+    const sitesCard = LessonUI.el('div', 'card');
+    sitesCard.innerHTML = '<h3>考察重點</h3><ul>' +
+      LESSON_CONTENT.hk_geology.mapSites.map((s) =>
+        `<li><strong>${s.name}</strong>（約 ${s.pct}%）— ${s.areas}</li>`
+      ).join('') + '</ul>';
+    document.querySelectorAll('.lesson-pane')[1].appendChild(sitesCard);
+
+    EarthEngine.createHKTerrain(document.getElementById('viz'), {
+      onProgress: (m) => { boot.innerHTML = m + '<br><small>載入中…</small>'; },
+    }).then((t) => {
+      terrain = t;
+      boot.classList.add('gone');
+      const stats = LessonUI.el('div', 'card');
+      stats.innerHTML = `<h3>地形數據</h3><p>本區 DEM 海拔約 <strong>${Math.round(t.minH)}–${Math.round(t.maxH)} m</strong>。拖曳旋轉、滾輪縮放。色階：綠＝低地 → 棕＝丘陵 → 白＝高地。</p>`;
+      document.querySelectorAll('.lesson-pane')[0].appendChild(stats);
+    }).catch((e) => {
+      boot.innerHTML = '載入失敗：' + e.message + '<br><small>請以 Live Server / GitHub Pages 開啟</small>';
+    });
+
+    document.getElementById('btn-hypso').onclick = function () {
+      terrain?.setMode('hypso');
+      document.querySelectorAll('.viz-toolbar .btn').forEach((b) => b.classList.remove('is-active'));
+      this.classList.add('is-active');
+    };
+    document.getElementById('btn-sat').onclick = function () {
+      terrain?.setMode('satellite');
+      document.querySelectorAll('.viz-toolbar .btn').forEach((b) => b.classList.remove('is-active'));
+      this.classList.add('is-active');
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小一常識：家務小幫手 | Housework Hero</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #fef08a 0%, #facc15 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Housework Hero",
+    zh: "家務小幫手",
+    ja: "家事ヒーロー",
+    ko: "집안일 영웅",
+    es: "Héroe de las tareas domésticas",
+    de: "Hausarbeits-Held",
+    fi: "Kotityösankari",
+    fr: "Héros des tâches ménagères",
+    ar: "بطل الأعمال المنزلية",
+    it: "Eroe delle faccende domestiche"
+  },
+  menu: {
+    en: "Select a Task",
+    zh: "選擇任務",
+    es: "Seleccionar una tarea",
+    de: "Wähle eine Aufgabe",
+    fi: "Valitse tehtävä",
+    fr: "Sélectionnez une tâche",
+    ar: "اختر مهمة",
+    it: "Seleziona un compito"
+  },
+  task1: {
+    en: "Fold Clothes",
+    zh: "摺衣服",
+    es: "Doblar ropa",
+    de: "Kleidung falten",
+    fi: "Taittele vaatteet",
+    fr: "Plier les vêtements",
+    ar: "طي الملابس",
+    it: "Piega i vestiti"
+  },
+  task2: {
+    en: "Sweep Floor",
+    zh: "掃地",
+    es: "Barrer el suelo",
+    de: "Boden fegen",
+    fi: "Lakaisi lattia",
+    fr: "Balayer le sol",
+    ar: "كنس الأرض",
+    it: "Spazza il pavimento"
+  },
+  task3: {
+    en: "Tidy Toys",
+    zh: "收拾玩具",
+    es: "Ordenar juguetes",
+    de: "Spielzeug aufräumen",
+    fi: "Siivoa lelut",
+    fr: "Ranger les jouets",
+    ar: "ترتيب الألعاب",
+    it: "Riordina i giocattoli"
+  },
+  back: {
+    en: "Back",
+    zh: "返回",
+    es: "Volver",
+    de: "Zurück",
+    fi: "Takaisin",
+    fr: "Retour",
+    ar: "عودة",
+    it: "Indietro"
+  },
+  completed: {
+    en: "Task Completed!",
+    zh: "任務完成！",
+    es: "¡Tarea completada!",
+    de: "Aufgabe erledigt!",
+    fi: "Tehtävä suoritettu!",
+    fr: "Tâche terminée !",
+    ar: "تمت المهمة!",
+    it: "Compito completato!"
+  },
+  instruction1: {
+    en: "Click to fold the clothes!",
+    zh: "點擊衣服把它摺好！",
+    es: "¡Haz clic para doblar la ropa!",
+    de: "Klicke, um die Kleidung zu falten!",
+    fi: "Napsauta taitellaksesi vaatteet!",
+    fr: "Cliquez pour plier les vêtements !",
+    ar: "انقر لطي الملابس!",
+    it: "Clicca per piegare i vestiti!"
+  },
+  instruction2: {
+    en: "Click the trash to sweep it!",
+    zh: "點擊垃圾把它掃走！",
+    es: "¡Haz clic en la basura para barrerla!",
+    de: "Klicke auf den Müll, um ihn wegzufegen!",
+    fi: "Napsauta roskia lakaistaksesi ne!",
+    fr: "Cliquez sur les ordures pour les balayer !",
+    ar: "انقر على القمامة لكنسها!",
+    it: "Clicca sulla spazzatura per spazzarla via!"
+  },
+  instruction3: {
+    en: "Click toys to put them in the box!",
+    zh: "點擊玩具把它放入箱子！",
+    es: "¡Haz clic en los juguetes para ponerlos en la caja!",
+    de: "Klicke auf Spielzeug, um es in die Kiste zu legen!",
+    fi: "Napsauta leluja laittaaksesi ne laatikkoon!",
+    fr: "Cliquez sur les jouets pour les mettre dans la boîte !",
+    ar: "انقر على الألعاب لوضعها في الصندوق!",
+    it: "Clicca sui giocattoli per metterli nella scatola!"
+  }
+};
+const clothesData = [{
+  id: 1,
+  type: "👕",
+  color: "bg-blue-200",
+  tilt: -6
+}, {
+  id: 2,
+  type: "👖",
+  color: "bg-blue-400",
+  tilt: 8
+}, {
+  id: 3,
+  type: "👗",
+  color: "bg-pink-300",
+  tilt: -4
+}, {
+  id: 4,
+  type: "👚",
+  color: "bg-purple-200",
+  tilt: 5
+}];
+const trashData = [{
+  id: 1,
+  icon: "🧃",
+  x: 20,
+  y: 30
+}, {
+  id: 2,
+  icon: "📄",
+  x: 60,
+  y: 60
+}, {
+  id: 3,
+  icon: "🍌",
+  x: 40,
+  y: 80
+}, {
+  id: 4,
+  icon: "🍂",
+  x: 80,
+  y: 20
+}, {
+  id: 5,
+  icon: "🍬",
+  x: 30,
+  y: 50
+}];
+const toysData = [{
+  id: 1,
+  icon: "🤖",
+  x: 10,
+  y: 20
+}, {
+  id: 2,
+  icon: "🧸",
+  x: 70,
+  y: 70
+}, {
+  id: 3,
+  icon: "🚗",
+  x: 30,
+  y: 80
+}, {
+  id: 4,
+  icon: "🦖",
+  x: 80,
+  y: 30
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [task, setTask] = useState("menu"); // menu, task1, task2, task3
+  const [progress, setProgress] = useState([]); // List of completed item IDs
+
+  const getText = key => t[key][lang] || t[key]["en"];
+  const startTask = taskId => {
+    setTask(taskId);
+    setProgress([]);
+  };
+  const completeItem = id => {
+    if (!progress.includes(id)) {
+      setProgress([...progress, id]);
+    }
+  };
+
+  // --- Task 1: Clothes ---
+  const renderTask1 = () => {
+    const allDone = progress.length === clothesData.length;
+    return /*#__PURE__*/React.createElement("div", {
+      className: "flex flex-col items-center"
+    }, /*#__PURE__*/React.createElement("p", {
+      className: "text-xl font-bold text-amber-900 mb-8"
+    }, getText("instruction1")), /*#__PURE__*/React.createElement("div", {
+      className: "grid grid-cols-2 gap-8"
+    }, clothesData.map(c => {
+      const isDone = progress.includes(c.id);
+      return /*#__PURE__*/React.createElement(motion.button, {
+        key: c.id,
+        onClick: () => completeItem(c.id),
+        className: `relative w-32 h-32 rounded-xl flex items-center justify-center text-6xl shadow-lg border-4 transition-colors ${isDone ? "bg-white border-green-400" : c.color + " border-white"}`,
+        whileHover: {
+          scale: 1.05
+        },
+        whileTap: {
+          scale: 0.95
+        }
+      }, /*#__PURE__*/React.createElement(motion.span, {
+        animate: isDone ? {
+          scale: 0.8,
+          rotate: 0
+        } : {
+          rotate: c.tilt
+        }
+      }, c.type), isDone && /*#__PURE__*/React.createElement("span", {
+        className: "absolute text-green-500 text-4xl font-black"
+      }, "✓"));
+    })), renderCompletion(allDone));
+  };
+
+  // --- Task 2: Sweep ---
+  const renderTask2 = () => {
+    const allDone = progress.length === trashData.length;
+    return /*#__PURE__*/React.createElement("div", {
+      className: "flex flex-col items-center w-full min-h-[400px] relative bg-stone-200 rounded-3xl border-8 border-stone-400 overflow-hidden shadow-inner"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "absolute top-4 left-0 w-full text-center bold text-stone-500"
+    }, getText("instruction2")), trashData.map(item => !progress.includes(item.id) && /*#__PURE__*/React.createElement(motion.button, {
+      key: item.id,
+      onClick: () => completeItem(item.id),
+      initial: {
+        scale: 0
+      },
+      animate: {
+        scale: 1
+      },
+      exit: {
+        scale: 0
+      },
+      className: "absolute text-5xl cursor-pointer hover:scale-110 active:scale-90",
+      style: {
+        left: `${item.x}%`,
+        top: `${item.y}%`
+      }
+    }, item.icon)), allDone && /*#__PURE__*/React.createElement("div", {
+      className: "absolute inset-0 flex items-center justify-center bg-white/80"
+    }, renderCompletion(true)));
+  };
+
+  // --- Task 3: Toys ---
+  const renderTask3 = () => {
+    const allDone = progress.length === toysData.length;
+    return /*#__PURE__*/React.createElement("div", {
+      className: "flex flex-col items-center w-full min-h-[400px] relative bg-sky-100 rounded-3xl border-8 border-sky-300 overflow-hidden shadow-inner p-4"
+    }, /*#__PURE__*/React.createElement("p", {
+      className: "text-sky-800 font-bold mb-4"
+    }, getText("instruction3")), /*#__PURE__*/React.createElement("div", {
+      className: "absolute bottom-4 right-4 w-40 h-32 bg-yellow-400 border-4 border-yellow-600 rounded-xl flex items-end justify-center shadow-lg"
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "text-4xl mb-2"
+    }, "📦")), toysData.map(item => {
+      const isDone = progress.includes(item.id);
+      return /*#__PURE__*/React.createElement(motion.button, {
+        key: item.id,
+        onClick: () => completeItem(item.id),
+        animate: isDone ? {
+          x: 200,
+          y: 300,
+          scale: 0,
+          opacity: 0
+        } : {},
+        className: "absolute text-6xl cursor-pointer",
+        style: {
+          left: `${item.x}%`,
+          top: `${item.y}%`
+        }
+      }, item.icon);
+    }), allDone && /*#__PURE__*/React.createElement("div", {
+      className: "absolute inset-0 flex items-center justify-center bg-white/80 backdrop-blur z-10"
+    }, renderCompletion(true)));
+  };
+  const renderCompletion = isDone => {
+    if (!isDone) return null;
+    return /*#__PURE__*/React.createElement(motion.div, {
+      initial: {
+        scale: 0
+      },
+      animate: {
+        scale: 1
+      },
+      className: "mt-8 text-center bg-white p-6 rounded-2xl shadow-xl"
+    }, /*#__PURE__*/React.createElement("h2", {
+      className: "text-3xl font-black text-green-600 mb-4"
+    }, getText("completed")), /*#__PURE__*/React.createElement("button", {
+      onClick: () => setTask("menu"),
+      className: "bg-amber-500 text-white px-8 py-3 rounded-full font-bold hover:bg-amber-600"
+    }, getText("back")));
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-amber-800 mb-8 mt-8 drop-shadow-sm flex items-center gap-2"
+  }, "🧹 ", getText("title")), task === "menu" ? /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => startTask("task1"),
+    className: "bg-white p-8 rounded-3xl shadow-xl hover:shadow-2xl hover:scale-105 transition-all flex flex-col items-center border-4 border-amber-200"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-8xl mb-4"
+  }, "👕"), /*#__PURE__*/React.createElement("span", {
+    className: "text-2xl font-black text-slate-700"
+  }, getText("task1"))), /*#__PURE__*/React.createElement("button", {
+    onClick: () => startTask("task2"),
+    className: "bg-white p-8 rounded-3xl shadow-xl hover:shadow-2xl hover:scale-105 transition-all flex flex-col items-center border-4 border-amber-200"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-8xl mb-4"
+  }, "🧹"), /*#__PURE__*/React.createElement("span", {
+    className: "text-2xl font-black text-slate-700"
+  }, getText("task2"))), /*#__PURE__*/React.createElement("button", {
+    onClick: () => startTask("task3"),
+    className: "bg-white p-8 rounded-3xl shadow-xl hover:shadow-2xl hover:scale-105 transition-all flex flex-col items-center border-4 border-amber-200"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-8xl mb-4"
+  }, "🧸"), /*#__PURE__*/React.createElement("span", {
+    className: "text-2xl font-black text-slate-700"
+  }, getText("task3")))) : /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-3xl"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setTask("menu"),
+    className: "mb-4 text-amber-700 font-bold hover:underline"
+  }, "← ", getText("back")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/50 p-4 md:p-8 rounded-3xl"
+  }, task === "task1" && renderTask1(), task === "task2" && renderTask2(), task === "task3" && renderTask3())));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

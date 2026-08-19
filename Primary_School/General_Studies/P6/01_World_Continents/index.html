@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>常識科：世界地圖與各大洲 | World Continents 3D</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      :root {
+        --primary-glow: rgba(56, 189, 248, 0.5);
+        --glass-bg: rgba(0, 0, 0, 0.4);
+        --glass-border: rgba(255, 255, 255, 0.1);
+      }
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #000;
+        color: white;
+        overflow: hidden;
+        margin: 0;
+      }
+      .glass-panel {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      }
+      .marker-label {
+        font-family: "Outfit", sans-serif;
+        font-weight: 800;
+        color: white;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+        pointer-events: none;
+        user-select: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect,
+  useRef,
+  useLayoutEffect
+} = React;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "World Explorer",
+    zh: "世界探索者",
+    ja: "世界探検家",
+    ko: "세계 탐험가",
+    es: "Explorador del Mundo",
+    de: "Weltentdecker",
+    fi: "Maailmanmatkaaja",
+    fr: "Explorateur du Monde",
+    ar: "مستكشف العالم",
+    it: "Esploratore del Mondo"
+  },
+  instruction: {
+    en: "Click to identify:",
+    zh: "請找出：",
+    ja: "クリックして特定：",
+    ko: "클릭하여 확인:",
+    es: "Clic para identificar:",
+    de: "Klicken zum Identifizieren:",
+    fi: "Napsauta tunnistaaksesi:",
+    fr: "Cliquez pour identifier :",
+    ar: "انقر للتعريف:",
+    it: "Clicca per identificare:"
+  },
+  find: {
+    en: "Where is",
+    zh: "哪裡是",
+    ja: "どこですか",
+    ko: "어디에 있나요",
+    es: "¿Dónde está",
+    de: "Wo ist",
+    fi: "Missä on",
+    fr: "Où est",
+    ar: "أين هي",
+    it: "Dov'è"
+  },
+  correct: {
+    en: "Correct!",
+    zh: "正確！",
+    ja: "正解！",
+    ko: "정답!",
+    es: "¡Correcto!",
+    de: "Richtig!",
+    fi: "Oikein!",
+    fr: "Correct !",
+    ar: "صحيح!",
+    it: "Corretto!"
+  },
+  tryAgain: {
+    en: "Try Again",
+    zh: "再試一次",
+    ja: "もう一度",
+    ko: "다시 시도",
+    es: "Inténtalo de nuevo",
+    de: "Versuch es nochmal",
+    fi: "Yritä uudelleen",
+    fr: "Réessayez",
+    ar: "حاول مرة أخرى",
+    it: "Riprova"
+  },
+  asia: {
+    en: "Asia",
+    zh: "亞洲",
+    ja: "アジア",
+    ko: "아시아",
+    es: "Asia",
+    de: "Asien",
+    fi: "Aasia",
+    fr: "Asie",
+    ar: "آسيا",
+    it: "Asia"
+  },
+  africa: {
+    en: "Africa",
+    zh: "非洲",
+    ja: "アフリカ",
+    ko: "아프리카",
+    es: "África",
+    de: "Afrika",
+    fi: "Afrikka",
+    fr: "Afrique",
+    ar: "أفريقيا",
+    it: "Africa"
+  },
+  namerica: {
+    en: "North America",
+    zh: "北美洲",
+    ja: "北米",
+    ko: "북아메리카",
+    es: "América del Norte",
+    de: "Nordamerika",
+    fi: "Pohjois-Amerikka",
+    fr: "Amérique du Nord",
+    ar: "أمريكا الشمالية",
+    it: "Nord America"
+  },
+  samerica: {
+    en: "South America",
+    zh: "南美洲",
+    ja: "南米",
+    ko: "남아메리카",
+    es: "América del Sur",
+    de: "Südamerika",
+    fi: "Etelä-Amerikka",
+    fr: "Amérique du Sud",
+    ar: "أمريكا الجنوبية",
+    it: "Sud America"
+  },
+  europe: {
+    en: "Europe",
+    zh: "歐洲",
+    ja: "ヨーロッパ",
+    ko: "유럽",
+    es: "Europa",
+    de: "Europa",
+    fi: "Eurooppa",
+    fr: "Europe",
+    ar: "أوروبا",
+    it: "Europa"
+  },
+  oceania: {
+    en: "Oceania",
+    zh: "大洋洲",
+    ja: "オセアニア",
+    ko: "오세아니아",
+    es: "Oceanía",
+    de: "Ozeanien",
+    fi: "Oseania",
+    fr: "Océanie",
+    ar: "أوقيانوسيا",
+    it: "Oceania"
+  },
+  antarctica: {
+    en: "Antarctica",
+    zh: "南極洲",
+    ja: "南極",
+    ko: "남극",
+    es: "Antártida",
+    de: "Antarktis",
+    fi: "Etelämanner",
+    fr: "Antarctique",
+    ar: "القارة القطبية الجنوبية",
+    it: "Antartide"
+  },
+  pacific: {
+    en: "Pacific Ocean",
+    zh: "太平洋",
+    ja: "太平洋",
+    ko: "태평양",
+    es: "Océano Pacífico",
+    de: "Pazifischer Ozean",
+    fi: "Tyyni valtameri",
+    fr: "Océan Pacifique",
+    ar: "المحيط الهادئ",
+    it: "Oceano Pacifico"
+  },
+  atlantic: {
+    en: "Atlantic Ocean",
+    zh: "大西洋",
+    ja: "大西洋",
+    ko: "대서양",
+    es: "Océano Atlántico",
+    de: "Atlantischer Ozean",
+    fi: "Atlantin valtameri",
+    fr: "Océan Atlantique",
+    ar: "المحيط الأطلسي",
+    it: "Oceano Atlantico"
+  },
+  indian: {
+    en: "Indian Ocean",
+    zh: "印度洋",
+    ja: "インド洋",
+    ko: "인도양",
+    es: "Océano Índico",
+    de: "Indischer Ozean",
+    fi: "Intian valtameri",
+    fr: "Océan Indien",
+    ar: "المحيط الهندي",
+    it: "Oceano Indiano"
+  },
+  arctic: {
+    en: "Arctic Ocean",
+    zh: "北冰洋",
+    ja: "北極海",
+    ko: "북극해",
+    es: "Océano Ártico",
+    de: "Arktischer Ozean",
+    fi: "Pohjoinen jäämeri",
+    fr: "Océan Arctique",
+    ar: "المحيط المتجمد الشمالي",
+    it: "Oceano Artico"
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+const regions = [{
+  id: "asia",
+  lat: 34,
+  lon: 100,
+  color: 0xff5555
+}, {
+  id: "africa",
+  lat: 0,
+  lon: 20,
+  color: 0x55ff55
+}, {
+  id: "namerica",
+  lat: 45,
+  lon: -100,
+  color: 0x5555ff
+}, {
+  id: "samerica",
+  lat: -15,
+  lon: -60,
+  color: 0xffff55
+}, {
+  id: "europe",
+  lat: 48,
+  lon: 15,
+  color: 0x55ffff
+}, {
+  id: "oceania",
+  lat: -25,
+  lon: 135,
+  color: 0xff55ff
+}, {
+  id: "antarctica",
+  lat: -80,
+  lon: 0,
+  color: 0xffffff
+}, {
+  id: "pacific",
+  lat: 0,
+  lon: -160,
+  isOcean: true
+}, {
+  id: "atlantic",
+  lat: 0,
+  lon: -30,
+  isOcean: true
+}, {
+  id: "indian",
+  lat: -20,
+  lon: 80,
+  isOcean: true
+}, {
+  id: "arctic",
+  lat: 85,
+  lon: 0,
+  isOcean: true
+}];
+function Scene({
+  targetId,
+  onSelect
+}) {
+  const mountRef = useRef(null);
+  const sceneDataRef = useRef({});
+  useLayoutEffect(() => {
+    const w = mountRef.current.clientWidth;
+    const h = mountRef.current.clientHeight;
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x020617);
+    const camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 100);
+    camera.position.z = 25;
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true
+    });
+    renderer.setSize(w, h);
+    mountRef.current.appendChild(renderer.domElement);
+
+    // Lights
+    const amb = new THREE.AmbientLight(0xffffff, 0.4);
+    scene.add(amb);
+    const dir = new THREE.DirectionalLight(0xffffff, 1.2);
+    dir.position.set(15, 10, 10);
+    scene.add(dir);
+    const group = new THREE.Group();
+    scene.add(group);
+    const earthGeo = new THREE.SphereGeometry(8, 64, 64);
+    const earthMat = new THREE.MeshPhongMaterial({
+      color: 0x1e3a8a,
+      emissive: 0x111827,
+      specular: 0x111111,
+      shininess: 30
+    });
+    const earth = new THREE.Mesh(earthGeo, earthMat);
+    group.add(earth);
+
+    // Markers
+    const markers = [];
+    const latLonToVector3 = (lat, lon, radius) => {
+      const phi = (90 - lat) * (Math.PI / 180);
+      const theta = (lon + 180) * (Math.PI / 180);
+      const x = -(radius * Math.sin(phi) * Math.cos(theta));
+      const z = radius * Math.sin(phi) * Math.sin(theta);
+      const y = radius * Math.cos(phi);
+      return new THREE.Vector3(x, y, z);
+    };
+    regions.forEach(r => {
+      const pos = latLonToVector3(r.lat, r.lon, 8);
+      const markerGeo = new THREE.SphereGeometry(r.isOcean ? 0.3 : 0.5, 16, 16);
+      const markerMat = new THREE.MeshBasicMaterial({
+        color: r.isOcean ? 0x60a5fa : 0xd1fae5,
+        transparent: true,
+        opacity: 0.6
+      });
+      const mesh = new THREE.Mesh(markerGeo, markerMat);
+      mesh.position.copy(pos);
+      mesh.userData = {
+        id: r.id,
+        isMarker: true
+      };
+      group.add(mesh);
+      markers.push(mesh);
+
+      // Pulse ring
+      const ringGeo = new THREE.RingGeometry(0.6, 0.7, 32);
+      const ringMat = new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.3
+      });
+      const ring = new THREE.Mesh(ringGeo, ringMat);
+      ring.position.copy(pos.clone().multiplyScalar(1.01));
+      ring.lookAt(0, 0, 0);
+      group.add(ring);
+    });
+
+    // Atmosphere
+    const atmoGeo = new THREE.SphereGeometry(8.2, 64, 64);
+    const atmoMat = new THREE.MeshPhongMaterial({
+      color: 0xa5f3fc,
+      transparent: true,
+      opacity: 0.1,
+      side: THREE.BackSide,
+      blending: THREE.AdditiveBlending
+    });
+    const atmo = new THREE.Mesh(atmoGeo, atmoMat);
+    group.add(atmo);
+    sceneDataRef.current = {
+      scene,
+      camera,
+      renderer,
+      group,
+      markers,
+      earth
+    };
+
+    // Raycaster
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    const onClick = e => {
+      const rect = renderer.domElement.getBoundingClientRect();
+      mouse.x = (e.clientX - rect.left) / rect.width * 2 - 1;
+      mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObjects(group.children);
+      for (let hit of intersects) {
+        if (hit.object.userData.isMarker) {
+          onSelect(hit.object.userData.id);
+          return;
+        }
+      }
+    };
+    renderer.domElement.addEventListener("pointerdown", onClick);
+
+    // Rotate
+    let isDrag = false;
+    let prev = {
+      x: 0,
+      y: 0
+    };
+    const onDown = e => {
+      isDrag = true;
+      prev = {
+        x: e.clientX,
+        y: e.clientY
+      };
+    };
+    const onMove = e => {
+      if (isDrag) {
+        const dx = e.clientX - prev.x;
+        const dy = e.clientY - prev.y;
+        group.rotation.y += dx * 0.005;
+        group.rotation.x += dy * 0.005;
+        prev = {
+          x: e.clientX,
+          y: e.clientY
+        };
+      } else {
+        group.rotation.y += 0.0005;
+      }
+    };
+    const onUp = () => isDrag = false;
+    renderer.domElement.addEventListener("mousedown", onDown);
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    const animate = () => {
+      requestAnimationFrame(animate);
+      if (!isDrag) group.rotation.y += 0.001;
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    // Resize
+    const handleResize = () => {
+      const w = mountRef.current.clientWidth,
+        h = mountRef.current.clientHeight;
+      renderer.setSize(w, h);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    };
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      mountRef.current.removeChild(renderer.domElement);
+    };
+  }, []);
+  return /*#__PURE__*/React.createElement("div", {
+    ref: mountRef,
+    className: "w-full h-full cursor-move"
+  });
+}
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [targetIdx, setTargetIdx] = useState(0);
+  const [feedback, setFeedback] = useState(null);
+  const target = regions[targetIdx];
+  const handleSelect = id => {
+    if (id === target.id) {
+      setFeedback("correct");
+      setTimeout(() => {
+        setFeedback(null);
+        setTargetIdx((targetIdx + 1) % regions.length);
+      }, 1500);
+    } else {
+      setFeedback("wrong");
+      setTimeout(() => setFeedback(null), 1000);
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "relative w-screen h-screen overflow-hidden"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0"
+  }, /*#__PURE__*/React.createElement(Scene, {
+    targetId: target.id,
+    onSelect: handleSelect
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 pointer-events-none p-6 flex flex-col justify-between"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between items-start pointer-events-auto"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel px-6 py-4 rounded-2xl"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-3xl font-black bg-gradient-to-r from-sky-300 to-indigo-400 bg-clip-text text-transparent"
+  }, getText("title", lang))), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-2 rounded-xl flex gap-1 flex-wrap max-w-sm justify-end"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-sky-500 text-white" : "text-gray-400 hover:text-white"}`
+  }, l)))), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-24 left-1/2 -translate-x-1/2 pointer-events-none flex flex-col items-center gap-2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-sky-300 font-bold uppercase tracking-widest text-sm drop-shadow-md"
+  }, getText("find", lang), "..."), /*#__PURE__*/React.createElement("div", {
+    className: "text-5xl md:text-7xl font-black text-white drop-shadow-[0_0_15px_rgba(56,189,248,0.8)] animate-pulse"
+  }, getText(target.id, lang))), feedback && /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 flex items-center justify-center pointer-events-none"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: `text-6xl font-black px-12 py-6 rounded-3xl backdrop-blur-xl border-4 shadow-2xl animate-bounce 
+                         ${feedback === "correct" ? "bg-green-500/80 border-green-300 text-white" : "bg-red-500/80 border-red-300 text-white"}`
+  }, feedback === "correct" ? "✅ " + getText("correct", lang) : "❌ " + getText("tryAgain", lang))), /*#__PURE__*/React.createElement("div", {
+    className: "text-center text-white/40 text-sm font-mono mt-auto"
+  }, "Drag to rotate Earth • Click markers to identify")));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

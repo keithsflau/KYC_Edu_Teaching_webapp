@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小三數學：神奇陣列圖 | Magic Array</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #818cf8 0%, #4f46e5 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Magic Array",
+    zh: "神奇陣列圖",
+    ja: "魔法の配列",
+    ko: "마법 배열",
+    es: "Matriz mágica",
+    de: "Magisches Array",
+    fi: "Taikataulukko",
+    fr: "Tableau magique",
+    ar: "المصفوفة السحرية",
+    it: "Matrice magica"
+  },
+  settings: {
+    en: "Array Settings",
+    zh: "設定陣列",
+    ja: "配列設定",
+    ko: "배열 설정",
+    es: "Configuración de la matriz",
+    de: "Array-Einstellungen",
+    fi: "Taulukon asetukset",
+    fr: "Paramètres du tableau",
+    ar: "إعدادات المصفوفة",
+    it: "Impostazioni matrice"
+  },
+  rows: {
+    en: "Rows",
+    zh: "行數",
+    ja: "行",
+    ko: "행",
+    es: "Filas",
+    de: "Zeilen",
+    fi: "Rivit",
+    fr: "Lignes",
+    ar: "الصفوف",
+    it: "Righe"
+  },
+  cols: {
+    en: "Columns",
+    zh: "列數",
+    ja: "列",
+    ko: "열",
+    es: "Columnas",
+    de: "Spalten",
+    fi: "Sarakkeet",
+    fr: "Colonnes",
+    ar: "الأعمدة",
+    it: "Colonne"
+  },
+  selectIcon: {
+    en: "Select Icon",
+    zh: "選擇圖案",
+    ja: "アイコンを選択",
+    ko: "아이콘 선택",
+    es: "Seleccionar icono",
+    de: "Symbol wählen",
+    fi: "Valitse kuvake",
+    fr: "Sélectionner l'icône",
+    ar: "اختر الرمز",
+    it: "Seleziona icona"
+  },
+  formula: {
+    en: "Multiplication Formula",
+    zh: "乘法算式",
+    ja: "掛け算の式",
+    ko: "곱셈 공식",
+    es: "Fórmula de multiplicación",
+    de: "Multiplikationsformel",
+    fi: "Kertolaskukaava",
+    fr: "Formule de multiplication",
+    ar: "صيغة الضرب",
+    it: "Formula di moltiplicazione"
+  },
+  legendTitle: {
+    en: "Legend",
+    zh: "圖例",
+    ja: "凡例",
+    ko: "범례",
+    es: "Leyenda",
+    de: "Legende",
+    fi: "Selite",
+    fr: "Légende",
+    ar: "المفتاح",
+    it: "Legenda"
+  },
+  vertical: {
+    en: "Rows (Vertical)",
+    zh: "行數 (縱向)",
+    ja: "行 (垂直)",
+    ko: "행 (수직)",
+    es: "Filas (Vertical)",
+    de: "Zeilen (Vertikal)",
+    fi: "Rivit (Pysty)",
+    fr: "Lignes (Vertical)",
+    ar: "الصفوف (عمودي)",
+    it: "Righe (Verticale)"
+  },
+  horizontal: {
+    en: "Columns (Horizontal)",
+    zh: "列數 (橫向)",
+    ja: "列 (水平)",
+    ko: "열 (수평)",
+    es: "Columnas (Horizontal)",
+    de: "Spalten (Horizontal)",
+    fi: "Sarakkeet (Vaaka)",
+    fr: "Colonnes (Horizontal)",
+    ar: "الأعمدة (أفقي)",
+    it: "Colonne (Orizzontale)"
+  },
+  desc: {
+    en: "{r} Rows, {c} per row",
+    zh: "{r} 行，每行 {c} 個",
+    ja: "{r} 行、各行 {c} 個",
+    ko: "{r} 행, 각 행에 {c} 개",
+    es: "{r} Filas, {c} por fila",
+    de: "{r} Zeilen, {c} pro Zeile",
+    fi: "{r} riviä, {c} per rivi",
+    fr: "{r} Lignes, {c} par ligne",
+    ar: "{r} صفوف، {c} في كل صف",
+    it: "{r} Righe, {c} per riga"
+  }
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [rows, setRows] = useState(3);
+  const [cols, setCols] = useState(4);
+  const icons = ["🍎", "⭐", "⚽", "🐱", "🚀", "💎"];
+  const [icon, setIcon] = useState("🍎");
+  const total = rows * cols;
+  const getDescText = () => (t.desc[lang] || t.desc["en"]).replace("{r}", rows).replace("{c}", cols);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-8 flex flex-col items-center text-white"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-6xl font-black text-indigo-100 mb-8 mt-8 drop-shadow-md text-center"
+  }, t.title[lang] || t.title["en"]), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "lg:col-span-4 bg-white/10 backdrop-blur-md rounded-3xl p-8 border border-white/20 shadow-xl"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "text-2xl font-bold mb-6 text-indigo-200"
+  }, t.settings[lang] || t.settings["en"]), /*#__PURE__*/React.createElement("div", {
+    className: "mb-8"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "flex justify-between text-lg font-bold mb-2"
+  }, /*#__PURE__*/React.createElement("span", null, t.rows[lang] || t.rows["en"]), /*#__PURE__*/React.createElement("span", {
+    className: "text-indigo-300"
+  }, rows)), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "1",
+    max: "10",
+    value: rows,
+    onChange: e => setRows(parseInt(e.target.value, 10)),
+    className: "w-full h-3 bg-indigo-900/50 rounded-lg appearance-none cursor-pointer accent-indigo-400"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "mb-8"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "flex justify-between text-lg font-bold mb-2"
+  }, /*#__PURE__*/React.createElement("span", null, t.cols[lang] || t.cols["en"]), /*#__PURE__*/React.createElement("span", {
+    className: "text-indigo-300"
+  }, cols)), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "1",
+    max: "10",
+    value: cols,
+    onChange: e => setCols(parseInt(e.target.value, 10)),
+    className: "w-full h-3 bg-indigo-900/50 rounded-lg appearance-none cursor-pointer accent-indigo-400"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "mb-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-lg font-bold mb-3"
+  }, t.selectIcon[lang] || t.selectIcon["en"]), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-2 flex-wrap"
+  }, icons.map(ic => /*#__PURE__*/React.createElement("button", {
+    key: ic,
+    onClick: () => setIcon(ic),
+    className: `w-12 h-12 text-2xl rounded-xl transition-all ${icon === ic ? "bg-indigo-500 scale-110 ring-2 ring-white" : "bg-indigo-900/30 hover:bg-indigo-800/50"}`
+  }, ic)))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-indigo-600 rounded-2xl p-6 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-indigo-200 font-bold mb-2"
+  }, t.formula[lang] || t.formula["en"]), /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-pink-300"
+  }, rows), " ×", " ", /*#__PURE__*/React.createElement("span", {
+    className: "text-cyan-300"
+  }, cols), " =", " ", /*#__PURE__*/React.createElement("span", {
+    className: "text-yellow-300"
+  }, total)))), /*#__PURE__*/React.createElement("div", {
+    className: "lg:col-span-8 bg-white rounded-3xl p-8 shadow-2xl text-slate-800 flex flex-col items-center justify-center min-h-[500px] relative overflow-hidden"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 left-4 text-slate-400 font-bold text-sm"
+  }, getDescText()), /*#__PURE__*/React.createElement(motion.div, {
+    className: "grid gap-2",
+    style: {
+      gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))`,
+      gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`
+    }
+  }, [...Array(rows)].map((_, r) => [...Array(cols)].map((_, c) => /*#__PURE__*/React.createElement(motion.div, {
+    key: `${r}-${c}`,
+    initial: {
+      scale: 0
+    },
+    animate: {
+      scale: 1
+    },
+    transition: {
+      delay: (r * cols + c) * 0.02,
+      type: "spring"
+    },
+    className: "w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center text-3xl sm:text-4xl bg-indigo-50 rounded-xl border-2 border-indigo-100 hover:border-indigo-400 cursor-pointer shadow-sm hover:shadow-md transition-all",
+    whileHover: {
+      scale: 1.1,
+      rotate: 10
+    }
+  }, icon)))), /*#__PURE__*/React.createElement("div", {
+    className: "mt-8 flex flex-wrap gap-8 text-sm font-bold text-slate-400 justify-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-4 h-4 rounded-full bg-pink-400"
+  }), " ", t.vertical[lang] || t.vertical["en"]), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-4 h-4 rounded-full bg-cyan-400"
+  }), " ", t.horizontal[lang] || t.horizontal["en"])))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

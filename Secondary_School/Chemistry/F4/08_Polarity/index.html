@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Like Dissolves Like | 極性與溶解性</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-900 text-white min-h-screen flex flex-col">
+    <header
+      class="bg-gray-800/80 backdrop-blur border-b border-gray-700 px-6 py-4 flex justify-between items-center z-10"
+    >
+      <div class="flex items-center gap-4">
+        <a
+          href="../../index.html"
+          class="text-gray-400 hover:text-white transition-colors"
+        >
+          <svg
+            class="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M10 19l-7-7m0 0l7-7m-7 7h18"
+            />
+          </svg>
+        </a>
+        <div>
+          <h1 class="text-xl font-bold text-sky-400">
+            Polarity & Solubility
+            <span class="text-gray-500 text-sm ml-2">極性與溶解</span>
+          </h1>
+          <p class="text-xs text-gray-400">
+            Microscale Simulation: "Like Dissolves Like"
+          </p>
+        </div>
+      </div>
+
+      <div class="flex gap-2 text-xs">
+        <div class="flex items-center gap-1">
+          <div class="w-3 h-3 rounded-full bg-blue-500"></div>
+          Water (Polar)
+        </div>
+        <div class="flex items-center gap-1">
+          <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+          Hexane (Non-polar)
+        </div>
+        <div class="flex items-center gap-1">
+          <div
+            class="w-3 h-3 rounded-full bg-green-400 border border-white"
+          ></div>
+          Ionic Solute
+        </div>
+        <div class="flex items-center gap-1">
+          <div
+            class="w-3 h-3 rounded-full bg-orange-400 border border-white"
+          ></div>
+          Non-polar Solute
+        </div>
+      </div>
+    </header>
+
+    <main
+      class="flex-grow flex flex-col lg:flex-row gap-6 p-6 max-w-7xl mx-auto w-full"
+    >
+      <!-- Controls -->
+      <div class="w-full lg:w-64 flex flex-col gap-4">
+        <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
+          <h3 class="text-xs font-bold text-sky-400 uppercase mb-4">
+            Solvent Setup
+          </h3>
+          <button
+            onclick="addWater()"
+            class="w-full mb-2 py-2 bg-blue-600 hover:bg-blue-500 rounded text-sm text-white transition-colors"
+          >
+            Add Water (Polar)
+          </button>
+          <button
+            onclick="addHexane()"
+            class="w-full mb-2 py-2 bg-yellow-600 hover:bg-yellow-500 rounded text-sm text-white transition-colors"
+          >
+            Add Hexane (Non-polar)
+          </button>
+          <button
+            onclick="resetBeaker()"
+            class="w-full py-2 bg-gray-600 hover:bg-gray-500 rounded text-sm text-white transition-colors mt-2"
+          >
+            Clear Beaker
+          </button>
+        </div>
+
+        <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
+          <h3 class="text-xs font-bold text-green-400 uppercase mb-4">
+            Add Solute
+          </h3>
+          <button
+            onclick="addSalt()"
+            class="w-full mb-2 py-2 bg-green-700 hover:bg-green-600 rounded text-sm text-white transition-colors border border-green-500/30"
+          >
+            Add Salt (Ionic/Polar)
+          </button>
+          <button
+            onclick="addIodine()"
+            class="w-full mb-2 py-2 bg-orange-700 hover:bg-orange-600 rounded text-sm text-white transition-colors border border-orange-500/30"
+          >
+            Add Iodine (Non-polar)
+          </button>
+        </div>
+
+        <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
+          <h3 class="text-xs font-bold text-gray-400 uppercase mb-4">
+            System Temperature
+          </h3>
+          <input
+            type="range"
+            min="1"
+            max="10"
+            value="5"
+            class="w-full accent-pink-500"
+            oninput="updateTemp(this.value)"
+          />
+          <div class="text-right text-xs text-gray-400 mt-1">
+            Kinetic Energy
+          </div>
+        </div>
+
+        <div
+          class="p-4 bg-sky-900/20 rounded-xl border border-sky-500/20 text-sm text-sky-200"
+        >
+          <p>
+            Observe how polar particles cluster together due to strong
+            attractive forces (Hydrogen bonds), forcing non-polar particles
+            aside (immiscibility).
+          </p>
+        </div>
+      </div>
+
+      <!-- Simulation Canvas -->
+      <div
+        class="flex-grow bg-black rounded-2xl border border-gray-700 relative overflow-hidden shadow-2xl"
+      >
+        <canvas id="simCanvas" class="w-full h-full block"></canvas>
+
+        <!-- Overlay Text -->
+        <div
+          class="absolute top-4 left-4 text-gray-500 select-none pointer-events-none"
+        >
+          <div class="text-sm font-mono" id="particle-count">Particles: 0</div>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      const canvas = document.getElementById("simCanvas");
+      const ctx = canvas.getContext("2d");
+
+      // Physics Params
+      const RADIUS = 6;
+      let particles = [];
+      let temperature = 5;
+
+      // Types
+      const TYPE_WATER = 0; // Polar Solvent
+      const TYPE_HEXANE = 1; // Non-polar Solvent
+      const TYPE_SALT = 2; // Polar Solute
+      const TYPE_IODINE = 3; // Non-polar Solute
+
+      // Force Constants
+      // Force > 0: Attraction, Force < 0: Repulsion (not used here much, mainly rigid body collision)
+      // We simulate "Like Dissolves Like" by giving Polar particles strong mutual attraction.
+      // Non-polar have very weak attraction.
+      // Polar-NonPolar interaction is weak (so Polar-Polar preference dominates, squeezing NonPolar out).
+
+      function getForceParams(typeA, typeB) {
+        const isPolarA = typeA === TYPE_WATER || typeA === TYPE_SALT;
+        const isPolarB = typeB === TYPE_WATER || typeB === TYPE_SALT;
+
+        if (isPolarA && isPolarB) return 0.8; // Strong Attraction (H-bond / Dipole)
+        if (!isPolarA && !isPolarB) return 0.1; // Weak VDW
+        return 0.05; // Very weak interaction between Polar/Non-polar
+      }
+
+      class Particle {
+        constructor(x, y, type) {
+          this.x = x;
+          this.y = y;
+          this.vx = (Math.random() - 0.5) * 2;
+          this.vy = (Math.random() - 0.5) * 2;
+          this.type = type;
+          this.mass = type === TYPE_IODINE ? 3 : 1; // Iodine heavier
+
+          // Color setup
+          switch (type) {
+            case TYPE_WATER:
+              this.color = "#3b82f6";
+              break;
+            case TYPE_HEXANE:
+              this.color = "#eab308";
+              break;
+            case TYPE_SALT:
+              this.color = "#4ade80";
+              this.border = true;
+              break;
+            case TYPE_IODINE:
+              this.color = "#fb923c";
+              this.border = true;
+              break;
+          }
+        }
+      }
+
+      function resize() {
+        canvas.width = canvas.parentElement.clientWidth;
+        canvas.height = canvas.parentElement.clientHeight;
+      }
+      window.addEventListener("resize", resize);
+      resize();
+
+      function addParticles(type, count) {
+        for (let i = 0; i < count; i++) {
+          // Scatter randomly but avoid walls initially
+          const x = Math.random() * (canvas.width - 20) + 10;
+          const y = Math.random() * (canvas.height - 20) + 10;
+          particles.push(new Particle(x, y, type));
+        }
+        updateCount();
+      }
+
+      window.addWater = () => addParticles(TYPE_WATER, 50);
+      window.addHexane = () => addParticles(TYPE_HEXANE, 50);
+      window.addSalt = () => addParticles(TYPE_SALT, 10);
+      window.addIodine = () => addParticles(TYPE_IODINE, 10);
+
+      window.resetBeaker = () => {
+        particles = [];
+        updateCount();
+      };
+
+      window.updateTemp = (val) => {
+        temperature = parseFloat(val);
+      };
+
+      function updateCount() {
+        document.getElementById("particle-count").innerText =
+          "Particles: " + particles.length;
+      }
+
+      // Add initial water
+      addWater();
+
+      function loop() {
+        ctx.fillStyle = "#111827";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Physics Step
+
+        // 1. Calculate Forces (Lennard-Jones-ish simplified)
+        for (let i = 0; i < particles.length; i++) {
+          const p1 = particles[i];
+
+          for (let j = i + 1; j < particles.length; j++) {
+            const p2 = particles[j];
+
+            const dx = p2.x - p1.x;
+            const dy = p2.y - p1.y;
+            const distSq = dx * dx + dy * dy;
+
+            if (distSq < 150 * 150 && distSq > 0.1) {
+              // Interaction range
+              const dist = Math.sqrt(distSq);
+
+              // Hard shell collision
+              const minDist = RADIUS * 2;
+              if (dist < minDist) {
+                // Basic elastic repulsion impulse
+                const overlap = (minDist - dist) * 0.5;
+                const nx = dx / dist; // Collision Normal
+                const ny = dy / dist;
+
+                p1.x -= nx * overlap;
+                p1.y -= ny * overlap;
+                p2.x += nx * overlap;
+                p2.y += ny * overlap;
+
+                // Bounce velocity swap calc (simplified)
+                // Ideally conserve momentum, but for visual sim:
+                // Just reflect velocity component along normal
+                // Skip complex math for "visual feel" speed
+              } else {
+                // Attraction Force
+                const forceStrength = getForceParams(p1.type, p2.type);
+                // Force curve: F ~ 1/r^2 usually, but we want "clumping"
+                // A simple constant pull if within range works well for visualization
+                const f = forceStrength * 0.05;
+
+                const fx = (dx / dist) * f;
+                const fy = (dy / dist) * f;
+
+                p1.vx += fx;
+                p1.vy += fy;
+                p2.vx -= fx;
+                p2.vy -= fy;
+              }
+            }
+          }
+
+          // Gravity (optional, to separate phases vertically)
+          if (p1.type === TYPE_WATER || p1.type === TYPE_SALT) {
+            p1.vy += 0.02; // Polar slightly heavier/denser simulation trick
+          } else {
+            p1.vy -= 0.01; // Non-polar floats? Or just less gravity
+          }
+
+          // Wall Bounce
+          if (p1.x < RADIUS) {
+            p1.x = RADIUS;
+            p1.vx *= -0.8;
+          }
+          if (p1.x > canvas.width - RADIUS) {
+            p1.x = canvas.width - RADIUS;
+            p1.vx *= -0.8;
+          }
+          if (p1.y < RADIUS) {
+            p1.y = RADIUS;
+            p1.vy *= -0.8;
+          }
+          if (p1.y > canvas.height - RADIUS) {
+            p1.y = canvas.height - RADIUS;
+            p1.vy *= -0.8;
+          }
+
+          // Temperature / Damping limits
+          const speed = Math.sqrt(p1.vx * p1.vx + p1.vy * p1.vy);
+          const targetSpeed = temperature * 0.5;
+
+          // Thermostat - Nudge speeds towards temperature
+          if (speed < targetSpeed) {
+            p1.vx *= 1.05;
+            p1.vy *= 1.05;
+          } else if (speed > targetSpeed * 2) {
+            p1.vx *= 0.95;
+            p1.vy *= 0.95;
+          }
+
+          // Move
+          p1.x += p1.vx;
+          p1.y += p1.vy;
+        }
+
+        // Draw
+        for (let p of particles) {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, RADIUS, 0, Math.PI * 2);
+          ctx.fillStyle = p.color;
+          ctx.fill();
+          if (p.border) {
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = "white";
+            ctx.stroke();
+          }
+        }
+
+        requestAnimationFrame(loop);
+      }
+
+      loop();
+    </script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

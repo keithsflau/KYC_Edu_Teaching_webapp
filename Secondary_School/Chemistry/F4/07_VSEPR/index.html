@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VSEPR Shape Explorer | 分子形狀探索器</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+      }
+    </script>
+  <style>
+    body {
+      font-family: "Inter", sans-serif;
+      overflow: hidden;
+    }
+
+    .glass-ui {
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+  </style>
+</head>
+
+<body class="bg-slate-950 text-white min-h-screen">
+  <div class="absolute inset-0 pointer-events-none z-10 flex flex-col justify-between">
+    <!-- Header -->
+    <header class="p-6 pointer-events-auto flex justify-between items-start">
+      <div>
+        <a href="../../index.html"
+          class="flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          <span>Back</span>
+        </a>
+        <h1 class="text-3xl font-bold text-white tracking-tight">
+          VSEPR Explorer
+          <span class="text-lg font-normal text-slate-400 ml-2">分子形狀探索</span>
+        </h1>
+        <p class="text-sm text-cyan-400">
+          Valence Shell Electron Pair Repulsion Theory
+        </p>
+      </div>
+
+      <div class="glass-ui rounded-xl p-2 flex flex-col gap-2 w-64">
+        <div class="text-xs font-bold text-slate-500 uppercase px-2 py-1">
+          Select Shape
+        </div>
+        <button onclick="setShape('linear')"
+          class="shape-btn px-4 py-2 rounded-lg text-left text-sm hover:bg-white/10 transition-colors" data-id="linear">
+          Linear (2 BP)
+          <span class="float-right text-xs opacity-50">直線形</span>
+        </button>
+        <button onclick="setShape('trigonal_planar')"
+          class="shape-btn px-4 py-2 rounded-lg text-left text-sm hover:bg-white/10 transition-colors"
+          data-id="trigonal_planar">
+          Trigonal Planar (3 BP)
+          <span class="float-right text-xs opacity-50">平面三角形</span>
+        </button>
+        <button onclick="setShape('tetrahedral')"
+          class="shape-btn px-4 py-2 rounded-lg text-left text-sm hover:bg-white/10 transition-colors bg-cyan-600 shadow-lg text-white"
+          data-id="tetrahedral">
+          Tetrahedral (4 BP)
+          <span class="float-right text-xs opacity-50">四面體形</span>
+        </button>
+        <button onclick="setShape('ammonia')"
+          class="shape-btn px-4 py-2 rounded-lg text-left text-sm hover:bg-white/10 transition-colors"
+          data-id="ammonia">
+          Trigonal Pyramidal (3 BP, 1 LP)
+        </button>
+        <button onclick="setShape('water')"
+          class="shape-btn px-4 py-2 rounded-lg text-left text-sm hover:bg-white/10 transition-colors" data-id="water">
+          V-Shaped (2 BP, 2 LP)
+        </button>
+        <button onclick="setShape('octahedral')"
+          class="shape-btn px-4 py-2 rounded-lg text-left text-sm hover:bg-white/10 transition-colors"
+          data-id="octahedral">
+          Octahedral (6 BP)
+          <span class="float-right text-xs opacity-50">八面體形</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Info Footer -->
+    <div class="p-6 pointer-events-auto w-full max-w-2xl">
+      <div class="glass-ui rounded-xl p-6">
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="text-xl font-bold text-white">Geometry Info</h2>
+          <span id="info-angle" class="text-2xl font-mono text-cyan-400 font-bold">---°</span>
+        </div>
+        <div class="flex gap-4 text-sm text-slate-400 mb-0">
+          <div>
+            <span class="block text-xs uppercase tracking-wider text-slate-500 mb-1">Examples</span>
+            <span id="info-example" class="text-white">Select a shape...</span>
+          </div>
+
+          <div class="ml-auto flex items-center gap-4">
+            <label class="flex items-center gap-2 cursor-pointer hover:text-white transition-colors">
+              <input type="checkbox" id="toggle-lp" onchange="toggleLPs()" checked class="accent-cyan-500">
+              Show Lone Pairs
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer hover:text-white transition-colors">
+              <input type="checkbox" id="toggle-rotate" checked class="accent-cyan-500">
+              Auto Rotate
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <canvas id="canvas" class="absolute inset-0 w-full h-full bg-slate-900"></canvas>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+    // --- Setup ---
+    const canvas = document.querySelector("#canvas");
+    const renderer = new THREE.WebGLRenderer({
+      canvas,
+      antialias: true,
+      alpha: true,
+    });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0f172a); // Slate 950
+    scene.fog = new THREE.Fog(0x0f172a, 10, 30);
+
+    const camera = new THREE.PerspectiveCamera(
+      45,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+    camera.position.set(0, 2, 8);
+
+    const controls = new OrbitControls(camera, canvas);
+    controls.enableDamping = true;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 2;
+
+    // --- Lighting ---
+    const ambLight = new THREE.AmbientLight(0xffffff, 0.4);
+    scene.add(ambLight);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+    dirLight.position.set(5, 10, 7);
+    scene.add(dirLight);
+    const rimLight = new THREE.DirectionalLight(0x00f3ff, 0.8);
+    rimLight.position.set(-5, 5, -5);
+    scene.add(rimLight);
+
+    // --- Materials ---
+    const matCentral = new THREE.MeshPhysicalMaterial({
+      color: 0x94a3b8, // Slate 400
+      metalness: 0.1,
+      roughness: 0.2,
+      clearcoat: 0.8,
+    });
+    const matBonding = new THREE.MeshPhysicalMaterial({
+      color: 0xe2e8f0, // Slate 200
+      metalness: 0.0,
+      roughness: 0.1,
+    });
+    const matLonePair = new THREE.MeshPhysicalMaterial({
+      color: 0xfacc15, // Yellow 400
+      metalness: 0,
+      roughness: 0.1,
+      transparent: true,
+      opacity: 0.6,
+      transmission: 0.2,
+    });
+    const matBondStick = new THREE.MeshStandardMaterial({ color: 0x64748b });
+
+    // --- Helper: Build Functions ---
+    const defaultAtomGeo = new THREE.SphereGeometry(1, 48, 48); // Scaled later
+    const bondGeo = new THREE.CylinderGeometry(0.1, 0.1, 1, 16);
+
+    let currentGroup = null;
+
+    function createAtom(r, mat, pos) {
+      const mesh = new THREE.Mesh(defaultAtomGeo, mat);
+      mesh.scale.set(r, r, r);
+      mesh.position.copy(pos);
+      return mesh;
+    }
+
+    function createLobe(pos, rot) {
+      // Teardrop shape for Lone Pair
+      const g = new THREE.Group();
+      // Just a deformed sphere for simplicity or complex geo
+      const mesh = new THREE.Mesh(
+        new THREE.SphereGeometry(0.6, 32, 32),
+        matLonePair
+      );
+      mesh.scale.set(1, 1.5, 1);
+      mesh.position.set(0, 0.7, 0);
+
+      g.add(mesh);
+      g.position.copy(pos);
+      if (rot) g.rotation.setFromVector3(rot); // simple lookat logic usually better
+      g.lookAt(0, 0, 0); // Point inward? No, point outward.
+      g.lookAt(pos.clone().multiplyScalar(2));
+
+      // Add two small dots for electrons
+      const e1 = new THREE.Mesh(
+        new THREE.SphereGeometry(0.08),
+        new THREE.MeshBasicMaterial({ color: 0xffffff })
+      );
+      e1.position.set(0.2, 0.8, 0);
+      const e2 = e1.clone();
+      e2.position.set(-0.2, 0.8, 0);
+      g.add(e1);
+      g.add(e2);
+
+      g.name = "lonepair";
+      return g;
+    }
+
+    function createBond(from, to) {
+      const vec = to.clone().sub(from);
+      const dist = vec.length();
+      const mid = from.clone().add(vec.multiplyScalar(0.5));
+
+      const bond = new THREE.Mesh(bondGeo, matBondStick);
+      bond.position.copy(mid);
+      bond.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        vec.clone().normalize()
+      );
+      bond.scale.set(1, dist, 1);
+      return bond;
+    }
+
+    // --- Shape Definitions ---
+    // Basic Vectors based on VSEPR geometry
+    const VECTORS = {
+      up: new THREE.Vector3(0, 2, 0),
+      down: new THREE.Vector3(0, -2, 0),
+      // Trigonal Planar (120 deg)
+      tp1: new THREE.Vector3(0, 2, 0),
+      tp2: new THREE.Vector3(1.732, -1, 0),
+      tp3: new THREE.Vector3(-1.732, -1, 0),
+      // Tetrahedral (109.5 deg) - roughly
+      tet1: new THREE.Vector3(0, 2, 0),
+      tet2: new THREE.Vector3(1.88, -0.66, 0),
+      tet3: new THREE.Vector3(-0.94, -0.66, 1.63),
+      tet4: new THREE.Vector3(-0.94, -0.66, -1.63),
+      // Octahedral
+      oct1: new THREE.Vector3(0, 2, 0),
+      oct2: new THREE.Vector3(0, -2, 0),
+      oct3: new THREE.Vector3(2, 0, 0),
+      oct4: new THREE.Vector3(-2, 0, 0),
+      oct5: new THREE.Vector3(0, 0, 2),
+      oct6: new THREE.Vector3(0, 0, -2),
+    };
+
+    const SHAPES = {
+      linear: {
+        layout: [
+          { pos: VECTORS.up, type: "atom" },
+          { pos: VECTORS.down, type: "atom" },
+        ],
+        angle: "180°",
+        ex: "BeCl₂, CO₂",
+      },
+      trigonal_planar: {
+        layout: [
+          { pos: VECTORS.tp1, type: "atom" },
+          { pos: VECTORS.tp2, type: "atom" },
+          { pos: VECTORS.tp3, type: "atom" },
+        ],
+        angle: "120°",
+        ex: "BF₃",
+      },
+      tetrahedral: {
+        layout: [
+          { pos: VECTORS.tet1, type: "atom" },
+          { pos: VECTORS.tet2, type: "atom" },
+          { pos: VECTORS.tet3, type: "atom" },
+          { pos: VECTORS.tet4, type: "atom" },
+        ],
+        angle: "109.5°",
+        ex: "CH₄, CCl₄",
+      },
+      ammonia: {
+        // Trigonal Pyramidal (Tetra layout with 1 LP)
+        // We use tetrahedral vectors, but replace top with LP
+        layout: [
+          { pos: VECTORS.tet1, type: "lp" },
+          { pos: VECTORS.tet2, type: "atom" },
+          { pos: VECTORS.tet3, type: "atom" },
+          { pos: VECTORS.tet4, type: "atom" },
+        ],
+        angle: "~107°",
+        ex: "NH₃",
+      },
+      water: {
+        // V-Shape (Tetra layout with 2 LP)
+        layout: [
+          { pos: VECTORS.tet1, type: "lp" },
+          { pos: VECTORS.tet2, type: "lp" },
+          { pos: VECTORS.tet3, type: "atom" },
+          { pos: VECTORS.tet4, type: "atom" },
+        ],
+        angle: "~104.5°",
+        ex: "H₂O",
+      },
+      octahedral: {
+        layout: [
+          { pos: VECTORS.oct1, type: "atom" },
+          { pos: VECTORS.oct2, type: "atom" },
+          { pos: VECTORS.oct3, type: "atom" },
+          { pos: VECTORS.oct4, type: "atom" },
+          { pos: VECTORS.oct5, type: "atom" },
+          { pos: VECTORS.oct6, type: "atom" },
+        ],
+        angle: "90°",
+        ex: "SF₆",
+      },
+    };
+
+    function buildShape(key) {
+      if (currentGroup) scene.remove(currentGroup);
+      currentGroup = new THREE.Group();
+
+      const def = SHAPES[key];
+      const data = def.layout;
+
+      // Central Atom
+      const center = createAtom(0.8, matCentral, new THREE.Vector3(0, 0, 0));
+      currentGroup.add(center);
+
+      // Surrounding
+      data.forEach((item) => {
+        const pos = item.pos.clone().normalize().multiplyScalar(2.2); // Bond length
+
+        if (item.type === "atom") {
+          // Atom
+          const atom = createAtom(0.6, matBonding, pos);
+          currentGroup.add(atom);
+          // Bond
+          const bond = createBond(
+            new THREE.Vector3(0, 0, 0),
+            pos.clone().multiplyScalar(0.8)
+          ); // slightly shorter
+          currentGroup.add(bond);
+        } else {
+          // Lone Pair
+          const lp = createLobe(pos.clone().multiplyScalar(0.7)); // Closer
+          currentGroup.add(lp);
+        }
+      });
+
+      scene.add(currentGroup);
+
+      // Update UI
+      document.getElementById("info-angle").innerText = def.angle;
+      document.getElementById("info-example").innerHTML = def.ex;
+
+      // Highlight Button
+      document.querySelectorAll(".shape-btn").forEach((btn) => {
+        if (btn.dataset.id === key) {
+          btn.classList.add("bg-cyan-600", "text-white", "shadow-lg");
+        } else {
+          btn.classList.remove("bg-cyan-600", "text-white", "shadow-lg");
+        }
+      });
+
+      // Re-apply toggle state
+      toggleLPs();
+    }
+
+    // --- Expose to Window ---
+    window.setShape = (key) => buildShape(key);
+
+    window.toggleLPs = () => {
+      const show = document.getElementById("toggle-lp").checked;
+      scene.traverse((obj) => {
+        if (obj.name === "lonepair") obj.visible = show;
+      });
+    };
+
+    // --- Loop ---
+    function animate() {
+      requestAnimationFrame(animate);
+      if (document.getElementById("toggle-rotate").checked) controls.update();
+      renderer.render(scene, camera);
+    }
+
+    // Init
+    buildShape("tetrahedral");
+    animate();
+
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+
+
+  <!-- Footer -->
+  <footer class="text-center py-4 text-slate-500 text-sm">
+    <p class="italic mb-1">
+      But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+      understanding. Jeremiah 10:12
+    </p>
+    <p class="text-xs mb-1 mt-2">
+      「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+    </p>
+    <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+      @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+    </p>
+  </footer>
+</body>
+
+</html>

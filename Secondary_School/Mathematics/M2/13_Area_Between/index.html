@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Area Between Curves | M2 Calculus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+      }
+      .glass {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .draggable {
+        cursor: ew-resize;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <div id="root" class="flex-grow flex flex-col"></div>
+    <script>
+const {
+  useState,
+  useRef
+} = React;
+const translations = {
+  en: {
+    unit: "Unit 3: Integration",
+    title: "Area Between Curves",
+    subtitle: "∫ [f(x) - g(x)] dx",
+    calcArea: "Calculated Area",
+    bounded: "Bounded Region",
+    lower: "Lower Limit a:",
+    upper: "Upper Limit b:",
+    instrTitle: "Instructions",
+    instr: "Drag the yellow pointers <strong>a</strong> and <strong>b</strong> to define the integration region. The integral calculates the accumulated difference (height) between the curves.",
+    langBtn: "中文"
+  },
+  zh: {
+    unit: "第三單元：積分",
+    title: "曲線間的面積",
+    subtitle: "∫ [f(x) - g(x)] dx",
+    calcArea: "計算面積",
+    bounded: "圍成區域",
+    lower: "下限 a:",
+    upper: "上限 b:",
+    instrTitle: "操作說明",
+    instr: "拖動黃色指針 <strong>a</strong> 和 <strong>b</strong> 來定義積分區域。積分計算曲線之間的累積差異（高度）。",
+    langBtn: "English"
+  }
+};
+const App = () => {
+  // Curves: f(x) = -0.5(x-2)^2 + 4  (Parabola down)
+  // g(x) = 0.5x + 1              (Line)
+
+  const [lang, setLang] = useState("en");
+  const t = translations[lang];
+  const f = x => -0.5 * Math.pow(x - 2, 2) + 4;
+  const g = x => 0.5 * x + 1;
+
+  // Limits
+  const [a, setA] = useState(1);
+  const [b, setB] = useState(5);
+
+  // Integrals
+  // Area = Int (f - g) dx
+  // Approximation by summing small strips
+  const calculateArea = (start, end) => {
+    const step = 0.01;
+    let sum = 0;
+    for (let x = start; x < end; x += step) {
+      const y1 = f(x);
+      const y2 = g(x);
+      if (y1 > y2) sum += (y1 - y2) * step;
+    }
+    return sum;
+  };
+  const area = calculateArea(Math.min(a, b), Math.max(a, b));
+
+  // Visuals
+  const w = 600,
+    h = 400;
+  const originX = 50,
+    originY = 350;
+  const scaleX = 80,
+    scaleY = 60;
+  const toScreen = (x, y) => ({
+    x: originX + x * scaleX,
+    y: originY - y * scaleY
+  });
+  const fromScreenX = sx => (sx - originX) / scaleX;
+
+  // Dragging
+  const [dragging, setDragging] = useState(null); // 'a' or 'b'
+  const svgRef = useRef(null);
+  const handleMouseMove = e => {
+    if (!dragging) return;
+    const rect = svgRef.current.getBoundingClientRect();
+    let xVal = fromScreenX(e.clientX - rect.left);
+    if (xVal < -0.5) xVal = -0.5;
+    if (xVal > 6) xVal = 6;
+    if (dragging === "a") setA(xVal);
+    if (dragging === "b") setB(xVal);
+  };
+
+  // Paths
+  const ptsF = [],
+    ptsG = [];
+  for (let x = -0.5; x <= 6; x += 0.1) {
+    ptsF.push({
+      x,
+      y: f(x)
+    });
+    ptsG.push({
+      x,
+      y: g(x)
+    });
+  }
+  const pathF = `M ${ptsF.map(p => {
+    const s = toScreen(p.x, p.y);
+    return `${s.x},${s.y}`;
+  }).join(" L ")}`;
+  const pathG = `M ${ptsG.map(p => {
+    const s = toScreen(p.x, p.y);
+    return `${s.x},${s.y}`;
+  }).join(" L ")}`;
+
+  // Area Path
+  const start = Math.min(a, b);
+  const end = Math.max(a, b);
+  const areaPts = [];
+  for (let x = start; x <= end; x += 0.1) areaPts.push({
+    x,
+    yTop: f(x),
+    yBot: g(x)
+  });
+
+  // Construct area polygon: Move top, then line down, then bot backwards
+  let areaD = "";
+  if (Math.abs(end - start) > 0.01) {
+    areaD += `M ${areaPts.map(p => {
+      const s = toScreen(p.x, p.yTop);
+      return `${s.x},${s.y}`;
+    }).join(" L ")}`;
+    areaD += ` L ${toScreen(end, g(end)).x},${toScreen(end, g(end)).y}`;
+    areaD += ` L ${areaPts.reverse().map(p => {
+      const s = toScreen(p.x, p.yBot);
+      return `${s.x},${s.y}`;
+    }).join(" L ")}`;
+    areaD += " Z";
+  }
+
+  // Limit Lines
+  const posA = toScreen(a, 0).x;
+  const posB = toScreen(b, 0).x;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "flex-grow flex flex-col items-center justify-center p-8 select-none",
+    onMouseUp: () => setDragging(null),
+    onMouseLeave: () => setDragging(null)
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 right-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLang(l => l === "en" ? "zh" : "en"),
+    className: "px-3 py-1 bg-slate-800 border border-slate-600 rounded-full text-xs font-bold text-emerald-400 hover:bg-slate-700 hover:text-white transition flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-language"
+  }), t.langBtn)), /*#__PURE__*/React.createElement("header", {
+    className: "mb-8 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-emerald-500 font-bold uppercase tracking-widest text-xs mb-2"
+  }, t.unit), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-white mb-2"
+  }, t.title), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-400 font-mono text-lg"
+  }, t.subtitle)), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col lg:flex-row gap-8 w-full max-w-6xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 glass p-6 rounded-3xl relative"
+  }, /*#__PURE__*/React.createElement("svg", {
+    ref: svgRef,
+    width: "100%",
+    height: "400",
+    viewBox: "0 0 600 400",
+    className: "overflow-visible bg-slate-900 rounded-xl",
+    onMouseMove: handleMouseMove
+  }, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("pattern", {
+    id: "diag",
+    width: "10",
+    height: "10",
+    patternUnits: "userSpaceOnUse",
+    patternTransform: "rotate(45)"
+  }, /*#__PURE__*/React.createElement("line", {
+    x1: "0",
+    y1: "0",
+    x2: "0",
+    y2: "10",
+    stroke: "#f43f5e",
+    strokeWidth: "2",
+    opacity: "0.3"
+  }))), /*#__PURE__*/React.createElement("line", {
+    x1: originX,
+    y1: "0",
+    x2: originX,
+    y2: h,
+    stroke: "#475569",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "0",
+    y1: originY,
+    x2: w,
+    y2: originY,
+    stroke: "#475569",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: areaD,
+    fill: "url(#diag)"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: pathF,
+    fill: "none",
+    stroke: "#38bdf8",
+    strokeWidth: "3"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: w - 50,
+    y: 150,
+    fill: "#38bdf8",
+    fontWeight: "bold"
+  }, "f(x)"), /*#__PURE__*/React.createElement("path", {
+    d: pathG,
+    fill: "none",
+    stroke: "#10b981",
+    strokeWidth: "3"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: w - 50,
+    y: 250,
+    fill: "#10b981",
+    fontWeight: "bold"
+  }, "g(x)"), /*#__PURE__*/React.createElement("g", {
+    onMouseDown: () => setDragging("a"),
+    className: "draggable hover:opacity-80"
+  }, /*#__PURE__*/React.createElement("line", {
+    x1: posA,
+    y1: "0",
+    x2: posA,
+    y2: h,
+    stroke: "#fbbf24",
+    strokeWidth: "2",
+    strokeDasharray: "5,5"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: `M ${posA - 10} ${h - 20} L ${posA + 10} ${h - 20} L ${posA} ${h - 35} Z`,
+    fill: "#fbbf24"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: posA - 15,
+    y: h - 35,
+    width: "30",
+    height: "35",
+    opacity: "0"
+  }), " ", /*#__PURE__*/React.createElement("text", {
+    x: posA,
+    y: h - 5,
+    fill: "#fbbf24",
+    textAnchor: "middle",
+    fontWeight: "bold"
+  }, "a")), /*#__PURE__*/React.createElement("g", {
+    onMouseDown: () => setDragging("b"),
+    className: "draggable hover:opacity-80"
+  }, /*#__PURE__*/React.createElement("line", {
+    x1: posB,
+    y1: "0",
+    x2: posB,
+    y2: h,
+    stroke: "#fbbf24",
+    strokeWidth: "2",
+    strokeDasharray: "5,5"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: `M ${posB - 10} ${h - 20} L ${posB + 10} ${h - 20} L ${posB} ${h - 35} Z`,
+    fill: "#fbbf24"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: posB - 15,
+    y: h - 35,
+    width: "30",
+    height: "35",
+    opacity: "0"
+  }), " ", /*#__PURE__*/React.createElement("text", {
+    x: posB,
+    y: h - 5,
+    fill: "#fbbf24",
+    textAnchor: "middle",
+    fontWeight: "bold"
+  }, "b")))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full lg:w-80 space-y-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass p-6 rounded-2xl"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-lg font-bold text-white mb-4"
+  }, t.calcArea), /*#__PURE__*/React.createElement("div", {
+    className: "p-4 bg-slate-800 rounded-xl mb-4 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs text-slate-400 mb-1"
+  }, t.bounded), /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-mono text-rose-400 font-bold"
+  }, area.toFixed(4))), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-2 text-sm font-mono"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-amber-400"
+  }, t.lower), /*#__PURE__*/React.createElement("span", {
+    className: "text-white"
+  }, a.toFixed(2))), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-amber-400"
+  }, t.upper), /*#__PURE__*/React.createElement("span", {
+    className: "text-white"
+  }, b.toFixed(2))))), /*#__PURE__*/React.createElement("div", {
+    className: "glass p-6 rounded-2xl"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-xs font-bold text-slate-400 uppercase mb-2"
+  }, t.instrTitle), /*#__PURE__*/React.createElement("p", {
+    className: "text-xs text-slate-300",
+    dangerouslySetInnerHTML: {
+      __html: t.instr
+    }
+  })))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>標點符號節奏 Punctuation Rhythm</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: linear-gradient(135deg, #ec4899 0%, #f97316 100%);
+        }
+
+        .beat-zone {
+            border: 4px solid #fbbf24;
+        }
+
+        .beat-note {
+            animation: fall 3s linear;
+        }
+
+        @keyframes fall {
+            from {
+                top: -100px;
+            }
+
+            to {
+                top: 100vh;
+            }
+        }
+    </style>
+</head>
+
+<body class="text-white overflow-hidden">
+    <div class="absolute top-4 flex justify-between w-full px-8">
+        <div class="bg-black/50 backdrop-blur px-6 py-3 rounded-xl">
+            <div class="text-sm">得分</div>
+            <div class="text-3xl font-bold" id="score">0</div>
+        </div>
+        <div class="bg-black/50 backdrop-blur px-6 py-3 rounded-xl">
+            <div class="text-sm">準確度</div>
+            <div class="text-3xl font-bold text-green-400" id="accuracy">100%</div>
+        </div>
+    </div>
+    <div class="absolute top-32 left-1/2 transform -translate-x-1/2 w-full max-w-2xl px-8">
+        <div class="bg-slate-800/80 backdrop-blur p-6 rounded-2xl">
+            <div class="text-xl mb-4 text-center leading-relaxed" id="sentence">今天天氣真好我們一起去公園玩吧</div>
+        </div>
+    </div>
+    <div class="absolute bottom-20 left-1/2 transform -translate-x-1/2 w-full max-w-4xl px-8">
+        <div class="beat-zone bg-gradient-to-r from-yellow-500/20 to-orange-500/20 backdrop-blur h-32 rounded-2xl flex items-center justify-center text-6xl font-bold"
+            id="beat-zone">♪</div>
+    </div>
+    <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-4"><button onclick="hit('，')"
+            class="bg-gradient-to-r from-blue-600 to-cyan-600 px-12 py-6 rounded-2xl text-4xl font-bold">，</button><button
+            onclick="hit('。')"
+            class="bg-gradient-to-r from-green-600 to-emerald-600 px-12 py-6 rounded-2xl text-4xl font-bold">。</button><button
+            onclick="hit('？')"
+            class="bg-gradient-to-r from-purple-600 to-pink-600 px-12 py-6 rounded-2xl text-4xl font-bold">？</button><button
+            onclick="hit('！')"
+            class="bg-gradient-to-r from-red-600 to-orange-600 px-12 py-6 rounded-2xl text-4xl font-bold">！</button>
+    </div>
+    <div id="notes-container" class="absolute inset-0 pointer-events-none"></div>
+    <script>
+        const SENTENCES = [
+            { text: "今天天氣真好我們一起去公園玩吧", beats: [{ time: 2, mark: '，', after: '好' }, { time: 4, mark: '。', after: '吧' }] },
+            { text: "你吃飯了沒有", beats: [{ time: 2, mark: '，', after: '了' }, { time: 3.5, mark: '？', after: '有' }] },
+            { text: "快點跑", beats: [{ time: 1.5, mark: '！', after: '跑' }] },
+            { text: "這本書很有趣你也應該看看", beats: [{ time: 2, mark: '，', after: '趣' }, { time: 4, mark: '。', after: '看' }] }
+        ];
+        let STATE = { score: 0, hits: 0, total: 0, currentSentence: 0, startTime: 0 };
+
+        function loadSentence() {
+            if (STATE.currentSentence >= SENTENCES.length) { alert('完成！得分: ' + STATE.score); location.reload(); return; }
+            const s = SENTENCES[STATE.currentSentence];
+            document.getElementById('sentence').textContent = s.text;
+            STATE.startTime = Date.now();
+            s.beats.forEach(b => { setTimeout(() => spawnNote(b.mark), b.time * 1000); });
+        }
+
+        function spawnNote(mark) {
+            const note = document.createElement('div');
+            note.className = 'beat-note absolute left-1/2 transform -translate-x-1/2 text-6xl font-bold';
+            note.textContent = mark;
+            note.dataset.mark = mark;
+            document.getElementById('notes-container').appendChild(note);
+            STATE.total++;
+            setTimeout(() => { if (note.parentNode) { note.remove(); updateAccuracy(); } }, 3000);
+        }
+
+        function hit(mark) {
+            const notes = document.querySelectorAll('.beat-note');
+            let found = false;
+            notes.forEach(n => {
+                if (n.dataset.mark === mark && !found) {
+                    const rect = n.getBoundingClientRect();
+                    const zoneRect = document.getElementById('beat-zone').getBoundingClientRect();
+                    if (Math.abs(rect.top - zoneRect.top) < 100) {
+                        n.remove();
+                        STATE.score += 100;
+                        STATE.hits++;
+                        document.getElementById('score').textContent = STATE.score;
+                        updateAccuracy();
+                        found = true;
+                    }
+                }
+            });
+        }
+
+        function updateAccuracy() {
+            document.getElementById('accuracy').textContent = STATE.total > 0 ? Math.round(STATE.hits / STATE.total * 100) + '%' : '100%';
+        }
+
+        loadSentence();
+        setInterval(() => { if (document.querySelectorAll('.beat-note').length === 0 && STATE.total > 0) { STATE.currentSentence++; STATE.total = 0; STATE.hits = 0; setTimeout(loadSentence, 1000); } }, 500);
+    </script>
+
+</body>
+
+</html>
+

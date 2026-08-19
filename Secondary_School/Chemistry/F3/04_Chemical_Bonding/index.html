@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bonding Simulator | 化學鍵模擬器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+      }
+      .atom-wrap {
+        transition: transform 1s ease;
+      }
+      .shell-ring {
+        position: absolute;
+        border-radius: 50%;
+        border: 2px solid;
+        pointer-events: none;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+      }
+      .electron-dot {
+        position: absolute;
+        border-radius: 50%;
+        transition: left 1.2s ease, top 1.2s ease, opacity 0.4s ease, transform 0.4s ease;
+        z-index: 5;
+      }
+      .electron-dot.inner {
+        width: 5px;
+        height: 5px;
+        opacity: 0.85;
+      }
+      .electron-dot.valence {
+        width: 9px;
+        height: 9px;
+        box-shadow: 0 0 6px currentColor;
+      }
+      .electron-dot.transferred {
+        box-shadow: 0 0 8px #f472b6;
+      }
+      .nucleus {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        color: #0f172a;
+        z-index: 10;
+        transition: box-shadow 0.6s ease;
+      }
+      .bond-arrow {
+        font-size: 2.5rem;
+        color: #a5b4fc;
+        align-self: center;
+        flex-shrink: 0;
+        transition: opacity 0.4s ease;
+      }
+      .transfer-arrow {
+        position: absolute;
+        pointer-events: none;
+        z-index: 20;
+        opacity: 0;
+        transition: opacity 0.5s ease;
+      }
+      .transfer-arrow.show {
+        opacity: 1;
+      }
+      #atoms-container {
+        min-height: 380px;
+      }
+    </style>
+  </head>
+
+  <body class="bg-indigo-950 text-white min-h-screen flex flex-col">
+    <!-- Header -->
+    <header
+      class="bg-indigo-900/50 backdrop-blur-md border-b border-indigo-800 px-6 py-4 flex justify-between items-center z-10"
+    >
+      <div class="flex items-center gap-4">
+        <a href="../../index.html" class="text-indigo-300 hover:text-white transition-colors" aria-label="Back to Chemistry hub">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+        </a>
+        <h1
+          class="text-xl font-bold bg-gradient-to-r from-pink-400 to-indigo-400 bg-clip-text text-transparent"
+        >
+          Bonding Simulator
+          <span class="text-indigo-400 font-medium text-sm ml-2">化學鍵</span>
+        </h1>
+      </div>
+    </header>
+
+    <main class="flex-grow flex flex-col md:flex-row">
+      <!-- Controls Panel -->
+      <div
+        class="w-full md:w-80 bg-indigo-900/40 border-r border-indigo-800 p-6 flex flex-col gap-8 z-10"
+      >
+        <div>
+          <h3
+            class="text-sm font-semibold text-indigo-300 uppercase tracking-widest mb-4"
+          >
+            Select Atoms
+          </h3>
+
+          <div class="space-y-4">
+            <div>
+              <label class="text-xs text-indigo-400 block mb-2"
+                >Atom 1 (Left)</label
+              >
+              <select
+                id="atom1"
+                class="w-full bg-indigo-950 border border-indigo-700 rounded-lg p-2 text-sm focus:outline-none focus:border-pink-500 transition-colors"
+              >
+                <option value="Na">Sodium (Na) - Metal</option>
+                <option value="Mg">Magnesium (Mg) - Metal</option>
+                <option value="H">Hydrogen (H) - Non-metal</option>
+                <option value="Cl">Chlorine (Cl) - Non-metal</option>
+                <option value="O">Oxygen (O) - Non-metal</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="text-xs text-indigo-400 block mb-2"
+                >Atom 2 (Right)</label
+              >
+              <select
+                id="atom2"
+                class="w-full bg-indigo-950 border border-indigo-700 rounded-lg p-2 text-sm focus:outline-none focus:border-pink-500 transition-colors"
+              >
+                <option value="Cl">Chlorine (Cl) - Non-metal</option>
+                <option value="O">Oxygen (O) - Non-metal</option>
+                <option value="H">Hydrogen (H) - Non-metal</option>
+                <option value="F">Fluorine (F) - Non-metal</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <button
+          onclick="startBonding()"
+          class="w-full py-3 bg-gradient-to-r from-pink-600 to-purple-600 rounded-xl font-bold text-white shadow-lg hover:shadow-pink-500/25 transition-all transform hover:scale-[1.02] active:scale-95"
+        >
+          Simulate Bond
+        </button>
+
+        <div
+          id="result-box"
+          class="hidden p-4 rounded-xl bg-indigo-950/80 border border-indigo-700"
+        >
+          <div class="text-xs text-indigo-400 uppercase mb-1">Result</div>
+          <div id="bond-type" class="text-xl font-bold text-white mb-2">
+            Ionic Bond
+          </div>
+          <p id="bond-desc" class="text-sm text-indigo-200 leading-relaxed">
+            Electron transfer occurs from Metal to Non-metal.
+          </p>
+        </div>
+      </div>
+
+      <!-- Simulation Stage -->
+      <div
+        class="flex-grow relative bg-slate-950 overflow-hidden flex items-center justify-center"
+        id="stage"
+      >
+        <!-- Background Grid -->
+        <div
+          class="absolute inset-0 opacity-10"
+          style="
+            background-image: radial-gradient(#4f46e5 1px, transparent 1px);
+            background-size: 20px 20px;
+          "
+        ></div>
+
+        <!-- Atoms Container -->
+        <div
+          id="atoms-container"
+          class="relative w-full max-w-4xl px-4 flex items-center justify-center gap-6 md:gap-10"
+        >
+          <!-- Injected via JS -->
+        </div>
+        <svg id="transfer-svg" class="transfer-arrow absolute inset-0 w-full h-full" aria-hidden="true">
+          <defs>
+            <marker id="arrowhead" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+              <polygon points="0 0, 8 4, 0 8" fill="#f472b6" />
+            </marker>
+          </defs>
+          <path id="transfer-path" fill="none" stroke="#f472b6" stroke-width="2.5" marker-end="url(#arrowhead)" />
+        </svg>
+      </div>
+    </main>
+
+    <script>
+      const ATOMS_DB = {
+        Na: {
+          type: "metal",
+          valence: 1,
+          shell: [2, 8, 1],
+          color: "#f472b6",
+          eColor: "#fbcfe8",
+          size: 34,
+          name: "Sodium",
+        },
+        Mg: {
+          type: "metal",
+          valence: 2,
+          shell: [2, 8, 2],
+          color: "#94a3b8",
+          eColor: "#cbd5e1",
+          size: 32,
+          name: "Magnesium",
+        },
+        H: {
+          type: "nonmetal",
+          valence: 1,
+          shell: [1],
+          color: "#fca5a5",
+          eColor: "#fecaca",
+          size: 22,
+          name: "Hydrogen",
+        },
+        Cl: {
+          type: "nonmetal",
+          valence: 7,
+          shell: [2, 8, 7],
+          color: "#3b82f6",
+          eColor: "#93c5fd",
+          size: 34,
+          name: "Chlorine",
+        },
+        O: {
+          type: "nonmetal",
+          valence: 6,
+          shell: [2, 6],
+          color: "#38bdf8",
+          eColor: "#7dd3fc",
+          size: 30,
+          name: "Oxygen",
+        },
+        F: {
+          type: "nonmetal",
+          valence: 7,
+          shell: [2, 7],
+          color: "#facc15",
+          eColor: "#fde047",
+          size: 28,
+          name: "Fluorine",
+        },
+      };
+
+      function shellRadii(shellCount, maxR) {
+        return Array.from({ length: shellCount }, (_, i) => {
+          const t = (i + 1) / shellCount;
+          return maxR * (0.42 + t * 0.58);
+        });
+      }
+
+      /** Octet-style valence positions; for 7e⁻ leave gap at top for incoming electron */
+      function valenceAngles(count, leaveGap) {
+        if (count === 1) return [-Math.PI / 2];
+        if (count === 2) return [-Math.PI / 2, Math.PI / 2];
+        if (count === 7 && leaveGap) {
+          const step = (2 * Math.PI) / 8;
+          return Array.from({ length: 7 }, (_, i) => step * i - Math.PI / 2);
+        }
+        return Array.from({ length: count }, (_, i) => (2 * Math.PI * i) / count - Math.PI / 2);
+      }
+
+      function electronAngles(shellIndex, shellCount, electronCount, isOutermost, leaveGap) {
+        if (isOutermost && electronCount <= 8) {
+          return valenceAngles(electronCount, leaveGap);
+        }
+        return Array.from(
+          { length: electronCount },
+          (_, i) => (2 * Math.PI * i) / electronCount - Math.PI / 2
+        );
+      }
+
+      function placeElectron(container, radius, angle, color, opts = {}) {
+        const { valence = false, transferred = false, removable = false, shellIndex = 0 } = opts;
+        const dot = document.createElement("div");
+        dot.className = `electron-dot ${valence ? "valence" : "inner"}${transferred ? " transferred" : ""}`;
+        dot.style.backgroundColor = color;
+        dot.style.color = color;
+        if (removable) dot.dataset.removable = "1";
+        dot.dataset.shell = String(shellIndex);
+        const size = valence ? 9 : 5;
+        const x = Math.cos(angle) * radius;
+        const y = Math.sin(angle) * radius;
+        dot.style.left = `calc(50% + ${x}px - ${size / 2}px)`;
+        dot.style.top = `calc(50% + ${y}px - ${size / 2}px)`;
+        container.appendChild(dot);
+        return dot;
+      }
+
+      function electronsLost(mode, shellArr, lost) {
+        const shells = shellArr.map((n) => n);
+        if (mode === "cation") {
+          shells[shells.length - 1] = Math.max(0, shells[shells.length - 1] - lost);
+        }
+        if (mode === "anion") {
+          shells[shells.length - 1] += lost;
+        }
+        return shells;
+      }
+
+      function transferCount(d1, d2) {
+        const outer = d2.shell[d2.shell.length - 1];
+        return Math.min(d1.valence, Math.max(0, 8 - outer));
+      }
+
+      function createAtomVisual(symbol, id, options = {}) {
+        const data = ATOMS_DB[symbol];
+        const {
+          mode = "neutral",
+          charge = "",
+          transferredCount = 0,
+          donorColor = "#f472b6",
+          leaveGap = false,
+        } = options;
+
+        const maxR = data.size * 2.85;
+        const radii = shellRadii(data.shell.length, maxR);
+        const box = maxR * 2 + 24;
+
+        const lost =
+          mode === "cation" || mode === "anion" ? transferredCount || data.valence : 0;
+        const shells =
+          mode === "neutral"
+            ? data.shell.map((n) => n)
+            : electronsLost(mode, data.shell, mode === "cation" ? lost : transferredCount);
+        const transferredOnOuter = mode === "anion" ? transferredCount : 0;
+
+        const container = document.createElement("div");
+        container.id = id;
+        container.className = "atom-wrap relative";
+        container.style.width = `${box}px`;
+        container.style.height = `${box}px`;
+
+        data.shell.forEach((_, shellIdx) => {
+          const ring = document.createElement("div");
+          ring.className = "shell-ring";
+          const d = radii[shellIdx] * 2;
+          ring.style.width = `${d}px`;
+          ring.style.height = `${d}px`;
+          ring.style.borderColor = `${data.color}99`;
+          container.appendChild(ring);
+        });
+
+        const nuc = document.createElement("div");
+        nuc.className = "nucleus shadow-lg";
+        nuc.style.width = `${data.size}px`;
+        nuc.style.height = `${data.size}px`;
+        nuc.style.backgroundColor = data.color;
+        nuc.style.fontSize = charge ? "0.72rem" : "0.85rem";
+        nuc.textContent = symbol + charge;
+        container.appendChild(nuc);
+
+        shells.forEach((eCount, shellIdx) => {
+          const isOutermost = shellIdx === shells.length - 1;
+          const radius = radii[shellIdx];
+
+          if (isOutermost && mode === "anion" && transferredOnOuter > 0) {
+            const originalOuter = data.shell[data.shell.length - 1];
+            const baseAngles = valenceAngles(originalOuter, originalOuter === 7);
+            baseAngles.forEach((angle) => {
+              placeElectron(container, radius, angle, data.eColor, {
+                valence: true,
+                shellIndex: shellIdx,
+              });
+            });
+            const gap = originalOuter === 7 ? gapAngleForShell(7) : -Math.PI / 2;
+            for (let t = 0; t < transferredOnOuter; t++) {
+              placeElectron(container, radius, gap + t * 0.2, donorColor, {
+                valence: true,
+                transferred: true,
+                shellIndex: shellIdx,
+              });
+            }
+            return;
+          }
+
+          const angles = electronAngles(
+            shellIdx,
+            shells.length,
+            eCount,
+            isOutermost,
+            leaveGap && mode === "neutral"
+          );
+          angles.forEach((angle) => {
+            placeElectron(container, radius, angle, data.eColor, {
+              valence: isOutermost,
+              removable: isOutermost && mode === "neutral" && data.type === "metal",
+              shellIndex: shellIdx,
+            });
+          });
+        });
+
+        return container;
+      }
+
+      function addBondArrow(stage) {
+        const arrow = document.createElement("div");
+        arrow.className = "bond-arrow";
+        arrow.id = "bond-arrow";
+        arrow.textContent = "→";
+        arrow.setAttribute("aria-hidden", "true");
+        stage.appendChild(arrow);
+        return arrow;
+      }
+
+      function showTransferArrow(fromEl, toEl) {
+        const svg = document.getElementById("transfer-svg");
+        const path = document.getElementById("transfer-path");
+        const stageRect = document.getElementById("stage").getBoundingClientRect();
+        const r1 = fromEl.getBoundingClientRect();
+        const r2 = toEl.getBoundingClientRect();
+        const x1 = r1.right - stageRect.left - 8;
+        const y1 = r1.top - stageRect.top + r1.height * 0.35;
+        const x2 = r2.left - stageRect.left + 8;
+        const y2 = r2.top - stageRect.top + r2.height * 0.22;
+        const cx = (x1 + x2) / 2;
+        const cy = Math.min(y1, y2) - 50;
+        path.setAttribute("d", `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`);
+        svg.classList.add("show");
+      }
+
+      function hideTransferArrow() {
+        document.getElementById("transfer-svg").classList.remove("show");
+      }
+
+      function startBonding() {
+        const a1Sym = document.getElementById("atom1").value;
+        const a2Sym = document.getElementById("atom2").value;
+        const d1 = ATOMS_DB[a1Sym];
+        const d2 = ATOMS_DB[a2Sym];
+        const stage = document.getElementById("atoms-container");
+
+        stage.innerHTML = "";
+        hideTransferArrow();
+        document.getElementById("result-box").classList.add("hidden");
+
+        const el1 = createAtomVisual(a1Sym, "atom-left", {
+          leaveGap: d2.valence === 7,
+        });
+        const el2 = createAtomVisual(a2Sym, "atom-right", {
+          leaveGap: d2.valence === 7,
+        });
+        stage.appendChild(el1);
+        addBondArrow(stage);
+        stage.appendChild(el2);
+
+        let bondType = "";
+        let bondDesc = "";
+
+        if (d1.type === "metal" && d2.type === "nonmetal") {
+          const nTransfer = transferCount(d1, d2);
+          bondType = "Ionic Bond (離子鍵)";
+          bondDesc = `${d1.name} loses ${nTransfer} outer electron(s) → ${a1Sym}${nTransfer > 1 ? nTransfer + "+" : "+"}. ${d2.name} gains ${nTransfer} electron(s) → ${a2Sym}${nTransfer > 1 ? nTransfer + "−" : "−"}. Ionic attraction forms the bond.`;
+          setTimeout(() => animateIonic(a1Sym, a2Sym, el1, el2, d1, d2, nTransfer), 900);
+        } else if (d1.type === "nonmetal" && d2.type === "nonmetal") {
+          bondType = "Covalent Bond (共價鍵)";
+          bondDesc = `${d1.name} and ${d2.name} share electron pairs to reach a stable outer shell (octet / duplet).`;
+          setTimeout(() => animateCovalent(el1, el2, d1, d2), 900);
+        } else {
+          bondType = "Metallic / No Reaction";
+          bondDesc = "Metal + metal usually forms a metallic lattice (not simulated here).";
+        }
+
+        document.getElementById("bond-type").innerText = bondType;
+        document.getElementById("bond-desc").innerText = bondDesc;
+        document.getElementById("result-box").classList.remove("hidden");
+      }
+
+      function gapAngleForShell(valenceCount) {
+        const step = (2 * Math.PI) / 8;
+        return step * 7 - Math.PI / 2;
+      }
+
+      function animateIonic(a1Sym, a2Sym, el1, el2, d1, d2, nTransfer) {
+        const movers = [...el1.querySelectorAll('[data-removable="1"]')].slice(0, nTransfer);
+        if (!movers.length) return;
+
+        showTransferArrow(el1, el2);
+
+        const el2Rect = el2.getBoundingClientRect();
+        const el1Rect = el1.getBoundingClientRect();
+        const outerRadius = ATOMS_DB[a2Sym].size * 2.85 * 0.85;
+        const landingAngle =
+          d2.shell[d2.shell.length - 1] === 7
+            ? gapAngleForShell(7)
+            : -Math.PI / 2;
+
+        const dx = el2Rect.left - el1Rect.left + (el2Rect.width - el1Rect.width) / 2;
+        const dy = el2Rect.top - el1Rect.top + (el2Rect.height - el1Rect.height) / 2;
+
+        movers.forEach((mover, idx) => {
+          setTimeout(() => {
+            mover.classList.add("transferred");
+            mover.style.backgroundColor = d1.eColor;
+            mover.style.color = d1.eColor;
+            mover.style.zIndex = "30";
+
+            const angle = landingAngle + idx * 0.25;
+            const tx = dx + Math.cos(angle) * outerRadius;
+            const ty = dy + Math.sin(angle) * outerRadius;
+
+            mover.style.left = `calc(50% + ${tx}px - 4.5px)`;
+            mover.style.top = `calc(50% + ${ty}px - 4.5px)`;
+          }, idx * 450);
+        });
+
+        const finishDelay = movers.length * 450 + 1200;
+
+        setTimeout(() => {
+          hideTransferArrow();
+          const stage = document.getElementById("atoms-container");
+          stage.innerHTML = "";
+
+          const ion1 = createAtomVisual(a1Sym, "atom-left", {
+            mode: "cation",
+            charge: nTransfer > 1 ? `${nTransfer}+` : "+",
+            transferredCount: nTransfer,
+          });
+          const ion2 = createAtomVisual(a2Sym, "atom-right", {
+            mode: "anion",
+            charge: nTransfer > 1 ? `${nTransfer}−` : "−",
+            transferredCount: nTransfer,
+            donorColor: d1.eColor,
+          });
+
+          ion1.querySelector(".nucleus").style.boxShadow = "0 0 18px #ef4444";
+          ion2.querySelector(".nucleus").style.boxShadow = "0 0 18px #60a5fa";
+
+          stage.appendChild(ion1);
+          addBondArrow(stage);
+          stage.appendChild(ion2);
+
+          ion1.style.transform = "translateX(12px)";
+          ion2.style.transform = "translateX(-12px)";
+        }, finishDelay);
+      }
+
+      function animateCovalent(el1, el2, d1, d2) {
+        el1.style.transform = "translateX(28px)";
+        el2.style.transform = "translateX(-28px)";
+
+        setTimeout(() => {
+          const shared = document.createElement("div");
+          shared.className = "absolute flex gap-1 z-20";
+          shared.style.left = "50%";
+          shared.style.top = "50%";
+          shared.style.transform = "translate(-50%, -50%)";
+          const pair = Math.min(d1.valence, d2.valence, 2);
+          for (let i = 0; i < pair; i++) {
+            const e1 = document.createElement("div");
+            e1.className = "electron-dot valence";
+            e1.style.position = "relative";
+            e1.style.left = "auto";
+            e1.style.top = "auto";
+            e1.style.backgroundColor = d1.eColor;
+            const e2 = document.createElement("div");
+            e2.className = "electron-dot valence";
+            e2.style.position = "relative";
+            e2.style.left = "auto";
+            e2.style.top = "auto";
+            e2.style.backgroundColor = d2.eColor;
+            shared.appendChild(e1);
+            shared.appendChild(e2);
+          }
+          document.getElementById("atoms-container").appendChild(shared);
+        }, 700);
+      }
+    </script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

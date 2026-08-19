@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小三常識：營養配對 | Nutrient Match</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Nutrient Match",
+    zh: "營養配對",
+    ja: "栄養素マッチ",
+    ko: "영양소 맞추기",
+    es: "Emparejar Nutrientes",
+    de: "Nährstoff-Zuordnung",
+    fi: "Ravintoaineiden yhdistäminen",
+    fr: "Association des nutriments",
+    ar: "مطابقة العناصر الغذائية",
+    it: "Abbina Nutrienti"
+  },
+  instruction: {
+    en: "Drag foods to their main nutrient!",
+    zh: "將食物拖放到對應的主要營養素！",
+    ja: "食べ物を主な栄養素にドラッグしてください！",
+    ko: "음식을 주요 영양소로 드래그하세요!",
+    es: "¡Arrastra los alimentos a su nutriente principal!",
+    de: "Ziehe Lebensmittel zu ihrem Hauptnährstoff!",
+    fi: "Vedä ruoat niiden pääravintoaineisiin!",
+    fr: "Faites glisser les aliments vers leur nutriment principal !",
+    ar: "اسحب الأطعمة إلى العنصر الغذائي الرئيسي!",
+    it: "Trascina gli alimenti nel loro nutriente principale!"
+  },
+  carbs: {
+    en: "Carbohydrates",
+    zh: "碳水化合物",
+    ja: "炭水化物",
+    ko: "탄수화물",
+    es: "Carbohidratos",
+    de: "Kohlenhydrate",
+    fi: "Hiilihydraatit",
+    fr: "Glucides",
+    ar: "كربوهيدرات",
+    it: "Carboidrati"
+  },
+  protein: {
+    en: "Protein",
+    zh: "蛋白質",
+    ja: "タンパク質",
+    ko: "단백질",
+    es: "Proteína",
+    de: "Protein",
+    fi: "Proteiini",
+    fr: "Protéines",
+    ar: "بروتين",
+    it: "Proteine"
+  },
+  vitamins: {
+    en: "Vitamins & Minerals",
+    zh: "維生素和礦物質",
+    ja: "ビタミンとミネラル",
+    ko: "비타민 및 미네랄",
+    es: "Vitaminas y Minerales",
+    de: "Vitamine & Mineralien",
+    fi: "Vitamiinit & Kivennäisaineet",
+    fr: "Vitamines et Minéraux",
+    ar: "فيتامينات ومعادن",
+    it: "Vitamine e Minerali"
+  },
+  fats: {
+    en: "Fats",
+    zh: "脂肪",
+    ja: "脂肪",
+    ko: "지방",
+    es: "Grasas",
+    de: "Fette",
+    fi: "Rasvat",
+    fr: "Graisses",
+    ar: "دهون",
+    it: "Grassi"
+  },
+  rice: {
+    en: "Rice",
+    zh: "米飯",
+    ja: "米",
+    ko: "밥",
+    es: "Arroz",
+    de: "Reis",
+    fi: "Riisi",
+    fr: "Riz",
+    ar: "أرز",
+    it: "Riso"
+  },
+  bread: {
+    en: "Bread",
+    zh: "麵包",
+    ja: "パン",
+    ko: "빵",
+    es: "Pan",
+    de: "Brot",
+    fi: "Leipä",
+    fr: "Pain",
+    ar: "خبز",
+    it: "Pane"
+  },
+  noodle: {
+    en: "Noodles",
+    zh: "麵條",
+    ja: "麺",
+    ko: "국수",
+    es: "Fideos",
+    de: "Nudeln",
+    fi: "Nuudelit",
+    fr: "Nouilles",
+    ar: "معكرونة",
+    it: "Spaghetti"
+  },
+  meat: {
+    en: "Meat",
+    zh: "肉類",
+    ja: "肉",
+    ko: "고기",
+    es: "Carne",
+    de: "Fleisch",
+    fi: "Liha",
+    fr: "Viande",
+    ar: "لحم",
+    it: "Carne"
+  },
+  egg: {
+    en: "Egg",
+    zh: "雞蛋",
+    ja: "卵",
+    ko: "계란",
+    es: "Huevo",
+    de: "Ei",
+    fi: "Kananmuna",
+    fr: "Œuf",
+    ar: "بيض",
+    it: "Uovo"
+  },
+  fish: {
+    en: "Fish",
+    zh: "魚",
+    ja: "魚",
+    ko: "물고기",
+    es: "Pescado",
+    de: "Fisch",
+    fi: "Kala",
+    fr: "Poisson",
+    ar: "سمك",
+    it: "Pesce"
+  },
+  apple: {
+    en: "Apple",
+    zh: "蘋果",
+    ja: "リンゴ",
+    ko: "사과",
+    es: "Manzana",
+    de: "Apfel",
+    fi: "Omena",
+    fr: "Pomme",
+    ar: "تفاحة",
+    it: "Mela"
+  },
+  veg: {
+    en: "Vegetables",
+    zh: "蔬菜",
+    ja: "野菜",
+    ko: "채소",
+    es: "Verduras",
+    de: "Gemüse",
+    fi: "Vihannekset",
+    fr: "Légumes",
+    ar: "خضروات",
+    it: "Verdure"
+  },
+  orange: {
+    en: "Orange",
+    zh: "橙",
+    ja: "オレンジ",
+    ko: "오렌지",
+    es: "Naranja",
+    de: "Orange",
+    fi: "Appelsiini",
+    fr: "Orange",
+    ar: "برتقال",
+    it: "Arancia"
+  },
+  oil: {
+    en: "Oil",
+    zh: "食用油",
+    ja: "油",
+    ko: "기름",
+    es: "Aceite",
+    de: "Öl",
+    fi: "Öljy",
+    fr: "Huile",
+    ar: "زيت",
+    it: "Olio"
+  },
+  butter: {
+    en: "Butter",
+    zh: "牛油",
+    ja: "バター",
+    ko: "버터",
+    es: "Mantequilla",
+    de: "Butter",
+    fi: "Voi",
+    fr: "Beurre",
+    ar: "زبدة",
+    it: "Burro"
+  },
+  correct: {
+    en: "Correct!",
+    zh: "答對了！",
+    ja: "正解！",
+    ko: "정답입니다!",
+    es: "¡Correcto!",
+    de: "Richtig!",
+    fi: "Oikein!",
+    fr: "Correct !",
+    ar: "صحيح!",
+    it: "Corretto!"
+  },
+  wrong: {
+    en: "Try Again!",
+    zh: "再試一次！",
+    ja: "もう一度！",
+    ko: "다시 시도하세요!",
+    es: "¡Inténtalo de nuevo!",
+    de: "Versuch es nochmal!",
+    fi: "Yritä uudelleen!",
+    fr: "Réessayez !",
+    ar: "حاول مرة أخرى!",
+    it: "Riprova!"
+  },
+  completed: {
+    en: "Nutrition Expert!",
+    zh: "營養小專家！",
+    ja: "栄養エキスパート！",
+    ko: "영양 전문가!",
+    es: "¡Experto en Nutrición!",
+    de: "Ernährungsexperte!",
+    fi: "Ravintoasiantuntija!",
+    fr: "Expert en nutrition !",
+    ar: "خبير التغذية!",
+    it: "Esperto di Nutrizione!"
+  },
+  reset: {
+    en: "Play Again",
+    zh: "再玩一次",
+    ja: "もう一度プレイ",
+    ko: "다시 하기",
+    es: "Jugar de Nuevo",
+    de: "Nochmal spielen",
+    fi: "Pelaa uudelleen",
+    fr: "Rejouer",
+    ar: "العب مرة أخرى",
+    it: "Gioca di Nuovo"
+  },
+  desc_carbs: {
+    en: "Energy Source",
+    zh: "能量來源",
+    ja: "エネルギー源",
+    ko: "에너지원",
+    es: "Fuente de Energía",
+    de: "Energiequelle",
+    fi: "Energianlähde",
+    fr: "Source d'énergie",
+    ar: "مصدر طاقة",
+    it: "Fonte di Energia"
+  },
+  desc_protein: {
+    en: "Builds Body",
+    zh: "幫助生長",
+    ja: "体を作る",
+    ko: "신체 형성",
+    es: "Construye el Cuerpo",
+    de: "Baut den Körper auf",
+    fi: "Rakentaa kehoa",
+    fr: "Construit le corps",
+    ar: "يبني الجسم",
+    it: "Costruisce il Corpo"
+  },
+  desc_vitamins: {
+    en: "Health Guard",
+    zh: "維持健康",
+    ja: "健康を守る",
+    ko: "건강 유지",
+    es: "Guardián de la Salud",
+    de: "Gesundheitswächter",
+    fi: "Terveyden vartija",
+    fr: "Gardien de la santé",
+    ar: "حارس الصحة",
+    it: "Guardiano della Salute"
+  },
+  desc_fats: {
+    en: "Energy Storage",
+    zh: "儲存能量",
+    ja: "エネルギー貯蔵",
+    ko: "에너지 저장",
+    es: "Almacenamiento de Energía",
+    de: "Energiespeicher",
+    fi: "Energiavarasto",
+    fr: "Stockage d'énergie",
+    ar: "تخزين الطاقة",
+    it: "Riserva di Energia"
+  }
+};
+const categories = [{
+  id: "carbs",
+  color: "bg-yellow-100",
+  border: "border-yellow-400",
+  text: "text-yellow-700",
+  icon: "⚡"
+}, {
+  id: "protein",
+  color: "bg-red-100",
+  border: "border-red-400",
+  text: "text-red-700",
+  icon: "💪"
+}, {
+  id: "vitamins",
+  color: "bg-green-100",
+  border: "border-green-400",
+  text: "text-green-700",
+  icon: "🛡️"
+}, {
+  id: "fats",
+  color: "bg-orange-100",
+  border: "border-orange-400",
+  text: "text-orange-700",
+  icon: "🔋"
+}];
+const foods = [{
+  id: "rice",
+  icon: "🍚",
+  type: "carbs"
+}, {
+  id: "bread",
+  icon: "🍞",
+  type: "carbs"
+}, {
+  id: "meat",
+  icon: "🥩",
+  type: "protein"
+}, {
+  id: "egg",
+  icon: "🥚",
+  type: "protein"
+}, {
+  id: "apple",
+  icon: "🍎",
+  type: "vitamins"
+}, {
+  id: "veg",
+  icon: "🥬",
+  type: "vitamins"
+}, {
+  id: "oil",
+  icon: "🫗",
+  type: "fats"
+}, {
+  id: "butter",
+  icon: "🧈",
+  type: "fats"
+}, {
+  id: "fish",
+  icon: "🐟",
+  type: "protein"
+}, {
+  id: "noodle",
+  icon: "🍜",
+  type: "carbs"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [queue, setQueue] = useState([]);
+  const [current, setCurrent] = useState(null);
+  const [feedback, setFeedback] = useState(null);
+  const [completedCategories, setCompletedCategories] = useState({}); // Counts
+
+  const getText = key => t[key][lang] || t[key]["en"];
+  useEffect(() => {
+    initGame();
+  }, []);
+  const initGame = () => {
+    const q = [...foods].sort(() => Math.random() - 0.5);
+    setQueue(q);
+    setCurrent(q[0]);
+    setFeedback(null);
+    setCompletedCategories({});
+  };
+  const handleSort = catId => {
+    if (feedback) return;
+    if (current.type === catId) {
+      setFeedback({
+        status: "correct",
+        catId
+      });
+      setTimeout(() => {
+        setFeedback(null);
+        const nextIdx = queue.indexOf(current) + 1;
+        if (nextIdx < queue.length) setCurrent(queue[nextIdx]);else setCurrent(null);
+      }, 800);
+    } else {
+      setFeedback({
+        status: "wrong"
+      });
+      setTimeout(() => setFeedback(null), 800);
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 flex flex-col items-center select-none overflow-hidden font-sans"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-rose-800 mb-4 mt-8 drop-shadow-sm bg-white/50 px-6 py-2 rounded-full"
+  }, "🥗 ", getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 flex flex-col items-center justify-center w-full relative"
+  }, /*#__PURE__*/React.createElement(AnimatePresence, {
+    mode: "wait"
+  }, current ? /*#__PURE__*/React.createElement(motion.div, {
+    key: current.id,
+    initial: {
+      scale: 0,
+      y: 50,
+      rotate: -10
+    },
+    animate: {
+      scale: 1,
+      y: 0,
+      rotate: 0
+    },
+    exit: {
+      scale: 0,
+      opacity: 0
+    },
+    className: "bg-white p-8 rounded-full shadow-2xl border-8 border-rose-200 w-48 h-48 flex flex-col items-center justify-center z-20 cursor-grab active:cursor-grabbing hover:scale-105 transition-transform",
+    drag: true,
+    dragConstraints: {
+      left: 0,
+      right: 0,
+      top: 0,
+      bottom: 0
+    },
+    dragElastic: 0.2,
+    onDragEnd: (e, info) => {
+      // Simple proximity Logic could go here, but button tapping is smoother for P3 on tablets
+      // We keep instructions simple: Drag visually, but Tap to select is easier to impl reliably
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-7xl mb-2"
+  }, current.icon), /*#__PURE__*/React.createElement("div", {
+    className: "font-bold text-slate-600"
+  }, getText(current.id))) : /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      scale: 0
+    },
+    animate: {
+      scale: 1
+    },
+    className: "bg-white/90 p-12 rounded-3xl shadow-xl text-center z-20"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-8xl mb-4"
+  }, "🏆"), /*#__PURE__*/React.createElement("h2", {
+    className: "text-3xl font-black text-rose-800 mb-6"
+  }, getText("completed")), /*#__PURE__*/React.createElement("button", {
+    onClick: initGame,
+    className: "bg-rose-500 text-white px-10 py-4 rounded-full font-black text-xl hover:bg-rose-600 shadow-xl"
+  }, getText("reset"), " 🔄"))), feedback && /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      opacity: 0,
+      scale: 0.5
+    },
+    animate: {
+      opacity: 1,
+      scale: 1
+    },
+    className: `absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-6 rounded-3xl font-black text-4xl shadow-2xl z-30 whitespace-nowrap ${feedback.status === "correct" ? "bg-green-500 text-white" : "bg-red-500 text-white"}`
+  }, getText(feedback.status))), /*#__PURE__*/React.createElement("p", {
+    className: "font-bold text-rose-800 text-lg mb-6 bg-white/60 px-4 py-1 rounded-full"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 lg:grid-cols-4 gap-4 w-full max-w-6xl mb-8"
+  }, categories.map(cat => /*#__PURE__*/React.createElement("button", {
+    key: cat.id,
+    onClick: () => handleSort(cat.id),
+    className: `${cat.color} ${cat.border} border-y-4 rounded-3xl p-4 flex flex-col items-center shadow-lg active:scale-95 transition-all relative overflow-hidden group h-40 justify-between`
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity text-6xl"
+  }, cat.icon), /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl"
+  }, cat.icon), /*#__PURE__*/React.createElement("div", {
+    className: `font-black text-xl md:text-2xl ${cat.text} text-center leading-none`
+  }, getText(cat.id)), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold text-slate-500 bg-white/50 px-2 py-1 rounded-full"
+  }, getText(`desc_${cat.id}`))))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

@@ -1,0 +1,192 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Equation Balance | S1 Math</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+      }
+      .balance-beam {
+        transition: transform 0.5s ease-in-out;
+      }
+    </style>
+  </head>
+  <body class="bg-orange-50 text-slate-800 min-h-screen">
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const App = () => {
+  const [level, setLevel] = useState(1);
+  const [eq, setEq] = useState({
+    a: 3,
+    b: 5,
+    rhs: 17
+  }); // 3x + 5 = 17
+  const [currentEq, setCurrentEq] = useState({
+    ...eq
+  });
+  const [message, setMessage] = useState("Isolate the x box!");
+  const [wobble, setWobble] = useState(0);
+  const generateLevel = () => {
+    // ax + b = c
+    const a = Math.floor(Math.random() * 3) + 1; // 1 to 3
+    const x = Math.floor(Math.random() * 5) + 1; // solution
+    const b = Math.floor(Math.random() * 5) + 1;
+    const rhs = a * x + b;
+    const newEq = {
+      a,
+      b,
+      rhs
+    };
+    setEq(newEq);
+    setCurrentEq({
+      ...newEq
+    });
+    setMessage("Isolate the x box!");
+  };
+  useEffect(() => {
+    generateLevel();
+  }, []);
+  const applyOp = (type, val) => {
+    const prev = {
+      ...currentEq
+    };
+    let next = {
+      ...currentEq
+    };
+    if (type === "sub") {
+      if (next.b >= val && next.rhs >= val) {
+        next.b -= val;
+        next.rhs -= val;
+        setMessage(`Subtracted ${val} from both sides.`);
+      } else {
+        setMessage("Cannot subtract (not enough units).");
+        winkRed();
+        return;
+      }
+    } else if (type === "div") {
+      if (next.a % val === 0 && next.rhs % val === 0 && next.b % val === 0) {
+        next.a /= val;
+        next.rhs /= val;
+        next.b /= val;
+        setMessage(`Divided both sides by ${val}.`);
+      } else {
+        setMessage("Cannot divide evenly.");
+        winkRed();
+        return;
+      }
+    }
+    setCurrentEq(next);
+    // Animate balance
+    setWobble(5);
+    setTimeout(() => setWobble(-5), 200);
+    setTimeout(() => setWobble(0), 400);
+  };
+  const winkRed = () => {
+    // Visual feedback for error
+  };
+  const isSolved = currentEq.a === 1 && currentEq.b === 0;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "p-8 max-w-4xl mx-auto min-h-screen flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("header", {
+    className: "mb-8 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-orange-600 font-bold uppercase text-xs tracking-widest mb-2"
+  }, "Unit 1: Algebra"), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-slate-900"
+  }, "Equation Balance"), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-500"
+  }, "Perform the same operation on both sides to solve for x.")), /*#__PURE__*/React.createElement("div", {
+    className: "relative w-full h-80 mb-8 flex flex-col justify-end items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "balance-beam w-3/4 h-2 bg-slate-700 relative rounded-full mb-16 flex justify-between px-10 items-end",
+    style: {
+      transform: `rotate(${wobble}deg)`
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "relative"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full w-48 h-32 border-b-4 border-l-2 border-r-2 border-slate-400 bg-slate-100/50 rounded-b-xl flex flex-wrap content-end justify-center p-2 gap-1 origin-bottom transition-all duration-500"
+  }, Array.from({
+    length: currentEq.a
+  }).map((_, i) => /*#__PURE__*/React.createElement("div", {
+    key: `x-${i}`,
+    className: "w-10 h-10 bg-blue-500 rounded text-white font-bold flex items-center justify-center shadow-lg border-2 border-blue-600"
+  }, "x")), Array.from({
+    length: currentEq.b
+  }).map((_, i) => /*#__PURE__*/React.createElement("div", {
+    key: `b-${i}`,
+    className: "w-6 h-6 bg-yellow-400 rounded-full shadow-md border-2 border-yellow-500 flex items-center justify-center text-[10px] font-bold text-yellow-800"
+  }, "1"))), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-0 left-1/2 -translate-x-1/2 w-0.5 h-16 bg-slate-400 -mb-16"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "relative"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full w-48 h-32 border-b-4 border-l-2 border-r-2 border-slate-400 bg-slate-100/50 rounded-b-xl flex flex-wrap content-end justify-center p-2 gap-1 origin-bottom transition-all duration-500"
+  }, Array.from({
+    length: currentEq.rhs
+  }).map((_, i) => /*#__PURE__*/React.createElement("div", {
+    key: `r-${i}`,
+    className: "w-6 h-6 bg-yellow-400 rounded-full shadow-md border-2 border-yellow-500 flex items-center justify-center text-[10px] font-bold text-yellow-800"
+  }, "1"))), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-0 left-1/2 -translate-x-1/2 w-0.5 h-16 bg-slate-400 -mb-16"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "w-0 h-0 border-l-[20px] border-l-transparent border-r-[20px] border-r-transparent border-b-[40px] border-b-slate-700 mb-8 mx-auto"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-8 rounded-3xl shadow-xl border border-orange-100 w-full text-center mb-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-mono font-bold mb-6"
+  }, currentEq.a > 1 ? `${currentEq.a}x` : currentEq.a === 1 ? "x" : "", currentEq.b > 0 ? ` + ${currentEq.b}` : "", " = ", currentEq.rhs), /*#__PURE__*/React.createElement("div", {
+    className: "text-lg font-bold text-blue-600 mb-4 h-8"
+  }, isSolved ? "SOLVED! Well Done!" : message), !isSolved && /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-center gap-4"
+  }, currentEq.b > 0 && /*#__PURE__*/React.createElement("button", {
+    onClick: () => applyOp("sub", currentEq.b),
+    className: "px-6 py-3 bg-red-100 text-red-700 font-bold rounded-xl hover:bg-red-200 transition"
+  }, "Subtract ", currentEq.b), currentEq.a > 1 && currentEq.b === 0 && /*#__PURE__*/React.createElement("button", {
+    onClick: () => applyOp("div", currentEq.a),
+    className: "px-6 py-3 bg-blue-100 text-blue-700 font-bold rounded-xl hover:bg-blue-200 transition"
+  }, "Divide by ", currentEq.a)), isSolved && /*#__PURE__*/React.createElement("button", {
+    onClick: generateLevel,
+    className: "px-8 py-3 bg-green-500 text-white font-bold rounded-xl hover:bg-green-600 shadow-lg transition"
+  }, "Next Equation")));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

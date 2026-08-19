@@ -1,0 +1,192 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Algebra Tiles | S1 Math</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+      }
+      .tile-x {
+        width: 40px;
+        height: 100px;
+      }
+      .tile-1 {
+        width: 40px;
+        height: 40px;
+      }
+    </style>
+  </head>
+  <body class="bg-indigo-50 text-slate-800 min-h-screen">
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const App = () => {
+  const [tiles, setTiles] = useState([]);
+  const [selectedId, setSelectedId] = useState(null);
+  const [score, setScore] = useState(0);
+  const generateLevel = () => {
+    // Determine random coefficients
+    // e.g. 3x - 2x + 4 - 3
+    let posX = Math.floor(Math.random() * 4); // 0 to 3
+    let negX = Math.floor(Math.random() * 4); // 0 to 3
+    // Ensure we have at least some variables to work with
+    if (posX === 0 && negX === 0) posX = Math.floor(Math.random() * 3) + 1;
+    const pos1 = Math.floor(Math.random() * 5) + 1; // 1 to 5
+    const neg1 = Math.floor(Math.random() * 5) + 1; // 1 to 5
+
+    const newTiles = [];
+    let id = 0;
+    for (let i = 0; i < posX; i++) newTiles.push({
+      id: id++,
+      type: "x",
+      val: 1
+    });
+    for (let i = 0; i < negX; i++) newTiles.push({
+      id: id++,
+      type: "x",
+      val: -1
+    });
+    for (let i = 0; i < pos1; i++) newTiles.push({
+      id: id++,
+      type: "1",
+      val: 1
+    });
+    for (let i = 0; i < neg1; i++) newTiles.push({
+      id: id++,
+      type: "1",
+      val: -1
+    });
+
+    // Shuffle
+    newTiles.sort(() => Math.random() - 0.5);
+    setTiles(newTiles);
+    setScore(0);
+    setSelectedId(null);
+  };
+  useEffect(() => {
+    generateLevel();
+  }, []);
+  const handleTileClick = id => {
+    if (selectedId === null) {
+      setSelectedId(id);
+    } else {
+      if (selectedId === id) {
+        setSelectedId(null);
+        return;
+      }
+      // Check match
+      const t1 = tiles.find(t => t.id === selectedId);
+      const t2 = tiles.find(t => t.id === id);
+      if (t1.type === t2.type && t1.val + t2.val === 0) {
+        // Zero Pair! Remove both
+        setTiles(tiles.filter(t => t.id !== selectedId && t.id !== id));
+        setScore(s => s + 1);
+      }
+      setSelectedId(null);
+    }
+  };
+
+  // Calculate current expression value text
+  const xCount = tiles.filter(t => t.type === "x").reduce((acc, t) => acc + t.val, 0);
+  const oneCount = tiles.filter(t => t.type === "1").reduce((acc, t) => acc + t.val, 0);
+  const formatExpression = (x, c) => {
+    let s = "";
+    if (x !== 0) s += x === 1 ? "x" : x === -1 ? "-x" : `${x}x`;
+    if (c !== 0) {
+      if (c > 0 && s !== "") s += " + ";
+      if (c < 0 && s !== "") s += " - ";
+      if (s === "") s += c; // if only constant
+      else s += Math.abs(c);
+    }
+    if (s === "") return "0";
+    return s;
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "p-8 max-w-4xl mx-auto min-h-screen flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("header", {
+    className: "mb-10 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-indigo-600 font-bold uppercase text-xs tracking-widest mb-2"
+  }, "Unit 1: Number Sense"), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-slate-900"
+  }, "Algebra Tiles"), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-500"
+  }, "Simplify the expression by canceling out Zero Pairs.")), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4 mb-8 items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xl font-mono bg-white px-6 py-3 rounded-xl shadow-sm border border-indigo-100"
+  }, "Current:", " ", /*#__PURE__*/React.createElement("span", {
+    className: "font-bold text-indigo-600"
+  }, formatExpression(xCount, oneCount))), /*#__PURE__*/React.createElement("button", {
+    onClick: generateLevel,
+    className: "px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 shadow-lg transition"
+  }, "New Problem ", /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-rotate-right ml-2"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/60 p-12 rounded-3xl shadow-xl w-full flex flex-wrap gap-6 justify-center min-h-[400px] border border-white"
+  }, tiles.map(tile => /*#__PURE__*/React.createElement("button", {
+    key: tile.id,
+    onClick: () => handleTileClick(tile.id),
+    className: `
+                                    shadow-md transition-all duration-300 transform rounded-lg border-2 flex items-center justify-center font-bold text-xl relative
+                                    ${tile.type === "x" ? "tile-x" : "tile-1"}
+                                    ${tile.val === 1 ? "bg-green-400 border-green-600 text-green-900" : "bg-red-400 border-red-600 text-red-900"}
+                                    ${selectedId === tile.id ? "ring-4 ring-yellow-400 scale-110 z-10" : "hover:scale-105 hover:brightness-110"}
+                                `
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "opacity-50"
+  }, tile.type === "x" ? "x" : "1"), tile.val === -1 && /*#__PURE__*/React.createElement("span", {
+    className: "absolute inset-0 bg-black/10"
+  }))), tiles.length === 0 && /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center justify-center text-slate-400 animate-pulse"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-check-circle text-6xl text-green-500 mb-4"
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "text-xl font-bold text-slate-600"
+  }, "Simplified!"))), /*#__PURE__*/React.createElement("div", {
+    className: "mt-8 text-center max-w-lg"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-slate-600 font-bold mb-2"
+  }, "Instructions"), /*#__PURE__*/React.createElement("p", {
+    className: "text-sm text-slate-500"
+  }, "1. Look for pairs of the same shape but different colors (Green is Positive, Red is Negative).", /*#__PURE__*/React.createElement("br", null), "2. Click matched pairs to remove them (Zero Pair).", /*#__PURE__*/React.createElement("br", null), "3. Continue until no more pairs can be made. The remaining tiles show the simplified expression.")));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

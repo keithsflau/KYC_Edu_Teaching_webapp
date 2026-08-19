@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小二常識：解決紛爭 | Solving Conflicts</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #fbcfe8 0%, #f472b6 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Conflict Solver",
+    zh: "解決紛爭",
+    ja: "仲直りしよう",
+    ko: "갈등 해결하기",
+    es: "Resolviendo Conflictos",
+    de: "Konfliktlöser",
+    fi: "Riitojen ratkaisu",
+    fr: "Résolution de conflits",
+    ar: "حل النزاعات",
+    it: "Risoluzione Conflitti"
+  },
+  instruction: {
+    en: "What should you say?",
+    zh: "你應該說什麼？",
+    ja: "何と言うべきですか？",
+    ko: "무라고 말해야 할까요?",
+    es: "¿Qué deberías decir?",
+    de: "Was solltest du sagen?",
+    fi: "Mitä sinun pitäisi sanoa?",
+    fr: "Que devriez-vous dire ?",
+    ar: "ماذا يجب أن تقول؟",
+    it: "Cosa dovresti dire?"
+  },
+  correct: {
+    en: "Great! That is polite.",
+    zh: "做得好！這很有禮貌。",
+    ja: "すごい！礼儀正しいですね。",
+    ko: "좋아요! 예의 바르네요.",
+    es: "¡Genial! Eso es educado.",
+    de: "Super! Das ist höflich.",
+    fi: "Hienoa! Tuo on kohteliasta.",
+    fr: "Super ! C'est poli.",
+    ar: "رائع! هذا مهذب.",
+    it: "Grande! È educato."
+  },
+  wrong: {
+    en: "That might make them sad...",
+    zh: "這樣可能會讓對方傷心...",
+    ja: "それは相手を悲しませるかもしれません...",
+    ko: "그 말이 그들을 슬프게 할 수도 있어요...",
+    es: "Eso podría ponerlos tristes...",
+    de: "Das könnte sie traurig machen...",
+    fi: "Tuo saattaa pahoittaa heidän mielensä...",
+    fr: "Cela pourrait les rendre tristes...",
+    ar: "قد يجعلهم ذلك حزينين...",
+    it: "Potrebbe renderli tristi..."
+  },
+  next: {
+    en: "Next Situation",
+    zh: "下一個情境",
+    ja: "次の状況",
+    ko: "다음 상황",
+    es: "Siguiente Situación",
+    de: "Nächste Situation",
+    fi: "Seuraava tilanne",
+    fr: "Situation Suivante",
+    ar: "الوضع التالي",
+    it: "Prossima Situazione"
+  },
+  score: {
+    en: "Friendship Score",
+    zh: "友誼分數",
+    ja: "友情スコア",
+    ko: "우정 점수",
+    es: "Puntuación de Amistad",
+    de: "Freundschafts-Punktestand",
+    fi: "Ystävyyspisteet",
+    fr: "Score d'Amitié",
+    ar: "نتيجة الصداقة",
+    it: "Punteggio Amicizia"
+  },
+  completed: {
+    en: "You are a good friend!",
+    zh: "你是一個好朋友！",
+    ja: "あなたは良い友達です！",
+    ko: "당신은 좋은 친구입니다!",
+    es: "¡Eres un buen amigo!",
+    de: "Du bist ein guter Freund!",
+    fi: "Olet hyvä ystävä!",
+    fr: "Tu es un bon ami !",
+    ar: "أنت صديق جيد!",
+    it: "Sei un buon amico!"
+  },
+  restart: {
+    en: "Play Again",
+    zh: "再玩一次",
+    ja: "もう一度プレイ",
+    ko: "다시 하기",
+    es: "Jugar de Nuevo",
+    de: "Nochmal spielen",
+    fi: "Pelaa uudelleen",
+    fr: "Rejouer",
+    ar: "العب مرة أخرى",
+    it: "Gioca di Nuovo"
+  },
+  s1: {
+    en: "You accidentally bumped into a classmate.",
+    zh: "你不小心撞到了同學。",
+    ja: "偶然クラスメートにぶつかってしまいました。",
+    ko: "실수로 반 친구와 부딪혔습니다.",
+    es: "Chocaste accidentalmente con un compañero.",
+    de: "Du bist versehentlich mit einem Klassenkameraden zusammengestoßen.",
+    fi: "Törmäsit vahingossa luokkatoveriin.",
+    fr: "Vous avez accidentellement bousculé un camarade.",
+    ar: "اصطدمت بزميل في الفصل عن طريق الخطأ.",
+    it: "Hai urtato accidentalmente un compagno di classe."
+  },
+  s1_a: {
+    en: "Sorry! Are you okay?",
+    zh: "對不起！你沒事吧？",
+    ja: "ごめんなさい！大丈夫？",
+    ko: "미안해! 괜찮니?",
+    es: "¡Perdón! ¿Estás bien?",
+    de: "Entschuldigung! Geht es dir gut?",
+    fi: "Anteeksi! Oletko kunnossa?",
+    fr: "Désolé ! Ça va ?",
+    ar: "آسف! هل أنت بخير؟",
+    it: "Scusa! Stai bene?"
+  },
+  s1_b: {
+    en: "Watch where you are going!",
+    zh: "你長不長眼睛的！",
+    ja: "どこ見て歩いてるんだ！",
+    ko: "앞 좀 잘 보고 다녀!",
+    es: "¡Mira por dónde vas!",
+    de: "Pass auf, wo du hingehst!",
+    fi: "Katso mihin menet!",
+    fr: "Regarde où tu vas !",
+    ar: "انتبه إلى أين تذهب!",
+    it: "Guarda dove vai!"
+  },
+  s2: {
+    en: "Your friend has a new toy.",
+    zh: "朋友有新玩具。",
+    ja: "友達が新しいおもちゃを持っています。",
+    ko: "친구가 새 장난감을 가지고 있습니다.",
+    es: "Tu amigo tiene un juguete nuevo.",
+    de: "Dein Freund hat ein neues Spielzeug.",
+    fi: "Ystävälläsi on uusi lelu.",
+    fr: "Ton ami a un nouveau jouet.",
+    ar: "صديقك لديه لعبة جديدة.",
+    it: "Il tuo amico ha un nuovo giocattolo."
+  },
+  s2_a: {
+    en: "Can I play with you?",
+    zh: "我可以和你一起玩嗎？",
+    ja: "一緒に遊んでもいい？",
+    ko: "나도 같이 놀아도 돼?",
+    es: "¿Puedo jugar contigo?",
+    de: "Kann ich mit dir spielen?",
+    fi: "Saanko leikkiä kanssasi?",
+    fr: "Puis-je jouer avec toi ?",
+    ar: "هل يمكنني اللعب معك؟",
+    it: "Posso giocare con te?"
+  },
+  s2_b: {
+    en: "Give it to me now!",
+    zh: "快點給我玩！",
+    ja: "今すぐ貸してよ！",
+    ko: "당장 내놔!",
+    es: "¡Dámelo ahora!",
+    de: "Gib es mir sofort!",
+    fi: "Anna se minulle nyt!",
+    fr: "Donne-le-moi maintenant !",
+    ar: "أعطني إياها الآن!",
+    it: "Dammelo subito!"
+  },
+  s3: {
+    en: "You broke your friend's pencil.",
+    zh: "你弄斷了朋友的鉛筆。",
+    ja: "友達の鉛筆を折ってしまいました。",
+    ko: "친구의 연필을 부러뜨렸습니다.",
+    es: "Rompiste el lápiz de tu amigo.",
+    de: "Du hast den Stift deines Freundes zerbrochen.",
+    fi: "Rikoit ystäväsi kynän.",
+    fr: "Tu as cassé le crayon de ton ami.",
+    ar: "لقد كسرت قلم صديقك.",
+    it: "Hai rotto la matita del tuo amico."
+  },
+  s3_a: {
+    en: "I promise to buy you a new one.",
+    zh: "對不起，我會賠一枝新的給你。",
+    ja: "新しいのを買ってあげるね。",
+    ko: "새로 사줄게 약속해.",
+    es: "Prometo comprarte uno nuevo.",
+    de: "Ich verspreche, dir einen neuen zu kaufen.",
+    fi: "Lupaan ostaa sinulle uuden.",
+    fr: "Je promets de t'en acheter un nouveau.",
+    ar: "أعدك بشراء واحد جديد لك.",
+    it: "Prometto di comprartene una nuova."
+  },
+  s3_b: {
+    en: "It was a cheap pencil anyway.",
+    zh: "這支筆很便宜，沒所謂吧。",
+    ja: "どうせ安い鉛筆でしょ。",
+    ko: "어차피 싼 연필이었잖아.",
+    es: "Era un lápiz barato de todos modos.",
+    de: "Es war sowieso ein billiger Stift.",
+    fi: "Se oli halpa kynä joka tapauksessa.",
+    fr: "C'était un crayon bon marché de toute façon.",
+    ar: "كان قلماً رخيصاً على أي حال.",
+    it: "Era comunque una matita economica."
+  },
+  s4: {
+    en: "Your friend is sad.",
+    zh: "朋友很不開心。",
+    ja: "友達が悲しんでいます。",
+    ko: "친구가 슬퍼합니다.",
+    es: "Tu amigo está triste.",
+    de: "Dein Freund ist traurig.",
+    fi: "Ystäväsi on surullinen.",
+    fr: "Ton ami est triste.",
+    ar: "صديقك حزين.",
+    it: "Il tuo amico è triste."
+  },
+  s4_a: {
+    en: "Do you want to talk about it?",
+    zh: "你想說說發生什麼事嗎？",
+    ja: "話を聞こうか？",
+    ko: "무슨 일인지 말해줄래?",
+    es: "¿Quieres hablar de ello?",
+    de: "Möchtest du darüber reden?",
+    fi: "Haluatko puhua siitä?",
+    fr: "Veux-tu en parler ?",
+    ar: "هل تريد التحدث عن ذلك؟",
+    it: "Vuoi parlarne?"
+  },
+  s4_b: {
+    en: "Stop crying, it's annoying.",
+    zh: "別哭了，很煩。",
+    ja: "泣くのはやめて、うっとうしいよ。",
+    ko: "그만 울어, 짜증나.",
+    es: "Deja de llorar, es molesto.",
+    de: "Hör auf zu weinen, es nervt.",
+    fi: "Lopeta itkeminen, se on ärsyttävää.",
+    fr: "Arrête de pleurer, c'est agaçant.",
+    ar: "توقف عن البكاء، إنه مزعج.",
+    it: "Smetti di piangere, è fastidioso."
+  }
+};
+const scenarios = [{
+  id: "s1",
+  correct: "a"
+}, {
+  id: "s2",
+  correct: "a"
+}, {
+  id: "s3",
+  correct: "a"
+}, {
+  id: "s4",
+  correct: "a"
+} // Keeping 'a' as correct for simplicity in data structure, but randomization in display is key
+];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [idx, setIdx] = useState(0);
+  const [score, setScore] = useState(0);
+  const [feedback, setFeedback] = useState(null);
+  const [shuffledOptions, setShuffledOptions] = useState([]);
+  const getText = key => t[key][lang] || t[key]["en"];
+  useEffect(() => {
+    if (idx < scenarios.length) {
+      // Shuffle options
+      const opts = ["a", "b"].sort(() => Math.random() - 0.5);
+      setShuffledOptions(opts);
+      setFeedback(null);
+    }
+  }, [idx]);
+  const handleChoice = opt => {
+    if (feedback) return;
+    const isCorrect = opt === scenarios[idx].correct;
+    if (isCorrect) {
+      setScore(s => s + 1);
+      setFeedback("correct");
+    } else {
+      setFeedback("wrong");
+    }
+  };
+  const next = () => {
+    setIdx(idx + 1);
+    setFeedback(null);
+  };
+  const restart = () => {
+    setIdx(0);
+    setScore(0);
+  };
+  const currentQ = scenarios[idx];
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-pink-900 mb-8 mt-8 drop-shadow-sm bg-white/50 px-6 py-2 rounded-full"
+  }, "🤝 ", getText("title")), idx < scenarios.length ? /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-2xl bg-white rounded-3xl p-8 shadow-2xl border-4 border-pink-200"
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "text-pink-600 font-bold mb-4"
+  }, getText("score"), ": ", score), /*#__PURE__*/React.createElement(motion.div, {
+    key: `${currentQ.id}-scen`,
+    initial: {
+      opacity: 0,
+      y: 20
+    },
+    animate: {
+      opacity: 1,
+      y: 0
+    },
+    className: "bg-pink-100 p-6 rounded-2xl mb-8 relative border-2 border-pink-300"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute -top-6 left-8 text-6xl"
+  }, "🤔"), /*#__PURE__*/React.createElement("h2", {
+    className: "text-2xl font-black text-slate-800 mt-4"
+  }, getText(currentQ.id))), /*#__PURE__*/React.createElement("p", {
+    className: "font-bold text-slate-500 mb-4 text-center"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-4"
+  }, shuffledOptions.map(opt => /*#__PURE__*/React.createElement("button", {
+    key: opt,
+    onClick: () => handleChoice(opt),
+    disabled: !!feedback,
+    className: `w-full p-6 rounded-2xl text-left border-4 transition-all text-xl font-bold font-fredoka flex items-center gap-4 ${feedback ? opt === currentQ.correct ? "bg-green-100 border-green-500 text-green-800" : feedback === "wrong" ? "opacity-50" : "bg-white border-slate-200 text-slate-400" : "bg-white border-slate-200 hover:border-pink-400 hover:bg-pink-50 text-slate-700 shadow-sm"}`
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-3xl"
+  }, shuffledOptions.indexOf(opt) === 0 ? "①" : "②"), " ", /*#__PURE__*/React.createElement("span", {
+    className: "flex-1"
+  }, getText(`${currentQ.id}_${opt}`)), feedback && opt === currentQ.correct && /*#__PURE__*/React.createElement("span", null, "✅"), feedback && opt !== currentQ.correct && feedback === "wrong" && /*#__PURE__*/React.createElement("span", null, "❌")))), feedback && /*#__PURE__*/React.createElement("div", {
+    className: "mt-8 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: `text-2xl font-black mb-4 ${feedback === "correct" ? "text-green-600" : "text-pink-600"}`
+  }, getText(feedback)), /*#__PURE__*/React.createElement("button", {
+    onClick: next,
+    className: "bg-pink-500 text-white px-10 py-3 rounded-full font-black text-xl hover:bg-pink-600 shadow-xl"
+  }, getText("next"), " ➡️"))) : /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/90 p-12 rounded-3xl shadow-xl text-center mt-12"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-8xl mb-4"
+  }, "💖"), /*#__PURE__*/React.createElement("h2", {
+    className: "text-3xl font-black text-pink-800 mb-6"
+  }, getText("completed")), /*#__PURE__*/React.createElement("p", {
+    className: "text-xl mb-8 font-bold text-slate-600"
+  }, getText("score"), ": ", score, " / ", scenarios.length), /*#__PURE__*/React.createElement("button", {
+    onClick: restart,
+    className: "bg-pink-500 text-white px-10 py-4 rounded-full font-black text-xl hover:bg-pink-600 shadow-xl"
+  }, getText("restart"), " 🔄")));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

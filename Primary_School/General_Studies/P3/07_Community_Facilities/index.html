@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小三常識：社區設施 | Community Facilities</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Community Facilities",
+    zh: "社區設施",
+    ja: "コミュニティ施設",
+    ko: "지역 시설",
+    es: "Instalaciones Comunitarias",
+    de: "Gemeinschaftseinrichtungen",
+    fi: "Yhteiskunnan tilat",
+    fr: "Installations communautaires",
+    ar: "مرافق المجتمع",
+    it: "Strutture Comunitarie"
+  },
+  instruction: {
+    en: "Where should they go?",
+    zh: "他們應該去哪裡？",
+    ja: "彼らはどこに行くべきですか？",
+    ko: "그들은 어디로 가야 합니까?",
+    es: "¿A dónde deberían ir?",
+    de: "Wohin sollen sie gehen?",
+    fi: "Minne heidän pitäisi mennä?",
+    fr: "Où devraient-ils aller ?",
+    ar: "إلى أين يجب أن يذهبوا؟",
+    it: "Dove dovrebbero andare?"
+  },
+  hospital: {
+    en: "Hospital",
+    zh: "醫院",
+    ja: "病院",
+    ko: "병원",
+    es: "Hospital",
+    de: "Krankenhaus",
+    fi: "Sairaala",
+    fr: "Hôpital",
+    ar: "مستشفى",
+    it: "Ospedale"
+  },
+  library: {
+    en: "Library",
+    zh: "圖書館",
+    ja: "図書館",
+    ko: "도서관",
+    es: "Biblioteca",
+    de: "Bibliothek",
+    fi: "Kirjasto",
+    fr: "Bibliothèque",
+    ar: "مكتبة",
+    it: "Biblioteca"
+  },
+  post: {
+    en: "Post Office",
+    zh: "郵政局",
+    ja: "郵便局",
+    ko: "우체국",
+    es: "Oficina de Correos",
+    de: "Postamt",
+    fi: "Posti",
+    fr: "Bureau de poste",
+    ar: "مكتب البريد",
+    it: "Ufficio Postale"
+  },
+  park: {
+    en: "Park",
+    zh: "公園",
+    ja: "公園",
+    ko: "공원",
+    es: "Parque",
+    de: "Park",
+    fi: "Puisto",
+    fr: "Parc",
+    ar: "حديقة",
+    it: "Parco"
+  },
+  police: {
+    en: "Police Station",
+    zh: "警署",
+    ja: "警察署",
+    ko: "경찰서",
+    es: "Estación de Policía",
+    de: "Polizeiwache",
+    fi: "Poliisiasema",
+    fr: "Commissariat",
+    ar: "مركز الشرطة",
+    it: "Stazione di Polizia"
+  },
+  market: {
+    en: "Market",
+    zh: "街市",
+    ja: "市場",
+    ko: "시장",
+    es: "Mercado",
+    de: "Markt",
+    fi: "Tori",
+    fr: "Marché",
+    ar: "سوق",
+    it: "Mercato"
+  },
+  need_sick: {
+    en: "I feel sick...",
+    zh: "我不舒服...",
+    ja: "気分が悪い...",
+    ko: "아파요...",
+    es: "Me siento enfermo...",
+    de: "Ich fühle mich krank...",
+    fi: "Olen sairas...",
+    fr: "Je me sens malade...",
+    ar: "أشعر بالمرض...",
+    it: "Mi sento male..."
+  },
+  need_read: {
+    en: "I want to read!",
+    zh: "我想看書！",
+    ja: "本が読みたい！",
+    ko: "책을 읽고 싶어요!",
+    es: "¡Quiero leer!",
+    de: "Ich will lesen!",
+    fi: "Haluan lukea!",
+    fr: "Je veux lire !",
+    ar: "أريد أن أقرأ!",
+    it: "Voglio leggere!"
+  },
+  need_mail: {
+    en: "Send a letter",
+    zh: "我要寄信",
+    ja: "手紙を送る",
+    ko: "편지 보내기",
+    es: "Enviar una carta",
+    de: "Einen Brief senden",
+    fi: "Lähetä kirje",
+    fr: "Envoyer une lettre",
+    ar: "إرسال رسالة",
+    it: "Invia una lettera"
+  },
+  need_play: {
+    en: "Let's play!",
+    zh: "我想玩耍！",
+    ja: "遊ぼう！",
+    ko: "놀자!",
+    es: "¡Vamos a jugar!",
+    de: "Lass uns spielen!",
+    fi: "Mennään leikkimään!",
+    fr: "Jouons !",
+    ar: "هيا نلعب!",
+    it: "Giochiamo!"
+  },
+  need_help: {
+    en: "I found a lost wallet",
+    zh: "我拾到錢包",
+    ja: "財布を拾いました",
+    ko: "지갑을 주웠어요",
+    es: "Encontré una billetera perdida",
+    de: "Ich habe eine verlorene Brieftasche gefunden",
+    fi: "Löysin kadonneen lompakon",
+    fr: "J'ai trouvé un portefeuille perdu",
+    ar: "وجدت محفظة مفقودة",
+    it: "Ho trovato un portafoglio smarrito"
+  },
+  need_food: {
+    en: "Buy vegetables",
+    zh: "我要買菜",
+    ja: "野菜を買う",
+    ko: "채소 사기",
+    es: "Comprar verduras",
+    de: "Gemüse kaufen",
+    fi: "Osta vihanneksia",
+    fr: "Acheter des légumes",
+    ar: "شراء خضروات",
+    it: "Compra verdure"
+  },
+  correct: {
+    en: "Correct!",
+    zh: "答對了！",
+    ja: "正解！",
+    ko: "정답입니다!",
+    es: "¡Correcto!",
+    de: "Richtig!",
+    fi: "Oikein!",
+    fr: "Correct !",
+    ar: "صحيح!",
+    it: "Corretto!"
+  },
+  wrong: {
+    en: "Try Again",
+    zh: "再試一次",
+    ja: "もう一度",
+    ko: "다시 시도하세요",
+    es: "Inténtalo de nuevo",
+    de: "Versuch es nochmal",
+    fi: "Yritä uudelleen",
+    fr: "Réessayez",
+    ar: "حاول مرة أخرى",
+    it: "Riprova"
+  },
+  completed: {
+    en: "Good Helper!",
+    zh: "好幫手！",
+    ja: "良いお手伝いさん！",
+    ko: "좋은 도우미!",
+    es: "¡Buen Ayudante!",
+    de: "Guter Helfer!",
+    fi: "Hyvä apulainen!",
+    fr: "Bon assistant !",
+    ar: "مساعد جيد!",
+    it: "Bravo Aiutante!"
+  },
+  reset: {
+    en: "Play Again",
+    zh: "再玩一次",
+    ja: "もう一度プレイ",
+    ko: "다시 하기",
+    es: "Jugar de Nuevo",
+    de: "Nochmal spielen",
+    fi: "Pelaa uudelleen",
+    fr: "Rejouer",
+    ar: "العب مرة أخرى",
+    it: "Gioca di Nuovo"
+  }
+};
+const places = [{
+  id: "hospital",
+  icon: "🏥",
+  color: "bg-red-100 border-red-300"
+}, {
+  id: "library",
+  icon: "📚",
+  color: "bg-blue-100 border-blue-300"
+}, {
+  id: "post",
+  icon: "📮",
+  color: "bg-green-100 border-green-300"
+}, {
+  id: "park",
+  icon: "🏞️",
+  color: "bg-emerald-100 border-emerald-300"
+}, {
+  id: "police",
+  icon: "👮",
+  color: "bg-slate-200 border-slate-400"
+}, {
+  id: "market",
+  icon: "🥦",
+  color: "bg-orange-100 border-orange-300"
+}];
+const tasks = [{
+  id: 1,
+  needs: "need_sick",
+  target: "hospital",
+  avatar: "🤒"
+}, {
+  id: 2,
+  needs: "need_read",
+  target: "library",
+  avatar: "🤓"
+}, {
+  id: 3,
+  needs: "need_mail",
+  target: "post",
+  avatar: "✉️"
+}, {
+  id: 4,
+  needs: "need_play",
+  target: "park",
+  avatar: "⚽"
+}, {
+  id: 5,
+  needs: "need_help",
+  target: "police",
+  avatar: "👛"
+}, {
+  id: 6,
+  needs: "need_food",
+  target: "market",
+  avatar: "🧺"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [queue, setQueue] = useState([]);
+  const [current, setCurrent] = useState(null);
+  const [feedback, setFeedback] = useState(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+  useEffect(() => {
+    initGame();
+  }, []);
+  const initGame = () => {
+    const q = [...tasks].sort(() => Math.random() - 0.5);
+    setQueue(q);
+    setCurrent(q[0]);
+    setFeedback(null);
+  };
+  const handleChoice = placeId => {
+    if (feedback) return;
+    if (current.target === placeId) {
+      setFeedback("correct");
+      setTimeout(() => {
+        setFeedback(null);
+        const nextIdx = queue.indexOf(current) + 1;
+        if (nextIdx < queue.length) setCurrent(queue[nextIdx]);else setCurrent(null);
+      }, 800);
+    } else {
+      setFeedback("wrong");
+      setTimeout(() => setFeedback(null), 800);
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 flex flex-col items-center select-none font-sans overflow-hidden"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-sky-800 mb-4 mt-8 drop-shadow-sm bg-white/50 px-6 py-2 rounded-full"
+  }, "🏙️ ", getText("title")), current ? /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-4xl flex flex-col items-center flex-1 justify-center"
+  }, /*#__PURE__*/React.createElement(motion.div, {
+    key: current.id,
+    initial: {
+      scale: 0,
+      y: 50
+    },
+    animate: {
+      scale: 1,
+      y: 0
+    },
+    exit: {
+      scale: 0,
+      opacity: 0
+    },
+    className: "bg-white p-8 rounded-[2rem] shadow-2xl border-8 border-sky-200 mb-8 flex flex-col items-center text-center max-w-sm z-20"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-8xl mb-4 animate-bounce-slow"
+  }, current.avatar), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-black text-slate-700 bg-slate-100 px-4 py-2 rounded-xl"
+  }, "\"", getText(current.needs), "\"")), /*#__PURE__*/React.createElement("p", {
+    className: "font-bold text-sky-700 mb-6 bg-white/60 px-6 py-1 rounded-full"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 md:grid-cols-3 gap-4 w-full"
+  }, places.map(place => /*#__PURE__*/React.createElement("button", {
+    key: place.id,
+    onClick: () => handleChoice(place.id),
+    className: `${place.color} border-b-8 rounded-2xl p-4 flex flex-col items-center shadow-lg transition-transform active:scale-95 hover:-translate-y-1`
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-5xl mb-2"
+  }, place.icon), /*#__PURE__*/React.createElement("div", {
+    className: "font-bold text-slate-700"
+  }, getText(place.id))))), feedback && /*#__PURE__*/React.createElement("div", {
+    className: `absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-6 rounded-3xl font-black text-4xl shadow-2xl z-30 whitespace-nowrap ${feedback === "correct" ? "bg-green-500 text-white" : "bg-red-500 text-white"}`
+  }, getText(feedback))) : /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/90 p-12 rounded-3xl shadow-xl text-center mt-20"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-8xl mb-4"
+  }, "🌟"), /*#__PURE__*/React.createElement("h2", {
+    className: "text-3xl font-black text-sky-800 mb-6"
+  }, getText("completed")), /*#__PURE__*/React.createElement("button", {
+    onClick: initGame,
+    className: "bg-sky-500 text-white px-10 py-4 rounded-full font-black text-xl hover:bg-sky-600 shadow-xl"
+  }, getText("reset"), " 🔄")));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

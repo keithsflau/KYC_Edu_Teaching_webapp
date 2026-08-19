@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rate of Change | M1 Calculus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+      }
+      .glass {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <div id="root" class="flex-grow flex flex-col"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const translations = {
+  en: {
+    unit: "Module 1: Calculus",
+    title: "Rate of Change",
+    desc: "Visualizing dy/dt and dx/dt in real-world contexts.",
+    scenario: "Scenario: Expanding Circle (Area)",
+    radius: "Radius r",
+    rateDr: "Rate dr/dt",
+    area: "Area A = πr²",
+    rateDa: "Rate dA/dt",
+    calc: "dA/dt = 2πr(dr/dt)",
+    langBtn: "中文"
+  },
+  zh: {
+    unit: "單元一：微積分",
+    title: "變更率",
+    desc: "圖像化 dy/dt 和 dx/dt 在真實情境中的應用。",
+    scenario: "情境：擴張中的圓形 (面積)",
+    radius: "半徑 r",
+    rateDr: "變更率 dr/dt",
+    area: "面積 A = πr²",
+    rateDa: "變更率 dA/dt",
+    calc: "dA/dt = 2πr(dr/dt)",
+    langBtn: "English"
+  }
+};
+const App = () => {
+  const [lang, setLang] = useState("en");
+  const t = translations[lang];
+  const [r, setR] = useState(3);
+  const [dr, setDr] = useState(0.4); // rate of radius change
+
+  // A = pi * r^2
+  // dA/dt = 2 * pi * r * dr/dt
+
+  const dA = 2 * Math.PI * r * dr;
+
+  // Visualization
+  // Circle growing
+  // Let's show the circle and an arrow indicating growth rate.
+
+  const size = 400;
+  const scale = 20; // 1 unit = 20px
+  const cx = size / 2,
+    cy = size / 2;
+  const rScreen = r * scale;
+
+  // Arrow size proportional to dr
+  // Arrow points out if dr > 0, in if dr < 0
+  const arrowLen = Math.abs(dr) * 40;
+  const angles = [0, 90, 180, 270];
+  return /*#__PURE__*/React.createElement("div", {
+    className: "flex-grow flex flex-col items-center justify-center p-8 select-none"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 right-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLang(l => l === "en" ? "zh" : "en"),
+    className: "px-3 py-1 bg-slate-800 border border-slate-600 rounded-full text-xs font-bold text-emerald-400 hover:bg-slate-700 hover:text-white transition flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-language"
+  }), t.langBtn)), /*#__PURE__*/React.createElement("header", {
+    className: "mb-8 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-blue-500 font-bold uppercase tracking-widest text-xs mb-2"
+  }, t.unit), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-white mb-2"
+  }, t.title), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-400 font-mono text-lg"
+  }, t.desc)), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col lg:flex-row gap-8 w-full max-w-5xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass p-4 rounded-3xl flex-1 flex flex-col items-center justify-center border border-blue-500/30"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-center font-bold text-blue-400 mb-4 uppercase text-xs"
+  }, t.scenario), /*#__PURE__*/React.createElement("svg", {
+    width: size,
+    height: size,
+    className: "bg-slate-900 rounded-full border border-slate-800"
+  }, /*#__PURE__*/React.createElement("circle", {
+    cx: cx,
+    cy: cy,
+    r: rScreen,
+    fill: "rgba(59, 130, 246, 0.2)",
+    stroke: "#3b82f6",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: cx,
+    y1: cy,
+    x2: cx + rScreen,
+    y2: cy,
+    stroke: "#60a5fa",
+    strokeWidth: "2",
+    strokeDasharray: "4"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: cx + rScreen / 2,
+    y: cy - 8,
+    className: "font-bold fill-blue-300 text-xs"
+  }, "r = ", r), angles.map(ang => {
+    const rad = ang * Math.PI / 180;
+    const x1 = cx + rScreen * Math.cos(rad);
+    const y1 = cy + rScreen * Math.sin(rad);
+    const x2 = cx + (rScreen + arrowLen * (dr >= 0 ? 1 : -1)) * Math.cos(rad);
+    const y2 = cy + (rScreen + arrowLen * (dr >= 0 ? 1 : -1)) * Math.sin(rad);
+    if (arrowLen < 5) return null;
+    return /*#__PURE__*/React.createElement("g", {
+      key: ang
+    }, /*#__PURE__*/React.createElement("line", {
+      x1: x1,
+      y1: y1,
+      x2: x2,
+      y2: y2,
+      stroke: dr >= 0 ? "#10b981" : "#ef4444",
+      strokeWidth: "3",
+      markerEnd: "url(#arrow)"
+    }));
+  }), /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("marker", {
+    id: "arrow",
+    markerWidth: "10",
+    markerHeight: "10",
+    refX: "9",
+    refY: "3",
+    orient: "auto",
+    markerUnits: "strokeWidth"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M0,0 L0,6 L9,3 z",
+    fill: dr >= 0 ? "#10b981" : "#ef4444"
+  }))))), /*#__PURE__*/React.createElement("div", {
+    className: "glass p-6 rounded-3xl flex-1 space-y-6 flex flex-col justify-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "space-y-4"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "text-xs font-bold text-slate-400 block mb-1 uppercase"
+  }, t.radius), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "1",
+    max: "8",
+    step: "0.5",
+    value: r,
+    onChange: e => setR(Number(e.target.value)),
+    className: "w-full accent-blue-500"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-right font-mono text-blue-400 font-bold"
+  }, r)), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "text-xs font-bold text-slate-400 block mb-1 uppercase"
+  }, t.rateDr, " (units/s)"), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "-2",
+    max: "2",
+    step: "0.1",
+    value: dr,
+    onChange: e => setDr(Number(e.target.value)),
+    className: "w-full accent-emerald-500"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-right font-mono text-emerald-400 font-bold"
+  }, dr))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-900/50 p-6 rounded-2xl border border-slate-700"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold text-slate-500 uppercase mb-4"
+  }, "Calculation"), /*#__PURE__*/React.createElement("div", {
+    className: "font-mono text-lg text-slate-300 space-y-3"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-blue-200"
+  }, "A = πr² = ", (Math.PI * r * r).toFixed(2)), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-rose-400 font-bold"
+  }, "dA/dt"), " = 2πr(dr/dt)"), /*#__PURE__*/React.createElement("div", {
+    className: "pl-4 border-l-2 border-rose-500/30 text-rose-200"
+  }, "= 2π(", r, ")(", dr, ")", /*#__PURE__*/React.createElement("br", null), "=", " ", /*#__PURE__*/React.createElement("span", {
+    className: "text-3xl font-bold text-rose-400"
+  }, dA.toFixed(2))))))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

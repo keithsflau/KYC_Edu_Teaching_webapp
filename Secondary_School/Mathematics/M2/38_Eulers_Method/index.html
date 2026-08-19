@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Euler's Method | M2 Differential Equations</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+      }
+      .glass {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .draggable {
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <div id="root" class="flex-grow flex flex-col"></div>
+    <script>
+const {
+  useState,
+  useRef
+} = React;
+const translations = {
+  en: {
+    unit: "Unit 6: Differential Equations",
+    title: "Euler's Method",
+    subtitle: "y_new = y_old + h · f(x,y)",
+    step: "Step Size h",
+    lower: "Lower (Accurate)",
+    higher: "Higher (Rough)",
+    errorTitle: "Error Analysis at x=4",
+    exact: "Exact:",
+    euler: "Euler:",
+    diff: "Diff:",
+    desc: "Reducing <strong>h</strong> reduces the error accumulation.",
+    langBtn: "中文"
+  },
+  zh: {
+    unit: "第六單元：微分方程",
+    title: "歐拉方法",
+    subtitle: "y_new = y_old + h · f(x,y)",
+    step: "步長 h",
+    lower: "較小 (精確)",
+    higher: "較大 (粗略)",
+    errorTitle: "x=4 處的誤差分析",
+    exact: "精確值:",
+    euler: "歐拉值:",
+    diff: "差異:",
+    desc: "縮小 <strong>h</strong> 可以減少誤差累積。",
+    langBtn: "English"
+  }
+};
+const App = () => {
+  // dy/dx = y
+  // Exact: y = e^x (if y(0)=1)
+
+  const [lang, setLang] = useState("en");
+  const t = translations[lang];
+  const [h, setH] = useState(0.25); // Step size
+
+  // Initial Cond
+  const x0 = 0;
+  const y0 = 1;
+
+  // Generate Euler points
+  // y_n+1 = y_n + h * f(x_n, y_n)
+  // f(x,y) = y
+
+  const eulerPts = [{
+    x: x0,
+    y: y0
+  }];
+  let cx = x0,
+    cy = y0;
+  for (let i = 0; i < 4 / h; i++) {
+    const slope = cy;
+    cy = cy + h * slope;
+    cx += h;
+    eulerPts.push({
+      x: cx,
+      y: cy
+    });
+  }
+
+  // Exact Curve
+  const exactPts = [];
+  for (let x = 0; x <= 4; x += 0.05) {
+    exactPts.push({
+      x,
+      y: Math.exp(x)
+    });
+  }
+
+  // Visuals
+  const w = 600,
+    hCanvas = 500;
+  const padding = 50;
+  const maxX = 4;
+  const maxY = Math.exp(4); // ~54
+
+  const scaleX = (w - 2 * padding) / maxX;
+  const scaleY = (hCanvas - 2 * padding) / maxY;
+  const toScreen = (x, y) => ({
+    x: padding + x * scaleX,
+    y: hCanvas - padding - y * scaleY
+  });
+  const pathExact = `M ${exactPts.map(p => {
+    const s = toScreen(p.x, p.y);
+    return `${s.x},${s.y}`;
+  }).join(" L ")}`;
+  const pathEuler = `M ${eulerPts.map(p => {
+    const s = toScreen(p.x, p.y);
+    return `${s.x},${s.y}`;
+  }).join(" L ")}`;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "flex-grow flex flex-col items-center justify-center p-8 select-none"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 right-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLang(l => l === "en" ? "zh" : "en"),
+    className: "px-3 py-1 bg-slate-800 border border-slate-600 rounded-full text-xs font-bold text-emerald-400 hover:bg-slate-700 hover:text-white transition flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-language"
+  }), t.langBtn)), /*#__PURE__*/React.createElement("header", {
+    className: "mb-8 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-emerald-500 font-bold uppercase tracking-widest text-xs mb-2"
+  }, t.unit), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-white mb-2"
+  }, t.title), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-400 font-mono text-lg"
+  }, t.subtitle)), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col lg:flex-row gap-8 w-full max-w-6xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 glass p-6 rounded-3xl relative"
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: "100%",
+    height: "500",
+    viewBox: "0 0 600 500",
+    className: "bg-slate-900 rounded-xl overflow-visible"
+  }, /*#__PURE__*/React.createElement("line", {
+    x1: padding,
+    y1: hCanvas - padding,
+    x2: w - padding,
+    y2: hCanvas - padding,
+    stroke: "#475569",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: padding,
+    y1: hCanvas - padding,
+    x2: padding,
+    y2: padding,
+    stroke: "#475569",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: pathExact,
+    fill: "none",
+    stroke: "#34d399",
+    strokeWidth: "3",
+    opacity: "0.5"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: toScreen(2, Math.exp(2)).x,
+    y: toScreen(2, Math.exp(2)).y - 10,
+    fill: "#34d399",
+    fontSize: "12"
+  }, "Exact y = eˣ"), /*#__PURE__*/React.createElement("path", {
+    d: pathEuler,
+    fill: "none",
+    stroke: "#fbbf24",
+    strokeWidth: "2"
+  }), eulerPts.map((p, i) => {
+    const s = toScreen(p.x, p.y);
+    // Draw 'step' triangle for visual?
+    return /*#__PURE__*/React.createElement("g", {
+      key: i
+    }, /*#__PURE__*/React.createElement("circle", {
+      cx: s.x,
+      cy: s.y,
+      r: "4",
+      fill: "#fbbf24"
+    }), i < eulerPts.length - 1 && /*#__PURE__*/React.createElement("line", {
+      x1: s.x,
+      y1: s.y,
+      x2: toScreen(eulerPts[i + 1].x, p.y).x,
+      y2: toScreen(eulerPts[i + 1].x, p.y).y,
+      stroke: "#fbbf24",
+      strokeDasharray: "2,2",
+      opacity: "0.5"
+    }), i < eulerPts.length - 1 && /*#__PURE__*/React.createElement("line", {
+      x1: toScreen(eulerPts[i + 1].x, p.y).x,
+      y1: toScreen(eulerPts[i + 1].x, p.y).y,
+      x2: toScreen(eulerPts[i + 1].x, eulerPts[i + 1].y).x,
+      y2: toScreen(eulerPts[i + 1].x, eulerPts[i + 1].y).y,
+      stroke: "#fbbf24",
+      strokeDasharray: "2,2",
+      opacity: "0.5"
+    }));
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full lg:w-80 space-y-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass p-6 rounded-2xl"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-lg font-bold text-white mb-4"
+  }, t.step), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between text-xs font-bold uppercase text-slate-500 mb-2"
+  }, /*#__PURE__*/React.createElement("span", null, t.lower), /*#__PURE__*/React.createElement("span", null, t.higher)), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "0.1",
+    max: "1.0",
+    step: "0.1",
+    value: h,
+    onChange: e => setH(Number(e.target.value)),
+    className: "w-full accent-amber-500 mb-4"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-center text-4xl font-mono text-amber-400 font-bold"
+  }, h.toFixed(1))), /*#__PURE__*/React.createElement("div", {
+    className: "glass p-6 rounded-2xl"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-xs font-bold text-slate-400 uppercase mb-2"
+  }, t.errorTitle), /*#__PURE__*/React.createElement("div", {
+    className: "p-4 bg-slate-800 rounded-xl space-y-2 font-mono text-sm"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-emerald-400"
+  }, t.exact), /*#__PURE__*/React.createElement("span", null, Math.exp(4).toFixed(1))), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-amber-400"
+  }, t.euler), /*#__PURE__*/React.createElement("span", null, eulerPts[eulerPts.length - 1].y.toFixed(1))), /*#__PURE__*/React.createElement("div", {
+    className: "border-t border-slate-600 my-2"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between text-rose-400 font-bold"
+  }, /*#__PURE__*/React.createElement("span", null, t.diff), /*#__PURE__*/React.createElement("span", null, Math.abs(Math.exp(4) - eulerPts[eulerPts.length - 1].y).toFixed(1))))), /*#__PURE__*/React.createElement("div", {
+    className: "text-center text-xs text-slate-500",
+    dangerouslySetInnerHTML: {
+      __html: t.desc
+    }
+  }))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

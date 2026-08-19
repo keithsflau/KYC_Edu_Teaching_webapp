@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小四數學：面積估算 | Area Estimation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #f0fdf4 0%, #16a34a 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState
+} = React;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Area Estimation",
+    zh: "面積估算",
+    ja: "面積見積もり",
+    ko: "면적 추정",
+    es: "Estimación de Área",
+    de: "Flächenschätzung",
+    fi: "Pinta-alan arviointi",
+    fr: "Estimation de la surface",
+    ar: "تقدير المساحة",
+    it: "Stima dell'area"
+  },
+  switchShape: {
+    en: "Switch Shape",
+    zh: "切換圖形",
+    ja: "形状を切り替え",
+    ko: "도형 전환",
+    es: "Cambiar Forma",
+    de: "Form wechseln",
+    fi: "Vaihda muotoa",
+    fr: "Changer de forme",
+    ar: "تبديل الشكل",
+    it: "Cambia forma"
+  },
+  rulesTitle: {
+    en: "Estimation Rules:",
+    zh: "估算規則：",
+    ja: "見積もりルール：",
+    ko: "추정 규칙:",
+    es: "Reglas de Estimación:",
+    de: "Schätzregeln:",
+    fi: "Arviointisäännöt:",
+    fr: "Règles d'estimation :",
+    ar: "قواعد التقدير:",
+    it: "Regole di stima:"
+  },
+  rule1: {
+    en: "1. Count full squares (✓)",
+    zh: "1. 數一數完整的方格 (✓)",
+    ja: "1. 完全な正方形を数える (✓)",
+    ko: "1. 완전한 정사각형 세기 (✓)",
+    es: "1. Cuenta los cuadrados completos (✓)",
+    de: "1. Zähle volle Quadrate (✓)",
+    fi: "1. Laske täydet neliöt (✓)",
+    fr: "1. Comptez les carrés complets (✓)",
+    ar: "1. عد المربعات الكاملة (✓)",
+    it: "1. Conta i quadrati completi (✓)"
+  },
+  rule2: {
+    en: "2. Count > half squares as 1 (△)",
+    zh: "2. 數一數不足一格但大於半格的 (△)",
+    ja: "2. 半分以上の正方形を1つとして数える (△)",
+    ko: "2. 절반 이상인 정사각형을 1로 세기 (△)",
+    es: "2. Cuenta > medio cuadrados como 1 (△)",
+    de: "2. Zähle > halbe Quadrate als 1 (△)",
+    fi: "2. Laske > puoli neliötä yhtenä (△)",
+    fr: "2. Comptez > demi-carrés comme 1 (△)",
+    ar: "2. عد > نصف المربعات كـ 1 (△)",
+    it: "2. Conta > mezzi quadrati come 1 (△)"
+  },
+  rule3: {
+    en: "3. Ignore < half squares",
+    zh: "3. 小於半格的不算",
+    ja: "3. 半分未満の正方形は無視",
+    ko: "3. 절반 미만인 정사각형은 무시",
+    es: "3. Ignora < medio cuadrados",
+    de: "3. Ignoriere < halbe Quadrate",
+    fi: "3. Ohita < puoli neliötä",
+    fr: "3. Ignorez < demi-carrés",
+    ar: "3. تجاهل < نصف المربعات",
+    it: "3. Ignora < mezzi quadrati"
+  },
+  leaf: {
+    en: "Leaf",
+    zh: "樹葉",
+    ja: "葉",
+    ko: "나뭇잎",
+    es: "Hoja",
+    de: "Blatt",
+    fi: "Lehti",
+    fr: "Feuille",
+    ar: "ورقة شجر",
+    it: "Foglia"
+  },
+  quadrilateral: {
+    en: "Irregular Quadrilateral",
+    zh: "不規則四邊形",
+    ja: "不規則な四角形",
+    ko: "불규칙 사각형",
+    es: "Cuadrilátero Irregular",
+    de: "Unregelmäßiges Viereck",
+    fi: "Epäsäännöllinen nelikulmio",
+    fr: "Quadrilatère irrégulier",
+    ar: "شكل رباعي غير منتظم",
+    it: "Quadrilatero irregolare"
+  },
+  moon: {
+    en: "Moon",
+    zh: "月亮",
+    ja: "月",
+    ko: "달",
+    es: "Luna",
+    de: "Mond",
+    fi: "Kuu",
+    fr: "Lune",
+    ar: "قمر",
+    it: "Luna"
+  }
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const getText = key => t[key][lang] || t[key]["en"];
+
+  // Pre-defined irregular shape path on 10x10 grid (400x400px)
+  // Each cell 40x40px
+  const shapes = [{
+    id: 1,
+    path: "M 120,80 Q 280,40 320,160 T 160,320 T 40,200 Z",
+    nameKey: "leaf"
+  }, {
+    id: 2,
+    path: "M 100,100 L 300,100 L 250,300 L 50,250 Z",
+    nameKey: "quadrilateral"
+  }, {
+    id: 3,
+    path: "M 200,40 A 100,100 0 1,1 200,360 A 60,60 0 1,0 200,40 Z",
+    nameKey: "moon"
+  }];
+  const [currentS, setCurrentS] = useState(0);
+  const shape = shapes[currentS];
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-8 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-green-900 mb-8 mt-8"
+  }, "🌿 ", getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/95 backdrop-blur-md rounded-3xl p-8 shadow-2xl flex flex-col md:flex-row gap-12 items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "relative w-[300px] h-[300px] md:w-[400px] md:h-[400px] bg-white border-2 border-slate-300"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 grid grid-cols-10 grid-rows-10 pointer-events-none"
+  }, [...Array(100)].map((_, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "border border-slate-100"
+  }))), /*#__PURE__*/React.createElement("svg", {
+    width: "100%",
+    height: "100%",
+    viewBox: "0 0 400 400",
+    className: "absolute top-0 left-0 bg-transparent opacity-70"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: shape.path,
+    fill: "#4ade80",
+    stroke: "#16a34a",
+    strokeWidth: "4"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col gap-6 w-full md:w-64"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-2xl font-black text-green-800 text-center md:text-left"
+  }, getText(shape.nameKey)), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setCurrentS((currentS + 1) % shapes.length),
+    className: "px-6 py-3 bg-green-500 text-white rounded-xl font-bold hover:bg-green-600 shadow-lg"
+  }, getText("switchShape")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-green-50 p-4 rounded-xl text-green-900 text-sm font-bold border border-green-200 leading-relaxed"
+  }, getText("rulesTitle"), /*#__PURE__*/React.createElement("br", null), getText("rule1"), /*#__PURE__*/React.createElement("br", null), getText("rule2"), /*#__PURE__*/React.createElement("br", null), getText("rule3")))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

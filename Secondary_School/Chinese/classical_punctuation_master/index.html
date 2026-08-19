@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文言文句讀大師</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .char {
+            display: inline-block;
+            padding: 8px;
+            margin: 2px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-radius: 4px;
+        }
+
+        .char:hover {
+            background: #475569;
+        }
+
+        .char.marked {
+            border-bottom: 3px solid #22d3ee;
+        }
+    </style>
+</head>
+
+<body class="bg-gradient-to-br from-slate-900 to-gray-900 text-white p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-5xl font-bold text-center mb-8">📖 文言文句讀大師</h1>
+        <div class="bg-slate-800/80 backdrop-blur rounded-2xl p-8 mb-6">
+            <h2 class="text-2xl font-bold mb-4">白文 (無標點)</h2>
+            <div id="text-area"
+                class="bg-slate-900 rounded-xl p-6 text-3xl font-serif leading-relaxed select-none mb-6 min-h-[120px]">
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                <button onclick="mark('，')"
+                    class="bg-slate-700 hover:bg-slate-600 p-4 rounded-xl font-bold text-xl transition-all hover:scale-105 active:scale-95 border-b-4 border-slate-900 active:border-b-0 active:translate-y-1">，逗號</button>
+                <button onclick="mark('。')"
+                    class="bg-slate-700 hover:bg-slate-600 p-4 rounded-xl font-bold text-xl transition-all hover:scale-105 active:scale-95 border-b-4 border-slate-900 active:border-b-0 active:translate-y-1">。句號</button>
+                <button onclick="mark('？')"
+                    class="bg-slate-700 hover:bg-slate-600 p-4 rounded-xl font-bold text-xl transition-all hover:scale-105 active:scale-95 border-b-4 border-slate-900 active:border-b-0 active:translate-y-1">？問號</button>
+                <button onclick="mark('！')"
+                    class="bg-slate-700 hover:bg-slate-600 p-4 rounded-xl font-bold text-xl transition-all hover:scale-105 active:scale-95 border-b-4 border-slate-900 active:border-b-0 active:translate-y-1">！感嘆</button>
+                <button onclick="mark('：')"
+                    class="bg-slate-700 hover:bg-slate-600 p-4 rounded-xl font-bold text-xl transition-all hover:scale-105 active:scale-95 border-b-4 border-slate-900 active:border-b-0 active:translate-y-1">：冒號</button>
+                <button onclick="mark('；')"
+                    class="bg-slate-700 hover:bg-slate-600 p-4 rounded-xl font-bold text-xl transition-all hover:scale-105 active:scale-95 border-b-4 border-slate-900 active:border-b-0 active:translate-y-1">；分號</button>
+                <button onclick="mark('、')"
+                    class="bg-slate-700 hover:bg-slate-600 p-4 rounded-xl font-bold text-xl transition-all hover:scale-105 active:scale-95 border-b-4 border-slate-900 active:border-b-0 active:translate-y-1">、頓號</button>
+                <button onclick="clearMarks()"
+                    class="bg-red-900/50 hover:bg-red-800/50 text-red-100 p-4 rounded-xl font-bold text-xl transition-all border-b-4 border-red-950 active:border-b-0 active:translate-y-1">↺
+                    清除</button>
+            </div>
+
+            <button onclick="check()"
+                class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 py-4 rounded-xl font-bold text-2xl shadow-lg shadow-emerald-900/50 transition-all hover:scale-[1.02] active:scale-[0.98]">
+                ✨ 檢查句讀
+            </button>
+        </div>
+        <div id="feedback" class="bg-slate-700/80 backdrop-blur rounded-2xl p-6 hidden"></div>
+    </div>
+    <script>
+        const TEXTS = [
+            { raw: "學而時習之不亦說乎有朋自遠方來不亦樂乎", correct: "學而時習之，不亦說乎？有朋自遠方來，不亦樂乎？" },
+            { raw: "子曰三人行必有我師焉", correct: "子曰：三人行，必有我師焉。" },
+            { raw: "溫故而知新可以為師矣", correct: "溫故而知新，可以為師矣。" },
+            { raw: "魚我所欲也熊掌亦我所欲也二者不可得兼舍魚而取熊掌者也", correct: "魚，我所欲也；熊掌，亦我所欲也。二者不可得兼，舍魚而取熊掌者也。" },
+            { raw: "山不在高有仙則名水不在深有龍則靈", correct: "山不在高，有仙則名。水不在深，有龍則靈。" },
+            { raw: "夫戰勇氣也一鼓作氣再而衰三而竭", correct: "夫戰，勇氣也。一鼓作氣，再而衰，三而竭。" },
+            { raw: "先天下之憂而憂後天下之樂而樂", correct: "先天下之憂而憂，後天下之樂而樂。" },
+            { raw: "親賢臣遠小人此先漢所以興隆也親小人遠賢臣此後漢所以傾頹也", correct: "親賢臣，遠小人，此先漢所以興隆也；親小人，遠賢臣，此後漢所以傾頹也。" }
+        ];
+        let currentIdx = 0;
+        let selectedIdx = -1;
+        let userMarks = {};
+
+        function loadText() {
+            if (currentIdx >= TEXTS.length) { alert('全部完成！你是句讀大師！'); location.reload(); return; }
+            const text = TEXTS[currentIdx];
+            const area = document.getElementById('text-area');
+            area.innerHTML = '';
+            userMarks = {};
+
+            text.raw.split('').forEach((char, i) => {
+                const span = document.createElement('span');
+                span.className = 'char';
+                span.textContent = char;
+                span.id = 'char-' + i;
+                span.onclick = () => { selectedIdx = i; document.querySelectorAll('.char').forEach(c => c.style.background = ''); span.style.background = '#1e40af'; };
+                area.appendChild(span);
+            });
+        }
+
+        function mark(punctuation) {
+            if (selectedIdx < 0) { alert('請先點擊要加標點的位置'); return; }
+            userMarks[selectedIdx] = punctuation;
+            const charEl = document.getElementById('char-' + selectedIdx);
+            charEl.classList.add('marked');
+            charEl.textContent = charEl.textContent[0] + punctuation;
+            selectedIdx = -1;
+            document.querySelectorAll('.char').forEach(c => c.style.background = '');
+        }
+
+        function clearMarks() {
+            userMarks = {};
+            loadText();
+        }
+
+        function check() {
+            const text = TEXTS[currentIdx];
+            let userText = '';
+            text.raw.split('').forEach((char, i) => {
+                userText += char;
+                if (userMarks[i]) userText += userMarks[i];
+            });
+
+            const fb = document.getElementById('feedback');
+            fb.classList.remove('hidden');
+
+            if (userText === text.correct) {
+                fb.innerHTML = '<div class="text-3xl font-bold text-green-400 mb-4">✅ 完全正確！</div><p>正確答案：' + text.correct + '</p>';
+                setTimeout(() => { currentIdx++; loadText(); fb.classList.add('hidden'); }, 3000);
+            } else {
+                fb.innerHTML = '<div class="text-3xl font-bold text-red-400 mb-4">❌ 有誤</div><p class="mb-2">你的答案：' + userText + '</p><p>正確答案：' + text.correct + '</p>';
+            }
+        }
+
+        loadText();
+    </script>
+
+</body>
+
+</html>
+

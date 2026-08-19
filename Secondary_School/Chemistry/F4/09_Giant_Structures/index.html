@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Giant Structures Museum | 巨型結構博物館</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+      }
+    </script>
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+        overflow: hidden;
+        background-color: #000;
+      }
+      .glass-panel {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .structure-btn.active {
+        background: rgba(56, 189, 248, 0.2);
+        border-color: rgba(56, 189, 248, 0.5);
+        color: #38bdf8;
+      }
+    </style>
+  </head>
+  <body class="text-white min-h-screen">
+    <!-- UI Overlay -->
+    <div
+      class="absolute inset-0 pointer-events-none z-10 flex flex-col justify-between"
+    >
+      <header
+        class="p-6 pointer-events-auto flex items-start justify-between bg-gradient-to-b from-black/80 to-transparent"
+      >
+        <div>
+          <a
+            href="../../index.html"
+            class="flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-2"
+          >
+            <svg
+              class="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              />
+            </svg>
+            <span>Back</span>
+          </a>
+          <h1
+            class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500"
+          >
+            Giant Structures
+          </h1>
+          <p class="text-sm text-slate-400">
+            Interactive Lattice Museum • 巨型共價結構
+          </p>
+        </div>
+
+        <div
+          class="glass-panel text-slate-300 px-4 py-2 rounded-lg text-xs font-mono"
+        >
+          <div class="flex items-center gap-2 mb-1">
+            <div
+              class="w-3 h-3 rounded-full bg-cyan-400 shadow-[0_0_10px_cyan]"
+            ></div>
+            Carbon (Diamond)
+          </div>
+          <div class="flex items-center gap-2 mb-1">
+            <div class="w-3 h-3 rounded-full bg-gray-500"></div>
+            Carbon (Graphite)
+          </div>
+          <div class="flex items-center gap-2 mb-1">
+            <div class="w-3 h-3 rounded-full bg-red-500"></div>
+            Silicon
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="w-3 h-3 rounded-full bg-purple-500"></div>
+            Oxygen
+          </div>
+        </div>
+      </header>
+
+      <main
+        class="flex-grow flex items-center justify-between px-6 pointer-events-none"
+      >
+        <!-- Left Info Panel -->
+        <div
+          class="glass-panel p-6 rounded-2xl w-80 pointer-events-auto transform -translate-x-full animate-[slideIn_0.5s_forwards]"
+        >
+          <h2 id="s-name" class="text-2xl font-bold text-white mb-2">
+            Diamond
+          </h2>
+          <div id="s-formula" class="text-sm font-mono text-cyan-400 mb-4">
+            Structure: Giant Covalent
+          </div>
+          <p id="s-desc" class="text-sm text-slate-300 leading-relaxed mb-6">
+            Each carbon atom is covalently bonded to 4 other carbon atoms in a
+            tetrahedral arrangement. This rigid 3D network makes diamond
+            extremely hard.
+          </p>
+
+          <div class="space-y-3">
+            <div
+              class="flex justify-between text-xs border-b border-white/10 pb-2"
+            >
+              <span class="text-slate-500">Hardness</span>
+              <span id="s-hard" class="text-white">10 (Mohs)</span>
+            </div>
+            <div
+              class="flex justify-between text-xs border-b border-white/10 pb-2"
+            >
+              <span class="text-slate-500">Conduction</span>
+              <span id="s-cond" class="text-red-400">Insulator</span>
+            </div>
+            <div
+              class="flex justify-between text-xs border-b border-white/10 pb-2"
+            >
+              <span class="text-slate-500">Melting Point</span>
+              <span id="s-mp" class="text-white">Very High (>3500°C)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Controls -->
+        <div class="pointer-events-auto flex flex-col gap-3">
+          <button
+            onclick="loadStructure('diamond')"
+            id="btn-diamond"
+            class="structure-btn active glass-panel px-6 py-4 rounded-xl text-left hover:bg-white/10 transition-all group w-48"
+          >
+            <div
+              class="text-lg font-bold group-hover:text-blue-300 transition-colors"
+            >
+              Diamond
+            </div>
+            <div class="text-xs text-slate-500">鑽石</div>
+          </button>
+          <button
+            onclick="loadStructure('graphite')"
+            id="btn-graphite"
+            class="structure-btn glass-panel px-6 py-4 rounded-xl text-left hover:bg-white/10 transition-all group w-48"
+          >
+            <div
+              class="text-lg font-bold group-hover:text-blue-300 transition-colors"
+            >
+              Graphite
+            </div>
+            <div class="text-xs text-slate-500">石墨</div>
+          </button>
+          <button
+            onclick="loadStructure('quartz')"
+            id="btn-quartz"
+            class="structure-btn glass-panel px-6 py-4 rounded-xl text-left hover:bg-white/10 transition-all group w-48"
+          >
+            <div
+              class="text-lg font-bold group-hover:text-blue-300 transition-colors"
+            >
+              Quartz (SiO₂)
+            </div>
+            <div class="text-xs text-slate-500">石英</div>
+          </button>
+          <button
+            onclick="loadStructure('c60')"
+            id="btn-c60"
+            class="structure-btn glass-panel px-6 py-4 rounded-xl text-left hover:bg-white/10 transition-all group w-48"
+          >
+            <div
+              class="text-lg font-bold group-hover:text-blue-300 transition-colors"
+            >
+              Buckminsterfullerene
+            </div>
+            <div class="text-xs text-slate-500">巴克球 (C₆₀)</div>
+          </button>
+          <label
+            class="glass-panel px-4 py-2 rounded-lg flex items-center gap-2 text-sm text-slate-300 cursor-pointer"
+          >
+            <input
+              type="checkbox"
+              id="auto-rotate"
+              checked
+              class="accent-cyan-500"
+            />
+            Auto rotate
+          </label>
+        </div>
+      </main>
+
+      
+    </div>
+
+    <!-- 3D Canvas -->
+    <canvas id="canvas" class="absolute inset-0 w-full h-full block"></canvas>
+
+    <script type="module">
+      import * as THREE from "three";
+      import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+      // --- Setup ---
+      const canvas = document.querySelector("#canvas");
+      const renderer = new THREE.WebGLRenderer({
+        canvas,
+        antialias: true,
+        alpha: false,
+      });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x050505);
+      scene.fog = new THREE.FogExp2(0x050505, 0.03);
+
+      const camera = new THREE.PerspectiveCamera(
+        50,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        100
+      );
+      camera.position.set(0, 0, 15);
+
+      const controls = new OrbitControls(camera, canvas);
+      controls.enableDamping = true;
+      controls.autoRotate = true;
+      controls.autoRotateSpeed = 1.0;
+      controls.enablePan = false;
+
+      // --- Lighting (Cinematic) ---
+      const ambLight = new THREE.AmbientLight(0xffffff, 0.2);
+      scene.add(ambLight);
+
+      const spot1 = new THREE.SpotLight(0x38bdf8, 50);
+      spot1.position.set(10, 10, 10);
+      spot1.angle = 0.5;
+      spot1.penumbra = 1;
+      scene.add(spot1);
+
+      const spot2 = new THREE.SpotLight(0xa855f7, 50);
+      spot2.position.set(-10, -5, 5);
+      spot2.angle = 0.5;
+      spot2.penumbra = 1;
+      scene.add(spot2);
+
+      // --- Materials ---
+      const matDiamond = new THREE.MeshPhysicalMaterial({
+        color: 0xccfbf1,
+        metalness: 0.1,
+        roughness: 0.0,
+        transmission: 0.6,
+        thickness: 1.5,
+        clearcoat: 1.0,
+      });
+      const matGraphite = new THREE.MeshStandardMaterial({
+        color: 0x334155,
+        roughness: 0.7,
+        metalness: 0.5,
+      });
+      const matSi = new THREE.MeshPhysicalMaterial({
+        color: 0xff0000,
+        metalness: 0.8,
+        roughness: 0.2, // Red for contrast in model, real Si is grey but usually Red in books
+      });
+      const matO = new THREE.MeshPhysicalMaterial({
+        color: 0xa855f7,
+        metalness: 0.1,
+        roughness: 0.5,
+      });
+      const matBond = new THREE.MeshStandardMaterial({ color: 0x475569 });
+      const matGlow = new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.1,
+      });
+
+      // --- Geometry ---
+      const atomGeo = new THREE.SphereGeometry(1, 32, 32);
+      const bondGeo = new THREE.CylinderGeometry(1, 1, 1, 16);
+
+      // --- Builders ---
+      function createAtom(pos, r, mat) {
+        const mesh = new THREE.Mesh(atomGeo, mat);
+        mesh.scale.set(r, r, r);
+        mesh.position.copy(pos);
+        return mesh;
+      }
+
+      function createBond(p1, p2, r) {
+        const vec = p2.clone().sub(p1);
+        const dist = vec.length();
+
+        // If distance is too long (periodic boundary issues or layer gap), skip bond
+        if (dist > 3.0) return null;
+
+        const mid = p1.clone().add(vec.multiplyScalar(0.5));
+        const mesh = new THREE.Mesh(bondGeo, matBond);
+        const axis = new THREE.Vector3(0, 1, 0);
+        mesh.quaternion.setFromUnitVectors(axis, vec.clone().normalize());
+        mesh.scale.set(r, dist, r);
+        mesh.position.copy(mid);
+        return mesh;
+      }
+
+      let currentModel = null;
+
+      // --- Structure Generators ---
+      function generateDiamond() {
+        const group = new THREE.Group();
+        const spacing = 2.5;
+
+        // F.C.C lattice basis for Diamond
+        // Basis: (0,0,0) and (1/4, 1/4, 1/4)
+        // We'll just generate a small chunk explicitly for simplicity
+
+        const atoms = [];
+        // Simple tetrahedral recursive expansion or hardcoded block?
+        // Let's do a hardcoded 2x2x2 unit cell approach
+
+        // Unit cell points (approx for visualization)
+        // Points at (0,0,0) + Face centers + (1/4,1/4,1/4) offsets
+        // Simplified: Central atom + 4 neighbors
+
+        // Level 0
+        const c0 = new THREE.Vector3(0, 0, 0);
+        atoms.push({ pos: c0, links: [] });
+
+        // Level 1 (Tetrahedral)
+        const d = 1.54 * 1.5; // Scale
+        const l1 = [
+          new THREE.Vector3(1, 1, 1).normalize().multiplyScalar(d),
+          new THREE.Vector3(-1, -1, 1).normalize().multiplyScalar(d),
+          new THREE.Vector3(-1, 1, -1).normalize().multiplyScalar(d),
+          new THREE.Vector3(1, -1, -1).normalize().multiplyScalar(d),
+        ];
+
+        l1.forEach((p) => {
+          atoms.push({ pos: p, links: [0] });
+          // Level 2 (expand from each L1)
+          // Just add 3 more to each L1 away from center to fill space
+          // This is procedural "growing" logic
+        });
+
+        // Let's use a simpler lattice loop
+        for (let x = -1; x <= 1; x++) {
+          for (let y = -1; y <= 1; y++) {
+            for (let z = -1; z <= 1; z++) {
+              // Offset 1
+              let bx = x * 2.5;
+              let by = y * 2.5;
+              let bz = z * 2.5;
+              atoms.push({ pos: new THREE.Vector3(bx, by, bz), links: [] });
+              // Offset 2 (Tetra basis)
+              atoms.push({
+                pos: new THREE.Vector3(bx + 1.25, by + 1.25, bz + 1.25),
+                links: [],
+              });
+
+              // FCC face centers omitted for brevity, this creates a simple Zinc Blende like grid of points
+            }
+          }
+        }
+
+        // Filter and Link
+        // In diamond, every atom connects to nearest neighbors (dist ~ 1.54 angstrom -> 1.5 units)
+        // In our grid above, dist between (0,0,0) and (1.25, 1.25, 1.25) is sqrt(3*1.25^2) = 2.16
+
+        // Let's rebuild perfectly
+        scene.remove(currentModel);
+        currentModel = new THREE.Group();
+
+        const positions = [];
+
+        // Create a 2x2x2 cube of unit cells
+        for (let i = 0; i < 2; i++) {
+          for (let j = 0; j < 2; j++) {
+            for (let k = 0; k < 2; k++) {
+              const ox = i * 3.5 - 1.75;
+              const oy = j * 3.5 - 1.75;
+              const oz = k * 3.5 - 1.75;
+
+              // Basis 0
+              positions.push(new THREE.Vector3(ox, oy, oz));
+              positions.push(new THREE.Vector3(ox + 1.75, oy + 1.75, oz));
+              positions.push(new THREE.Vector3(ox + 1.75, oy, oz + 1.75));
+              positions.push(new THREE.Vector3(ox, oy + 1.75, oz + 1.75));
+
+              // Basis 1 (Offset by 1/4, 1/4, 1/4) -> 0.875
+              const off = 0.875;
+              positions.push(new THREE.Vector3(ox + off, oy + off, oz + off));
+              positions.push(
+                new THREE.Vector3(ox + 1.75 + off, oy + 1.75 + off, oz + off)
+              );
+              positions.push(
+                new THREE.Vector3(ox + 1.75 + off, oy + off, oz + 1.75 + off)
+              );
+              positions.push(
+                new THREE.Vector3(ox + off, oy + 1.75 + off, oz + 1.75 + off)
+              );
+            }
+          }
+        }
+
+        // Render Atoms
+        positions.forEach((p) => {
+          // Dist from center check to make a spherical-ish cut (visual appeal)
+          if (p.length() < 5) {
+            const a = createAtom(p, 0.3, matDiamond);
+            currentModel.add(a);
+
+            // Render Bonds (Find neighbors)
+            positions.forEach((p2) => {
+              const d = p.distanceTo(p2);
+              if (d > 0.1 && d < 1.6) {
+                // 1.51 is bond length in this scale
+                const b = createBond(p, p2, 0.08);
+                if (b) currentModel.add(b);
+              }
+            });
+          }
+        });
+
+        return currentModel;
+      }
+
+      function generateGraphite() {
+        const group = new THREE.Group();
+
+        // Layers
+        for (let layer = -1; layer <= 1; layer++) {
+          const layerY = layer * 2.5;
+
+          // Honeycomb grid
+          for (let x = -3; x <= 3; x++) {
+            for (let z = -3; z <= 3; z++) {
+              // Hexagonal logic
+              const xpos = x * 1.5 + (z % 2) * 0.75;
+              const zpos = z * 1.3;
+
+              // Skip some to make shape
+              if (Math.sqrt(xpos * xpos + zpos * zpos) > 4) continue;
+
+              const p = new THREE.Vector3(xpos, layerY, zpos);
+              const a = createAtom(p, 0.35, matGraphite);
+              group.add(a);
+
+              // Bonds (Intra-layer only)
+              // This loop is inefficient but fine for <100 atoms
+            }
+          }
+        }
+
+        // Connect bonds
+        group.children.forEach((c1) => {
+          if (!c1.geometry || c1.geometry.type !== "SphereGeometry") return;
+          group.children.forEach((c2) => {
+            if (c1 === c2) return;
+            if (!c2.geometry || c2.geometry.type !== "SphereGeometry") return;
+
+            const d = c1.position.distanceTo(c2.position);
+            // C-C bond in graphite ~ 1.42 A. Layer gap ~ 3.35 A.
+            // Atoms are approx 0.8-1.0 apart in our loop logic above maybe?
+            // Let's tune
+            if (d < 1.1 && Math.abs(c1.position.y - c2.position.y) < 0.1) {
+              const b = createBond(c1.position, c2.position, 0.08);
+              if (b) group.add(b);
+            }
+          });
+        });
+
+        // Add VDW dashed lines between layers?
+        // Maybe just visual gap is enough.
+
+        return group;
+      }
+
+      function generateQuartz() {
+        const group = new THREE.Group();
+        // SiO2 is complex. Simplified cristobalite or generic tetra network.
+        // Visual rep: Si (Red) bonded to 4 O (Purple). O bonded to 2 Si.
+
+        // Random walker approach constrained to tetra? No, too messy.
+        // Use hardcoded small clusters.
+
+        const Sipos = [
+          new THREE.Vector3(0, 0, 0),
+          new THREE.Vector3(2, 2, 0),
+          new THREE.Vector3(-2, 2, 0),
+          new THREE.Vector3(0, -2, 2),
+          new THREE.Vector3(0, -2, -2),
+        ];
+
+        Sipos.forEach((p) => {
+          group.add(createAtom(p, 0.4, matSi));
+          // Add 4 Oxygens around
+          const offsets = [
+            new THREE.Vector3(1, 1, 1),
+            new THREE.Vector3(-1, -1, 1),
+            new THREE.Vector3(-1, 1, -1),
+            new THREE.Vector3(1, -1, -1),
+          ];
+          offsets.forEach((o) => {
+            const opos = p.clone().add(o.normalize().multiplyScalar(1.2));
+            group.add(createAtom(opos, 0.3, matO));
+            group.add(createBond(p, opos, 0.05));
+          });
+        });
+
+        // Just a small cluster demonstration
+        return group;
+      }
+
+      function generateC60() {
+        const group = new THREE.Group();
+        // Icosahedron vertices * truncation
+        // Truncated Icosahedron has 60 vertices.
+
+        // Math trick: Golden Ratio (phi)
+        const phi = (1 + Math.sqrt(5)) / 2;
+
+        const vertices = [];
+        // Rectangle permutations: (0, ±1, ±3phi) -> No, that's regular Icosa.
+        // C60 coordinates are:
+        // (0, ±1, ±3phi) - no, let's use a simpler library geometric approach or predefined set.
+        // Or... just render an IcosahedronGeometry and assume dots on vertices?
+        // No, C60 is Truncated Icosahedron.
+
+        // Three.js IcosahedronGeometry(radius, detail=0) -> 12 vertices.
+        // Not enough.
+
+        // Let's use points on a sphere
+        // Hard to gen C60 procedurally without table.
+
+        // Fallback: Use IcosahedronGeometry with Detail=1, then project to sphere?
+        // 42 vertices.
+
+        // Let's simply generate a "Soccer Ball" look with a DodecahedronGeometry?
+        // Dodecahedron has 20 verts.
+
+        // Let's try to generate a nice geodesic sphere to represent the "idea" if exact C60 coords are hard.
+        // Actually, the vertices of a truncated icosahedron are permutations of:
+        // (0, 1, 3phi) .. no that's scaled.
+
+        // Simple hack:
+        const ico = new THREE.IcosahedronGeometry(3, 1); // 42 verts...
+        const pos = ico.attributes.position;
+
+        for (let i = 0; i < pos.count; i++) {
+          const v = new THREE.Vector3(pos.getX(i), pos.getY(i), pos.getZ(i));
+          // Basic C60 approx
+          const a = createAtom(v, 0.25, matGraphite); // Conductive C
+          group.add(a);
+
+          // Nearest neighbors bonds
+          for (let j = i + 1; j < pos.count; j++) {
+            const v2 = new THREE.Vector3(pos.getX(j), pos.getY(j), pos.getZ(j));
+            const d = v.distanceTo(v2);
+            if (d > 1.0 && d < 2.0) {
+              // Tune for geometry
+              group.add(createBond(v, v2, 0.05));
+            }
+          }
+        }
+
+        // Scale down
+        group.scale.set(0.8, 0.8, 0.8);
+
+        return group;
+      }
+
+      // --- UI Logic ---
+      const DATA = {
+        diamond: {
+          name: "Diamond",
+          formula: "Giant Covalent (C)",
+          desc: "Each carbon bonded to 4 others. Hardest natural substance. High MP.",
+          hard: "10 (High)",
+          cond: "Insulator",
+          mp: ">3500°C",
+        },
+        graphite: {
+          name: "Graphite",
+          formula: "Giant Covalent Layered (C)",
+          desc: "Layered structure. Each C bonded to 3 others. Delocalized electrons conduct electricity. Soft layers slide.",
+          hard: "1-2 (Soft)",
+          cond: "Conductor",
+          mp: ">3500°C",
+        },
+        quartz: {
+          name: "Quartz",
+          formula: "Giant Covalent (SiO₂)",
+          desc: "Silicon bonded to 4 Oxygens. Oxygen bonded to 2 Silicons. Hard, high MP sand/glass component.",
+          hard: "7 (High)",
+          cond: "Insulator",
+          mp: "1700°C",
+        },
+        c60: {
+          name: "Buckminsterfullerene",
+          formula: "Simple Molecular (C₆₀)",
+          desc: "Soccer ball shape. 60 Carbons. Not a giant structure (it's a large molecule). Weak intermolecular forces between balls.",
+          hard: "Soft solid",
+          cond: "Semiconductor",
+          mp: "~600°C (Sublimes)",
+        },
+      };
+
+      window.loadStructure = (key) => {
+        if (currentModel) scene.remove(currentModel);
+
+        if (key === "diamond") currentModel = generateDiamond();
+        if (key === "graphite") currentModel = generateGraphite();
+        if (key === "quartz") currentModel = generateQuartz();
+        if (key === "c60") currentModel = generateC60();
+
+        scene.add(currentModel);
+
+        // UI Update
+        document
+          .querySelectorAll(".structure-btn")
+          .forEach((b) => b.classList.remove("active"));
+        document.getElementById("btn-" + key).classList.add("active");
+
+        const d = DATA[key];
+        document.getElementById("s-name").innerText = d.name;
+        document.getElementById("s-formula").innerText = d.formula;
+        document.getElementById("s-desc").innerText = d.desc;
+        document.getElementById("s-hard").innerText = d.hard;
+        document.getElementById("s-cond").innerText = d.cond;
+        document.getElementById("s-mp").innerText = d.mp;
+      };
+
+      // Loop
+      function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+      }
+
+      // Init
+      loadStructure("diamond");
+      animate();
+
+      // Resize
+      window.addEventListener("resize", () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      // Add CSS Animation
+      const style = document.createElement("style");
+      style.innerHTML = `
+            @keyframes slideIn {
+                from { transform: translateX(-100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+        `;
+      document.head.appendChild(style);
+    </script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

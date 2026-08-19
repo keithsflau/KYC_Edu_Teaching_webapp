@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>常識科：日食與月食模擬器 | Solar & Lunar Eclipse Simulator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      :root {
+        --primary-glow: rgba(250, 204, 21, 0.5);
+        --glass-bg: rgba(0, 0, 0, 0.4);
+        --glass-border: rgba(255, 255, 255, 0.1);
+      }
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #000;
+        color: white;
+        overflow: hidden;
+        margin: 0;
+      }
+      .glass-panel {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      }
+      .glass-btn {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        transition: 0.3s;
+      }
+      .glass-btn:hover {
+        background: rgba(250, 204, 21, 0.2);
+        border-color: #facc15;
+        box-shadow: 0 0 20px var(--primary-glow);
+        color: #facc15;
+      }
+      /* Custom Range Slider */
+      input[type="range"] {
+        -webkit-appearance: none;
+        background: transparent;
+        height: 6px;
+        border-radius: 3px;
+        background: rgba(255, 255, 255, 0.2);
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        height: 20px;
+        width: 20px;
+        border-radius: 50%;
+        background: #facc15;
+        cursor: pointer;
+        margin-top: -7px;
+        border: 2px solid black;
+        box-shadow: 0 0 10px #facc15;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect,
+  useRef,
+  useLayoutEffect
+} = React;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Eclipse Simulator",
+    zh: "日食與月食模擬器"
+  },
+  sun: {
+    en: "Sun",
+    zh: "太陽"
+  },
+  moon: {
+    en: "Moon",
+    zh: "月球"
+  },
+  earth: {
+    en: "Earth",
+    zh: "地球"
+  },
+  solar: {
+    en: "Solar Eclipse",
+    zh: "日食"
+  },
+  lunar: {
+    en: "Lunar Eclipse",
+    zh: "月食"
+  },
+  none: {
+    en: "No Eclipse",
+    zh: "無食"
+  },
+  total: {
+    en: "Total",
+    zh: "全食"
+  },
+  partial: {
+    en: "Partial",
+    zh: "偏食"
+  },
+  instruction: {
+    en: "Drag the slider to orbit the moon.",
+    zh: "拖動滑桿以控制月球公轉。"
+  },
+  shadow: {
+    en: "Show Shadows",
+    zh: "顯示陰影"
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+
+// THREE.JS Engine
+function Scene({
+  moonAngle,
+  showShadows
+}) {
+  const mountRef = useRef(null);
+  const sceneDataRef = useRef({});
+  useLayoutEffect(() => {
+    const w = mountRef.current.clientWidth;
+    const h = mountRef.current.clientHeight;
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x000000); // Space Black
+
+    // Starfield
+    const starsGeo = new THREE.BufferGeometry();
+    const starsPos = [];
+    for (let i = 0; i < 2000; i++) {
+      starsPos.push((Math.random() - 0.5) * 200, (Math.random() - 0.5) * 200, (Math.random() - 0.5) * 200);
+    }
+    starsGeo.setAttribute("position", new THREE.Float32BufferAttribute(starsPos, 3));
+    const starsMat = new THREE.PointsMaterial({
+      color: 0xffffff,
+      size: 0.5,
+      transparent: true,
+      opacity: 0.8
+    });
+    const stars = new THREE.Points(starsGeo, starsMat);
+    scene.add(stars);
+
+    // Camera
+    const camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 1000);
+    camera.position.set(0, 30, 60); // Top-down angled view
+    camera.lookAt(0, 0, 0);
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true
+    });
+    renderer.setSize(w, h);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Softer shadows
+    mountRef.current.appendChild(renderer.domElement);
+
+    // Lighting
+    // The Sun is the light source. It is at a fixed position in our sim (Left side).
+    // Sim coords: Sun at (-40, 0, 0). Earth at (0,0,0). Moon Orbits Earth.
+
+    // Sun Mesh (Glow)
+    const sunGeo = new THREE.SphereGeometry(5, 32, 32);
+    const sunMat = new THREE.MeshBasicMaterial({
+      color: 0xffff00
+    });
+    const sun = new THREE.Mesh(sunGeo, sunMat);
+    sun.position.set(-40, 0, 0);
+    scene.add(sun);
+
+    // Sun Light (Point Light for shadows)
+    const sunLight = new THREE.PointLight(0xffffff, 1.5, 200);
+    sunLight.position.set(-40, 0, 0);
+    sunLight.castShadow = true;
+    sunLight.shadow.mapSize.width = 2048;
+    sunLight.shadow.mapSize.height = 2048;
+    scene.add(sunLight);
+    // Ambient light low
+    scene.add(new THREE.AmbientLight(0x222222));
+
+    // Earth
+    const earthGeo = new THREE.SphereGeometry(3, 32, 32);
+    const earthMat = new THREE.MeshPhongMaterial({
+      color: 0x2233ff,
+      emissive: 0x112244,
+      specular: 0x111111,
+      shininess: 10
+    });
+    const earth = new THREE.Mesh(earthGeo, earthMat);
+    earth.castShadow = true;
+    earth.receiveShadow = true;
+    scene.add(earth);
+
+    // Moon Pivot (Center of Earth)
+    const moonPivot = new THREE.Group();
+    scene.add(moonPivot);
+
+    // Moon
+    const moonGeo = new THREE.SphereGeometry(0.8, 32, 32);
+    const moonMat = new THREE.MeshPhongMaterial({
+      color: 0x888888
+    });
+    const moon = new THREE.Mesh(moonGeo, moonMat);
+    moon.castShadow = true;
+    moon.receiveShadow = true;
+    moon.position.set(15, 0, 0); // Radius 15
+    moonPivot.add(moon);
+
+    // Orbit Path Visual
+    const pathGeo = new THREE.RingGeometry(14.9, 15.1, 64);
+    const pathMat = new THREE.MeshBasicMaterial({
+      color: 0x444444,
+      side: THREE.DoubleSide
+    });
+    const path = new THREE.Mesh(pathGeo, pathMat);
+    path.rotation.x = Math.PI / 2;
+    scene.add(path);
+
+    // Shadow Cones (Visual helpers)
+    // Since shadow mapping is invisible in empty space, we can fake the "Shadow Cone" using transparent cones if requested.
+    const umbraGeo = new THREE.ConeGeometry(3, 60, 32, 1, true); // Open ended? No.
+    // Earth Shadow Cone
+    const earthShadowMat = new THREE.MeshBasicMaterial({
+      color: 0x000000,
+      transparent: true,
+      opacity: 0.3,
+      side: THREE.DoubleSide,
+      depthWrite: false
+    });
+    const earthShadow = new THREE.Mesh(umbraGeo, earthShadowMat);
+    // Position it behind earth pointing away from sun.
+    // Sun at -40. Earth at 0. Shadow points to +X.
+    earthShadow.rotation.z = -Math.PI / 2;
+    earthShadow.position.set(30, 0, 0); // Center of cone
+    earthShadow.scale.set(1, 1, 1); // 3 radius base matches earth. length 60.
+    // scene.add(earthShadow); // Add dynamically
+
+    sceneDataRef.current = {
+      scene,
+      camera,
+      renderer,
+      moonPivot,
+      moon,
+      earthShadow,
+      earthShadowMat
+    };
+    const handleResize = () => {
+      const mw = mountRef.current.clientWidth,
+        mh = mountRef.current.clientHeight;
+      renderer.setSize(mw, mh);
+      camera.aspect = mw / mh;
+      camera.updateProjectionMatrix();
+    };
+    window.addEventListener("resize", handleResize);
+    const animate = () => {
+      requestAnimationFrame(animate);
+      earth.rotation.y += 0.005;
+      moon.rotation.y += 0.01;
+      renderer.render(scene, camera);
+    };
+    animate();
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      mountRef.current.removeChild(renderer.domElement);
+    };
+  }, []);
+
+  // Update Moon Position
+  useEffect(() => {
+    const {
+      moonPivot
+    } = sceneDataRef.current;
+    if (moonPivot) {
+      // moonAngle 0 -> Right (Lunar Eclipse pos)
+      // moonAngle 180 -> Left (Solar Eclipse pos)
+      // Pivot rotation Y.
+      // At 0 rotation, child is at (15,0,0) -> +X. Correct.
+      moonPivot.rotation.y = -moonAngle * (Math.PI / 180);
+    }
+  }, [moonAngle]);
+  return /*#__PURE__*/React.createElement("div", {
+    ref: mountRef,
+    className: "w-full h-full"
+  });
+}
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [moonAngle, setMoonAngle] = useState(0); // 0 = Lunar Eclipse pos (Right), 180 = Solar Eclipse pos (Left)
+
+  // Status Logic
+  // 180 deg = Solar Eclipse (Moon between Sun and Earth)
+  // 0 / 360 deg = Lunar Eclipse (Earth between Sun and Moon)
+  let status = "none";
+  let detail = "";
+  const normalize = a => (a % 360 + 360) % 360;
+  const a = normalize(moonAngle);
+  if (Math.abs(a - 180) < 10) {
+    status = "solar";
+    detail = Math.abs(a - 180) < 2 ? "total" : "partial";
+  } else if (a < 10 || a > 350) {
+    status = "lunar";
+    detail = a < 2 || a > 358 ? "total" : "partial";
+  }
+  return /*#__PURE__*/React.createElement("div", {
+    className: "relative w-screen h-screen overflow-hidden"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 z-0"
+  }, /*#__PURE__*/React.createElement(Scene, {
+    moonAngle: moonAngle
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-1/2 left-8 md:left-16 text-yellow-300 font-bold -translate-y-1/2 pointer-events-none drop-shadow-lg opacity-80 z-10"
+  }, "☀ ", getText("sun", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-1/2 left-1/2 text-blue-300 font-bold -translate-x-1/2 -translate-y-8 pointer-events-none drop-shadow-lg opacity-80 z-10"
+  }, "🌍 ", getText("earth", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 flex flex-col justify-between p-6 pointer-events-none"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between items-start pointer-events-auto"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel px-6 py-4 rounded-2xl"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-2xl md:text-3xl font-black bg-gradient-to-r from-yellow-300 to-orange-400 bg-clip-text text-transparent"
+  }, getText("title", lang))), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-2 rounded-xl flex gap-1"
+  }, ["zh", "en"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-4 py-2 rounded-lg font-bold text-sm ${lang === l ? "bg-yellow-500 text-black" : "text-gray-400"}`
+  }, l === "zh" ? "中文" : "ENG")))), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-32 left-1/2 -translate-x-1/2 text-center pointer-events-none"
+  }, status !== "none" && /*#__PURE__*/React.createElement("div", {
+    className: "animate-pulse"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl md:text-6xl font-black text-white drop-shadow-[0_0_20px_rgba(255,255,0,0.5)]"
+  }, getText(status, lang)), /*#__PURE__*/React.createElement("div", {
+    className: "text-xl md:text-2xl font-bold text-yellow-400 uppercase tracking-widest mt-2"
+  }, getText(detail, lang)))), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 rounded-3xl pointer-events-auto max-w-2xl mx-auto w-full mb-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between text-sm font-bold text-gray-400 mb-2"
+  }, /*#__PURE__*/React.createElement("span", null, getText("lunar", lang), " (0°)"), /*#__PURE__*/React.createElement("span", null, getText("solar", lang), " (180°)"), /*#__PURE__*/React.createElement("span", null, getText("lunar", lang), " (360°)")), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "0",
+    max: "360",
+    step: "0.1",
+    value: moonAngle,
+    onChange: e => setMoonAngle(parseFloat(e.target.value)),
+    className: "w-full mb-4"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-center text-white/60 text-sm"
+  }, getText("instruction", lang)))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

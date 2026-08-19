@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小五數學：體積概念 | Volume Cubes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      :root {
+        --glass-bg: rgba(30, 41, 59, 0.7);
+        --glass-border: rgba(255, 255, 255, 0.1);
+      }
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow: hidden; /* ThreeJS handles scroll */
+        margin: 0;
+      }
+      .glass-panel {
+        background: var(--glass-bg);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid var(--glass-border);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+      input[type="range"] {
+        -webkit-appearance: none;
+        background: transparent;
+        height: 6px;
+        border-radius: 3px;
+        background: rgba(255, 255, 255, 0.2);
+        cursor: pointer;
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        height: 18px;
+        width: 18px;
+        border-radius: 50%;
+        background: #6366f1;
+        margin-top: -6px;
+        box-shadow: 0 0 10px #6366f1;
+        border: 2px solid white;
+        transition: transform 0.1s;
+      }
+      input[type="range"]::-webkit-slider-thumb:hover {
+        transform: scale(1.2);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect,
+  useRef,
+  useLayoutEffect
+} = React;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Volume Explorer",
+    zh: "體積探究",
+    ja: "体積エクスプローラー",
+    ko: "부피 탐험기",
+    es: "Explorador de Volumen",
+    de: "Volumenforscher",
+    fi: "Tilavuuden tutkimus",
+    fr: "Explorateur de Volume",
+    ar: "مستكشف الحجم",
+    it: "Esploratore di Volume"
+  },
+  length: {
+    en: "Length",
+    zh: "長",
+    ja: "長さ",
+    ko: "길이",
+    es: "Largo",
+    de: "Länge",
+    fi: "Pituus",
+    fr: "Longueur",
+    ar: "الطول",
+    it: "Lunghezza"
+  },
+  width: {
+    en: "Width",
+    zh: "闊",
+    ja: "幅",
+    ko: "너비",
+    es: "Ancho",
+    de: "Breite",
+    fi: "Leveys",
+    fr: "Largeur",
+    ar: "العرض",
+    it: "Larghezza"
+  },
+  height: {
+    en: "Height",
+    zh: "高",
+    ja: "高さ",
+    ko: "높이",
+    es: "Altura",
+    de: "Höhe",
+    fi: "Korkeus",
+    fr: "Hauteur",
+    ar: "الارتفاع",
+    it: "Altezza"
+  },
+  total: {
+    en: "Total Cubes",
+    zh: "總方塊數",
+    ja: "総キューブ数",
+    ko: "총 큐브 수",
+    es: "Total de Cubos",
+    de: "Würfel Gesamt",
+    fi: "Kuutiot yhteensä",
+    fr: "Total des Cubes",
+    ar: "إجمالي المكعبات",
+    it: "Totale Cubi"
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+function Scene({
+  dim
+}) {
+  const mountRef = useRef(null);
+  const sceneDataRef = useRef({});
+  useLayoutEffect(() => {
+    const w = mountRef.current.clientWidth;
+    const h = mountRef.current.clientHeight;
+    const scene = new THREE.Scene();
+    // scene.background = new THREE.Color(0x0f172a); // Let CSS handle BG
+    const camera = new THREE.PerspectiveCamera(40, w / h, 0.1, 100);
+    camera.position.set(15, 15, 15);
+    camera.lookAt(0, 0, 0);
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true
+    });
+    renderer.setSize(w, h);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.shadowMap.enabled = true;
+    mountRef.current.appendChild(renderer.domElement);
+
+    // Lights
+    const amb = new THREE.AmbientLight(0xffffff, 0.7);
+    scene.add(amb);
+    const dir = new THREE.DirectionalLight(0xffffff, 0.8);
+    dir.position.set(5, 12, 8);
+    dir.castShadow = true;
+    dir.shadow.mapSize.width = 1024;
+    dir.shadow.mapSize.height = 1024;
+    scene.add(dir);
+
+    // Floor Grid
+    const grid = new THREE.GridHelper(20, 20, 0x475569, 0x1e293b);
+    scene.add(grid);
+
+    // Instanced Mesh
+    const maxCount = 1000;
+    const boxGeo = new THREE.BoxGeometry(0.95, 0.95, 0.95);
+    const boxMat = new THREE.MeshPhysicalMaterial({
+      color: 0x6366f1,
+      // Indigo-500
+      metalness: 0.1,
+      roughness: 0.2,
+      clearcoat: 0.5,
+      clearcoatRoughness: 0.1
+    });
+    const instances = new THREE.InstancedMesh(boxGeo, boxMat, maxCount);
+    instances.castShadow = true;
+    instances.receiveShadow = true;
+    instances.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    scene.add(instances);
+    sceneDataRef.current = {
+      scene,
+      camera,
+      renderer,
+      instances
+    };
+
+    // Rotation Logic (Orbit controls simulation)
+    const pivot = new THREE.Group();
+    pivot.add(grid);
+    pivot.add(instances);
+    scene.add(pivot);
+    let isDragging = false;
+    let previousMousePosition = {
+      x: 0,
+      y: 0
+    };
+    const cvs = renderer.domElement;
+    const onMouseDown = e => {
+      isDragging = true;
+      previousMousePosition = {
+        x: e.clientX,
+        y: e.clientY
+      };
+    };
+    const onMouseMove = e => {
+      if (isDragging) {
+        const deltaMove = {
+          x: e.clientX - previousMousePosition.x,
+          y: e.clientY - previousMousePosition.y
+        };
+        pivot.rotation.y += deltaMove.x * 0.005;
+        // pivot.rotation.x += deltaMove.y * 0.005; // Optional X rotation
+        previousMousePosition = {
+          x: e.clientX,
+          y: e.clientY
+        };
+      }
+    };
+    const onMouseUp = () => {
+      isDragging = false;
+    };
+    cvs.addEventListener("mousedown", onMouseDown);
+    cvs.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+
+    // Touch support
+    const onTouchStart = e => {
+      isDragging = true;
+      previousMousePosition = {
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY
+      };
+    };
+    const onTouchMove = e => {
+      if (isDragging) {
+        const deltaMove = {
+          x: e.touches[0].clientX - previousMousePosition.x,
+          y: e.touches[0].clientY - previousMousePosition.y
+        };
+        pivot.rotation.y += deltaMove.x * 0.005;
+        previousMousePosition = {
+          x: e.touches[0].clientX,
+          y: e.touches[0].clientY
+        };
+      }
+    };
+    const onTouchEnd = () => {
+      isDragging = false;
+    };
+    cvs.addEventListener("touchstart", onTouchStart, {
+      passive: false
+    });
+    cvs.addEventListener("touchmove", onTouchMove, {
+      passive: false
+    });
+    cvs.addEventListener("touchend", onTouchEnd);
+    const animate = () => {
+      requestAnimationFrame(animate);
+      // Gentle auto rotation if not dragging
+      if (!isDragging && Math.abs(pivot.rotation.y) > 0.01) {
+        // pivot.rotation.y += 0.001;
+      }
+      renderer.render(scene, camera);
+    };
+    animate();
+    const handleResize = () => {
+      if (!mountRef.current) return;
+      const mw = mountRef.current.clientWidth;
+      const mh = mountRef.current.clientHeight;
+      renderer.setSize(mw, mh);
+      camera.aspect = mw / mh;
+      camera.updateProjectionMatrix();
+    };
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("mouseup", onMouseUp);
+      cvs.removeEventListener("mousedown", onMouseDown);
+      cvs.removeEventListener("mousemove", onMouseMove);
+      if (mountRef.current && renderer.domElement) {
+        mountRef.current.removeChild(renderer.domElement);
+      }
+    };
+  }, []);
+  useEffect(() => {
+    const {
+      instances
+    } = sceneDataRef.current;
+    if (!instances) return;
+    let count = 0;
+    const dummy = new THREE.Object3D();
+    const cx = (dim.l - 1) * 0.5;
+    const cz = (dim.w - 1) * 0.5;
+    for (let x = 0; x < dim.l; x++) {
+      for (let y = 0; y < dim.h; y++) {
+        for (let z = 0; z < dim.w; z++) {
+          dummy.position.set(x - cx, y + 0.5, z - cz);
+          dummy.updateMatrix();
+          instances.setMatrixAt(count++, dummy.matrix);
+        }
+      }
+    }
+    instances.count = count;
+    instances.instanceMatrix.needsUpdate = true;
+  }, [dim]);
+  return /*#__PURE__*/React.createElement("div", {
+    ref: mountRef,
+    className: "w-full h-full"
+  });
+}
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [dim, setDim] = useState({
+    l: 3,
+    w: 2,
+    h: 2
+  });
+  return /*#__PURE__*/React.createElement("div", {
+    className: "relative w-screen h-screen overflow-hidden bg-slate-900"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 bg-gradient-to-br from-indigo-900/40 via-slate-900 to-black pointer-events-none"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 z-0"
+  }, /*#__PURE__*/React.createElement(Scene, {
+    dim: dim
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 pointer-events-none p-4 md:p-8 flex flex-col justify-between z-10"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between items-start pointer-events-auto"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel px-6 py-4 rounded-3xl"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-3xl font-black text-indigo-400 drop-shadow-md"
+  }, getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs text-slate-400 font-bold tracking-widest uppercase mt-1"
+  }, "Interactive 3D Grid")), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-2 rounded-xl flex gap-1 items-start max-w-[40%] flex-wrap justify-end"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-indigo-600 text-white shadow-lg" : "text-slate-400 hover:text-white hover:bg-white/10"}`
+  }, l)))), /*#__PURE__*/React.createElement("div", {
+    className: "pointer-events-auto self-end md:self-start glass-panel p-6 rounded-3xl w-full md:w-80 flex flex-col gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between items-center pb-4 border-b border-white/10"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-slate-400 font-bold uppercase text-xs tracking-widest"
+  }, getText("total", lang)), /*#__PURE__*/React.createElement("span", {
+    className: "text-4xl font-black text-indigo-400"
+  }, dim.l * dim.w * dim.h)), /*#__PURE__*/React.createElement(ControlSlider, {
+    label: getText("length", lang),
+    val: dim.l,
+    set: v => setDim({
+      ...dim,
+      l: v
+    }),
+    color: "text-indigo-300"
+  }), /*#__PURE__*/React.createElement(ControlSlider, {
+    label: getText("width", lang),
+    val: dim.w,
+    set: v => setDim({
+      ...dim,
+      w: v
+    }),
+    color: "text-indigo-300"
+  }), /*#__PURE__*/React.createElement(ControlSlider, {
+    label: getText("height", lang),
+    val: dim.h,
+    set: v => setDim({
+      ...dim,
+      h: v
+    }),
+    color: "text-indigo-300"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "bg-black/30 p-3 rounded-xl border border-white/5 text-center font-mono text-indigo-200"
+  }, dim.l, " × ", dim.w, " × ", dim.h, " = ", dim.l * dim.w * dim.h))));
+}
+const ControlSlider = ({
+  label,
+  val,
+  set,
+  color
+}) => /*#__PURE__*/React.createElement("div", {
+  className: "flex flex-col gap-2"
+}, /*#__PURE__*/React.createElement("div", {
+  className: `flex justify-between font-bold text-sm ${color}`
+}, /*#__PURE__*/React.createElement("label", null, label), /*#__PURE__*/React.createElement("span", null, val)), /*#__PURE__*/React.createElement("input", {
+  type: "range",
+  min: "1",
+  max: "10",
+  value: val,
+  onChange: e => set(Number(e.target.value)),
+  className: "w-full"
+}));
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

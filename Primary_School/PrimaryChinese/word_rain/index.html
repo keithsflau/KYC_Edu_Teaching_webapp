@@ -1,0 +1,411 @@
+﻿<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>褒貶詞 Word Rain | 反應式接詞遊戲</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
+      background: radial-gradient(circle at 20% 20%, #f0f9ff 0, #e0f2fe 20%, #e0f2fe 40%, #eff6ff 60%, #e0f2fe 100%);
+      color: #0f172a;
+    }
+    .page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 20px 48px;
+    }
+    .shell {
+      width: min(1100px, 100%);
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 20px 60px rgba(15, 23, 42, 0.12);
+      border: 1px solid rgba(14, 165, 233, 0.15);
+      position: relative;
+      overflow: hidden;
+    }
+    h1 {
+      margin: 0 0 6px;
+      font-size: 28px;
+      letter-spacing: 0.5px;
+      color: #0ea5e9;
+    }
+    .sub {
+      margin: 0 0 12px;
+      color: #334155;
+      font-size: 14px;
+    }
+    .status-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 14px;
+      background: linear-gradient(90deg, rgba(14, 165, 233, 0.1), rgba(59, 130, 246, 0.12));
+      color: #0f172a;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    }
+    .controls {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    button {
+      border: none;
+      background: linear-gradient(135deg, #0ea5e9, #6366f1);
+      color: white;
+      border-radius: 12px;
+      padding: 10px 16px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(14, 165, 233, 0.25);
+      transition: transform 0.1s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+    }
+    button:hover { transform: translateY(-1px); }
+    button:active { transform: translateY(1px); opacity: 0.9; }
+    .canvas-wrap {
+      position: relative;
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px solid rgba(14, 165, 233, 0.16);
+      background: linear-gradient(180deg, rgba(14, 165, 233, 0.08), rgba(125, 211, 252, 0.12));
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    }
+    canvas {
+      width: 100%;
+      height: min(70vh, 680px);
+      min-height: 440px;
+      display: block;
+      background: radial-gradient(circle at 50% 15%, rgba(255,255,255,0.65), rgba(125, 211, 252, 0.2) 45%, rgba(59, 130, 246, 0.18) 90%);
+    }
+    .legend {
+      margin-top: 12px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-size: 13px;
+      color: #334155;
+    }
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      background: rgba(14, 165, 233, 0.08);
+      border: 1px solid rgba(14, 165, 233, 0.14);
+    }
+    .legend b { color: #0ea5e9; }
+    .floating-note {
+      position: absolute;
+      right: 16px;
+      bottom: 12px;
+      font-size: 12px;
+      color: #64748b;
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+  <div id="root" class="page">
+    <div class="shell">
+      <div class="status-bar">
+        <div>
+          <h1>褒貶詞 Word Rain</h1>
+          <p class="sub">滑鼠左右移動水桶，接住褒義詞 (+10)，避開貶義詞 (-10)。</p>
+        </div>
+        <div class="controls">
+          <button id="restart-btn">重新開始</button>
+        </div>
+      </div>
+      <div class="status-bar">
+        <div class="pill" id="score-pill">分數：0</div>
+        <div class="pill" style="background: linear-gradient(90deg, rgba(52,211,153,0.12), rgba(16,185,129,0.16)); color: #0f172a;" id="streak-pill">最佳連抓：0</div>
+      </div>
+      <div class="canvas-wrap">
+        <canvas id="game-canvas"></canvas>
+      </div>
+      <div class="legend">
+        <span><b>褒義句</b>：他總是耐心傾聽、她主動整理教室…</span>
+        <span><b>貶義句</b>：他常無視別人感受、她總遲到不道歉…</span>
+        <span>提示：句卡顏色一致，需靠理解語意來判斷並提早對準落點。</span>
+      </div>
+      <div class="floating-note">Canvas + React 18 | 褒貶詞辨認練習</div>
+    </div>
+  </div>
+
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script>
+const {
+  useEffect,
+  useRef
+} = React;
+const positiveSentences = ["他總是耐心傾聽", "她主動整理教室", "同學受傷他陪伴", "她分享午餐點心", "他每日微笑問候", "她樂於解題指導", "他細心照顧植物", "她主動扶門禮讓", "他提醒朋友戴帽", "她鼓勵大家運動", "他尊重不同想法", "她感謝每次幫忙", "他回收每張紙張", "她守時從不遲到", "他聽見哭聲即安慰", "她替同桌擦黑板", "他捐出多餘文具", "她紀錄心情分享", "他合作完成報告", "她替隊友加油", "他整理書架分類", "她提醒排隊距離", "他替老師搬教材", "她主動認錯改進", "他節約用水關燈", "她每天稱讚同學", "他觀察天空報天氣", "她替朋友守秘密", "他禮讓候車長者", "她陪伴新同學遊戲", "他替大家記錄分數", "她分工清掃角落", "他帶領熱身活動", "她示範正確洗手", "他提醒別亂丟垃圾", "她借書給忘帶的人", "他鼓勵嘗試新挑戰", "她用歌聲帶來笑容", "他寄卡片向人致意", "她分享閱讀心得", "他細心擦拭桌面", "她關心朋友情緒", "他在雨天借雨傘", "她照顧班級植物", "他協助布置展板", "她幫忙分發講義", "他提醒準備考試", "她和善接待訪客", "他守護班級紀律", "她主動收拾球具", "他鼓勵同學講想法", "她帶領安靜閱讀", "他分享旅遊見聞", "她協助排練劇場", "他帶來自製點心", "她製作生日卡片", "他照料班級小魚", "她幫忙翻譯指示", "他提醒穿著整齊", "她鼓勵別氣餒", "他傳遞正向訊息", "她輪流照顧器材", "他細數分配物資", "她讓位給需要者", "他耐心示範書法", "她主動詢問需求", "他帶頭做伸展操", "她保持走廊安靜", "他提醒收好背包", "她陪同同學看醫護", "他遵守約定信守", "她表揚努力表現", "他幫忙綁鞋帶", "她帶頭節能減碳", "他與伙伴分享成果", "她整理公用文具", "他協助統計票數", "她創作海報鼓舞", "他照看圖書角落", "她主動替人代班", "他邀請孤單同學", "她傳遞溫馨小紙條", "他分享練琴心得", "她為朋友製作歌單", "他提醒放慢腳步", "她替社團補充水", "他堅持練習不放棄", "她報告時照顧全組", "他耐心等待輪到", "她管理時間安排", "他感謝每次指導", "她面對難題不退縮", "他鼓勵勇於提問", "她帶頭清理操場", "他分享觀察紀錄", "她寫信慰問朋友", "他持續紀錄好事", "她替學弟導覽校園", "他整理回收分類", "她傳遞祝福種子"];
+const negativeSentences = ["他常無視別人感受", "她總遲到不道歉", "他故意搶走座位", "她打斷他人發言", "他嘲笑同學錯誤", "她亂丟垃圾不管", "他在隊伍推擠人", "她借物品不歸還", "他抱怨所有安排", "她敷衍完成作業", "他傳遞不實謠言", "她拒絕團隊合作", "他偷看別人答案", "她訕笑新同學", "他故意遮擋視線", "她隨手踢倒椅子", "他哭鬧要求特權", "她講話音量過大", "他欺負年幼同學", "她把責任推別人", "他搗亂老師教材", "她偷懶不參與", "他對朋友翻白眼", "她故意弄壞工具", "他藉口逃避任務", "她拖延拖累全隊", "他自私不願分享", "她占用公用空間", "他惡意刪除紀錄", "她批評別人外表", "他故意頂撞師長", "她散播同學秘密", "他翻找別人抽屜", "她亂動他人作品", "他作弊後還狡辯", "她帶頭起鬨喧嘩", "他敲桌干擾上課", "她拖著腳步抱怨", "他推諉完成作業", "她亂畫公物牆面", "他偷拿零食吃", "她拆別人的模型", "他趁機插隊領餐", "她批評隊友努力", "他隨意打開手機", "她敷衍回答問題", "他責怪別人失敗", "她躲在角落偷懶", "他講髒話嚇同學", "她拒絕遵守規矩", "他瞞著老師逃課", "她輕視別人想法", "他踢倒同學書包", "她趁亂抄答案", "他遲交作業還抱怨", "她吵架後不道歉", "他故意搗毀裝飾", "她把錯誤推給弟妹", "他散播恐嚇訊息", "她霸占遊戲器材", "他大聲指責別人", "她把教室弄得凌亂", "他對老師翻白眼", "她偷帶玩具進課堂", "他公開嘲弄朋友", "她寫紙條排擠人", "他挑釁要求打架", "她偷看訊息內容", "他亂改公用設定", "她刪除小組文件", "他反覆食言失信", "她動手推撞同學", "他搶話不給人說", "她抄襲作業自誇", "他吵鬧干擾午休", "她躲避清掃工作", "他闖入別人座位", "她故意取笑口音", "他拖著作業去玩", "她踐踏花圃不理", "他亂按緊急鈴", "她惡意更改日程", "他上課偷偷玩遊戲", "她甩門嚇到同學", "他嘲弄別人夢想", "她偷拿大家飲水", "他拆開他人包裹", "她把音響開最大", "他亂蓋章弄髒本子", "她故意撕破考卷", "他假裝生病逃責", "她威脅不讓人加入", "他當面否定努力", "她酸言酸語攻擊", "他躲在廁所玩手機", "她煽動別人起衝突", "他亂發指令害出錯", "她假裝忘記承諾", "他故意阻擋回家", "她抱怨每次練習"];
+class RainDrop {
+  constructor(word, type, x, y, speed, width, height) {
+    this.word = word;
+    this.type = type;
+    this.x = x;
+    this.y = y;
+    this.speed = speed;
+    this.width = width;
+    this.height = height;
+    this.caught = false;
+  }
+  update(dt) {
+    this.y += this.speed * dt;
+  }
+  draw(ctx, font) {
+    ctx.font = font;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.lineJoin = "round";
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = "rgba(14,165,233,0.35)";
+    const radius = 14;
+    ctx.fillStyle = "rgba(14,165,233,0.18)";
+    ctx.beginPath();
+    ctx.roundRect(this.x, this.y, this.width, this.height, radius);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#0f172a";
+    ctx.fillText(this.word, this.x + this.width / 2, this.y + this.height / 2 + 1);
+  }
+  intersects(bucket) {
+    return this.x < bucket.x + bucket.w && this.x + this.width > bucket.x && this.y < bucket.y + bucket.h && this.y + this.height > bucket.y;
+  }
+}
+const Sparkle = (x, y) => ({
+  x,
+  y,
+  vx: (Math.random() - 0.5) * 120,
+  vy: -40 - Math.random() * 80,
+  life: 1,
+  size: 3 + Math.random() * 3
+});
+function WordRainGame() {
+  const canvasRef = useRef(null);
+  const scoreRef = useRef(0);
+  const bestStreakRef = useRef(0);
+  const currentStreakRef = useRef(0);
+  const dropsRef = useRef([]);
+  const sparklesRef = useRef([]);
+  const flashRef = useRef(0);
+  const bucketRef = useRef({
+    x: 0,
+    y: 0,
+    w: 168,
+    h: 32
+  });
+  const dimsRef = useRef({
+    w: 0,
+    h: 0
+  });
+  const rafRef = useRef(null);
+  const spawnTimerRef = useRef(0);
+  const spawnDelayRef = useRef(650);
+  const fontRef = useRef('bold 26px "Noto Sans TC", "Microsoft JhengHei", sans-serif');
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    const scorePill = document.getElementById("score-pill");
+    const streakPill = document.getElementById("streak-pill");
+    const restartBtn = document.getElementById("restart-btn");
+    const resize = () => {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      dimsRef.current = {
+        w: rect.width,
+        h: rect.height
+      };
+      bucketRef.current.y = rect.height - bucketRef.current.h - 24;
+      if (bucketRef.current.x === 0) {
+        bucketRef.current.x = rect.width / 2 - bucketRef.current.w / 2;
+      } else {
+        bucketRef.current.x = Math.min(Math.max(bucketRef.current.x, 4), rect.width - bucketRef.current.w - 4);
+      }
+    };
+    resize();
+    window.addEventListener("resize", resize);
+    const handleMouse = e => {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      bucketRef.current.x = Math.min(Math.max(x - bucketRef.current.w / 2, 4), rect.width - bucketRef.current.w - 4);
+    };
+    canvas.addEventListener("mousemove", handleMouse);
+    const resetGame = () => {
+      scoreRef.current = 0;
+      currentStreakRef.current = 0;
+      sparklesRef.current = [];
+      flashRef.current = 0;
+      dropsRef.current = [];
+      spawnTimerRef.current = 0;
+      spawnDelayRef.current = 650;
+      scorePill.textContent = "分數：" + scoreRef.current;
+      streakPill.textContent = "最佳連抓：" + bestStreakRef.current;
+    };
+    restartBtn.addEventListener("click", resetGame);
+    const spawnDrop = () => {
+      const {
+        w
+      } = dimsRef.current;
+      const isPositive = Math.random() < 0.62;
+      const sentencePool = isPositive ? positiveSentences : negativeSentences;
+      const sentence = sentencePool[Math.floor(Math.random() * sentencePool.length)];
+      ctx.font = fontRef.current;
+      const paddingX = 36;
+      const tileWidth = Math.min(ctx.measureText(sentence).width + paddingX, w - 32);
+      const tileHeight = 56;
+      const x = Math.random() * (w - tileWidth - 20) + 10;
+      const baseSpeed = isPositive ? 120 : 140;
+      const speed = baseSpeed + Math.random() * 55;
+      dropsRef.current.push(new RainDrop(sentence, isPositive ? "positive" : "negative", x, -tileHeight, speed, tileWidth, tileHeight));
+    };
+    let lastTime = performance.now();
+    const loop = time => {
+      const dt = Math.min((time - lastTime) / 1000, 0.05);
+      lastTime = time;
+      const {
+        w,
+        h
+      } = dimsRef.current;
+      ctx.clearRect(0, 0, w, h);
+      spawnTimerRef.current += dt * 1000;
+      if (spawnTimerRef.current >= spawnDelayRef.current) {
+        spawnDrop();
+        spawnTimerRef.current = 0;
+        spawnDelayRef.current = 420 + Math.random() * 360;
+      }
+
+      // Update and draw drops
+      const bucket = bucketRef.current;
+      ctx.save();
+      ctx.shadowColor = "rgba(15, 23, 42, 0.2)";
+      ctx.shadowBlur = 8;
+      dropsRef.current.forEach(drop => {
+        drop.update(dt);
+        if (!drop.caught && drop.intersects(bucket)) {
+          drop.caught = true;
+          if (drop.type === "positive") {
+            scoreRef.current += 10;
+            currentStreakRef.current += 1;
+            bestStreakRef.current = Math.max(bestStreakRef.current, currentStreakRef.current);
+            for (let i = 0; i < 7; i += 1) {
+              sparklesRef.current.push(Sparkle(drop.x + drop.width / 2, bucket.y));
+            }
+          } else {
+            scoreRef.current -= 10;
+            currentStreakRef.current = 0;
+            flashRef.current = 0.65;
+          }
+          scorePill.textContent = "分數：" + scoreRef.current;
+          streakPill.textContent = "最佳連抓：" + bestStreakRef.current;
+        }
+        if (!drop.caught && drop.y < h + 40) {
+          drop.draw(ctx, fontRef.current);
+        }
+      });
+      ctx.restore();
+
+      // Remove caught or off-screen drops
+      dropsRef.current = dropsRef.current.filter(d => !d.caught && d.y <= h + 60);
+
+      // Draw bucket
+      const bucketGrad = ctx.createLinearGradient(bucket.x, bucket.y, bucket.x, bucket.y + bucket.h);
+      bucketGrad.addColorStop(0, "#0ea5e9");
+      bucketGrad.addColorStop(1, "#3b82f6");
+      ctx.fillStyle = bucketGrad;
+      ctx.strokeStyle = "rgba(255,255,255,0.8)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(bucket.x, bucket.y, bucket.w, bucket.h, 10);
+      ctx.fill();
+      ctx.stroke();
+
+      // Sparkles
+      sparklesRef.current.forEach(s => {
+        s.life -= dt * 1.8;
+        s.x += s.vx * dt;
+        s.y += s.vy * dt;
+        s.vy += 220 * dt;
+        if (s.life > 0) {
+          ctx.fillStyle = "rgba(250, 204, 21," + s.life + ")";
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.size * s.life, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      });
+      sparklesRef.current = sparklesRef.current.filter(s => s.life > 0);
+
+      // Flash for negative hit
+      if (flashRef.current > 0) {
+        ctx.fillStyle = "rgba(239, 68, 68," + flashRef.current * 0.6 + ")";
+        ctx.fillRect(0, 0, w, h);
+        flashRef.current = Math.max(0, flashRef.current - dt * 1.6);
+      }
+
+      // Subtle foreground lines
+      ctx.strokeStyle = "rgba(14,165,233,0.08)";
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 5; i += 1) {
+        const y = h / 5 * i;
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
+      rafRef.current = requestAnimationFrame(loop);
+    };
+    rafRef.current = requestAnimationFrame(loop);
+    return () => {
+      window.removeEventListener("resize", resize);
+      canvas.removeEventListener("mousemove", handleMouse);
+      restartBtn.removeEventListener("click", resetGame);
+      cancelAnimationFrame(rafRef.current);
+    };
+  }, []);
+  return /*#__PURE__*/React.createElement("canvas", {
+    ref: canvasRef,
+    id: "game-canvas"
+  });
+}
+ReactDOM.createRoot(document.getElementById("game-canvas").parentElement).render(/*#__PURE__*/React.createElement(WordRainGame, null));
+</script>
+  <footer style="text-align: center; padding: 16px; color: #64748b; font-size: 12px; font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif; background: rgba(255,255,255,0.8); margin-top: 20px;">
+    <p style="font-style: italic; margin-bottom: 4px;">
+      But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his understanding. Jeremiah 10:12
+    </p>
+    <p style="font-size: 11px; margin-bottom: 4px; margin-top: 8px;">
+      「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+    </p>
+    <p style="font-size: 11px; margin-top: 8px; padding-top: 8px; border-top: 1px solid #cbd5e1;">
+      @ 2025 Primary Chinese Learning Resources | Prepared by SF Lau
+    </p>
+  </footer>
+
+</body>
+</html>
+
+
+

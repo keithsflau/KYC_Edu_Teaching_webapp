@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Box Plots 盒鬚圖 | S2 Math</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+      }
+    </style>
+  </head>
+  <body class="bg-teal-50 text-slate-800 min-h-screen">
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useMemo
+} = React;
+const App = () => {
+  const [lang, setLang] = useState("en");
+  const [rawData, setRawData] = useState("9, 14, 17, 21, 24, 27, 31, 33, 38, 42, 48");
+  const t = {
+    title: {
+      en: "Box Plots",
+      zh: "盒鬚圖"
+    },
+    data: {
+      en: "Enter Data",
+      zh: "輸入數據"
+    },
+    min: {
+      en: "Min",
+      zh: "最小值"
+    },
+    max: {
+      en: "Max",
+      zh: "最大值"
+    },
+    median: {
+      en: "Median",
+      zh: "中位數"
+    },
+    q1: {
+      en: "Q1",
+      zh: "下四分位數"
+    },
+    q3: {
+      en: "Q3",
+      zh: "上四分位數"
+    },
+    iqr: {
+      en: "IQR",
+      zh: "四分位距"
+    },
+    back: {
+      en: "Back to Dashboard",
+      zh: "返回主頁"
+    }
+  };
+  const numbers = useMemo(() => {
+    return rawData.split(",").map(s => parseFloat(s.trim())).filter(n => !isNaN(n)).sort((a, b) => a - b);
+  }, [rawData]);
+  const n = numbers.length;
+  const min = n > 0 ? numbers[0] : 0;
+  const max = n > 0 ? numbers[n - 1] : 0;
+  const median = n > 0 ? n % 2 === 1 ? numbers[Math.floor(n / 2)] : (numbers[n / 2 - 1] + numbers[n / 2]) / 2 : 0;
+  const q1 = n >= 4 ? numbers[Math.floor(n / 4)] : min;
+  const q3 = n >= 4 ? numbers[Math.floor(3 * n / 4)] : max;
+  const iqr = q3 - q1;
+
+  // Scale for visualization
+  const range = max - min || 1;
+  const scale = val => 30 + (val - min) / range * 240;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "p-6 max-w-4xl mx-auto min-h-screen flex flex-col"
+  }, /*#__PURE__*/React.createElement("header", {
+    className: "mb-6 flex justify-between items-center"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "text-teal-600 font-bold uppercase text-xs tracking-widest mb-1"
+  }, "S2 Math"), /*#__PURE__*/React.createElement("h1", {
+    className: "text-3xl font-extrabold text-slate-900"
+  }, t.title[lang])), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLang(lang === "en" ? "zh" : "en"),
+    className: "px-3 py-1 bg-white border border-teal-200 rounded-lg text-sm font-bold hover:bg-teal-100"
+  }, lang === "en" ? "中文" : "ENG")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-4 rounded-xl border border-teal-100 mb-6"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "block text-xs font-bold text-slate-400 uppercase mb-2"
+  }, t.data[lang]), /*#__PURE__*/React.createElement("textarea", {
+    value: rawData,
+    onChange: e => setRawData(e.target.value),
+    className: "w-full h-20 p-3 border-2 border-teal-200 rounded-lg font-mono focus:outline-none focus:ring-2 focus:ring-teal-400",
+    placeholder: "e.g., 12, 15, 18, 22..."
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-6 rounded-2xl border border-teal-100 mb-6"
+  }, /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 300 100",
+    className: "w-full h-32"
+  }, /*#__PURE__*/React.createElement("line", {
+    x1: scale(min),
+    y1: "50",
+    x2: scale(q1),
+    y2: "50",
+    stroke: "#14b8a6",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: scale(q3),
+    y1: "50",
+    x2: scale(max),
+    y2: "50",
+    stroke: "#14b8a6",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: scale(min),
+    y1: "35",
+    x2: scale(min),
+    y2: "65",
+    stroke: "#14b8a6",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: scale(max),
+    y1: "35",
+    x2: scale(max),
+    y2: "65",
+    stroke: "#14b8a6",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: scale(q1),
+    y: "25",
+    width: scale(q3) - scale(q1),
+    height: "50",
+    fill: "rgba(20, 184, 166, 0.3)",
+    stroke: "#14b8a6",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: scale(median),
+    y1: "25",
+    x2: scale(median),
+    y2: "75",
+    stroke: "#0f766e",
+    strokeWidth: "3"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: scale(min),
+    y: "90",
+    textAnchor: "middle",
+    className: "text-xs fill-slate-500"
+  }, min), /*#__PURE__*/React.createElement("text", {
+    x: scale(q1),
+    y: "90",
+    textAnchor: "middle",
+    className: "text-xs fill-slate-500"
+  }, "Q1:", q1), /*#__PURE__*/React.createElement("text", {
+    x: scale(median),
+    y: "15",
+    textAnchor: "middle",
+    className: "text-xs fill-teal-700 font-bold"
+  }, "Med:", median), /*#__PURE__*/React.createElement("text", {
+    x: scale(q3),
+    y: "90",
+    textAnchor: "middle",
+    className: "text-xs fill-slate-500"
+  }, "Q3:", q3), /*#__PURE__*/React.createElement("text", {
+    x: scale(max),
+    y: "90",
+    textAnchor: "middle",
+    className: "text-xs fill-slate-500"
+  }, max))), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-3 md:grid-cols-6 gap-3"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-teal-500 text-white p-3 rounded-xl text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs opacity-80"
+  }, t.min[lang]), /*#__PURE__*/React.createElement("div", {
+    className: "text-xl font-bold"
+  }, min)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-teal-400 text-white p-3 rounded-xl text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs opacity-80"
+  }, t.q1[lang]), /*#__PURE__*/React.createElement("div", {
+    className: "text-xl font-bold"
+  }, q1)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-teal-600 text-white p-3 rounded-xl text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs opacity-80"
+  }, t.median[lang]), /*#__PURE__*/React.createElement("div", {
+    className: "text-xl font-bold"
+  }, median)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-teal-400 text-white p-3 rounded-xl text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs opacity-80"
+  }, t.q3[lang]), /*#__PURE__*/React.createElement("div", {
+    className: "text-xl font-bold"
+  }, q3)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-teal-500 text-white p-3 rounded-xl text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs opacity-80"
+  }, t.max[lang]), /*#__PURE__*/React.createElement("div", {
+    className: "text-xl font-bold"
+  }, max)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-700 text-white p-3 rounded-xl text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs opacity-80"
+  }, t.iqr[lang]), /*#__PURE__*/React.createElement("div", {
+    className: "text-xl font-bold"
+  }, iqr))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

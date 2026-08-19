@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LP Optimization Lab | S6 Math 線性規劃優化</title>
+  <!--
+    Curriculum: HKDSE Linear Programming — corner point principle
+    Enrichment NSE: critical infrastructure staffing (hospital / emergency) via LP — maths-first
+  -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet" />
+  <style>body{font-family:"Outfit","Noto Sans TC",sans-serif}</style>
+</head>
+<body class="bg-teal-50 min-h-screen text-slate-800">
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useMemo } = React;
+
+    const T = {
+      en: {
+        back: "← Form 6", lang: "中文", badge: "Linear Programming",
+        title: "LP Optimization Lab",
+        sub: "Corner-point principle with an interactive feasible region",
+        story: "Scenario: allocate nurses (x) and technicians (y) to maximise coverage score Z = 5x + 3y under staffing constraints (critical service capacity — maths model).",
+        c1: "x + y ≤ ",
+        c2: "2x + y ≤ ",
+        cx: "x ≥ 0, y ≥ 0",
+        obj: "Maximise Z = 5x + 3y",
+        drag: "Drag the test point; optimum is always at a vertex of the feasible region.",
+        vertices: "Feasible vertices",
+        best: "Optimal vertex",
+        ns: "NSE enrichment: modelling hospital staffing capacity — not slogans; focus on constraints & objective.",
+        k: "K: Optimum of linear Z on a polygonal region occurs at a vertex",
+        s: "S: List vertices, evaluate Z, select maximum",
+        a: "A: Appreciate transparent optimisation for public services"
+      },
+      zh: {
+        back: "← 中六", lang: "ENG", badge: "線性規劃",
+        title: "線性規劃優化實驗室",
+        sub: "以互動可行域體驗頂點原理",
+        story: "情境：調配護士 (x) 與技術員 (y)，在人力約束下最大化覆蓋分數 Z = 5x + 3y（關鍵服務容量——數學模型）。",
+        c1: "x + y ≤ ",
+        c2: "2x + y ≤ ",
+        cx: "x ≥ 0, y ≥ 0",
+        obj: "最大化 Z = 5x + 3y",
+        drag: "拖動測試點；最優解必在可行域頂點。",
+        vertices: "可行頂點",
+        best: "最優頂點",
+        ns: "國安 enrichment：模擬醫院人力配置——非口號，聚焦約束與目標函數。",
+        k: "知：線性目標在多邊形可行域的最優解在頂點",
+        s: "技：列出頂點、計算 Z、取最大",
+        a: "態：重視公共服務的透明優化"
+      }
+    };
+
+    function intersect(a1, b1, c1, a2, b2, c2) {
+      const d = a1 * b2 - a2 * b1;
+      if (Math.abs(d) < 1e-9) return null;
+      return { x: (c1 * b2 - c2 * b1) / d, y: (a1 * c2 - a2 * c1) / d };
+    }
+
+    function App() {
+      const [lang, setLang] = useState("en");
+      const t = T[lang];
+      const [b1, setB1] = useState(6);
+      const [b2, setB2] = useState(9);
+      const [px, setPx] = useState(2);
+      const [py, setPy] = useState(1.5);
+
+      const { corners, best, feasible } = useMemo(() => {
+        const candidates = [
+          { x: 0, y: 0 },
+          { x: 0, y: b1 },
+          { x: b1, y: 0 },
+          { x: 0, y: b2 },
+          { x: b2 / 2, y: 0 },
+          intersect(1, 1, b1, 2, 1, b2),
+          intersect(1, 1, b1, 1, 0, 0),
+          intersect(2, 1, b2, 0, 1, 0),
+          intersect(1, 0, 0, 0, 1, 0)
+        ].filter(Boolean);
+
+        const inR = (p) => p.x >= -1e-6 && p.y >= -1e-6 && p.x + p.y <= b1 + 1e-6 && 2 * p.x + p.y <= b2 + 1e-6;
+        const uniq = [];
+        candidates.forEach(p => {
+          if (!inR(p)) return;
+          if (uniq.some(q => Math.hypot(q.x - p.x, q.y - p.y) < 1e-4)) return;
+          uniq.push({ x: +p.x.toFixed(4), y: +p.y.toFixed(4), z: 5 * p.x + 3 * p.y });
+        });
+        let best = uniq[0] || { x: 0, y: 0, z: 0 };
+        uniq.forEach(p => { if (p.z > best.z) best = p; });
+        const feasible = inR({ x: px, y: py });
+        return { corners: uniq, best, feasible };
+      }, [b1, b2, px, py]);
+
+      const scale = 60;
+      const maxX = Math.max(b1, b2 / 2, 5) + 1;
+      const maxY = Math.max(b1, b2, 5) + 1;
+      const W = 360, H = 280, pad = 30;
+      const tx = (x) => pad + (x / maxX) * (W - 2 * pad);
+      const ty = (y) => H - pad - (y / maxY) * (H - 2 * pad);
+
+      // polygon approx: sort corners by angle
+      const poly = [...corners].sort((a, b) => Math.atan2(a.y, a.x) - Math.atan2(b.y, b.x));
+      const polyPath = poly.map((p, i) => `${i ? "L" : "M"}${tx(p.x)},${ty(p.y)}`).join(" ") + " Z";
+
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-teal-50 via-white to-cyan-50">
+          <a href="../index.html" className="fixed top-4 left-4 z-50 text-sm bg-white/90 px-3 py-1.5 rounded-lg border shadow-sm">{t.back}</a>
+          <button onClick={() => setLang(lang === "en" ? "zh" : "en")} className="fixed top-4 right-4 z-50 text-sm font-bold text-teal-700 bg-white/90 px-3 py-1.5 rounded-lg border">{t.lang}</button>
+
+          <header className="max-w-5xl mx-auto pt-16 px-4 text-center">
+            <div className="text-teal-700 text-xs font-bold tracking-widest uppercase mb-2">{t.badge}</div>
+            <h1 className="text-3xl md:text-5xl font-extrabold mb-2">{t.title}</h1>
+            <p className="text-slate-500 mb-3">{t.sub}</p>
+            <p className="text-sm text-slate-600 max-w-2xl mx-auto">{t.story}</p>
+            <div className="mt-3 flex flex-wrap justify-center gap-2 text-xs">
+              <span className="bg-white px-3 py-1 rounded-full border">{t.k}</span>
+              <span className="bg-white px-3 py-1 rounded-full border">{t.s}</span>
+              <span className="bg-white px-3 py-1 rounded-full border">{t.a}</span>
+            </div>
+            <p className="text-xs text-slate-500 mt-2">{t.ns}</p>
+          </header>
+
+          <main className="max-w-5xl mx-auto px-4 py-8 grid lg:grid-cols-2 gap-6">
+            <section className="bg-white rounded-3xl shadow-xl border p-6 space-y-4">
+              <div className="font-mono text-center bg-teal-50 rounded-xl p-3 text-sm">{t.obj}</div>
+              <div>
+                <div className="flex justify-between text-sm mb-1"><span>{t.c1}{b1}</span></div>
+                <input type="range" min="3" max="8" step="0.5" value={b1} onChange={e => setB1(+e.target.value)} className="w-full accent-teal-600" />
+              </div>
+              <div>
+                <div className="flex justify-between text-sm mb-1"><span>{t.c2}{b2}</span></div>
+                <input type="range" min="3" max="10" step="0.5" value={b2} onChange={e => setB2(+e.target.value)} className="w-full accent-teal-600" />
+              </div>
+              <p className="text-xs text-slate-400">{t.cx}</p>
+              <div className="border-t pt-4">
+                <p className="text-sm font-bold text-slate-500 mb-2">{t.drag}</p>
+                <div className="mb-2"><span className="text-sm">x = {px.toFixed(2)}</span>
+                  <input type="range" min="0" max={maxX} step="0.1" value={px} onChange={e => setPx(+e.target.value)} className="w-full accent-cyan-600" /></div>
+                <div><span className="text-sm">y = {py.toFixed(2)}</span>
+                  <input type="range" min="0" max={maxY} step="0.1" value={py} onChange={e => setPy(+e.target.value)} className="w-full accent-cyan-600" /></div>
+                <div className={`mt-3 text-sm font-bold ${feasible ? "text-emerald-600" : "text-rose-600"}`}>
+                  Test Z = {(5 * px + 3 * py).toFixed(2)} · {feasible ? "feasible" : "infeasible"}
+                </div>
+              </div>
+            </section>
+
+            <section className="bg-white rounded-3xl shadow-xl border p-6">
+              <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-64 bg-slate-50 rounded-2xl border">
+                <line x1={pad} y1={H - pad} x2={W - pad} y2={H - pad} stroke="#94a3b8" />
+                <line x1={pad} y1={H - pad} x2={pad} y2={pad} stroke="#94a3b8" />
+                {poly.length >= 3 && <path d={polyPath} fill="rgba(20,184,166,0.25)" stroke="#0d9488" strokeWidth="2" />}
+                {corners.map((p, i) => (
+                  <circle key={i} cx={tx(p.x)} cy={ty(p.y)} r={p === best || (p.x === best.x && p.y === best.y) ? 7 : 5} fill={Math.hypot(p.x - best.x, p.y - best.y) < 1e-3 ? "#f59e0b" : "#0f766e"} />
+                ))}
+                <circle cx={tx(px)} cy={ty(py)} r="6" fill={feasible ? "#06b6d4" : "#f43f5e"} stroke="#fff" strokeWidth="2" />
+              </svg>
+              <h3 className="font-bold text-sm mt-4 mb-2">{t.vertices}</h3>
+              <ul className="space-y-1 text-sm font-mono">
+                {corners.map((p, i) => (
+                  <li key={i} className={Math.hypot(p.x - best.x, p.y - best.y) < 1e-3 ? "text-amber-700 font-bold" : ""}>
+                    ({p.x.toFixed(2)}, {p.y.toFixed(2)}) → Z = {p.z.toFixed(2)}
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-4 rounded-2xl bg-slate-900 text-amber-300 p-4 text-center font-bold">
+                {t.best}: ({best.x.toFixed(2)}, {best.y.toFixed(2)}) · Z* = {best.z.toFixed(2)}
+              </div>
+            </section>
+          </main>
+          <footer className="text-center py-4 text-slate-500 text-xs border-t">Jeremiah 10:12 · SF Lau</footer>
+        </div>
+      );
+    }
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>

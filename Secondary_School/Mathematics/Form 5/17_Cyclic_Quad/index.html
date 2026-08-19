@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>S5 Math App 17</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+      }
+    </style>
+  </head>
+  <body class="bg-indigo-50 text-slate-800 min-h-screen">
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect,
+  useRef
+} = React;
+const translations = {
+  en: {
+    unit: "Unit 3: Circle Geometry",
+    title: "Cyclic Quadrilateral",
+    desc: "Property: Opposite angles sum to 180°.",
+    drag: "Drag any vertex A, B, C, or D.",
+    angleA: "Angle A",
+    angleC: "Angle C",
+    angleB: "Angle B",
+    angleD: "Angle D",
+    sum: "Sum"
+  },
+  zh: {
+    unit: "單元三：圓的性質",
+    title: "圓內接四邊形",
+    desc: "性質：對角和為 180°。",
+    drag: "拖動頂點 A, B, C 或 D。",
+    angleA: "角 A",
+    angleC: "角 C",
+    angleB: "角 B",
+    angleD: "角 D",
+    sum: "總和"
+  }
+};
+const App = () => {
+  const [lang, setLang] = useState("en");
+  const t = translations[lang];
+
+  // Angles on circle (radians)
+  const [angA, setAngA] = useState(3.1);
+  const [angB, setAngB] = useState(5.2);
+  const [angC, setAngC] = useState(1.3);
+  const [angD, setAngD] = useState(2.8);
+  const radius = 130;
+  const cx = 200;
+  const cy = 200;
+  const getPos = ang => ({
+    x: cx + radius * Math.cos(ang),
+    y: cy + radius * Math.sin(ang)
+  });
+  const posA = getPos(angA);
+  const posB = getPos(angB);
+  const posC = getPos(angC);
+  const posD = getPos(angD);
+
+  // Calculate interior angles
+  // Angle at B is angle ABC.
+  // Vector BA and BC.
+  const calcAngle = (p1, center, p2) => {
+    const v1 = {
+      x: p1.x - center.x,
+      y: p1.y - center.y
+    };
+    const v2 = {
+      x: p2.x - center.x,
+      y: p2.y - center.y
+    };
+    const dot = v1.x * v2.x + v1.y * v2.y;
+    const mag = Math.sqrt(v1.x ** 2 + v1.y ** 2) * Math.sqrt(v2.x ** 2 + v2.y ** 2);
+    return Math.acos(dot / mag) * 180 / Math.PI;
+  };
+
+  // Careful with vertex order for polygon Area/Angles?
+  // Actually, for cyclic quad, vertices must be ordered.
+  // We assume user maintains order A->B->C->D around circle for simplicity
+  // OR we sort them by angle?
+  // Let's sort angles to ensure convexity/order.
+
+  const sortedAngles = [{
+    id: "A",
+    val: angA,
+    set: setAngA
+  }, {
+    id: "B",
+    val: angB,
+    set: setAngB
+  }, {
+    id: "C",
+    val: angC,
+    set: setAngC
+  }, {
+    id: "D",
+    val: angD,
+    set: setAngD
+  }].sort((a, b) => a.val - b.val);
+
+  // Re-assign positions based on sorted order so polygon lines are correct
+  // But we want A to remain 'Angle A' label.
+  // If they cross, the quad becomes self-intersecting.
+  // Let's just use the positions as is and hope user doesn't cross them (or let them).
+
+  const degA = calcAngle(posD, posA, posB);
+  const degB = calcAngle(posA, posB, posC);
+  const degC = calcAngle(posB, posC, posD);
+  const degD = calcAngle(posC, posD, posA);
+
+  // Interaction
+  const svgRef = useRef(null);
+  const [dragging, setDragging] = useState(null);
+  const handlePointerDown = (e, id) => {
+    setDragging(id);
+    e.target.setPointerCapture(e.pointerId);
+  };
+  const handlePointerMove = e => {
+    if (!dragging) return;
+    const rect = svgRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left - cx;
+    const y = e.clientY - rect.top - cy;
+    const ang = Math.atan2(y, x);
+
+    // Normalize 0-2PI
+    const normAng = ang < 0 ? ang + 2 * Math.PI : ang;
+    if (dragging === "A") setAngA(normAng);
+    if (dragging === "B") setAngB(normAng);
+    if (dragging === "C") setAngC(normAng);
+    if (dragging === "D") setAngD(normAng);
+  };
+  const handlePointerUp = () => setDragging(null);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "p-8 max-w-4xl mx-auto min-h-screen flex flex-col items-center select-none"
+  }, /*#__PURE__*/React.createElement("header", {
+    className: "mb-8 text-center w-full relative"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLang(lang === "en" ? "zh" : "en"),
+    className: "absolute right-0 top-0 px-4 py-2 bg-white rounded-full shadow border border-indigo-200 text-sm font-bold text-indigo-600 hover:bg-indigo-50 transition"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-globe mr-2"
+  }), lang === "en" ? "中文" : "ENG"), /*#__PURE__*/React.createElement("div", {
+    className: "text-indigo-600 font-bold uppercase text-xs tracking-widest mb-2"
+  }, t.unit), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-slate-900 mb-2"
+  }, t.title), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-500"
+  }, t.desc)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-6 rounded-3xl shadow-xl border border-indigo-100 w-full mb-8 flex flex-col md:flex-row gap-8 items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "relative"
+  }, /*#__PURE__*/React.createElement("svg", {
+    ref: svgRef,
+    width: "400",
+    height: "400",
+    className: "bg-slate-50 rounded-full cursor-pointer touch-none shadow-inner",
+    onPointerMove: handlePointerMove,
+    onPointerUp: handlePointerUp
+  }, /*#__PURE__*/React.createElement("circle", {
+    cx: cx,
+    cy: cy,
+    r: radius,
+    stroke: "#94a3b8",
+    strokeWidth: "2",
+    fill: "white"
+  }), /*#__PURE__*/React.createElement("polygon", {
+    points: `${posA.x},${posA.y} ${posB.x},${posB.y} ${posC.x},${posC.y} ${posD.x},${posD.y}`,
+    fill: "rgba(99, 102, 241, 0.1)",
+    stroke: "#6366f1",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("g", {
+    onPointerDown: e => handlePointerDown(e, "A")
+  }, /*#__PURE__*/React.createElement("circle", {
+    cx: posA.x,
+    cy: posA.y,
+    r: "10",
+    fill: "rgba(244, 63, 94, 0.2)"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: posA.x,
+    cy: posA.y,
+    r: "6",
+    fill: "#f43f5e"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: posA.x,
+    y: posA.y - 15,
+    textAnchor: "middle",
+    className: "font-bold fill-rose-600"
+  }, "A")), /*#__PURE__*/React.createElement("g", {
+    onPointerDown: e => handlePointerDown(e, "B")
+  }, /*#__PURE__*/React.createElement("circle", {
+    cx: posB.x,
+    cy: posB.y,
+    r: "10",
+    fill: "rgba(59, 130, 246, 0.2)"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: posB.x,
+    cy: posB.y,
+    r: "6",
+    fill: "#3b82f6"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: posB.x,
+    y: posB.y - 15,
+    textAnchor: "middle",
+    className: "font-bold fill-blue-600"
+  }, "B")), /*#__PURE__*/React.createElement("g", {
+    onPointerDown: e => handlePointerDown(e, "C")
+  }, /*#__PURE__*/React.createElement("circle", {
+    cx: posC.x,
+    cy: posC.y,
+    r: "10",
+    fill: "rgba(244, 63, 94, 0.2)"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: posC.x,
+    cy: posC.y,
+    r: "6",
+    fill: "#f43f5e"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: posC.x,
+    y: posC.y - 15,
+    textAnchor: "middle",
+    className: "font-bold fill-rose-600"
+  }, "C")), /*#__PURE__*/React.createElement("g", {
+    onPointerDown: e => handlePointerDown(e, "D")
+  }, /*#__PURE__*/React.createElement("circle", {
+    cx: posD.x,
+    cy: posD.y,
+    r: "10",
+    fill: "rgba(59, 130, 246, 0.2)"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: posD.x,
+    cy: posD.y,
+    r: "6",
+    fill: "#3b82f6"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: posD.x,
+    y: posD.y - 15,
+    textAnchor: "middle",
+    className: "font-bold fill-blue-600"
+  }, "D"))), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-4 left-0 right-0 text-center text-xs text-slate-400 pointer-events-none"
+  }, t.drag)), /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 space-y-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 gap-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-rose-50 p-4 rounded-2xl border border-rose-100 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold text-rose-400 uppercase mb-1"
+  }, t.angleA), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-bold text-rose-600 font-mono"
+  }, degA.toFixed(1), "°")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-rose-50 p-4 rounded-2xl border border-rose-100 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold text-rose-400 uppercase mb-1"
+  }, t.angleC), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-bold text-rose-600 font-mono"
+  }, degC.toFixed(1), "°"))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-3 rounded-xl border border-slate-100 text-center shadow-sm"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-sm font-bold text-slate-400 uppercase mr-2"
+  }, t.sum, " (A + C) ="), /*#__PURE__*/React.createElement("span", {
+    className: "font-mono font-bold text-rose-600 text-xl"
+  }, (degA + degC).toFixed(1), "°")), /*#__PURE__*/React.createElement("hr", {
+    className: "border-indigo-100"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 gap-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-blue-50 p-4 rounded-2xl border border-blue-100 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold text-blue-400 uppercase mb-1"
+  }, t.angleB), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-bold text-blue-600 font-mono"
+  }, degB.toFixed(1), "°")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-blue-50 p-4 rounded-2xl border border-blue-100 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold text-blue-400 uppercase mb-1"
+  }, t.angleD), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-bold text-blue-600 font-mono"
+  }, degD.toFixed(1), "°"))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-3 rounded-xl border border-slate-100 text-center shadow-sm"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-sm font-bold text-slate-400 uppercase mr-2"
+  }, t.sum, " (B + D) ="), /*#__PURE__*/React.createElement("span", {
+    className: "font-mono font-bold text-blue-600 text-xl"
+  }, (degB + degD).toFixed(1), "°")))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

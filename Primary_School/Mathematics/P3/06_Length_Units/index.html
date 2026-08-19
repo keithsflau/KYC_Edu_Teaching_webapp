@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小三數學：長度單位轉換 | Length Unit Converter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+      }
+      .bar-transition {
+        transition: width 0.5s ease-out;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState
+} = React;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Length Unit Converter",
+    zh: "長度單位轉換",
+    ja: "長さ単位変換",
+    ko: "길이 단위 변환",
+    es: "Conversor de longitud",
+    de: "Längenumrechner",
+    fi: "Pituusmuunnin",
+    fr: "Convertisseur de longueur",
+    ar: "محول الطول",
+    it: "Convertitore di lunghezza"
+  },
+  value: {
+    en: "Value",
+    zh: "數值",
+    ja: "値",
+    ko: "값",
+    es: "Valor",
+    de: "Wert",
+    fi: "Arvo",
+    fr: "Valeur",
+    ar: "القيمة",
+    it: "Valore"
+  },
+  unit: {
+    en: "Unit",
+    zh: "單位",
+    ja: "単位",
+    ko: "단위",
+    es: "Unidad",
+    de: "Einheit",
+    fi: "Yksikkö",
+    fr: "Unité",
+    ar: "الوحدة",
+    it: "Unità"
+  },
+  convertTo: {
+    en: "Convert to",
+    zh: "轉換成",
+    ja: "変換先",
+    ko: "변환 대상",
+    es: "Convertir a",
+    de: "Konvertieren in",
+    fi: "Muunna",
+    fr: "Convertir en",
+    ar: "تحويل إلى",
+    it: "Converti in"
+  },
+  targetUnit: {
+    en: "Target Unit",
+    zh: "目標單位",
+    ja: "目標単位",
+    ko: "목표 단위",
+    es: "Unidad objetivo",
+    de: "Zieleinheit",
+    fi: "Kohdeyksikkö",
+    fr: "Unité cible",
+    ar: "وحدة الهدف",
+    it: "Unità di destinazione"
+  },
+  result: {
+    en: "Result",
+    zh: "答案",
+    ja: "結果",
+    ko: "결과",
+    es: "Resultado",
+    de: "Ergebnis",
+    fi: "Tulos",
+    fr: "Résultat",
+    ar: "النتيجة",
+    it: "Risultato"
+  },
+  tipsTitle: {
+    en: "Conversion Tips",
+    zh: "轉換關係",
+    ja: "変換のヒント",
+    ko: "변환 팁",
+    es: "Consejos de conversión",
+    de: "Umrechnungstipps",
+    fi: "Muunnosvinkit",
+    fr: "Conseils de conversion",
+    ar: "نصائح التحويل",
+    it: "Suggerimenti per la conversione"
+  },
+  visualizer: {
+    en: "Visualizer (Approx)",
+    zh: "視覺化長度 (示意)",
+    ja: "可視化 (概算)",
+    ko: "시각화 (대략)",
+    es: "Visualizador (Aproximado)",
+    de: "Visualisierer (Ungefähr)",
+    fi: "Visualisoija (Noin)",
+    fr: "Visualiseur (Approximatif)",
+    ar: "المصور (تقريبي)",
+    it: "Visualizzatore (Approssimativo)"
+  },
+  scale: {
+    en: "Scale: 10m Full Width",
+    zh: "比例: 10米 全寬",
+    ja: "スケール: 10m 全幅",
+    ko: "비율: 10m 전체 너비",
+    es: "Escala: 10m Ancho completo",
+    de: "Maßstab: 10m Volle Breite",
+    fi: "Mittakaava: 10m Täysi leveys",
+    fr: "Échelle : 10m Pleine largeur",
+    ar: "توسيع: 10 م عرض كامل",
+    it: "Scala: 10m Larghezza intera"
+  },
+  mm: {
+    en: "Millimeter",
+    zh: "毫米",
+    ja: "ミリメートル",
+    ko: "밀리미터",
+    es: "Milímetro",
+    de: "Millimeter",
+    fi: "Millimetri",
+    fr: "Millimètre",
+    ar: "مليمتر",
+    it: "Millimetro"
+  },
+  cm: {
+    en: "Centimeter",
+    zh: "厘米",
+    ja: "センチメートル",
+    ko: "센티미터",
+    es: "Centímetro",
+    de: "Zentimeter",
+    fi: "Senttimetri",
+    fr: "Centimètre",
+    ar: "سنتيمتر",
+    it: "Centimetro"
+  },
+  m: {
+    en: "Meter",
+    zh: "米",
+    ja: "メートル",
+    ko: "미터",
+    es: "Metro",
+    de: "Meter",
+    fi: "Metri",
+    fr: "Mètre",
+    ar: "متر",
+    it: "Metro"
+  },
+  km: {
+    en: "Kilometer",
+    zh: "公里",
+    ja: "キロメートル",
+    ko: "킬로미터",
+    es: "Kilómetro",
+    de: "Kilometer",
+    fi: "Kilometri",
+    fr: "Kilomètre",
+    ar: "كيلومتر",
+    it: "Chilometro"
+  },
+  relationships: [{
+    val: "1 km = 1000 m"
+  }, {
+    val: "1 m = 100 cm"
+  }, {
+    val: "1 cm = 10 mm"
+  }, {
+    val: "1 m = 1000 mm"
+  }]
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [value, setValue] = useState(100);
+  const [fromUnit, setFromUnit] = useState("cm");
+  const [toUnit, setToUnit] = useState("m");
+  const units = {
+    mm: {
+      name: t.mm,
+      symbol: "mm",
+      toMM: 1
+    },
+    cm: {
+      name: t.cm,
+      symbol: "cm",
+      toMM: 10
+    },
+    m: {
+      name: t.m,
+      symbol: "m",
+      toMM: 1000
+    },
+    km: {
+      name: t.km,
+      symbol: "km",
+      toMM: 1000000
+    }
+  };
+  const convert = () => {
+    // units depends on lang now, so let's simplify logic by keeping multiplier static
+    // re-define multipliers separately
+    const multipliers = {
+      mm: 1,
+      cm: 10,
+      m: 1000,
+      km: 1000000
+    };
+    const inMM = value * multipliers[fromUnit];
+    return (inMM / multipliers[toUnit]).toFixed(4);
+  };
+  const result = convert();
+  const multipliers = {
+    mm: 1,
+    cm: 10,
+    m: 1000,
+    km: 1000000
+  };
+  const inMM = value * multipliers[fromUnit];
+  const widthPercent = Math.min(100, Math.max(1, inMM / 10000 * 100)); // 10m = 100%
+
+  const getUnitName = key => {
+    return units[key].name[lang] || units[key].name["en"];
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-8 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-6xl font-black text-green-900 mb-8 mt-8 text-center"
+  }, t.title[lang] || t.title["en"]), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/90 backdrop-blur-md rounded-3xl p-8 shadow-2xl max-w-4xl w-full"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-1 md:grid-cols-2 gap-6 mb-8"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "block text-lg font-bold text-green-800 mb-2"
+  }, t.value[lang] || t.value["en"]), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: value,
+    onChange: e => setValue(parseFloat(e.target.value) || 0),
+    className: "w-full px-6 py-4 text-3xl font-black text-center rounded-2xl border-4 border-green-300 focus:border-green-600 outline-none"
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "block text-lg font-bold text-green-800 mb-2"
+  }, t.unit[lang] || t.unit["en"]), /*#__PURE__*/React.createElement("select", {
+    value: fromUnit,
+    onChange: e => setFromUnit(e.target.value),
+    className: "w-full px-6 py-4 text-2xl font-bold rounded-2xl border-4 border-green-300 focus:border-green-600 outline-none"
+  }, Object.entries(units).map(([key, unit]) => /*#__PURE__*/React.createElement("option", {
+    key: key,
+    value: key
+  }, getUnitName(key), " (", unit.symbol, ")"))))), /*#__PURE__*/React.createElement("div", {
+    className: "text-center text-4xl md:text-5xl font-black text-green-600 mb-8"
+  }, "↓ ", t.convertTo[lang] || t.convertTo["en"], " ↓"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "block text-lg font-bold text-green-800 mb-2"
+  }, t.targetUnit[lang] || t.targetUnit["en"]), /*#__PURE__*/React.createElement("select", {
+    value: toUnit,
+    onChange: e => setToUnit(e.target.value),
+    className: "w-full px-6 py-4 text-2xl font-bold rounded-2xl border-4 border-green-300 focus:border-green-600 outline-none mb-8"
+  }, Object.entries(units).map(([key, unit]) => /*#__PURE__*/React.createElement("option", {
+    key: key,
+    value: key
+  }, getUnitName(key), " (", unit.symbol, ")")))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-8 text-center border-4 border-green-400"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-bold text-green-700 mb-2"
+  }, t.result[lang] || t.result["en"]), /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl md:text-7xl font-black text-green-600 break-all"
+  }, result), /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-bold text-green-700 mt-2"
+  }, units[toUnit].symbol)), /*#__PURE__*/React.createElement("div", {
+    className: "mt-8 bg-blue-50 rounded-2xl p-6"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-xl font-black text-blue-800 mb-4"
+  }, "💡 ", t.tipsTitle[lang] || t.tipsTitle["en"]), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-1 md:grid-cols-2 gap-4 text-sm font-bold text-blue-700"
+  }, t.relationships.map((r, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "bg-white p-3 rounded-lg"
+  }, r.val)))), /*#__PURE__*/React.createElement("div", {
+    className: "mt-8 bg-slate-100 rounded-2xl p-6 overflow-hidden"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-center font-bold text-slate-700 mb-4"
+  }, t.visualizer[lang] || t.visualizer["en"]), /*#__PURE__*/React.createElement("div", {
+    className: "w-full bg-slate-200 rounded-full h-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "h-full bg-gradient-to-r from-green-400 to-emerald-500 rounded-full bar-transition shadow-lg",
+    style: {
+      width: `${widthPercent}%`
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "text-center text-xs text-slate-400 mt-2"
+  }, t.scale[lang] || t.scale["en"]))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

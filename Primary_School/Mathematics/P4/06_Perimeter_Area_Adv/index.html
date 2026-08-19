@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小四數學：周界與面積進階 | Perimeter & Area</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #fff7ed 0%, #fb923c 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState
+} = React;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Composite Shapes Challenge",
+    zh: "複合圖形挑戰",
+    ja: "複合図形チャレンジ",
+    ko: "복합 도형 도전",
+    es: "Desafío de Formas Compuestas",
+    de: "Zusammengesetzte Formen",
+    fi: "Monimutkaiset kuviot",
+    fr: "Défi des formes composites",
+    ar: "تحدي الأشكال المركبة",
+    it: "Sfida delle forme composte"
+  },
+  showPerimeter: {
+    en: "Show Perimeter",
+    zh: "顯示周界",
+    ja: "周囲を表示",
+    ko: "둘레 표시",
+    es: "Mostrar Perímetro",
+    de: "Umfang anzeigen",
+    fi: "Näytä piiri",
+    fr: "Afficher le périmètre",
+    ar: "إظهار المحيط",
+    it: "Mostra perimetro"
+  },
+  hidePerimeter: {
+    en: "Hide Perimeter",
+    zh: "隱藏周界",
+    ja: "周囲を隠す",
+    ko: "둘레 숨기기",
+    es: "Ocultar Perímetro",
+    de: "Umfang ausblenden",
+    fi: "Piilota piiri",
+    fr: "Masquer le périmètre",
+    ar: "إخفاء المحيط",
+    it: "Nascondi perimetro"
+  },
+  showArea: {
+    en: "Show Area",
+    zh: "顯示面積",
+    ja: "面積を表示",
+    ko: "면적 표시",
+    es: "Mostrar Área",
+    de: "Fläche anzeigen",
+    fi: "Näytä pinta-ala",
+    fr: "Afficher la surface",
+    ar: "إظهار المساحة",
+    it: "Mostra area"
+  },
+  hideArea: {
+    en: "Hide Area",
+    zh: "隱藏面積",
+    ja: "面積を隠す",
+    ko: "면적 숨기기",
+    es: "Ocultar Área",
+    de: "Fläche ausblenden",
+    fi: "Piilota pinta-ala",
+    fr: "Masquer la surface",
+    ar: "إخفاء المساحة",
+    it: "Nascondi area"
+  },
+  perimeterCalc: {
+    en: "Perimeter Calculation",
+    zh: "周界計算",
+    ja: "周囲の計算",
+    ko: "둘레 계산",
+    es: "Cálculo del Perímetro",
+    de: "Umfangsberechnung",
+    fi: "Piirin laskenta",
+    fr: "Calcul du périmètre",
+    ar: "حساب المحيط",
+    it: "Calcolo del perimetro"
+  },
+  perimeterTip: {
+    en: "Displacement Method: Move inner edges out to form a large rectangle!",
+    zh: "移位法：把內凹的邊移出來，變成一個大長方形！",
+    ja: "移動法：内側の辺を外側に移動して大きな長方形を作る！",
+    ko: "이동법: 안쪽 모서리를 바깥쪽으로 이동하여 큰 직사각형을 만드세요!",
+    es: "Método de Desplazamiento: ¡Mueve los bordes internos hacia afuera para formar un rectángulo grande!",
+    de: "Verschiebungsmethode: Verschiebe innere Kanten nach außen, um ein großes Rechteck zu bilden!",
+    fi: "Siirtomenetelmä: Siirrä sisäreunat ulospäin muodostaaksesi suuren suorakulmion!",
+    fr: "Méthode de déplacement : Déplacez les bords intérieurs vers l'extérieur pour former un grand rectangle !",
+    ar: "طريقة الإزاحة: حرك الحواف الداخلية للخارج لتشكيل مستطيل كبير!",
+    it: "Metodo di spostamento: Sposta i bordi interni verso l'esterno per formare un grande rettangolo!"
+  },
+  areaCalc: {
+    en: "Area Calculation",
+    zh: "面積計算",
+    ja: "面積計算",
+    ko: "면적 계산",
+    es: "Cálculo del Área",
+    de: "Flächenberechnung",
+    fi: "Pinta-alan laskenta",
+    fr: "Calcul de la surface",
+    ar: "حساب المساحة",
+    it: "Calcolo dell'area"
+  },
+  areaTip: {
+    en: "Subtraction Method: Large Rectangle Area - Missing Part Area",
+    zh: "減法：大長方形面積 − 缺失部分面積",
+    ja: "引き算：大きな長方形の面積 - 欠けている部分の面積",
+    ko: "빼기 방법: 큰 직사각형 면적 - 빠진 부분 면적",
+    es: "MÉtodo de Resta: Área del Rectángulo Grande - Área de la Parte Faltante",
+    de: "Subtraktionsmethode: Große Rechteckfläche - Fehlende Teilfläche",
+    fi: "Vähennysmenetelmä: Suuren suorakulmion pinta-ala - Puuttuvan osan pinta-ala",
+    fr: "Méthode de soustraction : Surface du grand rectangle - Surface de la partie manquante",
+    ar: "طريقة الطرح: مساحة المستطيل الكبير - مساحة الجزء المفقود",
+    it: "Metodo di sottrazione: Area del rettangolo grande - Area della parte mancante"
+  }
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  // Shape: L-shape
+  // Outer dimensions: W=10, H=8
+  // Cutout: w=4, h=3
+  const W = 10,
+    H = 8,
+    cutW = 4,
+    cutH = 3;
+  // Vertices for SVG path (L-shape)
+  // (0,0) -> (W,0) -> (W, H-cutH) -> (W-cutW, H-cutH) -> (W-cutW, H) -> (0,H)
+
+  const scale = 30;
+  const p = `M0,0 L${W * scale},0 L${W * scale},${(H - cutH) * scale} L${(W - cutW) * scale},${(H - cutH) * scale} L${(W - cutW) * scale},${H * scale} L0,${H * scale} Z`;
+  const [showArea, setShowArea] = useState(false);
+  const [showPerimeter, setShowPerimeter] = useState(false);
+  const area = W * H - cutW * cutH;
+  const perimeter = W + H + (W - cutW) + cutH + cutW + (H - cutH);
+  const getText = key => t[key][lang] || t[key]["en"];
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-8 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-orange-900 mb-8 mt-8"
+  }, "🧱 ", getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/90 backdrop-blur-md rounded-3xl p-8 shadow-2xl max-w-4xl w-full flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "mb-8 relative p-8 bg-orange-50 rounded-3xl"
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: W * scale + 40,
+    height: H * scale + 40,
+    className: "overflow-visible"
+  }, /*#__PURE__*/React.createElement("g", {
+    transform: "translate(20,20)"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: p,
+    fill: "#fdba74",
+    stroke: "#c2410c",
+    strokeWidth: "4"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: W * scale / 2,
+    y: "-10",
+    textAnchor: "middle",
+    className: "font-bold text-lg fill-orange-900"
+  }, W, "cm"), /*#__PURE__*/React.createElement("text", {
+    x: "-15",
+    y: H * scale / 2,
+    textAnchor: "middle",
+    className: "font-bold text-lg fill-orange-900",
+    transform: `rotate(-90,-15,${H * scale / 2})`
+  }, H, "cm"), /*#__PURE__*/React.createElement("text", {
+    x: (W - cutW / 2) * scale,
+    y: (H - cutH) * scale - 10,
+    textAnchor: "middle",
+    className: "font-bold text-sm fill-orange-800"
+  }, cutW, "cm"), /*#__PURE__*/React.createElement("text", {
+    x: (W - cutW) * scale + 10,
+    y: H * scale - cutH * scale / 2,
+    textAnchor: "start",
+    className: "font-bold text-sm fill-orange-800"
+  }, cutH, "cm")))), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4 mb-8 flex-wrap justify-center"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setShowPerimeter(!showPerimeter),
+    className: "px-6 py-3 bg-blue-500 text-white rounded-xl font-bold shadow-lg"
+  }, showPerimeter ? getText("hidePerimeter") : getText("showPerimeter")), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setShowArea(!showArea),
+    className: "px-6 py-3 bg-green-500 text-white rounded-xl font-bold shadow-lg"
+  }, showArea ? getText("hideArea") : getText("showArea"))), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-1 md:grid-cols-2 gap-8 w-full"
+  }, showPerimeter && /*#__PURE__*/React.createElement("div", {
+    className: "bg-blue-100 p-6 rounded-2xl border-2 border-blue-400"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-xl font-bold text-blue-900 mb-2"
+  }, getText("perimeterCalc")), /*#__PURE__*/React.createElement("p", {
+    className: "text-blue-800 mb-2"
+  }, getText("perimeterTip")), /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-black text-blue-700"
+  }, "(", W, " + ", H, ") × 2 = ", perimeter, " cm")), showArea && /*#__PURE__*/React.createElement("div", {
+    className: "bg-green-100 p-6 rounded-2xl border-2 border-green-400"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-xl font-bold text-green-900 mb-2"
+  }, getText("areaCalc")), /*#__PURE__*/React.createElement("p", {
+    className: "text-green-800 mb-2"
+  }, getText("areaTip")), /*#__PURE__*/React.createElement("div", {
+    className: "text-lg font-bold"
+  }, "(", W, " × ", H, ") - (", cutW, " × ", cutH, ")"), /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-black text-green-700"
+  }, "= ", W * H, " - ", cutW * cutH, " = ", area, " cm²")))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

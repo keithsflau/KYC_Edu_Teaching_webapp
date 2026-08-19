@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Living vs Non-Living | Junior Science</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #f0fdf4;
+      } /* Green tint for biology */
+      .card-item {
+        cursor: grab;
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+      .card-item:active {
+        cursor: grabbing;
+        transform: scale(1.05) rotate(2deg);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+      }
+      .zone {
+        transition: all 0.3s;
+      }
+      .zone.drag-over {
+        transform: scale(1.02);
+        border-width: 4px;
+      }
+    </style>
+  </head>
+  <body class="bg-green-50 text-slate-800 min-h-screen">
+    <div id="root"></div>
+
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const initialItems = [{
+  id: 1,
+  name: "Tree",
+  type: "living",
+  icon: "fa-tree"
+}, {
+  id: 2,
+  name: "Rock",
+  type: "non-living",
+  icon: "fa-mountain"
+}, {
+  id: 3,
+  name: "Cat",
+  type: "living",
+  icon: "fa-cat"
+}, {
+  id: 4,
+  name: "Robot",
+  type: "non-living",
+  icon: "fa-robot"
+}, {
+  id: 5,
+  name: "Bacteria",
+  type: "living",
+  icon: "fa-disease"
+},
+// Disease icon for germ/bacteria
+{
+  id: 6,
+  name: "Car",
+  type: "non-living",
+  icon: "fa-car"
+}, {
+  id: 7,
+  name: "Mushroom",
+  type: "living",
+  icon: "fa-wand-magic-sparkles"
+},
+// Close enough icon for fungus
+{
+  id: 8,
+  name: "Water",
+  type: "non-living",
+  icon: "fa-glass-water"
+}];
+const App = () => {
+  const [items, setItems] = useState(initialItems);
+  const [livingZone, setLivingZone] = useState([]);
+  const [nonLivingZone, setNonLivingZone] = useState([]);
+  const [feedback, setFeedback] = useState(null); // { msg, color }
+
+  const handleDragStart = (e, id) => {
+    e.dataTransfer.setData("id", id);
+  };
+  const handleDrop = (e, targetZone) => {
+    const id = parseInt(e.dataTransfer.getData("id"), 10);
+    const item = items.find(i => i.id === id);
+    if (item) {
+      if (item.type === targetZone) {
+        // Correct
+        if (targetZone === "living") setLivingZone([...livingZone, item]);else setNonLivingZone([...nonLivingZone, item]);
+        setItems(items.filter(i => i.id !== id));
+        setFeedback({
+          msg: "Correct!",
+          color: "text-green-600"
+        });
+        setTimeout(() => setFeedback(null), 1000);
+      } else {
+        // Incorrect
+        setFeedback({
+          msg: item.name + " is actually " + item.type + "!",
+          color: "text-red-500"
+        });
+        if (item.name === "Robot" && targetZone === "living") {
+          setFeedback({
+            msg: "Caution: Robots move but don't reproduce/grow naturally!",
+            color: "text-amber-600"
+          });
+        }
+        if (item.name === "Car" && targetZone === "living") {
+          setFeedback({
+            msg: "Cars need energy (fuel) but don't grow!",
+            color: "text-amber-600"
+          });
+        }
+        setTimeout(() => setFeedback(null), 3000);
+      }
+    }
+  };
+  const handleDragOver = e => {
+    e.preventDefault();
+    // Add visual cue logic simplistically handled by CSS hover for now or add state if needed
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "p-8 max-w-6xl mx-auto min-h-screen flex flex-col"
+  }, /*#__PURE__*/React.createElement("header", {
+    className: "text-center mb-8"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-green-600 font-bold uppercase text-xs tracking-widest"
+  }, "Form 1 Science • Biology"), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-slate-800"
+  }, "Living vs Non-Living"), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-500"
+  }, "Drag items to the correct category. Remember", " ", /*#__PURE__*/React.createElement("strong", null, "MRS GREN"), "!")), /*#__PURE__*/React.createElement("div", {
+    className: "h-8 text-center mb-4"
+  }, feedback && /*#__PURE__*/React.createElement("div", {
+    className: `font-bold text-lg animate-bounce ${feedback.color}`
+  }, feedback.msg)), /*#__PURE__*/React.createElement("div", {
+    className: "flex-grow grid grid-cols-1 md:grid-cols-2 gap-8 mb-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    onDrop: e => handleDrop(e, "living"),
+    onDragOver: handleDragOver,
+    className: "zone bg-green-100/50 border-4 border-dashed border-green-300 rounded-3xl p-6 flex flex-col items-center min-h-[400px]"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-green-700 font-bold text-2xl mb-4 flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-heart-pulse"
+  }), " Living Things"), /*#__PURE__*/React.createElement("div", {
+    className: "w-full grid grid-cols-2 sm:grid-cols-3 gap-2"
+  }, livingZone.map(item => /*#__PURE__*/React.createElement("div", {
+    key: item.id,
+    className: "bg-white p-3 rounded-xl shadow border-green-200 border text-center animate-pop-in"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: `fa-solid ${item.icon} text-green-500 text-2xl mb-1`
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "font-bold text-sm"
+  }, item.name)))), livingZone.length === 0 && /*#__PURE__*/React.createElement("div", {
+    className: "text-green-400/50 font-bold text-4xl mt-20 opacity-20 rotate-12"
+  }, "Drop Here")), /*#__PURE__*/React.createElement("div", {
+    onDrop: e => handleDrop(e, "non-living"),
+    onDragOver: handleDragOver,
+    className: "zone bg-slate-100/50 border-4 border-dashed border-slate-300 rounded-3xl p-6 flex flex-col items-center min-h-[400px]"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-slate-600 font-bold text-2xl mb-4 flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-cube"
+  }), " Non-Living"), /*#__PURE__*/React.createElement("div", {
+    className: "w-full grid grid-cols-2 sm:grid-cols-3 gap-2"
+  }, nonLivingZone.map(item => /*#__PURE__*/React.createElement("div", {
+    key: item.id,
+    className: "bg-white p-3 rounded-xl shadow border-slate-200 border text-center animate-pop-in"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: `fa-solid ${item.icon} text-slate-400 text-2xl mb-1`
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "font-bold text-sm"
+  }, item.name)))), nonLivingZone.length === 0 && /*#__PURE__*/React.createElement("div", {
+    className: "text-slate-400/50 font-bold text-4xl mt-20 opacity-20 -rotate-12"
+  }, "Drop Here"))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-8 rounded-3xl shadow-xl border border-green-100 min-h-[150px]"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-lg font-bold text-slate-400 mb-4 uppercase text-center"
+  }, "Items to Sort"), items.length > 0 ? /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-wrap justify-center gap-4"
+  }, items.map(item => /*#__PURE__*/React.createElement("div", {
+    key: item.id,
+    draggable: true,
+    onDragStart: e => handleDragStart(e, item.id),
+    className: "card-item bg-white px-6 py-4 rounded-2xl border-2 border-slate-100 shadow-md hover:border-blue-400 hover:shadow-lg flex flex-col items-center gap-2"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: `fa-solid ${item.icon} text-3xl text-slate-700`
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "font-bold"
+  }, item.name)))) : /*#__PURE__*/React.createElement("div", {
+    className: "text-center"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-2xl font-bold text-green-600 mb-2"
+  }, "Excellent!"), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-500 mb-4"
+  }, "You have classified all items correctly."), /*#__PURE__*/React.createElement("button", {
+    onClick: () => window.location.reload(),
+    className: "bg-green-600 text-white px-6 py-2 rounded-full font-bold hover:bg-green-700"
+  }, "Play Again"))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>States of Matter Simulation | 物質狀態模擬</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+      }
+    </script>
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+      }
+      .slider-thumb::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 20px;
+        height: 20px;
+        background: #3b82f6;
+        cursor: pointer;
+        border-radius: 50%;
+      }
+    </style>
+  </head>
+
+  <body
+    class="bg-slate-900 text-white min-h-screen flex flex-col overflow-hidden"
+  >
+    <!-- Header -->
+    <header
+      class="bg-slate-800/50 backdrop-blur-md border-b border-slate-700 px-6 py-4 flex justify-between items-center z-10"
+    >
+      <div class="flex items-center gap-4">
+        <a href="../../index.html" class="text-slate-400 hover:text-white transition-colors" aria-label="Back to Chemistry hub">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+        </a>
+        <h1
+          class="text-xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent"
+        >
+          States of Matter
+          <span class="text-slate-500 font-medium text-sm ml-2">物質狀態</span>
+        </h1>
+      </div>
+      <div class="flex items-center gap-2 text-sm text-slate-400">
+        <span>Particle Theory</span>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow flex relative">
+      <!-- 3D Canvas Container -->
+      <div
+        id="canvas-container"
+        class="absolute inset-0 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900"
+      ></div>
+
+      <!-- Controls HUD -->
+      <div
+        class="absolute bottom-8 left-1/2 -translate-x-1/2 w-full max-w-3xl px-6 pointer-events-none"
+      >
+        <div
+          class="bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-6 shadow-2xl pointer-events-auto"
+        >
+          <div
+            class="flex flex-col md:flex-row gap-8 items-center justify-between"
+          >
+            <!-- State Selectors -->
+            <div class="flex bg-slate-800 p-1.5 rounded-xl">
+              <button
+                onclick="setMode('solid')"
+                id="btn-solid"
+                class="px-6 py-2 rounded-lg text-sm font-medium transition-all bg-blue-600 text-white shadow-lg"
+              >
+                Solid 固體
+              </button>
+              <button
+                onclick="setMode('liquid')"
+                id="btn-liquid"
+                class="px-6 py-2 rounded-lg text-sm font-medium transition-all text-slate-400 hover:text-white"
+              >
+                Liquid 液體
+              </button>
+              <button
+                onclick="setMode('gas')"
+                id="btn-gas"
+                class="px-6 py-2 rounded-lg text-sm font-medium transition-all text-slate-400 hover:text-white"
+              >
+                Gas 氣體
+              </button>
+            </div>
+
+            <!-- Temperature Control -->
+            <div class="flex-grow w-full md:w-auto">
+              <div class="flex justify-between text-xs text-slate-400 mb-2">
+                <span>Temperature (溫度)</span>
+                <span id="temp-display">0 K</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="text-blue-400 text-xs">Cold</span>
+                <input
+                  type="range"
+                  id="temp-slider"
+                  min="0"
+                  max="1000"
+                  value="50"
+                  class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer slider-thumb"
+                />
+                <span class="text-red-400 text-xs">Hot</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Info Panel -->
+      <div
+        class="absolute top-4 right-4 w-64 bg-slate-900/80 backdrop-blur-lg border border-slate-700/50 rounded-xl p-4 text-sm pointer-events-none"
+      >
+        <h3 class="text-blue-400 font-semibold mb-1" id="info-title">
+          Solid (固體)
+        </h3>
+        <p class="text-slate-300 leading-relaxed text-xs" id="info-desc">
+          Particles are packed closely together in a regular arrangement. They
+          vibrate about fixed positions.
+          <br /><br />
+          粒子排列整齊緊密，只能在固定位置振動。
+        </p>
+      </div>
+    </main>
+
+    <script type="module">
+      import * as THREE from "three";
+      import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+      // Scene Setup
+      const container = document.getElementById("canvas-container");
+      const scene = new THREE.Scene();
+      scene.fog = new THREE.FogExp2(0x0f172a, 0.02);
+
+      const camera = new THREE.PerspectiveCamera(
+        50,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        100
+      );
+      camera.position.set(0, 5, 10);
+
+      const renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        alpha: true,
+      });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(window.devicePixelRatio);
+      container.appendChild(renderer.domElement);
+
+      const controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+
+      // Lighting
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+      scene.add(ambientLight);
+
+      const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+      dirLight.position.set(5, 10, 7);
+      scene.add(dirLight);
+
+      // Container Box (Invisible bounds visualisation)
+      const boxGeometry = new THREE.BoxGeometry(8, 8, 8);
+      const boxEdges = new THREE.EdgesGeometry(boxGeometry);
+      const boxLine = new THREE.LineSegments(
+        boxEdges,
+        new THREE.LineBasicMaterial({ color: 0x334155 })
+      );
+      scene.add(boxLine);
+
+      // Particles
+      const particleCount = 125; // 5x5x5 for solid lattice
+      const particles = [];
+      const sphereGeometry = new THREE.SphereGeometry(0.3, 32, 32);
+      const sphereMaterial = new THREE.MeshPhongMaterial({
+        color: 0x3b82f6,
+        shininess: 100,
+        specular: 0x60a5fa,
+      });
+
+      // Initialize Particles
+      for (let i = 0; i < particleCount; i++) {
+        const mesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
+        scene.add(mesh);
+        particles.push({
+          mesh: mesh,
+          basePos: new THREE.Vector3(), // For solid lattice
+          velocity: new THREE.Vector3(),
+        });
+      }
+
+      // State Logic
+      let currentMode = "solid";
+      let temperature = 50; // 0 to 1000
+      const modes = {
+        solid: {
+          temp: 50,
+          desc: "Particles are packed closely together in a regular arrangement. They vibrate about fixed positions.<br><br>粒子排列整齊緊密，只能在固定位置振動。",
+          title: "Solid (固體)",
+        },
+        liquid: {
+          temp: 300,
+          desc: "Particles are close together but arranged randomly. They can move around each other.<br><br>粒子緊密但排列無序，可以互相滑動。",
+          title: "Liquid (液體)",
+        },
+        gas: {
+          temp: 800,
+          desc: "Particles are far apart and arranged randomly. They move quickly in all directions.<br><br>粒子距離很遠且排列無序，向四方八面高速移動。",
+          title: "Gas (氣體)",
+        },
+      };
+
+      // Initialize Lattice for Solid
+      function resetLattice() {
+        let idx = 0;
+        const size = 5;
+        const offset = 2; // (5-1)*1/2 = 2
+        for (let x = 0; x < size; x++) {
+          for (let y = 0; y < size; y++) {
+            for (let z = 0; z < size; z++) {
+              if (idx < particles.length) {
+                particles[idx].basePos.set(x - offset, y - offset, z - offset);
+                idx++;
+              }
+            }
+          }
+        }
+      }
+      resetLattice();
+
+      // Animation Loop
+      const clock = new THREE.Clock();
+
+      function animate() {
+        requestAnimationFrame(animate);
+        const delta = clock.getDelta();
+        const time = clock.getElapsedTime();
+
+        // Physics Logic based on State & Temperature
+        const speedFactor = temperature / 1000;
+
+        particles.forEach((p, i) => {
+          if (currentMode === "solid") {
+            // Vibrate around basePos
+            const vibration = speedFactor * 0.2;
+            p.mesh.position.x =
+              p.basePos.x + Math.sin(time * 10 + i) * vibration;
+            p.mesh.position.y =
+              p.basePos.y + Math.cos(time * 12 + i) * vibration;
+            p.mesh.position.z =
+              p.basePos.z + Math.sin(time * 8 + i) * vibration;
+            // Color indicating heat
+            p.mesh.material.color.setHSL(0.6 - speedFactor * 0.6, 0.8, 0.5);
+          } else if (currentMode === "liquid") {
+            // Brownian motion but constrained
+            // Simple logic: move randomly but attracted to center if too far
+            const moveSpeed = speedFactor * 2.0 * delta;
+
+            // Random walk
+            p.velocity.x += (Math.random() - 0.5) * moveSpeed;
+            p.velocity.y += (Math.random() - 0.5) * moveSpeed;
+            p.velocity.z += (Math.random() - 0.5) * moveSpeed;
+
+            // Damping
+            p.velocity.multiplyScalar(0.95);
+            p.mesh.position.add(p.velocity);
+
+            // Keep inside box (Liquid gravity effect somewhat?)
+            // Let's just bundle them loosely in bottom half
+            if (p.mesh.position.y > 2) p.velocity.y -= 0.1;
+            if (p.mesh.position.y < -3.5) {
+              p.mesh.position.y = -3.5;
+              p.velocity.y *= -0.5;
+            }
+
+            // Simple bounds check box 8x8x8 (-4 to 4)
+            ["x", "z"].forEach((axis) => {
+              if (Math.abs(p.mesh.position[axis]) > 3.5) {
+                p.velocity[axis] *= -1;
+                p.mesh.position[axis] = Math.sign(p.mesh.position[axis]) * 3.5;
+              }
+            });
+
+            // Color
+            p.mesh.material.color.setHSL(0.6 - speedFactor * 0.5, 0.8, 0.5);
+          } else if (currentMode === "gas") {
+            // Free movement, bounce off walls
+            const gasSpeed = speedFactor * 10.0 * delta;
+
+            if (p.velocity.length() === 0) {
+              p.velocity
+                .set(
+                  Math.random() - 0.5,
+                  Math.random() - 0.5,
+                  Math.random() - 0.5
+                )
+                .normalize();
+            }
+
+            p.velocity.normalize().multiplyScalar(gasSpeed);
+            p.mesh.position.add(p.velocity);
+
+            // Bounce Walls
+            ["x", "y", "z"].forEach((axis) => {
+              if (Math.abs(p.mesh.position[axis]) > 3.8) {
+                p.velocity[axis] *= -1;
+                p.mesh.position[axis] = Math.sign(p.mesh.position[axis]) * 3.8;
+              }
+            });
+            // Color
+            p.mesh.material.color.setHSL(0.6 - speedFactor * 0.5, 0.8, 0.5);
+          }
+        });
+
+        controls.update();
+        renderer.render(scene, camera);
+      }
+
+      animate();
+
+      // Window Resize
+      window.addEventListener("resize", () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      // Interface Functions (Global scope for HTML onclick)
+      window.setMode = (mode) => {
+        currentMode = mode;
+
+        // Update UI
+        ["solid", "liquid", "gas"].forEach((m) => {
+          const btn = document.getElementById(`btn-${m}`);
+          if (m === mode) {
+            btn.classList.add("bg-blue-600", "text-white", "shadow-lg");
+            btn.classList.remove("text-slate-400", "hover:text-white");
+          } else {
+            btn.classList.remove("bg-blue-600", "text-white", "shadow-lg");
+            btn.classList.add("text-slate-400", "hover:text-white");
+          }
+        });
+
+        // Update Info
+        document.getElementById("info-title").textContent = modes[mode].title;
+        document.getElementById("info-desc").innerHTML = modes[mode].desc;
+
+        // Set Temp Slider target
+        const targetTemp = modes[mode].temp;
+        updateSlider(targetTemp);
+
+        // Reset positions if switching to solid
+        if (mode === "solid") {
+          resetLattice();
+          // animate position reset could be nice but immediate is fine for MVP
+          particles.forEach((p) => {
+            p.mesh.position.copy(p.basePos);
+            p.velocity.set(0, 0, 0);
+          });
+        }
+      };
+
+      const slider = document.getElementById("temp-slider");
+      const tempDisplay = document.getElementById("temp-display");
+
+      function updateSlider(val) {
+        slider.value = val;
+        temperature = val;
+        tempDisplay.textContent = val + " K";
+      }
+
+      slider.addEventListener("input", (e) => {
+        temperature = parseInt(e.target.value, 10);
+        tempDisplay.textContent = temperature + " K";
+
+        // Auto switch mode based on temp?
+        // Let's keep manual mode switch for educational clarity,
+        // but maybe highlight the "correct" mode.
+      });
+    </script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

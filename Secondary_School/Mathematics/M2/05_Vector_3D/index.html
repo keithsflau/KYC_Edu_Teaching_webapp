@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3D Vector Visualizer | M2 Vectors</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+        overflow: hidden;
+      }
+      .glass {
+        background: rgba(15, 23, 42, 0.8);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      input[type="range"] {
+        -webkit-appearance: none;
+        background: transparent;
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        height: 12px;
+        width: 12px;
+        border-radius: 50%;
+        background: white;
+        margin-top: -4px;
+        cursor: pointer;
+      }
+      input[type="range"]::-webkit-slider-runnable-track {
+        width: 100%;
+        height: 4px;
+        background: #475569;
+        border-radius: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="absolute top-4 left-4 z-10 glass p-6 rounded-2xl max-w-sm">
+      <!-- Language Toggle -->
+      <div class="absolute top-4 right-4">
+        <button
+          id="lang-btn"
+          class="px-2 py-1 bg-slate-800 border border-slate-600 rounded-full text-[10px] font-bold text-emerald-400 hover:bg-slate-700 hover:text-white transition flex items-center gap-1"
+        >
+          <i class="fa-solid fa-language"></i>
+          <span id="lang-text">中文</span>
+        </button>
+      </div>
+
+      <h1
+        id="app-title"
+        class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-fuchsia-400 mb-2"
+      >
+        3D Vector Lab
+      </h1>
+      <p id="app-subtitle" class="text-xs text-slate-300 mb-4">
+        Visualizing Components
+      </p>
+
+      <div class="space-y-4">
+        <!-- Vector A -->
+        <div
+          class="p-3 bg-purple-900/30 border border-purple-500/30 rounded-xl"
+        >
+          <h3
+            id="label-vecA"
+            class="text-xs font-bold text-purple-400 uppercase mb-2"
+          >
+            Vector A
+          </h3>
+          <div class="space-y-2">
+            <div class="flex items-center gap-2">
+              <span class="text-[10px] w-3 text-red-400 font-bold">i</span>
+              <input
+                type="range"
+                min="-5"
+                max="5"
+                step="0.5"
+                id="ax"
+                value="2.5"
+                class="flex-1 accent-red-500"
+              />
+              <span id="val_ax" class="text-[10px] w-6 text-right font-mono"
+                >3.0</span
+              >
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-[10px] w-3 text-green-400 font-bold">j</span>
+              <input
+                type="range"
+                min="-5"
+                max="5"
+                step="0.5"
+                id="ay"
+                value="-1"
+                class="flex-1 accent-green-500"
+              />
+              <span id="val_ay" class="text-[10px] w-6 text-right font-mono"
+                >2.0</span
+              >
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-[10px] w-3 text-blue-400 font-bold">k</span>
+              <input
+                type="range"
+                min="-5"
+                max="5"
+                step="0.5"
+                id="az"
+                value="3.5"
+                class="flex-1 accent-blue-500"
+              />
+              <span id="val_az" class="text-[10px] w-6 text-right font-mono"
+                >4.0</span
+              >
+            </div>
+          </div>
+          <div
+            class="mt-2 pt-2 border-t border-purple-500/20 text-[10px] flex justify-between"
+          >
+            <span id="label-mag">Magnitude |A|</span>
+            <span id="mag_a" class="font-mono text-white">5.39</span>
+          </div>
+        </div>
+
+        <div id="label-cam" class="text-[10px] text-slate-500 text-center">
+          Rotate camera to see 3D structure
+        </div>
+      </div>
+    </div>
+
+    <div id="canvas-container" class="w-screen h-screen"></div>
+
+    <script>
+      // Bilingual
+      const translations = {
+        en: {
+          title: "3D Vector Lab",
+          subtitle: "Visualizing Components",
+          vecA: "Vector A",
+          mag: "Magnitude |A|",
+          cam: "Rotate camera to see 3D structure",
+          langBtn: "中文",
+        },
+        zh: {
+          title: "3D 向量實驗室",
+          subtitle: "向量分量視覺化",
+          vecA: "向量 A",
+          mag: "量值 |A|",
+          cam: "旋轉相機以查看 3D 結構",
+          langBtn: "English",
+        },
+      };
+
+      let currentLang = "en";
+
+      function updateLanguage() {
+        const t = translations[currentLang];
+        document.getElementById("lang-text").textContent = t.langBtn;
+        document.getElementById("app-title").textContent = t.title;
+        document.getElementById("app-subtitle").textContent = t.subtitle;
+        document.getElementById("label-vecA").textContent = t.vecA;
+        document.getElementById("label-mag").textContent = t.mag;
+        document.getElementById("label-cam").textContent = t.cam;
+      }
+
+      document.getElementById("lang-btn").addEventListener("click", () => {
+        currentLang = currentLang === "en" ? "zh" : "en";
+        updateLanguage();
+      });
+
+      // ThreeJS
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0f172a);
+      const camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        100
+      );
+      camera.position.set(8, 6, 10);
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document
+        .getElementById("canvas-container")
+        .appendChild(renderer.domElement);
+
+      const controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+
+      scene.add(new THREE.GridHelper(10, 10, 0x334155, 0x1e293b));
+      scene.add(new THREE.AxesHelper(2)); // Origin axes
+      scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+
+      // Vector Group
+      const vecGroup = new THREE.Group();
+      scene.add(vecGroup);
+
+      // Dynamic Objects
+      let arrowA;
+      let compX, compY, compZ;
+      let box;
+
+      function initObjects() {
+        // Main Arrow
+        arrowA = new THREE.ArrowHelper(
+          new THREE.Vector3(1, 1, 1).normalize(),
+          new THREE.Vector3(0, 0, 0),
+          1,
+          0xc084fc
+        );
+        vecGroup.add(arrowA);
+
+        // Component Arrows
+        compX = new THREE.ArrowHelper(
+          new THREE.Vector3(1, 0, 0),
+          new THREE.Vector3(0, 0, 0),
+          1,
+          0xf87171
+        ); // Red
+        compY = new THREE.ArrowHelper(
+          new THREE.Vector3(0, 1, 0),
+          new THREE.Vector3(0, 0, 0),
+          1,
+          0x4ade80
+        ); // Green
+        compZ = new THREE.ArrowHelper(
+          new THREE.Vector3(0, 0, 1),
+          new THREE.Vector3(0, 0, 0),
+          1,
+          0x60a5fa
+        ); // Blue
+        vecGroup.add(compX);
+        vecGroup.add(compY);
+        vecGroup.add(compZ);
+
+        // Bounding Box (Wireframe)
+        const geo = new THREE.BoxGeometry(1, 1, 1);
+        const edges = new THREE.EdgesGeometry(geo);
+        box = new THREE.LineSegments(
+          edges,
+          new THREE.LineBasicMaterial({
+            color: 0xffffff,
+            opacity: 0.2,
+            transparent: true,
+          })
+        );
+        vecGroup.add(box);
+      }
+
+      initObjects();
+
+      function update() {
+        const ax = parseFloat(document.getElementById("ax").value);
+        const ay = parseFloat(document.getElementById("ay").value);
+        const az = parseFloat(document.getElementById("az").value);
+
+        // Update HUD
+        document.getElementById("val_ax").innerText = ax.toFixed(1);
+        document.getElementById("val_ay").innerText = ay.toFixed(1);
+        document.getElementById("val_az").innerText = az.toFixed(1);
+        document.getElementById("mag_a").innerText = Math.sqrt(
+          ax * ax + ay * ay + az * az
+        ).toFixed(2);
+
+        const v = new THREE.Vector3(ax, ay, az);
+        const len = v.length();
+
+        // Update Main Arrow
+        if (len > 0.01) {
+          arrowA.setDirection(v.clone().normalize());
+          arrowA.setLength(len, len * 0.2, len * 0.08);
+        }
+
+        // Components
+        compX.setLength(Math.abs(ax), Math.abs(ax) * 0.2, Math.abs(ax) * 0.08);
+        compX.setDirection(new THREE.Vector3(Math.sign(ax), 0, 0));
+        // Shift Y component to start from X tip? No, origin usually.
+        // Or "Head-to-Tail":
+        // X from origin. Y from X-tip. Z from XY-tip.
+        // Let's do head-to-tail for education.
+
+        compX.position.set(0, 0, 0);
+
+        compY.setLength(Math.abs(ay));
+        compY.setDirection(new THREE.Vector3(0, Math.sign(ay), 0));
+        compY.position.set(ax, 0, 0); // Start at X tip
+
+        compZ.setLength(Math.abs(az));
+        compZ.setDirection(new THREE.Vector3(0, 0, Math.sign(az)));
+        compZ.position.set(ax, ay, 0); // Start at XY tip
+
+        // Box
+        // Box geometry is centered. We need to scale and position it.
+        box.scale.set(Math.abs(ax), Math.abs(ay), Math.abs(az));
+        box.position.set(ax / 2, ay / 2, az / 2);
+      }
+
+      document
+        .querySelectorAll("input")
+        .forEach((i) => i.addEventListener("input", update));
+
+      update(); // Init
+      updateLanguage();
+
+      function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+      }
+      animate();
+
+      window.addEventListener("resize", () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+    </script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

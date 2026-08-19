@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>諸子百家模擬人生 2.0 (Philosophy Strategy)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@900&family=Noto+Sans+TC:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            background: #1e1e1e;
+            font-family: 'Noto Sans TC', sans-serif;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        #game-ui {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: grid;
+            grid-template-rows: 60px 1fr 150px;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            background: rgba(30, 30, 30, 0.95);
+            border-bottom: 2px solid #b45309;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            color: #d1d5db;
+            pointer-events: auto;
+        }
+
+        .resource {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .res-icon {
+            color: #fbbf24;
+        }
+
+        /* Map Area (Canvas) */
+        #map-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: #111827;
+        }
+
+        /* Bottom Control Panel */
+        .bottom-panel {
+            background: rgba(17, 24, 39, 0.95);
+            border-top: 2px solid #b45309;
+            padding: 15px;
+            display: flex;
+            gap: 20px;
+            pointer-events: auto;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .action-card {
+            width: 140px;
+            height: 110px;
+            background: #374151;
+            border: 1px solid #4b5563;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .action-card:hover {
+            transform: translateY(-5px);
+            border-color: #fbbf24;
+            background: #4b5563;
+        }
+
+        .action-card.disabled {
+            opacity: 0.5;
+            filter: grayscale(1);
+            pointer-events: none;
+        }
+
+        .card-icon {
+            font-size: 2rem;
+            margin-bottom: 5px;
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: bold;
+            color: white;
+        }
+
+        .card-cost {
+            font-size: 0.8rem;
+            color: #fbbf24;
+        }
+
+        /* Event Modal */
+        .modal-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            pointer-events: auto;
+        }
+
+        .scroll-paper {
+            width: 600px;
+            background: #fdf6e3;
+            background-image: linear-gradient(90deg, transparent 50%, rgba(0, 0, 0, 0.03) 50%);
+            background-size: 4px 100%;
+            /* Bamboo slip texture effect */
+            padding: 40px;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.8), inset 0 0 100px rgba(180, 83, 9, 0.1);
+            border-top: 24px solid #92400e;
+            border-bottom: 24px solid #92400e;
+            border-radius: 4px;
+            color: #451a03;
+            position: relative;
+        }
+
+        .scroll-paper::before {
+            content: "📜";
+            position: absolute;
+            top: -50px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 3rem;
+            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5));
+        }
+
+        .event-title {
+            font-family: 'Noto Serif TC', serif;
+            font-size: 2.2rem;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #b45309;
+            padding-bottom: 10px;
+            text-align: center;
+        }
+
+        .event-desc {
+            font-size: 1.2rem;
+            line-height: 1.8;
+            margin-bottom: 30px;
+            text-align: justify;
+        }
+
+        .event-choices {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .choice-btn {
+            background: rgba(255, 255, 255, 0.8);
+            border: 2px solid #92400e;
+            padding: 18px;
+            text-align: left;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .choice-btn:hover {
+            background: #ffedd5;
+            transform: translateX(5px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Floating Text */
+        .float-text {
+            position: absolute;
+            font-weight: bold;
+            animation: floatUp 1.5s forwards;
+            pointer-events: none;
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <canvas id="map-container"></canvas>
+
+    <div id="game-ui">
+        <div class="top-bar">
+            <div class="flex gap-8">
+                <div class="resource"><span class="res-icon">👥</span> 民心 (Morale): <span id="res-morale">50</span>
+                </div>
+                <div class="resource"><span class="res-icon">💰</span> 國庫 (Gold): <span id="res-gold">100</span></div>
+                <div class="resource"><span class="res-icon">⚔️</span> 兵力 (Army): <span id="res-army">10</span></div>
+                <div class="resource"><span class="res-icon">👑</span> 影響 (Influence): <span
+                        id="res-influence">10</span></div>
+            </div>
+            <div class="text-xl font-black text-yellow-500">TURN <span id="turn-count">1</span></div>
+            <div class="text-sm text-gray-400">學派: <span id="school-name" class="text-white">儒家 (Confucianism)</span>
+            </div>
+        </div>
+
+        <div></div> <!-- Spacer -->
+
+        <div class="bottom-panel">
+            <div class="action-card" onclick="action('preach')">
+                <div class="card-icon">📜</div>
+                <div class="card-title">遊說列國</div>
+                <div class="card-cost">-10 💰</div>
+            </div>
+            <div class="action-card" onclick="action('recruit')">
+                <div class="card-icon">🚩</div>
+                <div class="card-title">招募門徒</div>
+                <div class="card-cost">-30 💰</div>
+            </div>
+            <div class="action-card" onclick="action('policy')">
+                <div class="card-icon">🏛️</div>
+                <div class="card-title">實施仁政</div>
+                <div class="card-cost">-50 💰</div>
+            </div>
+            <div class="bg-gray-700 w-[2px] h-[80%] mx-2"></div>
+            <div class="action-card" onclick="nextTurn()" style="border-color: #ef4444; background: #7f1d1d;">
+                <div class="card-icon">⏳</div>
+                <div class="card-title">結束回合</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Start Selection -->
+    <div id="start-overlay" class="modal-overlay" style="display:flex;">
+        <div class="scroll-paper" style="text-align:center;">
+            <h1 class="event-title">選擇你的學派</h1>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="choice-btn flex-col items-center hover:bg-yellow-100" onclick="startGame('儒家')">
+                    <span class="text-2xl mb-2">儒家 (Confucian)</span>
+                    <span class="text-sm text-gray-600">優勢: 民心穩定 +20%</span>
+                </div>
+                <div class="choice-btn flex-col items-center hover:bg-gray-300" onclick="startGame('墨家')">
+                    <span class="text-2xl mb-2">墨家 (Mohist)</span>
+                    <span class="text-sm text-gray-600">優勢: 防禦工事 +50%</span>
+                </div>
+                <div class="choice-btn flex-col items-center hover:bg-purple-100" onclick="startGame('法家')">
+                    <span class="text-2xl mb-2">法家 (Legalist)</span>
+                    <span class="text-sm text-gray-600">優勢: 稅收效率 +30%</span>
+                </div>
+                <div class="choice-btn flex-col items-center hover:bg-green-100" onclick="startGame('道家')">
+                    <span class="text-2xl mb-2">道家 (Taoist)</span>
+                    <span class="text-sm text-gray-600">優勢: 還原自然 (事件災難減半)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Event Popup -->
+    <div id="event-overlay" class="modal-overlay">
+        <div class="scroll-paper">
+            <h2 class="event-title" id="evt-title">鄰國饑荒</h2>
+            <p class="event-desc" id="evt-desc">鄰國發生大旱，難民湧入。你的學派主張如何應對？</p>
+            <div class="event-choices" id="evt-choices">
+                <!-- Dynamic Choices -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * PHILOSOPHY SIMULATOR 2.0 (Grand Strategy)
+         */
+
+        // --- Canvas Map ---
+        const canvas = document.getElementById('map-container');
+        const ctx = canvas.getContext('2d');
+        let W, H;
+
+        // Expanded Map State
+        const STATES = [
+            { name: "齊 (Qi)", x: 0.75, y: 0.25, color: '#3b82f6', size: 65, owner: 'AI', influence: 50 },
+            { name: "楚 (Chu)", x: 0.5, y: 0.75, color: '#ef4444', size: 90, owner: 'AI', influence: 40 },
+            { name: "秦 (Qin)", x: 0.15, y: 0.45, color: '#111', size: 75, owner: 'AI', influence: 80 },
+            { name: "燕 (Yan)", x: 0.65, y: 0.15, color: '#6b7280', size: 50, owner: 'AI', influence: 30 },
+            { name: "趙 (Zhao)", x: 0.4, y: 0.3, color: '#8b5cf6', size: 55, owner: 'AI', influence: 45 },
+            { name: "魏 (Wei)", x: 0.45, y: 0.45, color: '#ec4899', size: 50, owner: 'AI', influence: 55 },
+            { name: "韓 (Han)", x: 0.35, y: 0.5, color: '#14b8a6', size: 40, owner: 'AI', influence: 20 },
+            { name: "魯 (Lu)", x: 0.65, y: 0.45, color: '#fbbf24', size: 45, owner: 'Player', influence: 60 }
+        ];
+
+        // School Specifics
+        const SCHOOLS = {
+            '儒家': {
+                color: '#fbbf24', // Amber
+                action: { name: "復禮 (Rites)", icon: "🙇", desc: "消耗金錢大幅提升民心", cost: 30, type: 'rites' }
+            },
+            '墨家': {
+                color: '#1f2937', // Gray/Black (uses standard UI)
+                action: { name: "兼愛 (Universal Love)", icon: "🛡️", desc: "提升民心並增加防禦", cost: 25, type: 'defense' }
+            },
+            '法家': {
+                color: '#7c3aed', // Purple
+                action: { name: "嚴刑 (Strict Law)", icon: "⚖️", desc: "民心換取大量金錢與兵力", cost: 0, type: 'law' }
+            },
+            '道家': {
+                color: '#10b981', // Emerald
+                action: { name: "無為 (Wu Wei)", icon: "🍃", desc: "隨機獲得資源，無消耗", cost: 5, type: 'wuwei' }
+            }
+        };
+
+        const EVENTS = [
+            // --- CONFUCIAN EVENTS ---
+            {
+                title: "暴君徵稅",
+                desc: "君主打算增加賦稅以修建宮殿。你的諫言是？",
+                req: { school: '儒家' },
+                choices: [
+                    { text: "力諫君主 (民為貴)", cost: { gold: 0 }, effect: { morale: 15, gold: -20 }, msg: "君主不悅，削減了你的經費，但百姓愛戴你。" },
+                    { text: "默不作聲 (明哲保身)", cost: { morale: -15 }, effect: { gold: 30 }, msg: "你獲得了賞賜，但對不起良心。" }
+                ]
+            },
+            {
+                title: "禮崩樂壞",
+                desc: "卿大夫在此地僭越禮制，使用天子之樂。",
+                req: { school: '儒家' },
+                choices: [
+                    { text: "嚴厲斥責 (是可忍孰不可忍)", cost: { influence: -10 }, effect: { morale: 10, influence: 5 }, msg: "你捍衛了禮制，獲得了清譽。" },
+                    { text: "教化其子弟", cost: { gold: -10 }, effect: { influence: 10 }, msg: "長遠的教育提升了你的影響力。" }
+                ]
+            },
+
+            // --- MOHIST EVENTS ---
+            {
+                title: "弱國求援",
+                desc: "鄰近的小國宋國正被楚國大軍圍困。",
+                req: { school: '墨家' },
+                choices: [
+                    { text: "非攻 (前往遊說楚王)", cost: { gold: -30 }, effect: { influence: 20 }, msg: "你在朝堂上舌戰群儒，楚王退兵！名聲大噪！" },
+                    { text: "守城 (協助宋國防禦)", cost: { army: -20 }, effect: { gold: 50 }, msg: "你幫助宋國守住了，獲得了大量物資回報。" }
+                ]
+            },
+            {
+                title: "機關發明",
+                desc: "弟子設計出了一種新的守城器械。",
+                req: { school: '墨家' },
+                choices: [
+                    { text: "推廣用於防守", cost: { gold: -20 }, effect: { army: 30 }, msg: "城防大幅提升。" },
+                    { text: "改良農具", cost: { gold: -20 }, effect: { morale: 20 }, msg: "民生改善，百姓感激。" }
+                ]
+            },
+
+            // --- LEGALIST EVENTS ---
+            {
+                title: "貴族犯法",
+                desc: "一名擁有封地的貴族在鬧市殺了人。",
+                req: { school: '法家' },
+                choices: [
+                    { text: "依法處斬 (王子犯法與庶民同罪)", cost: { influence: -20 }, effect: { morale: 30, gold: 50 }, msg: "貴族震怒，但沒收其家產充盈了國庫，百姓稱頌。" },
+                    { text: "網開一面 (維護貴族利益)", cost: { morale: -30 }, effect: { influence: 20 }, msg: "獲得了貴族的支持，但法治威信掃地。" }
+                ]
+            },
+            {
+                title: "懶惰農夫",
+                desc: "部分農民因為收成不好而選擇甚至棄耕。",
+                req: { school: '法家' },
+                choices: [
+                    { text: "重罰棄耕者", cost: { morale: -10 }, effect: { gold: 30 }, msg: "恐懼迫使人們工作，糧產增加了。" },
+                    { text: "獎勵耕戰", cost: { gold: -20 }, effect: { army: 20, gold: 20 }, msg: "透過獎勵激發了生產力。" }
+                ]
+            },
+
+            // --- TAOIST EVENTS ---
+            {
+                title: "大旱將至",
+                desc: "觀天象，今年將有大旱。",
+                req: { school: '道家' },
+                choices: [
+                    { text: "順其自然 (天地不仁)", cost: { morale: -10 }, effect: { morale: -10 }, msg: "旱災發生了，你無動於衷。百姓受苦，但你保持了內心的平靜。" },
+                    { text: "開倉放糧", cost: { gold: -40 }, effect: { morale: 20 }, msg: "雖然不符合無為，但你救了很多人。" }
+                ]
+            },
+            {
+                title: "楚王聘請",
+                desc: "楚王聽聞你的賢名，派使者重金聘請為相。",
+                req: { school: '道家' },
+                choices: [
+                    { text: "曳尾於塗 (拒絕)", cost: { gold: 0 }, effect: { morale: 10, influence: 10 }, msg: "你寧願做泥裡的烏龜。世人更加敬重你的清高。" },
+                    { text: "出山輔佐", cost: { morale: -20 }, effect: { gold: 100 }, msg: "你獲得了榮華富貴，但失去了自由。" }
+                ]
+            },
+
+            // --- GENERAL EVENTS ---
+            {
+                title: "百家爭鳴",
+                desc: "稷下學宮邀請各派學者辯論。",
+                req: {},
+                choices: [
+                    { text: "積極辯論", cost: { influence: 0 }, effect: { influence: 15 }, msg: "你的學派名聲提升了。" },
+                    { text: "閉門著書", cost: { gold: -10 }, effect: { morale: 15 }, msg: "留下了傳世經典。" }
+                ]
+            },
+            {
+                title: "流民湧入",
+                desc: "戰亂導致大量難民來到你的封地。",
+                req: {},
+                choices: [
+                    { text: "接納流民", cost: { gold: -30 }, effect: { army: 20, morale: 5 }, msg: "獲得了勞動力和兵源。" },
+                    { text: "驅逐出境", cost: { morale: -20 }, effect: { gold: 10 }, msg: "節省了糧食，但被視為冷血。" }
+                ]
+            }
+        ];
+
+        let state = {
+            turn: 1,
+            resources: { morale: 50, gold: 100, army: 20, influence: 10 },
+            playerSchool: null,
+            territory: ['Lu']
+        };
+
+        function init() {
+            window.addEventListener('resize', resize);
+            resize();
+            drawMap();
+        }
+
+        function resize() {
+            W = canvas.width = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+            drawMap();
+        }
+
+        function startGame(school) {
+            state.playerSchool = school;
+            document.getElementById('school-name').textContent = school;
+
+            // Apply School Bonuses
+            if (school === '儒家') state.resources.morale += 20;
+            if (school === '墨家') state.resources.army += 20;
+            if (school === '法家') state.resources.gold += 30;
+            if (school === '道家') state.resources.morale += 10;
+
+            document.getElementById('start-overlay').style.display = 'none';
+
+            // Setup UI for School
+            const schoolData = SCHOOLS[school];
+            const bottomPanel = document.querySelector('.bottom-panel');
+
+            // Create the special action card
+            const specialCard = document.createElement('div');
+            specialCard.className = 'action-card';
+            specialCard.onclick = () => action('special');
+            specialCard.innerHTML = `
+                <div class="card-icon" style="color:${schoolData.color}">${schoolData.action.icon}</div>
+                <div class="card-title">${schoolData.action.name.split(' ')[0]}</div>
+                <div class="card-cost" style="font-size:0.7rem">${schoolData.action.desc}</div>
+            `;
+            // Insert before End Turn
+            bottomPanel.insertBefore(specialCard, bottomPanel.children[bottomPanel.children.length - 2]);
+
+            updateUI();
+        }
+
+        function drawMap() {
+            ctx.fillStyle = "#111827";
+            ctx.fillRect(0, 0, W, H);
+
+            // Draw Connections
+            ctx.beginPath();
+            // Simple web connecting states reasonably
+            const connect = (s1, s2) => {
+                const o1 = STATES.find(s => s.name.includes(s1));
+                const o2 = STATES.find(s => s.name.includes(s2));
+                if (o1 && o2) {
+                    ctx.moveTo(o1.x * W, o1.y * H);
+                    ctx.lineTo(o2.x * W, o2.y * H);
+                }
+            };
+            connect("Qi", "Lu"); connect("Lu", "Song"); connect("Lu", "Wei");
+            connect("Qi", "Yan"); connect("Qi", "Zhao");
+            connect("Chu", "Lu"); connect("Chu", "Qin"); connect("Chu", "Han");
+            connect("Qin", "Wei"); connect("Qin", "Han");
+
+            ctx.strokeStyle = "#374151";
+            ctx.lineWidth = 3;
+            ctx.setLineDash([5, 5]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Draw States
+            STATES.forEach(s => {
+                const x = s.x * W;
+                const y = s.y * H;
+                const isPlayer = s.owner === 'Player';
+
+                // Pulse effect for player
+                if (isPlayer) {
+                    const time = Date.now() / 1000;
+                    const pulse = Math.sin(time * 2) * 10;
+                    ctx.beginPath();
+                    ctx.arc(x, y, s.size + 5 + pulse, 0, Math.PI * 2);
+                    ctx.fillStyle = "rgba(251, 191, 36, 0.2)";
+                    ctx.fill();
+                }
+
+                // City Circle
+                ctx.beginPath();
+                ctx.arc(x, y, s.size, 0, Math.PI * 2);
+                ctx.fillStyle = s.color;
+
+                if (isPlayer) {
+                    ctx.strokeStyle = '#fbbf24';
+                    ctx.lineWidth = 6;
+                    ctx.stroke();
+                } else {
+                    ctx.strokeStyle = '#1f2937';
+                    ctx.lineWidth = 4;
+                    ctx.stroke();
+                }
+                ctx.fill();
+
+                // Name
+                ctx.fillStyle = "#fff";
+                ctx.font = "bold 18px 'Noto Sans TC'";
+                ctx.textAlign = "center";
+                ctx.shadowColor = "black";
+                ctx.shadowBlur = 4;
+                ctx.fillText(s.name, x, y + 6);
+                ctx.shadowBlur = 0;
+
+                // Info
+                ctx.font = "12px sans-serif";
+                ctx.fillStyle = "#d1d5db";
+                // ctx.fillText(`Inf: ${s.influence}`, x, y + s.size + 15);
+            });
+            requestAnimationFrame(drawMap);
+        }
+
+        function updateUI() {
+            document.getElementById('res-morale').textContent = state.resources.morale;
+            document.getElementById('res-gold').textContent = state.resources.gold;
+            document.getElementById('res-army').textContent = state.resources.army;
+            document.getElementById('res-influence').textContent = state.resources.influence;
+            document.getElementById('turn-count').textContent = state.turn;
+        }
+
+        function action(type) {
+            let cost = 0;
+            const res = state.resources;
+
+            if (type === 'preach') {
+                cost = 15;
+                if (res.gold < cost) return alert("國庫不足！");
+                res.gold -= cost;
+                res.morale += 5;
+                res.influence += 2;
+                spawnFloatText("民心 +5, 影響 +2", "up");
+            }
+            else if (type === 'recruit') {
+                cost = 40;
+                if (res.gold < cost) return alert("國庫不足！");
+                res.gold -= cost;
+                res.army += 15;
+                spawnFloatText("兵力 +15", "up");
+            }
+            else if (type === 'policy') {
+                cost = 50;
+                if (res.gold < cost) return alert("國庫不足！");
+                res.gold -= cost;
+                res.morale += 10;
+                // Investment mechanic
+                res.gold += Math.floor(Math.random() * 20) + 5;
+                spawnFloatText("仁政實施", "up");
+            }
+            else if (type === 'special') {
+                const s = SCHOOLS[state.playerSchool];
+                const act = s.action;
+
+                if (act.type === 'rites') { // Confucian
+                    if (res.gold < act.cost) return alert("國庫不足！");
+                    res.gold -= act.cost;
+                    res.morale += 25;
+                    res.influence += 5;
+                    spawnFloatText("復禮: 民心大增", "up");
+                }
+                else if (act.type === 'defense') { // Mohist
+                    if (res.gold < act.cost) return alert("國庫不足！");
+                    res.gold -= act.cost;
+                    res.morale += 5;
+                    res.army += 20;
+                    spawnFloatText("兼愛: 防禦提升", "up");
+                }
+                else if (act.type === 'law') { // Legalist
+                    // Cost is morale instead of gold
+                    if (res.morale < 20) return alert("民心過低，無法實施嚴刑！");
+                    res.morale -= 20;
+                    res.gold += 60;
+                    res.army += 10;
+                    spawnFloatText("嚴刑: 國庫充盈", "up");
+                }
+                else if (act.type === 'wuwei') { // Taoist
+                    if (res.gold < act.cost) return alert("國庫不足！");
+                    res.gold -= act.cost;
+                    // Random random effect
+                    const r = Math.random();
+                    if (r < 0.33) {
+                        res.morale += 20;
+                        spawnFloatText("無為: 民心自然歸附", "up");
+                    } else if (r < 0.66) {
+                        res.gold += 30;
+                        spawnFloatText("無為: 風調雨順", "up");
+                    } else {
+                        spawnFloatText("無為: 什麼也沒發生", "up");
+                    }
+                }
+            }
+
+            updateUI();
+        }
+
+        function nextTurn() {
+            state.turn++;
+            state.resources.gold += 30; // Base income
+
+            // School passive bonuses
+            if (state.playerSchool === '法家') state.resources.gold += 15;
+
+            updateUI();
+
+            // Event Chance
+            if (Math.random() > 0.3) {
+                triggerEvent();
+            }
+        }
+
+        function triggerEvent() {
+            // Filter events: Generic OR Matching School
+            const validEvents = EVENTS.filter(e => {
+                if (!e.req.school) return true; // Generic
+                return e.req.school === state.playerSchool;
+            });
+
+            if (validEvents.length === 0) return;
+
+            const evt = validEvents[Math.floor(Math.random() * validEvents.length)];
+
+            document.getElementById('event-overlay').style.display = 'flex';
+            document.getElementById('evt-title').textContent = evt.title;
+            document.getElementById('evt-desc').textContent = evt.desc;
+
+            const container = document.getElementById('evt-choices');
+            container.innerHTML = '';
+
+            evt.choices.forEach(c => {
+                const btn = document.createElement('div');
+                btn.className = 'choice-btn';
+
+                // Format cost string
+                let costStr = [];
+                if (c.cost.gold) costStr.push(`💰 ${c.cost.gold}`);
+                if (c.cost.morale) costStr.push(`👥 ${c.cost.morale}`);
+                if (c.cost.army) costStr.push(`⚔️ ${c.cost.army}`);
+                if (c.cost.influence) costStr.push(`👑 ${c.cost.influence}`);
+
+                btn.innerHTML = `
+                    <div>${c.text}</div>
+                    <div class="text-sm font-normal text-red-600">${costStr.join(' ')}</div>
+                `;
+                btn.onclick = () => resolveEvent(c);
+                container.appendChild(btn);
+            });
+        }
+
+        function resolveEvent(choice) {
+            const res = state.resources;
+
+            // Check costs
+            if (choice.cost.gold && res.gold + choice.cost.gold < 0) return alert("資源不足，無法選擇此項！");
+            if (choice.cost.morale && res.morale + choice.cost.morale < 0) return alert("民心不足，無法選擇此項！");
+
+            document.getElementById('event-overlay').style.display = 'none';
+
+            // Apply costs
+            if (choice.cost.gold) res.gold += choice.cost.gold;
+            if (choice.cost.morale) res.morale += choice.cost.morale;
+            if (choice.cost.army) res.army += choice.cost.army;
+            if (choice.cost.influence) res.influence += choice.cost.influence;
+
+            // Apply effects
+            if (choice.effect.gold) res.gold += choice.effect.gold;
+            if (choice.effect.morale) res.morale += choice.effect.morale;
+            if (choice.effect.army) res.army += choice.effect.army;
+            if (choice.effect.influence) res.influence += choice.effect.influence;
+
+            alert(choice.msg);
+            updateUI();
+        }
+
+        function spawnFloatText(text, dir) {
+            const el = document.createElement('div');
+            el.className = 'float-text text-yellow-400 text-2xl shadow-black drop-shadow-md';
+            el.style.left = '50%';
+            el.style.top = '50%';
+            el.innerText = text;
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 1500);
+        }
+
+        init();
+
+    </script>
+
+</body>
+
+</html>
+

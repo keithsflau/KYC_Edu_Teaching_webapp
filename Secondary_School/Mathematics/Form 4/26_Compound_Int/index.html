@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Compound Interest | S4 Math 複利</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <script
+      type="text/javascript"
+      id="MathJax-script"
+      async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+    ></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+      }
+    </style>
+  </head>
+  <body class="bg-emerald-50 text-slate-800 min-h-screen">
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect,
+  useMemo
+} = React;
+const translations = {
+  en: {
+    unit: "Unit 7: Financial Math",
+    title: "Compound Interest Calculator",
+    desc: "Calculate future value with compound interest.",
+    principal: "Principal (P)",
+    rate: "Annual Rate (r%)",
+    time: "Time (years)",
+    compound: "Compounding",
+    yearly: "Yearly",
+    quarterly: "Quarterly",
+    monthly: "Monthly",
+    daily: "Daily",
+    amount: "Final Amount (A)",
+    interest: "Interest Earned",
+    formula: "Formula"
+  },
+  zh: {
+    unit: "單元七：金融數學",
+    title: "複利計算器",
+    desc: "計算複利的未來價值。",
+    principal: "本金 (P)",
+    rate: "年利率 (r%)",
+    time: "時間（年）",
+    compound: "複利類型",
+    yearly: "年複利",
+    quarterly: "季複利",
+    monthly: "月複利",
+    daily: "日複利",
+    amount: "最終金額 (A)",
+    interest: "利息收入",
+    formula: "公式"
+  }
+};
+const App = () => {
+  const [lang, setLang] = useState("en");
+  const t = translations[lang];
+  const [P, setP] = useState(8500);
+  const [r, setR] = useState(3.5);
+  const [time, setTime] = useState(8);
+  const [n, setN] = useState(4); // Compounding frequency
+
+  // A = P(1 + r/n)^(nt)
+  const rDecimal = r / 100;
+  const A = P * Math.pow(1 + rDecimal / n, n * time);
+  const interest = A - P;
+
+  // Growth Data for Chart
+  const growthData = useMemo(() => {
+    const data = [];
+    for (let yr = 0; yr <= time; yr++) {
+      data.push({
+        year: yr,
+        value: P * Math.pow(1 + rDecimal / n, n * yr)
+      });
+    }
+    return data;
+  }, [P, rDecimal, n, time]);
+
+  // Chart
+  const w = 550,
+    h = 250;
+  const maxVal = Math.max(...growthData.map(d => d.value));
+  const barWidth = (w - 80) / growthData.length - 4;
+  useEffect(() => {
+    if (window.MathJax) window.MathJax.typesetPromise();
+  }, [P, r, time, n, lang]);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "p-8 max-w-5xl mx-auto min-h-screen flex flex-col items-center select-none"
+  }, /*#__PURE__*/React.createElement("header", {
+    className: "mb-8 text-center w-full relative"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLang(lang === 'en' ? 'zh' : 'en'),
+    className: "absolute right-0 top-0 px-4 py-2 bg-white rounded-full shadow border border-emerald-200 text-sm font-bold text-emerald-600 hover:bg-emerald-50 transition"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-globe mr-2"
+  }), lang === 'en' ? '中文' : 'ENG'), /*#__PURE__*/React.createElement("div", {
+    className: "text-emerald-600 font-bold uppercase text-xs tracking-widest mb-2"
+  }, t.unit), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-slate-900 mb-2"
+  }, t.title), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-500"
+  }, t.desc)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-6 rounded-3xl shadow-xl border border-emerald-100 w-full mb-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "text-sm font-bold text-slate-500 block mb-2"
+  }, t.principal), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: P,
+    onChange: e => setP(Number(e.target.value)),
+    className: "w-full p-3 border rounded-xl font-mono text-center focus:ring-2 focus:ring-emerald-400 outline-none"
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "text-sm font-bold text-slate-500 block mb-2"
+  }, t.rate), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "0.5",
+    max: "20",
+    step: "0.5",
+    value: r,
+    onChange: e => setR(Number(e.target.value)),
+    className: "w-full accent-emerald-500"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-right font-mono text-emerald-600 font-bold"
+  }, r, "%")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "text-sm font-bold text-slate-500 block mb-2"
+  }, t.time), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "1",
+    max: "30",
+    value: time,
+    onChange: e => setTime(Number(e.target.value)),
+    className: "w-full accent-emerald-500"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-right font-mono text-emerald-600 font-bold"
+  }, `${time} yrs`)), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "text-sm font-bold text-slate-500 block mb-2"
+  }, t.compound), /*#__PURE__*/React.createElement("select", {
+    value: n,
+    onChange: e => setN(Number(e.target.value)),
+    className: "w-full p-3 border rounded-xl font-mono focus:ring-2 focus:ring-emerald-400 outline-none"
+  }, /*#__PURE__*/React.createElement("option", {
+    value: "1"
+  }, t.yearly), /*#__PURE__*/React.createElement("option", {
+    value: "4"
+  }, t.quarterly), /*#__PURE__*/React.createElement("option", {
+    value: "12"
+  }, t.monthly), /*#__PURE__*/React.createElement("option", {
+    value: "365"
+  }, t.daily)))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-50 p-4 rounded-xl mb-6 overflow-x-auto"
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: w,
+    height: h,
+    className: "mx-auto"
+  }, /*#__PURE__*/React.createElement("line", {
+    x1: "40",
+    y1: h - 30,
+    x2: w,
+    y2: h - 30,
+    stroke: "#94a3b8",
+    strokeWidth: "1"
+  }), growthData.map((d, i) => {
+    const barH = d.value / maxVal * (h - 60);
+    const x = 50 + i * (barWidth + 4);
+    const y = h - 30 - barH;
+    return /*#__PURE__*/React.createElement("g", {
+      key: i
+    }, /*#__PURE__*/React.createElement("rect", {
+      x: x,
+      y: y,
+      width: barWidth,
+      height: barH,
+      fill: "#10b981",
+      rx: "2",
+      className: "hover:opacity-80 transition"
+    }), time <= 15 && /*#__PURE__*/React.createElement("text", {
+      x: x + barWidth / 2,
+      y: h - 15,
+      textAnchor: "middle",
+      className: "text-[9px] fill-slate-400"
+    }, d.year));
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-emerald-50 p-4 rounded-xl mb-6 text-center border border-emerald-100"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-sm font-bold text-emerald-400 uppercase mb-2"
+  }, t.formula), /*#__PURE__*/React.createElement("div", {
+    className: "text-xl font-mono"
+  }, `\\\\[ A = P\\\\left(1 + \\\\frac{r}{n}\\\\right)^{nt} = ${P.toLocaleString()}\\\\left(1 + \\\\frac{ ${(r / 100).toFixed(4)} }{ ${n} }\\\\right)^{ ${n} \\\\times ${time} } \\\\]`)), /*#__PURE__*/React.createElement("div", {
+    className: "grid md:grid-cols-2 gap-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-emerald-100 p-6 rounded-2xl text-center border border-emerald-200"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-sm font-bold text-emerald-600 uppercase mb-2"
+  }, t.amount), /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-extrabold text-emerald-800 font-mono"
+  }, "$", A.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-blue-50 p-6 rounded-2xl text-center border border-blue-100"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-sm font-bold text-blue-500 uppercase mb-2"
+  }, t.interest), /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-extrabold text-blue-700 font-mono"
+  }, "$", interest.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }))))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

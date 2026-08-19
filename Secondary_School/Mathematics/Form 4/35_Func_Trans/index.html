@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Function Transformations | S4 Math 函數變換</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <script
+      type="text/javascript"
+      id="MathJax-script"
+      async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+    ></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+      }
+    </style>
+  </head>
+  <body class="bg-pink-50 text-slate-800 min-h-screen">
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect,
+  useMemo
+} = React;
+const translations = {
+  en: {
+    unit: "Unit 3: Functions",
+    title: "Function Transformations",
+    desc: "Explore translations, reflections, and scaling of f(x).",
+    function: "Base Function f(x)",
+    transform: "Transformation: y = a f(b(x - h)) + k",
+    verticalShift: "Vertical Shift (k)",
+    horizontalShift: "Horizontal Shift (h)",
+    verticalStretch: "Vertical Stretch (a)",
+    horizontalStretch: "Horizontal Stretch (b)",
+    quadratic: "Quadratic (x²)",
+    abs: "Absolute |x|",
+    cubic: "Cubic (x³)",
+    sine: "Sine sin(x)"
+  },
+  zh: {
+    unit: "單元三：函數",
+    title: "函數變換",
+    desc: "探索函數平移、反射和伸縮。",
+    function: "基本函數 f(x)",
+    transform: "變換式：y = a f(b(x - h)) + k",
+    verticalShift: "垂直平移 (k)",
+    horizontalShift: "水平平移 (h)",
+    verticalStretch: "垂直伸縮 (a)",
+    horizontalStretch: "水平伸縮 (b)",
+    quadratic: "二次函數 (x²)",
+    abs: "絕對值 |x|",
+    cubic: "三次函數 (x³)",
+    sine: "正弦 sin(x)"
+  }
+};
+const App = () => {
+  const [lang, setLang] = useState("en");
+  const t = translations[lang];
+  const [funcType, setFuncType] = useState("quadratic");
+  const [k, setK] = useState(0); // Vertical shift
+  const [h, setH] = useState(0); // Horizontal shift
+  const [a, setA] = useState(1); // Vertical stretch
+  const [b, setB] = useState(1); // Horizontal stretch (inside function)
+
+  // Base functions
+  const baseFuncs = {
+    quadratic: x => x * x,
+    abs: x => Math.abs(x),
+    cubic: x => x * x * x,
+    sine: x => Math.sin(x)
+  };
+
+  // Transformed function
+  const f = x => baseFuncs[funcType](x);
+  const transformedF = x => a * f(b * (x - h)) + k;
+
+  // Graph settings
+  const width = 500;
+  const height = 400;
+  const xRange = 8;
+  const yRange = 8;
+  const scaleX = width / (2 * xRange);
+  const scaleY = height / (2 * yRange);
+  const originX = width / 2;
+  const originY = height / 2;
+  const toScreen = (x, y) => ({
+    x: originX + x * scaleX,
+    y: originY - y * scaleY
+  });
+  const generatePath = (func, color, dashed = false) => {
+    let d = "";
+    // Increase resolution for sine
+    const step = funcType === "sine" ? 0.05 : 0.1;
+    for (let x = -xRange; x <= xRange; x += step) {
+      const y = func(x);
+      if (y > yRange * 1.5 || y < -yRange * 1.5) continue; // Clip
+      const pt = toScreen(x, y);
+      d += (d ? "L" : "M") + `${pt.x.toFixed(1)},${pt.y.toFixed(1)} `;
+    }
+    return /*#__PURE__*/React.createElement("path", {
+      d: d,
+      stroke: color,
+      strokeWidth: dashed ? "2" : "3",
+      fill: "none",
+      strokeDasharray: dashed ? "5,5" : "none",
+      opacity: dashed ? 0.4 : 1
+    });
+  };
+  useEffect(() => {
+    if (window.MathJax) window.MathJax.typesetPromise();
+  }, [k, h, a, b, funcType, lang]);
+  const Reset = () => {
+    setK(0);
+    setH(0);
+    setA(1);
+    setB(1);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "p-8 max-w-5xl mx-auto min-h-screen flex flex-col items-center select-none"
+  }, /*#__PURE__*/React.createElement("header", {
+    className: "mb-8 text-center w-full relative"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLang(lang === "en" ? "zh" : "en"),
+    className: "absolute right-0 top-0 px-4 py-2 bg-white rounded-full shadow border border-pink-200 text-sm font-bold text-pink-600 hover:bg-pink-50 transition"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-globe mr-2"
+  }), lang === "en" ? "中文" : "ENG"), /*#__PURE__*/React.createElement("div", {
+    className: "text-pink-600 font-bold uppercase text-xs tracking-widest mb-2"
+  }, t.unit), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-slate-900 mb-2"
+  }, t.title), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-500"
+  }, t.desc)), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col lg:flex-row gap-8 w-full"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-4 rounded-3xl shadow-lg border border-pink-100 flex-[2]"
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: width,
+    height: height,
+    className: "bg-slate-50 rounded-xl mx-auto overflow-hidden"
+  }, Array.from({
+    length: 17
+  }).map((_, i) => {
+    const val = i - 8;
+    const sx = originX + val * scaleX;
+    const sy = originY - val * scaleY;
+    return /*#__PURE__*/React.createElement("g", {
+      key: i
+    }, /*#__PURE__*/React.createElement("line", {
+      x1: sx,
+      y1: 0,
+      x2: sx,
+      y2: height,
+      stroke: val === 0 ? "#64748b" : "#e2e8f0",
+      strokeWidth: val === 0 ? 2 : 1
+    }), /*#__PURE__*/React.createElement("line", {
+      x1: 0,
+      y1: sy,
+      x2: width,
+      y2: sy,
+      stroke: val === 0 ? "#64748b" : "#e2e8f0",
+      strokeWidth: val === 0 ? 2 : 1
+    }));
+  }), generatePath(f, "#94a3b8", true), generatePath(transformedF, "#db2777"), /*#__PURE__*/React.createElement("text", {
+    x: width - 60,
+    y: 30,
+    className: "text-xs fill-slate-400 font-bold"
+  }, "Base: f(x)"), /*#__PURE__*/React.createElement("text", {
+    x: width - 60,
+    y: 50,
+    className: "text-xs fill-pink-600 font-bold"
+  }, "New: y"))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-6 rounded-3xl shadow-lg border border-pink-100 flex-1 space-y-6"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "text-sm font-bold text-slate-500 mb-2"
+  }, t.function), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 gap-2"
+  }, Object.keys(baseFuncs).map(key => /*#__PURE__*/React.createElement("button", {
+    key: key,
+    onClick: () => setFuncType(key),
+    className: `py-2 rounded-xl text-sm font-bold transition ${funcType === key ? "bg-pink-600 text-white shadow" : "bg-slate-100 text-slate-500 hover:bg-slate-200"}`
+  }, t[key])))), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-sm font-bold text-pink-500 uppercase"
+  }, t.transform), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-50 p-4 rounded-xl font-mono text-center"
+  }, "y = ", /*#__PURE__*/React.createElement("span", {
+    className: "text-blue-600 font-bold"
+  }, a), " f (", /*#__PURE__*/React.createElement("span", {
+    className: "text-green-600 font-bold"
+  }, b), "(x -", " ", /*#__PURE__*/React.createElement("span", {
+    className: "text-orange-600 font-bold"
+  }, h), ")) +", " ", /*#__PURE__*/React.createElement("span", {
+    className: "text-purple-600 font-bold"
+  }, k)), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between text-xs font-bold text-orange-500 mb-1"
+  }, /*#__PURE__*/React.createElement("span", null, t.horizontalShift), /*#__PURE__*/React.createElement("span", null, "h = ", h)), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "-5",
+    max: "5",
+    step: "0.5",
+    value: h,
+    onChange: e => setH(Number(e.target.value)),
+    className: "w-full accent-orange-500"
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between text-xs font-bold text-purple-500 mb-1"
+  }, /*#__PURE__*/React.createElement("span", null, t.verticalShift), /*#__PURE__*/React.createElement("span", null, "k = ", k)), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "-5",
+    max: "5",
+    step: "0.5",
+    value: k,
+    onChange: e => setK(Number(e.target.value)),
+    className: "w-full accent-purple-500"
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between text-xs font-bold text-blue-500 mb-1"
+  }, /*#__PURE__*/React.createElement("span", null, t.verticalStretch), /*#__PURE__*/React.createElement("span", null, "a = ", a)), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "-3",
+    max: "3",
+    step: "0.5",
+    value: a,
+    onChange: e => setA(Number(e.target.value)),
+    className: "w-full accent-blue-500"
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between text-xs font-bold text-green-500 mb-1"
+  }, /*#__PURE__*/React.createElement("span", null, t.horizontalStretch), /*#__PURE__*/React.createElement("span", null, "b = ", b)), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "0.5",
+    max: "3",
+    step: "0.5",
+    value: b,
+    onChange: e => setB(Number(e.target.value)),
+    className: "w-full accent-green-500"
+  })), /*#__PURE__*/React.createElement("button", {
+    onClick: Reset,
+    className: "w-full py-2 bg-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-300 transition"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-rotate-left mr-2"
+  }), " Reset")))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

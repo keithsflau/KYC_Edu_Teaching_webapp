@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Friction Lab | S2 Science</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #fff7ed;
+      }
+      .surface-ice {
+        background: linear-gradient(to right, #e0f2fe 0%, #bae6fd 100%);
+      }
+      .surface-wood {
+        background: url("https://img.freepik.com/free-photo/brown-wooden-textured-flooring-background_53876-128562.jpg");
+        background-size: cover;
+      }
+      .surface-sandpaper {
+        background: url("https://t4.ftcdn.net/jpg/02/47/97/81/360_F_247978184_Dk4Xz5b5d5d5d5d5.jpg");
+        background-color: #713f12;
+        opacity: 0.8;
+      } /* Fallback color */
+      .micro-view {
+        transition: all 0.5s;
+      }
+    </style>
+  </head>
+  <body class="bg-orange-50 text-slate-800 min-h-screen">
+    <div id="root"></div>
+
+    <script>
+const {
+  useState,
+  useEffect,
+  useRef
+} = React;
+const surfaces = [{
+  id: "ice",
+  name: "Ice",
+  mu: 0.1,
+  color: "bg-cyan-100",
+  roughness: 1
+}, {
+  id: "wood",
+  name: "Wood",
+  mu: 0.5,
+  color: "bg-amber-700",
+  roughness: 5
+}, {
+  id: "sandpaper",
+  name: "Sandpaper",
+  mu: 0.9,
+  color: "bg-stone-800",
+  roughness: 9
+}];
+const App = () => {
+  const [mass, setMass] = useState(1); // kg
+  const [surface, setSurface] = useState(surfaces[1]);
+  const [appliedForce, setAppliedForce] = useState(0); // N
+  const [velocity, setVelocity] = useState(0);
+  const [position, setPosition] = useState(50); // px
+
+  const frictionLimit = mass * 10 * surface.mu; // f_max = mu * N (N = mg = m*10)
+
+  // Physics Loop
+  useEffect(() => {
+    let animationFrame;
+    const update = () => {
+      // Logic:
+      // If v=0:
+      //    If Applied > Limiting Friction -> Start moving. Net Force = Applied - KineticFriction (bit lower usually but simplify to same).
+      //    Else -> v=0, friction = applied.
+      // If v>0:
+      //    Net Force = Applied - Friction.
+
+      // Simplifying physics interaction:
+      // Just move if Applied >= Friction Limit.
+
+      if (appliedForce > frictionLimit) {
+        const netForce = appliedForce - frictionLimit;
+        const acceleration = netForce / mass; // a = F/m
+        setVelocity(v => v + acceleration * 0.05);
+      } else {
+        // Decelerate if moving, or stay still
+        setVelocity(v => {
+          if (v > 0) {
+            // Friction stops it
+            const decel = frictionLimit / mass * 0.05;
+            return Math.max(0, v - decel);
+          }
+          return 0;
+        });
+      }
+      setPosition(p => {
+        let newP = p + velocity;
+        if (newP > 600) {
+          newP = 50;
+        } // Loop
+        return newP;
+      });
+      animationFrame = requestAnimationFrame(update);
+    };
+    animationFrame = requestAnimationFrame(update);
+    return () => cancelAnimationFrame(animationFrame);
+  }, [appliedForce, frictionLimit, mass]);
+
+  // Force Reset if button released
+  const stopPull = () => {
+    // setAppliedForce(0); // Interaction choice: Slide to keep force or hold? Slider keeps force.
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "p-8 max-w-6xl mx-auto min-h-screen flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("header", {
+    className: "text-center mb-10 w-full"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-orange-600 font-bold uppercase text-xs tracking-widest"
+  }, "Form 2 Science • Unit 11"), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-slate-800 mb-2"
+  }, "Friction Laboratory"), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-500"
+  }, "Explore how Mass and Surface Texture affect Friction.")), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col gap-12 w-full"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full bg-white rounded-3xl shadow-xl overflow-hidden relative h-[400px] border-4 border-slate-200"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-0 w-full h-1/2 bg-slate-100 border-b border-slate-300"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 right-4 bg-white p-4 rounded-xl shadow border border-slate-200 text-sm"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "font-bold mb-1"
+  }, "Status Monitor"), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between w-48 mb-1"
+  }, /*#__PURE__*/React.createElement("span", null, "Friction Force:"), " ", /*#__PURE__*/React.createElement("span", {
+    className: "font-mono text-red-500 font-bold"
+  }, Math.min(appliedForce, frictionLimit).toFixed(1), " N")), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between w-48"
+  }, /*#__PURE__*/React.createElement("span", null, "Applied Force:"), " ", /*#__PURE__*/React.createElement("span", {
+    className: "font-mono text-green-600 font-bold"
+  }, appliedForce.toFixed(1), " N")), /*#__PURE__*/React.createElement("div", {
+    className: "mt-2 text-xs text-slate-400"
+  }, velocity > 0.1 ? "MOVING" : "STATIONARY"))), /*#__PURE__*/React.createElement("div", {
+    className: `absolute bottom-0 w-full h-1/2 transition-all duration-500 ${surface.id === "wood" ? "bg-amber-700" : surface.id === "ice" ? "bg-cyan-100" : "bg-stone-600"}`
+  }, surface.id === "wood" && /*#__PURE__*/React.createElement("div", {
+    className: "w-full h-full opacity-20",
+    style: {
+      backgroundImage: "repeating-linear-gradient(45deg, transparent, transparent 10px, #000 10px, #000 11px)"
+    }
+  }), surface.id === "sandpaper" && /*#__PURE__*/React.createElement("div", {
+    className: "w-full h-full opacity-30",
+    style: {
+      backgroundImage: "radial-gradient(#000 1px, transparent 1px)",
+      backgroundSize: "4px 4px"
+    }
+  }), surface.id === "ice" && /*#__PURE__*/React.createElement("div", {
+    className: "w-full h-full bg-white/30 backdrop-blur-sm"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-[200px] w-32 h-20 bg-rose-500 rounded-lg shadow-lg flex items-center justify-center transition-transform",
+    style: {
+      transform: `translateX(${position}px)`
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-white font-black text-xl"
+  }, mass, " kg"), /*#__PURE__*/React.createElement("div", {
+    className: "absolute -right-16 top-1/2 -translate-y-1/2 flex items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "h-[2px] bg-green-500",
+    style: {
+      width: `${Math.min(100, appliedForce * 5)}px`
+    }
+  }), appliedForce > 0 && /*#__PURE__*/React.createElement("div", {
+    className: "w-0 h-0 border-t-[5px] border-t-transparent border-b-[5px] border-b-transparent border-l-[10px] border-l-green-500"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "absolute -left-16 top-1/2 -translate-y-1/2 flex items-center flex-row-reverse"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "h-[2px] bg-red-500",
+    style: {
+      width: `${Math.min(100, Math.min(appliedForce, frictionLimit) * 5)}px`
+    }
+  }), appliedForce > 0 && /*#__PURE__*/React.createElement("div", {
+    className: "w-0 h-0 border-t-[5px] border-t-transparent border-b-[5px] border-b-transparent border-r-[10px] border-r-red-500"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-[200px] text-4xl text-slate-800",
+    style: {
+      left: `${position + 140}px`,
+      opacity: appliedForce > 0 ? 1 : 0.2
+    }
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-hand-holding-hand fa-flip-horizontal"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col lg:flex-row gap-8 items-start"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 w-full bg-white p-6 rounded-3xl shadow-md border border-orange-100 space-y-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4 items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-32 font-bold text-slate-600"
+  }, "Surface Type"), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-2 flex-1"
+  }, surfaces.map(s => /*#__PURE__*/React.createElement("button", {
+    key: s.id,
+    onClick: () => setSurface(s),
+    className: `flex-1 py-3 rounded-xl font-bold border-2 transition-all ${surface.id === s.id ? "border-orange-500 bg-orange-50 text-orange-700" : "border-slate-100 text-slate-500 bg-slate-50"}`
+  }, s.name)))), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4 items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-32 font-bold text-slate-600"
+  }, "Block Mass"), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "1",
+    max: "10",
+    step: "1",
+    value: mass,
+    onChange: e => setMass(Number(e.target.value)),
+    className: "flex-1 h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-rose-500"
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "w-12 font-bold text-rose-600"
+  }, mass, " kg")), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4 items-center bg-green-50 p-4 rounded-xl border border-green-200"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-32 font-bold text-green-800"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-arrow-right mr-2"
+  }), " Apply Force"), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "0",
+    max: "100",
+    step: "1",
+    value: appliedForce,
+    onChange: e => setAppliedForce(Number(e.target.value)),
+    className: "flex-1 h-4 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-green-600"
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "w-16 font-mono font-bold text-green-700 text-right"
+  }, appliedForce, " N"))), /*#__PURE__*/React.createElement("div", {
+    className: "w-64 h-64 bg-white rounded-full border-8 border-slate-300 shadow-inner overflow-hidden relative flex-shrink-0 mx-auto"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 bg-slate-100 flex items-center justify-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold text-slate-400 absolute top-4"
+  }, "Microscopic View"), /*#__PURE__*/React.createElement("div", {
+    className: "w-full relative h-10"
+  }, /*#__PURE__*/React.createElement("svg", {
+    className: "absolute top-0 left-0 w-full h-8 overflow-visible",
+    style: {
+      transform: `translateX(${velocity * 2 % 10}px)`
+    }
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M 0 0 L 10 5 L 20 0 L 30 5 L 40 0 L 50 5 L 60 0 L 70 5 L 80 0 L 90 5 L 100 0 L 110 5 L 120 0 L 130 5 L 140 0 L 150 5 L 160 0 L 170 5 L 180 0 L 190 5 L 200 0 L 210 5 L 220 0 L 230 5 L 240 0 L 250 5 L 260 0",
+    fill: "none",
+    stroke: "#f43f5e",
+    strokeWidth: "3"
+  })), /*#__PURE__*/React.createElement("svg", {
+    className: "absolute top-4 left-0 w-full h-8 overflow-visible"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M 0 5 L 10 0 L 20 5 L 30 0 L 40 5 L 50 0 L 60 5 L 70 0 L 80 5 L 90 0 L 100 5 L 110 0 L 120 5 L 130 0 L 140 5 L 150 0 L 160 5 L 170 0 L 180 5 L 190 0 L 200 5 L 210 0 L 220 5 L 230 0 L 240 5 L 250 0 L 260 5",
+    fill: "none",
+    stroke: surface.id === "ice" ? "#bae6fd" : surface.id === "wood" ? "#b45309" : "#44403c",
+    strokeWidth: surface.roughness // Thicker lines for rougher surface visual
+    ,
+    className: "transition-all duration-300"
+  }))))))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

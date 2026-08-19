@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小六數學：百分數全能計算機</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+      crossorigin
+    ></script>
+    <script
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+      crossorigin
+    ></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        min-height: 100vh;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <script>
+const {
+  useState
+} = React;
+const {
+  motion
+} = window.Motion;
+// Inline icons (lucide-react UMD is blocked / unavailable)
+const Percent = ({ size = 24, className = "" }) => React.createElement("svg", {
+  width: size, height: size, viewBox: "0 0 24 24", fill: "none",
+  stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", className
+}, React.createElement("line", { x1: "19", x2: "5", y1: "5", y2: "19" }),
+  React.createElement("circle", { cx: "6.5", cy: "6.5", r: "2.5" }),
+  React.createElement("circle", { cx: "17.5", cy: "17.5", r: "2.5" }));
+const ShoppingBag = ({ size = 24, className = "" }) => React.createElement("svg", {
+  width: size, height: size, viewBox: "0 0 24 24", fill: "none",
+  stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", className
+}, React.createElement("path", { d: "M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" }),
+  React.createElement("path", { d: "M3 6h18" }),
+  React.createElement("path", { d: "M16 10a4 4 0 0 1-8 0" }));
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n || {
+  LanguageSelector: () => null,
+  get: (o, lang) => (o && (o[lang] || o.en)) || ""
+};
+const t = {
+  title: {
+    en: "Percentage Master",
+    zh: "百分數全能計算機",
+    ja: "パーセンテージマスター",
+    ko: "백분율 마스터",
+    es: "Maestro de Porcentajes",
+    de: "Prozentmeister",
+    fi: "Prosenttimestari",
+    fr: "Maître des pourcentages",
+    ar: "سيد النسب المئوية",
+    it: "Maestro delle Percentuali"
+  },
+  header_grade: {
+    en: "P6 Math",
+    zh: "小六數學",
+    ja: "小6算数",
+    ko: "초6 수학",
+    es: "Matemáticas P6",
+    de: "Mathe 6. Klasse",
+    fi: "6. luokan matematiikka",
+    fr: "Maths P6",
+    ar: "الرياضيات للصف السادس",
+    it: "Matematica 6a elementare"
+  },
+  mode_basic: {
+    en: "Basic Calc",
+    zh: "基本計算",
+    ja: "基本計算",
+    ko: "기본 계산",
+    es: "Cálculo Básico",
+    de: "Basisrechnung",
+    fi: "Peruslaskenta",
+    fr: "Calcul de base",
+    ar: "حساب أساسي",
+    it: "Calcolo Base"
+  },
+  mode_discount: {
+    en: "Discount",
+    zh: "折扣計算",
+    ja: "割引計算",
+    ko: "할인 계산",
+    es: "Descuento",
+    de: "Rabatt",
+    fi: "Alennus",
+    fr: "Remise",
+    ar: "خصم",
+    it: "Sconto"
+  },
+  mode_scenarios: {
+    en: "Scenarios",
+    zh: "實際應用",
+    ja: "シナリオ",
+    ko: "실제 적용",
+    es: "Escenarios",
+    de: "Szenarien",
+    fi: "Skenaariot",
+    fr: "Scénarios",
+    ar: "سيناريوهات",
+    it: "Scenari"
+  },
+  basic_title: {
+    en: "Basic Percentage Calculation",
+    zh: "基本百分數計算",
+    ja: "基本的なパーセンテージ計算",
+    ko: "기본 백분율 계산",
+    es: "Cálculo de Porcentaje Básico",
+    de: "Grundlegende Prozentrechnung",
+    fi: "Perusprosenttilaskenta",
+    fr: "Calcul de pourcentage de base",
+    ar: "حساب النسبة المئوية الأساسية",
+    it: "Calcolo percentuale di base"
+  },
+  value: {
+    en: "Value",
+    zh: "數值",
+    ja: "値",
+    ko: "값",
+    es: "Valor",
+    de: "Wert",
+    fi: "Arvo",
+    fr: "Valeur",
+    ar: "قيمة",
+    it: "Valore"
+  },
+  percent: {
+    en: "Percentage (%)",
+    zh: "百分比 (%)",
+    ja: "パーセンテージ (%)",
+    ko: "백분율 (%)",
+    es: "Porcentaje (%)",
+    de: "Prozentsatz (%)",
+    fi: "Prosenttiosuus (%)",
+    fr: "Pourcentage (%)",
+    ar: "النسبة المئوية (%)",
+    it: "Percentuale (%)"
+  },
+  formula: {
+    en: "Formula",
+    zh: "計算公式",
+    ja: "公式",
+    ko: "공식",
+    es: "Fórmula",
+    de: "Formel",
+    fi: "Kaava",
+    fr: "Formule",
+    ar: "صيغة",
+    it: "Formula"
+  },
+  answer: {
+    en: "Answer",
+    zh: "答案",
+    ja: "答え",
+    ko: "정답",
+    es: "Respuesta",
+    de: "Antwort",
+    fi: "Vastaus",
+    fr: "Réponse",
+    ar: "إجابة",
+    it: "Risposta"
+  },
+  discount_title: {
+    en: "Shopping Discount",
+    zh: "購物折扣計算",
+    ja: "買い物割引",
+    ko: "쇼핑 할인",
+    es: "Descuento de compras",
+    de: "Einkaufsrabatt",
+    fi: "Ostosalennus",
+    fr: "Remise d'achat",
+    ar: "خصم التسوق",
+    it: "Sconto acquisti"
+  },
+  original_price: {
+    en: "Original Price ($)",
+    zh: "原價 ($)",
+    ja: "定価 ($)",
+    ko: "원가 ($)",
+    es: "Precio Original ($)",
+    de: "Originalpreis ($)",
+    fi: "Alkuperäinen hinta ($)",
+    fr: "Prix d'origine ($)",
+    ar: "السعر الأصلي ($)",
+    it: "Prezzo Originale ($)"
+  },
+  discount_rate: {
+    en: "Discount Rate (%)",
+    zh: "折扣率 (%)",
+    ja: "割引率 (%)",
+    ko: "할인율 (%)",
+    es: "Tasa de Descuento (%)",
+    de: "Rabattsatz (%)",
+    fi: "Alennusprosentti (%)",
+    fr: "Taux de remise (%)",
+    ar: "معدل الخصم (%)",
+    it: "Tasso di Sconto (%)"
+  },
+  label_original: {
+    en: "Original",
+    zh: "原價",
+    ja: "定価",
+    ko: "원가",
+    es: "Original",
+    de: "Original",
+    fi: "Alkuperäinen",
+    fr: "Origine",
+    ar: "أصلي",
+    it: "Originale"
+  },
+  label_saved: {
+    en: "Discount",
+    zh: "減價",
+    ja: "割引額",
+    ko: "할인액",
+    es: "Descuento",
+    de: "Rabatt",
+    fi: "Alennus",
+    fr: "Remise",
+    ar: "خصم",
+    it: "Sconto"
+  },
+  label_final: {
+    en: "Final",
+    zh: "實付",
+    ja: "支払額",
+    ko: "지불액",
+    es: "Final",
+    de: "Endpreis",
+    fi: "Lopullinen",
+    fr: "Final",
+    ar: "نهائي",
+    it: "Finale"
+  },
+  steps: {
+    en: "Calculation Steps:",
+    zh: "計算步驟：",
+    ja: "計算手順：",
+    ko: "계산 단계:",
+    es: "Pasos de cálculo:",
+    de: "Rechenschritte:",
+    fi: "Laskentavaiheet:",
+    fr: "Étapes de calcul :",
+    ar: "خطوات الحساب:",
+    it: "Fasi di calcolo:"
+  },
+  step1_desc: {
+    en: "Calculate Discount Amount:",
+    zh: "計算折扣金額：",
+    ja: "割引額を計算：",
+    ko: "할인 금액 계산:",
+    es: "Calcular monto de descuento:",
+    de: "Rabattbetrag berechnen:",
+    fi: "Laske alennuksen määrä:",
+    fr: "Calculer le montant de la remise :",
+    ar: "حساب مبلغ الخصم:",
+    it: "Calcola importo sconto:"
+  },
+  step2_desc: {
+    en: "Calculate Final Price:",
+    zh: "計算實付金額：",
+    ja: "支払額を計算：",
+    ko: "지불 금액 계산:",
+    es: "Calcular precio final:",
+    de: "Endpreis berechnen:",
+    fi: "Laske lopullinen hinta:",
+    fr: "Calculer le prix final :",
+    ar: "حساب السعر النهائي:",
+    it: "Calcola prezzo finale:"
+  },
+  scenarios_title: {
+    en: "Real Life Scenarios",
+    zh: "實際應用場景",
+    ja: "実生活シナリオ",
+    ko: "실생활 시나리오",
+    es: "Escenarios de la vida real",
+    de: "Alltagsszenarien",
+    fi: "Tosielämän skenaariot",
+    fr: "Scénarios de la vie réelle",
+    ar: "سيناريوهات الحياة الواقعية",
+    it: "Scenari di vita reale"
+  },
+  sc_discount: {
+    en: "Store Discount",
+    zh: "打折優惠",
+    ja: "店舗割引",
+    ko: "매장 할인",
+    es: "Descuento en tienda",
+    de: "Geschäftsrabatt",
+    fi: "Kauppa-alennus",
+    fr: "Remise en magasin",
+    ar: "خصم المتجر",
+    it: "Sconto negozio"
+  },
+  sc_increase: {
+    en: "Price Increase",
+    zh: "價格上升",
+    ja: "値上げ",
+    ko: "가격 인상",
+    es: "Aumento de precio",
+    de: "Preiserhöhung",
+    fi: "Hinnankorotus",
+    fr: "Augmentation de prix",
+    ar: "زيادة الأسعار",
+    it: "Aumento di prezzo"
+  },
+  sc_tax: {
+    en: "Value Added Tax",
+    zh: "增值稅",
+    ja: "付加価値税",
+    ko: "부가가치세",
+    es: "Impuesto al Valor Agregado",
+    de: "Mehrwertsteuer",
+    fi: "Arvonlisävero",
+    fr: "Taxe sur la valeur ajoutée",
+    ar: "ضريبة القيمة المضافة",
+    it: "Imposta sul Valore Aggiunto"
+  },
+  sc_commission: {
+    en: "Commission",
+    zh: "佣金計算",
+    ja: "手数料",
+    ko: "수수료",
+    es: "Comisión",
+    de: "Provision",
+    fi: "Komissio",
+    fr: "Commission",
+    ar: "عمولة",
+    it: "Commissione"
+  },
+  base: {
+    en: "Base/Original:",
+    zh: "原價/基數：",
+    ja: "基準/元値:",
+    ko: "기준/원가:",
+    es: "Base/Original:",
+    de: "Basis/Original:",
+    fi: "Perus/Alkuperäinen:",
+    fr: "Base/Origine :",
+    ar: "الأساس/الأصل:",
+    it: "Base/Originale:"
+  },
+  rate_label: {
+    en: "Rate:",
+    zh: "百分率：",
+    ja: "率:",
+    ko: "비율:",
+    es: "Tasa:",
+    de: "Rate:",
+    fi: "Korko:",
+    fr: "Taux :",
+    ar: "معدل:",
+    it: "Tasso:"
+  },
+  decrease: {
+    en: "Decrease:",
+    zh: "減少：",
+    ja: "減少:",
+    ko: "감소:",
+    es: "Disminución:",
+    de: "Abnahme:",
+    fi: "Vähennys:",
+    fr: "Diminution :",
+    ar: "نقصان:",
+    it: "Diminuzione:"
+  },
+  increase: {
+    en: "Increase:",
+    zh: "增加：",
+    ja: "増加:",
+    ko: "증가:",
+    es: "Aumento:",
+    de: "Zunahme:",
+    fi: "Lisäys:",
+    fr: "Augmentation :",
+    ar: "زيادة:",
+    it: "Aumento:"
+  },
+  final_label: {
+    en: "Final:",
+    zh: "最終：",
+    ja: "最終:",
+    ko: "최종:",
+    es: "Final:",
+    de: "Endgültig:",
+    fi: "Lopullinen:",
+    fr: "Final :",
+    ar: "نهائي:",
+    it: "Finale:"
+  },
+  info_concept: {
+    en: "Percentage Concept",
+    zh: "百分數概念",
+    ja: "パーセンテージの概念",
+    ko: "백분율 개념",
+    es: "Concepto de Porcentaje",
+    de: "Prozentkonzept",
+    fi: "Prosenttikäsite",
+    fr: "Concept de pourcentage",
+    ar: "مفهوم النسبة المئوية",
+    it: "Concetto di percentuale"
+  },
+  info_per100: {
+    en: "Represents parts per 100",
+    zh: "表示「每一百份中的若干份」",
+    ja: "100に対する割合を表す",
+    ko: "100당 부분을 나타냄",
+    es: "Representa partes por 100",
+    de: "Repräsentiert Teile pro 100",
+    fi: "Edustaa osia per 100",
+    fr: "Représente des parties pour 100",
+    ar: "يمثل أجزاء لكل 100",
+    it: "Rappresenta parti per 100"
+  },
+  info_decimal: {
+    en: "To Decimal:",
+    zh: "轉換小數：",
+    ja: "小数へ:",
+    ko: "소수로 변환:",
+    es: "A Decimal:",
+    de: "In Dezimal:",
+    fi: "Desimaaliksi:",
+    fr: "En décimal :",
+    ar: "إلى عشري:",
+    it: "In decimale:"
+  },
+  info_fraction: {
+    en: "To Fraction:",
+    zh: "轉換分數：",
+    ja: "分数へ:",
+    ko: "분수로 변환:",
+    es: "A Fracción:",
+    de: "In Bruch:",
+    fi: "Murtoluvuksi:",
+    fr: "En fraction :",
+    ar: "إلى كسر:",
+    it: "In frazione:"
+  },
+  info_common: {
+    en: "Common Percentages",
+    zh: "常用百分數",
+    ja: "一般的なパーセンテージ",
+    ko: "자주 쓰는 백분율",
+    es: "Porcentajes Comunes",
+    de: "Häufige Prozentsätze",
+    fi: "Yleiset prosentin",
+    fr: "Pourcentages courants",
+    ar: "النسب المئوية الشائعة",
+    it: "Percentuali Comuni"
+  },
+  all_whole: {
+    en: "All / Whole",
+    zh: "全部 / 整體",
+    ja: "全部 / 全体",
+    ko: "전체",
+    es: "Todo / Entero",
+    de: "Alles / Ganzes",
+    fi: "Kaikki / Kokonainen",
+    fr: "Tout / Entier",
+    ar: "الكل / كامل",
+    it: "Tutto / Intero"
+  },
+  half: {
+    en: "Half",
+    zh: "一半",
+    ja: "半分",
+    ko: "절반",
+    es: "Mitad",
+    de: "Hälfte",
+    fi: "Puoli",
+    fr: "Moitié",
+    ar: "نصف",
+    it: "Metà"
+  },
+  quarter: {
+    en: "Quarter",
+    zh: "四分之一",
+    ja: "四分の一",
+    ko: "4분의 1",
+    es: "Cuarto",
+    de: "Viertel",
+    fi: "Neljännes",
+    fr: "Quart",
+    ar: "ربع",
+    it: "Quarto"
+  },
+  tenth: {
+    en: "Tenth",
+    zh: "十分之一",
+    ja: "十分の一",
+    ko: "10분의 1",
+    es: "Décimo",
+    de: "Zehntel",
+    fi: "Kymmenesosa",
+    fr: "Dixième",
+    ar: "عشر",
+    it: "Decimo"
+  },
+  info_apps: {
+    en: "Applications",
+    zh: "應用範疇",
+    ja: "応用",
+    ko: "응용 분야",
+    es: "Aplicaciones",
+    de: "Anwendungen",
+    fi: "Sovellukset",
+    fr: "Applications",
+    ar: "تطبيقات",
+    it: "Applicazioni"
+  },
+  app_shop: {
+    en: "Store Discounts",
+    zh: "商店折扣優惠",
+    ja: "店舗割引",
+    ko: "매장 할인",
+    es: "Descuentos en tiendas",
+    de: "Ladenrabatte",
+    fi: "Kauppa-alennukset",
+    fr: "Remises en magasin",
+    ar: "خصومات المتاجر",
+    it: "Sconti negozio"
+  },
+  app_bank: {
+    en: "Bank Interest",
+    zh: "銀行利息計算",
+    ja: "銀行利子",
+    ko: "은행 이자",
+    es: "Interés bancario",
+    de: "Bankzinsen",
+    fi: "Pankkikorot",
+    fr: "Intérêts bancaires",
+    ar: "فوائد بنكية",
+    it: "Interessi bancari"
+  },
+  app_exam: {
+    en: "Exam Scores",
+    zh: "考試成績評分",
+    ja: "試験の点数",
+    ko: "시험 점수",
+    es: "Puntajes de examen",
+    de: "Prüfungsnoten",
+    fi: "Koetulokset",
+    fr: "Notes d'examen",
+    ar: "درجات الامتحان",
+    it: "Punteggi esame"
+  },
+  app_data: {
+    en: "Data Analysis",
+    zh: "統計數據分析",
+    ja: "データ分析",
+    ko: "데이터 분석",
+    es: "Análisis de datos",
+    de: "Datenanalyse",
+    fi: "Data-analyysi",
+    fr: "Analyse de données",
+    ar: "تحليل البيانات",
+    it: "Analisi dei dati"
+  },
+  app_tax: {
+    en: "Tax Calc",
+    zh: "稅務計算",
+    ja: "税金計算",
+    ko: "세금 계산",
+    es: "Cálculo de impuestos",
+    de: "Steuerberechnung",
+    fi: "Verolaskenta",
+    fr: "Calcul d'impôt",
+    ar: "حساب الضرائب",
+    it: "Calcolo tasse"
+  }
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const getText = key => t[key][lang] || t[key]["en"];
+  const [mode, setMode] = useState("basic"); // basic, discount, scenarios
+  const [value, setValue] = useState(100);
+  const [percentage, setPercentage] = useState(20);
+  const [originalPrice, setOriginalPrice] = useState(500);
+  const [discountRate, setDiscountRate] = useState(20);
+  const result = value * percentage / 100;
+  const discountAmount = originalPrice * discountRate / 100;
+  const finalPrice = originalPrice - discountAmount;
+  const scenarios = [{
+    type: "discount",
+    titleKey: "sc_discount",
+    original: 800,
+    rate: 25,
+    icon: "🏷️"
+  }, {
+    type: "increase",
+    titleKey: "sc_increase",
+    original: 300,
+    rate: 15,
+    icon: "📈"
+  }, {
+    type: "tax",
+    titleKey: "sc_tax",
+    original: 1000,
+    rate: 10,
+    icon: "💰"
+  }, {
+    type: "commission",
+    titleKey: "sc_commission",
+    original: 5000,
+    rate: 3,
+    icon: "💼"
+  }];
+  const renderProgressBar = percent => {
+    return /*#__PURE__*/React.createElement("div", {
+      className: "w-full h-12 bg-white/30 rounded-full overflow-hidden relative"
+    }, /*#__PURE__*/React.createElement(motion.div, {
+      className: "h-full bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-end pr-4",
+      initial: {
+        width: 0
+      },
+      animate: {
+        width: `${percent}%`
+      },
+      transition: {
+        duration: 0.8,
+        ease: "easeOut"
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "text-white font-black text-xl drop-shadow"
+    }, percent, "%")));
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-8 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("header", {
+    className: "text-center mb-8 mt-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "inline-flex items-center gap-3 bg-white/20 backdrop-blur-md px-6 py-3 rounded-full mb-4"
+  }, /*#__PURE__*/React.createElement(Percent, {
+    className: "text-white",
+    size: 24
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "text-white font-bold text-lg"
+  }, getText("header_grade"))), /*#__PURE__*/React.createElement("h1", {
+    className: "text-5xl md:text-6xl font-black text-white mb-2 tracking-tight"
+  }, getText("title")), /*#__PURE__*/React.createElement("p", {
+    className: "text-xl text-white/80 font-medium"
+  }, "Percentage Master")), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-wrap gap-3 justify-center mb-8"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setMode("basic"),
+    className: `px-6 py-3 rounded-2xl font-bold transition-all ${mode === "basic" ? "bg-white text-pink-600 shadow-lg scale-105" : "bg-white/20 text-white"}`
+  }, getText("mode_basic")), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setMode("discount"),
+    className: `px-6 py-3 rounded-2xl font-bold transition-all ${mode === "discount" ? "bg-white text-pink-600 shadow-lg scale-105" : "bg-white/20 text-white"}`
+  }, getText("mode_discount")), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setMode("scenarios"),
+    className: `px-6 py-3 rounded-2xl font-bold transition-all ${mode === "scenarios" ? "bg-white text-pink-600 shadow-lg scale-105" : "bg-white/20 text-white"}`
+  }, getText("mode_scenarios"))), /*#__PURE__*/React.createElement("main", {
+    className: "w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "lg:col-span-8 bg-white/95 backdrop-blur-md rounded-3xl p-8 shadow-2xl"
+  }, mode === "basic" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h2", {
+    className: "text-2xl font-black text-slate-800 mb-6"
+  }, getText("basic_title")), /*#__PURE__*/React.createElement("div", {
+    className: "mb-6"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "block text-sm font-bold text-slate-600 mb-3"
+  }, getText("value")), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: value,
+    onChange: e => setValue(parseFloat(e.target.value) || 0),
+    className: "w-full px-6 py-4 rounded-2xl border-2 border-pink-200 focus:border-pink-500 outline-none text-2xl font-black text-center"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "mb-6"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "block text-sm font-bold text-slate-600 mb-3"
+  }, getText("percent")), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "0",
+    max: "100",
+    value: percentage,
+    onChange: e => setPercentage(parseInt(e.target.value, 10)),
+    className: "w-full mb-3"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-center text-4xl font-black text-pink-600 mb-4"
+  }, percentage, "%"), renderProgressBar(percentage)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-gradient-to-br from-pink-50 to-orange-50 rounded-2xl p-8 border-2 border-pink-200"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-center mb-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xl font-bold text-slate-600 mb-2"
+  }, getText("formula")), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-mono text-slate-800 mb-4"
+  }, value, " × ", percentage, "% = ", value, " ×", " ", (percentage / 100).toFixed(2))), /*#__PURE__*/React.createElement("div", {
+    className: "text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-lg font-bold text-slate-600 mb-2"
+  }, getText("answer")), /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl font-black text-pink-600"
+  }, result.toFixed(2))))), mode === "discount" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h2", {
+    className: "text-2xl font-black text-slate-800 mb-6 flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement(ShoppingBag, null), " ", getText("discount_title")), /*#__PURE__*/React.createElement("div", {
+    className: "mb-6"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "block text-sm font-bold text-slate-600 mb-3"
+  }, getText("original_price")), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: originalPrice,
+    onChange: e => setOriginalPrice(parseFloat(e.target.value) || 0),
+    className: "w-full px-6 py-4 rounded-2xl border-2 border-blue-200 focus:border-blue-500 outline-none text-2xl font-black text-center"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "mb-6"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "block text-sm font-bold text-slate-600 mb-3"
+  }, getText("discount_rate")), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "0",
+    max: "90",
+    value: discountRate,
+    onChange: e => setDiscountRate(parseInt(e.target.value, 10)),
+    className: "w-full mb-3"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-center text-4xl font-black text-blue-600 mb-4"
+  }, discountRate, "% OFF"), renderProgressBar(discountRate)), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-1 md:grid-cols-3 gap-4 mb-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-100 rounded-2xl p-4 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-sm font-bold text-slate-600 mb-2"
+  }, getText("label_original")), /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-black text-slate-800"
+  }, "$", originalPrice)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-red-100 rounded-2xl p-4 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-sm font-bold text-red-600 mb-2"
+  }, getText("label_saved")), /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-black text-red-600"
+  }, "-$", discountAmount.toFixed(2))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-green-100 rounded-2xl p-4 text-center border-2 border-green-400"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-sm font-bold text-green-700 mb-2"
+  }, getText("label_final")), /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-black text-green-600"
+  }, "$", finalPrice.toFixed(2)))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-6"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "font-black text-lg text-slate-800 mb-3"
+  }, getText("steps")), /*#__PURE__*/React.createElement("ol", {
+    className: "space-y-2 text-slate-700"
+  }, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "1."), " ", getText("step1_desc"), " $", originalPrice, " × ", discountRate, "% = $", discountAmount.toFixed(2)), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", null, "2."), " ", getText("step2_desc"), " $", originalPrice, " - $", discountAmount.toFixed(2), " =", " ", /*#__PURE__*/React.createElement("span", {
+    className: "text-green-600 font-black"
+  }, "$", finalPrice.toFixed(2)))))), mode === "scenarios" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h2", {
+    className: "text-2xl font-black text-slate-800 mb-6"
+  }, getText("scenarios_title")), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-1 md:grid-cols-2 gap-6"
+  }, scenarios.map((scenario, idx) => {
+    const amount = scenario.original * scenario.rate / 100;
+    const final = scenario.type === "discount" ? scenario.original - amount : scenario.original + amount;
+    return /*#__PURE__*/React.createElement("div", {
+      key: idx,
+      className: "bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 border-2 border-purple-200"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "text-4xl mb-3"
+    }, scenario.icon), /*#__PURE__*/React.createElement("h3", {
+      className: "text-xl font-black text-slate-800 mb-4"
+    }, getText(scenario.titleKey)), /*#__PURE__*/React.createElement("div", {
+      className: "space-y-3 text-slate-700"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "flex justify-between"
+    }, /*#__PURE__*/React.createElement("span", null, getText("base")), /*#__PURE__*/React.createElement("span", {
+      className: "font-black"
+    }, "$", scenario.original)), /*#__PURE__*/React.createElement("div", {
+      className: "flex justify-between"
+    }, /*#__PURE__*/React.createElement("span", null, getText("rate_label")), /*#__PURE__*/React.createElement("span", {
+      className: "font-black"
+    }, scenario.rate, "%")), /*#__PURE__*/React.createElement("div", {
+      className: "flex justify-between border-t-2 border-purple-200 pt-2"
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "font-bold"
+    }, scenario.type === "discount" ? getText("decrease") : getText("increase")), /*#__PURE__*/React.createElement("span", {
+      className: `font-black ${scenario.type === "discount" ? "text-red-600" : "text-green-600"}`
+    }, "$", amount.toFixed(2))), /*#__PURE__*/React.createElement("div", {
+      className: "flex justify-between bg-white rounded-lg p-2 border-2 border-purple-300"
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "font-bold"
+    }, getText("final_label")), /*#__PURE__*/React.createElement("span", {
+      className: "font-black text-purple-600 text-lg"
+    }, "$", final.toFixed(2)))));
+  })))), /*#__PURE__*/React.createElement("div", {
+    className: "lg:col-span-4 flex flex-col gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/95 backdrop-blur-md rounded-3xl p-6 shadow-lg"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-lg font-black text-pink-600 mb-3"
+  }, "💡 ", getText("info_concept")), /*#__PURE__*/React.createElement("div", {
+    className: "text-sm text-slate-700 leading-relaxed space-y-3"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-pink-50 p-3 rounded-lg"
+  }, /*#__PURE__*/React.createElement("strong", null, getText("percent")), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-600 mt-1"
+  }, getText("info_per100"))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-blue-50 p-3 rounded-lg"
+  }, /*#__PURE__*/React.createElement("strong", null, getText("info_decimal")), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-600 mt-1"
+  }, "25% = 25 ÷ 100 = 0.25")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-green-50 p-3 rounded-lg"
+  }, /*#__PURE__*/React.createElement("strong", null, getText("info_fraction")), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-600 mt-1"
+  }, "50% = 50/100 = 1/2")))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-gradient-to-br from-yellow-100 to-orange-100 rounded-3xl p-6 shadow-lg"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-lg font-black text-orange-700 mb-3"
+  }, "📊 ", getText("info_common")), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-2 text-sm"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-2 rounded-lg flex justify-between"
+  }, /*#__PURE__*/React.createElement("span", null, "100%"), /*#__PURE__*/React.createElement("span", {
+    className: "font-black"
+  }, getText("all_whole"))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-2 rounded-lg flex justify-between"
+  }, /*#__PURE__*/React.createElement("span", null, "50%"), /*#__PURE__*/React.createElement("span", {
+    className: "font-black"
+  }, getText("half"))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-2 rounded-lg flex justify-between"
+  }, /*#__PURE__*/React.createElement("span", null, "25%"), /*#__PURE__*/React.createElement("span", {
+    className: "font-black"
+  }, getText("quarter"))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-2 rounded-lg flex justify-between"
+  }, /*#__PURE__*/React.createElement("span", null, "10%"), /*#__PURE__*/React.createElement("span", {
+    className: "font-black"
+  }, getText("tenth"))))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/95 backdrop-blur-md rounded-3xl p-6 shadow-lg"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-lg font-black text-slate-800 mb-3"
+  }, "🎯 ", getText("info_apps")), /*#__PURE__*/React.createElement("ul", {
+    className: "text-sm text-slate-600 space-y-2"
+  }, /*#__PURE__*/React.createElement("li", null, "✓ ", getText("app_shop")), /*#__PURE__*/React.createElement("li", null, "✓ ", getText("app_bank")), /*#__PURE__*/React.createElement("li", null, "✓ ", getText("app_exam")), /*#__PURE__*/React.createElement("li", null, "✓ ", getText("app_data")), /*#__PURE__*/React.createElement("li", null, "✓ ", getText("app_tax")))))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

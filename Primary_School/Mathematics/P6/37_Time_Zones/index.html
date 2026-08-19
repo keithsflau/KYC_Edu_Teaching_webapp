@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小六數學：時區換算 | Time Zones</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Time Zones",
+    zh: "時區換算",
+    ja: "タイムゾーン",
+    ko: "시간대",
+    es: "Zonas Horarias",
+    de: "Zeitzonen",
+    fi: "Aikavyöhykkeet",
+    fr: "Fuseaux horaires",
+    ar: "المناطق الزمنية",
+    it: "Fusi Orari"
+  },
+  hkTime: {
+    en: "Hong Kong Time",
+    zh: "香港時間",
+    ja: "香港時間",
+    ko: "홍콩 시간",
+    es: "Hora de Hong Kong",
+    de: "Hongkong Zeit",
+    fi: "Hongkongin aika",
+    fr: "Heure de Hong Kong",
+    ar: "توقيت هونغ كونغ",
+    it: "Orario di Hong Kong"
+  },
+  diff: {
+    en: "Difference",
+    zh: "時差",
+    ja: "時差",
+    ko: "시차",
+    es: "Diferencia",
+    de: "Unterschied",
+    fi: "Ero",
+    fr: "Différence",
+    ar: "الفرق",
+    it: "Differenza"
+  },
+  day: {
+    en: "Day",
+    zh: "日",
+    ja: "昼",
+    ko: "낮",
+    es: "Día",
+    de: "Tag",
+    fi: "Päivä",
+    fr: "Jour",
+    ar: "نهار",
+    it: "Giorno"
+  },
+  night: {
+    en: "Night",
+    zh: "夜",
+    ja: "夜",
+    ko: "밤",
+    es: "Noche",
+    de: "Nacht",
+    fi: "Yö",
+    fr: "Nuit",
+    ar: "ليل",
+    it: "Notte"
+  },
+  prevDay: {
+    en: "Previous Day",
+    zh: "前一日",
+    ja: "前日",
+    ko: "전날",
+    es: "Día Anterior",
+    de: "Vorheriger Tag",
+    fi: "Edellinen päivä",
+    fr: "Jour précédent",
+    ar: "اليوم السابق",
+    it: "Giorno Precedente"
+  },
+  nextDay: {
+    en: "Next Day",
+    zh: "後一日",
+    ja: "翌日",
+    ko: "다음 날",
+    es: "Día Siguiente",
+    de: "Nächster Tag",
+    fi: "Seuraava päivä",
+    fr: "Jour suivant",
+    ar: "اليوم التالي",
+    it: "Giorno Successivo"
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [hkH, setHkH] = useState(12);
+  const cities = [{
+    name: "Hong Kong",
+    utc: 8,
+    icon: "🇭🇰"
+  }, {
+    name: "London",
+    utc: 0,
+    icon: "🇬🇧"
+  }, {
+    name: "New York",
+    utc: -5,
+    icon: "🇺🇸"
+  }, {
+    name: "Tokyo",
+    utc: 9,
+    icon: "🇯🇵"
+  }, {
+    name: "Sydney",
+    utc: 10,
+    icon: "🇦🇺"
+  }, {
+    name: "Paris",
+    utc: 1,
+    icon: "🇫🇷"
+  }];
+  const formatTime = totalH => {
+    // totalH can be negative or > 24
+    let h = Math.floor(totalH);
+    let normalizedH = (h % 24 + 24) % 24;
+    let ampm = normalizedH >= 12 ? "PM" : "AM";
+    let displayH = normalizedH % 12 || 12;
+    return {
+      str: `${displayH}:00 ${ampm}`,
+      h24: normalizedH,
+      dayOffset: Math.floor(totalH / 24) // 0 same, -1 prev, 1 next
+    };
+  };
+
+  // HK is UTC+8. UTC = HK - 8.
+  const baseUtc = hkH - 8;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4 font-sans bg-slate-900 text-white"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-5xl flex justify-between items-center mb-10"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-black text-indigo-400 drop-shadow-[0_0_15px_rgba(129,140,248,0.5)]"
+  }, "🌍 ", getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "flex bg-slate-800/80 p-1.5 rounded-xl border border-white/10 flex-wrap justify-end gap-1 max-w-[50%]"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-indigo-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white hover:bg-white/5"}`
+  }, l)))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-4xl flex flex-col gap-10"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-8 rounded-3xl flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "text-2xl font-bold uppercase text-indigo-300 mb-6"
+  }, getText("hkTime", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl font-black font-mono text-white mb-8"
+  }, formatTime(hkH).str), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-lg relative px-4"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "0",
+    max: "23",
+    step: "1",
+    value: hkH,
+    onChange: e => setHkH(parseInt(e.target.value, 10)),
+    className: "w-full accent-indigo-500 h-4 bg-slate-700 rounded-full appearance-none cursor-pointer z-10 relative"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between text-xs font-mono text-slate-500 mt-2 px-1"
+  }, /*#__PURE__*/React.createElement("span", null, "00:00"), /*#__PURE__*/React.createElement("span", null, "12:00"), /*#__PURE__*/React.createElement("span", null, "23:00")))), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+  }, cities.map((c, i) => {
+    const cityH = baseUtc + c.utc;
+    const info = formatTime(cityH);
+    const isDay = info.h24 >= 6 && info.h24 < 18;
+    return /*#__PURE__*/React.createElement(motion.div, {
+      key: i,
+      layout: true,
+      className: `p-6 rounded-3xl border-2 transition-all relative overflow-hidden ${isDay ? "bg-sky-100 border-sky-300" : "bg-slate-800 border-indigo-900"}`
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "absolute -right-4 -bottom-4 text-9xl opacity-10 pointer-events-none grayscale"
+    }, c.icon), /*#__PURE__*/React.createElement("div", {
+      className: "relative z-10 flex flex-col h-full justify-between"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "flex justify-between items-start"
+    }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+      className: `text-3xl mb-1`
+    }, c.icon), /*#__PURE__*/React.createElement("div", {
+      className: `font-bold text-lg ${isDay ? "text-slate-800" : "text-slate-200"}`
+    }, c.name), /*#__PURE__*/React.createElement("div", {
+      className: `text-xs font-bold uppercase ${isDay ? "text-sky-600" : "text-indigo-400"}`
+    }, "UTC ", c.utc >= 0 ? "+" : "", c.utc)), /*#__PURE__*/React.createElement("div", {
+      className: `text-xs font-black px-2 py-1 rounded uppercase ${isDay ? "bg-sky-200 text-sky-800" : "bg-indigo-900 text-indigo-200"}`
+    }, isDay ? getText("day", lang) : getText("night", lang))), /*#__PURE__*/React.createElement("div", {
+      className: "mt-6 text-right"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: `text-4xl font-black font-mono ${isDay ? "text-slate-900" : "text-white"}`
+    }, info.str), info.dayOffset !== 0 && /*#__PURE__*/React.createElement("div", {
+      className: `text-xs font-bold uppercase mt-1 ${isDay ? "text-red-500" : "text-red-400"}`
+    }, info.dayOffset > 0 ? getText("nextDay", lang) : getText("prevDay", lang)))));
+  }))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

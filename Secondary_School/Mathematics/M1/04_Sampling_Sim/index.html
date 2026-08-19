@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sampling Methods | M1 Statistics</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+      }
+      .glass {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <div id="root" class="flex-grow flex flex-col"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const translations = {
+  en: {
+    unit: "Module 1: Statistics",
+    title: "Sampling Simulator",
+    desc: "Visualize different sampling techniques.",
+    popParams: "Population Parameters",
+    rand: "Simples Random",
+    sys: "Systematic",
+    strat: "Stratified",
+    generate: "Generate Info",
+    select: "Select Sample",
+    reset: "Reset",
+    legend: "Legend",
+    selected: "Selected",
+    notSelected: "Not Selected",
+    langBtn: "中文"
+  },
+  zh: {
+    unit: "單元一：統計學",
+    title: "抽樣模擬器",
+    desc: "視像化不同的抽樣方法。",
+    popParams: "總體參數",
+    rand: "簡單隨機抽樣",
+    sys: "系統抽樣",
+    strat: "分層抽樣",
+    generate: "生成數據",
+    select: "選取樣本",
+    reset: "重置",
+    legend: "圖例",
+    selected: "已選取",
+    notSelected: "未選取",
+    langBtn: "English"
+  }
+};
+const App = () => {
+  const [lang, setLang] = useState("en");
+  const t = translations[lang];
+  const [method, setMethod] = useState("Random");
+  const [population, setPopulation] = useState([]);
+  const [sampleSize, setSampleSize] = useState(12);
+  const popSize = 100;
+
+  // Initialize Population
+  useEffect(() => {
+    // Generate 100 people with "Stratum" (e.g. Group A/B/C)
+    const newPop = Array.from({
+      length: popSize
+    }, (_, i) => ({
+      id: i,
+      group: i < 30 ? "A" : i < 70 ? "B" : "C",
+      // 30% A, 40% B, 30% C
+      selected: false
+    }));
+    setPopulation(newPop);
+  }, []);
+  const runSampling = () => {
+    const newPop = [...population].map(p => ({
+      ...p,
+      selected: false
+    }));
+    if (method === "Random") {
+      // Start Simple Random
+      const indices = new Set();
+      while (indices.size < sampleSize) {
+        indices.add(Math.floor(Math.random() * popSize));
+      }
+      indices.forEach(i => newPop[i].selected = true);
+    } else if (method === "Systematic") {
+      // k = N/n = 100/10 = 10. Start random r. Select r, r+k, r+2k...
+      const k = Math.floor(popSize / sampleSize);
+      const start = Math.floor(Math.random() * k);
+      for (let i = 0; i < sampleSize; i++) {
+        const idx = (start + i * k) % popSize;
+        newPop[idx].selected = true;
+      }
+    } else if (method === "Stratified") {
+      // Proportional selection.
+      // A: 30 -> want 3
+      // B: 40 -> want 4
+      // C: 30 -> want 3
+      const groups = {
+        A: 30,
+        B: 40,
+        C: 30
+      };
+      // Helper
+      const selectFromGroup = (grp, count) => {
+        const available = newPop.filter(p => p.group === grp);
+        const selectedIndices = new Set();
+        while (selectedIndices.size < count) {
+          const r = Math.floor(Math.random() * available.length);
+          selectedIndices.add(available[r].id);
+        }
+        selectedIndices.forEach(id => {
+          newPop[id].selected = true;
+        });
+      };
+
+      // Simple logic for n=10
+      selectFromGroup("A", Math.round(sampleSize * 0.3));
+      selectFromGroup("B", Math.round(sampleSize * 0.4));
+      selectFromGroup("C", Math.round(sampleSize * 0.3));
+    }
+    setPopulation(newPop);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "flex-grow flex flex-col items-center justify-center p-8 select-none"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 right-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLang(l => l === "en" ? "zh" : "en"),
+    className: "px-3 py-1 bg-slate-800 border border-slate-600 rounded-full text-xs font-bold text-emerald-400 hover:bg-slate-700 hover:text-white transition flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-language"
+  }), t.langBtn)), /*#__PURE__*/React.createElement("header", {
+    className: "mb-8 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-emerald-500 font-bold uppercase tracking-widest text-xs mb-2"
+  }, t.unit), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-white mb-2"
+  }, t.title), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-400 font-mono text-lg"
+  }, t.desc)), /*#__PURE__*/React.createElement("div", {
+    className: "glass p-6 rounded-3xl w-full max-w-5xl mb-8 border border-slate-700"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-center gap-4 mb-8 flex-wrap"
+  }, ["Random", "Systematic", "Stratified"].map(m => /*#__PURE__*/React.createElement("button", {
+    key: m,
+    onClick: () => {
+      setMethod(m);
+      setPopulation(population.map(p => ({
+        ...p,
+        selected: false
+      })));
+    },
+    className: `px-6 py-3 rounded-xl font-bold transition ${method === m ? "bg-emerald-600 text-white shadow-lg scale-105" : "bg-slate-800 text-slate-400 border border-slate-700 hover:bg-slate-700"}`
+  }, m === "Random" ? t.rand : m === "Systematic" ? t.sys : t.strat))), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-10 gap-2 mb-8 max-w-2xl mx-auto"
+  }, population.map(p => /*#__PURE__*/React.createElement("div", {
+    key: p.id,
+    className: `
+                                        w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold transition-all duration-500 font-mono
+                                        ${p.selected ? "bg-rose-500 text-white scale-110 shadow-lg ring-2 ring-rose-900 z-10" : p.group === "A" ? "bg-blue-900/50 text-blue-300 border border-blue-800" : p.group === "B" ? "bg-emerald-900/50 text-emerald-300 border border-emerald-800" : "bg-amber-900/50 text-amber-300 border border-amber-800"}
+                                    `
+  }, p.id + 1))), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-center"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: runSampling,
+    className: "bg-slate-100 hover:bg-white text-slate-900 text-lg font-bold px-8 py-3 rounded-xl shadow-lg transition active:scale-95 flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-play"
+  }), " ", t.select, " P(10)"))), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4 flex-wrap justify-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2 text-sm text-slate-400 font-bold glass px-3 py-1 rounded-full border border-slate-700"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "w-3 h-3 rounded-full bg-blue-500"
+  }), " Group A"), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2 text-sm text-slate-400 font-bold glass px-3 py-1 rounded-full border border-slate-700"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "w-3 h-3 rounded-full bg-emerald-500"
+  }), " ", "Group B"), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2 text-sm text-slate-400 font-bold glass px-3 py-1 rounded-full border border-slate-700"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "w-3 h-3 rounded-full bg-amber-500"
+  }), " ", "Group C"), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2 text-sm text-rose-400 font-bold glass px-3 py-1 rounded-full border border-rose-900/50"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "w-3 h-3 rounded-full bg-rose-500"
+  }), " ", t.selected)));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

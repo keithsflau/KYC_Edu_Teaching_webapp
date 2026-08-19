@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小六數學：密鋪圖案 | Tessellation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Tessellation",
+    zh: "密鋪圖案",
+    ja: "テッセレーション",
+    ko: "테셀레이션",
+    es: "Teselado",
+    de: "Parkettierung",
+    fi: "Tessellaatio",
+    fr: "Tessellation",
+    ar: "فسيفساء",
+    it: "Tassellatura"
+  },
+  select: {
+    en: "Select Shape",
+    zh: "選擇形狀",
+    ja: "形状を選択",
+    ko: "모양 선택",
+    es: "Seleccionar Forma",
+    de: "Form auswählen",
+    fi: "Valitse muoto",
+    fr: "Sélectionner une forme",
+    ar: "اختر الشكل",
+    it: "Seleziona Forma"
+  },
+  triangle: {
+    en: "Triangle",
+    zh: "三角形",
+    ja: "三角形",
+    ko: "삼각형",
+    es: "Triángulo",
+    de: "Dreieck",
+    fi: "Kolmio",
+    fr: "Triangle",
+    ar: "مثلث",
+    it: "Triangolo"
+  },
+  square: {
+    en: "Square",
+    zh: "正方形",
+    ja: "正方形",
+    ko: "정사각형",
+    es: "Cuadrado",
+    de: "Quadrat",
+    fi: "Neliö",
+    fr: "Carré",
+    ar: "مربع",
+    it: "Quadrato"
+  },
+  hexagon: {
+    en: "Hexagon",
+    zh: "六邊形",
+    ja: "六角形",
+    ko: "육각형",
+    es: "Hexágono",
+    de: "Sechseck",
+    fi: "Kuusikulmio",
+    fr: "Hexagone",
+    ar: "سداسي",
+    it: "Esagono"
+  },
+  pentagon: {
+    en: "Pentagon",
+    zh: "五邊形",
+    ja: "五角形",
+    ko: "오각형",
+    es: "Pentágono",
+    de: "Fünfeck",
+    fi: "Viisikulmio",
+    fr: "Pentagone",
+    ar: "خماسي",
+    it: "Pentagono"
+  },
+  status_ok: {
+    en: "Tessellates!",
+    zh: "可以密鋪！",
+    ja: "敷き詰め可能！",
+    ko: "빈틈없이 채워집니다!",
+    es: "¡Tesela!",
+    de: "Parkettierbar!",
+    fi: "Tesseloituu!",
+    fr: "Tesselle !",
+    ar: "يمكن رصفها!",
+    it: "Tassella!"
+  },
+  status_fail: {
+    en: "Gaps Found!",
+    zh: "有空隙！",
+    ja: "隙間あり！",
+    ko: "빈틈이 생깁니다!",
+    es: "¡Hay Huecos!",
+    de: "Lücken gefunden!",
+    fi: "Aukkoja!",
+    fr: "Trous trouvés !",
+    ar: "توجد فجوات!",
+    it: "Spazi Trovati!"
+  },
+  explanation: {
+    en: "Angles at a point sum to 360°",
+    zh: "接合點的內角和必須是 360°",
+    ja: "一点の角の和は360°",
+    ko: "한 점의 각 합은 360°",
+    es: "Los ángulos suman 360°",
+    de: "Winkel summieren sich zu 360°",
+    fi: "Kulmien summa on 360°",
+    fr: "La somme des angles est de 360°",
+    ar: "مجموع الزوايا 360 درجة",
+    it: "Gli angoli sommano a 360°"
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+const Patterns = {
+  sqr: /*#__PURE__*/React.createElement("pattern", {
+    id: "p_sqr",
+    x: "0",
+    y: "0",
+    width: "40",
+    height: "40",
+    patternUnits: "userSpaceOnUse"
+  }, /*#__PURE__*/React.createElement("rect", {
+    x: "0",
+    y: "0",
+    width: "40",
+    height: "40",
+    fill: "#fbbf24",
+    stroke: "#d97706",
+    strokeWidth: "2"
+  })),
+  tri: /*#__PURE__*/React.createElement("pattern", {
+    id: "p_tri",
+    x: "0",
+    y: "0",
+    width: "40",
+    height: "34.64",
+    patternUnits: "userSpaceOnUse"
+  }, /*#__PURE__*/React.createElement("polygon", {
+    points: "20,0 40,34.64 0,34.64",
+    fill: "#fbbf24",
+    stroke: "#d97706",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("polygon", {
+    points: "0,0 40,0 20,34.64",
+    fill: "#f59e0b",
+    stroke: "#b45309",
+    strokeWidth: "2"
+  })))
+  // SVG patterns are tough to get perfect procedural in one go. Using CSS backgrounds for tessellations is often cleaner.
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [selected, setSelected] = useState("sqr");
+  const shapes = [{
+    id: "tri",
+    icon: "🔺",
+    valid: true
+  }, {
+    id: "sqr",
+    icon: "🟥",
+    valid: true
+  }, {
+    id: "pent",
+    icon: "⬠",
+    valid: false
+  }, {
+    id: "hex",
+    icon: "⬡",
+    valid: true
+  }];
+  const current = shapes.find(s => s.id === selected);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4 font-sans bg-slate-900 text-white"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-5xl flex justify-between items-center mb-10"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-black text-amber-400 drop-shadow-[0_0_15px_rgba(251,191,36,0.5)]"
+  }, "🧩 ", getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "flex bg-slate-800/80 p-1.5 rounded-xl border border-white/10 flex-wrap justify-end gap-1 max-w-[50%]"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-amber-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white hover:bg-white/5"}`
+  }, l)))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-5xl grid grid-cols-1 md:grid-cols-12 gap-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "col-span-1 md:col-span-3 flex flex-col gap-4"
+  }, shapes.map(s => /*#__PURE__*/React.createElement("button", {
+    key: s.id,
+    onClick: () => setSelected(s.id),
+    className: `p-6 rounded-2xl border-2 text-left transition-all flex items-center gap-4 ${selected === s.id ? "bg-amber-600 border-amber-400 text-white shadow-lg" : "bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700"}`
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-2xl"
+  }, s.icon), /*#__PURE__*/React.createElement("span", {
+    className: "font-bold hidden md:inline"
+  }, s.id === "tri" && getText("triangle", lang), s.id === "sqr" && getText("square", lang), s.id === "pent" && getText("pentagon", lang), s.id === "hex" && getText("hexagon", lang))))), /*#__PURE__*/React.createElement("div", {
+    className: "col-span-1 md:col-span-9 glass-panel p-2 rounded-3xl relative overflow-hidden min-h-[500px] flex items-center justify-center bg-slate-900"
+  }, /*#__PURE__*/React.createElement("div", {
+    key: selected,
+    className: "absolute inset-0 opacity-80",
+    style: {
+      backgroundImage: selected === "sqr" ? `linear-gradient(45deg, #cc8e35 25%, transparent 25%, transparent 75%, #cc8e35 75%, #cc8e35), linear-gradient(45deg, #cc8e35 25%, transparent 25%, transparent 75%, #cc8e35 75%, #cc8e35)` : selected === "tri" ? `conic-gradient(at 0% 100%, #fbbf24 60deg, transparent 60deg), conic-gradient(from 180deg at 50% 100%, #f59e0b 60deg, transparent 60deg)` : selected === "hex" ? `url("data:image/svg+xml,%3Csvg width='56' height='100' viewBox='0 0 56 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M28 66L0 50L0 16L28 0L56 16L56 50L28 66L28 100' fill='none' stroke='%23d97706' stroke-width='2'/%3E%3Cpath d='M28 0L28 34L0 50L0 84L28 100L56 84L56 50L28 34' fill='%23fbbf24' fill-opacity='0.5'/%3E%3C/svg%3E")` : "none",
+      backgroundSize: selected === "sqr" ? "60px 60px" : selected === "tri" ? "60px 52px" : selected === "hex" ? "auto" : "auto",
+      backgroundPosition: selected === "sqr" ? "0 0, 30px 30px" : "0 0",
+      backgroundColor: selected === "sqr" ? "#fbbf24" : "#1e293b"
+    }
+  }, selected === "pent" && /*#__PURE__*/React.createElement("div", {
+    className: "w-full h-full flex flex-wrap content-center justify-center p-8 bg-slate-800"
+  }, [1, 2, 3].map(i => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "text-9xl text-amber-500 m-[-20px] drop-shadow-lg opacity-80"
+  }, "⬠")))), /*#__PURE__*/React.createElement("div", {
+    className: "z-10 bg-slate-900/80 backdrop-blur-md border border-white/10 p-8 rounded-2xl text-center max-w-sm m-4 shadow-2xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl mb-4"
+  }, current.valid ? "✅" : "❌"), /*#__PURE__*/React.createElement("h2", {
+    className: `text-3xl font-black mb-2 ${current.valid ? "text-green-400" : "text-red-400"}`
+  }, current.valid ? getText("status_ok", lang) : getText("status_fail", lang)), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-300 font-bold"
+  }, getText("explanation", lang))))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

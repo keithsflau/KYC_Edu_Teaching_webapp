@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Polar Curves | M2 Calculus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+      }
+      .glass {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <div id="root" class="flex-grow flex flex-col"></div>
+    <script>
+const {
+  useState
+} = React;
+const translations = {
+  en: {
+    unit: "Unit 2: Calculus",
+    title: "Polar Curves",
+    select: "Select Type",
+    cardioid: "Cardioid (1+cosθ)",
+    rose: "Rose (cos kθ)",
+    lemniscate: "Lemniscate (r²=cos2θ)",
+    factor: "Petals Factor k",
+    note: "Note: If k is even, 2k petals. If k is odd, k petals.",
+    langBtn: "中文"
+  },
+  zh: {
+    unit: "第二單元：微積分",
+    title: "極座標曲線",
+    select: "選擇類型",
+    cardioid: "心形線 (1+cosθ)",
+    rose: "玫瑰線 (cos kθ)",
+    lemniscate: "雙扭線 (r²=cos2θ)",
+    factor: "花瓣係數 k",
+    note: "注意：若 k 為偶數，有 2k 個花瓣。若 k 為奇數，有 k 個花瓣。",
+    langBtn: "English"
+  }
+};
+const App = () => {
+  // r = a + b cos(theta)
+  // Cardioid: a=b
+  // Limacon: a!=b
+  // Rose: r = a cos(k theta)
+
+  const [lang, setLang] = useState("en");
+  const t = translations[lang];
+  const [type, setType] = useState("cardioid");
+  const [k, setK] = useState(4); // for rose
+
+  // Viz
+  const w = 600,
+    h = 600;
+  const originX = w / 2;
+  const originY = h / 2;
+  const scale = 100;
+  const getR = theta => {
+    if (type === "cardioid") return 1 + Math.cos(theta); // 1 + cos θ
+    if (type === "rose") return Math.cos(k * theta); // cos kθ
+    if (type === "lemniscate") {
+      const c = Math.cos(2 * theta); // r^2 = cos 2θ (undefined when cos 2θ < 0)
+      return c < 0 ? null : Math.sqrt(c);
+    }
+    return 1;
+  };
+  const pts = [];
+  for (let t = 0; t <= 2 * Math.PI + 0.1; t += 0.02) {
+    const r = getR(t);
+    if (r === null) {
+      pts.push(null);
+      continue;
+    }
+    const x = r * Math.cos(t);
+    const y = r * Math.sin(t);
+    pts.push({
+      x,
+      y
+    });
+  }
+  // Build path with breaks where lemniscate is undefined (avoid abs-induced extra lobes)
+  let pathD = "";
+  let penDown = false;
+  for (const p of pts) {
+    if (!p) {
+      penDown = false;
+      continue;
+    }
+    const coord = `${originX + p.x * scale},${originY - p.y * scale}`;
+    if (!penDown) {
+      pathD += (pathD ? " " : "") + `M ${coord}`;
+      penDown = true;
+    } else {
+      pathD += ` L ${coord}`;
+    }
+  }
+
+  // Polar Grid
+  const rings = [0.5, 1, 1.5, 2];
+  return /*#__PURE__*/React.createElement("div", {
+    className: "flex-grow flex flex-col items-center justify-center p-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 right-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLang(l => l === "en" ? "zh" : "en"),
+    className: "px-3 py-1 bg-slate-800 border border-slate-600 rounded-full text-xs font-bold text-emerald-400 hover:bg-slate-700 hover:text-white transition flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-language"
+  }), t.langBtn)), /*#__PURE__*/React.createElement("header", {
+    className: "mb-8 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-emerald-500 font-bold uppercase tracking-widest text-xs mb-2"
+  }, t.unit), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-white mb-2"
+  }, t.title), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-400 font-mono text-lg"
+  }, "x = r cos θ, y = r sin θ")), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col lg:flex-row gap-12 w-full max-w-6xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 glass p-6 rounded-3xl relative flex items-center justify-center aspect-square"
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: "100%",
+    height: "100%",
+    viewBox: "0 0 600 600",
+    className: "overflow-visible"
+  }, rings.map(r => /*#__PURE__*/React.createElement("circle", {
+    key: r,
+    cx: originX,
+    cy: originY,
+    r: r * scale,
+    fill: "none",
+    stroke: "#334155"
+  })), /*#__PURE__*/React.createElement("line", {
+    x1: originX,
+    y1: "0",
+    x2: originX,
+    y2: h,
+    stroke: "#334155"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "0",
+    y1: originY,
+    x2: w,
+    y2: originY,
+    stroke: "#334155"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: pathD,
+    fill: "rgba(56, 189, 248, 0.2)",
+    stroke: "#38bdf8",
+    strokeWidth: "3"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full lg:w-80 space-y-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass p-6 rounded-2xl"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "text-xs text-slate-500 uppercase font-bold mb-4 block"
+  }, t.select), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-2"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setType("cardioid"),
+    className: `w-full text-left px-4 py-3 rounded-xl ${type === "cardioid" ? "bg-emerald-600 text-white" : "bg-slate-800 text-slate-400"}`
+  }, t.cardioid), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setType("rose"),
+    className: `w-full text-left px-4 py-3 rounded-xl ${type === "rose" ? "bg-emerald-600 text-white" : "bg-slate-800 text-slate-400"}`
+  }, t.rose), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setType("lemniscate"),
+    className: `w-full text-left px-4 py-3 rounded-xl ${type === "lemniscate" ? "bg-emerald-600 text-white" : "bg-slate-800 text-slate-400"}`
+  }, t.lemniscate))), type === "rose" && /*#__PURE__*/React.createElement("div", {
+    className: "glass p-6 rounded-2xl"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "text-xs text-slate-500 uppercase font-bold mb-2 block"
+  }, t.factor), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "2",
+    max: "8",
+    step: "1",
+    value: k,
+    onChange: e => setK(Number(e.target.value)),
+    className: "w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-center mt-2 font-mono text-emerald-400"
+  }, "k = ", k), /*#__PURE__*/React.createElement("p", {
+    className: "text-xs text-slate-400 mt-2 text-center"
+  }, t.note)))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

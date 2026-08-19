@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小三數學：棒形圖製作 | Bar Chart Maker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+      }
+      .bar-transition {
+        transition: height 0.5s ease-out;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState
+} = React;
+const { LanguageSelector,
+  get } = window.MathI18n || { LanguageSelector: () => null, get: (key) => key };
+const t = {
+  title: {
+    en: "Bar Chart Maker",
+    zh: "棒形圖製作",
+    ja: "棒グラフ作成",
+    ko: "막대 그래프 만들기",
+    es: "Creador de gráficos de barras",
+    de: "Balkendiagramm-Ersteller",
+    fi: "Pylväskaavion luoja",
+    fr: "Créateur de diagrammes à barres",
+    ar: "صانع المخططات الشريطية",
+    it: "Creatore di grafici a barre"
+  },
+  adjust: {
+    en: "Adjust Data",
+    zh: "調整數據",
+    ja: "データを調整",
+    ko: "데이터 조정",
+    es: "Ajustar datos",
+    de: "Daten anpassen",
+    fi: "Säädä tietoja",
+    fr: "Ajuster les données",
+    ar: "تعديل البيانات",
+    it: "Regola i dati"
+  },
+  chartTitle: {
+    en: "Favorite Fruits",
+    zh: "最喜愛的水果",
+    ja: "好きな果物",
+    ko: "좋아하는 과일",
+    es: "Frutas favoritas",
+    de: "Lieblingsfrüchte",
+    fi: "Lempi hedelmät",
+    fr: "Fruits préférés",
+    ar: "الفواكه المفضلة",
+    it: "Frutta preferita"
+  },
+  tip: {
+    en: "Drag sliders or enter numbers to change bar height!",
+    zh: "拖動滑桿或輸入數字來改變棒的高度！",
+    ja: "スライダーをドラッグするか数字を入力して棒の高さを変更してください！",
+    ko: "슬라이더를 드래그하거나 숫자를 입력하여 막대 높이를 변경하세요!",
+    es: "¡Arrastra los controles deslizantes o ingresa números para cambiar la altura de la barra!",
+    de: "Ziehen Sie die Schieberegler oder geben Sie Zahlen ein, um die Balkenhöhe zu ändern!",
+    fi: "Vedä liukusäätimiä tai syötä numeroita muuttaaksesi pylvään korkeutta!",
+    fr: "Faites glisser les curseurs ou entrez des nombres pour changer la hauteur de la barre !",
+    ar: "اسحب أشرطة التمرير أو أدخل أرقامًا لتغيير ارتفاع الشريط!",
+    it: "Trascina i cursori o inserisci numeri per cambiare l'altezza della barra!"
+  },
+  fruits: {
+    apple: {
+      en: "Apple",
+      zh: "蘋果",
+      ja: "リンゴ",
+      ko: "사과",
+      es: "Manzana",
+      de: "Apfel",
+      fi: "Omena",
+      fr: "Pomme",
+      ar: "تفاحة",
+      it: "Mela"
+    },
+    orange: {
+      en: "Orange",
+      zh: "橙",
+      ja: "オレンジ",
+      ko: "오렌지",
+      es: "Naranja",
+      de: "Orange",
+      fi: "Appelsiini",
+      fr: "Orange",
+      ar: "برتقال",
+      it: "Arancia"
+    },
+    banana: {
+      en: "Banana",
+      zh: "香蕉",
+      ja: "バナナ",
+      ko: "바나나",
+      es: "Plátano",
+      de: "Banane",
+      fi: "Banaani",
+      fr: "Banane",
+      ar: "موز",
+      it: "Banana"
+    },
+    grape: {
+      en: "Grape",
+      zh: "葡萄",
+      ja: "ブドウ",
+      ko: "포도",
+      es: "Uva",
+      de: "Traube",
+      fi: "Rypäle",
+      fr: "Raisin",
+      ar: "عنب",
+      it: "Uva"
+    }
+  }
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [data, setData] = useState([{
+    nameKey: "apple",
+    value: 5,
+    color: "#ef4444"
+  }, {
+    nameKey: "orange",
+    value: 8,
+    color: "#f97316"
+  }, {
+    nameKey: "banana",
+    value: 3,
+    color: "#eab308"
+  }, {
+    nameKey: "grape",
+    value: 6,
+    color: "#8b5cf6"
+  }]);
+  const maxScale = 15;
+  const updateValue = (idx, val) => {
+    const newData = [...data];
+    newData[idx].value = Math.max(0, Math.min(15, parseInt(val, 10) || 0));
+    setData(newData);
+  };
+  const getName = key => t.fruits[key][lang] || t.fruits[key]["en"];
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-8 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-6xl font-black text-indigo-900 mb-8 mt-8 text-center"
+  }, "📊 ", t.title[lang] || t.title["en"]), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/90 backdrop-blur-md rounded-3xl p-8 shadow-2xl max-w-6xl w-full"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-1 lg:grid-cols-2 gap-8"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h3", {
+    className: "text-2xl font-black text-indigo-800 mb-6"
+  }, t.adjust[lang] || t.adjust["en"]), data.map((d, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "mb-4 flex items-center gap-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-24 text-xl font-bold"
+  }, getName(d.nameKey)), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "0",
+    max: "15",
+    value: d.value,
+    onChange: e => updateValue(i, e.target.value),
+    className: "flex-1 accent-indigo-600"
+  }), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: d.value,
+    onChange: e => updateValue(i, e.target.value),
+    className: "w-20 px-3 py-2 text-xl font-black text-center rounded-lg border-2 border-indigo-300"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "mt-8 bg-indigo-50 p-4 rounded-xl text-indigo-800 text-lg"
+  }, /*#__PURE__*/React.createElement("p", null, "👉 ", t.tip[lang] || t.tip["en"]))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-indigo-50 rounded-2xl p-6 relative"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-2xl font-black text-indigo-800 mb-6 text-center"
+  }, t.chartTitle[lang] || t.chartTitle["en"]), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-end justify-around h-80 bg-white rounded-xl p-4 border-2 border-indigo-100 relative"
+  }, [0, 5, 10, 15].map(val => /*#__PURE__*/React.createElement("div", {
+    key: val,
+    className: "absolute w-full border-t border-slate-200",
+    style: {
+      bottom: `${val / 15 * 100}%`,
+      left: 0
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "absolute -left-6 -top-3 text-xs text-slate-400 font-bold"
+  }, val))), data.map((d, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "flex flex-col items-center gap-2 z-10 w-1/5"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xl font-black text-slate-700"
+  }, d.value), /*#__PURE__*/React.createElement("div", {
+    className: "w-full h-64 flex items-end justify-center"
+  }, " ", /*#__PURE__*/React.createElement("div", {
+    className: "w-full rounded-t-xl bar-transition shadow-lg",
+    style: {
+      height: `${d.value / maxScale * 100}%`,
+      backgroundColor: d.color
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "text-sm md:text-lg font-bold mt-2 text-slate-600 truncate w-full text-center"
+  }, getName(d.nameKey)))))))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

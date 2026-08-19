@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - Solar Energy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: #0c4a6e;
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Solar Power Station",
+    zh: "太陽能發電站",
+    ja: "太陽光発電所",
+    ko: "태양광 발전소",
+    es: "Estación de energía solar",
+    de: "Solarkraftwerk",
+    fi: "Aurinkovoimala",
+    fr: "Centrale solaire",
+    ar: "محطة الطاقة الشمسية",
+    it: "Centrale Solare"
+  },
+  instruction: {
+    en: "Angle the panels to catch the sun!",
+    zh: "調整面板角度以吸收陽光！",
+    ja: "パネルを太陽に向けて角度を調整しよう！",
+    ko: "태양을 잡기 위해 패널 각도를 조절하세요!",
+    es: "¡Orienta los paneles para captar el sol!",
+    de: "Richte die Paneele aus, um die Sonne einzufangen!",
+    fi: "Suuntaa paneelit saadaksesi aurinkoa!",
+    fr: "Inclinez les panneaux pour capter le soleil !",
+    ar: "وجه الألواح لالتقاط الشمس!",
+    it: "Inclina i pannelli per catturare il sole!"
+  },
+  energy: {
+    en: "Energy Output",
+    zh: "能量輸出",
+    ja: "エネルギー出力",
+    ko: "에너지 출력",
+    es: "Salida de energía",
+    de: "Energieoutput",
+    fi: "Energiantuotanto",
+    fr: "Production d'énergie",
+    ar: "إنتاج الطاقة",
+    it: "Produzione Energia"
+  },
+  optimal: {
+    en: "Optimal!",
+    zh: "最佳！",
+    ja: "最適！",
+    ko: "최적!",
+    es: "¡Óptimo!",
+    de: "Optimal!",
+    fi: "Optimaalinen!",
+    fr: "Optimal !",
+    ar: "الأمثل!",
+    it: "Ottimale!"
+  }
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [sunAngle, setSunAngle] = useState(45); // Sun moves
+  const [panelAngle, setPanelAngle] = useState(0);
+  const getText = key => t[key][lang] || t[key]["en"];
+
+  // Simulation of Sun Movement
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSunAngle(prev => (prev + 0.5) % 180);
+    }, 100);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Calculate efficiency based on alignment
+  // Perfect alignment is when panel normal checks sun vector
+  // Simplified: Panel angle should match Sun angle
+
+  const diff = Math.abs(sunAngle - panelAngle);
+  // Efficiency: 100 - diff. If diff > 90, 0.
+  let efficiency = Math.max(0, 100 - diff * 1.5);
+  efficiency = Math.min(100, efficiency);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4 overflow-hidden relative"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-bold mb-4 text-yellow-300 drop-shadow-md z-10"
+  }, getText("title")), /*#__PURE__*/React.createElement("p", {
+    className: "mb-8 font-bold text-sky-200 z-10"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 bg-gradient-to-b from-sky-900 to-sky-600 z-0"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-0 left-1/2 w-[800px] h-[800px] pointer-events-none",
+    style: {
+      transform: `translateX(-50%) rotate(${sunAngle - 90}deg)`
+    } // Rotate around bottom center
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-24 h-24 bg-yellow-400 rounded-full shadow-[0_0_80px_rgba(255,223,0,1)]"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "z-10 w-full flex flex-col items-center mt-20"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "relative w-40 h-40 flex flex-col justify-end items-center mb-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-48 h-4 bg-blue-600 border-2 border-slate-300 shadow-xl origin-center",
+    style: {
+      transform: `rotate(${-90 + panelAngle}deg)`
+    } // Base 0 is flat? Let's say 0 is flat (90 to vertical).
+    // Sun 0 is left horizon. 90 is top. 180 is right.
+    // Panel needs to face it.
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full h-full grid grid-cols-4 divide-x divide-white/20"
+  }, /*#__PURE__*/React.createElement("div", null), /*#__PURE__*/React.createElement("div", null), /*#__PURE__*/React.createElement("div", null), /*#__PURE__*/React.createElement("div", null))), /*#__PURE__*/React.createElement("div", {
+    className: "w-2 h-20 bg-gray-500"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "w-20 h-2 bg-gray-500 rounded-full"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-800/80 p-8 rounded-3xl backdrop-blur-md border border-slate-600 w-full max-w-md"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between items-center mb-4"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "font-bold"
+  }, getText("energy")), /*#__PURE__*/React.createElement("span", {
+    className: `text-2xl font-mono font-bold ${efficiency > 80 ? "text-green-400" : "text-yellow-400"}`
+  }, Math.round(efficiency), "%")), /*#__PURE__*/React.createElement("div", {
+    className: "w-full h-6 bg-slate-700 rounded-full overflow-hidden mb-8 border border-slate-500"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: `h-full transition-all duration-100 ${efficiency > 80 ? "bg-green-500" : "bg-yellow-500"}`,
+    style: {
+      width: `${efficiency}%`
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-4"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-2xl"
+  }, "🔄"), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "0",
+    max: "180",
+    value: panelAngle,
+    onChange: e => setPanelAngle(Number(e.target.value)),
+    className: "w-full h-8 bg-slate-600 rounded-lg appearance-none cursor-pointer"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "mt-10 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: `text-6xl transition-all duration-500 ${efficiency > 50 ? "opacity-100 drop-shadow-[0_0_30px_yellow]" : "opacity-30"}`
+  }, "🏠💡"))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

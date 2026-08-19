@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Distillation Tower | Junior Science</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #f1f5f9;
+      }
+
+      .glass-apparatus {
+        background: rgba(255, 255, 255, 0.3);
+        border: 2px solid #64748b;
+        position: relative;
+      }
+
+      .liquid-impure {
+        background: rgba(168, 85, 247, 0.6); /* Purple impure ink */
+        transition: height 0.5s;
+      }
+
+      .liquid-pure {
+        background: rgba(56, 189, 248, 0.5); /* Clear water */
+        transition: height 0.5s;
+      }
+
+      .steam {
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.8) 0%,
+          rgba(255, 255, 255, 0) 70%
+        );
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        opacity: 0;
+      }
+
+      @keyframes rise {
+        0% {
+          transform: translateY(0) scale(1);
+          opacity: 0;
+        }
+        50% {
+          opacity: 0.8;
+        }
+        100% {
+          transform: translateY(-100px) scale(2);
+          opacity: 0;
+        }
+      }
+
+      @keyframes bubble {
+        0% {
+          transform: translateY(0);
+        }
+        100% {
+          transform: translateY(-30px);
+          opacity: 0;
+        }
+      }
+
+      .bubble {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.6);
+        position: absolute;
+        animation: bubble 1s infinite;
+      }
+
+      .condenser-jacket {
+        background: rgba(203, 213, 225, 0.3);
+        border: 2px solid #94a3b8;
+      }
+
+      .water-flow {
+        background: rgba(56, 189, 248, 0.3);
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+        height: 0%;
+        transition: height 2s;
+      }
+    </style>
+  </head>
+  <body class="bg-slate-100 text-slate-800 h-screen overflow-hidden">
+    <div id="root"></div>
+
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const App = () => {
+  const [heatOn, setHeatOn] = useState(false);
+  const [waterOn, setWaterOn] = useState(false);
+  const [distillate, setDistillate] = useState(0);
+  const [temp, setTemp] = useState(25);
+  const [timer, setTimer] = useState(0);
+  useEffect(() => {
+    let interval;
+    if (heatOn) {
+      interval = setInterval(() => {
+        setTemp(prev => {
+          const next = prev < 100 ? prev + 1 : 100;
+          if (next >= 100 && waterOn) {
+            setDistillate(d => Math.min(d + 0.5, 80));
+          }
+          return next;
+        });
+      }, 100);
+    } else {
+      interval = setInterval(() => {
+        setTemp(prev => Math.max(prev - 2, 25));
+      }, 100);
+    }
+    return () => clearInterval(interval);
+  }, [heatOn, waterOn]);
+  const reset = () => {
+    setHeatOn(false);
+    setWaterOn(false);
+    setDistillate(0);
+    setTemp(25);
+    setTimer(0);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "h-full flex flex-col p-6 max-w-7xl mx-auto"
+  }, /*#__PURE__*/React.createElement("header", {
+    className: "flex justify-between items-center mb-8"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
+    className: "text-purple-600 font-bold uppercase text-xs tracking-wider"
+  }, "Form 1 Science • Water"), /*#__PURE__*/React.createElement("h1", {
+    className: "text-3xl font-extrabold text-slate-800"
+  }, "Distillation Simulator"), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-500 text-sm"
+  }, "Separating pure water from coloured ink.")), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white px-6 py-2 rounded-xl shadow-sm border text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold text-slate-400"
+  }, "THERMOMETER"), /*#__PURE__*/React.createElement("div", {
+    className: `text-2xl font-mono font-bold ${temp >= 100 ? "text-red-500" : "text-slate-700"}`
+  }, Math.round(temp), "°C")))), /*#__PURE__*/React.createElement("div", {
+    className: "flex-grow flex flex-col md:flex-row gap-8 items-center justify-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "relative w-[800px] h-[500px] bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-10 left-[150px] flex flex-col items-center"
+  }, heatOn && /*#__PURE__*/React.createElement("div", {
+    className: "w-8 h-20 bg-orange-400 opacity-80 blur-md rounded-t-full animate-pulse origin-bottom"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "w-4 h-16 bg-slate-700"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "w-16 h-4 bg-slate-800 rounded"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-[100px] left-[110px] w-24 h-24 rounded-full glass-apparatus z-10 overflow-hidden"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-0 w-full h-[60%] liquid-impure"
+  }, temp >= 90 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    className: "bubble left-[20%] delay-100"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "bubble left-[50%] delay-300"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "bubble left-[80%] delay-0"
+  })))), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-[190px] left-[142px] w-8 h-24 glass-apparatus border-b-0 z-10"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-[280px] left-[150px] h-32 w-2 bg-yellow-100 border border-slate-400 z-0"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-0 w-full bg-red-500 transition-all duration-300",
+    style: {
+      height: `${temp}%`
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-[260px] left-[150px] w-24 h-8 glass-apparatus border-l-0 rotate-[15deg] origin-left z-10"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-[195px] left-[230px] w-[300px] h-16 condenser-jacket rotate-[15deg] origin-left z-0 overflow-hidden"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: `water-flow ${waterOn ? "h-full" : "h-0"}`
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-[207px] left-[230px] w-[320px] h-4 glass-apparatus bg-transparent rotate-[15deg] origin-left z-10 flex items-center justify-center"
+  }, temp >= 100 && /*#__PURE__*/React.createElement("div", {
+    className: "w-full flex justify-around opacity-50"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-wind animate-slide-right text-gray-400 text-xs"
+  }), waterOn ? /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-droplet animate-slide-right text-blue-400 text-xs"
+  }) : /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-wind animate-slide-right text-gray-400 text-xs"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-[180px] left-[450px] w-2 h-40 bg-blue-300 opacity-50 rotate-12 z-[-1]"
+  }), " ", /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-[300px] left-[280px] w-2 h-40 bg-blue-300 opacity-50 -rotate-12 z-[-1]"
+  }), " ", /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-10 right-[150px] w-16 h-24 glass-apparatus border-t-0 rounded-b-lg overflow-hidden"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-0 w-full liquid-pure",
+    style: {
+      height: `${distillate}px`
+    }
+  })), temp >= 100 && waterOn && /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-[110px] right-[175px] text-blue-400 animate-bounce"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-droplet"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-[150px] left-[20px] text-xs font-bold text-slate-400 text-right w-24 leading-tight"
+  }, "Anti-bumping granules needed"), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-[80px] right-[250px] text-xs font-bold text-slate-400"
+  }, "Water OUT"), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-[150px] right-[180px] text-xs font-bold text-slate-400"
+  }, "Water IN (Bottom)")), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-xs space-y-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-6 rounded-2xl shadow-sm border border-slate-200"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "font-bold text-lg mb-4"
+  }, "Controls"), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-between mb-4"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "font-bold"
+  }, "Bunsen Burner"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setHeatOn(!heatOn),
+    className: `w-12 h-6 rounded-full transition-colors ${heatOn ? "bg-orange-500" : "bg-slate-300"} relative`
+  }, /*#__PURE__*/React.createElement("div", {
+    className: `absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${heatOn ? "left-7" : "left-1"}`
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-between mb-6"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "font-bold"
+  }, "Cooling Water"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setWaterOn(!waterOn),
+    className: `w-12 h-6 rounded-full transition-colors ${waterOn ? "bg-blue-500" : "bg-slate-300"} relative`
+  }, /*#__PURE__*/React.createElement("div", {
+    className: `absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${waterOn ? "left-7" : "left-1"}`
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs text-slate-500 bg-slate-50 p-3 rounded-lg border border-slate-100"
+  }, /*#__PURE__*/React.createElement("strong", null, "Status:"), heatOn && !waterOn && temp >= 100 && /*#__PURE__*/React.createElement("span", {
+    className: "text-red-500 block mt-1"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-triangle-exclamation"
+  }), " ", "Steam is escaping! Turn on water."), heatOn && waterOn && temp >= 100 && /*#__PURE__*/React.createElement("span", {
+    className: "text-green-500 block mt-1"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-check"
+  }), " Distillation in progress."), !heatOn && /*#__PURE__*/React.createElement("span", {
+    className: "block mt-1"
+  }, "Ready to start."))), /*#__PURE__*/React.createElement("button", {
+    onClick: reset,
+    className: "w-full py-3 rounded-xl border border-slate-300 hover:bg-slate-50 font-bold text-slate-600 transition"
+  }, "Reset Experiment"))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

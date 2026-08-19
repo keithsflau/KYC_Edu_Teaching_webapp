@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小六數學：速度、距離、時間 | Speed Master</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+      .road-stripe {
+        background-image: linear-gradient(
+          90deg,
+          transparent 50%,
+          rgba(255, 255, 255, 0.5) 50%
+        );
+        background-size: 100px 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect,
+  useRef
+} = React;
+const {
+  motion,
+  useAnimation
+} = window.Motion;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Speed Master",
+    zh: "速度大師",
+    ja: "スピードマスター",
+    ko: "스피드 마스터",
+    es: "Maestro de Velocidad",
+    de: "Geschwindigkeits-Meister",
+    fi: "Nopeusmestari",
+    fr: "Maître de la Vitesse",
+    ar: "سيد السرعة",
+    it: "Maestro della Velocità"
+  },
+  mode_calc: {
+    en: "Calculator",
+    zh: "計算器",
+    ja: "計算機",
+    ko: "계산기",
+    es: "Calculadora",
+    de: "Rechner",
+    fi: "Laskin",
+    fr: "Calculatrice",
+    ar: "آلة حاسبة",
+    it: "Calcolatrice"
+  },
+  mode_race: {
+    en: "Race Sim",
+    zh: "賽車模擬",
+    ja: "レースシミュ",
+    ko: "레이스 시뮬레이션",
+    es: "Simulador de Carrera",
+    de: "Rennsimulation",
+    fi: "Kilpailusimulaatio",
+    fr: "Sim. de course",
+    ar: "محاكاة السباق",
+    it: "Simulazione Gara"
+  },
+  speed: {
+    en: "Speed (S)",
+    zh: "速度 (S)",
+    ja: "速度 (S)",
+    ko: "속력 (S)",
+    es: "Velocidad (S)",
+    de: "Geschwindigkeit (S)",
+    fi: "Nopeus (S)",
+    fr: "Vitesse (S)",
+    ar: "السرعة (S)",
+    it: "Velocità (S)"
+  },
+  distance: {
+    en: "Distance (D)",
+    zh: "距離 (D)",
+    ja: "距離 (D)",
+    ko: "거리 (D)",
+    es: "Distancia (D)",
+    de: "Entfernung (D)",
+    fi: "Matka (D)",
+    fr: "Distance (D)",
+    ar: "المسافة (D)",
+    it: "Distanza (D)"
+  },
+  time: {
+    en: "Time (T)",
+    zh: "時間 (T)",
+    ja: "時間 (T)",
+    ko: "시간 (T)",
+    es: "Tiempo (T)",
+    de: "Zeit (T)",
+    fi: "Aika (T)",
+    fr: "Temps (T)",
+    ar: "الوقت (T)",
+    it: "Tempo (T)"
+  },
+  solve_for: {
+    en: "Solve For:",
+    zh: "求解：",
+    ja: "解く：",
+    ko: "구하기:",
+    es: "Resolver para:",
+    de: "Lösen nach:",
+    fi: "Ratkaise:",
+    fr: "Résoudre pour :",
+    ar: "حل من أجل:",
+    it: "Risolvi per:"
+  },
+  start: {
+    en: "Start Engine",
+    zh: "啟動引擎",
+    ja: "エンジン始動",
+    ko: "엔진 시동",
+    es: "Arrancar Motor",
+    de: "Motor Starten",
+    fi: "Käynnistä Moottori",
+    fr: "Démarrer Moteur",
+    ar: "ابدأ المحرك",
+    it: "Avvia Motore"
+  },
+  reset: {
+    en: "Reset",
+    zh: "重置",
+    ja: "リセット",
+    ko: "초기화",
+    es: "Reiniciar",
+    de: "Zurücksetzen",
+    fi: "Nollaa",
+    fr: "Réinitialiser",
+    ar: "إعادة تعيين",
+    it: "Reimposta"
+  },
+  vehicle_car: {
+    en: "Car",
+    zh: "汽車",
+    ja: "車",
+    ko: "자동차",
+    es: "Coche",
+    de: "Auto",
+    fi: "Auto",
+    fr: "Voiture",
+    ar: "سيارة",
+    it: "Auto"
+  },
+  vehicle_train: {
+    en: "Train",
+    zh: "火車",
+    ja: "電車",
+    ko: "기차",
+    es: "Tren",
+    de: "Zug",
+    fi: "Juna",
+    fr: "Train",
+    ar: "قطار",
+    it: "Treno"
+  },
+  vehicle_plane: {
+    en: "Plane",
+    zh: "飛機",
+    ja: "飛行機",
+    ko: "비행기",
+    es: "Avión",
+    de: "Flugzeug",
+    fi: "Lentokone",
+    fr: "Avion",
+    ar: "طائرة",
+    it: "Aereo"
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+const VEHICLES = [{
+  id: "car",
+  emoji: "🏎️",
+  baseSpeed: 100,
+  maxSpeed: 200
+}, {
+  id: "train",
+  emoji: "🚄",
+  baseSpeed: 300,
+  maxSpeed: 500
+}, {
+  id: "plane",
+  emoji: "✈️",
+  baseSpeed: 800,
+  maxSpeed: 1000
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [mode, setMode] = useState("calc"); // calc, race
+  const [solveTarget, setSolveTarget] = useState("T"); // S, D, T
+
+  // Values for Calc
+  const [valS, setValS] = useState(60);
+  const [valD, setValD] = useState(120);
+  const [valT, setValT] = useState(2);
+
+  // Race State
+  const [selectedVehicle, setSelectedVehicle] = useState(VEHICLES[0]);
+  const [raceDist, setRaceDist] = useState(500); // km
+  const [raceSpeed, setRaceSpeed] = useState(100); // km/h
+  const [isRacing, setIsRacing] = useState(false);
+  const controls = useAnimation();
+
+  // Formula Calculation
+  const result = (() => {
+    if (solveTarget === "S") return {
+      val: (valD / valT).toFixed(1),
+      formula: "D ÷ T",
+      unit: "km/h"
+    };
+    if (solveTarget === "D") return {
+      val: (valS * valT).toFixed(1),
+      formula: "S × T",
+      unit: "km"
+    };
+    if (solveTarget === "T") return {
+      val: (valD / valS).toFixed(1),
+      formula: "D ÷ S",
+      unit: "h"
+    };
+  })();
+  const startRace = async () => {
+    if (isRacing) return;
+    // Reset to start so a second race always works
+    controls.set({
+      left: "2%"
+    });
+    setIsRacing(true);
+
+    // Sim duration: let's scale it so 1000km/h takes 2s for "screen width".
+    // Screen width represents RaceDist.
+    // Time = RaceDist / RaceSpeed.
+    // But for animation, if T is huge, we don't want to wait hours.
+    // Let's map real Time (hours) to Seconds (animation).
+    // E.g. 1 hour = 2 seconds.
+    const realTimeHours = raceDist / raceSpeed;
+    const animDuration = realTimeHours * 2;
+    await controls.start({
+      left: "90%",
+      transition: {
+        duration: animDuration,
+        ease: "linear"
+      }
+    });
+    setIsRacing(false);
+  };
+  const resetRace = () => {
+    controls.set({
+      left: "2%"
+    });
+    setIsRacing(false);
+  };
+  useEffect(() => {
+    resetRace();
+  }, [selectedVehicle, raceDist, raceSpeed]);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4 font-sans bg-slate-900 text-white selection:bg-purple-500 selection:text-white"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-5xl flex justify-between items-center mb-6"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-black italic bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-500 drop-shadow-lg pr-4"
+  }, "🚀 ", getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "flex bg-slate-800/80 p-1.5 rounded-xl border border-white/10 flex-wrap justify-end gap-1 max-w-[50%]"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-cyan-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white hover:bg-white/5"}`
+  }, l)))), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-2 p-1 bg-slate-800 rounded-2xl mb-8 border border-white/10"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setMode("calc"),
+    className: `flex-1 px-8 py-3 rounded-xl font-bold transition-all ${mode === "calc" ? "bg-cyan-500 text-slate-900 shadow-lg" : "text-slate-400 hover:text-white"}`
+  }, getText("mode_calc", lang)), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setMode("race"),
+    className: `flex-1 px-8 py-3 rounded-xl font-bold transition-all ${mode === "race" ? "bg-purple-500 text-white shadow-lg" : "text-slate-400 hover:text-white"}`
+  }, getText("mode_race", lang))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-6xl"
+  }, mode === "calc" ? /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-1 lg:grid-cols-2 gap-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-8 rounded-3xl flex flex-col justify-center"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "text-xl font-bold text-slate-300 mb-6 uppercase tracking-wider"
+  }, getText("solve_for", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4 mb-8"
+  }, ["S", "D", "T"].map(target => /*#__PURE__*/React.createElement("button", {
+    key: target,
+    onClick: () => setSolveTarget(target),
+    className: `flex-1 aspect-square rounded-2xl text-4xl font-black transition-all border-4 flex items-center justify-center ${solveTarget === target ? "bg-white text-slate-900 border-white scale-110 shadow-xl" : "bg-transparent text-slate-500 border-slate-700 hover:border-slate-500"}`
+  }, target))), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-6"
+  }, solveTarget !== "S" && /*#__PURE__*/React.createElement(InputRow, {
+    label: getText("speed", lang),
+    val: valS,
+    setVal: setValS,
+    unit: "km/h",
+    color: "text-cyan-400"
+  }), solveTarget !== "D" && /*#__PURE__*/React.createElement(InputRow, {
+    label: getText("distance", lang),
+    val: valD,
+    setVal: setValD,
+    unit: "km",
+    color: "text-purple-400"
+  }), solveTarget !== "T" && /*#__PURE__*/React.createElement(InputRow, {
+    label: getText("time", lang),
+    val: valT,
+    setVal: setValT,
+    unit: "h",
+    color: "text-orange-400"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-gradient-to-br from-cyan-900 via-slate-900 to-purple-900 rounded-3xl p-8 border border-white/10 shadow-2xl flex flex-col justify-center items-center text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-slate-400 font-bold uppercase tracking-widest mb-4"
+  }, solveTarget === "S" && getText("speed", lang), solveTarget === "D" && getText("distance", lang), solveTarget === "T" && getText("time", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "text-8xl font-black text-white font-mono mb-2 tracking-tighter"
+  }, result.val), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl text-slate-300 font-bold mb-8"
+  }, result.unit), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/10 rounded-xl px-6 py-3 font-mono text-xl text-cyan-200 border border-white/10"
+  }, result.formula)), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 rounded-3xl"
+  }, /*#__PURE__*/React.createElement(TriangleDiagram, {
+    active: solveTarget
+  })))) :
+  /*#__PURE__*/
+  /* Race Mode */
+  React.createElement("div", {
+    className: "glass-panel p-8 rounded-3xl shadow-2xl relative overflow-hidden"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 bg-slate-900/80 -z-10"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "relative h-48 bg-slate-800 rounded-2xl overflow-hidden mb-8 border-y-4 border-slate-600 flex items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 road-stripe opacity-20"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute left-[2%] top-0 bottom-0 w-2 bg-white/50 z-0"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute left-[2%] -top-6 text-xs font-bold text-white/50"
+  }, "START"), /*#__PURE__*/React.createElement("div", {
+    className: "absolute right-[10%] top-0 bottom-0 w-4 bg-yellow-400 z-0 flex flex-col"
+  }, [...Array(10)].map((_, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: `flex-1 ${i % 2 === 0 ? "bg-black" : "bg-transparent"}`
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "absolute right-[10%] -top-6 text-xs font-bold text-yellow-400"
+  }, "FINISH"), /*#__PURE__*/React.createElement(motion.div, {
+    animate: controls,
+    initial: {
+      left: "2%"
+    },
+    className: "absolute text-6xl z-10 drop-shadow-2xl",
+    style: {
+      top: "50%",
+      marginTop: "-30px"
+    }
+  }, selectedVehicle.emoji, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-14 left-0 right-0 text-center text-xs font-bold bg-black/50 rounded px-1 backdrop-blur-sm pointer-events-none"
+  }, raceSpeed, " km/h"))), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-1 md:grid-cols-3 gap-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 rounded-2xl bg-black/20"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "text-xs uppercase font-bold text-slate-400 mb-4 block"
+  }, "Select Vehicle"), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-2"
+  }, VEHICLES.map(v => /*#__PURE__*/React.createElement("button", {
+    key: v.id,
+    onClick: () => {
+      setSelectedVehicle(v);
+      setRaceSpeed(v.baseSpeed);
+    },
+    className: `flex-1 aspect-square rounded-xl text-3xl flex items-center justify-center border-2 transition-all ${selectedVehicle.id === v.id ? "bg-indigo-600 border-indigo-400 shadow-lg scale-105" : "bg-slate-700 border-transparent hover:bg-slate-600"}`
+  }, v.emoji)))), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 rounded-2xl bg-black/20 space-y-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between text-sm font-bold"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-purple-300"
+  }, getText("distance", lang)), /*#__PURE__*/React.createElement("span", null, raceDist, " km")), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "100",
+    max: "2000",
+    step: "100",
+    value: raceDist,
+    onChange: e => setRaceDist(Number(e.target.value)),
+    className: "w-full h-2 bg-slate-700 rounded-full accent-purple-500 appearance-none"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between text-sm font-bold mt-2"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-cyan-300"
+  }, getText("speed", lang)), /*#__PURE__*/React.createElement("span", null, raceSpeed, " km/h")), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "10",
+    max: selectedVehicle.maxSpeed,
+    step: "10",
+    value: raceSpeed,
+    onChange: e => setRaceSpeed(Number(e.target.value)),
+    className: "w-full h-2 bg-slate-700 rounded-full accent-cyan-500 appearance-none"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col gap-2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "p-4 bg-slate-800 rounded-xl text-center border border-white/5"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs text-slate-500 uppercase font-bold"
+  }, getText("time", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-mono font-bold text-orange-400"
+  }, (raceDist / raceSpeed).toFixed(2), " h")), /*#__PURE__*/React.createElement("button", {
+    onClick: startRace,
+    disabled: isRacing,
+    className: `flex-1 rounded-xl font-black text-lg uppercase tracking-wider transition-all shadow-lg ${isRacing ? "bg-slate-700 text-slate-500 cursor-not-allowed" : "bg-green-500 text-slate-900 hover:bg-green-400 hover:scale-[1.02]"}`
+  }, getText("start", lang)))))));
+}
+function InputRow({
+  label,
+  val,
+  setVal,
+  unit,
+  color
+}) {
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: `text-sm font-bold ${color} uppercase mb-1`
+  }, label), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: val,
+    onChange: e => setVal(Math.max(1, Number(e.target.value))),
+    className: "flex-1 bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 text-2xl font-black text-white focus:border-cyan-500 outline-none transition-all"
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "text-slate-500 font-bold lowercase w-12"
+  }, unit)));
+}
+function TriangleDiagram({
+  active
+}) {
+  return /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center justify-center p-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "relative w-48 h-40"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0"
+  }, /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 100 86",
+    className: "w-full h-full drop-shadow-xl"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M 50 0 L 100 86 L 0 86 Z",
+    fill: "#1e293b",
+    stroke: "#475569",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "25",
+    y1: "43",
+    x2: "75",
+    y2: "43",
+    stroke: "#475569",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "50",
+    y1: "43",
+    x2: "50",
+    y2: "86",
+    stroke: "#475569",
+    strokeWidth: "2"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: `absolute top-4 left-1/2 -translate-x-1/2 text-3xl font-black transition-all ${active === "D" ? "text-white scale-125" : "text-slate-600"}`
+  }, "D"), /*#__PURE__*/React.createElement("div", {
+    className: `absolute bottom-2 left-8 text-3xl font-black transition-all ${active === "S" ? "text-white scale-125" : "text-slate-600"}`
+  }, "S"), /*#__PURE__*/React.createElement("div", {
+    className: `absolute bottom-2 right-8 text-3xl font-black transition-all ${active === "T" ? "text-white scale-125" : "text-slate-600"}`
+  }, "T"), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-[45%] left-1/4 text-xs text-slate-600 font-bold"
+  }, "÷"), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-[45%] right-1/4 text-xs text-slate-600 font-bold"
+  }, "÷"), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-slate-600 font-bold"
+  }, "×")), /*#__PURE__*/React.createElement("div", {
+    className: "mt-4 text-xs text-slate-400 uppercase tracking-widest font-bold"
+  }, "Magic Triangle"));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

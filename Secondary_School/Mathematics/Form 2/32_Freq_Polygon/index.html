@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Frequency Polygon 頻數多邊形 | S2 Math</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+      }
+    </style>
+  </head>
+  <body class="bg-indigo-50 text-slate-800 min-h-screen">
+    <div id="root"></div>
+    <script>
+const {
+  useState
+} = React;
+const App = () => {
+  const [lang, setLang] = useState("en");
+  // Data [min, max, freq]
+  const [data, setData] = useState([{
+    id: 1,
+    min: 10,
+    max: 20,
+    freq: 7
+  }, {
+    id: 2,
+    min: 20,
+    max: 30,
+    freq: 10
+  }, {
+    id: 3,
+    min: 30,
+    max: 40,
+    freq: 14
+  }, {
+    id: 4,
+    min: 40,
+    max: 50,
+    freq: 9
+  }, {
+    id: 5,
+    min: 50,
+    max: 60,
+    freq: 5
+  }]);
+  const [showHistogram, setShowHistogram] = useState(true);
+  const t = {
+    title: {
+      en: "Frequency Polygon",
+      zh: "頻數多邊形"
+    },
+    class: {
+      en: "Class Interval",
+      zh: "組區間"
+    },
+    freq: {
+      en: "Frequency",
+      zh: "頻數"
+    },
+    mid: {
+      en: "Class Mark",
+      zh: "組中點"
+    },
+    toggle: {
+      en: "Show Histogram",
+      zh: "顯示直方圖"
+    },
+    back: {
+      en: "Back to Dashboard",
+      zh: "返回主頁"
+    }
+  };
+  const updateFreq = (id, newFreq) => {
+    setData(data.map(d => d.id === id ? {
+      ...d,
+      freq: Math.max(0, Number(newFreq))
+    } : d));
+  };
+
+  // Calculate SVG Points
+  const maxFreq = Math.max(...data.map(d => d.freq), 20);
+  const height = 300;
+  const width = 500;
+  const padding = 40;
+  const chartW = width - padding * 2;
+  const chartH = height - padding * 2;
+  const scaleY = chartH / maxFreq;
+  const binW = chartW / (data.length + 2); // +2 for start/end padding
+
+  // Generate Polygon Points (connect midpoints)
+  // Start point (imaginary class before)
+  const firstBin = data[0];
+  const startX = padding + binW;
+  const startY = padding + chartH; // Y=0 line
+
+  let polyPath = `M ${startX - binW} ${startY} `; // Start at 0 freq of prev class
+
+  // Midpoints
+  data.forEach((d, i) => {
+    const x = startX + i * binW + binW / 2;
+    const y = padding + chartH - d.freq * scaleY;
+    polyPath += `L ${x} ${y} `;
+  });
+
+  // End point (imaginary class after)
+  const lastX = startX + data.length * binW + binW / 2;
+  polyPath += `L ${lastX} ${startY}`;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "p-6 max-w-5xl mx-auto min-h-screen flex flex-col"
+  }, /*#__PURE__*/React.createElement("header", {
+    className: "mb-6 flex justify-between items-center"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "text-indigo-600 font-bold uppercase text-xs tracking-widest mb-1"
+  }, "S2 Math"), /*#__PURE__*/React.createElement("h1", {
+    className: "text-3xl font-extrabold text-slate-900"
+  }, t.title[lang])), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLang(lang === "en" ? "zh" : "en"),
+    className: "px-3 py-1 bg-white border border-indigo-200 rounded-lg text-sm font-bold hover:bg-indigo-100"
+  }, lang === "en" ? "中文" : "ENG")), /*#__PURE__*/React.createElement("div", {
+    className: "grid md:grid-cols-3 gap-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "col-span-1 bg-white p-6 rounded-2xl border border-indigo-100 shadow-sm"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "font-bold text-slate-400 text-sm uppercase mb-4"
+  }, t.freq[lang], " Table"), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-3"
+  }, data.map(d => /*#__PURE__*/React.createElement("div", {
+    key: d.id,
+    className: "flex items-center justify-between bg-slate-50 p-2 rounded-lg"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-sm font-mono text-slate-500 w-20"
+  }, d.min, " - ", d.max), /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 flex gap-2"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "0",
+    max: "25",
+    value: d.freq,
+    onChange: e => updateFreq(d.id, e.target.value),
+    className: "w-full accent-indigo-500"
+  }), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: d.freq,
+    onChange: e => updateFreq(d.id, e.target.value),
+    className: "w-12 p-1 text-center font-bold text-indigo-700 bg-white rounded border border-indigo-200"
+  }))))), /*#__PURE__*/React.createElement("div", {
+    className: "mt-6"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "flex items-center gap-2 cursor-pointer select-none"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "checkbox",
+    checked: showHistogram,
+    onChange: e => setShowHistogram(e.target.checked),
+    className: "w-5 h-5 accent-indigo-600 rounded"
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "font-bold text-indigo-700 text-sm"
+  }, t.toggle[lang])))), /*#__PURE__*/React.createElement("div", {
+    className: "col-span-2 bg-white p-6 rounded-2xl border border-indigo-100 shadow-sm overflow-hidden relative",
+    style: {
+      minHeight: "400px"
+    }
+  }, /*#__PURE__*/React.createElement("svg", {
+    viewBox: `0 0 ${width} ${height}`,
+    className: "w-full h-full"
+  }, /*#__PURE__*/React.createElement("line", {
+    x1: padding,
+    y1: height - padding,
+    x2: width - padding,
+    y2: height - padding,
+    stroke: "#cbd5e1",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: padding,
+    y1: padding,
+    x2: padding,
+    y2: height - padding,
+    stroke: "#cbd5e1",
+    strokeWidth: "2"
+  }), [0.2, 0.4, 0.6, 0.8, 1].map(frac => /*#__PURE__*/React.createElement("line", {
+    key: frac,
+    x1: padding,
+    y1: height - padding - maxFreq * scaleY * frac,
+    x2: width - padding,
+    y2: height - padding - maxFreq * scaleY * frac,
+    stroke: "#f1f5f9",
+    strokeWidth: "1"
+  })), data.map((d, i) => {
+    const h = d.freq * scaleY;
+    const x = startX + i * binW;
+    const y = height - padding - h;
+    const midX = x + binW / 2;
+    return /*#__PURE__*/React.createElement("g", {
+      key: d.id
+    }, showHistogram && /*#__PURE__*/React.createElement("rect", {
+      x: x,
+      y: y,
+      width: binW,
+      height: h,
+      fill: "rgba(99, 102, 241, 0.2)",
+      stroke: "white",
+      strokeWidth: "2"
+    }), /*#__PURE__*/React.createElement("text", {
+      x: midX,
+      y: height - padding + 15,
+      textAnchor: "middle",
+      className: "text-xs fill-slate-400"
+    }, (d.min + d.max) / 2), /*#__PURE__*/React.createElement("circle", {
+      cx: midX,
+      cy: y,
+      r: "4",
+      fill: "#4f46e5",
+      stroke: "white",
+      strokeWidth: "2",
+      className: "z-10 relative"
+    }));
+  }), /*#__PURE__*/React.createElement("path", {
+    d: polyPath,
+    fill: "none",
+    stroke: "#ef4444",
+    strokeWidth: "3",
+    markerMid: "url(#dot)"
+  })))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

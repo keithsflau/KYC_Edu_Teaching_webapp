@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Insulation Challenge | Junior Science</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #fff7ed;
+      }
+    </style>
+  </head>
+  <body class="bg-orange-50 text-slate-800 min-h-screen">
+    <div id="root"></div>
+
+    <script>
+const {
+  useState,
+  useEffect,
+  useRef
+} = React;
+const materials = [{
+  id: "none",
+  name: "No Insulation",
+  color: "#94a3b8",
+  rate: 1.0
+},
+// Control
+{
+  id: "foil",
+  name: "Aluminium Foil",
+  color: "#60a5fa",
+  rate: 0.7
+},
+// Reflects radiation but conducts
+{
+  id: "cotton",
+  name: "Cotton Wool",
+  color: "#facc15",
+  rate: 0.4
+},
+// Traps air
+{
+  id: "bubble",
+  name: "Bubble Wrap",
+  color: "#f97316",
+  rate: 0.3
+} // Best trap air
+];
+const App = () => {
+  const chartRef = useRef(null);
+  const [running, setRunning] = useState(false);
+  const [time, setTime] = useState(0); // Minutes
+  const [temps, setTemps] = useState({
+    none: 90,
+    foil: 90,
+    cotton: 90,
+    bubble: 90
+  });
+  const [history, setHistory] = useState({
+    none: [90],
+    foil: [90],
+    cotton: [90],
+    bubble: [90]
+  });
+  const [chartInstance, setChartInstance] = useState(null);
+
+  // Simulation Loop
+  useEffect(() => {
+    let interval;
+    if (running && time < 20) {
+      // Run for 20 mins simulated
+      interval = setInterval(() => {
+        setTime(prev => prev + 1);
+        setTemps(prev => {
+          const next = {
+            ...prev
+          };
+          Object.keys(next).forEach(key => {
+            const rate = materials.find(m => m.id === key).rate;
+            // Simple cooling law approximation: dT/dt = -k(T - T_env)
+            // T_env = 20
+            const diff = next[key] - 20;
+            const loss = diff * 0.05 * rate; // Cooling constant
+            next[key] = Math.max(20, next[key] - loss);
+          });
+          return next;
+        });
+      }, 500); // Fast forward: 1 second = 2 minute simulated roughly or 0.5s per min step
+    } else if (time >= 20) {
+      setRunning(false);
+    }
+    return () => clearInterval(interval);
+  }, [running, time]);
+
+  // Update History
+  useEffect(() => {
+    if (time > 0) {
+      setHistory(prev => {
+        const next = {
+          ...prev
+        };
+        Object.keys(temps).forEach(key => {
+          next[key] = [...next[key], temps[key]];
+        });
+        return next;
+      });
+    }
+  }, [temps]);
+
+  // Chart Render
+  useEffect(() => {
+    if (chartRef.current) {
+      const ctx = chartRef.current.getContext("2d");
+      const datasets = materials.map(m => ({
+        label: m.name,
+        data: history[m.id],
+        borderColor: m.id === "none" ? "#94a3b8" : m.id === "bubble" ? "#f97316" : m.id === "cotton" ? "#facc15" : "#60a5fa",
+        tension: 0.4,
+        fill: false
+      }));
+      if (chartInstance) {
+        chartInstance.data.labels = Array.from({
+          length: history.none.length
+        }, (_, i) => i);
+        chartInstance.data.datasets = datasets;
+        chartInstance.update();
+      } else {
+        const newChart = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: [0],
+            datasets: datasets
+          },
+          options: {
+            responsive: true,
+            animation: false,
+            scales: {
+              y: {
+                min: 20,
+                max: 100,
+                title: {
+                  display: true,
+                  text: "Temperature (°C)"
+                }
+              },
+              x: {
+                title: {
+                  display: true,
+                  text: "Time (minutes)"
+                }
+              }
+            }
+          }
+        });
+        setChartInstance(newChart);
+      }
+    }
+  }, [history]);
+  const reset = () => {
+    setRunning(false);
+    setTime(0);
+    setTemps({
+      none: 90,
+      foil: 90,
+      cotton: 90,
+      bubble: 90
+    });
+    setHistory({
+      none: [90],
+      foil: [90],
+      cotton: [90],
+      bubble: [90]
+    });
+    if (chartInstance) {
+      chartInstance.data.labels = [0];
+      chartInstance.data.datasets.forEach(d => d.data = [90]);
+      chartInstance.update();
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "p-4 md:p-8 min-h-screen flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("header", {
+    className: "text-center mb-8"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-orange-500 font-bold uppercase text-xs tracking-widest"
+  }, "Form 1 Science • Energy"), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-slate-800"
+  }, "Insulation Challenge"), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-500"
+  }, "Which material keeps the water hot the longest?")), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-8 rounded-3xl shadow-xl border border-orange-100 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-center gap-4 flex-wrap mb-8 w-full"
+  }, materials.map(m => /*#__PURE__*/React.createElement("div", {
+    key: m.id,
+    className: "flex flex-col items-center w-24"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "relative w-16 h-20 rounded-b-lg border-x-2 border-b-2 border-slate-300 flex items-end justify-center overflow-hidden bg-white"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full transition-all duration-300 opacity-80",
+    style: {
+      height: "80%",
+      backgroundColor: `rgba(249, 115, 22, ${Math.max(0.2, (temps[m.id] - 20) / 70)})` // Opacity based on temp
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 border-4 border-transparent",
+    style: {
+      borderColor: m.id === "none" ? "transparent" : m.color,
+      borderStyle: m.id === "cotton" ? "dashed" : m.id === "bubble" ? "dotted" : "solid"
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-1 text-xs font-bold w-full text-center bg-white/50"
+  }, Math.round(temps[m.id]), "°C")), /*#__PURE__*/React.createElement("span", {
+    className: "text-xs font-bold mt-2 text-slate-500 text-center"
+  }, m.name)))), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4 mb-4"
+  }, !running && time === 0 && /*#__PURE__*/React.createElement("button", {
+    onClick: () => setRunning(true),
+    className: "bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 rounded-full font-bold shadow-lg transition flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-play"
+  }), " Start Experiment"), running && /*#__PURE__*/React.createElement("button", {
+    onClick: () => setRunning(false),
+    className: "bg-slate-200 text-slate-600 px-8 py-3 rounded-full font-bold cursor-default flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-spinner fa-spin"
+  }), " Running...", " ", time, "m"), time > 0 && !running && /*#__PURE__*/React.createElement("button", {
+    onClick: reset,
+    className: "bg-slate-200 hover:bg-slate-300 text-slate-700 px-8 py-3 rounded-full font-bold transition flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-rotate-right"
+  }), " Reset"))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-6 rounded-3xl shadow-lg border border-orange-100 flex flex-col justify-center"
+  }, /*#__PURE__*/React.createElement("canvas", {
+    ref: chartRef
+  }))), time >= 20 && /*#__PURE__*/React.createElement("div", {
+    className: "mt-8 bg-orange-100 border border-orange-200 p-6 rounded-2xl max-w-2xl text-center animate-fade-in-up"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-2xl font-bold text-orange-800 mb-2"
+  }, "Conclusion"), /*#__PURE__*/React.createElement("p", {
+    className: "text-orange-900"
+  }, /*#__PURE__*/React.createElement("strong", null, "Bubble Wrap"), " and ", /*#__PURE__*/React.createElement("strong", null, "Cotton Wool"), " ", "are good insulators because they trap pockets of air. Air is a poor conductor of heat. Aluminium foil reflects some radiation but still conducts heat, making it less effective than trapped air in this setup.")));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

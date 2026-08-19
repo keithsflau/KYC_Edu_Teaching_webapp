@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - Food Pyramid Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: linear-gradient(135deg, #fef9c3 0%, #dbeafe 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Food Pyramid",
+    zh: "食物金字塔",
+    ja: "食品ピラミッド",
+    ko: "식품 피라미드",
+    es: "Pirámide Alimenticia",
+    de: "Lebensmittelpyramide",
+    fi: "Ruokapyramidi",
+    fr: "Pyramide alimentaire",
+    ar: "الهرم الغذائي",
+    it: "Piramide Alimentare"
+  },
+  instruction: {
+    en: "Click the correct pyramid level for the food!",
+    zh: "點擊正確的金字塔層級！",
+    ja: "正しいピラミッドの段をクリックしてください！",
+    ko: "음식에 맞는 피라미드 단계를 클릭하세요!",
+    es: "¡Haz clic en el nivel correcto de la pirámide!",
+    de: "Klicke die richtige Pyramidenebene an!",
+    fi: "Napsauta oikeaa pyramiditasoa!",
+    fr: "Cliquez sur le bon niveau de la pyramide !",
+    ar: "انقر على مستوى الهرم الصحيح!",
+    it: "Clicca il livello corretto della piramide!"
+  },
+  correct: {
+    en: "Correct!",
+    zh: "答對了！",
+    ja: "正解！",
+    ko: "정답!",
+    es: "¡Correcto!",
+    de: "Richtig!",
+    fi: "Oikein!",
+    fr: "Correct !",
+    ar: "صحيح!",
+    it: "Corretto!"
+  },
+  wrong: {
+    en: "Try Again",
+    zh: "再試一次",
+    ja: "もう一度",
+    ko: "다시 시도",
+    es: "Inténtalo de nuevo",
+    de: "Versuch es nochmal",
+    fi: "Yritä uudelleen",
+    fr: "Réessayez",
+    ar: "حاول مرة أخرى",
+    it: "Riprova"
+  },
+  level1: {
+    en: "Eat Most",
+    zh: "吃最多",
+    ja: "最も多く食べる",
+    ko: "가장 많이 섭취",
+    es: "Comer más",
+    de: "Am meisten essen",
+    fi: "Syö eniten",
+    fr: "Manger le plus",
+    ar: "كل أكثر",
+    it: "Mangia di più"
+  },
+  level2: {
+    en: "Eat More",
+    zh: "吃多些",
+    ja: "多めに食べる",
+    ko: "많이 섭취",
+    es: "Comer mucho",
+    de: "Mehr essen",
+    fi: "Syö enemmän",
+    fr: "Manger plus",
+    ar: "كل كثيرا",
+    it: "Mangia molto"
+  },
+  level3: {
+    en: "Eat Moderately",
+    zh: "吃適量",
+    ja: "適度に食べる",
+    ko: "적당히 섭취",
+    es: "Comer moderadamente",
+    de: "Mäßig essen",
+    fi: "Syö kohtuullisesti",
+    fr: "Manger modérément",
+    ar: "كل باعتدال",
+    it: "Mangia moderatamente"
+  },
+  level4: {
+    en: "Eat Less",
+    zh: "吃最少",
+    ja: "控えめに食べる",
+    ko: "적게 섭취",
+    es: "Comer menos",
+    de: "Weniger essen",
+    fi: "Syö vähemmän",
+    fr: "Manger moins",
+    ar: "كل أقل",
+    it: "Mangia meno"
+  },
+  grains: {
+    en: "Grains",
+    zh: "穀物類",
+    ja: "穀物",
+    ko: "곡물",
+    es: "Granos",
+    de: "Getreide",
+    fi: "Viljat",
+    fr: "Céréales",
+    ar: "الحبوب",
+    it: "Cereali"
+  },
+  veg_fruit: {
+    en: "Vegetables & Fruits",
+    zh: "蔬菜及水果類",
+    ja: "野菜と果物",
+    ko: "채소 및 과일",
+    es: "Verduras y Frutas",
+    de: "Gemüse & Obst",
+    fi: "Vihannekset & Hedelmät",
+    fr: "Légumes et fruits",
+    ar: "الخضروات والفواكه",
+    it: "Verdura e Frutta"
+  },
+  meat_dairy: {
+    en: "Meat, Fish, Egg & Dairy",
+    zh: "肉、魚、蛋及奶類",
+    ja: "肉、魚、卵、乳製品",
+    ko: "고기, 생선, 계란 및 유제품",
+    es: "Carne, pescado, huevo y lácteos",
+    de: "Fleisch, Fisch, Ei & Milchprodukte",
+    fi: "Liha, kala, muna ja maitotuotteet",
+    fr: "Viande, poisson, œuf et produits laitiers",
+    ar: "اللحوم والأسماك والبيض ومنتجات الألبان",
+    it: "Carne, Pesce, Uova e Latticini"
+  },
+  fat_sugar: {
+    en: "Fat, Oil, Sugar & Salt",
+    zh: "油、鹽、糖",
+    ja: "脂肪、油、砂糖、塩",
+    ko: "지방, 기름, 설탕 및 소금",
+    es: "Grasa, aceite, azúcar y sal",
+    de: "Fett, Öl, Zucker & Salz",
+    fi: "Rasva, öljy, sokeri ja suola",
+    fr: "Graisse, huile, sucre et sel",
+    ar: "الدهون والزيت والسكر والملح",
+    it: "Grasso, Olio, Zucchero e Sale"
+  }
+};
+const foods = [{
+  id: "rice",
+  icon: "🍚",
+  name: "Rice",
+  level: 1
+}, {
+  id: "bread",
+  icon: "🍞",
+  name: "Bread",
+  level: 1
+}, {
+  id: "noodle",
+  icon: "🍜",
+  name: "Noodle",
+  level: 1
+}, {
+  id: "corn",
+  icon: "🌽",
+  name: "Corn",
+  level: 1
+}, {
+  id: "broccoli",
+  icon: "🥦",
+  name: "Broccoli",
+  level: 2
+}, {
+  id: "apple",
+  icon: "🍎",
+  name: "Apple",
+  level: 2
+}, {
+  id: "carrot",
+  icon: "🥕",
+  name: "Carrot",
+  level: 2
+}, {
+  id: "banana",
+  icon: "🍌",
+  name: "Banana",
+  level: 2
+}, {
+  id: "fish",
+  icon: "🐟",
+  name: "Fish",
+  level: 3
+}, {
+  id: "meat",
+  icon: "🥩",
+  name: "Meat",
+  level: 3
+}, {
+  id: "milk",
+  icon: "🥛",
+  name: "Milk",
+  level: 3
+}, {
+  id: "egg",
+  icon: "🥚",
+  name: "Egg",
+  level: 3
+}, {
+  id: "candy",
+  icon: "🍬",
+  name: "Candy",
+  level: 4
+}, {
+  id: "cake",
+  icon: "🍰",
+  name: "Cake",
+  level: 4
+}, {
+  id: "chips",
+  icon: "🍟",
+  name: "Chips",
+  level: 4
+}, {
+  id: "cola",
+  icon: "🥤",
+  name: "Cola",
+  level: 4
+}];
+const levels = [{
+  id: 4,
+  name: "fat_sugar",
+  label: "level4",
+  color: "bg-red-200"
+}, {
+  id: 3,
+  name: "meat_dairy",
+  label: "level3",
+  color: "bg-yellow-200"
+}, {
+  id: 2,
+  name: "veg_fruit",
+  label: "level2",
+  color: "bg-green-200"
+}, {
+  id: 1,
+  name: "grains",
+  label: "level1",
+  color: "bg-orange-200"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [queue, setQueue] = useState([]);
+  const [currentFood, setCurrentFood] = useState(null);
+  const [feedback, setFeedback] = useState(null);
+  const [score, setScore] = useState(0);
+  const getText = key => t[key][lang] || t[key]["en"];
+  useEffect(() => {
+    startGame();
+  }, []);
+  const startGame = () => {
+    const shuffled = [...foods].sort(() => Math.random() - 0.5);
+    setQueue(shuffled);
+    setCurrentFood(shuffled[0]);
+    setFeedback(null);
+    setScore(0);
+  };
+  const handleDrop = levelId => {
+    if (feedback) return;
+    if (currentFood.level === levelId) {
+      setFeedback("correct");
+      setScore(s => s + 10);
+      setTimeout(() => {
+        setFeedback(null);
+        const nextIndex = queue.indexOf(currentFood) + 1;
+        if (nextIndex < queue.length) {
+          setCurrentFood(queue[nextIndex]);
+        } else {
+          setCurrentFood(null); // GameOver
+        }
+      }, 1000);
+    } else {
+      setFeedback("wrong");
+      setTimeout(() => setFeedback(null), 1000);
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center justify-center p-4"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-bold mb-4 text-slate-800"
+  }, getText("title")), /*#__PURE__*/React.createElement("p", {
+    className: "mb-4 text-xl text-slate-600"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col md:flex-row gap-8 w-full max-w-5xl items-center justify-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center w-full md:w-1/2 gap-1"
+  }, levels.map(lvl => /*#__PURE__*/React.createElement("div", {
+    key: lvl.id,
+    onClick: () => handleDrop(lvl.id),
+    className: `w-full ${lvl.id === 4 ? "w-[40%]" : lvl.id === 3 ? "w-[60%]" : lvl.id === 2 ? "w-[80%]" : "w-full"} 
+                      ${lvl.color} p-4 rounded-xl text-center cursor-pointer hover:opacity-80 transition-all border-2 border-white shadow-md relative`
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "font-bold text-slate-700"
+  }, getText(lvl.name)), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs text-slate-500"
+  }, getText(lvl.label))))), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center justify-center w-full md:w-1/2 h-64 bg-white/50 rounded-3xl relative"
+  }, currentFood ? /*#__PURE__*/React.createElement(motion.div, {
+    key: currentFood.id,
+    initial: {
+      scale: 0
+    },
+    animate: {
+      scale: 1
+    },
+    className: "flex flex-col items-center",
+    draggable: true
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-9xl mb-2 filter drop-shadow-xl cursor-grab active:cursor-grabbing hover:scale-110 transition-transform"
+  }, currentFood.icon), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-bold text-slate-700 bg-white/80 px-4 py-1 rounded-full"
+  })) : /*#__PURE__*/React.createElement("div", {
+    className: "text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl mb-2"
+  }, "🎉"), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-bold text-slate-700"
+  }, getText("correct")), /*#__PURE__*/React.createElement("button", {
+    onClick: startGame,
+    className: "mt-4 bg-blue-500 text-white px-6 py-2 rounded-full font-bold hover:bg-blue-600"
+  }, "Play Again")), feedback && /*#__PURE__*/React.createElement("div", {
+    className: `absolute top-0 left-0 w-full h-full flex items-center justify-center rounded-3xl bg-black/50 z-10`
+  }, /*#__PURE__*/React.createElement("div", {
+    className: `text-4xl font-bold px-8 py-4 rounded-xl ${feedback === "correct" ? "bg-green-500 text-white" : "bg-red-500 text-white"}`
+  }, getText(feedback))))), /*#__PURE__*/React.createElement("div", {
+    className: "mt-8 font-bold text-xl text-slate-600"
+  }, "Score: ", score));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

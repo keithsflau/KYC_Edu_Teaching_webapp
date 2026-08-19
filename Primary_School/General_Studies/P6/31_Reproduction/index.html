@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - Reproduction Journey</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: #fff1f2;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "The Journey of Life",
+    zh: "生命的旅程",
+    ja: "命の旅",
+    ko: "생명의 여정",
+    es: "El viaje de la vida",
+    de: "Die Reise des Lebens",
+    fi: "Elämän matka",
+    fr: "Le voyage de la vie",
+    ar: "رحلة الحياة",
+    it: "Il viaggio della vita"
+  },
+  instruction: {
+    en: "Guide the cell to the target!",
+    zh: "引導細胞到達目標！",
+    ja: "細胞をターゲットに導いてください！",
+    ko: "세포를 목표물로 안내하세요!",
+    es: "¡Guía la célula hacia el objetivo!",
+    de: "Führe die Zelle zum Ziel!",
+    fi: "Ohjaa solu kohteeseen!",
+    fr: "Guidez la cellule vers la cible !",
+    ar: "وجه الخلية إلى الهدف!",
+    it: "Guida la cellula verso l'obiettivo!"
+  },
+  start: {
+    en: "Start Journey",
+    zh: "開始旅程",
+    ja: "旅を始める",
+    ko: "여정 시작"
+  },
+  success: {
+    en: "Fertilization Successful!",
+    zh: "受精成功！",
+    ja: "受精成功！",
+    ko: "수정 성공!"
+  }
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [pos, setPos] = useState({
+    x: 10,
+    y: 50
+  }); // Percent
+  const [playing, setPlaying] = useState(false);
+  const [won, setWon] = useState(false);
+  const getText = key => t[key][lang] || t[key]["en"];
+  useEffect(() => {
+    if (!playing || won) return;
+    const timer = setInterval(() => {
+      // Auto-move right slightly, plus random wiggle
+      setPos(p => {
+        let nx = p.x + 0.5;
+        let ny = p.y + (Math.random() - 0.5) * 5;
+        // Bounds
+        ny = Math.max(10, Math.min(90, ny));
+        if (nx >= 85) {
+          setWon(true);
+          setPlaying(false);
+          return {
+            x: 85,
+            y: 50
+          };
+        }
+        return {
+          x: nx,
+          y: ny
+        };
+      });
+    }, 50);
+    return () => clearInterval(timer);
+  }, [playing, won]);
+
+  // User interaction - maybe Tap to steer up/down?
+  const steer = dir => {
+    if (!playing) return;
+    setPos(p => ({
+      ...p,
+      y: Math.max(10, Math.min(90, p.y + dir * 10))
+    }));
+  };
+  const reset = () => {
+    setPos({
+      x: 10,
+      y: 50
+    });
+    setWon(false);
+    setPlaying(true);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-bold mb-8 text-rose-600"
+  }, getText("title")), /*#__PURE__*/React.createElement("p", {
+    className: "mb-4 font-bold text-slate-500"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "relative w-full max-w-3xl h-[400px] bg-rose-50 rounded-full border-4 border-rose-200 overflow-hidden shadow-inner mb-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute right-4 top-1/2 -translate-y-1/2 w-32 h-32 bg-rose-300 rounded-full flex items-center justify-center shadow-[0_0_20px_pink]"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-24 h-24 bg-rose-400 rounded-full opacity-50"
+  })), /*#__PURE__*/React.createElement(motion.div, {
+    className: "absolute w-8 h-4 ",
+    style: {
+      left: `${pos.x}%`,
+      top: `${pos.y}%`
+    },
+    animate: {
+      left: `${pos.x}%`,
+      top: `${pos.y}%`
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-4 h-4 bg-blue-500 rounded-full relative"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute right-full top-1/2 w-8 h-1 bg-blue-500 origin-right rotate-12 animate-wiggle"
+  }))), won && /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 flex items-center justify-center bg-white/50 backdrop-blur-sm"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black text-rose-600 animate-pulse"
+  }, getText("success")))), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-8"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => steer(-1),
+    disabled: !playing,
+    className: "p-6 bg-rose-200 rounded-full shadow hover:bg-rose-300 active:scale-95 text-2xl font-bold"
+  }, "⬆️"), !playing && /*#__PURE__*/React.createElement("button", {
+    onClick: reset,
+    className: "px-8 py-4 bg-rose-500 text-white rounded-full font-bold shadow-lg text-xl"
+  }, getText("start")), /*#__PURE__*/React.createElement("button", {
+    onClick: () => steer(1),
+    disabled: !playing,
+    className: "p-6 bg-rose-200 rounded-full shadow hover:bg-rose-300 active:scale-95 text-2xl font-bold"
+  }, "⬇️")));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

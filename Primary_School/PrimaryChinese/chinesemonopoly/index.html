@@ -1,0 +1,1098 @@
+﻿<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>語文大富翁 - 中一中文遊戲</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            min-height: 100vh;
+        }
+        
+        .board-cell {
+            transition: all 0.3s ease;
+            border: 2px solid #1e293b;
+        }
+        
+        .board-cell:hover {
+            transform: scale(1.05);
+            z-index: 10;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .player-token {
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        @keyframes diceRoll {
+            0% { transform: rotate(0deg) scale(1); }
+            25% { transform: rotate(90deg) scale(1.1); }
+            50% { transform: rotate(180deg) scale(1); }
+            75% { transform: rotate(270deg) scale(1.1); }
+            100% { transform: rotate(360deg) scale(1); }
+        }
+        
+        .dice-rolling {
+            animation: diceRoll 0.6s ease-in-out;
+        }
+        
+        @keyframes movePlayer {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1); }
+        }
+        
+        .player-moving {
+            animation: movePlayer 0.4s ease-in-out;
+        }
+        
+        .property-card {
+            transition: all 0.3s ease;
+        }
+        
+        .property-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .modal-overlay {
+            backdrop-filter: blur(4px);
+        }
+    </style>
+</head>
+<body class="p-2 md:p-4">
+    <div class="max-w-[1800px] mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-4">
+            <h1 class="text-3xl md:text-4xl font-black text-white mb-2 drop-shadow-lg">
+                <i class="fas fa-landmark text-yellow-300"></i> 語文大富翁
+            </h1>
+            <p class="text-white text-sm md:text-lg opacity-90">答對中文問題才能買地！</p>
+        </div>
+
+        <!-- Main Game Container -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-2 md:gap-4">
+            <!-- Left Sidebar: Players & Controls -->
+            <div class="lg:col-span-1 space-y-2 md:space-y-4">
+                <!-- Players Info -->
+                <div class="bg-white rounded-xl shadow-xl p-3 md:p-4">
+                    <h2 class="text-lg md:text-xl font-bold mb-3 text-gray-800">
+                        <i class="fas fa-users"></i> 玩家資訊
+                    </h2>
+                    <div id="playersInfo" class="space-y-2">
+                        <!-- Players will be dynamically added here -->
+                    </div>
+                </div>
+
+                <!-- Game Controls -->
+                <div class="bg-white rounded-xl shadow-xl p-3 md:p-4">
+                    <h2 class="text-lg md:text-xl font-bold mb-3 text-gray-800">
+                        <i class="fas fa-gamepad"></i> 遊戲控制
+                    </h2>
+                    <div class="space-y-3">
+                        <div class="text-center">
+                            <p class="text-xs md:text-sm text-gray-600 mb-1">當前玩家</p>
+                            <div id="currentPlayer" class="text-xl md:text-2xl font-bold"></div>
+                        </div>
+                        <button id="rollDiceBtn" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold py-2 md:py-3 px-4 md:px-6 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105 shadow-lg text-sm md:text-base">
+                            <i class="fas fa-dice"></i> 擲骰子
+                        </button>
+                        <div id="diceResult" class="text-center text-xl md:text-2xl font-bold text-gray-800 hidden"></div>
+                        <div id="gameActions" class="space-y-2 hidden">
+                            <button id="buyPropertyBtn" class="w-full bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 transition-all text-sm">
+                                <i class="fas fa-shopping-cart"></i> 購買地產
+                            </button>
+                            <button id="endTurnBtn" class="w-full bg-gray-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-700 transition-all text-sm">
+                                <i class="fas fa-forward"></i> 結束回合
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Properties Owned -->
+                <div class="bg-white rounded-xl shadow-xl p-3 md:p-4">
+                    <h2 class="text-lg md:text-xl font-bold mb-3 text-gray-800">
+                        <i class="fas fa-map-marked-alt"></i> 我的地產
+                    </h2>
+                    <div id="myProperties" class="space-y-2 max-h-48 overflow-y-auto">
+                        <p class="text-sm text-gray-500 text-center">暫無地產</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center: Game Board -->
+            <div class="lg:col-span-2">
+                <div class="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl shadow-2xl p-2 md:p-4">
+                    <div id="gameBoard" class="relative">
+                        <!-- Board will be generated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Sidebar: Game Info -->
+            <div class="lg:col-span-1 space-y-2 md:space-y-4">
+                <!-- Bank Info -->
+                <div class="bg-white rounded-xl shadow-xl p-3 md:p-4">
+                    <h2 class="text-lg md:text-xl font-bold mb-3 text-gray-800">
+                        <i class="fas fa-university"></i> 銀行資訊
+                    </h2>
+                    <div class="space-y-2 text-sm md:text-base">
+                        <div class="flex justify-between">
+                            <span>起始資金:</span>
+                            <span class="font-bold">$1,500</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>過路費:</span>
+                            <span class="font-bold text-red-600">地價 × 倍數</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Game Rules -->
+                <div class="bg-white rounded-xl shadow-xl p-3 md:p-4">
+                    <h2 class="text-lg md:text-xl font-bold mb-3 text-gray-800">
+                        <i class="fas fa-book"></i> 遊戲規則
+                    </h2>
+                    <ul class="text-xs md:text-sm space-y-1 text-gray-700">
+                        <li>• 答對問題才能買地</li>
+                        <li>• 經過他人地產需付租金</li>
+                        <li>• 破產者退出遊戲</li>
+                        <li>• 最後剩餘者獲勝</li>
+                    </ul>
+                </div>
+
+                <!-- Event Log -->
+                <div class="bg-white rounded-xl shadow-xl p-3 md:p-4">
+                    <h2 class="text-lg md:text-xl font-bold mb-3 text-gray-800">
+                        <i class="fas fa-scroll"></i> 遊戲日誌
+                    </h2>
+                    <div id="eventLog" class="space-y-1 text-xs md:text-sm max-h-48 overflow-y-auto">
+                        <p class="text-gray-500">遊戲開始...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Question Modal -->
+    <div id="questionModal" class="fixed inset-0 bg-black bg-opacity-50 modal-overlay hidden items-center justify-center z-50">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full mx-4 p-6 md:p-8 relative">
+            <button id="closeQuestionModal" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl">×</button>
+            <div id="questionContent" class="space-y-4 md:space-y-6">
+                <!-- Question content will be dynamically loaded -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Property Purchase Modal -->
+    <div id="purchaseModal" class="fixed inset-0 bg-black bg-opacity-50 modal-overlay hidden items-center justify-center z-50">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6 md:p-8 text-center">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">購買地產</h3>
+            <div id="purchaseInfo" class="mb-6"></div>
+            <div class="space-y-3">
+                <button id="confirmPurchaseBtn" class="w-full bg-green-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-700 transition-all">
+                    <i class="fas fa-check"></i> 確認購買
+                </button>
+                <button id="cancelPurchaseBtn" class="w-full bg-gray-400 text-white font-bold py-3 px-6 rounded-lg hover:bg-gray-500 transition-all">
+                    <i class="fas fa-times"></i> 取消
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div id="gameOverModal" class="fixed inset-0 bg-black bg-opacity-50 modal-overlay hidden items-center justify-center z-50">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6 md:p-8 text-center">
+            <h2 class="text-3xl font-bold text-yellow-600 mb-4">🎉 遊戲結束！</h2>
+            <div id="winnerInfo" class="mb-6"></div>
+            <button id="restartGameBtn" class="bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold py-3 px-8 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all">
+                <i class="fas fa-redo"></i> 重新開始
+            </button>
+        </div>
+    </div>
+
+    <!-- Setup Modal -->
+    <div id="setupModal" class="fixed inset-0 bg-black bg-opacity-50 modal-overlay flex items-center justify-center z-50">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6 md:p-8 text-center">
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">
+                <i class="fas fa-landmark text-yellow-300"></i> 語文大富翁
+            </h2>
+            <p class="text-gray-600 mb-6">請選擇玩家數量</p>
+            <div class="grid grid-cols-3 gap-4 mb-6">
+                <button class="player-count-btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-4 px-6 rounded-lg transition-all transform hover:scale-105 shadow-lg" data-count="2">
+                    <div class="text-2xl mb-2">👥</div>
+                    <div class="text-lg">2 人</div>
+                </button>
+                <button class="player-count-btn bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-6 rounded-lg transition-all transform hover:scale-105 shadow-lg" data-count="3">
+                    <div class="text-2xl mb-2">👥</div>
+                    <div class="text-lg">3 人</div>
+                </button>
+                <button class="player-count-btn bg-purple-500 hover:bg-purple-600 text-white font-bold py-4 px-6 rounded-lg transition-all transform hover:scale-105 shadow-lg" data-count="4">
+                    <div class="text-2xl mb-2">👥</div>
+                    <div class="text-lg">4 人</div>
+                </button>
+            </div>
+            <p class="text-sm text-gray-500">答對中文問題才能買地！</p>
+        </div>
+    </div>
+
+    <script>
+        // Game Configuration
+        const STARTING_MONEY = 1500;
+        const BOARD_SIZE = 40;
+        const PLAYER_COLORS = [
+            { bg: 'bg-blue-500', border: 'border-blue-600', name: '玩家一' },
+            { bg: 'bg-red-500', border: 'border-red-600', name: '玩家二' },
+            { bg: 'bg-green-500', border: 'border-green-600', name: '玩家三' },
+            { bg: 'bg-yellow-500', border: 'border-yellow-600', name: '玩家四' }
+        ];
+
+        // Property Data (40 spaces on Monopoly board)
+        const PROPERTIES = [
+            { name: '起點', type: 'start', price: 0, rent: 0, color: 'bg-green-500' },
+            { name: '中環', type: 'property', price: 60, rent: 2, color: 'bg-blue-400', group: 'brown' },
+            { name: '機會', type: 'chance', price: 0, rent: 0, color: 'bg-orange-400' },
+            { name: '銅鑼灣', type: 'property', price: 60, rent: 4, color: 'bg-blue-400', group: 'brown' },
+            { name: '所得稅', type: 'tax', price: 0, rent: 200, color: 'bg-red-500' },
+            { name: '九龍站', type: 'railroad', price: 200, rent: 25, color: 'bg-gray-600' },
+            { name: '旺角', type: 'property', price: 100, rent: 6, color: 'bg-pink-300', group: 'lightblue' },
+            { name: '機會', type: 'chance', price: 0, rent: 0, color: 'bg-orange-400' },
+            { name: '深水埗', type: 'property', price: 100, rent: 6, color: 'bg-pink-300', group: 'lightblue' },
+            { name: '油麻地', type: 'property', price: 120, rent: 8, color: 'bg-pink-300', group: 'lightblue' },
+            { name: '監獄', type: 'jail', price: 0, rent: 0, color: 'bg-gray-700' },
+            { name: '尖沙咀', type: 'property', price: 140, rent: 10, color: 'bg-purple-300', group: 'pink' },
+            { name: '電力公司', type: 'utility', price: 150, rent: 0, color: 'bg-yellow-400' },
+            { name: '佐敦', type: 'property', price: 140, rent: 10, color: 'bg-purple-300', group: 'pink' },
+            { name: '油尖旺', type: 'property', price: 160, rent: 12, color: 'bg-purple-300', group: 'pink' },
+            { name: '東鐵線', type: 'railroad', price: 200, rent: 25, color: 'bg-gray-600' },
+            { name: '觀塘', type: 'property', price: 180, rent: 14, color: 'bg-orange-300', group: 'orange' },
+            { name: '社區基金', type: 'chest', price: 0, rent: 0, color: 'bg-blue-300' },
+            { name: '黃大仙', type: 'property', price: 180, rent: 14, color: 'bg-orange-300', group: 'orange' },
+            { name: '九龍城', type: 'property', price: 200, rent: 16, color: 'bg-orange-300', group: 'orange' },
+            { name: '免費停車', type: 'freeparking', price: 0, rent: 0, color: 'bg-green-300' },
+            { name: '沙田', type: 'property', price: 220, rent: 18, color: 'bg-red-300', group: 'red' },
+            { name: '機會', type: 'chance', price: 0, rent: 0, color: 'bg-orange-400' },
+            { name: '大埔', type: 'property', price: 220, rent: 18, color: 'bg-red-300', group: 'red' },
+            { name: '上水', type: 'property', price: 240, rent: 20, color: 'bg-red-300', group: 'red' },
+            { name: '西鐵線', type: 'railroad', price: 200, rent: 25, color: 'bg-gray-600' },
+            { name: '元朗', type: 'property', price: 260, rent: 22, color: 'bg-yellow-300', group: 'yellow' },
+            { name: '屯門', type: 'property', price: 260, rent: 22, color: 'bg-yellow-300', group: 'yellow' },
+            { name: '水務局', type: 'utility', price: 150, rent: 0, color: 'bg-blue-400' },
+            { name: '天水圍', type: 'property', price: 280, rent: 24, color: 'bg-yellow-300', group: 'yellow' },
+            { name: '入獄', type: 'gotojail', price: 0, rent: 0, color: 'bg-gray-800' },
+            { name: '中環', type: 'property', price: 300, rent: 26, color: 'bg-green-300', group: 'green' },
+            { name: '金鐘', type: 'property', price: 300, rent: 26, color: 'bg-green-300', group: 'green' },
+            { name: '社區基金', type: 'chest', price: 0, rent: 0, color: 'bg-blue-300' },
+            { name: '灣仔', type: 'property', price: 320, rent: 28, color: 'bg-green-300', group: 'green' },
+            { name: '港島線', type: 'railroad', price: 200, rent: 25, color: 'bg-gray-600' },
+            { name: '機會', type: 'chance', price: 0, rent: 0, color: 'bg-orange-400' },
+            { name: '銅鑼灣', type: 'property', price: 350, rent: 35, color: 'bg-blue-500', group: 'blue' },
+            { name: '超額稅', type: 'tax', price: 0, rent: 100, color: 'bg-red-600' },
+            { name: '跑馬地', type: 'property', price: 400, rent: 50, color: 'bg-blue-500', group: 'blue' }
+        ];
+
+        // Chinese Language Questions Database
+        const QUESTIONS = [
+            {
+                question: "「憧憬」的意思是？",
+                options: ["嚮往", "恐懼", "後悔", "憤怒"],
+                correct: 0,
+                explanation: "「憧憬」指對美好事物的嚮往和期待。"
+            },
+            {
+                question: "「畫蛇添足」比喻什麼？",
+                options: ["多此一舉", "精益求精", "恰到好處", "完美無缺"],
+                correct: 0,
+                explanation: "「畫蛇添足」比喻做了多餘的事，非但無益，反而不合適。"
+            },
+            {
+                question: "「他跑得很快」中的「得」是什麼詞？",
+                options: ["助詞", "動詞", "名詞", "形容詞"],
+                correct: 0,
+                explanation: "「得」在這裡是結構助詞，用於連接動詞和補語。"
+            },
+            {
+                question: "「春風又綠江南岸」中「綠」字的用法是？",
+                options: ["形容詞作動詞", "名詞作動詞", "動詞作名詞", "副詞作動詞"],
+                correct: 0,
+                explanation: "「綠」原本是形容詞，這裡活用為動詞，意思是「使...變綠」。"
+            },
+            {
+                question: "「守株待兔」的故事告訴我們什麼道理？",
+                options: ["不應墨守成規", "應該勤奮工作", "要懂得變通", "以上皆是"],
+                correct: 3,
+                explanation: "「守株待兔」比喻不主動努力，而存萬一的僥倖心理。"
+            },
+            {
+                question: "「亡羊補牢」的意思是？",
+                options: ["為時已晚", "及時補救", "無可挽回", "後悔莫及"],
+                correct: 1,
+                explanation: "「亡羊補牢」比喻出了問題以後想辦法補救，可以防止繼續受損失。"
+            },
+            {
+                question: "「美麗的花朵」中「美麗的」是什麼成分？",
+                options: ["定語", "狀語", "補語", "主語"],
+                correct: 0,
+                explanation: "「美麗的」修飾名詞「花朵」，是定語。"
+            },
+            {
+                question: "「他認真地學習」中「認真地」是什麼成分？",
+                options: ["狀語", "定語", "補語", "謂語"],
+                correct: 0,
+                explanation: "「認真地」修飾動詞「學習」，是狀語。"
+            },
+            {
+                question: "「一石二鳥」比喻什麼？",
+                options: ["一舉兩得", "困難重重", "機會難得", "運氣很好"],
+                correct: 0,
+                explanation: "「一石二鳥」比喻做一件事得到兩種好處。"
+            },
+            {
+                question: "「破釜沉舟」表達什麼決心？",
+                options: ["不留退路，決一死戰", "小心謹慎", "猶豫不決", "三心二意"],
+                correct: 0,
+                explanation: "「破釜沉舟」比喻不留退路，下決心不顧一切地幹到底。"
+            },
+            {
+                question: "「但願人長久，千里共嬋娟」中的「嬋娟」指什麼？",
+                options: ["月亮", "美女", "美好", "長久"],
+                correct: 0,
+                explanation: "「嬋娟」在這裡指月亮，是借代修辭手法。"
+            },
+            {
+                question: "「躊躇」的同義詞是？",
+                options: ["猶豫", "果斷", "勇敢", "堅定"],
+                correct: 0,
+                explanation: "「躊躇」指猶豫不決，拿不定主意。"
+            },
+            {
+                question: "「璀璨」通常用來形容什麼？",
+                options: ["光芒", "聲音", "味道", "觸感"],
+                correct: 0,
+                explanation: "「璀璨」形容光彩鮮明、耀眼奪目。"
+            },
+            {
+                question: "「邂逅」的意思是？",
+                options: ["偶然相遇", "故意避開", "長期相處", "告別分離"],
+                correct: 0,
+                explanation: "「邂逅」指不期而遇，偶然相遇。"
+            },
+            {
+                question: "「蹣跚」形容什麼狀態？",
+                options: ["走路不穩", "說話流利", "思維敏捷", "動作迅速"],
+                correct: 0,
+                explanation: "「蹣跚」形容走路緩慢、搖擺不穩的樣子。"
+            }
+        ];
+
+        // Game State
+        let gameState = {
+            players: [],
+            currentPlayerIndex: 0,
+            gameStarted: false,
+            gameOver: false,
+            properties: PROPERTIES.map((prop, index) => ({
+                ...prop,
+                owner: null,
+                index: index
+            })),
+            numPlayers: 2,
+            currentProperty: null
+        };
+
+        // Initialize Game
+        function initGame(numPlayers = 2) {
+            gameState.numPlayers = Math.min(Math.max(parseInt(numPlayers, 10) || 2, 2), 4);
+            
+            // Create players
+            gameState.players = [];
+            for (let i = 0; i < gameState.numPlayers; i++) {
+                gameState.players.push({
+                    id: i,
+                    name: PLAYER_COLORS[i].name,
+                    position: 0,
+                    money: STARTING_MONEY,
+                    color: PLAYER_COLORS[i],
+                    inJail: false,
+                    jailTurns: 0,
+                    properties: []
+                });
+            }
+
+            // Reset properties
+            gameState.properties = PROPERTIES.map((prop, index) => ({
+                ...prop,
+                owner: null,
+                index: index
+            }));
+
+            gameState.currentPlayerIndex = 0;
+            gameState.gameStarted = true;
+            gameState.gameOver = false;
+
+            // Hide setup modal
+            const setupModal = document.getElementById('setupModal');
+            if (setupModal) {
+                setupModal.classList.add('hidden');
+                setupModal.classList.remove('flex');
+            }
+
+            renderBoard();
+            renderPlayersInfo();
+            updateCurrentPlayer();
+            addEventLog("遊戲開始！");
+        }
+
+        // Render Game Board (Monopoly style - 4 sides)
+        function renderBoard() {
+            const boardElement = document.getElementById('gameBoard');
+            boardElement.innerHTML = '';
+            
+            // Create 4-sided board layout (11x11 grid for 40 cells)
+            // Layout: 9 cells per side + 4 corners = 40 total
+            const boardHTML = `
+                <div class="grid grid-cols-11 gap-0 relative" style="aspect-ratio: 1;">
+                    ${Array.from({ length: 40 }, (_, i) => {
+                        const cell = getCellPosition(i);
+                        const isCorner = i === 0 || i === 10 || i === 20 || i === 30;
+                        return `
+                            <div class="board-cell ${cell.color} text-white p-1 md:p-2 relative flex flex-col items-center justify-center text-[7px] md:text-xs font-bold" 
+                                 style="grid-column: ${cell.col}; grid-row: ${cell.row}; min-height: ${isCorner ? '80px' : '60px'};"
+                                 data-index="${i}">
+                                <div class="text-center w-full">
+                                    <div class="font-bold mb-1 truncate">${PROPERTIES[i].name}</div>
+                                    ${PROPERTIES[i].price > 0 ? `<div class="text-[6px] md:text-[10px]">$${PROPERTIES[i].price}</div>` : ''}
+                                </div>
+                                <div id="cell-players-${i}" class="absolute bottom-1 left-1 flex gap-0.5 flex-wrap">
+                                    <!-- Players will be rendered here -->
+                                </div>
+                                ${gameState.properties[i].owner !== null ? `
+                                    <div class="absolute top-1 right-1 w-2 h-2 md:w-3 md:h-3 rounded-full ${PLAYER_COLORS[gameState.properties[i].owner]?.bg || 'bg-gray-500'} border border-white"></div>
+                                ` : ''}
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+            
+            boardElement.innerHTML = boardHTML;
+            updatePlayerPositions();
+        }
+
+        // Calculate cell position for 4-sided board
+        // Traditional Monopoly: 40 cells total
+        // - 4 corners (0, 10, 20, 30)
+        // - 9 cells per side between corners
+        function getCellPosition(index) {
+            // Bottom row: index 0-9 (right to left, starting from bottom-right corner)
+            if (index <= 9) {
+                return { row: 11, col: 11 - index, color: PROPERTIES[index].color };
+            }
+            // Left column: index 10-19 (bottom to top, starting from bottom-left corner)
+            else if (index <= 19) {
+                return { row: 11 - (index - 10), col: 1, color: PROPERTIES[index].color };
+            }
+            // Top row: index 20-29 (left to right, starting from top-left corner)
+            else if (index <= 29) {
+                return { row: 1, col: 1 + (index - 20), color: PROPERTIES[index].color };
+            }
+            // Right column: index 30-39 (top to bottom, starting from top-right corner)
+            else {
+                return { row: 1 + (index - 30), col: 11, color: PROPERTIES[index].color };
+            }
+        }
+
+        // Render Players Info
+        function renderPlayersInfo() {
+            const playersInfoElement = document.getElementById('playersInfo');
+            const colorMap = {
+                'bg-blue-500': 'text-blue-600',
+                'bg-red-500': 'text-red-600',
+                'bg-green-500': 'text-green-600',
+                'bg-yellow-500': 'text-yellow-600'
+            };
+            
+            playersInfoElement.innerHTML = gameState.players.map(player => {
+                const textColor = colorMap[player.color.bg] || 'text-gray-600';
+                return `
+                    <div class="p-2 md:p-3 rounded-lg border-2 ${player.id === gameState.currentPlayerIndex ? player.color.border : 'border-transparent'} ${player.color.bg} bg-opacity-10">
+                        <div class="flex items-center justify-between mb-1">
+                            <div class="flex items-center gap-2">
+                                <div class="w-4 h-4 rounded-full ${player.color.bg}"></div>
+                                <span class="font-semibold ${textColor} text-sm md:text-base">${player.name}</span>
+                            </div>
+                            ${player.inJail ? '<span class="text-xs text-red-600">⛓️</span>' : ''}
+                        </div>
+                        <div class="text-xs md:text-sm font-bold ${textColor}">
+                            $${player.money.toLocaleString()}
+                        </div>
+                        <div class="text-xs text-gray-600">
+                            地產: ${player.properties.length} 處
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Update Current Player
+        function updateCurrentPlayer() {
+            const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+            if (!currentPlayer) return;
+            const colorMap = {
+                'bg-blue-500': 'text-blue-600',
+                'bg-red-500': 'text-red-600',
+                'bg-green-500': 'text-green-600',
+                'bg-yellow-500': 'text-yellow-600'
+            };
+            const textColor = colorMap[currentPlayer.color.bg] || 'text-gray-600';
+            
+            document.getElementById('currentPlayer').textContent = currentPlayer.name;
+            document.getElementById('currentPlayer').className = `text-xl md:text-2xl font-bold ${textColor}`;
+            renderPlayersInfo();
+            updateMyProperties();
+        }
+
+        // Update Player Positions on Board
+        function updatePlayerPositions() {
+            // Clear all player tokens
+            for (let i = 0; i < BOARD_SIZE; i++) {
+                const cellElement = document.getElementById(`cell-players-${i}`);
+                if (cellElement) {
+                    cellElement.innerHTML = '';
+                }
+            }
+
+            // Render player tokens
+            gameState.players.forEach((player, playerIndex) => {
+                const cellElement = document.getElementById(`cell-players-${player.position}`);
+                if (cellElement) {
+                    const token = document.createElement('div');
+                    token.className = `player-token ${player.color.bg} ${player.color.border}`;
+                    token.style.zIndex = '20';
+                    token.title = player.name;
+                    cellElement.appendChild(token);
+                }
+            });
+        }
+
+        // Update My Properties
+        function updateMyProperties() {
+            const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+            const myPropertiesElement = document.getElementById('myProperties');
+            if (!currentPlayer || !myPropertiesElement) return;
+            
+            if (currentPlayer.properties.length === 0) {
+                myPropertiesElement.innerHTML = '<p class="text-sm text-gray-500 text-center">暫無地產</p>';
+            } else {
+                myPropertiesElement.innerHTML = currentPlayer.properties.map(propIndex => {
+                    const prop = gameState.properties[propIndex];
+                    return `
+                        <div class="property-card p-2 bg-gray-50 rounded border border-gray-200 text-xs">
+                            <div class="font-bold text-gray-800">${prop.name}</div>
+                            <div class="text-gray-600">租金: $${prop.rent}</div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        // Roll Dice
+        function rollDice() {
+            if (gameState.gameOver || !gameState.gameStarted) return;
+            
+            const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+            if (!currentPlayer) return;
+            
+            // Check if player is in jail
+            if (currentPlayer.inJail) {
+                if (currentPlayer.jailTurns >= 3) {
+                    currentPlayer.inJail = false;
+                    currentPlayer.jailTurns = 0;
+                    addEventLog(`${currentPlayer.name} 出獄了！`);
+                } else {
+                    currentPlayer.jailTurns++;
+                    addEventLog(`${currentPlayer.name} 仍在監獄中 (${currentPlayer.jailTurns}/3)`);
+                    nextTurn();
+                    return;
+                }
+            }
+            
+            const diceBtn = document.getElementById('rollDiceBtn');
+            diceBtn.disabled = true;
+            diceBtn.classList.add('dice-rolling');
+
+            const dice1 = Math.floor(Math.random() * 6) + 1;
+            const dice2 = Math.floor(Math.random() * 6) + 1;
+            const total = dice1 + dice2;
+            const diceResultElement = document.getElementById('diceResult');
+            
+            setTimeout(() => {
+                diceBtn.classList.remove('dice-rolling');
+                diceResultElement.textContent = `🎲 ${dice1} + ${dice2} = ${total}`;
+                diceResultElement.classList.remove('hidden');
+                
+                movePlayer(total);
+            }, 600);
+        }
+
+        // Move Player
+        function movePlayer(steps) {
+            const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+            const newPosition = (currentPlayer.position + steps) % BOARD_SIZE;
+            
+            // Animate movement
+            let currentPos = currentPlayer.position;
+            const moveInterval = setInterval(() => {
+                currentPos = (currentPos + 1) % BOARD_SIZE;
+                currentPlayer.position = currentPos;
+                updatePlayerPositions();
+                
+                if (currentPos === newPosition) {
+                    clearInterval(moveInterval);
+                    currentPlayer.position = newPosition;
+                    updatePlayerPositions();
+                    
+                    // Handle landing on space
+                    setTimeout(() => handleLanding(newPosition), 300);
+                }
+            }, 150);
+        }
+
+        // Handle Landing on Space
+        function handleLanding(position) {
+            const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+            const property = gameState.properties[position];
+            
+            addEventLog(`${currentPlayer.name} 到達 ${property.name}`);
+            
+            switch (property.type) {
+                case 'start':
+                    currentPlayer.money += 200;
+                    addEventLog(`${currentPlayer.name} 經過起點，獲得 $200`);
+                    renderPlayersInfo();
+                    nextTurn();
+                    break;
+                    
+                case 'property':
+                case 'railroad':
+                case 'utility':
+                    if (property.owner === null) {
+                        // Show question to buy property
+                        gameState.currentProperty = position;
+                        showQuestionForPurchase();
+                    } else if (property.owner === currentPlayer.id) {
+                        addEventLog(`${currentPlayer.name} 到達自己的地產`);
+                        nextTurn();
+                    } else {
+                        // Pay rent
+                        const owner = gameState.players[property.owner];
+                        const rent = calculateRent(property);
+                        currentPlayer.money -= rent;
+                        owner.money += rent;
+                        addEventLog(`${currentPlayer.name} 支付 $${rent} 租金給 ${owner.name}`);
+                        
+                        if (currentPlayer.money < 0) {
+                            handleBankruptcy(currentPlayer);
+                        } else {
+                            renderPlayersInfo();
+                            nextTurn();
+                        }
+                    }
+                    break;
+                    
+                case 'tax':
+                    const taxAmount = property.rent;
+                    currentPlayer.money -= taxAmount;
+                    addEventLog(`${currentPlayer.name} 繳納稅款 $${taxAmount}`);
+                    if (currentPlayer.money < 0) {
+                        handleBankruptcy(currentPlayer);
+                    } else {
+                        renderPlayersInfo();
+                        nextTurn();
+                    }
+                    break;
+                    
+                case 'gotojail':
+                    currentPlayer.position = 10; // Jail position
+                    currentPlayer.inJail = true;
+                    currentPlayer.jailTurns = 0;
+                    addEventLog(`${currentPlayer.name} 被送進監獄！`);
+                    updatePlayerPositions();
+                    nextTurn();
+                    break;
+                    
+                case 'chance':
+                case 'chest':
+                    handleChanceOrChest(property.type);
+                    break;
+                    
+                case 'freeparking':
+                    addEventLog(`${currentPlayer.name} 免費停車`);
+                    nextTurn();
+                    break;
+                    
+                default:
+                    nextTurn();
+            }
+        }
+
+        // Calculate Rent
+        function calculateRent(property) {
+            if (property.type === 'railroad') {
+                // Count railroads owned by same player
+                const owner = gameState.players[property.owner];
+                const railroadsOwned = owner.properties.filter(idx => 
+                    gameState.properties[idx].type === 'railroad'
+                ).length;
+                return 25 * railroadsOwned;
+            } else if (property.type === 'utility') {
+                // Count utilities owned by same player
+                const owner = gameState.players[property.owner];
+                const utilitiesOwned = owner.properties.filter(idx => 
+                    gameState.properties[idx].type === 'utility'
+                ).length;
+                return utilitiesOwned === 2 ? 100 : 50;
+            } else {
+                return property.rent;
+            }
+        }
+
+        // Show Question for Purchase
+        function showQuestionForPurchase() {
+            const property = gameState.properties[gameState.currentProperty];
+            if (!property) return;
+            const question = QUESTIONS[Math.floor(Math.random() * QUESTIONS.length)];
+            
+            const modal = document.getElementById('questionModal');
+            const questionContent = document.getElementById('questionContent');
+            
+            questionContent.innerHTML = `
+                <div class="text-center">
+                    <h3 class="text-xl md:text-2xl font-bold text-gray-800 mb-2">購買 ${property.name}</h3>
+                    <p class="text-sm md:text-base text-gray-600 mb-2">價格: $${property.price}</p>
+                    <p class="text-sm md:text-base text-gray-600 mb-4">答對問題才能購買！</p>
+                    <div class="bg-blue-50 p-4 rounded-lg mb-4">
+                        <p class="text-lg md:text-xl text-gray-800 mb-4">${question.question}</p>
+                        <div class="space-y-2">
+                            ${question.options.map((option, index) => `
+                                <button class="option-btn w-full p-3 bg-white hover:bg-blue-100 rounded-lg text-left font-semibold transition-all transform hover:scale-105 border-2 border-transparent hover:border-blue-300" data-answer="${index}">
+                                    ${String.fromCharCode(65 + index)}. ${option}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div id="answerResult" class="mt-4 hidden"></div>
+                </div>
+            `;
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            // Add event listeners to options
+            document.querySelectorAll('.option-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const selectedAnswer = parseInt(this.dataset.answer, 10);
+                    checkPurchaseAnswer(question, selectedAnswer, property);
+                });
+            });
+        }
+
+        // Check Purchase Answer
+        function checkPurchaseAnswer(question, selectedAnswer, property) {
+            const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+            const answerResult = document.getElementById('answerResult');
+            const optionButtons = document.querySelectorAll('.option-btn');
+            
+            // Disable all buttons
+            optionButtons.forEach(btn => {
+                btn.disabled = true;
+                btn.classList.remove('hover:bg-blue-100', 'hover:scale-105');
+            });
+
+            if (selectedAnswer === question.correct) {
+                // Correct answer - can buy property
+                optionButtons[selectedAnswer].classList.add('bg-green-500', 'text-white', 'border-green-600');
+                answerResult.innerHTML = `
+                    <div class="bg-green-100 border-2 border-green-500 rounded-lg p-4">
+                        <p class="text-green-800 font-bold text-lg">✓ 答對了！</p>
+                        <p class="text-green-700 mt-2">${question.explanation}</p>
+                        <p class="text-green-700 mt-2">你可以購買這塊地產！</p>
+                    </div>
+                `;
+                
+                setTimeout(() => {
+                    closeQuestionModal();
+                    showPurchaseModal(property);
+                }, 2000);
+            } else {
+                // Wrong answer - cannot buy
+                optionButtons[selectedAnswer].classList.add('bg-red-500', 'text-white', 'border-red-600');
+                optionButtons[question.correct].classList.add('bg-green-500', 'text-white', 'border-green-600');
+                answerResult.innerHTML = `
+                    <div class="bg-red-100 border-2 border-red-500 rounded-lg p-4">
+                        <p class="text-red-800 font-bold text-lg">✗ 答錯了</p>
+                        <p class="text-red-700 mt-2">正確答案是：${question.options[question.correct]}</p>
+                        <p class="text-red-700 mt-2">${question.explanation}</p>
+                        <p class="text-red-700 mt-2 font-bold">無法購買這塊地產</p>
+                    </div>
+                `;
+                
+                setTimeout(() => {
+                    closeQuestionModal();
+                    gameState.currentProperty = null;
+                    nextTurn();
+                }, 2000);
+            }
+        }
+
+        // Show Purchase Modal
+        function showPurchaseModal(property) {
+            const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+            const modal = document.getElementById('purchaseModal');
+            const purchaseInfo = document.getElementById('purchaseInfo');
+            
+            purchaseInfo.innerHTML = `
+                <div class="space-y-2">
+                    <p class="text-lg font-bold text-gray-800">${property.name}</p>
+                    <p class="text-gray-600">價格: <span class="font-bold text-blue-600">$${property.price}</span></p>
+                    <p class="text-gray-600">租金: <span class="font-bold text-green-600">$${property.rent}</span></p>
+                    <p class="text-sm text-gray-500 mt-4">你的資金: $${currentPlayer.money.toLocaleString()}</p>
+                </div>
+            `;
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        // Confirm Purchase
+        function confirmPurchase() {
+            const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+            const property = gameState.properties[gameState.currentProperty];
+            if (!currentPlayer || !property) return;
+            
+            if (currentPlayer.money >= property.price) {
+                currentPlayer.money -= property.price;
+                property.owner = currentPlayer.id;
+                currentPlayer.properties.push(gameState.currentProperty);
+                
+                addEventLog(`${currentPlayer.name} 購買了 ${property.name} ($${property.price})`);
+                
+                renderBoard();
+                renderPlayersInfo();
+                updateMyProperties();
+                
+                closePurchaseModal();
+                gameState.currentProperty = null;
+                nextTurn();
+            } else {
+                alert('資金不足！');
+            }
+        }
+
+        // Close Modals
+        function closeQuestionModal() {
+            const modal = document.getElementById('questionModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function closePurchaseModal() {
+            const modal = document.getElementById('purchaseModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // Handle Chance or Community Chest
+        function handleChanceOrChest(type) {
+            const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+            const effects = [
+                { text: '獲得 $100', money: 100 },
+                { text: '獲得 $200', money: 200 },
+                { text: '支付 $50', money: -50 },
+                { text: '支付 $100', money: -100 },
+                { text: '前進3格', move: 3 },
+                { text: '後退2格', move: -2 }
+            ];
+            
+            const effect = effects[Math.floor(Math.random() * effects.length)];
+            addEventLog(`${currentPlayer.name} 抽到${type === 'chance' ? '機會' : '社區基金'}卡: ${effect.text}`);
+            
+            if (effect.money) {
+                currentPlayer.money += effect.money;
+                if (currentPlayer.money < 0) {
+                    handleBankruptcy(currentPlayer);
+                    return;
+                }
+            } else if (effect.move) {
+                const newPosition = (currentPlayer.position + effect.move + BOARD_SIZE) % BOARD_SIZE;
+                currentPlayer.position = newPosition;
+                updatePlayerPositions();
+                setTimeout(() => handleLanding(newPosition), 500);
+                return;
+            }
+            
+            renderPlayersInfo();
+            nextTurn();
+        }
+
+        // Handle Bankruptcy
+        function handleBankruptcy(player) {
+            addEventLog(`${player.name} 破產了！`);
+            
+            // Transfer properties to bank
+            player.properties.forEach(propIndex => {
+                gameState.properties[propIndex].owner = null;
+            });
+            
+            // Remove player
+            const playerIndex = gameState.players.findIndex(p => p.id === player.id);
+            gameState.players.splice(playerIndex, 1);
+            
+            // Adjust current player index
+            if (gameState.currentPlayerIndex >= gameState.players.length) {
+                gameState.currentPlayerIndex = 0;
+            }
+            
+            if (gameState.players.length === 1) {
+                endGame(gameState.players[0]);
+            } else {
+                renderBoard();
+                renderPlayersInfo();
+                updateCurrentPlayer();
+                nextTurn();
+            }
+        }
+
+        // Next Turn
+        function nextTurn() {
+            if (!gameState.players.length) return;
+            const diceResultElement = document.getElementById('diceResult');
+            diceResultElement.classList.add('hidden');
+            
+            const diceBtn = document.getElementById('rollDiceBtn');
+            diceBtn.disabled = false;
+            
+            const gameActions = document.getElementById('gameActions');
+            gameActions.classList.add('hidden');
+            
+            gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
+            updateCurrentPlayer();
+        }
+
+        // End Game
+        function endGame(winner) {
+            gameState.gameOver = true;
+            const modal = document.getElementById('gameOverModal');
+            const winnerInfo = document.getElementById('winnerInfo');
+            
+            const colorMap = {
+                'bg-blue-500': 'text-blue-600',
+                'bg-red-500': 'text-red-600',
+                'bg-green-500': 'text-green-600',
+                'bg-yellow-500': 'text-yellow-600'
+            };
+            const textColor = colorMap[winner.color.bg] || 'text-gray-600';
+            
+            winnerInfo.innerHTML = `
+                <div class="mb-4">
+                    <p class="text-xl font-semibold text-gray-700 mb-2">🏆 獲勝者</p>
+                    <p class="text-3xl font-bold ${textColor}">${winner.name}</p>
+                    <p class="text-lg text-gray-600 mt-2">資金: $${winner.money.toLocaleString()}</p>
+                    <p class="text-lg text-gray-600">地產: ${winner.properties.length} 處</p>
+                </div>
+            `;
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        // Add Event Log
+        function addEventLog(message) {
+            const eventLog = document.getElementById('eventLog');
+            const logEntry = document.createElement('p');
+            logEntry.className = 'text-gray-700';
+            logEntry.textContent = message;
+            eventLog.insertBefore(logEntry, eventLog.firstChild);
+            
+            // Keep only last 10 entries
+            while (eventLog.children.length > 10) {
+                eventLog.removeChild(eventLog.lastChild);
+            }
+        }
+
+        // Event Listeners
+        document.getElementById('rollDiceBtn').addEventListener('click', rollDice);
+        document.getElementById('closeQuestionModal').addEventListener('click', closeQuestionModal);
+        document.getElementById('confirmPurchaseBtn').addEventListener('click', confirmPurchase);
+        document.getElementById('cancelPurchaseBtn').addEventListener('click', () => {
+            closePurchaseModal();
+            gameState.currentProperty = null;
+            nextTurn();
+        });
+        document.getElementById('restartGameBtn').addEventListener('click', () => {
+            document.getElementById('gameOverModal').classList.add('hidden');
+            document.getElementById('gameOverModal').classList.remove('flex');
+            // Show setup modal again
+            document.getElementById('setupModal').classList.remove('hidden');
+            document.getElementById('setupModal').classList.add('flex');
+        });
+
+        // Close modal when clicking outside
+        document.getElementById('questionModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeQuestionModal();
+            }
+        });
+
+        // Setup modal - player count buttons
+        document.querySelectorAll('.player-count-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const numPlayers = parseInt(this.dataset.count, 10);
+                initGame(numPlayers);
+            });
+        });
+
+        // Initialize - show setup modal on load
+        window.addEventListener('load', function() {
+            // Show setup modal instead of prompt
+            const setupModal = document.getElementById('setupModal');
+            if (setupModal) {
+                setupModal.classList.remove('hidden');
+                setupModal.classList.add('flex');
+            }
+        });
+    </script>
+    <footer style="text-align: center; padding: 16px; color: #64748b; font-size: 12px; font-family: 'Noto Sans TC', sans-serif; background: rgba(255,255,255,0.9); margin-top: 20px;">
+      <p style="font-style: italic; margin-bottom: 4px;">
+        But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his understanding. Jeremiah 10:12
+      </p>
+      <p style="font-size: 11px; margin-bottom: 4px; margin-top: 8px;">
+        「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+      </p>
+      <p style="font-size: 11px; margin-top: 8px; padding-top: 8px; border-top: 1px solid #cbd5e1;">
+        @ 2025 Primary Chinese Learning Resources | Prepared by SF Lau
+      </p>
+    </footer>
+
+</body>
+</html>
+
+

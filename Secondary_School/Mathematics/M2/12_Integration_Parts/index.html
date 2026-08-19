@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Integration by Parts | M2 Calculus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+      }
+      .glass {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <div id="root" class="flex-grow flex flex-col"></div>
+    <script>
+const {
+  useState
+} = React;
+const translations = {
+  en: {
+    unit: "Unit 2: Integral Calculus",
+    title: "Integration by Parts",
+    eq: "∫ u dv = uv - ∫ v du",
+    plane: "v-u Plane",
+    totalArea: "Total Rectangle Area (uv)",
+    totalDesc: "Total bounding box area.",
+    vdu: "∫ v du (Green)",
+    vduDesc: "Area under curve. Standard integral.",
+    udv: "∫ u dv (Red)",
+    udvDesc: "Area to the left. The one usually hard to solve!",
+    langBtn: "中文"
+  },
+  zh: {
+    unit: "第二單元：積分",
+    title: "分部積分法",
+    eq: "∫ u dv = uv - ∫ v du",
+    plane: "v-u 平面",
+    totalArea: "總矩形面積 (uv)",
+    totalDesc: "邊界框的總面積。",
+    vdu: "∫ v du (綠色)",
+    vduDesc: "曲線下面積。標準積分。",
+    udv: "∫ u dv (紅色)",
+    udvDesc: "曲線左側面積。通常較難求解的部分！",
+    langBtn: "English"
+  }
+};
+const App = () => {
+  // Visual proof Area(box) = Area(under curve) + Area(left of curve)
+  // uv = Integral(v du) + Integral(u dv)
+  // So Integral(u dv) = uv - Integral(v du)
+
+  const [lang, setLang] = useState("en");
+  const t = translations[lang];
+  const [uLim, setULim] = useState(3);
+  const vFunc = u => Math.exp(u);
+  const scaleX = 100;
+  const scaleY = 30; // e^2 approx 7.4
+  const cx = 50;
+  const cy = 350;
+
+  // Points for Box
+  const uVal = uLim;
+  const vVal = vFunc(uVal);
+
+  // Screen Coordinates
+  const pCorner = {
+    x: cx + uVal * scaleX,
+    y: cy - vVal * scaleY
+  };
+  const pUAxis = {
+    x: cx + uVal * scaleX,
+    y: cy
+  };
+  const pVAxis = {
+    x: cx,
+    y: cy - vVal * scaleY
+  };
+
+  // Curve path
+  const pts = [];
+  for (let i = 0; i <= uVal; i += 0.05) {
+    pts.push(`${cx + i * scaleX},${cy - vFunc(i) * scaleY}`);
+  }
+  const curvePath = `M ${pts.join(" L ")}`;
+
+  // Area u dv (Standard Integral Area under curve if axes flipped? No)
+  // In u-v plane:
+  // Area under v(u) curve = Integral v du
+  // Area to left of u(v) curve = Integral u dv
+
+  // Path for Area Under (Integral v du)
+  const areaUnder = `M ${cx},${cy} L ${pts.join(" L ")} L ${pUAxis.x},${pUAxis.y} Z`;
+
+  // Path for Area Left (Integral u dv) = Box - Area Under
+  const areaLeft = `M ${cx},${cy} L ${pVAxis.x},${pVAxis.y} L ${pCorner.x},${pCorner.y} L ${pts.reverse().join(" L ")} Z`;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "flex-grow flex flex-col items-center justify-center p-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 right-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLang(l => l === "en" ? "zh" : "en"),
+    className: "px-3 py-1 bg-slate-800 border border-slate-600 rounded-full text-xs font-bold text-emerald-400 hover:bg-slate-700 hover:text-white transition flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-language"
+  }), t.langBtn)), /*#__PURE__*/React.createElement("header", {
+    className: "mb-8 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-emerald-500 font-bold uppercase tracking-widest text-xs mb-2"
+  }, t.unit), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-white mb-2"
+  }, t.title), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-400 font-mono text-lg"
+  }, t.eq)), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col md:flex-row gap-12 items-center w-full max-w-5xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 glass p-8 rounded-3xl relative min-h-[400px]"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "absolute top-4 left-4 font-mono font-bold text-slate-500"
+  }, t.plane), /*#__PURE__*/React.createElement("svg", {
+    width: "450",
+    height: "400",
+    className: "overflow-visible"
+  }, /*#__PURE__*/React.createElement("line", {
+    x1: cx,
+    y1: "0",
+    x2: cx,
+    y2: "400",
+    stroke: "#cbd5e1",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "0",
+    y1: cy,
+    x2: "450",
+    y2: cy,
+    stroke: "#cbd5e1",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: cx + 400,
+    y: cy + 20,
+    fill: "#cbd5e1",
+    fontWeight: "bold"
+  }, "u"), /*#__PURE__*/React.createElement("text", {
+    x: cx - 20,
+    y: "20",
+    fill: "#cbd5e1",
+    fontWeight: "bold"
+  }, "v"), /*#__PURE__*/React.createElement("rect", {
+    x: cx,
+    y: pCorner.y,
+    width: uVal * scaleX,
+    height: vVal * scaleY,
+    fill: "none",
+    stroke: "#60a5fa",
+    strokeWidth: "2",
+    strokeDasharray: "5 5"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: pCorner.x + 10,
+    y: pCorner.y,
+    fill: "#60a5fa",
+    fontWeight: "bold"
+  }, "(", uVal.toFixed(1), ", ", vVal.toFixed(1), ")"), /*#__PURE__*/React.createElement("path", {
+    d: areaUnder,
+    fill: "#10b981",
+    opacity: "0.6",
+    stroke: "none"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: areaLeft,
+    fill: "#f43f5e",
+    opacity: "0.6",
+    stroke: "none"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: curvePath,
+    fill: "none",
+    stroke: "white",
+    strokeWidth: "3"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: pCorner.x,
+    cy: pCorner.y,
+    r: "5",
+    fill: "white"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "md:w-80 space-y-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass p-6 rounded-2xl border border-sky-500/30"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs uppercase text-sky-400 font-bold mb-2"
+  }, t.totalArea), /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-mono font-bold text-white mb-2"
+  }, (uVal * vVal).toFixed(2)), /*#__PURE__*/React.createElement("div", {
+    className: "text-[10px] text-slate-400"
+  }, t.totalDesc)), /*#__PURE__*/React.createElement("div", {
+    className: "glass p-6 rounded-2xl border-l-4 border-emerald-500"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs uppercase text-emerald-400 font-bold mb-2"
+  }, t.vdu), /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-mono font-bold text-emerald-100 mb-2"
+  }, (Math.exp(uVal) - 1).toFixed(2)), /*#__PURE__*/React.createElement("div", {
+    className: "text-[10px] text-slate-400"
+  }, t.vduDesc)), /*#__PURE__*/React.createElement("div", {
+    className: "glass p-6 rounded-2xl border-l-4 border-rose-500"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs uppercase text-rose-400 font-bold mb-2"
+  }, t.udv), /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-mono font-bold text-rose-100 mb-2"
+  }, (uVal * vVal - (Math.exp(uVal) - 1)).toFixed(2)), /*#__PURE__*/React.createElement("div", {
+    className: "text-[10px] text-slate-400"
+  }, t.udvDesc)), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "0.5",
+    max: "2.5",
+    step: "0.1",
+    value: uLim,
+    onChange: e => setULim(Number(e.target.value)),
+    className: "w-full accent-sky-500"
+  }))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

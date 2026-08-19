@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Slicing | M2 Calculus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+        overflow: hidden;
+      }
+      .glass {
+        background: rgba(15, 23, 42, 0.8);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      input[type="range"] {
+        -webkit-appearance: none;
+        background: transparent;
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        height: 12px;
+        width: 12px;
+        border-radius: 50%;
+        background: white;
+        margin-top: -4px;
+        cursor: pointer;
+      }
+      input[type="range"]::-webkit-slider-runnable-track {
+        width: 100%;
+        height: 4px;
+        background: #475569;
+        border-radius: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="absolute top-4 left-4 z-10 glass p-6 rounded-2xl max-w-sm">
+      <!-- Language Toggle -->
+      <div class="absolute top-4 right-4">
+        <button
+          id="lang-btn"
+          class="px-2 py-1 bg-slate-800 border border-slate-600 rounded-full text-[10px] font-bold text-emerald-400 hover:bg-slate-700 hover:text-white transition flex items-center gap-1"
+        >
+          <i class="fa-solid fa-language"></i>
+          <span id="lang-text">中文</span>
+        </button>
+      </div>
+
+      <h1
+        id="app-title"
+        class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-green-400 mb-2"
+      >
+        General Slicing
+      </h1>
+      <p id="app-subtitle" class="text-xs text-slate-300 mb-4">
+        Volume by Cross Sections
+      </p>
+
+      <div class="space-y-4">
+        <div class="p-3 bg-slate-900/50 border border-slate-700 rounded-xl">
+          <h3
+            id="label-base"
+            class="text-xs font-bold text-slate-400 uppercase mb-2"
+          >
+            Base Region
+          </h3>
+          <p id="label-circle" class="text-[10px] text-slate-500">
+            Circle x² + y² = 4
+          </p>
+        </div>
+
+        <div>
+          <h3
+            id="label-cross"
+            class="text-xs font-bold text-teal-400 uppercase mb-2"
+          >
+            Cross Section Shape
+          </h3>
+          <div class="space-y-1">
+            <button
+              onclick="setShape('square')"
+              id="btn_square"
+              class="w-full text-left px-3 py-2 rounded bg-slate-700 text-xs hover:bg-slate-600 border border-transparent focus:border-teal-500"
+            >
+              Square
+            </button>
+            <button
+              onclick="setShape('equilateral')"
+              id="btn_equilateral"
+              class="w-full text-left px-3 py-2 rounded bg-slate-700 text-xs hover:bg-slate-600 border border-transparent focus:border-teal-500"
+            >
+              Equilateral Triangle
+            </button>
+            <button
+              onclick="setShape('semicircle')"
+              id="btn_semicircle"
+              class="w-full text-left px-3 py-2 rounded bg-slate-700 text-xs hover:bg-slate-600 border border-transparent focus:border-teal-500"
+            >
+              Semi-Circle
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <h3
+            id="label-slices"
+            class="text-xs font-bold text-slate-400 uppercase mb-2"
+          >
+            Slices
+          </h3>
+          <input
+            type="range"
+            min="2"
+            max="50"
+            step="1"
+            id="slices"
+            value="10"
+            class="w-full accent-teal-500"
+          />
+        </div>
+
+        <div id="label-formula" class="text-[10px] text-center text-slate-500">
+          Formula: V = ∫ A(x) dx
+        </div>
+      </div>
+    </div>
+
+    <div id="canvas-container" class="w-screen h-screen"></div>
+
+    <script>
+      // Bilingual
+      const translations = {
+        en: {
+          title: "General Slicing",
+          subtitle: "Volume by Cross Sections",
+          base: "Base Region",
+          circle: "Circle x² + y² = 4",
+          cross: "Cross Section Shape",
+          square: "Square",
+          tri: "Equilateral Triangle",
+          semi: "Semi-Circle",
+          slices: "Slices",
+          formula: "Formula: V = ∫ A(x) dx",
+          langBtn: "中文",
+        },
+        zh: {
+          title: "一般切片法",
+          subtitle: "利用截面求體積",
+          base: "底面區域",
+          circle: "圓 x² + y² = 4",
+          cross: "截面形狀",
+          square: "正方形",
+          tri: "正三角形",
+          semi: "半圓形",
+          slices: "切片數量",
+          formula: "公式: V = ∫ A(x) dx",
+          langBtn: "English",
+        },
+      };
+
+      let currentLang = "en";
+
+      function updateLanguage() {
+        const t = translations[currentLang];
+        document.getElementById("lang-text").textContent = t.langBtn;
+        document.getElementById("app-title").textContent = t.title;
+        document.getElementById("app-subtitle").textContent = t.subtitle;
+        document.getElementById("label-base").textContent = t.base;
+        document.getElementById("label-circle").textContent = t.circle;
+        document.getElementById("label-cross").textContent = t.cross;
+        document.getElementById("btn_square").textContent = t.square;
+        document.getElementById("btn_equilateral").textContent = t.tri;
+        document.getElementById("btn_semicircle").textContent = t.semi;
+        document.getElementById("label-slices").textContent = t.slices;
+        document.getElementById("label-formula").textContent = t.formula;
+      }
+
+      document.getElementById("lang-btn").addEventListener("click", () => {
+        currentLang = currentLang === "en" ? "zh" : "en";
+        updateLanguage();
+      });
+
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0f172a);
+      const camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        100
+      );
+      camera.position.set(5, 5, 8);
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document
+        .getElementById("canvas-container")
+        .appendChild(renderer.domElement);
+
+      const controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+
+      scene.add(new THREE.GridHelper(10, 10, 0x334155, 0x1e293b));
+      scene.add(new THREE.AxesHelper(2)); // Origin
+      scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+      const dl = new THREE.DirectionalLight(0xffffff, 0.8);
+      dl.position.set(5, 10, 5);
+      scene.add(dl);
+
+      // Base Circle
+      const circleGeo = new THREE.CircleGeometry(2, 64);
+      const circleMat = new THREE.MeshBasicMaterial({
+        color: 0x334155,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.3,
+      });
+      const circle = new THREE.Mesh(circleGeo, circleMat);
+      circle.rotation.x = -Math.PI / 2;
+      scene.add(circle);
+
+      const slicesGroup = new THREE.Group();
+      scene.add(slicesGroup);
+
+      let currentShape = "square";
+
+      window.setShape = (s) => {
+        currentShape = s;
+        // Update UI buttons mainly
+        document
+          .querySelectorAll("button")
+          .forEach((b) => b.classList.remove("bg-teal-900", "text-teal-400"));
+        // We need to target specific buttons by ID now, simpler
+        document
+          .getElementById(`btn_${s}`)
+          .classList.add("bg-teal-900", "text-teal-400");
+        update();
+      };
+      setShape("square");
+
+      function update() {
+        while (slicesGroup.children.length > 0)
+          slicesGroup.remove(slicesGroup.children[0]);
+
+        const n = parseInt(document.getElementById("slices").value, 10);
+        const r = 2; // radius of base
+
+        const startX = -r;
+        const endX = r;
+        const dx = (endX - startX) / n;
+
+        for (let i = 0; i < n; i++) {
+          const x = startX + i * dx + dx / 2;
+          // Width of base chord at x
+          // y = sqrt(r^2 - x^2)
+          // width = 2y
+          if (Math.abs(x) >= r) continue;
+
+          const y = Math.sqrt(r * r - x * x);
+          const w = 2 * y;
+
+          if (w < 0.01) continue;
+
+          let geometry;
+
+          // Extrude thickness dx
+          const extrudeSettings = { depth: dx * 0.9, bevelEnabled: false };
+          const shape = new THREE.Shape();
+
+          // Draw base line of length w centered at 0
+          // We draw the FACE shape in 2D.
+          // Then extrude it.
+          // Square: height = w
+          // Triangle: height = w * sqrt(3)/2
+          // Semicircle: radius = w/2
+
+          if (currentShape === "square") {
+            shape.moveTo(-w / 2, 0);
+            shape.lineTo(w / 2, 0);
+            shape.lineTo(w / 2, w);
+            shape.lineTo(-w / 2, w);
+            shape.lineTo(-w / 2, 0);
+          } else if (currentShape === "equilateral") {
+            const h = (w * Math.sqrt(3)) / 2;
+            shape.moveTo(-w / 2, 0);
+            shape.lineTo(w / 2, 0);
+            shape.lineTo(0, h);
+            shape.lineTo(-w / 2, 0);
+          } else if (currentShape === "semicircle") {
+            shape.absarc(0, 0, w / 2, 0, Math.PI, false);
+          }
+
+          const geo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+          const mat = new THREE.MeshPhysicalMaterial({
+            color: 0x14b8a6, // Teal
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0.8,
+            metalness: 0.1,
+            roughness: 0.2,
+          });
+          const mesh = new THREE.Mesh(geo, mat);
+
+          // Position and Rotate
+          // Extrusion generates along Z.
+          // Base is on XY plane (local).
+          // We want base on XZ plane (global).
+          // x coord is x.
+          // Slicing perpendicular to X axis. So chord is along Z axis.
+          // Height is along Y axis.
+
+          // Current Extrude: Shape (XY) -> Z depth.
+          // We want Shape (ZY) -> X depth.
+
+          // Rotate Mesh?
+          // Let's rotate geometry to align thickness with X.
+          mesh.rotation.y = Math.PI / 2;
+
+          // Now thickness is along X. Face is on YZ plane.
+          // Center of base chord is at (0,0,0) local?
+          // Shape drew centered on X (local).
+          // After rotation Y=90, Local X becomes Global Z.
+          // So centered on Global Z. Correct.
+
+          mesh.position.set(x - dx / 2, 0, 0); // Center thickness
+
+          slicesGroup.add(mesh);
+        }
+      }
+
+      document.getElementById("slices").addEventListener("input", update);
+
+      update();
+      updateLanguage();
+
+      function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+      }
+      animate();
+
+      window.addEventListener("resize", () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+    </script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

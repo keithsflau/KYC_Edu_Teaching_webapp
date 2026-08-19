@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SonicTransposer - Portable</title>
+    
+    <!-- Tone.js -->
+    <script src="https://unpkg.com/tone"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        background: "hsl(240 10% 3.9%)",
+                        foreground: "hsl(0 0% 98%)",
+                        card: "hsl(240 10% 3.9%)",
+                        primary: "hsl(263.4 70% 50.4%)",
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Mountains+of+Christmas:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: hsl(240 10% 3.9%);
+            color: hsl(0 0% 98%);
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(30, 30, 35, 0.6), rgba(20, 20, 25, 0.8));
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        /* Range Input Styles */
+        input[type=range] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #ffffff;
+            cursor: pointer;
+            margin-top: -8px;
+            box-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+        }
+        /* Snow Animation */
+        @keyframes snow {
+            0% { transform: translateY(-10vh) translateX(0); opacity: 0; }
+            20% { opacity: 0.8; }
+            100% { transform: translateY(110vh) translateX(20px); opacity: 0; }
+        }
+        .snowflake {
+            position: absolute;
+            top: -10vh;
+            color: white;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        /* Warm Animations */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-6px) rotate(2deg); }
+        }
+        .animate-float {
+            animation: float 4s ease-in-out infinite;
+        }
+
+        @keyframes warmth {
+            0%, 100% { box-shadow: 0 0 15px rgba(255, 215, 0, 0.1); }
+            50% { box-shadow: 0 0 30px rgba(239, 68, 68, 0.2); }
+        }
+        
+        .christmas-card {
+             animation: warmth 3s ease-in-out infinite;
+             background: linear-gradient(160deg, rgba(30, 0, 0, 0.8), rgba(60, 10, 10, 0.85));
+             border: 1px solid rgba(255, 215, 0, 0.15);
+        }
+
+        .font-christmas {
+            font-family: 'Mountains of Christmas', cursive;
+        }
+
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script>
+const {
+  useState,
+  useEffect,
+  useRef
+} = React;
+
+// --- Icons ---
+const Icon = ({
+  path,
+  ...props
+}) => /*#__PURE__*/React.createElement("svg", {
+  xmlns: "http://www.w3.org/2000/svg",
+  width: props.size || 24,
+  height: props.size || 24,
+  viewBox: "0 0 24 24",
+  fill: props.fill || "none",
+  stroke: "currentColor",
+  strokeWidth: "2",
+  strokeLinecap: "round",
+  strokeLinejoin: "round",
+  ...props
+}, path);
+const Music = props => /*#__PURE__*/React.createElement(Icon, {
+  path: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("path", {
+    d: "M9 18V5l12-2v13"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "6",
+    cy: "18",
+    r: "3"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "18",
+    cy: "16",
+    r: "3"
+  })),
+  ...props
+});
+const Upload = props => /*#__PURE__*/React.createElement(Icon, {
+  path: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("path", {
+    d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+  }), /*#__PURE__*/React.createElement("polyline", {
+    points: "17 8 12 3 7 8"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "12",
+    x2: "12",
+    y1: "3",
+    y2: "15"
+  })),
+  ...props
+});
+const RefreshCw = props => /*#__PURE__*/React.createElement(Icon, {
+  path: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("path", {
+    d: "M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M21 3v5h-5"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M3 21v-5h5"
+  })),
+  ...props
+});
+const Volume2 = props => /*#__PURE__*/React.createElement(Icon, {
+  path: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("polygon", {
+    points: "11 5 6 9 2 9 2 15 6 15 11 19 11 5"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M15.54 8.46a5 5 0 0 1 0 7.07"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M19.07 4.93a10 10 0 0 1 0 14.14"
+  })),
+  ...props
+});
+const Play = props => /*#__PURE__*/React.createElement(Icon, {
+  path: /*#__PURE__*/React.createElement("polygon", {
+    points: "5 3 19 12 5 21 5 3"
+  }),
+  ...props
+});
+const Pause = props => /*#__PURE__*/React.createElement(Icon, {
+  path: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("rect", {
+    x: "6",
+    y: "4",
+    width: "4",
+    height: "16"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: "14",
+    y: "4",
+    width: "4",
+    height: "16"
+  })),
+  ...props
+});
+const Download = props => /*#__PURE__*/React.createElement(Icon, {
+  path: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("path", {
+    d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+  }), /*#__PURE__*/React.createElement("polyline", {
+    points: "7 10 12 15 17 10"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "12",
+    x2: "12",
+    y1: "15",
+    y2: "3"
+  })),
+  ...props
+});
+const Gift = props => /*#__PURE__*/React.createElement(Icon, {
+  path: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("polyline", {
+    points: "20 12 20 22 4 22 4 12"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: "2",
+    y: "7",
+    width: "20",
+    height: "5"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "12",
+    x2: "12",
+    y1: "22",
+    y2: "7"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M12 7h4.5a2.5 2.5 0 0 1 0-5C13 2 12 7 12 7z"
+  })),
+  ...props
+});
+
+// --- Utilities ---
+function cn(...inputs) {
+  return inputs.filter(Boolean).join(' ');
+}
+function formatTime(seconds) {
+  if (!seconds) return "0:00";
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${s < 10 ? '0' : ''}${s}`;
+}
+
+// --- App Component ---
+function App() {
+  const [file, setFile] = useState(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [pitch, setPitch] = useState(0); // Semitones
+  const [isReady, setIsReady] = useState(false);
+  const [duration, setDuration] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [volume, setVolume] = useState(0);
+  const playerRef = useRef(null);
+  const pitchShiftRef = useRef(null);
+  const audioBufferRef = useRef(null);
+  const rafRef = useRef(null);
+
+  // Initialize/Cleanup
+  useEffect(() => {
+    return () => {
+      if (playerRef.current) playerRef.current.dispose();
+      if (pitchShiftRef.current) pitchShiftRef.current.dispose();
+    };
+  }, []);
+  const handleFileChange = async e => {
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile) {
+      loadFile(selectedFile);
+    }
+  };
+  const loadFile = async file => {
+    setIsReady(false);
+    setFile(file);
+    const url = URL.createObjectURL(file);
+    const buffer = await new Tone.Buffer(url);
+    audioBufferRef.current = buffer;
+    setDuration(buffer.duration);
+    if (playerRef.current) playerRef.current.dispose();
+    if (pitchShiftRef.current) pitchShiftRef.current.dispose();
+    playerRef.current = new Tone.Player(buffer).toDestination();
+    pitchShiftRef.current = new Tone.PitchShift(pitch).toDestination();
+    playerRef.current.disconnect();
+    playerRef.current.connect(pitchShiftRef.current);
+    playerRef.current.sync().start(0);
+    setIsReady(true);
+  };
+  useEffect(() => {
+    if (pitchShiftRef.current) {
+      pitchShiftRef.current.pitch = pitch;
+    }
+  }, [pitch]);
+  useEffect(() => {
+    if (playerRef.current) {
+      playerRef.current.volume.value = volume;
+    }
+  }, [volume]);
+  const togglePlay = async () => {
+    await Tone.start();
+    if (isPlaying) {
+      Tone.Transport.pause();
+    } else {
+      Tone.Transport.start();
+    }
+    setIsPlaying(!isPlaying);
+  };
+  useEffect(() => {
+    const loop = () => {
+      if (Tone.Transport.state === 'started') {
+        setCurrentTime(Tone.Transport.seconds);
+      }
+      rafRef.current = requestAnimationFrame(loop);
+    };
+    loop();
+    return () => cancelAnimationFrame(rafRef.current);
+  }, []);
+  const handleSeek = e => {
+    const time = parseFloat(e.target.value);
+    setCurrentTime(time);
+    Tone.Transport.seconds = time;
+  };
+  const handleDownload = async () => {
+    if (!audioBufferRef.current) return;
+    setIsProcessing(true);
+    try {
+      const renderedBuffer = await Tone.Offline(({
+        transport
+      }) => {
+        const player = new Tone.Player(audioBufferRef.current);
+        const pitchEffect = new Tone.PitchShift(pitch);
+        player.connect(pitchEffect);
+        pitchEffect.toDestination();
+        player.sync().start(0);
+        transport.start();
+      }, audioBufferRef.current.duration);
+      const wavData = toWav(renderedBuffer);
+      const blob = new Blob([wavData], {
+        type: 'audio/wav'
+      });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `transposed_${file.name.replace(/\.[^/.]+$/, "")}.wav`;
+      anchor.click();
+    } catch (err) {
+      console.error(err);
+      alert("Error processing audio");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+  const toWav = buffer => {
+    const numOfChan = buffer.numberOfChannels;
+    const length = buffer.length * numOfChan * 2 + 44;
+    const out = new ArrayBuffer(length);
+    const view = new DataView(out);
+    const channels = [];
+    let sample;
+    let offset = 0;
+    let pos = 0;
+    function setUint16(data) {
+      view.setUint16(pos, data, true);
+      pos += 2;
+    }
+    function setUint32(data) {
+      view.setUint32(pos, data, true);
+      pos += 4;
+    }
+    setUint32(0x46464952); // "RIFF"
+    setUint32(length - 8);
+    setUint32(0x45564157); // "WAVE"
+
+    setUint32(0x20746d66); // "fmt "
+    setUint32(16);
+    setUint16(1); // PCM
+    setUint16(numOfChan);
+    setUint32(buffer.sampleRate);
+    setUint32(buffer.sampleRate * 2 * numOfChan);
+    setUint16(numOfChan * 2);
+    setUint16(16);
+    setUint32(0x61746164); // "data"
+    setUint32(length - pos - 4);
+    for (let i = 0; i < buffer.numberOfChannels; i++) channels.push(buffer.getChannelData(i));
+    let sampleIdx = 0;
+    while (sampleIdx < buffer.length) {
+      for (let i = 0; i < numOfChan; i++) {
+        sample = Math.max(-1, Math.min(1, channels[i][sampleIdx]));
+        sample = (sample < 0 ? sample * 0x8000 : sample * 0x7FFF) | 0;
+        view.setInt16(44 + offset, sample, true);
+        offset += 2;
+      }
+      sampleIdx++;
+    }
+    return out;
+  };
+
+  // Snow Effect
+  const snowflakes = Array.from({
+    length: 30
+  }).map((_, i) => ({
+    id: i,
+    left: `${Math.random() * 100}%`,
+    animationDuration: `${Math.random() * 5 + 5}s`,
+    opacity: Math.random() * 0.5 + 0.3,
+    delay: `${Math.random() * 5}s`,
+    size: Math.random() * 10 + 5 + 'px'
+  }));
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen bg-[#0a0510] text-white flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans"
+  }, snowflakes.map(flake => /*#__PURE__*/React.createElement("div", {
+    key: flake.id,
+    className: "snowflake",
+    style: {
+      left: flake.left,
+      animation: `snow ${flake.animationDuration} linear infinite`,
+      animationDelay: flake.delay,
+      fontSize: flake.size,
+      opacity: flake.opacity
+    }
+  }, "❄")), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-[-20%] left-[-20%] w-[600px] h-[600px] bg-red-900/20 rounded-full blur-[120px]"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-[-20%] right-[-20%] w-[600px] h-[600px] bg-green-900/20 rounded-full blur-[120px]"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-md z-10"
+  }, /*#__PURE__*/React.createElement("header", {
+    className: "mb-10 text-center relative z-10"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "mb-8 animate-float"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "inline-flex flex-col items-center justify-center gap-2 px-8 py-6 rounded-3xl bg-gradient-to-br from-red-900/40 to-green-900/40 border border-yellow-500/20 glass shadow-[0_0_40px_rgba(220,38,38,0.2)]"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-4 text-3xl mb-2"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "filter drop-shadow-lg"
+  }, "🦁"), /*#__PURE__*/React.createElement(Gift, {
+    className: "text-red-400 animate-pulse",
+    size: 32
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "filter drop-shadow-lg"
+  }, "🐼")), /*#__PURE__*/React.createElement("h2", {
+    className: "font-christmas text-3xl md:text-4xl text-yellow-100/90 tracking-wider filter drop-shadow-md"
+  }, "A Christmas Gift"), /*#__PURE__*/React.createElement("p", {
+    className: "text-red-200/80 text-sm font-medium tracking-widest uppercase text-[10px] mt-1"
+  }, "From Lion to Lovely Panda"))), /*#__PURE__*/React.createElement("div", {
+    className: "inline-flex items-center justify-center p-3 mb-4 rounded-2xl bg-white/5 border border-white/10 glass shadow-2xl"
+  }, /*#__PURE__*/React.createElement(Music, {
+    className: "w-8 h-8 text-red-300"
+  })), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-red-300 via-yellow-200 to-green-300 mb-2 filter drop-shadow-sm"
+  }, "SonicTransposer"), /*#__PURE__*/React.createElement("p", {
+    className: "text-white/40"
+  }, "Details Music Engineering")), /*#__PURE__*/React.createElement("div", {
+    className: "glass-card christmas-card rounded-3xl p-8 space-y-8 relative z-10"
+  }, !file ? /*#__PURE__*/React.createElement("div", {
+    className: "relative group cursor-pointer"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "file",
+    accept: "audio/*",
+    onChange: handleFileChange,
+    className: "absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "border-2 border-dashed border-white/10 rounded-2xl p-10 flex flex-col items-center justify-center gap-4 transition-all group-hover:border-purple-500/50 group-hover:bg-white/5"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "p-4 rounded-full bg-white/5 text-purple-400 group-hover:scale-110 transition-transform"
+  }, /*#__PURE__*/React.createElement(Upload, {
+    size: 32
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "text-center"
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "font-medium text-lg"
+  }, "Drop your MP3 here"), /*#__PURE__*/React.createElement("p", {
+    className: "text-sm text-white/40"
+  }, "or click to browse")))) : /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-between bg-white/5 p-4 rounded-xl border border-white/5"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-3 overflow-hidden"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "p-2 bg-purple-500/20 rounded-lg text-purple-400"
+  }, /*#__PURE__*/React.createElement(Music, {
+    size: 20
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "min-w-0"
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "font-medium truncate"
+  }, file.name), /*#__PURE__*/React.createElement("p", {
+    className: "text-xs text-white/40"
+  }, (file.size / 1024 / 1024).toFixed(2), " MB"))), /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      setFile(null);
+      setIsPlaying(false);
+      Tone.Transport.stop();
+    },
+    className: "p-2 hover:bg-white/10 rounded-lg transition-colors text-white/60 hover:text-white"
+  }, /*#__PURE__*/React.createElement(RefreshCw, {
+    size: 18
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "space-y-2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between items-center text-sm font-medium"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-white/60"
+  }, "Pitch Shift"), /*#__PURE__*/React.createElement("span", {
+    className: cn("px-2 py-0.5 rounded text-xs", pitch > 0 ? "bg-green-500/20 text-green-400" : pitch < 0 ? "bg-red-500/20 text-red-400" : "bg-white/10 text-white/60")
+  }, pitch > 0 ? '+' : '', pitch, " Semitones")), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "-12",
+    max: "12",
+    step: "1",
+    value: pitch,
+    onChange: e => setPitch(Number(e.target.value)),
+    className: "w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-purple-500"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between text-xs text-white/30 px-1"
+  }, /*#__PURE__*/React.createElement("span", null, "-12"), /*#__PURE__*/React.createElement("span", null, "0"), /*#__PURE__*/React.createElement("span", null, "+12"))), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between text-sm text-white/60"
+  }, /*#__PURE__*/React.createElement(Volume2, {
+    size: 16
+  }), /*#__PURE__*/React.createElement("span", null, Math.round((volume + 20) / 20 * 100), "%")), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "-20",
+    max: "0",
+    step: "0.5",
+    value: volume,
+    onChange: e => setVolume(Number(e.target.value)),
+    className: "w-full h-1 bg-white/20 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: togglePlay,
+    disabled: !isReady,
+    className: "w-14 h-14 flex items-center justify-center rounded-full bg-white text-black hover:scale-105 transition-all shadow-[0_0_20px_rgba(255,255,255,0.3)] disabled:opacity-50 disabled:cursor-not-allowed"
+  }, isPlaying ? /*#__PURE__*/React.createElement(Pause, {
+    fill: "currentColor"
+  }) : /*#__PURE__*/React.createElement(Play, {
+    fill: "currentColor",
+    className: "ml-1"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 space-y-1"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "0",
+    max: duration || 100,
+    value: currentTime,
+    onChange: handleSeek,
+    className: "w-full h-1 bg-white/20 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between text-xs text-white/40"
+  }, /*#__PURE__*/React.createElement("span", null, formatTime(currentTime)), /*#__PURE__*/React.createElement("span", null, formatTime(duration))))))), file && /*#__PURE__*/React.createElement("div", {
+    className: "mt-6 flex justify-center"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: handleDownload,
+    disabled: isProcessing || !isReady,
+    className: "flex items-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-500 rounded-xl font-medium transition-all shadow-lg hover:shadow-purple-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
+  }, isProcessing ? /*#__PURE__*/React.createElement(RefreshCw, {
+    className: "animate-spin",
+    size: 20
+  }) : /*#__PURE__*/React.createElement(Download, {
+    size: 20
+  }), isProcessing ? 'Rendering...' : 'Download Transposed WAV'))), /*#__PURE__*/React.createElement("footer", {
+    className: "mt-12 text-center text-white/40 text-sm z-10 p-4"
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "italic mb-1"
+  }, "But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his understanding. Jeremiah 10:12"), /*#__PURE__*/React.createElement("p", {
+    className: "text-xs mb-1 mt-2"
+  }, "「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12"), /*#__PURE__*/React.createElement("p", {
+    className: "text-xs mt-2 pt-2 border-t border-white/10"
+  }, "@ 2025 Generated by Gemini 3.0 Prepared by SF Lau")));
+}
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+</body>
+</html>

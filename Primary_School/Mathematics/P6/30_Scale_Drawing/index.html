@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小六數學：比例尺繪圖 | Scale Drawing</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Scale Drawings",
+    zh: "比例尺繪圖",
+    ja: "縮尺図",
+    ko: "축척 그림",
+    es: "Dibujos a Escala",
+    de: "Maßstabszeichnungen",
+    fi: "Mittakaavapiirustukset",
+    fr: "Dessins à l'échelle",
+    ar: "الرسومات بالمقياس",
+    it: "Disegni in Scala"
+  },
+  realSize: {
+    en: "Real Size",
+    zh: "實際大小",
+    ja: "実寸",
+    ko: "실제 크기",
+    es: "Tamaño Real",
+    de: "Reale Größe",
+    fi: "Todellinen koko",
+    fr: "Taille réelle",
+    ar: "الحجم الحقيقي",
+    it: "Dimensione Reale"
+  },
+  scale: {
+    en: "Scale",
+    zh: "比例尺",
+    ja: "縮尺",
+    ko: "축척",
+    es: "Escala",
+    de: "Maßstab",
+    fi: "Mittakaava",
+    fr: "Échelle",
+    ar: "مقياس",
+    it: "Scala"
+  },
+  drawingSize: {
+    en: "Drawing Size",
+    zh: "繪圖大小",
+    ja: "図面のサイズ",
+    ko: "그림 크기",
+    es: "Tamaño del Dibujo",
+    de: "Zeichnungsgröße",
+    fi: "Piirustuksen koko",
+    fr: "Taille du dessin",
+    ar: "حجم الرسم",
+    it: "Dimensione Disegno"
+  },
+  height: {
+    en: "Height",
+    zh: "高度",
+    ja: "高さ",
+    ko: "높이",
+    es: "Altura",
+    de: "Höhe",
+    fi: "Korkeus",
+    fr: "Hauteur",
+    ar: "ارتفاع",
+    it: "Altezza"
+  },
+  width: {
+    en: "Width",
+    zh: "闊度",
+    ja: "幅",
+    ko: "너비",
+    es: "Ancho",
+    de: "Breite",
+    fi: "Leveys",
+    fr: "Largeur",
+    ar: "عرض",
+    it: "Larghezza"
+  },
+  calc: {
+    en: "Calculation",
+    zh: "計算",
+    ja: "計算",
+    ko: "계산",
+    es: "Cálculo",
+    de: "Berechnung",
+    fi: "Laskutoimitus",
+    fr: "Calcul",
+    ar: "حساب",
+    it: "Calcolo"
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [realH, setRealH] = useState(300); // cm
+  const [realW, setRealW] = useState(200); // cm
+  const [scale, setScale] = useState(50); // 1:50
+
+  const drawH = realH / scale;
+  const drawW = realW / scale;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4 font-sans bg-slate-900 text-white"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-5xl flex justify-between items-center mb-10"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-black text-fuchsia-400 drop-shadow-[0_0_15px_rgba(232,121,249,0.5)]"
+  }, "📐 ", getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "flex bg-slate-800/80 p-1.5 rounded-xl border border-white/10 flex-wrap justify-end gap-1 max-w-[50%]"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-fuchsia-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white hover:bg-white/5"}`
+  }, l)))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-5xl grid grid-cols-1 lg:grid-cols-2 gap-12"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col gap-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-8 rounded-3xl space-y-8"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between font-bold uppercase text-fuchsia-400 mb-2"
+  }, /*#__PURE__*/React.createElement("span", null, getText("realSize", lang), " (", getText("height", lang), ")"), /*#__PURE__*/React.createElement("span", null, realH, " cm")), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "100",
+    max: "500",
+    step: "10",
+    value: realH,
+    onChange: e => setRealH(parseInt(e.target.value, 10)),
+    className: "w-full accent-fuchsia-500 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between font-bold uppercase text-fuchsia-400 mb-2"
+  }, /*#__PURE__*/React.createElement("span", null, getText("realSize", lang), " (", getText("width", lang), ")"), /*#__PURE__*/React.createElement("span", null, realW, " cm")), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "50",
+    max: "400",
+    step: "10",
+    value: realW,
+    onChange: e => setRealW(parseInt(e.target.value, 10)),
+    className: "w-full accent-fuchsia-500 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "font-bold uppercase text-fuchsia-400 mb-4"
+  }, getText("scale", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-2"
+  }, [10, 20, 50, 100].map(s => /*#__PURE__*/React.createElement("button", {
+    key: s,
+    onClick: () => setScale(s),
+    className: `flex-1 py-3 rounded-xl font-bold border-2 transition-all ${scale === s ? "bg-fuchsia-600 border-fuchsia-500 text-white shadow-lg" : "border-slate-600 text-slate-400 hover:bg-white/5"}`
+  }, "1 : ", s))))), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-8 rounded-3xl border-l-4 border-fuchsia-500 bg-fuchsia-900/10"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-fuchsia-400 font-bold uppercase mb-4 text-xs tracking-widest"
+  }, getText("calc", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-2 font-mono text-lg"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between border-b border-white/10 pb-2"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-slate-400"
+  }, getText("height", lang)), /*#__PURE__*/React.createElement("span", null, realH, " ÷ ", scale, " =", " ", /*#__PURE__*/React.createElement("span", {
+    className: "text-fuchsia-400 font-bold"
+  }, drawH, " cm"))), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between pt-2"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-slate-400"
+  }, getText("width", lang)), /*#__PURE__*/React.createElement("span", null, realW, " ÷ ", scale, " =", " ", /*#__PURE__*/React.createElement("span", {
+    className: "text-fuchsia-400 font-bold"
+  }, drawW, " cm")))))), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-8 rounded-3xl flex flex-col relative overflow-hidden bg-slate-800/50"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 right-4 text-xs font-bold uppercase text-slate-500 border border-slate-600 px-2 py-1 rounded"
+  }, "1 Screen Unit ≈ 1 cm"), /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 opacity-10",
+    style: {
+      backgroundImage: "linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)",
+      backgroundSize: "20px 20px"
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 flex items-center justify-center relative z-10 min-h-[400px]"
+  }, /*#__PURE__*/React.createElement(motion.div, {
+    layout: true,
+    className: "bg-fuchsia-500/80 border-2 border-white shadow-[0_0_30px_rgba(232,121,249,0.3)] relative flex items-center justify-center",
+    animate: {
+      width: drawW * 20,
+      // 1cm = 20px
+      height: drawH * 20
+    },
+    transition: {
+      type: "spring",
+      stiffness: 100,
+      damping: 20
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute -left-8 top-1/2 -translate-y-1/2 -rotate-90 text-xs font-bold text-fuchsia-300 whitespace-nowrap"
+  }, drawH, " cm"), /*#__PURE__*/React.createElement("div", {
+    className: "absolute -bottom-6 left-1/2 -translate-x-1/2 text-xs font-bold text-fuchsia-300 whitespace-nowrap"
+  }, drawW, " cm"), /*#__PURE__*/React.createElement("div", {
+    className: "text-white font-black text-2xl drop-shadow-md opacity-50"
+  }, "1:", scale))))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

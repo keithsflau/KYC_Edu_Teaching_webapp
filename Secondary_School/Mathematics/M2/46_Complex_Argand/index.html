@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Argand Diagram | M2 Algebra</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+      }
+      .glass {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .draggable {
+        cursor: grab;
+      }
+      .draggable:active {
+        cursor: grabbing;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <div id="root" class="flex-grow flex flex-col"></div>
+    <script>
+const {
+  useState,
+  useRef
+} = React;
+const translations = {
+  en: {
+    header: "Unit 1: Algebra",
+    title: "Argand Diagram",
+    subtitle: "Dragging Vectors",
+    controls: "Controls",
+    add: "Add (+)",
+    sub: "Subtract (-)",
+    instr: {
+      part1: "Drag the ",
+      blue: "Blue",
+      part2: " and ",
+      red: "Red",
+      part3: " dots."
+    },
+    paraTitle: "Parallelogram Law",
+    paraDesc: "Complex addition corresponds to vector addition in the plane. The sum is the diagonal of the parallelogram formed by z1 and z2.",
+    langBtn: "中文"
+  },
+  zh: {
+    header: "第一單元：代數",
+    title: "阿根圖",
+    subtitle: "拖曳向量",
+    controls: "控制",
+    add: "加法 (+)",
+    sub: "減法 (-)",
+    instr: {
+      part1: "拖動 ",
+      blue: "藍色",
+      part2: " 和 ",
+      red: "紅色",
+      part3: " 圓點。"
+    },
+    paraTitle: "平行四邊形法則",
+    paraDesc: "複數加法對應於平面上的向量加法。其和為 z1 與 z2 所形成的平行四邊形的對角線。",
+    langBtn: "English"
+  }
+};
+const App = () => {
+  // State
+  const [z1, setZ1] = useState({
+    r: 2,
+    i: 1
+  });
+  const [z2, setZ2] = useState({
+    r: 1,
+    i: -2
+  });
+  const [op, setOp] = useState("add"); // add, sub
+  const [dragging, setDragging] = useState(null); // 'z1', 'z2'
+  const [lang, setLang] = useState("en");
+  const t = translations[lang];
+
+  // Calc Result
+  let res = {
+    r: 0,
+    i: 0
+  };
+  if (op === "add") res = {
+    r: z1.r + z2.r,
+    i: z1.i + z2.i
+  };
+  if (op === "sub") res = {
+    r: z1.r - z2.r,
+    i: z1.i - z2.i
+  };
+
+  // Coords
+  const w = 600,
+    h = 600;
+  const range = 6;
+  const scale = w / (2 * range);
+  const originX = w / 2;
+  const originY = h / 2;
+  const toScreen = (r, i) => ({
+    x: originX + r * scale,
+    y: originY - i * scale
+  });
+  const fromScreen = (sx, sy) => ({
+    r: (sx - originX) / scale,
+    i: (originY - sy) / scale
+  });
+
+  // Handlers
+  const handleMouseMove = e => {
+    if (!dragging) return;
+    const svg = e.currentTarget;
+    const ctm = svg.getScreenCTM();
+    if (!ctm) return;
+    const pt = svg.createSVGPoint();
+    pt.x = e.clientX;
+    pt.y = e.clientY;
+    const local = pt.matrixTransform(ctm.inverse());
+    const complex = fromScreen(local.x, local.y);
+    // Clamp to visible Argand range
+    const clamped = {
+      r: Math.max(-range, Math.min(range, complex.r)),
+      i: Math.max(-range, Math.min(range, complex.i))
+    };
+    if (dragging === "z1") setZ1(clamped);
+    if (dragging === "z2") setZ2(clamped);
+  };
+  const Arrow = ({
+    start,
+    end,
+    color,
+    label,
+    dashed
+  }) => {
+    const s = start || {
+      x: originX,
+      y: originY
+    };
+    return /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("line", {
+      x1: s.x,
+      y1: s.y,
+      x2: end.x,
+      y2: end.y,
+      stroke: color,
+      strokeWidth: "3",
+      strokeDasharray: dashed ? "5,5" : "",
+      markerEnd: `url(#head-${color.replace("#", "")})`
+    }));
+  };
+  const Dot = ({
+    pt,
+    color,
+    id,
+    label
+  }) => {
+    const sp = toScreen(pt.r, pt.i);
+    return /*#__PURE__*/React.createElement("g", {
+      className: id ? "draggable" : "",
+      onMouseDown: id ? () => setDragging(id) : undefined
+    }, /*#__PURE__*/React.createElement("circle", {
+      cx: sp.x,
+      cy: sp.y,
+      r: id ? 15 : 6,
+      fill: color,
+      opacity: id ? 0.3 : 1
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: sp.x,
+      cy: sp.y,
+      r: "6",
+      fill: color,
+      stroke: "white",
+      strokeWidth: "2"
+    }), /*#__PURE__*/React.createElement("text", {
+      x: sp.x + 10,
+      y: sp.y - 10,
+      fill: color,
+      fontWeight: "bold",
+      fontSize: "14",
+      style: {
+        pointerEvents: "none"
+      }
+    }, label));
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "flex-grow flex flex-col items-center justify-center p-8 select-none",
+    onMouseUp: () => setDragging(null)
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 right-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLang(l => l === "en" ? "zh" : "en"),
+    className: "px-3 py-1 bg-slate-800 border border-slate-600 rounded-full text-xs font-bold text-emerald-400 hover:bg-slate-700 hover:text-white transition flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-language"
+  }), t.langBtn)), /*#__PURE__*/React.createElement("header", {
+    className: "mb-8 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-emerald-500 font-bold uppercase tracking-widest text-xs mb-2"
+  }, t.header), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-white mb-2"
+  }, t.title), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-400 font-mono text-lg"
+  }, t.subtitle)), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col lg:flex-row gap-12 w-full max-w-6xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 glass p-6 rounded-3xl relative flex items-center justify-center aspect-square"
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: "100%",
+    height: "100%",
+    viewBox: "0 0 600 600",
+    className: "overflow-visible bg-slate-900 rounded-xl cursor-crosshair",
+    onMouseMove: handleMouseMove
+  }, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("marker", {
+    id: "head-38bdf8",
+    markerWidth: "6",
+    markerHeight: "6",
+    refX: "5",
+    refY: "3",
+    orient: "auto"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M0,0 L6,3 L0,6",
+    fill: "#38bdf8"
+  })), /*#__PURE__*/React.createElement("marker", {
+    id: "head-f43f5e",
+    markerWidth: "6",
+    markerHeight: "6",
+    refX: "5",
+    refY: "3",
+    orient: "auto"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M0,0 L6,3 L0,6",
+    fill: "#f43f5e"
+  })), /*#__PURE__*/React.createElement("marker", {
+    id: "head-10b981",
+    markerWidth: "6",
+    markerHeight: "6",
+    refX: "5",
+    refY: "3",
+    orient: "auto"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M0,0 L6,3 L0,6",
+    fill: "#10b981"
+  }))), /*#__PURE__*/React.createElement("line", {
+    x1: originX,
+    y1: "0",
+    x2: originX,
+    y2: h,
+    stroke: "#475569",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "0",
+    y1: originY,
+    x2: w,
+    y2: originY,
+    stroke: "#475569",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: originX,
+    cy: originY,
+    r: scale * 1,
+    fill: "none",
+    stroke: "#334155"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: originX,
+    cy: originY,
+    r: scale * 2,
+    fill: "none",
+    stroke: "#334155"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: originX,
+    cy: originY,
+    r: scale * 3,
+    fill: "none",
+    stroke: "#334155"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: `M ${toScreen(z1.r, z1.i).x},${toScreen(z1.r, z1.i).y} L ${toScreen(res.r, res.i).x},${toScreen(res.r, res.i).y} L ${toScreen(z2.r, z2.i).x},${toScreen(z2.r, z2.i).y}`,
+    fill: "rgba(255,255,255,0.05)",
+    stroke: "white",
+    strokeDasharray: "4,4",
+    opacity: "0.5"
+  }), /*#__PURE__*/React.createElement(Arrow, {
+    end: toScreen(z1.r, z1.i),
+    color: "#38bdf8"
+  }), /*#__PURE__*/React.createElement(Arrow, {
+    end: toScreen(z2.r, z2.i),
+    color: "#f43f5e"
+  }), /*#__PURE__*/React.createElement(Arrow, {
+    end: toScreen(res.r, res.i),
+    color: "#10b981"
+  }), /*#__PURE__*/React.createElement(Dot, {
+    pt: z1,
+    color: "#38bdf8",
+    id: "z1",
+    label: "z1"
+  }), /*#__PURE__*/React.createElement(Dot, {
+    pt: z2,
+    color: "#f43f5e",
+    id: "z2",
+    label: "z2"
+  }), /*#__PURE__*/React.createElement(Dot, {
+    pt: res,
+    color: "#10b981",
+    label: op === "add" ? "z1+z2" : "z1-z2"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full lg:w-80 space-y-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass p-6 rounded-2xl"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-lg font-bold text-white mb-4"
+  }, t.controls), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 gap-2 mb-6"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setOp("add"),
+    className: `py-3 rounded-xl font-bold ${op === "add" ? "bg-emerald-600 text-white" : "bg-slate-800 text-slate-400"}`
+  }, t.add), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setOp("sub"),
+    className: `py-3 rounded-xl font-bold ${op === "sub" ? "bg-emerald-600 text-white" : "bg-slate-800 text-slate-400"}`
+  }, t.sub)), /*#__PURE__*/React.createElement("p", {
+    className: "text-sm text-slate-400 mb-2"
+  }, t.instr.part1, /*#__PURE__*/React.createElement("strong", {
+    className: "text-sky-400"
+  }, t.instr.blue), t.instr.part2, /*#__PURE__*/React.createElement("strong", {
+    className: "text-rose-400"
+  }, t.instr.red), t.instr.part3), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-2 font-mono text-sm bg-slate-800 p-4 rounded-xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-sky-400"
+  }, "z1:"), /*#__PURE__*/React.createElement("span", null, z1.r.toFixed(1), " ", z1.i >= 0 ? "+" : "", " ", z1.i.toFixed(1), "i")), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-rose-400"
+  }, "z2:"), /*#__PURE__*/React.createElement("span", null, z2.r.toFixed(1), " ", z2.i >= 0 ? "+" : "", " ", z2.i.toFixed(1), "i")), /*#__PURE__*/React.createElement("div", {
+    className: "border-t border-slate-600 my-1"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between font-bold text-emerald-400"
+  }, /*#__PURE__*/React.createElement("span", null, "Res:"), /*#__PURE__*/React.createElement("span", null, res.r.toFixed(1), " ", res.i >= 0 ? "+" : "", " ", res.i.toFixed(1), "i")))), /*#__PURE__*/React.createElement("div", {
+    className: "glass p-6 rounded-2xl"
+  }, /*#__PURE__*/React.createElement("h4", {
+    className: "text-xs uppercase font-bold text-slate-500 mb-2"
+  }, t.paraTitle), /*#__PURE__*/React.createElement("p", {
+    className: "text-xs text-slate-400"
+  }, t.paraDesc)))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小二常識：洗手七部曲 | Hand Washing</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  Reorder
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Hand Washing Steps",
+    zh: "洗手七部曲",
+    ja: "手洗いの手順",
+    ko: "손 씻기 순서",
+    es: "Pasos para Lavarse las Manos",
+    de: "Händewaschen Schritte",
+    fi: "Käsienpesun vaiheet",
+    fr: "Étapes du lavage des mains",
+    ar: "خطوات غسل اليدين",
+    it: "Passaggi Lavaggio Mani"
+  },
+  instruction: {
+    en: "Order the steps vertically!",
+    zh: "按正確順序上下排列洗手步驟！",
+    ja: "手洗いの手順を正しい順序に並べてください！",
+    ko: "단계를 세로로 정렬하세요!",
+    es: "¡Ordena los pasos verticalmente!",
+    de: "Ordne die Schritte vertikal an!",
+    fi: "Järjestä vaiheet pystysuoraan!",
+    fr: "Ordonnez les étapes verticalement !",
+    ar: "رتب الخطوات عموديا!",
+    it: "Ordina i passaggi verticalmente!"
+  },
+  check: {
+    en: "Check Order",
+    zh: "檢查順序",
+    ja: "順序を確認",
+    ko: "순서 확인",
+    es: "Comprobar Orden",
+    de: "Reihenfolge prüfen",
+    fi: "Tarkista järjestys",
+    fr: "Vérifier l'ordre",
+    ar: "تحقق من الطلب",
+    it: "Controlla Ordine"
+  },
+  reset: {
+    en: "Reset",
+    zh: "重置",
+    ja: "リセット",
+    ko: "리셋",
+    es: "Reiniciar",
+    de: "Zurücksetzen",
+    fi: "Nollaa",
+    fr: "Réinitialiser",
+    ar: "إعادة تعيين",
+    it: "Resetta"
+  },
+  correct: {
+    en: "Clean and Safe!",
+    zh: "乾淨衛生！",
+    ja: "清潔で安全！",
+    ko: "깨끗하고 안전해요!",
+    es: "¡Limpio y Seguro!",
+    de: "Sauber und sicher!",
+    fi: "Puhdas ja turvallinen!",
+    fr: "Propre et sûr !",
+    ar: "نظيف وآمن!",
+    it: "Pulito e Sicuro!"
+  },
+  wrong: {
+    en: "Incorrect Order, Try Again.",
+    zh: "次序不對，再試一次。",
+    ja: "順序が違います。もう一度。",
+    ko: "순서가 틀렸습니다. 다시 시도하세요.",
+    es: "Orden incorrecto, inténtalo de nuevo.",
+    de: "Falsche Reihenfolge, versuch es nochmal.",
+    fi: "Väärä järjestys, yritä uudelleen.",
+    fr: "Ordre incorrect, réessayez.",
+    ar: "ترتيب غير صحيح، حاول مرة أخرى.",
+    it: "Ordine errato, riprova."
+  },
+  step1: {
+    en: "Wet Hands",
+    zh: "用水弄濕雙手",
+    ja: "手を濡らす",
+    ko: "손 적시기",
+    es: "Mojar las manos",
+    de: "Hände nass machen",
+    fi: "Kastele kädet",
+    fr: "Mouiller les mains",
+    ar: "بلل اليدين",
+    it: "Bagnare le Mani"
+  },
+  step2: {
+    en: "Apply Soap",
+    zh: "加入梘液",
+    ja: "石鹸をつける",
+    ko: "비누 칠하기",
+    es: "Aplicar jabón",
+    de: "Seife auftragen",
+    fi: "Lisää saippuaa",
+    fr: "Savonner",
+    ar: "وضع الصابون",
+    it: "Applicare Sapone"
+  },
+  step3: {
+    en: "Rub Palms",
+    zh: "掌心對掌心搓揉",
+    ja: "手のひらをこする",
+    ko: "손바닥 문지르기",
+    es: "Frotar palmas",
+    de: "Handflächen reiben",
+    fi: "Hiero kämmeniä",
+    fr: "Frotter les paumes",
+    ar: "فرك النخيل",
+    it: "Strofinare Palmi"
+  },
+  step4: {
+    en: "Rub Back of Hands",
+    zh: "搓揉手背",
+    ja: "手の甲をこする",
+    ko: "손등 문지르기",
+    es: "Frotar dorso",
+    de: "Handrücken reiben",
+    fi: "Hiero kämmenselkiä",
+    fr: "Frotter le dos",
+    ar: "فرك ظهر اليدين",
+    it: "Strofinare Dorso"
+  },
+  step5: {
+    en: "Rub Fingers",
+    zh: "搓揉指隙和指背",
+    ja: "指の間をこする",
+    ko: "손가락 문지르기",
+    es: "Frotar dedos",
+    de: "Finger reiben",
+    fi: "Hiero sormia",
+    fr: "Frotter les doigts",
+    ar: "فرك الأصابع",
+    it: "Strofinare Dita"
+  },
+  step6: {
+    en: "Rinse Hands",
+    zh: "清水沖洗",
+    ja: "手をすすぐ",
+    ko: "손 헹구기",
+    es: "Enjuagar manos",
+    de: "Hände abspülen",
+    fi: "Huuhtele kädet",
+    fr: "Rincer les mains",
+    ar: "شطف اليدين",
+    it: "Risciacquare Mani"
+  },
+  step7: {
+    en: "Dry Hands",
+    zh: "抹乾雙手",
+    ja: "手を乾かす",
+    ko: "손 말리기",
+    es: "Secar manos",
+    de: "Hände trocknen",
+    fi: "Kuivaa kädet",
+    fr: "Sécher les mains",
+    ar: "جفف اليدين",
+    it: "Asciugare Mani"
+  }
+};
+const correctOrder = [1, 2, 3, 4, 5, 6, 7];
+const stepData = [{
+  id: 1,
+  label: "step1",
+  icon: "💧"
+}, {
+  id: 2,
+  label: "step2",
+  icon: "🧼"
+}, {
+  id: 3,
+  label: "step3",
+  icon: "🙏"
+}, {
+  id: 4,
+  label: "step4",
+  icon: "🖐️"
+}, {
+  id: 5,
+  label: "step5",
+  icon: "🤞"
+}, {
+  id: 6,
+  label: "step6",
+  icon: "🚿"
+}, {
+  id: 7,
+  label: "step7",
+  icon: "🧻"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [items, setItems] = useState([]);
+  const [status, setStatus] = useState(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+  useEffect(() => {
+    shuffle();
+  }, []);
+  const shuffle = () => {
+    const shuffled = [...stepData].sort(() => Math.random() - 0.5);
+    setItems(shuffled);
+    setStatus(null);
+  };
+  const check = () => {
+    const currentIds = items.map(i => i.id);
+    const isCorrect = currentIds.every((val, index) => val === correctOrder[index]);
+    if (isCorrect) setStatus("correct");else setStatus("wrong");
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-blue-800 mb-4 mt-8 drop-shadow-sm bg-white/50 px-6 py-2 rounded-full"
+  }, "🙌 ", getText("title")), /*#__PURE__*/React.createElement("p", {
+    className: "font-bold text-blue-700 mb-6"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-md"
+  }, /*#__PURE__*/React.createElement(Reorder.Group, {
+    axis: "y",
+    values: items,
+    onReorder: setItems,
+    className: "space-y-3"
+  }, items.map(item => /*#__PURE__*/React.createElement(Reorder.Item, {
+    key: item.id,
+    value: item
+  }, /*#__PURE__*/React.createElement("div", {
+    className: `bg-white p-4 rounded-xl shadow-md border-b-4 border-slate-200 flex items-center gap-4 cursor-grab active:cursor-grabbing hover:scale-[1.02] transition-transform ${status === "correct" ? "border-green-300 bg-green-50" : status === "wrong" ? "border-red-200 bg-red-50" : ""}`
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center shadow-inner"
+  }, item.icon), /*#__PURE__*/React.createElement("div", {
+    className: "font-bold text-slate-700 text-lg"
+  }, getText(item.label)), /*#__PURE__*/React.createElement("div", {
+    className: "ml-auto text-slate-300"
+  }, "☰")))))), status && /*#__PURE__*/React.createElement("div", {
+    className: `mt-6 p-4 rounded-2xl font-black text-center text-xl shadow w-full max-w-md ${status === "correct" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"}`
+  }, getText(status)), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4 w-full max-w-md mt-6 pb-12"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: check,
+    className: "flex-1 bg-blue-500 text-white py-4 rounded-xl font-bold shadow-lg hover:bg-blue-600 text-xl border-b-4 border-blue-700 active:border-b-0 active:translate-y-1"
+  }, getText("check")), /*#__PURE__*/React.createElement("button", {
+    onClick: shuffle,
+    className: "bg-slate-200 text-slate-600 px-6 py-4 rounded-xl font-bold shadow-lg hover:bg-slate-300 text-xl border-b-4 border-slate-400 active:border-b-0 active:translate-y-1"
+  }, getText("reset"))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

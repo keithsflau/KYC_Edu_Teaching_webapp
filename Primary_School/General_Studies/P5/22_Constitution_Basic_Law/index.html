@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - Constitution and Basic Law</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: #fff1f2;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Basic Law Matcher",
+    zh: "基本法配對",
+    ja: "基本法マッチャー",
+    ko: "기본법 매칭",
+    es: "Emparejador de Leyes Básicas",
+    de: "Grundgesetz-Matcher",
+    fi: "Peruslakiyhdistäjä",
+    fr: "Appariement de la Loi Fondamentale",
+    ar: "مطابقة القانون الأساسي",
+    it: "Abbinatore Legge Fondamentale"
+  },
+  instruction: {
+    en: "Match the Article concept to its description.",
+    zh: "將條文概念與其描述配對。",
+    ja: "条文の概念をその説明と一致させてください。",
+    ko: "조항 개념을 설명과 일치시키세요.",
+    es: "Relaciona el concepto del artículo con su descripción.",
+    de: "Ordne das Artikelkonzept seiner Beschreibung zu.",
+    fi: "Yhdistä artiklan käsite sen kuvaukseen.",
+    fr: "Associez le concept de l'article à sa description.",
+    ar: "طابق مفهوم المادة بوصفها.",
+    it: "Abbina il concetto dell'Articolo alla sua descrizione."
+  },
+  one_country_two_systems: {
+    en: "One Country, Two Systems",
+    zh: "一國兩制",
+    ja: "一国二制度",
+    ko: "일국양제"
+  },
+  hk_prc: {
+    en: "HKSAR is part of PRC",
+    zh: "香港特區是中國的一部分",
+    ja: "HKSARはPRCの一部です",
+    ko: "HKSAR은 PRC의 일부입니다"
+  },
+  capitalist: {
+    en: "Capitalist System",
+    zh: "資本主義制度",
+    ja: "資本主義制度",
+    ko: "자본주의 제도"
+  },
+  unchanged_50: {
+    en: "Unchanged for 50 years",
+    zh: "五十年不變",
+    ja: "50年間変わらない",
+    ko: "50년 동안 변하지 않음"
+  },
+  high_autonomy: {
+    en: "High Degree of Autonomy",
+    zh: "高度自治",
+    ja: "高度な自治",
+    ko: "고도의 자치",
+    es: "Alto grado de autonomía",
+    de: "Hoher Grad an Autonomie",
+    fi: "Laaja autonomia",
+    fr: "Haut degré d'autonomie",
+    ar: "درجة عالية من الحكم الذاتي",
+    it: "Alto Grado di Autonomia"
+  },
+  hk_people_rule: {
+    en: "Hong Kong people ruling Hong Kong",
+    zh: "港人治港",
+    ja: "香港人による香港統治",
+    ko: "홍콩인에 의한 홍콩 통치"
+  },
+  rights: {
+    en: "Rights & Freedoms",
+    zh: "權利與自由",
+    ja: "権利と自由",
+    ko: "권리와 자유"
+  },
+  speech_assembly: {
+    en: "Speech, Press, Assembly",
+    zh: "言論、新聞、集會",
+    ja: "言論、出版、集会",
+    ko: "언론, 출판, 집회"
+  }
+};
+const pairs = [{
+  id: 1,
+  term: "one_country_two_systems",
+  match: "hk_prc"
+}, {
+  id: 2,
+  term: "capitalist",
+  match: "unchanged_50"
+}, {
+  id: 3,
+  term: "high_autonomy",
+  match: "hk_people_rule"
+}, {
+  id: 4,
+  term: "rights",
+  match: "speech_assembly"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [selectedTerm, setSelectedTerm] = useState(null);
+  const [matched, setMatched] = useState([]);
+  const [feedback, setFeedback] = useState(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+
+  // Flatten for buttons
+  const cards = [];
+  pairs.forEach(p => {
+    cards.push({
+      id: `t${p.id}`,
+      type: "term",
+      text: p.term,
+      pairId: p.id
+    });
+    cards.push({
+      id: `m${p.id}`,
+      type: "match",
+      text: p.match,
+      pairId: p.id
+    });
+  });
+
+  // Shuffle once on mount (copy first — Array.sort mutates)
+  const [shuffledCards, setShuffledCards] = useState([]);
+  useEffect(() => {
+    setShuffledCards([...cards].sort(() => Math.random() - 0.5));
+  }, []);
+  const handleCardClick = card => {
+    if (matched.includes(card.id)) return;
+    setFeedback(null);
+    if (!selectedTerm) {
+      setSelectedTerm(card);
+    } else {
+      if (selectedTerm.id === card.id) {
+        setSelectedTerm(null); // Deselect self
+      } else if (selectedTerm.pairId === card.pairId && selectedTerm.type !== card.type) {
+        setMatched([...matched, selectedTerm.id, card.id]);
+        setSelectedTerm(null);
+        setFeedback("ok");
+      } else {
+        setFeedback("bad");
+        setSelectedTerm(null);
+      }
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-bold mb-8 text-rose-800"
+  }, getText("title")), /*#__PURE__*/React.createElement("p", {
+    className: "mb-8 font-bold text-slate-500"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 md:grid-cols-3 gap-6 max-w-4xl"
+  }, shuffledCards.map(card => {
+    const isMatched = matched.includes(card.id);
+    const isSelected = selectedTerm && selectedTerm.id === card.id;
+    return /*#__PURE__*/React.createElement("button", {
+      key: card.id,
+      onClick: () => handleCardClick(card),
+      disabled: isMatched,
+      className: `p-6 rounded-xl font-bold text-lg min-h-[120px] shadow-lg transition-all
+                            ${isMatched ? "bg-green-100 text-green-800 opacity-50" : isSelected ? "bg-rose-500 text-white scale-105" : "bg-white text-rose-900 hover:bg-rose-50"}
+                         `
+    }, getText(card.text));
+  })), feedback === "bad" && /*#__PURE__*/React.createElement("div", {
+    className: "mt-6 p-3 rounded-xl bg-red-100 text-red-700 font-bold"
+  }, lang === "zh" ? "配對錯誤，請再試！" : "Try again!"), matched.length === cards.length && matched.length > 0 && /*#__PURE__*/React.createElement("div", {
+    className: "mt-8 text-4xl font-black text-rose-600 animate-bounce"
+  }, lang === "zh" ? "完成！" : "Complete!"));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

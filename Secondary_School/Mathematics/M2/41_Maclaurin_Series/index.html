@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Maclaurin Series | M2 Calculus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+      }
+      .glass {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <div id="root" class="flex-grow flex flex-col"></div>
+    <script>
+const {
+  useState
+} = React;
+const translations = {
+  en: {
+    unit: "Unit 2: Calculus",
+    title: "Maclaurin Series",
+    subtitle: "Approximating sin(x)",
+    polyDeg: "Polynomial Degree:",
+    numTerms: "Number of Terms (k=",
+    desc: "As k increases, the approximation hugs the curve further from x=0.",
+    approxLabel: "Approximation",
+    exactLabel: "Exact sin(x)",
+    langBtn: "中文"
+  },
+  zh: {
+    unit: "第二單元：微積分",
+    title: "麥克勞林級數",
+    subtitle: "近似 sin(x)",
+    polyDeg: "多項式次數：",
+    numTerms: "項數 (k=",
+    desc: "隨著 k 增加，近似曲線在 x=0 附近會更貼近原曲線。",
+    approxLabel: "近似值",
+    exactLabel: "精確 sin(x)",
+    langBtn: "English"
+  }
+};
+const App = () => {
+  // Maclaurin Series for sin(x)
+  // sin(x) = x - x^3/3! + x^5/5! - x^7/7! ...
+
+  const [lang, setLang] = useState("en");
+  const t = translations[lang];
+  const [terms, setTerms] = useState(3);
+  // Recurrence avoids factorial overflow for high term counts (max 15 → 29!)
+  const approx = (x, nTerms) => {
+    let sum = 0;
+    let term = x;
+    for (let i = 0; i < nTerms; i++) {
+      sum += term;
+      const power = 2 * i + 1;
+      term *= -x * x / ((power + 1) * (power + 2));
+    }
+    return sum;
+  };
+
+  // Visualization
+  const w = 800,
+    h = 400;
+  const range = 10;
+  const scaleX = w / (2 * range);
+  const scaleY = h / 4; // range -2 to 2
+  const originX = w / 2;
+  const originY = h / 2;
+  const toScreen = (x, y) => ({
+    x: originX + x * scaleX,
+    y: originY - y * scaleY
+  });
+  const exactPts = [];
+  for (let x = -range; x <= range; x += 0.1) exactPts.push({
+    x,
+    y: Math.sin(x)
+  });
+  const approxPts = [];
+  for (let x = -range; x <= range; x += 0.1) approxPts.push({
+    x,
+    y: approx(x, terms)
+  });
+  const generatePath = pts => `M ${pts.map(p => {
+    const sp = toScreen(p.x, p.y);
+    return `${sp.x},${sp.y}`;
+  }).join(" L ")}`;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "flex-grow flex flex-col items-center justify-center p-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 right-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLang(l => l === "en" ? "zh" : "en"),
+    className: "px-3 py-1 bg-slate-800 border border-slate-600 rounded-full text-xs font-bold text-emerald-400 hover:bg-slate-700 hover:text-white transition flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-language"
+  }), t.langBtn)), /*#__PURE__*/React.createElement("header", {
+    className: "mb-8 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-emerald-500 font-bold uppercase tracking-widest text-xs mb-2"
+  }, t.unit), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-white mb-2"
+  }, t.title), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-400 font-mono text-lg"
+  }, t.subtitle)), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col gap-8 w-full max-w-5xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass p-6 rounded-3xl relative overflow-hidden h-[400px]"
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: "100%",
+    height: "400",
+    viewBox: "0 0 800 400",
+    preserveAspectRatio: "none",
+    className: "overflow-visible"
+  }, /*#__PURE__*/React.createElement("line", {
+    x1: "0",
+    y1: originY,
+    x2: w,
+    y2: originY,
+    stroke: "#475569"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: originX,
+    y1: "0",
+    x2: originX,
+    y2: h,
+    stroke: "#475569"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: generatePath(exactPts),
+    fill: "none",
+    stroke: "#64748b",
+    strokeWidth: "3",
+    strokeDasharray: "5,5"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: generatePath(approxPts),
+    fill: "none",
+    stroke: "#10b981",
+    strokeWidth: "3"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: w - 100,
+    y: 50,
+    fill: "#10b981",
+    fontWeight: "bold"
+  }, t.approxLabel), /*#__PURE__*/React.createElement("text", {
+    x: w - 100,
+    y: 80,
+    fill: "#64748b",
+    fontWeight: "bold"
+  }, t.exactLabel))), /*#__PURE__*/React.createElement("div", {
+    className: "glass p-8 rounded-3xl flex flex-col md:flex-row items-center gap-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 text-center md:text-left"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-lg font-bold text-white mb-2"
+  }, t.polyDeg, " ", 2 * (terms - 1) + 1), /*#__PURE__*/React.createElement("p", {
+    className: "font-mono text-emerald-400 text-lg overflow-hidden text-ellipsis whitespace-nowrap"
+  }, "sin(x) ≈ x", terms > 1 && " - x³/3!", terms > 2 && " + x⁵/5!", terms > 3 && " - x⁷/7!", terms > 4 && " + ...")), /*#__PURE__*/React.createElement("div", {
+    className: "w-full md:w-64"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "text-xs text-slate-500 uppercase font-bold mb-2 block"
+  }, t.numTerms, terms, ")"), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "1",
+    max: "15",
+    step: "1",
+    value: terms,
+    onChange: e => setTerms(Number(e.target.value)),
+    className: "w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+  }), /*#__PURE__*/React.createElement("p", {
+    className: "text-xs text-slate-400 mt-2"
+  }, t.desc)))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

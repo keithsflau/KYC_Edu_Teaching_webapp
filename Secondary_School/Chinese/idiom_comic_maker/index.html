@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>成語四格漫畫大師</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+        }
+
+        .canvas-container {
+            cursor: crosshair;
+        }
+
+        .tool-btn.active {
+            ring: 2px solid #fbbf24;
+            transform: scale(1.1);
+        }
+
+        .pattern-bg {
+            background-color: #fdfbf7;
+            background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+    </style>
+</head>
+
+<body class="bg-gradient-to-br from-amber-50 to-orange-100 min-h-screen p-4 text-slate-800">
+
+    <!-- Header -->
+    <header
+        class="max-w-6xl mx-auto flex items-center justify-between mb-6 bg-white/80 backdrop-blur rounded-2xl p-4 shadow-lg border border-amber-200">
+        <div class="flex items-center gap-4">
+            <div class="bg-red-600 text-white p-3 rounded-lg shadow font-bold text-2xl">成語</div>
+            <div>
+                <h1 class="text-2xl font-bold text-slate-800">四格漫畫大師</h1>
+                <p class="text-slate-500 text-sm">創意 • 挑戰 • 學習</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-6">
+            <div class="text-center">
+                <div class="text-xs text-slate-500 uppercase tracking-wide">計時器</div>
+                <div id="timer" class="text-3xl font-mono font-bold text-red-600">00:00</div>
+            </div>
+            <button onclick="toggleGameMode()" id="gameBtn"
+                class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl shadow-lg transition flex items-center gap-2 font-bold">
+                <span>🎯 開始挑戰</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="max-w-6xl mx-auto flex gap-6 items-start">
+
+        <!-- Left Sidebar: Tools -->
+        <div class="w-24 flex flex-col gap-4 sticky top-6">
+
+            <!-- Brush / Eraser -->
+            <div class="bg-white rounded-2xl p-3 shadow-lg border border-amber-100 flex flex-col gap-3">
+                <button onclick="setTool('brush')" id="btn-brush"
+                    class="tool-btn active w-full aspect-square rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-2xl"
+                    title="畫筆">🖌️</button>
+                <button onclick="setTool('eraser')" id="btn-eraser"
+                    class="tool-btn w-full aspect-square rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-2xl"
+                    title="擦膠">🧼</button>
+                <div class="h-px bg-slate-200 my-1"></div>
+                <button onclick="undo()"
+                    class="w-full aspect-square rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-xl"
+                    title="復原">↩️</button>
+                <button onclick="clearCurrentCanvas()"
+                    class="w-full aspect-square rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-xl text-red-500"
+                    title="清除">🗑️</button>
+            </div>
+
+            <!-- Colors -->
+            <div class="bg-white rounded-2xl p-3 shadow-lg border border-amber-100 flex flex-col gap-2">
+                <button onclick="setColor('#000000')"
+                    class="w-full aspect-square rounded-full bg-black border-2 border-slate-200 shadow-sm"></button>
+                <button onclick="setColor('#ef4444')"
+                    class="w-full aspect-square rounded-full bg-red-500 border-2 border-white shadow-sm"></button>
+                <button onclick="setColor('#3b82f6')"
+                    class="w-full aspect-square rounded-full bg-blue-500 border-2 border-white shadow-sm"></button>
+                <button onclick="setColor('#22c55e')"
+                    class="w-full aspect-square rounded-full bg-green-500 border-2 border-white shadow-sm"></button>
+                <button onclick="setColor('#eab308')"
+                    class="w-full aspect-square rounded-full bg-yellow-500 border-2 border-white shadow-sm"></button>
+                <button onclick="setColor('#a855f7')"
+                    class="w-full aspect-square rounded-full bg-purple-500 border-2 border-white shadow-sm"></button>
+                <input type="color" onchange="setColor(this.value)"
+                    class="w-full aspect-square cursor-pointer rounded-full opacity-0 absolute bottom-0">
+            </div>
+
+            <!-- Brush Size -->
+            <div class="bg-white rounded-2xl p-3 shadow-lg border border-amber-100 flex flex-col items-center gap-2">
+                <input type="range" min="1" max="20" value="3" oninput="setSize(this.value)"
+                    class="w-full h-24 writing-mode-vertical" style="writing-mode: vertical-lr; direction: rtl;">
+                <div id="size-indicator" class="w-3 h-3 rounded-full bg-black"></div>
+            </div>
+
+        </div>
+
+        <!-- Center: Canvas Area -->
+        <div class="flex-1">
+
+            <!-- Topic Banner -->
+            <div
+                class="bg-white rounded-2xl p-6 shadow-lg border border-amber-100 mb-6 text-center relative overflow-hidden group">
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500">
+                </div>
+                <h2 class="text-4xl font-bold text-slate-800 mb-2" id="current-idiom">自由創作模式</h2>
+                <p class="text-slate-500" id="current-meaning">點擊「開始挑戰」來隨機抽取成語題目！</p>
+                <button onclick="nextTopic()"
+                    class="hidden group-hover:block absolute right-4 top-1/2 -translate-y-1/2 bg-slate-100 hover:bg-slate-200 p-2 rounded-full text-slate-600 transition">🎲</button>
+            </div>
+
+            <!-- Canvas Grid -->
+            <div class="grid grid-cols-2 gap-4" id="canvas-grid">
+                <!-- Canvases will be enhanced by JS -->
+                <div class="relative group bg-white p-2 rounded-xl shadow-sm border border-slate-200">
+                    <div class="absolute top-3 left-3 bg-slate-100 text-slate-500 text-xs font-bold px-2 py-1 rounded">
+                        1. 起</div>
+                    <canvas id="c1" width="400" height="300"
+                        class="w-full h-auto bg-white pattern-bg cursor-crosshair touch-none border border-slate-100"></canvas>
+                </div>
+                <div class="relative group bg-white p-2 rounded-xl shadow-sm border border-slate-200">
+                    <div class="absolute top-3 left-3 bg-slate-100 text-slate-500 text-xs font-bold px-2 py-1 rounded">
+                        2. 承</div>
+                    <canvas id="c2" width="400" height="300"
+                        class="w-full h-auto bg-white pattern-bg cursor-crosshair touch-none border border-slate-100"></canvas>
+                </div>
+                <div class="relative group bg-white p-2 rounded-xl shadow-sm border border-slate-200">
+                    <div class="absolute top-3 left-3 bg-slate-100 text-slate-500 text-xs font-bold px-2 py-1 rounded">
+                        3. 轉</div>
+                    <canvas id="c3" width="400" height="300"
+                        class="w-full h-auto bg-white pattern-bg cursor-crosshair touch-none border border-slate-100"></canvas>
+                </div>
+                <div class="relative group bg-white p-2 rounded-xl shadow-sm border border-slate-200">
+                    <div class="absolute top-3 left-3 bg-slate-100 text-slate-500 text-xs font-bold px-2 py-1 rounded">
+                        4. 合</div>
+                    <canvas id="c4" width="400" height="300"
+                        class="w-full h-auto bg-white pattern-bg cursor-crosshair touch-none border border-slate-100"></canvas>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right: Stickers & Finish -->
+        <div class="w-64 flex flex-col gap-4 sticky top-6">
+
+            <div class="bg-white rounded-2xl p-4 shadow-lg border border-amber-100">
+                <h3 class="font-bold text-slate-700 mb-3 flex items-center gap-2">
+                    <span>😊</span> 表情貼紙
+                </h3>
+                <div class="grid grid-cols-4 gap-2 text-2xl h-64 overflow-y-auto content-start" id="sticker-grid">
+                    <!-- Stickers populated by JS -->
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-4 shadow-lg border border-amber-100">
+                <h3 class="font-bold text-slate-700 mb-3 flex items-center gap-2">
+                    <span>💭</span> 對話氣泡
+                </h3>
+                <div class="grid grid-cols-2 gap-2" id="bubble-grid">
+                    <button onclick="setTool('stamp', '🗨️')"
+                        class="hover:bg-slate-50 p-2 rounded text-3xl">🗨️</button>
+                    <button onclick="setTool('stamp', '💭')" class="hover:bg-slate-50 p-2 rounded text-3xl">💭</button>
+                    <button onclick="setTool('stamp', '❗')" class="hover:bg-slate-50 p-2 rounded text-3xl">❗</button>
+                    <button onclick="setTool('stamp', '❓')" class="hover:bg-slate-50 p-2 rounded text-3xl">❓</button>
+                </div>
+            </div>
+
+            <button onclick="downloadComics()"
+                class="bg-green-600 hover:bg-green-700 text-white px-6 py-4 rounded-xl shadow-lg transition flex items-center justify-center gap-2 font-bold w-full">
+                <span>💾 下載作品</span>
+            </button>
+
+        </div>
+
+    </div>
+
+    <script>
+        // --- Data ---
+        const IDIOM_DB = [
+            { t: "守株待兔", m: "比喻死守經驗，不知變通" },
+            { t: "畫蛇添足", m: "做了多餘的事，反而壞事" },
+            { t: "班門弄斧", m: "在專家面前賣弄本領" },
+            { t: "對牛彈琴", m: "對不懂道理的人講道理" },
+            { t: "井底之蛙", m: "比喻見識淺薄的人" },
+            { t: "狐假虎威", m: "倚仗別人的勢力來欺壓人" },
+            { t: "掩耳盜鈴", m: "自己欺騙自己" },
+            { t: "自相矛盾", m: "言行不一致" }
+        ];
+
+        const STICKERS = [
+            "😀", "😂", "😎", "🤔", "😱", "😡", "😭", "😴",
+            "👍", "👎", "👋", "🙏", "👀", "🧠", "💡", "❤️",
+            "🏃", "🧍", "🧘", "🤸", "🐅", "🐍", "🐸", "🐰",
+            "🌳", "🏠", "🚗", "⭐", "🔥", "💧", "💨", "💤"
+        ];
+
+        // --- State ---
+        let currentTool = 'brush'; // brush, eraser, stamp
+        let currentColor = '#000000';
+        let currentSize = 3;
+        let currentStamp = '';
+        let isDrawing = false;
+        let activeCanvasIndex = -1;
+        let history = [[], [], [], []]; // History for each canvas
+
+        const contexts = [];
+        const canvasEls = [];
+
+        // --- Initialization ---
+        function init() {
+            // Setup Canvases
+            for (let i = 1; i <= 4; i++) {
+                const c = document.getElementById(`c${i}`);
+                canvasEls.push(c);
+                const ctx = c.getContext('2d');
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                contexts.push(ctx);
+
+                // Events
+                c.addEventListener('mousedown', startDraw);
+                c.addEventListener('mousemove', draw);
+                c.addEventListener('mouseup', endDraw);
+                c.addEventListener('mouseout', endDraw);
+
+                // Touch support
+                c.addEventListener('touchstart', handleTouchStart);
+                c.addEventListener('touchmove', handleTouchMove);
+                c.addEventListener('touchend', endDraw);
+
+                saveState(i - 1); // Initial state
+            }
+
+            // Populate Stickers
+            const stickerGrid = document.getElementById('sticker-grid');
+            STICKERS.forEach(s => {
+                const btn = document.createElement('button');
+                btn.textContent = s;
+                btn.className = "hover:bg-slate-100 p-1 rounded transition text-center";
+                btn.onclick = () => setTool('stamp', s);
+                stickerGrid.appendChild(btn);
+            });
+        }
+
+        // --- Drawing Engine ---
+        function getPos(e, canvas) {
+            const rect = canvas.getBoundingClientRect();
+            let x, y;
+            if (e.touches) {
+                x = e.touches[0].clientX - rect.left;
+                y = e.touches[0].clientY - rect.top;
+            } else {
+                x = e.clientX - rect.left;
+                y = e.clientY - rect.top;
+            }
+            // Scale for canvas resolution vs display size
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            return { x: x * scaleX, y: y * scaleY };
+        }
+
+        function startDraw(e) {
+            e.preventDefault();
+            const idx = canvasEls.indexOf(e.target);
+            activeCanvasIndex = idx;
+            const ctx = contexts[idx];
+            const pos = getPos(e, e.target);
+
+            if (currentTool === 'stamp') {
+                ctx.font = `${currentSize * 10 + 20}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(currentStamp, pos.x, pos.y);
+                saveState(idx);
+                return;
+            }
+
+            isDrawing = true;
+            ctx.beginPath();
+            ctx.moveTo(pos.x, pos.y);
+
+            ctx.strokeStyle = currentTool === 'eraser' ? '#ffffff' : currentColor;
+            ctx.lineWidth = currentTool === 'eraser' ? currentSize * 2 : currentSize;
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            e.preventDefault();
+            const idx = canvasEls.indexOf(e.target);
+            if (idx !== activeCanvasIndex) return;
+
+            const ctx = contexts[idx];
+            const pos = getPos(e, e.target);
+
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+        }
+
+        function endDraw() {
+            if (isDrawing) {
+                isDrawing = false;
+                contexts[activeCanvasIndex].closePath();
+                saveState(activeCanvasIndex);
+            }
+        }
+
+        function handleTouchStart(e) {
+            if (e.target.tagName === 'CANVAS') {
+                startDraw(e);
+            }
+        }
+
+        function handleTouchMove(e) {
+            if (e.target.tagName === 'CANVAS') {
+                draw(e);
+            }
+        }
+
+        // --- Tools ---
+        function setTool(tool, stampChar = '') {
+            currentTool = tool;
+            currentStamp = stampChar;
+
+            // UI Updates
+            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+            if (tool === 'brush') document.getElementById('btn-brush').classList.add('active');
+            if (tool === 'eraser') document.getElementById('btn-eraser').classList.add('active');
+
+            // Cursor
+            const cursor = tool === 'stamp' ? 'text' : 'crosshair';
+            canvasEls.forEach(c => c.style.cursor = cursor);
+        }
+
+        function setColor(c) {
+            currentColor = c;
+            setTool('brush'); // Switch back to brush when color picked
+            document.getElementById('size-indicator').style.backgroundColor = c;
+        }
+
+        function setSize(s) {
+            currentSize = parseInt(s, 10);
+            const indicator = document.getElementById('size-indicator');
+            indicator.style.width = s + 'px';
+            indicator.style.height = s + 'px';
+        }
+
+        function clearCurrentCanvas() {
+            // Find which canvas was last interacted with or clear 1st if none
+            // Actually, the button is outside context. Let's make it clear ALL or create small clear buttons?
+            // "clearCurrentCanvas" is ambiguous if no canvas active.
+            // Better: small icons on each canvas. But to follow requested design, let's just clear ALL for now or last active.
+            // Let's change behavior: Clear button clears the LAST active canvas.
+            if (activeCanvasIndex === -1) activeCanvasIndex = 0;
+            if (!confirm('確定要清除此格嗎？')) return;
+
+            const ctx = contexts[activeCanvasIndex];
+            ctx.clearRect(0, 0, canvasEls[activeCanvasIndex].width, canvasEls[activeCanvasIndex].height);
+            saveState(activeCanvasIndex);
+        }
+
+        // --- History ---
+        function saveState(idx) {
+            const c = canvasEls[idx];
+            if (history[idx].length > 10) history[idx].shift(); // Limit history
+            history[idx].push(c.toDataURL());
+        }
+
+        function undo() {
+            if (activeCanvasIndex === -1) return;
+            const h = history[activeCanvasIndex];
+            if (h.length <= 1) return; // Keep initial empty state
+
+            h.pop(); // Remove current state
+            const prev = h[h.length - 1];
+
+            const img = new Image();
+            img.src = prev;
+            img.onload = () => {
+                const ctx = contexts[activeCanvasIndex];
+                ctx.clearRect(0, 0, canvasEls[activeCanvasIndex].width, canvasEls[activeCanvasIndex].height);
+                ctx.drawImage(img, 0, 0);
+            };
+        }
+
+        // --- Game Logic ---
+        let timerInterval;
+        let seconds = 0;
+        let isGameRunning = false;
+
+        function toggleGameMode() {
+            if (isGameRunning) {
+                stopGame();
+            } else {
+                startGame();
+            }
+        }
+
+        function startGame() {
+            isGameRunning = true;
+            document.getElementById('gameBtn').innerHTML = '<span>⏹️ 停止計時</span>';
+            document.getElementById('gameBtn').classList.replace('bg-indigo-600', 'bg-red-600');
+            document.getElementById('gameBtn').classList.replace('hover:bg-indigo-700', 'hover:bg-red-700');
+
+            nextTopic();
+
+            seconds = 0;
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                seconds++;
+                const min = Math.floor(seconds / 60).toString().padStart(2, '0');
+                const sec = (seconds % 60).toString().padStart(2, '0');
+                document.getElementById('timer').textContent = `${min}:${sec}`;
+            }, 1000);
+        }
+
+        function stopGame() {
+            isGameRunning = false;
+            clearInterval(timerInterval);
+            document.getElementById('gameBtn').innerHTML = '<span>🎯 開始挑戰</span>';
+            document.getElementById('gameBtn').classList.replace('bg-red-600', 'bg-indigo-600');
+            document.getElementById('gameBtn').classList.replace('hover:bg-red-700', 'hover:bg-indigo-700');
+            alert(`完成！用時：${document.getElementById('timer').textContent}`);
+        }
+
+        function nextTopic() {
+            const item = IDIOM_DB[Math.floor(Math.random() * IDIOM_DB.length)];
+            document.getElementById('current-idiom').textContent = item.t;
+            document.getElementById('current-meaning').textContent = item.m;
+            // Visual feedback
+            const container = document.getElementById('current-idiom').parentElement;
+            container.classList.add('scale-105');
+            setTimeout(() => container.classList.remove('scale-105'), 200);
+        }
+
+        function downloadComics() {
+            // Create a temporary canvas to merge all 4
+            const temp = document.createElement('canvas');
+            temp.width = 840; // 400 * 2 + padding
+            temp.height = 700; // 300 * 2 + padding + title
+            const ctx = temp.getContext('2d');
+
+            // Background
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, 0, temp.width, temp.height);
+
+            // Title
+            ctx.fillStyle = '#000';
+            ctx.font = 'bold 30px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(document.getElementById('current-idiom').textContent, 420, 50);
+
+            // Draw canvases
+            // Grid: 0,0 -> 20, 80 ...
+            const positions = [
+                { x: 20, y: 80 }, { x: 420 + 20, y: 80 },
+                { x: 20, y: 380 + 20 }, { x: 420 + 20, y: 380 + 20 }
+            ];
+
+            canvasEls.forEach((c, i) => {
+                ctx.drawImage(c, positions[i].x, positions[i].y);
+                // Draw border
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(positions[i].x, positions[i].y, 400, 300);
+                // Number
+                ctx.fillStyle = '#eee';
+                ctx.fillRect(positions[i].x + 10, positions[i].y + 10, 40, 25);
+                ctx.fillStyle = '#555';
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'left';
+                const labels = ['起', '承', '轉', '合'];
+                ctx.fillText(`${i + 1}. ${labels[i]}`, positions[i].x + 15, positions[i].y + 28);
+            });
+
+            // Footer
+            ctx.fillStyle = '#888';
+            ctx.font = '14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(`成語四格漫畫大師 - Created with AI`, 420, 680);
+
+            const link = document.createElement('a');
+            link.download = `idiom-comic-${Date.now()}.png`;
+            link.href = temp.toDataURL();
+            link.click();
+        }
+
+        // Start
+        init();
+
+    </script>
+
+</body>
+
+</html>
+

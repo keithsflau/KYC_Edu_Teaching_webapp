@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Integration by Substitution | M2 Calculus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+      }
+      .glass {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <div id="root" class="flex-grow flex flex-col"></div>
+    <script>
+const {
+  useState
+} = React;
+const translations = {
+  en: {
+    unit: "Unit 2: Integral Calculus",
+    title: "Integration by Substitution",
+    eq: "∫ f(g(x))g'(x) dx = ∫ f(u) du",
+    xHeader: "X-Domain: ∫ 2x cos(x²) dx",
+    uHeader: "U-World: ∫ cos(u) du",
+    xDesc1: "Complex function with inner function g(x) = x²",
+    xDesc2: "and derivative factor g'(x) = 2x present.",
+    uDesc1: "Simpler function f(u) = cos(u).",
+    uDesc2: "The complex 'speed' factor 2x is absorbed into du.",
+    step1: "Let ",
+    uEq: "u = x²",
+    step2: " du = 2x dx",
+    expl: "The area under the red curve (complex X) is ",
+    same: "EXACTLY SAME",
+    expl2: " as the area under the pink curve (simple U).",
+    expl3: "We change the coordinate system to make the math easier.",
+    langBtn: "中文"
+  },
+  zh: {
+    unit: "第二單元：積分",
+    title: "代換積分法",
+    eq: "∫ f(g(x))g'(x) dx = ∫ f(u) du",
+    xHeader: "X-域： ∫ 2x cos(x²) dx",
+    uHeader: "U-世界： ∫ cos(u) du",
+    xDesc1: "複合函數，內層函數為 g(x) = x²",
+    xDesc2: "且存在導數因子 g'(x) = 2x。",
+    uDesc1: "更簡單的函數 f(u) = cos(u)。",
+    uDesc2: "複雜的「速度」因子 2x 被吸收到 du 中。",
+    step1: "設 ",
+    uEq: "u = x²",
+    step2: " du = 2x dx",
+    expl: "紅色曲線 (複雜 X) 下的面積",
+    same: "完全相同",
+    expl2: " 於粉紅色曲線 (簡單 U) 下的面積。",
+    expl3: "我們改變坐標系以簡化數學運算。",
+    langBtn: "English"
+  }
+};
+const App = () => {
+  // Example: Int(2x * cos(x^2) dx)
+  // u = x^2, du = 2x dx
+  // Int(cos(u) du)
+
+  const [lang, setLang] = useState("en");
+  const t = translations[lang];
+  const [xDomain, setXDomain] = useState([0, Math.sqrt(Math.PI)]); // 0 to sqrt(pi) approx 1.77
+
+  // Function f(x) = 2x cos(x^2)
+  const f_x = x => 2 * x * Math.cos(x * x);
+
+  // Transformed g(u) = cos(u)
+  const g_u = u => Math.cos(u);
+
+  // Mapping u = x^2
+  const toU = x => x * x;
+  const scaleX = 150;
+  const scaleY = 100;
+  const cx = 50;
+  const cy = 200;
+
+  // Generate Path for X-world
+  const ptsX = [];
+  for (let x = 0; x <= 2; x += 0.05) {
+    ptsX.push(`${cx + x * scaleX},${cy - f_x(x) * scaleY}`);
+  }
+  const pathX = `M ${cx},${cy} L ${ptsX.join(" L ")} L ${cx + 2 * scaleX},${cy} Z`;
+
+  // Generate Path for U-world
+  const ptsU = [];
+  for (let u = 0; u <= 4; u += 0.1) {
+    // u = 2^2 = 4
+    ptsU.push(`${cx + u * (scaleX / 2)},${cy - g_u(u) * scaleY}`); // transform X scale
+  }
+  const pathU = `M ${cx},${cy} L ${ptsU.join(" L ")} L ${cx + 4 * (scaleX / 2)},${cy} Z`;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "flex-grow flex flex-col items-center justify-center p-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 right-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLang(l => l === "en" ? "zh" : "en"),
+    className: "px-3 py-1 bg-slate-800 border border-slate-600 rounded-full text-xs font-bold text-emerald-400 hover:bg-slate-700 hover:text-white transition flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-language"
+  }), t.langBtn)), /*#__PURE__*/React.createElement("header", {
+    className: "mb-8 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-emerald-500 font-bold uppercase tracking-widest text-xs mb-2"
+  }, t.unit), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-white mb-2"
+  }, t.title), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-400 font-mono text-lg"
+  }, t.eq)), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-1 lg:grid-cols-2 gap-8 w-full max-w-6xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass p-6 rounded-3xl flex flex-col"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-xl font-bold text-sky-400 mb-4 font-mono"
+  }, t.xHeader), /*#__PURE__*/React.createElement("div", {
+    className: "flex-grow flex items-center justify-center relative min-h-[300px]"
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: "400",
+    height: "300",
+    className: "bg-slate-900 rounded-xl"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: pathX,
+    fill: "rgba(14, 165, 233, 0.2)",
+    stroke: "#0ea5e9",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: cx,
+    y1: cy,
+    x2: cx + 2 * scaleX,
+    y2: cy,
+    stroke: "#cbd5e1",
+    strokeWidth: "1"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "mt-4 text-center text-sm text-slate-400"
+  }, t.xDesc1, " ", /*#__PURE__*/React.createElement("br", null), t.xDesc2)), /*#__PURE__*/React.createElement("div", {
+    className: "glass p-6 rounded-3xl flex flex-col"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-xl font-bold text-pink-400 mb-4 font-mono"
+  }, t.uHeader), /*#__PURE__*/React.createElement("div", {
+    className: "flex-grow flex items-center justify-center relative min-h-[300px]"
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: "400",
+    height: "300",
+    className: "bg-slate-900 rounded-xl"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: pathU,
+    fill: "rgba(236, 72, 153, 0.2)",
+    stroke: "#ec4899",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: cx,
+    y1: cy,
+    x2: cx + 4 * (scaleX / 2),
+    y2: cy,
+    stroke: "#cbd5e1",
+    strokeWidth: "1"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "mt-4 text-center text-sm text-slate-400"
+  }, t.uDesc1, " ", /*#__PURE__*/React.createElement("br", null), t.uDesc2))), /*#__PURE__*/React.createElement("div", {
+    className: "mt-8 glass p-6 rounded-2xl w-full max-w-3xl text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-mono font-bold text-white mb-4"
+  }, t.step1, " ", /*#__PURE__*/React.createElement("span", {
+    className: "text-yellow-400"
+  }, t.uEq), " ", /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-arrow-right mx-4 text-slate-500"
+  }), " ", t.step2), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-300"
+  }, t.expl, " ", /*#__PURE__*/React.createElement("strong", {
+    className: "text-emerald-400"
+  }, t.same), t.expl2, " ", /*#__PURE__*/React.createElement("br", null), t.expl3)));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

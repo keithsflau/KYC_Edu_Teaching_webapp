@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小一常識：校園尋寶記 | School Tour</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #f0f9ff 0%, #cbebff 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "School Treasure Hunt",
+    zh: "校園尋寶記",
+    ja: "学校の宝探し",
+    ko: "학교 보물 찾기",
+    es: "Búsqueda del tesoro escolar",
+    de: "Schulschatzsuche",
+    fi: "Koulun aarteenmetsästys",
+    fr: "Chasse au trésor scolaire",
+    ar: "البحث عن الكنز في المدرسة",
+    it: "Caccia al tesoro scolastica"
+  },
+  instruction: {
+    en: "Where should I go?",
+    zh: "我應該去哪裡？",
+    ja: "どこに行けばいいですか？",
+    ko: "어디로 가야 하나요?",
+    es: "¿A dónde debo ir?",
+    de: "Wohin soll ich gehen?",
+    fi: "Minne minun pitäisi mennä?",
+    fr: "Où dois-je aller ?",
+    ar: "إلى أين يجب أن أذهب؟",
+    it: "Dove dovrei andare?"
+  },
+  q1: {
+    en: "I want to read storybooks.",
+    zh: "我想看故事書。",
+    ja: "絵本を読みたいです。",
+    ko: "동화책을 읽고 싶어요.",
+    es: "Quiero leer libros de cuentos.",
+    de: "Ich möchte Geschichtenbücher lesen.",
+    fi: "Haluan lukea satukirjoja.",
+    fr: "Je veux lire des livres d'histoires.",
+    ar: "أريد قراءة كتب القصة.",
+    it: "Voglio leggere libri di storie."
+  },
+  q2: {
+    en: "I need to wash my hands.",
+    zh: "我要洗手。",
+    ja: "手を洗いたいです。",
+    ko: "손을 씻어야 해요.",
+    es: "Necesito lavarme las manos.",
+    de: "Ich muss mir die Hände waschen.",
+    fi: "Minun täytyy pestä käteni.",
+    fr: "Je dois me laver les mains.",
+    ar: "أحتاج إلى غسل يدي.",
+    it: "Devo lavarmi le mani."
+  },
+  q3: {
+    en: "I want to run and play.",
+    zh: "我想跑步和玩耍。",
+    ja: "走って遊びたいです。",
+    ko: "뛰고 싶어요.",
+    es: "Quiero correr y jugar.",
+    de: "Ich möchte rennen und spielen.",
+    fi: "Haluan juosta ja leikkiä.",
+    fr: "Je veux courir et jouer.",
+    ar: "أريد أن أركض وألعب.",
+    it: "Voglio correre e giocare."
+  },
+  q4: {
+    en: "I have a question about school fees.",
+    zh: "我有關於學費的問題。",
+    ja: "学費について質問があります。",
+    ko: "수업료에 대해 질문이 있어요.",
+    es: "Tengo una pregunta sobre las tasas escolares.",
+    de: "Ich habe eine Frage zu den Schulgebühren.",
+    fi: "Minulla on kysymys koulumaksuista.",
+    fr: "J'ai une question sur les frais de scolarité.",
+    ar: "لديك سؤال حول الرسوم المدرسية.",
+    it: "Ho una domanda sulle tasse scolastiche."
+  },
+  q5: {
+    en: "It is time for Maths lesson.",
+    zh: "現在是數學課。",
+    ja: "数学の授業の時間です。",
+    ko: "수학 수업 시간이에요.",
+    es: "Es hora de la clase de matemáticas.",
+    de: "Es ist Zeit für den Matheunterricht.",
+    fi: "On matematiikan tunnin aika.",
+    fr: "C'est l'heure du cours de mathématiques.",
+    ar: "حان وقت درس الرياضيات.",
+    it: "È ora della lezione di matematica."
+  },
+  q6: {
+    en: "Let's sing a song!",
+    zh: "一起唱歌吧！",
+    ja: "歌を歌いましょう！",
+    ko: "노래를 불러요!",
+    es: "¡Cantemos una canción!",
+    de: "Lass uns ein Lied singen!",
+    fi: "Lauletaan laulu!",
+    fr: "Chantons une chanson !",
+    ar: "دعونا نغني أغنية!",
+    it: "Cantiamo una canzone!"
+  },
+  office: {
+    en: "General Office",
+    zh: "校務處",
+    ja: "事務室",
+    ko: "교무실",
+    es: "Oficina General",
+    de: "Sekretariat",
+    fi: "Kanslia",
+    fr: "Bureau général",
+    ar: "المكتب العام",
+    it: "Ufficio generale"
+  },
+  library: {
+    en: "Library",
+    zh: "圖書館",
+    ja: "図書館",
+    ko: "도서관",
+    es: "Biblioteca",
+    de: "Bibliothek",
+    fi: "Kirjasto",
+    fr: "Bibliothèque",
+    ar: "المكتبة",
+    it: "Biblioteca"
+  },
+  toilet: {
+    en: "Toilet",
+    zh: "洗手間",
+    ja: "トイレ",
+    ko: "화장실",
+    es: "Baño",
+    de: "Toilette",
+    fi: "Vessa",
+    fr: "Toilettes",
+    ar: "الحمام",
+    it: "Bagno"
+  },
+  classroom: {
+    en: "Classroom",
+    zh: "課室",
+    ja: "教室",
+    ko: "교실",
+    es: "Aula",
+    de: "Klassenzimmer",
+    fi: "Luokkahuone",
+    fr: "Salle de classe",
+    ar: "الفصل",
+    it: "Aula"
+  },
+  playground: {
+    en: "Playground",
+    zh: "操場",
+    ja: "遊び場",
+    ko: "운동장",
+    es: "Patio de recreo",
+    de: "Spielplatz",
+    fi: "Leikkikenttä",
+    fr: "Cour de récréation",
+    ar: "الملعب",
+    it: "Parco giochi"
+  },
+  musicroom: {
+    en: "Music Room",
+    zh: "音樂室",
+    ja: "音楽室",
+    ko: "음악실",
+    es: "Sala de música",
+    de: "Musikzimmer",
+    fi: "Musiikkiluokka",
+    fr: "Salle de musique",
+    ar: "غرفة الموسيقى",
+    it: "Sala di musica"
+  },
+  correct: {
+    en: "Correct! great job!",
+    zh: "答對了！做得好！",
+    ja: "正解！よくできました！",
+    ko: "정답! 잘했어요!",
+    es: "¡Correcto! ¡Buen trabajo!",
+    de: "Richtig! Gut gemacht!",
+    fi: "Oikein! Hyvää työtä!",
+    fr: "Correct ! Bien joué !",
+    ar: "صحيح! عمل رائع!",
+    it: "Corretto! Ottimo lavoro!"
+  },
+  tryAgain: {
+    en: "Not here, try again!",
+    zh: "不是這裡，再試一次！",
+    ja: "ここではありません、もう一度！",
+    ko: "여기가 아니에요, 다시 해보세요!",
+    es: "¡Aquí no, inténtalo de nuevo!",
+    de: "Nicht hier, versuche es noch einmal!",
+    fi: "Ei täällä, yritä uudelleen!",
+    fr: "Pas ici, réessayez !",
+    ar: "ليس هنا، حاول مرة أخرى!",
+    it: "Non qui, riprova!"
+  },
+  next: {
+    en: "Next Question",
+    zh: "下一題",
+    ja: "次の問題",
+    ko: "다음 문제",
+    es: "Siguiente pregunta",
+    de: "Nächste Frage",
+    fi: "Seuraava kysymys",
+    fr: "Question suivante",
+    ar: "السؤال التالي",
+    it: "Prossima domanda"
+  },
+  completed: {
+    en: "Mission Complete!",
+    zh: "任務完成！",
+    ja: "ミッション完了！",
+    ko: "임무 완료!",
+    es: "¡Misión cumplida!",
+    de: "Mission erfüllt!",
+    fi: "Tehtävä suoritettu!",
+    fr: "Mission accomplie !",
+    ar: "اكتملت المهمة!",
+    it: "Missione completata!"
+  },
+  restart: {
+    en: "Play Again",
+    zh: "再玩一次",
+    ja: "もう一度プレイ",
+    ko: "다시하기",
+    es: "Jugar de nuevo",
+    de: "Nochmal spielen",
+    fi: "Pelaa uudelleen",
+    fr: "Rejouer",
+    ar: "العب مرة أخرى",
+    it: "Gioca di nuovo"
+  }
+};
+const rooms = [{
+  id: "office",
+  color: "bg-blue-400"
+}, {
+  id: "library",
+  color: "bg-yellow-400"
+}, {
+  id: "toilet",
+  color: "bg-cyan-400"
+}, {
+  id: "classroom",
+  color: "bg-green-400"
+}, {
+  id: "playground",
+  color: "bg-orange-400"
+}, {
+  id: "musicroom",
+  color: "bg-purple-400"
+}];
+const questions = [{
+  textKey: "q1",
+  answerId: "library"
+}, {
+  textKey: "q2",
+  answerId: "toilet"
+}, {
+  textKey: "q3",
+  answerId: "playground"
+}, {
+  textKey: "q4",
+  answerId: "office"
+}, {
+  textKey: "q5",
+  answerId: "classroom"
+}, {
+  textKey: "q6",
+  answerId: "musicroom"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [qIndex, setQIndex] = useState(0);
+  const [feedback, setFeedback] = useState(null); // 'correct' | 'wrong'
+  const [showConfetti, setShowConfetti] = useState(false);
+  const getText = (key, subKey) => {
+    if (subKey) return t[key][subKey][lang] || t[key][subKey]["en"];
+    return t[key][lang] || t[key]["en"];
+  };
+  const currentQ = questions[qIndex];
+  const handleRoomClick = roomId => {
+    if (feedback === "correct") return;
+    if (roomId === currentQ.answerId) {
+      setFeedback("correct");
+      playSound("correct");
+    } else {
+      setFeedback("wrong");
+      playSound("wrong");
+      setTimeout(() => setFeedback(null), 1000);
+    }
+  };
+  const nextQ = () => {
+    setFeedback(null);
+    if (qIndex < questions.length - 1) {
+      setQIndex(qIndex + 1);
+    } else {
+      setQIndex(-1); // Finished
+      setShowConfetti(true);
+    }
+  };
+  const restart = () => {
+    setQIndex(0);
+    setFeedback(null);
+    setShowConfetti(false);
+  };
+  const playSound = type => {
+    // Placeholder for sound effect logic
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-sky-600 mb-4 mt-8 text-center drop-shadow-md"
+  }, "🏫 ", getText("title")), qIndex !== -1 ? /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-4xl flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white rounded-3xl p-6 shadow-xl mb-6 w-full max-w-2xl text-center border-4 border-sky-200"
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-500 font-bold mb-2"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("h2", {
+    className: "text-2xl md:text-3xl font-black text-slate-800"
+  }, getText(currentQ.textKey))), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 md:grid-cols-3 gap-4 w-full"
+  }, rooms.map(room => /*#__PURE__*/React.createElement(motion.button, {
+    key: room.id,
+    onClick: () => handleRoomClick(room.id),
+    whileHover: {
+      scale: 1.05
+    },
+    whileTap: {
+      scale: 0.95
+    },
+    className: `${room.color} h-32 md:h-40 rounded-2xl shadow-lg flex items-center justify-center p-4 border-b-8 border-black/10 relative overflow-hidden`
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-white font-black text-xl md:text-2xl drop-shadow-md z-10"
+  }, getText(room.id)), /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 bg-white/10 opacity-0 hover:opacity-100 transition-opacity"
+  })))), /*#__PURE__*/React.createElement(AnimatePresence, null, feedback && /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      opacity: 0,
+      y: 50
+    },
+    animate: {
+      opacity: 1,
+      y: 0
+    },
+    exit: {
+      opacity: 0,
+      y: 20
+    },
+    className: `fixed bottom-8 left-0 right-0 mx-auto w-[90%] max-w-md p-6 rounded-3xl shadow-2xl text-center z-50 ${feedback === "correct" ? "bg-green-500 text-white" : "bg-red-500 text-white"}`
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-3xl font-black mb-2"
+  }, feedback === "correct" ? "🎉 " + getText("correct") : "❌ " + getText("tryAgain")), feedback === "correct" && /*#__PURE__*/React.createElement("button", {
+    onClick: nextQ,
+    className: "mt-4 bg-white text-green-600 px-8 py-3 rounded-full font-black text-xl hover:scale-105 transition-transform shadow-lg"
+  }, getText("next"), " ➡️")))) : /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center justify-center mt-20"
+  }, /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      scale: 0
+    },
+    animate: {
+      scale: 1
+    },
+    className: "text-6xl mb-4"
+  }, "🏆"), /*#__PURE__*/React.createElement("h2", {
+    className: "text-4xl font-black text-sky-700 mb-8"
+  }, getText("completed")), /*#__PURE__*/React.createElement("button", {
+    onClick: restart,
+    className: "bg-sky-500 text-white px-10 py-4 rounded-full font-black text-2xl hover:bg-sky-600 shadow-xl transition-transform hover:scale-105"
+  }, getText("restart"), " 🔄")));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

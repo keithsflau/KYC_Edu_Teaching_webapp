@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小三常識：護齒小天使 | Healthy Teeth</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+        cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><text y="20" font-size="20">🪥</text></svg>')
+            2 20,
+          auto;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect,
+  useRef
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Healthy Teeth",
+    zh: "護齒小天使",
+    ja: "健康な歯",
+    ko: "건강한 치아",
+    es: "Dientes Sanos",
+    de: "Gesunde Zähne",
+    fi: "Terveet hampaat",
+    fr: "Dents saines",
+    ar: "أسنان صحية",
+    it: "Denti Sani"
+  },
+  instruction: {
+    en: "Brush away the dirt!",
+    zh: "把牙齒刷乾淨！",
+    ja: "歯の汚れを磨き落とそう！",
+    ko: "치아의 때를 닦아내세요!",
+    es: "¡Cepilla la suciedad!",
+    de: "Putz den Schmutz weg!",
+    fi: "Harjaa lika pois!",
+    fr: "Brossez la saleté !",
+    ar: "نظف الأوساخ بالفرشاة!",
+    it: "Spazzola via lo sporco!"
+  },
+  clean: {
+    en: "Sparkling Clean!",
+    zh: "乾淨亮白！",
+    ja: "ピカピカ清潔！",
+    ko: "반짝반짝 깨끗해요!",
+    es: "¡Reluciente de Limpio!",
+    de: "Blitzsauber!",
+    fi: "Hohtavan puhdasta!",
+    fr: "Étincelant de propreté !",
+    ar: "نظيف لامع!",
+    it: "Splendente Pulito!"
+  },
+  reset: {
+    en: "Brush Again",
+    zh: "再刷一次",
+    ja: "もう一度磨く",
+    ko: "다시 닦기",
+    es: "Cepillar de Nuevo",
+    de: "Nochmal putzen",
+    fi: "Harjaa uudelleen",
+    fr: "Brosser à nouveau",
+    ar: "اغسل مرة أخرى",
+    it: "Spazzola di Nuovo"
+  },
+  food_instruction: {
+    en: "Which foods are bad for teeth?",
+    zh: "哪些食物對牙齒不好？",
+    ja: "歯に悪い食べ物はどれ？",
+    ko: "어떤 음식이 치아에 해로울까요?",
+    es: "¿Qué alimentos son malos para los dientes?",
+    de: "Welche Lebensmittel sind schlecht für die Zähne?",
+    fi: "Mitkä ruoat ovat pahaksi hampaille?",
+    fr: "Quels aliments sont mauvais pour les dents ?",
+    ar: "ما هي الأطعمة الضارة بالأسنان؟",
+    it: "Quali cibi fanno male ai denti?"
+  },
+  bad_food: {
+    en: "Sugary Food",
+    zh: "高糖食物",
+    ja: "甘い食べ物",
+    ko: "단 음식",
+    es: "Comida Azucarada",
+    de: "Zuckerhaltiges Essen",
+    fi: "Sokerinen ruoka",
+    fr: "Nourriture sucrée",
+    ar: "طعام سكري",
+    it: "Cibo Zuccherato"
+  },
+  good_food: {
+    en: "Healthy Food",
+    zh: "健康食物",
+    ja: "健康的な食べ物",
+    ko: "건강한 음식",
+    es: "Comida Saludable",
+    de: "Gesundes Essen",
+    fi: "Terveellinen ruoka",
+    fr: "Nourriture saine",
+    ar: "طعام صحي",
+    it: "Cibo Sano"
+  },
+  level2: {
+    en: "Next: Food Quiz",
+    zh: "下一關：食物問答",
+    ja: "次へ：食べ物クイズ",
+    ko: "다음: 음식 퀴즈",
+    es: "Siguiente: Cuestionario",
+    de: "Weiter: Essens-Quiz",
+    fi: "Seuraava: Ruokavisa",
+    fr: "Suivant : Quiz alimentaire",
+    ar: "التالي: مسابقة الطعام",
+    it: "Avanti: Quiz sul Cibo"
+  },
+  correct: {
+    en: "Correct!",
+    zh: "答對了！",
+    ja: "正解！",
+    ko: "정답입니다!",
+    es: "¡Correcto!",
+    de: "Richtig!",
+    fi: "Oikein!",
+    fr: "Correct !",
+    ar: "صحيح!",
+    it: "Corretto!"
+  },
+  wrong: {
+    en: "Think again!",
+    zh: "想一想！",
+    ja: "もう一度考えて！",
+    ko: "다시 생각해보세요!",
+    es: "¡Piénsalo de nuevo!",
+    de: "Denk nochmal nach!",
+    fi: "Mieti uudelleen!",
+    fr: "Réfléchissez encore !",
+    ar: "فكر مرة أخرى!",
+    it: "Pensaci ancora!"
+  }
+};
+
+// Tooth positions in a simplified arc
+const teethPos = [{
+  id: 1,
+  x: 20,
+  y: 60
+}, {
+  id: 2,
+  x: 30,
+  y: 70
+}, {
+  id: 3,
+  x: 40,
+  y: 75
+}, {
+  id: 4,
+  x: 50,
+  y: 75
+}, {
+  id: 5,
+  x: 60,
+  y: 75
+}, {
+  id: 6,
+  x: 70,
+  y: 70
+}, {
+  id: 7,
+  x: 80,
+  y: 60
+}, {
+  id: 8,
+  x: 25,
+  y: 40
+}, {
+  id: 9,
+  x: 35,
+  y: 30
+}, {
+  id: 10,
+  x: 45,
+  y: 25
+}, {
+  id: 11,
+  x: 55,
+  y: 25
+}, {
+  id: 12,
+  x: 65,
+  y: 30
+}, {
+  id: 13,
+  x: 75,
+  y: 40
+}];
+const foods = [{
+  id: "candy",
+  icon: "🍬",
+  type: "bad"
+}, {
+  id: "apple",
+  icon: "🍎",
+  type: "good"
+}, {
+  id: "soda",
+  icon: "🥤",
+  type: "bad"
+}, {
+  id: "milk",
+  icon: "🥛",
+  type: "good"
+}, {
+  id: "cake",
+  icon: "🍰",
+  type: "bad"
+}, {
+  id: "carrot",
+  icon: "🥕",
+  type: "good"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [mode, setMode] = useState("brush"); // brush, quiz
+  const [dirt, setDirt] = useState(teethPos.map(t => ({
+    id: t.id,
+    level: 10
+  })) // 10 = very dirty, 0 = clean
+  );
+  const [quizState, setQuizState] = useState({
+    current: 0,
+    score: 0,
+    feedback: null
+  });
+  const getText = key => t[key][lang] || t[key]["en"];
+
+  // Brushing Logic
+  const handleBrush = id => {
+    if (mode !== "brush") return;
+    setDirt(prev => prev.map(d => {
+      if (d.id === id && d.level > 0) {
+        return {
+          ...d,
+          level: Math.max(0, d.level - 1)
+        };
+      }
+      return d;
+    }));
+  };
+  const allClean = dirt.every(d => d.level === 0);
+
+  // Quiz Logic
+  const handleQuizAnswer = answer => {
+    if (quizState.feedback) return;
+    const currentFood = foods[quizState.current];
+    const isCorrect = currentFood.type === "bad" && answer === "bad" || currentFood.type === "good" && answer === "good";
+    const atLast = quizState.current >= foods.length - 1;
+    setQuizState(prev => ({
+      ...prev,
+      feedback: isCorrect ? "correct" : "wrong",
+      score: isCorrect ? prev.score + 1 : prev.score
+    }));
+    setTimeout(() => {
+      if (!atLast) {
+        setQuizState(prev => ({
+          ...prev,
+          current: prev.current + 1,
+          feedback: null
+        }));
+      } else {
+        setQuizState({
+          current: 0,
+          score: 0,
+          feedback: null
+        });
+        setMode("brush");
+        setDirt(teethPos.map(t => ({
+          id: t.id,
+          level: 10
+        })));
+      }
+    }, 1000);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 flex flex-col items-center select-none overflow-hidden"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-blue-600 mb-4 mt-8 drop-shadow-sm bg-white/50 px-6 py-2 rounded-full"
+  }, "🦷 ", getText("title")), mode === "brush" && /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center w-full max-w-2xl"
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "font-bold text-blue-800 mb-6 text-xl"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "relative w-full aspect-square bg-white rounded-full shadow-2xl border-8 border-blue-200 overflow-hidden flex items-center justify-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 bg-red-100 rounded-full scale-90 border-8 border-red-200"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-10 left-1/2 -translate-x-1/2 w-32 h-20 bg-red-300 rounded-t-full"
+  }), teethPos.map(tp => {
+    const dirtLevel = dirt.find(d => d.id === tp.id).level;
+    return /*#__PURE__*/React.createElement("div", {
+      key: tp.id,
+      className: "absolute w-16 h-20 bg-white rounded-xl shadow-md flex items-center justify-center cursor-pointer transition-transform active:scale-95 hover:bg-slate-50 border-2 border-slate-100",
+      style: {
+        left: `${tp.x}%`,
+        top: `${tp.y}%`,
+        transform: "translate(-50%, -50%)"
+      },
+      onMouseEnter: () => handleBrush(tp.id) // Hover to brush on PC
+      ,
+      onTouchMove: () => handleBrush(tp.id) // Touch drag to brush
+      ,
+      onClick: () => handleBrush(tp.id) // Click/Tap fallback
+    }, dirtLevel > 0 ? /*#__PURE__*/React.createElement("div", {
+      className: "text-yellow-600 font-bold opacity-80",
+      style: {
+        opacity: dirtLevel / 10
+      }
+    }, ["🦠", "🌿", "🍫", "🍪"][tp.id % 4]) : /*#__PURE__*/React.createElement("div", {
+      className: "text-2xl animate-pulse"
+    }, "✨"), dirtLevel > 0 && /*#__PURE__*/React.createElement("div", {
+      className: "absolute inset-0 bg-yellow-900/20 rounded-xl",
+      style: {
+        opacity: dirtLevel / 10
+      }
+    }));
+  }), allClean && /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm animate-fade-in"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-8xl mb-4"
+  }, "🦷✨"), /*#__PURE__*/React.createElement("h2", {
+    className: "text-4xl font-black text-blue-600 mb-6"
+  }, getText("clean")), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setMode("quiz"),
+    className: "bg-blue-500 text-white px-8 py-3 rounded-full font-bold shadow-xl hover:bg-blue-600 text-xl"
+  }, getText("level2"), " ➡️")))), mode === "quiz" && /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center w-full max-w-lg mt-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-8 rounded-3xl shadow-xl w-full text-center"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "text-2xl font-black text-slate-700 mb-6"
+  }, getText("food_instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "text-9xl mb-8 animate-bounce-slow"
+  }, foods[quizState.current].icon), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4 w-full"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => handleQuizAnswer("good"),
+    disabled: !!quizState.feedback,
+    className: "flex-1 bg-green-100 hover:bg-green-200 text-green-800 py-6 rounded-2xl font-bold text-xl border-4 border-green-300"
+  }, "😁 ", getText("good_food")), /*#__PURE__*/React.createElement("button", {
+    onClick: () => handleQuizAnswer("bad"),
+    disabled: !!quizState.feedback,
+    className: "flex-1 bg-red-100 hover:bg-red-200 text-red-800 py-6 rounded-2xl font-bold text-xl border-4 border-red-300"
+  }, "😖 ", getText("bad_food"))), quizState.feedback && /*#__PURE__*/React.createElement("div", {
+    className: `mt-6 p-4 rounded-xl font-black text-2xl ${quizState.feedback === "correct" ? "bg-green-500 text-white" : "bg-red-500 text-white"}`
+  }, getText(quizState.feedback)))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

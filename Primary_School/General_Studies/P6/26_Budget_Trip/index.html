@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - Trip Budget</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: #ecfeff;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Budget Planner",
+    zh: "預算計劃員",
+    ja: "予算プランナー",
+    ko: "예산 계획자",
+    es: "Planificador de presupuesto",
+    de: "Budgetplaner",
+    fi: "Budjettisuunnittelija",
+    fr: "Planificateur de budget",
+    ar: "مخطط الميزانية",
+    it: "Pianificatore Budget"
+  },
+  instruction: {
+    en: "Plan a trip with $1000!",
+    zh: "用 $1000 計劃一次旅行！",
+    ja: "$1000で旅行を計画しましょう！",
+    ko: "$1000로 여행을 계획하세요!",
+    es: "¡Planifica un viaje con $1000!",
+    de: "Plane eine Reise mit 1000 $!",
+    fi: "Suunnittele matka 1000 dollarilla!",
+    fr: "Planifiez un voyage avec 1000 $ !",
+    ar: "خطط لرحلة بمبلغ 1000 دولار!",
+    it: "Pianifica un viaggio con $1000!"
+  },
+  transport: {
+    en: "Transport",
+    zh: "交通",
+    ja: "交通",
+    ko: "교통"
+  },
+  hotel: {
+    en: "Hotel",
+    zh: "住宿",
+    ja: "宿泊",
+    ko: "숙박"
+  },
+  food: {
+    en: "Food",
+    zh: "膳食",
+    ja: "食事",
+    ko: "음식"
+  },
+  bus: {
+    en: "Bus ($50)",
+    zh: "巴士 ($50)",
+    ja: "バス ($50)",
+    ko: "버스 ($50)"
+  },
+  plane: {
+    en: "Plane ($500)",
+    zh: "飛機 ($500)",
+    ja: "飛行機 ($500)",
+    ko: "비행기 ($500)"
+  },
+  hostel: {
+    en: "Hostel ($100)",
+    zh: "青年旅舍 ($100)",
+    ja: "ホステル ($100)",
+    ko: "호스텔 ($100)"
+  },
+  luxury: {
+    en: "5-Star ($400)",
+    zh: "五星級 ($400)",
+    ja: "5つ星 ($400)",
+    ko: "5성급 ($400)"
+  },
+  street: {
+    en: "Street Food ($50)",
+    zh: "街頭小吃 ($50)",
+    ja: "屋台 ($50)",
+    ko: "길거리 음식 ($50)"
+  },
+  fine: {
+    en: "Fine Dining ($200)",
+    zh: "高級餐廳 ($200)",
+    ja: "高級料理 ($200)",
+    ko: "고급 식사 ($200)"
+  },
+  balance: {
+    en: "Balance:",
+    zh: "餘額：",
+    ja: "残高：",
+    ko: "잔액:"
+  },
+  success: {
+    en: "Trip Booked! ✈️",
+    zh: "旅程已預訂！✈️",
+    ja: "予約完了！✈️",
+    ko: "여행 예약 완료! ✈️"
+  },
+  fail: {
+    en: "Over Budget! 💸",
+    zh: "超出預算！💸",
+    ja: "予算オーバー！💸",
+    ko: "예산 초과! 💸"
+  }
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [choices, setChoices] = useState({
+    transport: 0,
+    hotel: 0,
+    food: 0
+  });
+  const getText = key => t[key][lang] || t[key]["en"];
+  const budget = 1000;
+  const total = choices.transport + choices.hotel + choices.food;
+  const remaining = budget - total;
+  const options = {
+    transport: [{
+      cost: 50,
+      label: "bus",
+      icon: "🚌"
+    }, {
+      cost: 500,
+      label: "plane",
+      icon: "✈️"
+    }],
+    hotel: [{
+      cost: 100,
+      label: "hostel",
+      icon: "🛏️"
+    }, {
+      cost: 400,
+      label: "luxury",
+      icon: "🏨"
+    }],
+    food: [{
+      cost: 50,
+      label: "street",
+      icon: "🌭"
+    }, {
+      cost: 200,
+      label: "fine",
+      icon: "🍽️"
+    }]
+  };
+  const handleSelect = (cat, val) => {
+    setChoices({
+      ...choices,
+      [cat]: val
+    });
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-bold mb-8 text-cyan-700"
+  }, getText("title")), /*#__PURE__*/React.createElement("p", {
+    className: "mb-4 font-bold text-slate-500"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-xl bg-white p-8 rounded-3xl shadow-xl border-4 border-cyan-100 flex flex-col gap-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: `text-center p-4 rounded-xl border-2 ${remaining >= 0 ? "bg-green-100 border-green-300 text-green-800" : "bg-red-100 border-red-300 text-red-800"}`
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-sm font-bold uppercase"
+  }, getText("balance")), /*#__PURE__*/React.createElement("div", {
+    className: "text-5xl font-black"
+  }, "$", remaining)), Object.keys(options).map(cat => /*#__PURE__*/React.createElement("div", {
+    key: cat
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "font-bold text-slate-400 mb-2 uppercase text-xs tracking-wider"
+  }, getText(cat)), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4"
+  }, options[cat].map(opt => /*#__PURE__*/React.createElement("button", {
+    key: opt.label,
+    onClick: () => handleSelect(cat, opt.cost),
+    className: `flex-1 p-4 rounded-xl flex flex-col items-center border-2 transition-all
+                                  ${choices[cat] === opt.cost ? "bg-cyan-500 border-cyan-600 text-white shadow-lg scale-105" : "bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100"}
+                               `
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-3xl mb-1"
+  }, opt.icon), /*#__PURE__*/React.createElement("span", {
+    className: "font-bold text-sm"
+  }, getText(opt.label))))))), remaining >= 0 && choices.transport > 0 && choices.hotel > 0 && choices.food > 0 && /*#__PURE__*/React.createElement("div", {
+    className: "mt-4 text-center text-3xl font-black text-cyan-600 animate-bounce"
+  }, getText("success")), remaining < 0 && /*#__PURE__*/React.createElement("div", {
+    className: "mt-4 text-center text-3xl font-black text-red-500 animate-shake"
+  }, getText("fail"))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

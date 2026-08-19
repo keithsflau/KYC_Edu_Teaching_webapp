@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小六數學：概率事件 | Probability Events</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Probability Types",
+    zh: "概率事件分類",
+    ja: "確率の種類",
+    ko: "확률의 유형",
+    es: "Tipos de Probabilidad",
+    de: "Wahrscheinlichkeitsarten",
+    fi: "Todennäköisyystyypit",
+    fr: "Types de probabilité",
+    ar: "أنواع الاحتمالات",
+    it: "Tipi di Probabilità"
+  },
+  classify: {
+    en: "Classify the Event",
+    zh: "分類事件",
+    ja: "イベントを分類",
+    ko: "사건 분류",
+    es: "Clasificar el Evento",
+    de: "Das Ereignis klassifizieren",
+    fi: "Luokittele tapahtuma",
+    fr: "Classer l'événement",
+    ar: "تصنيف الحدث",
+    it: "Classifica l'Evento"
+  },
+  impossible: {
+    en: "Impossible",
+    zh: "不可能",
+    ja: "不可能",
+    ko: "불가능",
+    es: "Imposible",
+    de: "Unmöglich",
+    fi: "Mahdoton",
+    fr: "Impossible",
+    ar: "مستحيل",
+    it: "Impossibile"
+  },
+  possible: {
+    en: "Possible",
+    zh: "可能",
+    ja: "可能",
+    ko: "가능",
+    es: "Posible",
+    de: "Möglich",
+    fi: "Mahdollinen",
+    fr: "Possible",
+    ar: "ممكن",
+    it: "Possibile"
+  },
+  certain: {
+    en: "Certain",
+    zh: "一定",
+    ja: "確実",
+    ko: "확실",
+    es: "Cierto",
+    de: "Sicher",
+    fi: "Varma",
+    fr: "Certain",
+    ar: "مؤكد",
+    it: "Certo"
+  },
+  correct: {
+    en: "Correct!",
+    zh: "答對了！",
+    ja: "正解！",
+    ko: "정답!",
+    es: "¡Correcto!",
+    de: "Richtig!",
+    fi: "Oikein!",
+    fr: "Correct !",
+    ar: "صحيح!",
+    it: "Corretto!"
+  },
+  wrong: {
+    en: "Try Again",
+    zh: "再試一次",
+    ja: "もう一度",
+    ko: "다시 시도",
+    es: "Inténtalo de nuevo",
+    de: "Versuchen Sie es erneut",
+    fi: "Yritä uudelleen",
+    fr: "Réessayez",
+    ar: "حاول مرة أخرى",
+    it: "Riprova"
+  },
+  next: {
+    en: "Next",
+    zh: "下一題",
+    ja: "次へ",
+    ko: "다음",
+    es: "Siguiente",
+    de: "Weiter",
+    fi: "Seuraava",
+    fr: "Suivant",
+    ar: "التالي",
+    it: "Avanti"
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+const EVENTS = [{
+  prob: "certain",
+  text: {
+    en: "The sun rises in the east",
+    zh: "太陽從東邊升起",
+    ja: "太陽は東から昇る",
+    ko: "해는 동쪽에서 뜬다",
+    es: "El sol sale por el este",
+    de: "Die Sonne geht im Osten auf",
+    fr: "Le soleil se lève à l'est",
+    it: "Il sole sorge a est"
+  }
+}, {
+  prob: "impossible",
+  text: {
+    en: "Rolling a 7 on a standard die",
+    zh: "擲骰子擲出 7",
+    ja: "サイコロで7が出る",
+    ko: "주사위에서 7이 나온다",
+    es: "Sacar un 7 en un dado",
+    de: "Eine 7 würfeln",
+    fr: "Obtenir un 7 sur un dé",
+    it: "Fare 7 con un dado"
+  }
+}, {
+  prob: "possible",
+  text: {
+    en: "It will rain tomorrow",
+    zh: "明天會下雨",
+    ja: "明日は雨が降る",
+    ko: "내일 비가 올 것이다",
+    es: "Lloverá mañana",
+    de: "Morgen wird es regnen",
+    fr: "Il pleuvra demain",
+    it: "Domani pioverà"
+  }
+}, {
+  prob: "possible",
+  text: {
+    en: "Flipping a coin gives Heads",
+    zh: "擲硬幣是公 (洋紫荊)",
+    ja: "コイン投げで表が出る",
+    ko: "동전 던지기 앞면",
+    es: "Sale cara al lanzar moneda",
+    de: "Münzwurf ergibt Kopf",
+    fr: "Pile ou face donne Face",
+    it: "Testa al lancio della moneta"
+  },
+  sub: {
+    en: "(Equal Chance)",
+    zh: "(機會均等)",
+    ja: "(五分五分)",
+    ko: "(반반)",
+    es: "(Probabilidad Igual)",
+    de: "(Gleiche Chance)",
+    fr: "(Chance égale)",
+    it: "(Possibilità uguale)"
+  }
+}, {
+  prob: "impossible",
+  text: {
+    en: "Dividing by zero",
+    zh: "被零除",
+    ja: "ゼロで割る",
+    ko: "0으로 나누기",
+    es: "Dividir por cero",
+    de: "Durch Null teilen",
+    fr: "Diviser par zéro",
+    it: "Dividere per zero"
+  }
+}, {
+  prob: "certain",
+  text: {
+    en: "Triangle has 3 sides",
+    zh: "三角形有 3 條邊",
+    ja: "三角形には3つの辺がある",
+    ko: "삼각형은 3개의 변을 가진다",
+    es: "El triángulo tiene 3 lados",
+    de: "Ein Dreieck hat 3 Seiten",
+    fr: "Un triangle a 3 côtés",
+    it: "Il triangolo ha 3 lati"
+  }
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [currentIdx, setCurrentIdx] = useState(0);
+  const [status, setStatus] = useState("idle"); // idle, correct, wrong
+  const [selectedType, setSelectedType] = useState(null);
+  const currentEvent = EVENTS[currentIdx];
+  const eventText = currentEvent.text[lang] || currentEvent.text["en"];
+  const subText = currentEvent.sub ? currentEvent.sub[lang] || currentEvent.sub["en"] : "";
+  const handleSelect = type => {
+    if (status === "correct") return;
+    setSelectedType(type);
+
+    // Special logic: 'possible' covers equal chance too for simplicity in UI classification
+    // But let's check exact match logic
+    const isCorrect = currentEvent.prob === type || currentEvent.prob === "equal" && type === "possible"; // Assuming 'equal' maps to 'possible' in this simplified 3-choice UI?
+
+    // Actually, the previous data only had impossible/possible/certain, but one item was labeled 'equal'.
+    // Let's stick to 3 categories: Impossible (0%), Possible (>0% <100%), Certain (100%).
+    // So 'equal' is a subset of 'possible'.
+
+    if (type === currentEvent.prob || currentEvent.prob === "equal" && type === "possible") {
+      setStatus("correct");
+    } else {
+      setStatus("wrong");
+    }
+  };
+  const next = () => {
+    setCurrentIdx((currentIdx + 1) % EVENTS.length);
+    setStatus("idle");
+    setSelectedType(null);
+  };
+  const CHOICE_BTNS = [{
+    type: "impossible",
+    color: "bg-red-500",
+    label: "impossible"
+  }, {
+    type: "possible",
+    color: "bg-yellow-500",
+    label: "possible"
+  }, {
+    type: "certain",
+    color: "bg-green-500",
+    label: "certain"
+  }];
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4 font-sans bg-slate-900 text-white"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-4xl flex justify-between items-center mb-10"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-black text-emerald-400 drop-shadow-[0_0_15px_rgba(52,211,153,0.5)]"
+  }, "🔮 ", getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "flex bg-slate-800/80 p-1.5 rounded-xl border border-white/10 flex-wrap justify-end gap-1 max-w-[50%]"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-emerald-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white hover:bg-white/5"}`
+  }, l)))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-3xl flex flex-col gap-8"
+  }, /*#__PURE__*/React.createElement(motion.div, {
+    key: currentIdx,
+    initial: {
+      opacity: 0,
+      y: 20
+    },
+    animate: {
+      opacity: 1,
+      y: 0
+    },
+    className: "glass-panel p-12 rounded-3xl min-h-[200px] flex flex-col items-center justify-center text-center relative overflow-hidden"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 bg-emerald-900/10 -z-10"
+  }), /*#__PURE__*/React.createElement("h2", {
+    className: "text-3xl md:text-4xl font-black text-white mb-4 leading-tight"
+  }, eventText), subText && /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-400 font-bold"
+  }, subText)), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-1 md:grid-cols-3 gap-4"
+  }, CHOICE_BTNS.map(btn => {
+    const isSelected = selectedType === btn.type;
+    let stateClass = "opacity-100";
+    if (status !== "idle" && !isSelected) stateClass = "opacity-50 blur-[1px]";
+    return /*#__PURE__*/React.createElement("button", {
+      key: btn.type,
+      onClick: () => handleSelect(btn.type),
+      className: `
+                                   relative h-32 rounded-2xl border-4 transition-all duration-300 shadow-xl overflow-hidden group
+                                   ${isSelected ? status === "correct" ? "border-green-400 scale-105 z-10" : "border-red-400 scale-105 z-10" : "border-transparent hover:border-white/20 hover:scale-105"}
+                                   ${stateClass}
+                                   ${btn.color}
+                               `
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors"
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "absolute inset-0 flex items-center justify-center"
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "text-2xl font-black uppercase tracking-wider drop-shadow-md pb-2"
+    }, getText(btn.label, lang))), /*#__PURE__*/React.createElement("div", {
+      className: "absolute bottom-4 left-4 right-4 h-2 bg-black/30 rounded-full overflow-hidden"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "h-full bg-white",
+      style: {
+        width: btn.type === "impossible" ? "0%" : btn.type === "certain" ? "100%" : "50%"
+      }
+    })));
+  })), status !== "idle" && /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      opacity: 0,
+      height: 0
+    },
+    animate: {
+      opacity: 1,
+      height: "auto"
+    },
+    className: "flex justify-center"
+  }, status === "correct" ? /*#__PURE__*/React.createElement("button", {
+    onClick: next,
+    className: "px-12 py-4 bg-green-500 hover:bg-green-400 text-slate-900 text-xl font-black rounded-2xl shadow-[0_0_20px_rgba(34,197,94,0.5)] transition-transform active:scale-95 flex items-center gap-3"
+  }, /*#__PURE__*/React.createElement("span", null, "🎉 ", getText("correct", lang)), /*#__PURE__*/React.createElement("span", null, getText("next", lang), " ➔")) : /*#__PURE__*/React.createElement("div", {
+    className: "px-12 py-4 bg-slate-700 text-red-400 text-xl font-bold rounded-2xl border-2 border-red-500/50"
+  }, getText("wrong", lang)))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

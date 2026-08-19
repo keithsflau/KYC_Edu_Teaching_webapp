@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小一常識：中國傳統節日 | Chinese Festivals</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background:
+          radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.35) 0 2px, transparent 3px),
+          radial-gradient(circle at 80% 40%, rgba(255, 255, 255, 0.25) 0 1.5px, transparent 2.5px),
+          linear-gradient(135deg, #fef2f2 0%, #fecaca 100%);
+        background-size: 24px 24px, 18px 18px, auto;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Festive Food Match",
+    zh: "節日食品配對",
+    ja: "祭りの食べ物",
+    ko: "명절 음식 짝짓기",
+    es: "Comida festiva",
+    de: "Festliches Essen",
+    fi: "Juhlava ruoka",
+    fr: "Nourriture festive",
+    ar: "طعام احتفالي",
+    it: "Cibo festivi"
+  },
+  instruction: {
+    en: "What do we eat during this festival?",
+    zh: "這個節日我們會吃什麼？",
+    ja: "この祭りでは何を食べますか？",
+    ko: "이 축제 때 우리는 무엇을 먹나요?",
+    es: "¿Qué comemos durante este festival?",
+    de: "Was essen wir während dieses Festes?",
+    fi: "Mitä syömme tämän juhlan aikana?",
+    fr: "Que mangeons-nous pendant ce festival ?",
+    ar: "ماذا نأكل خلال هذا المهرجان؟",
+    it: "Cosa mangiamo durante questa festa?"
+  },
+  cny: {
+    en: "Lunar New Year",
+    zh: "農曆新年",
+    es: "Año Nuevo Lunar",
+    de: "Mondneujahr",
+    fi: "Kuun uusi vuosi",
+    fr: "Nouvel An lunaire",
+    ar: "رأس السنة القمرية",
+    it: "Capodanno lunare"
+  },
+  mid: {
+    en: "Mid-Autumn Festival",
+    zh: "中秋節",
+    es: "Festival del Medio Otoño",
+    de: "Mondfest",
+    fi: "Keskisyksyn juhla",
+    fr: "Fête de la mi-automne",
+    ar: "مهرجان منتصف الخريف",
+    it: "Festival di metà autunno"
+  },
+  dragon: {
+    en: "Dragon Boat Festival",
+    zh: "端午節",
+    es: "Festival del Bote del Dragón",
+    de: "Drachenbootfest",
+    fi: "Lohikäärmevenejuhla",
+    fr: "Fête des bateaux-dragons",
+    ar: "مهرجان قوارب التنين",
+    it: "Festival delle barche drago"
+  },
+  cake: {
+    en: "Rice Cake (Nian Gao)",
+    zh: "年糕",
+    es: "Pastel de arroz",
+    de: "Reiskuchen",
+    fi: "Riisikakku",
+    fr: "Gâteau de riz",
+    ar: "كعكة الأرز",
+    it: "Torta di riso"
+  },
+  turnip: {
+    en: "Turnip Cake",
+    zh: "蘿蔔糕",
+    es: "Pastel de nabo",
+    de: "Rübenkuchen",
+    fi: "Nauriskakku",
+    fr: "Gâteau de navet",
+    ar: "كعكة اللفت",
+    it: "Torta di rapa"
+  },
+  moon: {
+    en: "Mooncake",
+    zh: "月餅",
+    es: "Pastel de luna",
+    de: "Mondkuchen",
+    fi: "Kuukakku",
+    fr: "Gâteau de lune",
+    ar: "كعكة القمر",
+    it: "Torta lunare"
+  },
+  starfruit: {
+    en: "Starfruit",
+    zh: "楊桃",
+    es: "Carambola",
+    de: "Sternfrucht",
+    fi: "Tähtihedelmä",
+    fr: "Carambole",
+    ar: "فاكهة النجمة",
+    it: "Frutto stella"
+  },
+  dumpling: {
+    en: "Rice Dumpling (Zongzi)",
+    zh: "粽子",
+    es: "Zongzi",
+    de: "Klebreisknödel",
+    fi: "Riisimytky",
+    fr: "Zongzi",
+    ar: "زلابية الأرز",
+    it: "Zongzi"
+  },
+  egg: {
+    en: "Salted Egg",
+    zh: "鹹蛋",
+    es: "Huevo salado",
+    de: "Gesalzenes Ei",
+    fi: "Suolattu muna",
+    fr: "Œuf salé",
+    ar: "بيض مملح",
+    it: "Uovo salato"
+  },
+  correct: {
+    en: "Yummy!",
+    zh: "答對了！好味道！",
+    es: "¡Qué rico!",
+    de: "Lecker!",
+    fi: "Nam!",
+    fr: "Miam !",
+    ar: "لذيذ!",
+    it: "Gnam!"
+  },
+  wrong: {
+    en: "Not quite...",
+    zh: "好像不是這個...",
+    es: "No exactamente...",
+    de: "Nicht ganz...",
+    fi: "Ei aivan...",
+    fr: "Pas tout à fait...",
+    ar: "ليس تماما...",
+    it: "Non proprio..."
+  },
+  completed: {
+    en: "Festival Expert!",
+    zh: "節日專家！",
+    es: "¡Experto en festivales!",
+    de: "Festexperte!",
+    fi: "Juhla-asiantuntija!",
+    fr: "Expert en festivals !",
+    ar: "خبير المهرجانات!",
+    it: "Esperto di festival!"
+  },
+  restart: {
+    en: "Play Again",
+    zh: "再玩一次",
+    es: "Jugar de nuevo",
+    de: "Nochmal spielen",
+    fi: "Pelaa uudelleen",
+    fr: "Rejouer",
+    ar: "العب مرة أخرى",
+    it: "Gioca di nuovo"
+  }
+};
+const quizData = [{
+  id: "cny",
+  bg: "bg-red-500",
+  icon: "🧧",
+  // 年糕、蘿蔔糕皆為農曆新年常見食品；選項必須包含所有正確答案
+  correct: ["cake", "turnip"],
+  options: ["cake", "turnip", "moon"]
+}, {
+  id: "mid",
+  bg: "bg-indigo-900",
+  // Dark night for moon
+  icon: "🌕",
+  // 中秋以月餅為主（楊桃並非典型中秋食品，且先前未出現在選項中）
+  correct: ["moon"],
+  options: ["dumpling", "moon", "turnip"]
+}, {
+  id: "dragon",
+  bg: "bg-teal-600",
+  // Water/Green
+  icon: "🐉",
+  correct: ["dumpling"],
+  options: ["cake", "dumpling", "starfruit"]
+}];
+const foodIcons = {
+  cake: "🧁",
+  // Nian Gao
+  turnip: "⬜",
+  // Turnip cake
+  moon: "🥮",
+  // Mooncake
+  starfruit: "⭐",
+  // Starfruit
+  dumpling: "🍙" // Zongzi - Rice ball emoji is closest or 🎋
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [qIdx, setQIdx] = useState(0);
+  const [feedback, setFeedback] = useState(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+  const currentQ = qIdx < quizData.length ? quizData[qIdx] : null;
+  const handleAnswer = optId => {
+    if (feedback) return;
+    if (currentQ.correct.includes(optId)) {
+      setFeedback("correct");
+      setTimeout(() => {
+        setFeedback(null);
+        setQIdx(qIdx + 1);
+      }, 1500);
+    } else {
+      setFeedback("wrong");
+      setTimeout(() => setFeedback(null), 1000);
+    }
+  };
+  const renderFood = id => {
+    // Custom render for clarity as emojis are ambiguous
+    let display = foodIcons[id] || "❓";
+    return /*#__PURE__*/React.createElement("div", {
+      className: "flex flex-col items-center"
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "text-6xl mb-2"
+    }, display), /*#__PURE__*/React.createElement("span", {
+      className: "font-bold text-slate-700"
+    }, getText(id)));
+  };
+  const restart = () => setQIdx(0);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-red-800 mb-8 mt-8 drop-shadow-sm bg-white/50 px-6 py-2 rounded-full"
+  }, "🏮 ", getText("title")), currentQ ? /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-2xl bg-white rounded-3xl p-8 shadow-2xl flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(motion.div, {
+    key: currentQ.id,
+    initial: {
+      opacity: 0,
+      y: -20
+    },
+    animate: {
+      opacity: 1,
+      y: 0
+    },
+    className: `${currentQ.bg} text-white w-full py-8 rounded-2xl flex flex-col items-center mb-8 shadow-lg`
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-8xl mb-4 filter drop-shadow"
+  }, currentQ.icon), /*#__PURE__*/React.createElement("h2", {
+    className: "text-3xl font-black text-center"
+  }, getText(currentQ.id))), /*#__PURE__*/React.createElement("p", {
+    className: "font-bold text-slate-500 mb-6"
+  }, getText("instruction")), feedback && /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      scale: 0
+    },
+    animate: {
+      scale: 1
+    },
+    className: `text-2xl font-black mb-4 px-6 py-2 rounded-full ${feedback === "correct" ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"}`
+  }, getText(feedback)), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-1 md:grid-cols-3 gap-6 w-full"
+  }, currentQ.options.map((opt, i) => /*#__PURE__*/React.createElement(motion.button, {
+    key: opt,
+    initial: {
+      opacity: 0,
+      x: -20
+    },
+    animate: {
+      opacity: 1,
+      x: 0
+    },
+    transition: {
+      delay: i * 0.1
+    },
+    onClick: () => handleAnswer(opt),
+    className: "bg-slate-50 hover:bg-red-50 border-4 border-slate-100 hover:border-red-200 rounded-xl p-6 transition-all shadow-md hover:scale-105 active:scale-95"
+  }, renderFood(opt))))) : /*#__PURE__*/React.createElement("div", {
+    className: "mt-12 text-center bg-white/90 p-12 rounded-3xl shadow-xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-8xl mb-4"
+  }, "🎉"), /*#__PURE__*/React.createElement("h2", {
+    className: "text-3xl font-black text-red-800 mb-6"
+  }, getText("completed")), /*#__PURE__*/React.createElement("button", {
+    onClick: restart,
+    className: "bg-red-600 text-white px-10 py-4 rounded-full font-black text-xl hover:bg-red-700 shadow-xl"
+  }, getText("restart"), " 🔄")));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

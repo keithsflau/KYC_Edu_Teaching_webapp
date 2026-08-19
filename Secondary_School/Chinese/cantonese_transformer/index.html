@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>口語大變身 2.0 (Cantonese Transformer)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;700;900&family=Noto+Sans+TC:wght@400;700;900&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Exo 2', 'Noto Sans TC', sans-serif;
+            background-color: #000;
+            overflow: hidden;
+            touch-action: none;
+            user-select: none;
+        }
+
+        #game-ui {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .hud-top {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px;
+        }
+
+        .score-display {
+            font-size: 2rem;
+            color: #22d3ee;
+            text-shadow: 0 0 10px rgba(34, 211, 238, 0.8);
+            font-weight: 900;
+        }
+
+        .lives-display {
+            font-size: 2rem;
+            color: #ef4444;
+            text-shadow: 0 0 10px rgba(239, 68, 68, 0.8);
+        }
+
+        .ammo-display {
+            font-size: 2.5rem;
+            color: #facc15;
+            text-shadow: 0 0 10px rgba(250, 204, 21, 0.8);
+            font-weight: 900;
+            min-width: 100px;
+        }
+
+        .boss-hp-bar-container {
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            height: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid #ef4444;
+            border-radius: 10px;
+            display: none;
+            overflow: hidden;
+        }
+
+        .boss-hp-bar {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, #ef4444, #f87171);
+            transition: width 0.2s;
+        }
+
+        .start-screen,
+        .game-over-screen {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+            pointer-events: auto;
+        }
+
+        .title {
+            font-size: 4rem;
+            font-weight: 900;
+            background: linear-gradient(to bottom, #22d3ee, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px rgba(34, 211, 238, 0.5);
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: #94a3b8;
+            font-size: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .glow-btn {
+            background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
+            color: white;
+            padding: 1rem 3rem;
+            font-size: 1.5rem;
+            border-radius: 50px;
+            font-weight: bold;
+            box-shadow: 0 0 20px rgba(14, 165, 233, 0.5);
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .glow-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 40px rgba(14, 165, 233, 0.8);
+        }
+
+        .powerup-notif {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3rem;
+            font-weight: 900;
+            color: #facc15;
+            text-shadow: 0 0 20px rgba(250, 204, 21, 1);
+            opacity: 0;
+            animation: popup 1.5s ease-out;
+        }
+
+        @keyframes popup {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.5);
+            }
+
+            20% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1.2);
+            }
+
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -200%) scale(1);
+            }
+        }
+
+        .shake {
+            animation: shake 0.3s cubic-bezier(.36, .07, .19, .97) both;
+        }
+
+        @keyframes shake {
+
+            10%,
+            90% {
+                transform: translate3d(-2px, 0, 0);
+            }
+
+            20%,
+            80% {
+                transform: translate3d(2px, 0, 0);
+            }
+
+            30%,
+            50%,
+            70% {
+                transform: translate3d(-6px, 0, 0);
+            }
+
+            40%,
+            60% {
+                transform: translate3d(6px, 0, 0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="game-ui">
+        <div class="hud-top">
+            <div class="ammo-display" id="ammo-display"></div>
+            <div class="score-display">SCORE: <span id="score">0</span></div>
+            <div class="lives-display" id="lives">❤❤❤</div>
+        </div>
+        <div class="boss-hp-bar-container" id="boss-hp-container">
+            <div class="boss-hp-bar" id="boss-hp"></div>
+        </div>
+        <div id="powerup-container"></div>
+    </div>
+
+    <div id="start-screen" class="start-screen">
+        <h1 class="title">口語大變身<br><span style="font-size:2rem;letter-spacing:0.5em;color:white;">TRANSFORMER</span>
+        </h1>
+        <p class="subtitle">將口語敵人轉化為書面語戰友！</p>
+        <button class="glow-btn" onclick="startGame()">MISSION START</button>
+        <p class="mt-8 text-slate-400 text-sm">移動: 滑鼠/觸控<br>射擊: 按住 Space (點擊切換書面語子彈)</p>
+    </div>
+
+    <div id="game-over-screen" class="game-over-screen hidden" style="display:none;">
+        <h1 class="title"
+            style="background:linear-gradient(to bottom, #ef4444, #b91c1c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">
+            MISSION FAILED</h1>
+        <div class="text-white text-3xl mb-2 font-bold">FINAL SCORE: <span id="final-score">0</span></div>
+        <div class="text-slate-400 mb-8" id="death-reason"></div>
+        <button class="glow-btn" onclick="startGame()">RETRY</button>
+    </div>
+
+    <script>
+        /**
+         * CANTONESE TRANSFORMER 2.0 (Bullet Hell Edition)
+         * Features: Canvas Engine, Particle System, Boss Battles, Weapon Upgrades
+         */
+
+        // --- Game Data ---
+        const WORD_PAIRS = [
+            { oral: "咁", written: "那麼", power: 1 }, { oral: "嘅", written: "的", power: 1 }, { oral: "唔", written: "不", power: 1 },
+            { oral: "啲", written: "些", power: 1 }, { oral: "冇", written: "沒有", power: 1 }, { oral: "好", written: "很", power: 1 },
+            { oral: "佢", written: "他", power: 1 }, { oral: "係", written: "是", power: 1 }, { oral: "睇", written: "看", power: 1 },
+            { oral: "去", written: "往", power: 1 }, { oral: "講", written: "說", power: 1 }, { oral: "食", written: "吃", power: 1 },
+            { oral: "點", written: "怎樣", power: 2 }, { oral: "乜", written: "什麼", power: 2 }, { oral: "邊", written: "哪裡", power: 2 },
+            { oral: "幾", written: "多少", power: 2 }, { oral: "咪", written: "就", power: 2 },
+            { oral: "諗", written: "想", power: 3 }, { oral: "搵", written: "找", power: 3 }, { oral: "畀", written: "給", power: 3 }
+        ];
+
+        const BOSS_DATA = {
+            name: "口語魔王 (Slang Lord)",
+            hp: 100,
+            words: ["因為咁", "所以話", "其實係", "根本就"]
+        };
+
+        // --- Engine Config ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let GAME_WIDTH, GAME_HEIGHT;
+
+        const PLAYER = { x: 0, y: 0, w: 60, h: 60, speed: 8, weaponLevel: 1, shootTimer: 0, maxHp: 3, hp: 3 };
+        const COLORS = {
+            player: '#0ea5e9',
+            bullet: '#facc15',
+            enemy: '#ef4444',
+            boss: '#a855f7',
+            text: '#ffffff'
+        };
+
+        // --- Game State ---
+        let state = {
+            isPlaying: false,
+            score: 0,
+            wave: 1,
+            enemies: [],
+            bullets: [],
+            particles: [],
+            powerups: [],
+            boss: null,
+            lastTime: 0,
+            shake: 0,
+            bgStars: [],
+            enemyIntervalId: null,
+            bossIntervalId: null
+        };
+
+        // --- Input ---
+        let input = { x: 0, y: 0, isDown: false, shooting: false };
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            GAME_WIDTH = canvas.width;
+            GAME_HEIGHT = canvas.height;
+            // Stars
+            state.bgStars = Array(100).fill(0).map(() => ({
+                x: Math.random() * GAME_WIDTH,
+                y: Math.random() * GAME_HEIGHT,
+                size: Math.random() * 2 + 0.5,
+                speed: Math.random() * 3 + 0.5
+            }));
+        }
+
+        // --- Classes ---
+        class Bullet {
+            constructor(x, y, written, angle = -Math.PI / 2) {
+                this.x = x;
+                this.y = y;
+                this.written = written;
+                this.angle = angle;
+                this.speed = 800;
+                this.active = true;
+                this.w = 50; this.h = 25;
+            }
+            update(dt) {
+                this.x += Math.cos(this.angle) * this.speed * dt;
+                this.y += Math.sin(this.angle) * this.speed * dt;
+                if (this.y < -50 || this.x < -50 || this.x > GAME_WIDTH + 50) this.active = false;
+            }
+            draw(ctx) {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle + Math.PI / 2);
+                ctx.fillStyle = COLORS.bullet;
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = COLORS.bullet;
+                ctx.font = "bold 16px 'Noto Sans TC'";
+                ctx.textAlign = "center";
+
+                // Bullet shape
+                ctx.beginPath();
+                ctx.roundRect(-25, -12, 50, 24, 12);
+                ctx.fill();
+
+                ctx.fillStyle = "#000";
+                ctx.fillText(this.written, 0, 6);
+                ctx.restore();
+            }
+        }
+
+        class Enemy {
+            constructor(isBoss = false) {
+                const pair = WORD_PAIRS[Math.floor(Math.random() * WORD_PAIRS.length)];
+                this.oral = pair.oral;
+                this.written = pair.written;
+                this.isBoss = isBoss;
+
+                this.w = isBoss ? 200 : 70;
+                this.h = isBoss ? 200 : 70;
+                this.x = Math.random() * (GAME_WIDTH - this.w) + this.w / 2;
+                this.y = -100;
+                this.vx = (Math.random() - 0.5) * 100;
+                this.vy = isBoss ? 50 : Math.random() * 100 + 100 + (state.wave * 10);
+
+                this.hp = isBoss ? 200 : 1;
+                this.maxHp = this.hp;
+                this.active = true;
+                this.color = isBoss ? COLORS.boss : COLORS.enemy;
+                this.rot = 0;
+                this.rotSpeed = (Math.random() - 0.5);
+            }
+
+            update(dt) {
+                this.y += this.vy * dt;
+                this.x += this.vx * dt;
+                if (this.x < 50 || this.x > GAME_WIDTH - 50) this.vx *= -1;
+
+                this.rot += this.rotSpeed * dt;
+
+                if (this.isBoss && this.y > 150) this.vy = Math.sin(Date.now() / 500) * 50; // Boss hover
+
+                if (this.y > GAME_HEIGHT + 100) {
+                    this.active = false;
+                    if (!this.isBoss) decreaseLives(); // Escaped enemy hurts
+                }
+            }
+
+            draw(ctx) {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rot);
+
+                // Glow
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = this.color;
+
+                // Shape
+                ctx.fillStyle = this.color;
+                if (this.isBoss) {
+                    ctx.beginPath();
+                    const sides = 6;
+                    for (let i = 0; i < sides; i++) {
+                        const theta = (i / sides) * 2 * Math.PI;
+                        const r = this.w / 2;
+                        ctx.lineTo(r * Math.cos(theta), r * Math.sin(theta));
+                    }
+                    ctx.closePath();
+                    ctx.fill();
+                } else {
+                    ctx.beginPath();
+                    ctx.roundRect(-this.w / 2, -this.h / 2, this.w, this.h, 15);
+                    ctx.fill();
+                }
+
+                // Text
+                ctx.fillStyle = "#fff";
+                ctx.shadowBlur = 0;
+                ctx.rotate(-this.rot); // Keep text straight often looks better, or rotate with box
+                ctx.font = `bold ${this.isBoss ? 40 : 30}px 'Noto Sans TC'`;
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText(this.oral, 0, 0);
+
+                ctx.restore();
+            }
+        }
+
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x; this.y = y; this.color = color;
+                const a = Math.random() * Math.PI * 2;
+                const s = Math.random() * 200 + 50;
+                this.vx = Math.cos(a) * s; this.vy = Math.sin(a) * s;
+                this.life = 1.0;
+                this.decay = Math.random() * 2 + 1;
+                this.size = Math.random() * 5 + 2;
+            }
+            update(dt) {
+                this.x += this.vx * dt; this.y += this.vy * dt;
+                this.life -= this.decay * dt;
+            }
+            draw(ctx) {
+                ctx.globalAlpha = Math.max(0, this.life);
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        // --- Logic ---
+        function init() {
+            window.addEventListener('resize', resize);
+            resize();
+
+            window.addEventListener('mousemove', e => { input.x = e.clientX; input.y = e.clientY; });
+            window.addEventListener('touchmove', e => {
+                e.preventDefault();
+                input.x = e.touches[0].clientX;
+                input.y = e.touches[0].clientY;
+            }, { passive: false });
+
+            // Input listeners for shooting
+            window.addEventListener('keydown', e => { if (e.code === 'Space') input.shooting = true; });
+            window.addEventListener('keyup', e => { if (e.code === 'Space') input.shooting = false; });
+
+            // Auto-fire logic handled in loop
+            PLAYER.x = GAME_WIDTH / 2;
+            PLAYER.y = GAME_HEIGHT - 100;
+
+            requestAnimationFrame(loop);
+        }
+
+        function startGame() {
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('game-over-screen').style.display = 'none';
+            PLAYER.hp = 3;
+            PLAYER.weaponLevel = 1;
+            state.score = 0;
+            state.wave = 1;
+            state.enemies = [];
+            state.bullets = [];
+            state.particles = [];
+            state.isPlaying = true;
+            updateHUD();
+
+            // Prevent setInterval stacking on retry
+            if (state.enemyIntervalId) {
+                clearInterval(state.enemyIntervalId);
+                state.enemyIntervalId = null;
+            }
+            if (state.bossIntervalId) {
+                clearInterval(state.bossIntervalId);
+                state.bossIntervalId = null;
+            }
+
+            // Spawn Logic
+            state.enemyIntervalId = setInterval(() => {
+                if (!state.isPlaying || state.boss) return;
+                if (state.enemies.length < 5 + state.wave) {
+                    state.enemies.push(new Enemy());
+                }
+            }, 1000);
+
+            // Boss Logic
+            state.bossIntervalId = setInterval(() => {
+                if (!state.isPlaying || state.boss) return;
+                if (state.score > state.wave * 1000 && !state.boss) {
+                    spawnBoss();
+                }
+            }, 5000);
+        }
+
+        function spawnBoss() {
+            state.boss = new Enemy(true);
+            state.enemies.push(state.boss);
+            document.getElementById('boss-hp-container').style.display = 'block';
+
+            // Boss Notification
+            const div = document.createElement('div');
+            div.className = 'powerup-notif';
+            div.textContent = "⚠ BOSS INCOMING ⚠";
+            div.style.color = '#ef4444';
+            document.getElementById('powerup-container').appendChild(div);
+            setTimeout(() => div.remove(), 1500);
+        }
+
+        function updateHUD() {
+            document.getElementById('score').textContent = state.score;
+            document.getElementById('lives').textContent = '❤'.repeat(Math.max(0, PLAYER.hp));
+            if (state.boss) {
+                const pct = (state.boss.hp / state.boss.maxHp) * 100;
+                document.getElementById('boss-hp').style.width = pct + '%';
+                if (state.boss.hp <= 0) {
+                    document.getElementById('boss-hp-container').style.display = 'none';
+                    state.boss = null;
+                    state.wave++;
+                    PLAYER.weaponLevel = Math.min(3, PLAYER.weaponLevel + 1);
+                    showPowerup("WEAPON UPGRADE!");
+                }
+            }
+        }
+
+        function showPowerup(text) {
+            const div = document.createElement('div');
+            div.className = 'powerup-notif';
+            div.textContent = text;
+            document.getElementById('powerup-container').appendChild(div);
+            setTimeout(() => div.remove(), 1500);
+        }
+
+        function decreaseLives() {
+            PLAYER.hp--;
+            updateHUD();
+            screenShake();
+            if (PLAYER.hp <= 0) gameOver();
+        }
+
+        function gameOver() {
+            state.isPlaying = false;
+            if (state.enemyIntervalId) {
+                clearInterval(state.enemyIntervalId);
+                state.enemyIntervalId = null;
+            }
+            if (state.bossIntervalId) {
+                clearInterval(state.bossIntervalId);
+                state.bossIntervalId = null;
+            }
+            document.getElementById('game-over-screen').style.display = 'flex';
+            document.getElementById('final-score').textContent = state.score;
+        }
+
+        function screenShake() {
+            state.shake = 10;
+        }
+
+        function loop(timestamp) {
+            const dt = (timestamp - state.lastTime) / 1000;
+            state.lastTime = timestamp;
+
+            // Clear & BG
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+            // Stars
+            ctx.fillStyle = '#fff';
+            state.bgStars.forEach(s => {
+                s.y += s.speed * (state.isPlaying ? 2 : 0.5); // Warp speed when playing
+                if (s.y > GAME_HEIGHT) { s.y = 0; s.x = Math.random() * GAME_WIDTH; }
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            if (state.isPlaying) {
+                // --- Player ---
+                // Smooth follow mouse/touch with lerp
+                PLAYER.x += (input.x - PLAYER.x) * 10 * dt;
+                PLAYER.y = GAME_HEIGHT - 80;
+
+                ctx.save();
+                if (state.shake > 0) {
+                    ctx.translate(Math.random() * state.shake - state.shake / 2, Math.random() * state.shake - state.shake / 2);
+                    state.shake *= 0.9;
+                }
+
+                // Draw Player Ship
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = COLORS.player;
+                ctx.fillStyle = COLORS.player;
+                ctx.beginPath();
+                ctx.moveTo(PLAYER.x, PLAYER.y - 30);
+                ctx.lineTo(PLAYER.x - 25, PLAYER.y + 20);
+                ctx.lineTo(PLAYER.x + 25, PLAYER.y + 20);
+                ctx.closePath();
+                ctx.fill();
+                // Thruster
+                ctx.fillStyle = '#f59e0b';
+                ctx.beginPath();
+                ctx.moveTo(PLAYER.x - 10, PLAYER.y + 20);
+                ctx.lineTo(PLAYER.x + 10, PLAYER.y + 20);
+                ctx.lineTo(PLAYER.x, PLAYER.y + 40 + Math.random() * 10);
+                ctx.fill();
+                ctx.restore();
+
+                // --- Shooting ---
+                PLAYER.shootTimer -= dt;
+                if (PLAYER.shootTimer <= 0) {
+                    PLAYER.shootTimer = 0.2; // 5 shots/sec
+
+                    // Find target for written word
+                    let targetWord = "擊"; // Default
+                    let nearestDist = Infinity;
+                    state.enemies.forEach(e => {
+                        const dy = e.y - PLAYER.y; // only look forward
+                        const dist = Math.sqrt(Math.pow(e.x - PLAYER.x, 2) + Math.pow(e.y - PLAYER.y, 2));
+                        if (dist < nearestDist && e.y < PLAYER.y) {
+                            nearestDist = dist;
+                            targetWord = e.written;
+                        }
+                    });
+
+                    // Update Ammo UI
+                    document.getElementById('ammo-display').textContent = targetWord;
+
+                    if (input.shooting) {
+                        if (PLAYER.weaponLevel === 1) {
+                            state.bullets.push(new Bullet(PLAYER.x, PLAYER.y - 30, targetWord));
+                        } else if (PLAYER.weaponLevel >= 2) {
+                            state.bullets.push(new Bullet(PLAYER.x - 15, PLAYER.y - 30, targetWord));
+                            state.bullets.push(new Bullet(PLAYER.x + 15, PLAYER.y - 30, targetWord));
+                        }
+                        if (PLAYER.weaponLevel === 3) {
+                            state.bullets.push(new Bullet(PLAYER.x, PLAYER.y - 30, targetWord, -Math.PI / 2 - 0.2));
+                            state.bullets.push(new Bullet(PLAYER.x, PLAYER.y - 30, targetWord, -Math.PI / 2 + 0.2));
+                        }
+                    }
+                }
+
+                // --- Updates ---
+                state.bullets.forEach(b => b.update(dt));
+                state.enemies.forEach(e => e.update(dt));
+                state.particles.forEach(p => p.update(dt));
+
+                // --- Collisions ---
+                state.bullets = state.bullets.filter(b => {
+                    if (!b.active) return false;
+                    let hit = false;
+                    for (let e of state.enemies) {
+                        if (!e.active) continue;
+                        // Box collision
+                        if (b.x > e.x - e.w / 2 && b.x < e.x + e.w / 2 &&
+                            b.y > e.y - e.h / 2 && b.y < e.y + e.h / 2) {
+
+                            if (b.written === e.written) {
+                                e.hp--;
+                                // Visual Hit
+                                for (let k = 0; k < 5; k++) state.particles.push(new Particle(b.x, b.y, COLORS.bullet));
+
+                                if (e.hp <= 0) {
+                                    e.active = false;
+                                    state.score += e.isBoss ? 1000 : 100;
+                                    // Explosion
+                                    for (let k = 0; k < 20; k++) state.particles.push(new Particle(e.x, e.y, COLORS.text));
+                                    screenShake();
+                                }
+                                updateHUD();
+                                hit = true;
+                            } else {
+                                // Wrong word: let the bullet pass by deflecting slightly
+                                // (otherwise bullets get destroyed on any collision)
+                                b.angle += (Math.random() - 0.5) * 0.6;
+                            }
+                            break;
+                        }
+                    }
+                    return !hit;
+                });
+
+                state.enemies = state.enemies.filter(e => e.active);
+                state.particles = state.particles.filter(p => p.life > 0);
+
+                // --- Draw ---
+                state.bullets.forEach(b => b.draw(ctx));
+                state.enemies.forEach(e => e.draw(ctx));
+                state.particles.forEach(p => p.draw(ctx));
+            }
+
+            requestAnimationFrame(loop);
+        }
+
+        // Initial resize
+        init();
+
+    </script>
+
+</body>
+
+</html>
+

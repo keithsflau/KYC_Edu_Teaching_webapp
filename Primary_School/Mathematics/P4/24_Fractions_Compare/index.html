@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小四數學：分數比較 | Comparing Fractions</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #fff7ed 0%, #fdba74 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Comparing Fractions",
+    zh: "分數比較",
+    ja: "分数の比較",
+    ko: "분수 비교",
+    es: "Comparación de Fracciones",
+    de: "Brüche vergleichen",
+    fi: "Murtolukujen vertailu",
+    fr: "Comparaison de fractions",
+    ar: "مقارنة الكسور",
+    it: "Confronto frazioni"
+  },
+  tip: {
+    en: "Common Denominator Tip: Make denominators the same ({lcd}), then compare numerators!\n{n1} × {d2} = {v1}  vs  {n2} × {d1} = {v2}",
+    zh: "通分母提示：把分母變一樣 ({lcd})，比較分子！\n{n1} × {d2} = {v1}  vs  {n2} × {d1} = {v2}",
+    ja: "共通分母のヒント：分母を同じにして ({lcd})、分子を比較してください！\n{n1} × {d2} = {v1}  vs  {n2} × {d1} = {v2}",
+    ko: "공통 분모 팁: 분모를 같게 만들고 ({lcd}), 분자를 비교하세요!\n{n1} × {d2} = {v1}  vs  {n2} × {d1} = {v2}",
+    es: "Consejo de Denominador Común: ¡Haz que los denominadores sean iguales ({lcd}), luego compara los numeradores!\n{n1} × {d2} = {v1}  vs  {n2} × {d1} = {v2}",
+    de: "Tipp zum gemeinsamen Nenner: Machen Sie die Nenner gleich ({lcd}) und vergleichen Sie dann die Zähler!\n{n1} × {d2} = {v1}  vs  {n2} × {d1} = {v2}",
+    fi: "Yhteisen nimittäjän vinkki: Tee nimittäjistä samat ({lcd}) ja vertaa sitten osoittajia!\n{n1} × {d2} = {v1}  vs  {n2} × {d1} = {v2}",
+    fr: "Astuce du dénominateur commun : Rendez les dénominateurs identiques ({lcd}), puis comparez les numérateurs !\n{n1} × {d2} = {v1}  vs  {n2} × {d1} = {v2}",
+    ar: "نصيحة القاسم المشترك: اجعل القواسم متساوية ({lcd})، ثم قارن البسط!\n{n1} × {d2} = {v1}  vs  {n2} × {d1} = {v2}",
+    it: "Suggerimento denominatore comune: rendi i denominatori uguali ({lcd}), poi confronta i numeratori!\n{n1} × {d2} = {v1}  vs  {n2} × {d1} = {v2}"
+  }
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [n1, setN1] = useState(2);
+  const [d1, setD1] = useState(3);
+  const [n2, setN2] = useState(3);
+  const [d2, setD2] = useState(4);
+  const getText = key => t[key][lang] || t[key]["en"];
+  const safeN1 = Number.isFinite(n1) && n1 > 0 ? n1 : 1;
+  const safeD1 = Number.isFinite(d1) && d1 > 1 ? d1 : 2;
+  const safeN2 = Number.isFinite(n2) && n2 > 0 ? n2 : 1;
+  const safeD2 = Number.isFinite(d2) && d2 > 1 ? d2 : 2;
+  const val1 = safeN1 / safeD1;
+  const val2 = safeN2 / safeD2;
+  let sign = "=";
+  if (val1 > val2) sign = ">";else if (val1 < val2) sign = "<";
+  const Bar = ({
+    n,
+    d,
+    color
+  }) => /*#__PURE__*/React.createElement("div", {
+    className: "w-full h-16 bg-white rounded-full border-4 border-slate-200 overflow-hidden relative flex"
+  }, [...Array(d)].map((_, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: `h-full border-r-2 border-white/50 transition-all duration-500 ${i < n ? color : "bg-transparent"}`,
+    style: {
+      width: `${100 / d}%`
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 flex"
+  }, [...Array(d)].map((_, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "h-full border-r-2 border-slate-300",
+    style: {
+      width: `${100 / d}%`
+    }
+  }))));
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-8 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-orange-900 mb-8 mt-8"
+  }, "⚖️ ", getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/95 backdrop-blur-md rounded-3xl p-8 shadow-2xl max-w-4xl w-full"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-8 items-center mb-12"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center gap-2"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    min: "1",
+    max: safeD1,
+    value: Number.isFinite(n1) ? n1 : "",
+    onChange: e => {
+      const v = parseInt(e.target.value, 10);
+      setN1(Number.isFinite(v) ? Math.min(Math.max(v, 1), safeD1) : NaN);
+    },
+    className: "w-24 text-5xl font-black text-center bg-orange-50 rounded-xl outline-none"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "w-24 h-1 bg-orange-900 rounded-full"
+  }), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    min: "2",
+    max: "12",
+    value: Number.isFinite(d1) ? d1 : "",
+    onChange: e => {
+      const v = parseInt(e.target.value, 10);
+      if (!Number.isFinite(v)) {
+        setD1(NaN);
+        return;
+      }
+      const next = Math.min(Math.max(v, 2), 12);
+      setD1(next);
+      if (Number.isFinite(n1) && n1 > next) setN1(next);
+    },
+    className: "w-24 text-5xl font-black text-center bg-orange-50 rounded-xl outline-none"
+  })), /*#__PURE__*/React.createElement(motion.div, {
+    key: sign,
+    initial: {
+      scale: 0
+    },
+    animate: {
+      scale: 1
+    },
+    className: "w-24 h-24 bg-orange-500 rounded-full flex items-center justify-center text-6xl font-black text-white shadow-lg mx-auto"
+  }, sign), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center gap-2"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    min: "1",
+    max: safeD2,
+    value: Number.isFinite(n2) ? n2 : "",
+    onChange: e => {
+      const v = parseInt(e.target.value, 10);
+      setN2(Number.isFinite(v) ? Math.min(Math.max(v, 1), safeD2) : NaN);
+    },
+    className: "w-24 text-5xl font-black text-center bg-blue-50 rounded-xl outline-none"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "w-24 h-1 bg-blue-900 rounded-full"
+  }), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    min: "2",
+    max: "12",
+    value: Number.isFinite(d2) ? d2 : "",
+    onChange: e => {
+      const v = parseInt(e.target.value, 10);
+      if (!Number.isFinite(v)) {
+        setD2(NaN);
+        return;
+      }
+      const next = Math.min(Math.max(v, 2), 12);
+      setD2(next);
+      if (Number.isFinite(n2) && n2 > next) setN2(next);
+    },
+    className: "w-24 text-5xl font-black text-center bg-blue-50 rounded-xl outline-none"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-4"
+  }, /*#__PURE__*/React.createElement(Bar, {
+    n: safeN1,
+    d: safeD1,
+    color: "bg-orange-500"
+  }), /*#__PURE__*/React.createElement(Bar, {
+    n: safeN2,
+    d: safeD2,
+    color: "bg-blue-500"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "mt-8 text-center bg-yellow-50 p-4 rounded-xl text-yellow-800 font-bold whitespace-pre-line"
+  }, getText("tip").replace("{lcd}", safeD1 * safeD2).replace("{n1}", safeN1).replace("{d2}", safeD2).replace("{v1}", safeN1 * safeD2).replace("{n2}", safeN2).replace("{d1}", safeD1).replace("{v2}", safeN2 * safeD1))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

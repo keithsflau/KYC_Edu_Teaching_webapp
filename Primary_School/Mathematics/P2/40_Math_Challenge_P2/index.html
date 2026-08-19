@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小二數學：終極挑戰 | P2 Math Challenge</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #4c1d95 0%, #2e1065 100%);
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Math Challenge",
+    zh: "數學大挑戰",
+    ja: "数学チャレンジ",
+    ko: "수학 도전",
+    es: "Desafío Matemático",
+    de: "Mathe-Herausforderung",
+    fi: "Matematiikkahaaste",
+    fr: "Défi Mathématique",
+    ar: "تحدي الرياضيات",
+    it: "Sfida Matematica"
+  },
+  start: {
+    en: "Start",
+    zh: "開始",
+    ja: "スタート",
+    ko: "시작",
+    es: "Inicio",
+    de: "Start",
+    fi: "Aloita",
+    fr: "Début",
+    ar: "ابدأ",
+    it: "Inizio"
+  },
+  score: {
+    en: "Score",
+    zh: "分數",
+    ja: "スコア",
+    ko: "점수",
+    es: "Puntuación",
+    de: "Punktzahl",
+    fi: "Pisteet",
+    fr: "Score",
+    ar: "النتيجة",
+    it: "Punteggio"
+  },
+  time: {
+    en: "Time",
+    zh: "時間",
+    ja: "時間",
+    ko: "시간",
+    es: "Tiempo",
+    de: "Zeit",
+    fi: "Aika",
+    fr: "Temps",
+    ar: "الوقت",
+    it: "Tempo"
+  },
+  timesUp: {
+    en: "Time's Up!",
+    zh: "時間到!",
+    ja: "時間切れ!",
+    ko: "시간 종료!",
+    es: "¡Se acabó el tiempo!",
+    de: "Zeit ist um!",
+    fi: "Aika loppui!",
+    fr: "Temps écoulé !",
+    ar: "انتهى الوقت!",
+    it: "Tempo scaduto!"
+  },
+  playAgain: {
+    en: "Play Again",
+    zh: "再玩一次",
+    ja: "もう一度プレイ",
+    ko: "다시 하기",
+    es: "Jugar de nuevo",
+    de: "Noch einmal spielen",
+    fi: "Pelaa uudelleen",
+    fr: "Rejouer",
+    ar: "العب مرة أخرى",
+    it: "Gioca di nuovo"
+  },
+  backMenu: {
+    en: "Back to Menu",
+    zh: "回到目錄",
+    ja: "メニューに戻る",
+    ko: "메뉴로 돌아가기",
+    es: "Volver al menú",
+    de: "Zurück zum Menü",
+    fi: "Takaisin valikkoon",
+    fr: "Retour au menu",
+    ar: "العودة للقائمة",
+    it: "Torna al menu"
+  },
+  questionFaces: {
+    en: "How many faces does {name} have?",
+    zh: "{name} 有多少個面？",
+    ja: "{name} の面はいくつありますか？",
+    ko: "{name}의 면은 몇 개입니까?",
+    es: "¿Cuántas caras tiene {name}?",
+    de: "Wie viele Flächen hat {name}?",
+    fi: "Kuinka monta tahkoa on {name}:lla?",
+    fr: "Combien de faces a {name} ?",
+    ar: "كم وجها لـ {name}؟",
+    it: "Quante facce ha {name}?"
+  },
+  hourMin: {
+    en: "1 Hour = ? Minutes",
+    zh: "1 小時 = ? 分鐘",
+    ja: "1 時間 = ? 分",
+    ko: "1 시간 = ? 분",
+    es: "1 hora = ? minutos",
+    de: "1 Stunde = ? Minuten",
+    fi: "1 Tunti = ? Minuuttia",
+    fr: "1 Heure = ? Minutes",
+    ar: "1 ساعة = ? دقيقة",
+    it: "1 Ora = ? Minuti"
+  },
+  moneyQ: {
+    en: "10x $1 = $?",
+    zh: "10個 $1 = $?",
+    ja: "10個の $1 = $?",
+    ko: "10개의 $1 = $?",
+    es: "10x $1 = $?",
+    de: "10x $1 = $?",
+    fi: "10x $1 = $?",
+    fr: "10x $1 = $?",
+    ar: "10x $1 = $?",
+    it: "10x $1 = $?"
+  },
+  cube: {
+    zh: "正方體",
+    en: "Cube"
+  },
+  cuboid: {
+    zh: "長方體",
+    en: "Cuboid"
+  },
+  cylinder: {
+    zh: "圓柱體",
+    en: "Cylinder"
+  },
+  sphere: {
+    zh: "球體",
+    en: "Sphere"
+  }
+};
+const qTypes = ["add", "sub", "mul", "div", "shapes", "time", "money"];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [state, setState] = useState("menu"); // menu, play, end
+  const [score, setScore] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(60);
+  const [q, setQ] = useState(null);
+  const [feedback, setFeedback] = useState("");
+  useEffect(() => {
+    let timer;
+    if (state === "play" && timeLeft > 0) {
+      timer = setInterval(() => setTimeLeft(t => t - 1), 1000);
+    } else if (timeLeft === 0 && state === "play") {
+      setState("end");
+    }
+    return () => clearInterval(timer);
+  }, [state, timeLeft]);
+  const getShapeName = n => t[n] ? t[n][lang] || t[n]["en"] : n;
+  const genQ = () => {
+    const type = qTypes[Math.floor(Math.random() * qTypes.length)];
+    let qText, qAns, opts;
+    if (type === "add") {
+      const a = Math.floor(Math.random() * 400) + 100;
+      const b = Math.floor(Math.random() * 400) + 100;
+      qText = `${a} + ${b} = ?`;
+      qAns = a + b;
+    } else if (type === "sub") {
+      const a = Math.floor(Math.random() * 400) + 500;
+      const b = Math.floor(Math.random() * 400) + 100;
+      qText = `${a} - ${b} = ?`;
+      qAns = a - b;
+    } else if (type === "mul") {
+      const a = [2, 5, 10][Math.floor(Math.random() * 3)];
+      const b = Math.floor(Math.random() * 9) + 1;
+      qText = `${a} × ${b} = ?`;
+      qAns = a * b;
+    } else if (type === "div") {
+      // Simple division
+      const b = Math.floor(Math.random() * 4) + 2;
+      const ans = Math.floor(Math.random() * 5) + 1;
+      const a = b * ans;
+      qText = `${a} ÷ ${b} = ?`;
+      qAns = ans;
+    } else if (type === "shapes") {
+      const s = [{
+        n: "cube",
+        f: 6
+      }, {
+        n: "cuboid",
+        f: 6
+      }, {
+        n: "cylinder",
+        f: 3
+      }, {
+        n: "sphere",
+        f: 1
+      }];
+      const item = s[Math.floor(Math.random() * s.length)];
+      const name = t[item.n][lang] || t[item.n]["en"];
+      const template = t.questionFaces[lang] || t.questionFaces["en"];
+      qText = template.replace("{name}", name);
+      qAns = item.f;
+    } else if (type === "time") {
+      qText = t.hourMin[lang] || t.hourMin["en"];
+      qAns = 60;
+    } else {
+      // Money
+      qText = t.moneyQ[lang] || t.moneyQ["en"];
+      qAns = 10;
+    }
+
+    // Generate options
+    let o = new Set();
+    o.add(qAns);
+    while (o.size < 3) {
+      let fake = qAns + Math.floor(Math.random() * 20) - 10;
+      if (fake > 0 && fake !== qAns) o.add(fake);
+    }
+    opts = Array.from(o).sort(() => Math.random() - 0.5);
+    setQ({
+      text: qText,
+      ans: qAns,
+      options: opts
+    });
+  };
+
+  // Re-generate question when language changes if in play mode
+  useEffect(() => {
+    if (state === "play") {
+      genQ();
+    }
+  }, [lang]);
+  const startGame = () => {
+    setScore(0);
+    setTimeLeft(60);
+    setState("play");
+    genQ();
+  };
+  const check = val => {
+    if (val === q.ans) {
+      setScore(s => s + 10);
+      setFeedback("CORRECT");
+      setTimeout(() => {
+        setFeedback("");
+        genQ();
+      }, 500);
+    } else {
+      setScore(s => Math.max(0, s - 5));
+      setFeedback("WRONG");
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-8 flex flex-col items-center justify-center bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] relative"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 right-4 z-50"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  })), state === "menu" && /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/10 backdrop-blur-md p-12 rounded-3xl border-4 border-white/20 text-center animate-fade-in"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-6xl font-black mb-4 text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-pink-500"
+  }, "P2 ", t.title[lang] || t.title["en"]), /*#__PURE__*/React.createElement("button", {
+    onClick: startGame,
+    className: "bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white text-4xl font-black py-6 px-12 rounded-full shadow-lg transform transition hover:scale-110 active:scale-95 mt-8"
+  }, t.start[lang] || t.start["en"])), state === "play" && q && /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-2xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between items-center mb-8 text-3xl font-black"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/20 px-6 py-2 rounded-full"
+  }, t.score[lang] || t.score["en"], ": ", score), /*#__PURE__*/React.createElement("div", {
+    className: `bg-white/20 px-6 py-2 rounded-full ${timeLeft < 10 ? "text-red-400 animate-pulse" : ""}`
+  }, t.time[lang] || t.time["en"], ": ", timeLeft, "s")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white text-slate-800 p-12 rounded-3xl shadow-2xl text-center mb-8 min-h-[300px] flex flex-col justify-center relative"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-5xl font-black mb-8"
+  }, q.text), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-1 md:grid-cols-3 gap-4"
+  }, q.options.map((opt, i) => /*#__PURE__*/React.createElement("button", {
+    key: i,
+    onClick: () => check(opt),
+    className: "bg-indigo-100 hover:bg-indigo-300 text-indigo-900 text-3xl font-bold p-6 rounded-xl transition transform active:scale-95 shadow-md"
+  }, opt))), feedback === "CORRECT" && /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 flex items-center justify-center bg-green-500/90 text-white text-6xl font-black rounded-3xl animate-ping-once"
+  }, "✅"), feedback === "WRONG" && /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 flex items-center justify-center bg-red-500/90 text-white text-6xl font-black rounded-3xl animate-ping-once"
+  }, "❌"))), state === "end" && /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/10 backdrop-blur-md p-12 rounded-3xl border-4 border-white/20 text-center animate-fade-in"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-5xl font-black mb-8 text-white"
+  }, t.timesUp[lang] || t.timesUp["en"]), /*#__PURE__*/React.createElement("div", {
+    className: "text-8xl font-black text-yellow-300 mb-8"
+  }, score, " ", t.score[lang] || t.score["en"]), /*#__PURE__*/React.createElement("button", {
+    onClick: startGame,
+    className: "bg-white text-purple-900 text-3xl font-bold py-4 px-10 rounded-full shadow-lg hover:bg-gray-100 transition"
+  }, t.playAgain[lang] || t.playAgain["en"]), /*#__PURE__*/React.createElement("div", {
+    className: "mt-8"
+  }, /*#__PURE__*/React.createElement("a", {
+    href: "../index.html",
+    className: "text-white/70 hover:text-white underline"
+  }, t.backMenu[lang] || t.backMenu["en"]))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+    <style>
+      @keyframes ping-once {
+        0% {
+          opacity: 0;
+          transform: scale(0.5);
+        }
+        50% {
+          opacity: 1;
+          transform: scale(1.1);
+        }
+        100% {
+          opacity: 0;
+          transform: scale(1);
+        }
+      }
+      .animate-ping-once {
+        animation: ping-once 0.5s forwards;
+      }
+    </style>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Parametric Curves | M2 Calculus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+      }
+      .glass {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <div id="root" class="flex-grow flex flex-col"></div>
+    <script>
+const {
+  useState,
+  useRef,
+  useEffect
+} = React;
+const translations = {
+  en: {
+    unit: "Unit 2: Calculus",
+    title: "Parametric Curves",
+    subtitle: "x(t) and y(t) driven by time",
+    param: "Parameter t",
+    xMotion: "x(t) Motion",
+    yMotion: "y(t) Motion",
+    desc: "The combined motion creates the Lissajous knot.",
+    langBtn: "中文"
+  },
+  zh: {
+    unit: "第二單元：微積分",
+    title: "參數曲線",
+    subtitle: "x(t) 與 y(t) 隨時間 t 變化",
+    param: "參數 t",
+    xMotion: "x(t) 運動",
+    yMotion: "y(t) 運動",
+    desc: "結合兩個方向的運動形成了利薩茹 (Lissajous) 結。",
+    langBtn: "English"
+  }
+};
+const App = () => {
+  // x = 4 cos(3t)
+  // y = 4 sin(2t)
+  // Lissajous Knot
+
+  const [lang, setLang] = useState("en");
+  const tObj = translations[lang];
+  const [t, setT] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const getX = t => 4 * Math.cos(3 * t);
+  const getY = t => 4 * Math.sin(2 * t);
+  const maxT = 2 * Math.PI;
+
+  // Auto play
+  useEffect(() => {
+    if (!isPlaying) return;
+    const interval = setInterval(() => {
+      setT(prev => (prev + 0.02) % maxT);
+    }, 20);
+    return () => clearInterval(interval);
+  }, [isPlaying]);
+
+  // Scale
+  const w = 500,
+    h = 500;
+  const scale = 50;
+  const origin = 250;
+  const toScreen = (x, y) => ({
+    x: origin + x * scale,
+    y: origin - y * scale
+  });
+
+  // Trace
+  const trace = [];
+  for (let ti = 0; ti <= t; ti += 0.05) trace.push({
+    x: getX(ti),
+    y: getY(ti)
+  });
+  // Full Path ghost
+  const fullPath = [];
+  for (let ti = 0; ti <= maxT; ti += 0.05) fullPath.push({
+    x: getX(ti),
+    y: getY(ti)
+  });
+  const dTrace = `M ${trace.map(p => {
+    const s = toScreen(p.x, p.y);
+    return `${s.x},${s.y}`;
+  }).join(" L ")}`;
+  const dGhost = `M ${fullPath.map(p => {
+    const s = toScreen(p.x, p.y);
+    return `${s.x},${s.y}`;
+  }).join(" L ")}`;
+  const currPos = toScreen(getX(t), getY(t));
+
+  // Single Component Graphs
+  const Graph1D = ({
+    func,
+    val,
+    color,
+    label
+  }) => {
+    const gw = 300,
+      gh = 100;
+    const pts = [];
+    for (let ti = 0; ti <= maxT; ti += 0.1) pts.push({
+      t: ti,
+      val: func(ti)
+    });
+    const gScaleX = gw / maxT;
+    const gScaleY = 10;
+    const gOriginY = gh / 2;
+    const d = `M ${pts.map(p => `${p.t * gScaleX},${gOriginY - p.val * gScaleY}`).join(" L ")}`;
+    const cx = t * gScaleX;
+    const cy = gOriginY - val * gScaleY;
+    return /*#__PURE__*/React.createElement("div", {
+      className: "glass p-4 rounded-xl"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "text-xs font-bold uppercase mb-2",
+      style: {
+        color
+      }
+    }, label), /*#__PURE__*/React.createElement("svg", {
+      width: "100%",
+      height: gh,
+      className: "overflow-visible"
+    }, /*#__PURE__*/React.createElement("line", {
+      x1: "0",
+      y1: gOriginY,
+      x2: gw,
+      y2: gOriginY,
+      stroke: "#334155"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: d,
+      fill: "none",
+      stroke: color,
+      strokeWidth: "2",
+      opacity: "0.5"
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: cx,
+      cy: cy,
+      r: "4",
+      fill: color
+    })));
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "flex-grow flex flex-col items-center justify-center p-8 select-none"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 right-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLang(l => l === "en" ? "zh" : "en"),
+    className: "px-3 py-1 bg-slate-800 border border-slate-600 rounded-full text-xs font-bold text-emerald-400 hover:bg-slate-700 hover:text-white transition flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-language"
+  }), tObj.langBtn)), /*#__PURE__*/React.createElement("header", {
+    className: "mb-8 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-emerald-500 font-bold uppercase tracking-widest text-xs mb-2"
+  }, tObj.unit), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-white mb-2"
+  }, tObj.title), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-400 font-mono text-lg"
+  }, tObj.subtitle)), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col lg:flex-row gap-8 w-full max-w-6xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 glass p-6 rounded-3xl relative flex items-center justify-center aspect-square"
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: "500",
+    height: "500",
+    className: "bg-slate-900 rounded-xl"
+  }, /*#__PURE__*/React.createElement("line", {
+    x1: "250",
+    y1: "0",
+    x2: "250",
+    y2: "500",
+    stroke: "#334155"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "0",
+    y1: "250",
+    x2: "500",
+    y2: "250",
+    stroke: "#334155"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: dGhost,
+    fill: "none",
+    stroke: "#334155",
+    strokeWidth: "2",
+    strokeDasharray: "5,5"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: dTrace,
+    fill: "none",
+    stroke: "#2dd4bf",
+    strokeWidth: "3"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: currPos.x,
+    cy: currPos.y,
+    r: "6",
+    fill: "#f43f5e"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "20",
+    y: "480",
+    fill: "#64748b",
+    fontSize: "12"
+  }, "x = 4cos(3t)"), /*#__PURE__*/React.createElement("text", {
+    x: "20",
+    y: "460",
+    fill: "#64748b",
+    fontSize: "12"
+  }, "y = 4sin(2t)"))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full lg:w-96 space-y-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass p-6 rounded-2xl flex items-center gap-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setIsPlaying(!isPlaying),
+    className: `w-12 h-12 rounded-full flex items-center justify-center text-xl text-white transition hover:scale-105 ${isPlaying ? "bg-amber-500" : "bg-emerald-500"}`
+  }, /*#__PURE__*/React.createElement("i", {
+    className: `fa-solid ${isPlaying ? "fa-pause" : "fa-play"}`
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "flex-1"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between text-xs font-bold uppercase text-slate-500 mb-1"
+  }, /*#__PURE__*/React.createElement("span", null, tObj.param), /*#__PURE__*/React.createElement("span", {
+    className: "text-white font-mono"
+  }, t.toFixed(2))), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "0",
+    max: maxT,
+    step: "0.01",
+    value: t,
+    onChange: e => setT(Number(e.target.value)),
+    className: "w-full accent-emerald-500"
+  }))), /*#__PURE__*/React.createElement(Graph1D, {
+    func: getX,
+    val: getX(t),
+    color: "#38bdf8",
+    label: tObj.xMotion
+  }), /*#__PURE__*/React.createElement(Graph1D, {
+    func: getY,
+    val: getY(t),
+    color: "#fbbf24",
+    label: tObj.yMotion
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-center text-xs text-slate-500"
+  }, tObj.desc))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

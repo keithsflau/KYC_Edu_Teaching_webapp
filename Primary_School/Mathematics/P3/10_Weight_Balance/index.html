@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小三數學：重量天秤 | Weight Balance</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Weight Balance",
+    zh: "重量天秤",
+    ja: "重さのバランス",
+    ko: "무게 균형",
+    es: "Balanza de peso",
+    de: "Waage",
+    fi: "Painovaaka",
+    fr: "Balance de poids",
+    ar: "ميزان الوزن",
+    it: "Bilancia del peso"
+  },
+  subtitle: {
+    en: "Learn grams (g) and kilograms (kg)",
+    zh: "認識克(g)與千克(kg)",
+    ja: "グラム(g)とキログラム(kg)を学ぶ",
+    ko: "그램(g)과 킬로그램(kg) 배우기",
+    es: "Aprenda gramos (g) y kilogramos (kg)",
+    de: "Lernen Sie Gramm (g) und Kilogramm (kg)",
+    fi: "Opi grammat (g) ja kilogrammat (kg)",
+    fr: "Apprendre les grammes (g) et les kilogrammes (kg)",
+    ar: "تعلم الجرام (g) والكيلوجرام (kg)",
+    it: "Impara grammi (g) e chilogrammi (kg)"
+  },
+  balanced: {
+    en: "Balanced!",
+    zh: "平衡！",
+    ja: "バランス!",
+    ko: "균형!",
+    es: "¡Equilibrado!",
+    de: "Ausgeglichen!",
+    fi: "Tasapainossa!",
+    fr: "Équilibré !",
+    ar: "متوازن!",
+    it: "Bilanciato!"
+  },
+  leftHeavy: {
+    en: "Left is heavier",
+    zh: "左邊較重",
+    ja: "左が重い",
+    ko: "왼쪽이 더 무거움",
+    es: "La izquierda es más pesada",
+    de: "Links ist schwerer",
+    fi: "Vasen on painavampi",
+    fr: "La gauche est plus lourde",
+    ar: "اليسار أثقل",
+    it: "Sinistra più pesante"
+  },
+  rightHeavy: {
+    en: "Right is heavier",
+    zh: "右邊較重",
+    ja: "右が重い",
+    ko: "오른쪽이 더 무거움",
+    es: "La derecha es más pesada",
+    de: "Rechts ist schwerer",
+    fi: "Oikea on painavampi",
+    fr: "La droite est plus lourde",
+    ar: "اليمين أثقل",
+    it: "Destra più pesante"
+  },
+  leftWeight: {
+    en: "Left Weight",
+    zh: "左邊重量",
+    ja: "左の重さ",
+    ko: "왼쪽 무게",
+    es: "Peso izquierdo",
+    de: "Linkes Gewicht",
+    fi: "Vasen paino",
+    fr: "Poids gauche",
+    ar: "الوزن الأيسر",
+    it: "Peso sinistro"
+  },
+  rightWeight: {
+    en: "Right Weight",
+    zh: "右邊重量",
+    ja: "右の重さ",
+    ko: "오른쪽 무게",
+    es: "Peso derecho",
+    de: "Rechtes Gewicht",
+    fi: "Oikea paino",
+    fr: "Poids droit",
+    ar: "الوزن الأيمن",
+    it: "Peso destro"
+  },
+  units: {
+    en: "Weight Units",
+    zh: "重量單位",
+    ja: "重量単位",
+    ko: "무게 단위",
+    es: "Unidades de peso",
+    de: "Gewichtseinheiten",
+    fi: "Painoyksiköt",
+    fr: "Unités de poids",
+    ar: "وحدات الوزن",
+    it: "Unità di peso"
+  },
+  items: [{
+    name: {
+      zh: "蘋果",
+      en: "Apple"
+    },
+    emoji: "🍎",
+    weight: 200
+  }, {
+    name: {
+      zh: "橙",
+      en: "Orange"
+    },
+    emoji: "🍊",
+    weight: 150
+  }, {
+    name: {
+      zh: "西瓜",
+      en: "Watermelon"
+    },
+    emoji: "🍉",
+    weight: 2000
+  }, {
+    name: {
+      zh: "書本",
+      en: "Book"
+    },
+    emoji: "📚",
+    weight: 500
+  }, {
+    name: {
+      zh: "水樽",
+      en: "Bottle"
+    },
+    emoji: "💧",
+    weight: 250
+  }]
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [leftWeight, setLeftWeight] = useState(500);
+  const [rightWeight, setRightWeight] = useState(500);
+  const diff = leftWeight - rightWeight;
+  let calculatedTilt = -diff / 5;
+  if (diff !== 0 && Math.abs(calculatedTilt) < 5) {
+    calculatedTilt = diff < 0 ? 5 : -5;
+  }
+  const tilt = Math.max(-30, Math.min(30, calculatedTilt));
+  const getStatusText = () => {
+    if (diff === 0) return "⚖️ " + (t.balanced[lang] || t.balanced["en"]);
+    if (diff > 0) return "⬅️ " + (t.leftHeavy[lang] || t.leftHeavy["en"]);
+    return "➡️ " + (t.rightHeavy[lang] || t.rightHeavy["en"]);
+  };
+  const getItemName = item => item.name[lang] || item.name["en"];
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-8 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-6xl font-black text-orange-900 mb-4 mt-8 text-center"
+  }, "⚖️ ", t.title[lang] || t.title["en"]), /*#__PURE__*/React.createElement("p", {
+    className: "text-xl text-orange-700 font-bold mb-8 text-center"
+  }, t.subtitle[lang] || t.subtitle["en"]), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/90 backdrop-blur-md rounded-3xl p-8 shadow-2xl max-w-5xl w-full"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-center mb-8"
+  }, /*#__PURE__*/React.createElement(motion.div, {
+    className: "relative w-full max-w-2xl",
+    animate: {
+      rotate: tilt
+    },
+    transition: {
+      type: "spring",
+      stiffness: 100
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "h-4 bg-gradient-to-r from-orange-600 to-red-600 rounded-full"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-0 left-0 w-40 h-24 bg-orange-400 rounded-2xl border-4 border-orange-600 flex items-center justify-center text-4xl font-black",
+    style: {
+      transform: "translateY(-100px)"
+    }
+  }, leftWeight, "g"), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-0 right-0 w-40 h-24 bg-orange-400 rounded-2xl border-4 border-orange-600 flex items-center justify-center text-4xl font-black",
+    style: {
+      transform: "translateY(-100px)"
+    }
+  }, rightWeight, "g"))), /*#__PURE__*/React.createElement("div", {
+    className: `text-center text-xl md:text-2xl font-black mb-8 ${diff === 0 ? "text-green-600" : "text-red-600"}`
+  }, getStatusText()), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-1 md:grid-cols-2 gap-8"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h3", {
+    className: "text-2xl font-black text-orange-800 mb-4"
+  }, t.leftWeight[lang] || t.leftWeight["en"]), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "0",
+    max: "3000",
+    value: leftWeight,
+    onChange: e => setLeftWeight(parseInt(e.target.value, 10)),
+    className: "w-full mb-4"
+  }), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: leftWeight,
+    onChange: e => setLeftWeight(parseInt(e.target.value, 10) || 0),
+    className: "w-full px-4 py-3 text-2xl font-black text-center rounded-xl border-4 border-orange-300"
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h3", {
+    className: "text-2xl font-black text-orange-800 mb-4"
+  }, t.rightWeight[lang] || t.rightWeight["en"]), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "0",
+    max: "3000",
+    value: rightWeight,
+    onChange: e => setRightWeight(parseInt(e.target.value, 10)),
+    className: "w-full mb-4"
+  }), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: rightWeight,
+    onChange: e => setRightWeight(parseInt(e.target.value, 10) || 0),
+    className: "w-full px-4 py-3 text-2xl font-black text-center rounded-xl border-4 border-orange-300"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "mt-8 grid grid-cols-3 md:grid-cols-5 gap-3"
+  }, t.items.map((item, i) => /*#__PURE__*/React.createElement("button", {
+    key: i,
+    onClick: () => {
+      setLeftWeight(item.weight);
+      setRightWeight(item.weight);
+    },
+    className: "py-4 bg-gradient-to-r from-yellow-100 to-orange-100 hover:from-yellow-200 hover:to-orange-200 rounded-xl transition-all"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl mb-2"
+  }, item.emoji), /*#__PURE__*/React.createElement("div", {
+    className: "text-sm font-bold"
+  }, getItemName(item)), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs text-orange-600"
+  }, item.weight, "g")))), /*#__PURE__*/React.createElement("div", {
+    className: "mt-8 bg-blue-50 p-4 rounded-xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "font-bold text-blue-800 mb-2"
+  }, "💡 ", t.units[lang] || t.units["en"]), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-blue-700"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-2 rounded"
+  }, "1 kg = 1000 g"), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-2 rounded"
+  }, "1000 g = 1 kg")))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

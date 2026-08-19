@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>常識科：火山探險 | Volcano Explorer 3D</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      :root {
+        --primary-glow: rgba(239, 68, 68, 0.5);
+        --glass-bg: rgba(0, 0, 0, 0.6);
+        --glass-border: rgba(255, 255, 255, 0.1);
+      }
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow: hidden;
+        margin: 0;
+      }
+      .glass-panel {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      }
+      .glass-btn {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        transition: 0.3s;
+      }
+      .glass-btn:hover {
+        background: rgba(239, 68, 68, 0.4);
+        border-color: #ef4444;
+        box-shadow: 0 0 20px var(--primary-glow);
+      }
+      .glass-btn.active {
+        background: #ef4444;
+        border-color: #ef4444;
+        box-shadow: 0 0 20px var(--primary-glow);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect,
+  useRef,
+  useLayoutEffect
+} = React;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+
+// Icons
+const Icon = ({
+  p,
+  size = 24
+}) => /*#__PURE__*/React.createElement("svg", {
+  xmlns: "http://www.w3.org/2000/svg",
+  width: size,
+  height: size,
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: "2",
+  strokeLinecap: "round",
+  strokeLinejoin: "round"
+}, /*#__PURE__*/React.createElement("path", {
+  d: p
+}));
+const Icons = {
+  Cut: "M6 3v12M18 9v12M4 21h16M4 3h16M3 12h18",
+  // stylized
+  Eye: "M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6",
+  Fire: "M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.1.2-2.2.5-3.3a7 7 0 0 0 3 2.8z",
+  Info: "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z M12 16v-4 M12 8h.01"
+};
+const t = {
+  title: {
+    en: "Volcano Explorer",
+    zh: "火山探險"
+  },
+  cut: {
+    en: "Cross Section",
+    zh: "剖面圖"
+  },
+  view: {
+    en: "3D View",
+    zh: "3D 外觀"
+  },
+  erupt: {
+    en: "ERUPT!",
+    zh: "爆發！"
+  },
+  magma: {
+    en: "Magma Chamber",
+    zh: "岩漿庫"
+  },
+  vent: {
+    en: "Main Vent",
+    zh: "主火山口通道"
+  },
+  crater: {
+    en: "Crater",
+    zh: "火山口"
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+
+// THREE.JS
+function Scene({
+  cutView,
+  erupting,
+  setErupting
+}) {
+  const mountRef = useRef(null);
+  const sceneDataRef = useRef({});
+  useLayoutEffect(() => {
+    const w = mountRef.current.clientWidth;
+    const h = mountRef.current.clientHeight;
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0f172a);
+    // Fog
+    scene.fog = new THREE.FogExp2(0x0f172a, 0.02);
+    const camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 100);
+    camera.position.set(15, 10, 15);
+    camera.lookAt(0, 3, 0);
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true
+    });
+    renderer.setSize(w, h);
+    renderer.shadowMap.enabled = true;
+    renderer.localClippingEnabled = true; // IMPORTANT
+    mountRef.current.appendChild(renderer.domElement);
+
+    // Lights
+    const ambient = new THREE.AmbientLight(0x404040);
+    scene.add(ambient);
+    const dirLight = new THREE.DirectionalLight(0xffbba, 1);
+    dirLight.position.set(10, 20, 10);
+    dirLight.castShadow = true;
+    scene.add(dirLight);
+
+    // Clipping Plane (For Cross Section)
+    // Normal (0,0,1) means cut along Z axis?
+    // Let's cut along X axis (normal 1,0,0) so we see side profile.
+    const clipPlane = new THREE.Plane(new THREE.Vector3(-1, 0, 0), 0);
+
+    // --- MESHES ---
+    const root = new THREE.Group();
+    scene.add(root);
+
+    // 1. Volcano Mountain
+    // Lathe
+    const points = [];
+    for (let i = 0; i <= 10; i++) {
+      // Create a curve: x = radius, y = height
+      // Base radius = 8. Top radius = 2. Height = 6.
+      const t = i / 10;
+      const y = t * 6;
+      // x = 8 * (1-t)^2 + 2 * t? Concave curve looks better.
+      // Exp: x = 8 * exp(-t * 1.5) ?
+      const x = 7 * Math.pow(1 - t, 2) + 2;
+      points.push(new THREE.Vector2(x, y));
+    }
+    const volGeo = new THREE.LatheGeometry(points, 32);
+    const volMat = new THREE.MeshStandardMaterial({
+      color: 0x57534e,
+      roughness: 1,
+      flatShading: true,
+      side: THREE.DoubleSide,
+      clippingPlanes: [clipPlane],
+      clipShadows: true
+    });
+    const volcano = new THREE.Mesh(volGeo, volMat);
+    volcano.castShadow = true;
+    volcano.receiveShadow = true;
+    root.add(volcano);
+
+    // 2. Magma Chamber (Sphere)
+    const magmaGeo = new THREE.SphereGeometry(3, 32, 32);
+    const magmaMat = new THREE.MeshStandardMaterial({
+      color: 0xff4500,
+      emissive: 0xff0000,
+      emissiveIntensity: 2,
+      clippingPlanes: [clipPlane] // Also clip it? No, maybe we want to see inside?
+      // Actually if we cut the mountain, we want to SEE the magma inside.
+      // So Magma should NOT be clipped? Or clipped in half too?
+      // Usually cross section shows half magma.
+    });
+    // Magma champer is underground (y < 0).
+    const magma = new THREE.Mesh(magmaGeo, magmaMat);
+    magma.position.y = -2;
+    magma.userData.isCore = true;
+    root.add(magma);
+
+    // 3. Main Vent (Cylinder)
+    const ventGeo = new THREE.CylinderGeometry(0.8, 2, 8, 16);
+    const vent = new THREE.Mesh(ventGeo, magmaMat);
+    vent.position.y = 3; // From Chamber (-2) to Top (6).
+    // height 8 reaches y=7? (-1 to 7).
+    vent.userData.isCore = true;
+    root.add(vent);
+
+    // 4. Ground
+    const groundGeo = new THREE.PlaneGeometry(50, 50);
+    const groundMat = new THREE.MeshStandardMaterial({
+      color: 0x222222,
+      roughness: 1
+    });
+    const ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.rotation.x = -Math.PI / 2;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    // Particles (Eruption)
+    const particleCount = 200;
+    const particlesGeo = new THREE.BufferGeometry();
+    const pPos = new Float32Array(particleCount * 3);
+    const pVel = []; // Custom array for velocities
+    const pLife = []; // Life
+
+    for (let i = 0; i < particleCount; i++) {
+      pPos[i * 3] = 0;
+      pPos[i * 3 + 1] = -100;
+      pPos[i * 3 + 2] = 0; // Hide initially
+      pVel.push({
+        x: 0,
+        y: 0,
+        z: 0
+      });
+      pLife.push(0);
+    }
+    particlesGeo.setAttribute("position", new THREE.BufferAttribute(pPos, 3));
+    const pMat = new THREE.PointsMaterial({
+      color: 0xffaa00,
+      size: 0.5,
+      transparent: true,
+      opacity: 0.8
+    });
+    const particleSystem = new THREE.Points(particlesGeo, pMat);
+    scene.add(particleSystem);
+    sceneDataRef.current = {
+      scene,
+      camera,
+      renderer,
+      root,
+      clipPlane,
+      magma,
+      vent,
+      volcano,
+      particleSystem,
+      pPos,
+      pVel,
+      pLife,
+      particlesGeo
+    };
+
+    // Mouse
+    let isDrag = false,
+      prev = {
+        x: 0,
+        y: 0
+      };
+    const cvs = renderer.domElement;
+    const start = (x, y) => {
+      isDrag = true;
+      prev = {
+        x,
+        y
+      };
+    };
+    const move = (x, y) => {
+      if (!isDrag) return;
+      const dx = x - prev.x,
+        dy = y - prev.y;
+      root.rotation.y += dx * 0.005;
+      prev = {
+        x,
+        y
+      };
+    };
+    const end = () => isDrag = false;
+    cvs.addEventListener("mousedown", e => start(e.clientX, e.clientY));
+    window.addEventListener("mousemove", e => move(e.clientX, e.clientY));
+    window.addEventListener("mouseup", end);
+    cvs.addEventListener("touchstart", e => start(e.touches[0].clientX, e.touches[0].clientY));
+    window.addEventListener("touchmove", e => move(e.touches[0].clientX, e.touches[0].clientY));
+    window.addEventListener("touchend", end);
+    const handleResize = () => {
+      const w = mountRef.current.clientWidth,
+        h = mountRef.current.clientHeight;
+      renderer.setSize(w, h);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    };
+    window.addEventListener("resize", handleResize);
+
+    // Loop
+    const animate = () => {
+      requestAnimationFrame(animate);
+
+      // Particles Logic
+      const {
+        pPos,
+        pVel,
+        pLife,
+        particlesGeo,
+        particleSystem
+      } = sceneDataRef.current;
+      let active = false;
+      for (let i = 0; i < particleCount; i++) {
+        if (pLife[i] > 0) {
+          active = true;
+          pLife[i]--;
+          // Physics
+          pPos[i * 3] += pVel[i].x;
+          pPos[i * 3 + 1] += pVel[i].y;
+          pPos[i * 3 + 2] += pVel[i].z;
+          pVel[i].y -= 0.02; // Gravity
+
+          if (pPos[i * 3 + 1] < 0) pLife[i] = 0; // Hit ground
+        } else {
+          // Respawn if erupting
+          if (sceneDataRef.current.isEruptingGlobal) {
+            pLife[i] = 60 + Math.random() * 60;
+            pPos[i * 3] = (Math.random() - 0.5) * 1; // Vent Width
+            pPos[i * 3 + 1] = 6; // Top of volcano
+            pPos[i * 3 + 2] = (Math.random() - 0.5) * 1;
+            // Explosion vel
+            pVel[i] = {
+              x: (Math.random() - 0.5) * 0.5,
+              y: 0.5 + Math.random() * 1,
+              z: (Math.random() - 0.5) * 0.5
+            };
+          } else {
+            pPos[i * 3 + 1] = -100; // Hide
+          }
+        }
+      }
+      particlesGeo.attributes.position.needsUpdate = true;
+      renderer.render(scene, camera);
+    };
+    animate();
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      mountRef.current.removeChild(renderer.domElement);
+    };
+  }, []);
+
+  // Updates
+  useEffect(() => {
+    const {
+      clipPlane,
+      volcano,
+      magma,
+      vent
+    } = sceneDataRef.current;
+    if (!volcano) return;
+    if (cutView) {
+      // Enable clipping
+      volcano.material.clippingPlanes = [clipPlane];
+      magma.material.clippingPlanes = [clipPlane];
+      vent.material.clippingPlanes = [clipPlane];
+    } else {
+      volcano.material.clippingPlanes = [];
+      magma.material.clippingPlanes = [];
+      vent.material.clippingPlanes = [];
+    }
+  }, [cutView]);
+  useEffect(() => {
+    sceneDataRef.current.isEruptingGlobal = erupting;
+  }, [erupting]);
+  return /*#__PURE__*/React.createElement("div", {
+    ref: mountRef,
+    className: "w-full h-full"
+  });
+}
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [cutView, setCutView] = useState(false);
+  const [erupting, setErupting] = useState(false);
+  const handleErupt = () => {
+    setErupting(true);
+    setTimeout(() => setErupting(false), 5000);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "relative w-screen h-screen overflow-hidden"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0"
+  }, /*#__PURE__*/React.createElement(Scene, {
+    cutView: cutView,
+    erupting: erupting,
+    setErupting: setErupting
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 pointer-events-none p-6 flex flex-col justify-between"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between items-start pointer-events-auto"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel px-6 py-4 rounded-2xl"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-3xl font-black bg-gradient-to-r from-red-500 to-orange-400 bg-clip-text text-transparent"
+  }, getText("title", lang))), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-2 rounded-xl flex gap-1"
+  }, ["zh", "en"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-4 py-2 rounded-lg font-bold text-sm ${lang === l ? "bg-red-500 text-white" : "text-gray-400"}`
+  }, l === "zh" ? "中文" : "ENG")))), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col md:flex-row gap-4 items-end pointer-events-auto"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col gap-2"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setCutView(!cutView),
+    className: `glass-btn px-6 py-4 rounded-xl flex items-center gap-3 text-lg font-bold ${cutView ? "active" : "text-gray-300"}`
+  }, /*#__PURE__*/React.createElement(Icon, {
+    p: Icons.Cut
+  }), /*#__PURE__*/React.createElement(Icon, {
+    p: cutView ? Icons.Eye : Icons.Info
+  }), " ", cutView ? getText("view", lang) : getText("cut", lang)), cutView && /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-4 rounded-xl space-y-2 animate-pulse"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-4 h-4 bg-red-600 rounded-full"
+  }), " ", getText("magma", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-4 h-4 bg-orange-500 rounded-full"
+  }), " ", getText("vent", lang)))), /*#__PURE__*/React.createElement("button", {
+    onClick: handleErupt,
+    disabled: erupting,
+    className: `ml-auto glass-btn px-8 py-6 rounded-2xl flex items-center gap-4 text-2xl font-black ${erupting ? "opacity-50 cursor-not-allowed" : "hover:scale-105"}`
+  }, /*#__PURE__*/React.createElement(Icon, {
+    p: Icons.Fire,
+    size: 32
+  }), " ", getText("erupt", lang)))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

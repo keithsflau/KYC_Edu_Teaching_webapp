@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reactivity Series Lab | 金屬活性虛擬實驗室</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+      }
+      canvas {
+        touch-action: none;
+      }
+    </style>
+  </head>
+
+  <body class="bg-gray-900 text-white min-h-screen flex flex-col">
+    <!-- Header -->
+    <header
+      class="bg-gray-800 border-b border-gray-700 px-6 py-4 flex justify-between items-center z-10"
+    >
+      <div class="flex items-center gap-4">
+        <a href="../../index.html" class="text-gray-400 hover:text-white transition-colors" aria-label="Back to Chemistry hub">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+        </a>
+        <h1 class="text-xl font-bold text-orange-400">
+          Reactivity Lab
+          <span class="text-gray-500 font-medium text-sm ml-2">金屬活性</span>
+        </h1>
+      </div>
+      <div class="flex gap-2">
+        <div class="px-3 py-1 rounded bg-gray-700 text-xs text-orange-300">
+          Observation Mode
+        </div>
+      </div>
+    </header>
+
+    <main
+      class="flex-grow flex flex-col md:flex-row h-[calc(100vh-64px)] overflow-hidden"
+    >
+      <!-- Lab Controls -->
+      <div
+        class="w-full md:w-72 bg-gray-800 p-6 flex flex-col border-r border-gray-700 z-10"
+      >
+        <div class="mb-8">
+          <h3
+            class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4"
+          >
+            1. Environment
+          </h3>
+          <div class="space-y-2">
+            <button
+              onclick="setEnv('water')"
+              id="env-water"
+              class="w-full text-left px-4 py-3 rounded-lg bg-blue-900/40 border border-blue-800/50 hover:bg-blue-900/60 transition-colors flex items-center justify-between group active-env"
+            >
+              <span>Water (H₂O)</span>
+              <div class="w-2 h-2 rounded-full bg-blue-500"></div>
+            </button>
+            <button
+              onclick="setEnv('acid')"
+              id="env-acid"
+              class="w-full text-left px-4 py-3 rounded-lg bg-red-900/40 border border-red-800/50 hover:bg-red-900/60 transition-colors flex items-center justify-between group"
+            >
+              <span>Dilute Acid (HCl)</span>
+              <div class="w-2 h-2 rounded-full bg-red-500"></div>
+            </button>
+          </div>
+        </div>
+
+        <div class="mb-8 flex-grow">
+          <h3
+            class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4"
+          >
+            2. Select Metal
+          </h3>
+          <div class="grid grid-cols-2 gap-2">
+            <button
+              onclick="dropMetal('K')"
+              class="p-2 rounded bg-gray-700 hover:bg-gray-600 border border-gray-600 text-sm font-mono"
+            >
+              K (Potassium)
+            </button>
+            <button
+              onclick="dropMetal('Na')"
+              class="p-2 rounded bg-gray-700 hover:bg-gray-600 border border-gray-600 text-sm font-mono"
+            >
+              Na (Sodium)
+            </button>
+            <button
+              onclick="dropMetal('Mg')"
+              class="p-2 rounded bg-gray-700 hover:bg-gray-600 border border-gray-600 text-sm font-mono"
+            >
+              Mg (Magnesium)
+            </button>
+            <button
+              onclick="dropMetal('Zn')"
+              class="p-2 rounded bg-gray-700 hover:bg-gray-600 border border-gray-600 text-sm font-mono"
+            >
+              Zn (Zinc)
+            </button>
+            <button
+              onclick="dropMetal('Fe')"
+              class="p-2 rounded bg-gray-700 hover:bg-gray-600 border border-gray-600 text-sm font-mono"
+            >
+              Fe (Iron)
+            </button>
+            <button
+              onclick="dropMetal('Cu')"
+              class="p-2 rounded bg-gray-700 hover:bg-gray-600 border border-gray-600 text-sm font-mono"
+            >
+              Cu (Copper)
+            </button>
+            <button
+              onclick="dropMetal('Au')"
+              class="p-2 rounded bg-gray-700 hover:bg-gray-600 border border-gray-600 text-sm font-mono"
+            >
+              Au (Gold)
+            </button>
+          </div>
+        </div>
+
+        <button
+          onclick="resetLab()"
+          class="w-full py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 text-sm"
+        >
+          Clear Beaker
+        </button>
+      </div>
+
+      <!-- Simulation View -->
+      <div
+        class="flex-grow relative bg-gray-900 items-center justify-center flex"
+      >
+        <!-- Canvas Layer -->
+        <canvas id="simCanvas" class="absolute inset-0 w-full h-full"></canvas>
+
+        <!-- Overlay Info -->
+        <div
+          id="observation-toast"
+          class="absolute top-8 pointer-events-none transition-opacity duration-300 opacity-0 bg-black/60 backdrop-blur text-white px-6 py-3 rounded-full border border-gray-700 shadow-xl"
+        >
+          <span id="toast-text" class="text-sm font-medium">No Reaction</span>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      // Data
+      // Reactivity scale: 0 (None) to 10 (Explosive)
+      const REACTIVITY = {
+        water: { K: 10, Na: 9, Mg: 2, Zn: 0, Fe: 0, Cu: 0, Au: 0 },
+        acid: { K: 10, Na: 10, Mg: 8, Zn: 6, Fe: 4, Cu: 0, Au: 0 },
+      };
+
+      const METAL_COLORS = {
+        K: "#d1d5db",
+        Na: "#d1d5db",
+        Mg: "#94a3b8",
+        Zn: "#64748b",
+        Fe: "#78716c",
+        Cu: "#b45309",
+        Au: "#fbbf24",
+      };
+
+      const ENV_COLORS = {
+        water: { bg: "#e0f2fe", fluid: "rgba(56, 189, 248, 0.3)" },
+        acid: { bg: "#fee2e2", fluid: "rgba(248, 113, 113, 0.3)" },
+      };
+
+      let currentEnv = "water";
+      let activeMetal = null;
+      let reactionIntensity = 0;
+
+      const canvas = document.getElementById("simCanvas");
+      const ctx = canvas.getContext("2d");
+      let width, height;
+
+      let bubbles = [];
+      let particles = []; // For fire/sparks
+
+      window.onload = function () {
+        resize();
+        window.addEventListener("resize", resize);
+        animate();
+      };
+
+      function resize() {
+        width = canvas.width = canvas.offsetWidth;
+        height = canvas.height = canvas.offsetHeight;
+      }
+
+      function setEnv(env) {
+        currentEnv = env;
+        resetLab();
+
+        // Visual Toggle
+        document.querySelectorAll('button[id^="env-"]').forEach((b) => {
+          b.classList.remove("ring-2", "ring-white");
+        });
+        document
+          .getElementById(`env-${env}`)
+          .classList.add("ring-2", "ring-white");
+      }
+
+      function dropMetal(metal) {
+        resetLab();
+        activeMetal = {
+          type: metal,
+          y: 0,
+          targetY: height * 0.7, // Bottom of beaker
+          size: 30,
+          color: METAL_COLORS[metal],
+        };
+
+        const r = REACTIVITY[currentEnv][metal];
+        reactionIntensity = r;
+
+        let text = "";
+        if (r === 0) text = "No Reaction (沒有反應)";
+        else if (r < 3) text = "Very Slow Reaction (反應緩慢)";
+        else if (r < 7) text = "Moderate Reaction - Bubbles (反應溫和 - 氣泡)";
+        else if (r < 10) text = "Vigorous Reaction! (劇烈反應!)";
+        else text = "Explosive Reaction! (爆炸性反應!)";
+
+        showToast(text);
+
+        if (r >= 9) {
+          // Flash effect for explosive
+          setTimeout(() => {
+            ctx.fillStyle = "white";
+            ctx.fillRect(0, 0, width, height);
+          }, 600);
+        }
+      }
+
+      function resetLab() {
+        activeMetal = null;
+        reactionIntensity = 0;
+        bubbles = [];
+        particles = [];
+        hideToast();
+      }
+
+      function showToast(msg) {
+        const t = document.getElementById("observation-toast");
+        document.getElementById("toast-text").innerText = msg;
+        t.classList.remove("opacity-0");
+      }
+      function hideToast() {
+        document.getElementById("observation-toast").classList.add("opacity-0");
+      }
+
+      function animate() {
+        requestAnimationFrame(animate);
+        ctx.clearRect(0, 0, width, height);
+
+        // Draw Beaker
+        const bx = width / 2 - 150;
+        const by = height * 0.2;
+        const bw = 300;
+        const bh = height * 0.6;
+
+        // Fluid
+        ctx.fillStyle = ENV_COLORS[currentEnv].fluid;
+        ctx.fillRect(bx + 10, by + 50, bw - 20, bh - 60);
+
+        // Beaker Lines
+        ctx.strokeStyle = "rgba(255,255,255,0.4)";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(bx, by);
+        ctx.lineTo(bx, by + bh);
+        ctx.lineTo(bx + bw, by + bh);
+        ctx.lineTo(bx + bw, by);
+        ctx.stroke();
+
+        // Metal Physics
+        if (activeMetal) {
+          // Fall down
+          if (activeMetal.y < activeMetal.targetY) {
+            activeMetal.y += 5;
+          } else {
+            // Floating logic if very reactive (K/Na floats)
+            if (reactionIntensity > 8) {
+              activeMetal.targetY = by + 60; // Surface
+              activeMetal.y += (activeMetal.targetY - activeMetal.y) * 0.1;
+            }
+          }
+
+          const mx = width / 2;
+          const my = activeMetal.y;
+
+          // Draw Metal
+          ctx.fillStyle = activeMetal.color;
+          ctx.beginPath();
+          ctx.arc(mx, my, activeMetal.size, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Generate Bubbles (H2)
+          const rate = activeMetal.y > by + 40 ? reactionIntensity : 0; // Only if in liquid
+          if (Math.random() * 10 < rate) {
+            for (let i = 0; i < rate; i++) {
+              bubbles.push({
+                x: mx + (Math.random() - 0.5) * 40,
+                y: my - 20,
+                r: Math.random() * 5 + 2,
+                v: Math.random() * 2 + 1,
+              });
+            }
+          }
+
+          // Fire/Explosion for K/Na
+          if (reactionIntensity >= 9 && activeMetal.y <= by + 70) {
+            for (let i = 0; i < 5; i++) {
+              particles.push({
+                x: mx + (Math.random() - 0.5) * 20,
+                y: my - 20,
+                vx: (Math.random() - 0.5) * 5,
+                vy: -Math.random() * 5,
+                life: 1.0,
+                color:
+                  currentEnv === "water" && activeMetal.type === "K"
+                    ? "#d8b4fe"
+                    : "#fbbf24", // Lilac flame for K
+              });
+            }
+          }
+        }
+
+        // Update Bubbles
+        ctx.fillStyle = "rgba(255,255,255,0.6)";
+        for (let i = bubbles.length - 1; i >= 0; i--) {
+          const b = bubbles[i];
+          b.y -= b.v;
+          b.x += Math.random() - 0.5; // Jiggle
+
+          ctx.beginPath();
+          ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+          ctx.fill();
+
+          if (b.y < by + 50) bubbles.splice(i, 1); // Pop at surface
+        }
+
+        // Update Particles (Fire)
+        for (let i = particles.length - 1; i >= 0; i--) {
+          const p = particles[i];
+          p.x += p.vx;
+          p.y += p.vy;
+          p.life -= 0.05;
+
+          ctx.globalAlpha = p.life;
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = 1.0;
+
+          if (p.life <= 0) particles.splice(i, 1);
+        }
+      }
+    </script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

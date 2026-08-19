@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小五數學：繪製折線圖 | Drawing Line Graphs</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(190, 24, 93, 0.2); /* Pink 900/800 mix */
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(244, 114, 182, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+      input[type="number"]::-webkit-inner-spin-button,
+      input[type="number"]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Drawing Line Graphs",
+    zh: "繪製折線圖",
+    ja: "折れ線グラフを描く",
+    ko: "꺾은선 그래프 그리기",
+    es: "Dibujo de Gráficos Lineales",
+    de: "Liniendiagramme zeichnen",
+    fi: "Viivakaavioiden piirtäminen",
+    fr: "Dessiner des graphiques linéaires",
+    ar: "رسم الرسوم البيانية الخطية",
+    it: "Disegno grafici a linee"
+  },
+  graphTitle: {
+    en: "Sales Data",
+    zh: "銷售數據",
+    ja: "売上データ",
+    ko: "판매 데이터",
+    es: "Datos de Ventas",
+    de: "Verkaufsdaten",
+    fi: "Myyntitiedot",
+    fr: "Données de vente",
+    ar: "بيانات المبيعات",
+    it: "Dati di vendita"
+  },
+  tip: {
+    en: "Change values to update graph!",
+    zh: "調整數值，觀察折線圖的變化！",
+    ja: "値を変更してグラフを更新！",
+    ko: "값을 변경하여 그래프 업데이트!",
+    es: "¡Cambia valores para actualizar!",
+    de: "Ändere Werte zum Aktualisieren!",
+    fi: "Muuta arvoja päivittääksesi!",
+    fr: "Changez les valeurs pour maj !",
+    ar: "غيّر القيم لتحديث الرسم!",
+    it: "Cambia i valori per aggiornare!"
+  },
+  mon: {
+    en: "Mon",
+    zh: "週一",
+    ja: "月",
+    ko: "월",
+    es: "Lun",
+    de: "Mo",
+    fi: "Ma",
+    fr: "Lun",
+    ar: "إثنين",
+    it: "Lun"
+  },
+  tue: {
+    en: "Tue",
+    zh: "週二",
+    ja: "火",
+    ko: "화",
+    es: "Mar",
+    de: "Di",
+    fi: "Ti",
+    fr: "Mar",
+    ar: "ثلاثاء",
+    it: "Mar"
+  },
+  wed: {
+    en: "Wed",
+    zh: "週三",
+    ja: "水",
+    ko: "수",
+    es: "Mié",
+    de: "Mi",
+    fi: "Ke",
+    fr: "Mer",
+    ar: "أربعاء",
+    it: "Mer"
+  },
+  thu: {
+    en: "Thu",
+    zh: "週四",
+    ja: "木",
+    ko: "목",
+    es: "Jue",
+    de: "Do",
+    fi: "To",
+    fr: "Jeu",
+    ar: "خميس",
+    it: "Gio"
+  },
+  fri: {
+    en: "Fri",
+    zh: "週五",
+    ja: "金",
+    ko: "금",
+    es: "Vie",
+    de: "Fr",
+    fi: "Pe",
+    fr: "Ven",
+    ar: "جمعة",
+    it: "Ven"
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [data, setData] = useState([{
+    id: "mon",
+    value: 20
+  }, {
+    id: "tue",
+    value: 35
+  }, {
+    id: "wed",
+    value: 25
+  }, {
+    id: "thu",
+    value: 40
+  }, {
+    id: "fri",
+    value: 30
+  }]);
+  const maxVal = 50;
+
+  // SVG Layout
+  const width = 350;
+  const height = 210;
+  const padding = {
+    top: 20,
+    bottom: 30,
+    left: 40,
+    right: 20
+  };
+  const chartW = width - padding.left - padding.right;
+  const chartH = height - padding.top - padding.bottom;
+  const points = data.map((d, i) => ({
+    x: padding.left + i * (chartW / (data.length - 1)),
+    y: height - padding.bottom - d.value / maxVal * chartH,
+    ...d
+  }));
+  const pointDescription = points.map(p => `${p.x},${p.y}`).join(" ");
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-4xl flex justify-between items-center mb-10"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-black text-pink-400 drop-shadow-[0_0_15px_rgba(236,72,153,0.5)]"
+  }, "✏️ ", getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-800/80 p-1.5 rounded-xl border border-white/10 flex flex-wrap justify-end gap-1 max-w-[50%]"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-pink-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white hover:bg-white/5"}`
+  }, l)))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-3xl flex flex-col gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-8 rounded-3xl flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-xl font-bold text-pink-200 mb-6 uppercase tracking-widest border-b border-pink-500/20 pb-2"
+  }, getText("graphTitle", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-lg"
+  }, /*#__PURE__*/React.createElement("svg", {
+    viewBox: `0 0 ${width} ${height}`,
+    className: "w-full h-auto overflow-visible"
+  }, [0, 10, 20, 30, 40, 50].map(v => {
+    const y = height - padding.bottom - v / maxVal * chartH;
+    return /*#__PURE__*/React.createElement("g", {
+      key: v
+    }, /*#__PURE__*/React.createElement("line", {
+      x1: padding.left,
+      y1: y,
+      x2: width - padding.right,
+      y2: y,
+      stroke: "rgba(255,255,255,0.1)",
+      strokeWidth: "1"
+    }), /*#__PURE__*/React.createElement("text", {
+      x: padding.left - 5,
+      y: y + 3,
+      textAnchor: "end",
+      className: "text-[10px] fill-slate-400 font-mono"
+    }, v));
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: padding.left,
+    y1: padding.top,
+    x2: padding.left,
+    y2: height - padding.bottom,
+    stroke: "#94a3b8",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: padding.left,
+    y1: height - padding.bottom,
+    x2: width - padding.right,
+    y2: height - padding.bottom,
+    stroke: "#94a3b8",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement(motion.path, {
+    initial: false,
+    animate: {
+      d: `M${pointDescription}`
+    },
+    transition: {
+      type: "spring",
+      stiffness: 300,
+      damping: 30
+    },
+    fill: "none",
+    stroke: "#ec4899",
+    strokeWidth: "3",
+    strokeLinecap: "round",
+    strokeLinejoin: "round"
+  }), /*#__PURE__*/React.createElement(motion.path, {
+    initial: false,
+    animate: {
+      d: `M${points[0].x},${height - padding.bottom} L${pointDescription} L${points[points.length - 1].x},${height - padding.bottom} Z`
+    },
+    fill: "rgba(236, 72, 153, 0.1)"
+  }), points.map((p, i) => /*#__PURE__*/React.createElement("g", {
+    key: i
+  }, /*#__PURE__*/React.createElement(motion.circle, {
+    cx: p.x,
+    animate: {
+      cy: p.y
+    },
+    r: "5",
+    fill: "#be185d",
+    stroke: "white",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: p.x,
+    y: height - 10,
+    textAnchor: "middle",
+    className: "text-[10px] fill-slate-300 font-bold uppercase tracking-wider"
+  }, getText(p.id, lang))))))), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-5 gap-3"
+  }, data.map((d, i) => /*#__PURE__*/React.createElement("div", {
+    key: d.id,
+    className: "glass-panel p-3 rounded-xl flex flex-col items-center gap-2"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "text-xs font-bold text-pink-300 uppercase"
+  }, getText(d.id, lang)), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    min: "0",
+    max: "50",
+    value: d.value,
+    onChange: e => {
+      const n = [...data];
+      let val = parseInt(e.target.value, 10);
+      if (isNaN(val)) val = 0;
+      if (val > 50) val = 50;
+      if (val < 0) val = 0;
+      n[i].value = val;
+      setData(n);
+    },
+    className: "w-full bg-slate-900 border border-pink-500/30 rounded-lg text-center font-black text-xl text-white outline-none focus:border-pink-500"
+  })))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-amber-500/10 border border-amber-500/20 p-4 rounded-xl flex gap-3 text-amber-200 text-sm justify-center items-center"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-2xl"
+  }, "💡"), /*#__PURE__*/React.createElement("span", {
+    className: "font-bold"
+  }, getText("tip", lang)))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

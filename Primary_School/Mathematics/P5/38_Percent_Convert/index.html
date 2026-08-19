@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小五數學：百分數互化 | Percentage Conversion</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(180, 83, 9, 0.2); /* Amber 700 alpha */
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(251, 191, 36, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Percentage Conversion",
+    zh: "百分數互化",
+    ja: "百分率の変換",
+    ko: "백분율 변환",
+    es: "Conversión de Porcentaje",
+    de: "Prozentumrechnung",
+    fi: "Prosenttimuunnos",
+    fr: "Conversion de pourcentage",
+    ar: "تحويل النسبة المئوية",
+    it: "Conversione percentuale"
+  },
+  toPercent: {
+    en: "Fraction → %",
+    zh: "分數 → 百分數",
+    ja: "分数 → %",
+    ko: "분수 → %",
+    es: "Fracción → %",
+    de: "Bruch → %",
+    fi: "Murtoluku → %",
+    fr: "Fraction → %",
+    ar: "كسر → %",
+    it: "Frazione → %"
+  },
+  fromPercent: {
+    en: "% → Fraction/Decimal",
+    zh: "百分數 → 分數/小數",
+    ja: "% → 分数/小数",
+    ko: "% → 분수/소수",
+    es: "% → Fracción/Decimal",
+    de: "% → Bruch/Dezimal",
+    fi: "% → Murtoluku/Desimaali",
+    fr: "% → Fraction/Décimal",
+    ar: "% → كسر/عشري",
+    it: "% → Frazione/Decimale"
+  },
+  fraction: {
+    en: "Fraction",
+    zh: "分數",
+    ja: "分数",
+    ko: "분수",
+    es: "Fracción",
+    de: "Bruch",
+    fi: "Murtoluku",
+    fr: "Fraction",
+    ar: "كسر",
+    it: "Frazione"
+  },
+  decimal: {
+    en: "Decimal",
+    zh: "小數",
+    ja: "小数",
+    ko: "소수",
+    es: "Decimal",
+    de: "Dezimalzahl",
+    fi: "Desimaali",
+    fr: "Décimal",
+    ar: "عشري",
+    it: "Decimale"
+  },
+  calcStep: {
+    en: "{n} ÷ {d} × 100 = {res}%",
+    zh: "{n} ÷ {d} × 100 = {res}%",
+    ja: "{n} ÷ {d} × 100 = {res}%",
+    ko: "{n} ÷ {d} × 100 = {res}%",
+    es: "{n} ÷ {d} × 100 = {res}%",
+    de: "{n} ÷ {d} × 100 = {res}%",
+    fi: "{n} ÷ {d} × 100 = {res}%",
+    fr: "{n} ÷ {d} × 100 = {res}%",
+    ar: "{n} ÷ {d} × 100 = {res}%",
+    it: "{n} ÷ {d} × 100 = {res}%"
+  }
+};
+const getText = (key, lang, params = {}) => {
+  let text = t[key]?.[lang] || t[key]?.["en"] || key;
+  for (const k in params) {
+    text = text.replace(`{${k}}`, params[k]);
+  }
+  return text;
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [mode, setMode] = useState("toPercent");
+  const [num, setNum] = useState(3);
+  const [denom, setDenom] = useState(4);
+  const [percent, setPercent] = useState(75);
+  const fracToPercent = (num / denom * 100).toFixed(2).replace(/\.00$/, "");
+  const percentToFrac = percent / 100;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-4xl flex justify-between items-center mb-10"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-black text-amber-400 drop-shadow-[0_0_15px_rgba(251,191,36,0.5)]"
+  }, "🔄 ", getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-800/80 p-1.5 rounded-xl border border-white/10 flex flex-wrap justify-end gap-1 max-w-[50%]"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-amber-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white hover:bg-white/5"}`
+  }, l)))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-3xl flex flex-col gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex bg-slate-900/50 p-1.5 rounded-2xl border border-amber-500/20 w-fit mx-auto"
+  }, [{
+    id: "toPercent",
+    label: getText("toPercent", lang)
+  }, {
+    id: "fromPercent",
+    label: getText("fromPercent", lang)
+  }].map(m => /*#__PURE__*/React.createElement("button", {
+    key: m.id,
+    onClick: () => setMode(m.id),
+    className: `px-6 py-3 rounded-xl font-bold transition-all text-sm md:text-base ${mode === m.id ? "bg-amber-600 text-white shadow-lg shadow-amber-900/50" : "text-amber-200/60 hover:text-amber-200 hover:bg-white/5"}`
+  }, m.label))), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-8 rounded-3xl min-h-[400px] flex flex-col items-center justify-center relative overflow-hidden"
+  }, /*#__PURE__*/React.createElement(AnimatePresence, {
+    mode: "wait"
+  }, mode === "toPercent" ? /*#__PURE__*/React.createElement(motion.div, {
+    key: "toPercent",
+    initial: {
+      opacity: 0,
+      x: -20
+    },
+    animate: {
+      opacity: 1,
+      x: 0
+    },
+    exit: {
+      opacity: 0,
+      x: 20
+    },
+    className: "flex flex-col items-center gap-8 w-full"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-4 text-white"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center gap-2"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: num,
+    onChange: e => setNum(Number(e.target.value)),
+    className: "w-24 bg-transparent border-b-2 border-amber-400 text-4xl font-black text-center outline-none focus:border-amber-200"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "w-full h-1 bg-white/20 rounded-full"
+  }), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: denom,
+    onChange: e => setDenom(Number(e.target.value) || 1),
+    className: "w-24 bg-transparent border-b-2 border-amber-400 text-4xl font-black text-center outline-none focus:border-amber-200"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl text-amber-200/50 font-black"
+  }, "="), /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl font-black text-amber-400 font-mono drop-shadow-[0_0_20px_rgba(251,191,36,0.3)]"
+  }, fracToPercent, "%")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-900/40 p-4 rounded-xl text-amber-100 font-mono text-lg border border-white/5"
+  }, getText("calcStep", lang, {
+    n: num,
+    d: denom,
+    res: fracToPercent
+  }))) : /*#__PURE__*/React.createElement(motion.div, {
+    key: "fromPercent",
+    initial: {
+      opacity: 0,
+      x: 20
+    },
+    animate: {
+      opacity: 1,
+      x: 0
+    },
+    exit: {
+      opacity: 0,
+      x: -20
+    },
+    className: "flex flex-col items-center gap-8 w-full"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: percent,
+    onChange: e => setPercent(Number(e.target.value)),
+    className: "w-40 bg-slate-900/50 border-2 border-amber-500/50 rounded-2xl p-4 text-5xl font-black text-center text-white outline-none focus:border-amber-400"
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "text-6xl font-black text-amber-400"
+  }, "%")), /*#__PURE__*/React.createElement("div", {
+    className: "grid md:grid-cols-2 gap-4 w-full"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-amber-900/40 border border-amber-500/20 p-6 rounded-2xl flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-amber-200/60 font-bold uppercase text-xs mb-2"
+  }, getText("fraction", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black text-white font-mono"
+  }, percent, "/100")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-emerald-900/40 border border-emerald-500/20 p-6 rounded-2xl flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-emerald-200/60 font-bold uppercase text-xs mb-2"
+  }, getText("decimal", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black text-white font-mono"
+  }, percentToFrac.toFixed(2).replace(/\.00$/, "")))))))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

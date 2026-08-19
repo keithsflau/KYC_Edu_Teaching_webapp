@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Shell Method | M2 Calculus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+        overflow: hidden;
+      }
+      .glass {
+        background: rgba(15, 23, 42, 0.8);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      input[type="range"] {
+        -webkit-appearance: none;
+        background: transparent;
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        height: 12px;
+        width: 12px;
+        border-radius: 50%;
+        background: white;
+        margin-top: -4px;
+        cursor: pointer;
+      }
+      input[type="range"]::-webkit-slider-runnable-track {
+        width: 100%;
+        height: 4px;
+        background: #475569;
+        border-radius: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      class="absolute top-4 left-4 z-10 glass p-6 rounded-2xl max-w-sm max-h-screen overflow-y-auto"
+    >
+      <!-- Language Toggle -->
+      <div class="absolute top-4 right-4">
+        <button
+          id="lang-btn"
+          class="px-2 py-1 bg-slate-800 border border-slate-600 rounded-full text-[10px] font-bold text-emerald-400 hover:bg-slate-700 hover:text-white transition flex items-center gap-1"
+        >
+          <i class="fa-solid fa-language"></i>
+          <span id="lang-text">中文</span>
+        </button>
+      </div>
+
+      <h1
+        id="app-title"
+        class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-indigo-400 mb-2"
+      >
+        Shell Method
+      </h1>
+      <p id="app-subtitle" class="text-xs text-slate-300 mb-4">
+        Volume by Cylindrical Shells
+      </p>
+
+      <div class="space-y-6">
+        <!-- Function Controls -->
+        <div>
+          <h3
+            id="label-height"
+            class="text-xs font-bold text-teal-400 uppercase mb-2"
+          >
+            Height f(x)
+          </h3>
+          <div id="eq-height" class="text-[10px] text-slate-400 mb-1">
+            f(x) = H - a(x-c)²
+          </div>
+          <div class="flex items-center gap-2 mb-2">
+            <label class="text-[10px] w-6">H</label>
+            <input
+              type="range"
+              min="1"
+              max="5"
+              step="0.1"
+              id="ph"
+              value="4"
+              class="flex-1 accent-teal-500"
+            />
+          </div>
+          <div class="flex items-center gap-2">
+            <label class="text-[10px] w-6">a</label>
+            <input
+              type="range"
+              min="0.1"
+              max="1"
+              step="0.1"
+              id="pa"
+              value="0.5"
+              class="flex-1 accent-teal-500"
+            />
+          </div>
+        </div>
+
+        <div class="pt-4 border-t border-slate-700">
+          <h3
+            id="label-params"
+            class="text-xs font-bold text-indigo-400 uppercase mb-2"
+          >
+            Parameters
+          </h3>
+          <div class="flex items-center gap-2 mb-2">
+            <label id="label-rad" class="text-[10px] w-6">Radius</label>
+            <input
+              type="range"
+              min="0.5"
+              max="3"
+              step="0.1"
+              id="radiusMax"
+              value="2.5"
+              class="flex-1 accent-indigo-500"
+            />
+          </div>
+          <div class="flex items-center gap-2">
+            <label id="label-shells" class="text-[10px] w-6">Shells</label>
+            <input
+              type="range"
+              min="3"
+              max="30"
+              step="1"
+              id="shells"
+              value="10"
+              class="flex-1 accent-indigo-500"
+            />
+          </div>
+          <div class="flex items-center gap-2 mt-2">
+            <label id="label-angle" class="text-[10px] w-6">Angle</label>
+            <input
+              type="range"
+              min="0"
+              max="6.28"
+              step="0.1"
+              id="angle"
+              value="5.0"
+              class="flex-1 accent-indigo-500"
+            />
+          </div>
+        </div>
+
+        <div class="p-3 bg-slate-800 rounded text-center">
+          <div id="label-volForm" class="text-[10px] uppercase text-slate-500">
+            Volume Formula
+          </div>
+          <div class="font-mono text-sm text-white">2π ∫ x f(x) dx</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="canvas-container" class="w-screen h-screen"></div>
+
+    <script>
+      // Bilingual
+      const translations = {
+        en: {
+          title: "Shell Method",
+          subtitle: "Volume by Cylindrical Shells",
+          height: "Height f(x)",
+          params: "Parameters",
+          radius: "Radius",
+          shells: "Shells",
+          angle: "Angle",
+          volForm: "Volume Formula",
+          langBtn: "中文",
+        },
+        zh: {
+          title: "殼層法 (Shell Method)",
+          subtitle: "圓柱殼體積積分",
+          height: "高度 f(x)",
+          params: "參數",
+          radius: "半徑",
+          shells: "殼層數",
+          angle: "角度",
+          volForm: "體積公式",
+          langBtn: "English",
+        },
+      };
+
+      let currentLang = "en";
+
+      function updateLanguage() {
+        const t = translations[currentLang];
+        document.getElementById("lang-text").textContent = t.langBtn;
+        document.getElementById("app-title").textContent = t.title;
+        document.getElementById("app-subtitle").textContent = t.subtitle;
+        document.getElementById("label-height").textContent = t.height;
+        document.getElementById("label-params").textContent = t.params;
+        document.getElementById("label-rad").textContent = t.radius;
+        document.getElementById("label-shells").textContent = t.shells;
+        document.getElementById("label-angle").textContent = t.angle;
+        document.getElementById("label-volForm").textContent = t.volForm;
+      }
+
+      document.getElementById("lang-btn").addEventListener("click", () => {
+        currentLang = currentLang === "en" ? "zh" : "en";
+        updateLanguage();
+      });
+
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0f172a);
+      const camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        100
+      );
+      camera.position.set(6, 5, 8);
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document
+        .getElementById("canvas-container")
+        .appendChild(renderer.domElement);
+
+      const controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+
+      scene.add(new THREE.GridHelper(10, 10, 0x334155, 0x1e293b));
+      scene.add(new THREE.AxesHelper(2));
+      scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+      const dl = new THREE.DirectionalLight(0xffffff, 0.8);
+      dl.position.set(5, 10, 5);
+      scene.add(dl);
+
+      const solidGroup = new THREE.Group();
+      scene.add(solidGroup);
+
+      function getHeight(r) {
+        const h = parseFloat(document.getElementById("ph").value);
+        const a = parseFloat(document.getElementById("pa").value);
+        // Parabola f(x) = h - a*r^2
+        return Math.max(0, h - a * r * r);
+      }
+
+      function updateSolid() {
+        while (solidGroup.children.length > 0)
+          solidGroup.remove(solidGroup.children[0]);
+
+        const n = parseInt(document.getElementById("shells").value, 10);
+        const rMax = parseFloat(document.getElementById("radiusMax").value);
+        const angleMax = parseFloat(document.getElementById("angle").value);
+
+        const dr = rMax / n;
+
+        for (let i = 0; i < n; i++) {
+          const rInner = i * dr + 0.05; // gap for visual
+          const rOuter = (i + 1) * dr - 0.05;
+          const midR = (rInner + rOuter) / 2;
+          const h = getHeight(midR);
+
+          if (h <= 0) continue;
+
+          const shape = new THREE.Shape();
+          shape.absarc(0, 0, rOuter, 0, angleMax, false);
+          shape.lineTo(
+            Math.cos(angleMax) * rInner,
+            Math.sin(angleMax) * rInner
+          );
+          shape.absarc(0, 0, rInner, angleMax, 0, true);
+
+          const extrudeSettings = { depth: h, bevelEnabled: false };
+          const eGeo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+
+          const mat = new THREE.MeshPhysicalMaterial({
+            color: 0x2dd4bf, // Teal
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0.7,
+            metalness: 0.1,
+            roughness: 0.2,
+          });
+
+          const mesh = new THREE.Mesh(eGeo, mat);
+
+          // Extrude is along Z.
+          // We want height along Y. Revolution axis usually Y.
+          // Rotate -90 on X to make Z point up (Y).
+          mesh.rotation.x = -Math.PI / 2;
+
+          solidGroup.add(mesh);
+        }
+      }
+
+      updateSolid();
+
+      document
+        .querySelectorAll("input")
+        .forEach((el) => el.addEventListener("input", updateSolid));
+
+      function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+      }
+      animate();
+
+      window.addEventListener("resize", () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      // Init lang
+      updateLanguage();
+    </script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

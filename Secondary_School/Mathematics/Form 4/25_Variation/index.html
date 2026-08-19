@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Variation | S4 Math 變分</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <script
+      type="text/javascript"
+      id="MathJax-script"
+      async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+    ></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+      }
+    </style>
+  </head>
+  <body class="bg-lime-50 text-slate-800 min-h-screen">
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useMemo
+} = React;
+const translations = {
+  en: {
+    unit: "Unit 6: Variation",
+    title: "Direct & Inverse Variation",
+    desc: "Explore y ∝ x (direct) and y ∝ 1/x (inverse).",
+    type: "Type",
+    direct: "Direct",
+    inverse: "Inverse",
+    constant: "Constant (k)",
+    formula: "Formula"
+  },
+  zh: {
+    unit: "單元六：變分",
+    title: "正變與反變",
+    desc: "探索 y ∝ x（正變）及 y ∝ 1/x（反變）。",
+    type: "類型",
+    direct: "正變",
+    inverse: "反變",
+    constant: "常數 (k)",
+    formula: "公式"
+  }
+};
+const App = () => {
+  const [lang, setLang] = useState("en");
+  const t = translations[lang];
+  const [type, setType] = useState("direct");
+  const [k, setK] = useState(2);
+
+  // Graph Config
+  const w = 500,
+    ht = 400;
+  const xRange = 10,
+    yRange = 10;
+  const scaleX = w / (2 * xRange);
+  const scaleY = ht / (2 * yRange);
+  const originX = w / 2;
+  const originY = ht / 2;
+  const toScreen = (x, y) => ({
+    x: originX + x * scaleX,
+    y: originY - y * scaleY
+  });
+
+  // Generate Path
+  const pathData = useMemo(() => {
+    let d = "";
+    const step = 0.1;
+    for (let px = -xRange; px <= xRange; px += step) {
+      if (type === "inverse" && Math.abs(px) < 0.2) {
+        if (d) d += " "; // Break path near asymptote
+        continue;
+      }
+      const y = type === "direct" ? k * px : k / px;
+      if (Math.abs(y) > yRange * 2) continue;
+      const pt = toScreen(px, y);
+      d += (d.endsWith(" ") || !d ? "M" : "L") + `${pt.x.toFixed(1)},${pt.y.toFixed(1)} `;
+    }
+    return d;
+  }, [type, k]);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "p-8 max-w-5xl mx-auto min-h-screen flex flex-col items-center select-none"
+  }, /*#__PURE__*/React.createElement("header", {
+    className: "mb-8 text-center w-full relative"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLang(lang === "en" ? "zh" : "en"),
+    className: "absolute right-0 top-0 px-4 py-2 bg-white rounded-full shadow border border-lime-200 text-sm font-bold text-lime-600 hover:bg-lime-50 transition"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-globe mr-2"
+  }), lang === "en" ? "中文" : "ENG"), /*#__PURE__*/React.createElement("div", {
+    className: "text-lime-600 font-bold uppercase text-xs tracking-widest mb-2"
+  }, t.unit), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-slate-900 mb-2"
+  }, t.title), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-500"
+  }, t.desc)), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col lg:flex-row gap-8 w-full"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-4 rounded-3xl shadow-lg border border-lime-100 flex-[2]"
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: w,
+    height: ht,
+    className: "bg-slate-50 rounded-xl"
+  }, Array.from({
+    length: 21
+  }).map((_, i) => {
+    const val = i - 10;
+    const sx = originX + val * scaleX;
+    const sy = originY - val * scaleY;
+    return /*#__PURE__*/React.createElement(React.Fragment, {
+      key: i
+    }, /*#__PURE__*/React.createElement("line", {
+      x1: sx,
+      y1: "0",
+      x2: sx,
+      y2: ht,
+      stroke: val === 0 ? "#64748b" : "#e2e8f0",
+      strokeWidth: val === 0 ? 2 : 1
+    }), /*#__PURE__*/React.createElement("line", {
+      x1: "0",
+      y1: sy,
+      x2: w,
+      y2: sy,
+      stroke: val === 0 ? "#64748b" : "#e2e8f0",
+      strokeWidth: val === 0 ? 2 : 1
+    }));
+  }), /*#__PURE__*/React.createElement("path", {
+    d: pathData,
+    stroke: "#84cc16",
+    strokeWidth: "3",
+    fill: "none"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-6 rounded-3xl shadow-lg border border-lime-100 flex-1 space-y-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-2"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setType("direct"),
+    className: `flex-1 py-3 rounded-xl font-bold ${type === "direct" ? "bg-lime-500 text-white" : "bg-slate-100 text-slate-500"}`
+  }, t.direct), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setType("inverse"),
+    className: `flex-1 py-3 rounded-xl font-bold ${type === "inverse" ? "bg-lime-500 text-white" : "bg-slate-100 text-slate-500"}`
+  }, t.inverse)), /*#__PURE__*/React.createElement("div", {
+    key: `${type}-${k}`,
+    className: "formula-box text-center font-mono text-2xl bg-white p-4 rounded-xl border border-lime-200"
+  }, type === "direct" ? `y = ${k}x` : `y = ${k} / x`), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "text-sm font-bold text-slate-500"
+  }, t.constant), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "-5",
+    max: "5",
+    step: "0.5",
+    value: k,
+    onChange: e => setK(Number(e.target.value)),
+    className: "w-full accent-lime-500"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-right font-mono text-lime-600 font-bold text-xl"
+  }, k)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-50 p-4 rounded-xl text-sm"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "font-bold text-slate-600 mb-2"
+  }, t.formula, ":"), type === "direct" ? /*#__PURE__*/React.createElement("div", {
+    className: "font-mono"
+  }, "y ∝ x → y = kx") : /*#__PURE__*/React.createElement("div", {
+    className: "font-mono"
+  }, "y ∝ 1/x → y = k/x")))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

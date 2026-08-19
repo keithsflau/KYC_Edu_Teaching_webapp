@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小二數學：除法 (均分) | Division (Sharing)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #f0fdf4 0%, #16a34a 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "➗ Division: Sharing",
+    zh: "➗ 除法概念：均分",
+    ja: "➗ 割り算：等分",
+    ko: "➗ 나눗셈: 나누기",
+    es: "➗ División: Reparto",
+    de: "➗ Division: Aufteilen",
+    fi: "➗ Jakolasku: Jakaminen",
+    fr: "➗ Division : Partage",
+    ar: "➗ القسمة: التوزيع",
+    it: "➗ Divisione: Condivisione"
+  },
+  desc: {
+    zh: "將 {total} 個 🍎 平均分給 {groups} 位小朋友",
+    en: "Share {total} apples equally among {groups} kids",
+    ja: "{total} 個のリンゴを {groups} 人の子供たちに等しく分けます",
+    ko: "사과 {total}개를 {groups}명의 아이들에게 똑같이 나누어 줍니다",
+    es: "Reparte {total} manzanas equitativamente entre {groups} niños",
+    fr: "Partagez {total} pommes également entre {groups} enfants",
+    de: "Teile {total} Äpfel gleichmäßig unter {groups} Kindern auf"
+  },
+  start: {
+    en: "Start Sharing",
+    zh: "開始分",
+    ja: "分ける",
+    ko: "나누기 시작",
+    es: "Empezar a repartir",
+    de: "Aufteilen starten",
+    fi: "Aloita jako",
+    fr: "Commencer le partage",
+    ar: "ابدأ التوزيع",
+    it: "Inizia a condividere"
+  },
+  check: {
+    en: "Check",
+    zh: "檢查",
+    ja: "確認",
+    ko: "확인",
+    es: "Comprobar",
+    de: "Prüfen",
+    fi: "Tarkista",
+    fr: "Vérifier",
+    ar: "تحقق",
+    it: "Controlla"
+  }
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [total, setTotal] = useState(12);
+  const [groups, setGroups] = useState(3);
+  const [distributed, setDistributed] = useState([]);
+  const [isFinished, setIsFinished] = useState(false);
+  const [isDistributing, setIsDistributing] = useState(false);
+  const [input, setInput] = useState("");
+  const [feedback, setFeedback] = useState("");
+  const intervalRef = React.useRef(null);
+  const newProb = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    setDistributed([]);
+    setIsFinished(false);
+    setIsDistributing(false);
+    setInput("");
+    setFeedback("");
+    const g = Math.floor(Math.random() * 4) + 2; // 2-5 groups
+    const perG = Math.floor(Math.random() * 4) + 2; // 2-5 items
+    setGroups(g);
+    setTotal(g * perG);
+  };
+  useEffect(() => {
+    newProb();
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, []);
+  const distribute = () => {
+    if (isFinished || isDistributing) return;
+    setIsDistributing(true);
+    const target = total;
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    intervalRef.current = setInterval(() => {
+      setDistributed(prev => {
+        if (prev.length >= target) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+          setIsFinished(true);
+          setIsDistributing(false);
+          return prev;
+        }
+        const next = [...prev, prev.length + 1];
+        if (next.length >= target) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+          setIsFinished(true);
+          setIsDistributing(false);
+        }
+        return next;
+      });
+    }, 200);
+  };
+  const check = () => {
+    if (parseInt(input, 10) === total / groups) {
+      setFeedback("CORRECT");
+      setTimeout(newProb, 3000);
+    } else {
+      setFeedback("WRONG");
+    }
+  };
+  const getDesc = () => {
+    const tmpl = t.desc[lang] || t.desc["en"];
+    return tmpl.replace("{total}", total).replace("{groups}", groups);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-8 flex flex-col items-center justify-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-green-900 mb-8 max-w-2xl text-center"
+  }, t.title[lang] || t.title["en"]), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/90 rounded-3xl p-8 shadow-2xl w-full max-w-4xl text-center border-4 border-green-300"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "mb-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-bold text-slate-600 mb-4"
+  }, getDesc()), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-center flex-wrap gap-2 h-20 mb-4 items-center"
+  }, [...Array(Math.max(0, total - distributed.length))].map((_, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "text-3xl animate-bounce"
+  }, "🍎"))), !isFinished && !isDistributing && distributed.length === 0 && /*#__PURE__*/React.createElement("button", {
+    onClick: distribute,
+    className: "px-8 py-2 bg-green-500 text-white rounded-full font-bold shadow-lg hover:bg-green-600 mb-4"
+  }, t.start[lang] || t.start["en"])), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-center gap-4 flex-wrap mb-8"
+  }, [...Array(groups)].map((_, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "bg-green-50 border-4 border-green-400 rounded-3xl p-4 w-32 min-h-[160px] flex flex-col items-center relative"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl mb-2"
+  }, "👶"), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-wrap justify-center gap-1"
+  }, distributed.filter((_, idx) => idx % groups === i).map((_, j) => /*#__PURE__*/React.createElement("div", {
+    key: j,
+    className: "text-2xl animate-ping-once"
+  }, "🍎"))), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-2 text-green-700 font-bold"
+  }, distributed.filter((_, idx) => idx % groups === i).length)))), isFinished && /*#__PURE__*/React.createElement("div", {
+    className: "animate-fade-in"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-bold text-slate-700 mb-4 flex items-center justify-center gap-4 flex-wrap"
+  }, total, " ÷ ", groups, " =", /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: input,
+    onChange: e => setInput(e.target.value),
+    className: "w-24 text-center border-b-4 border-green-500 bg-green-50 text-4xl font-black focus:outline-none",
+    autoFocus: true
+  })), /*#__PURE__*/React.createElement("button", {
+    onClick: check,
+    className: "px-10 py-3 bg-green-500 text-white rounded-full font-black text-2xl shadow-xl hover:bg-green-600 active:scale-95 transition-transform"
+  }, t.check[lang] || t.check["en"])), /*#__PURE__*/React.createElement("div", {
+    className: "h-16 mt-8"
+  }, feedback === "CORRECT" && /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black text-green-500 animate-bounce"
+  }, get("correct", lang)), feedback === "WRONG" && /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black text-red-500 animate-shake"
+  }, get("wrong", lang)))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+    <style>
+      @keyframes ping-once {
+        0% {
+          transform: scale(0);
+          opacity: 0;
+        }
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+      .animate-ping-once {
+        animation: ping-once 0.3s cubic-bezier(0, 0, 0.2, 1) forwards;
+      }
+    </style>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

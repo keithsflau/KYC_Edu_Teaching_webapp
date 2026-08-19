@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小三數學：羅馬數字探險 | Roman Numerals</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #475569 0%, #1e293b 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n || {
+  LanguageSelector: () => null,
+  get: (key, lang) => key
+};
+const t = {
+  title: {
+    en: "Roman Numeral Adventure",
+    zh: "羅馬數字探險",
+    ja: "ローマ数字の冒険",
+    ko: "로마 숫자 모험",
+    es: "Aventura de números romanos",
+    de: "Abenteuer römische Zahlen",
+    fi: "Roomalaiset numerot",
+    fr: "Aventure chiffres romains",
+    ar: "مغامرة الأرقام الرومانية",
+    it: "Avventura numeri romani"
+  },
+  converter: {
+    en: "Number Converter",
+    zh: "數字轉換器",
+    ja: "数値変換",
+    ko: "숫자 변환기",
+    es: "Convertidor de números",
+    de: "Zahlenkonverter",
+    fi: "Numeromuunnin",
+    fr: "Convertisseur de nombres",
+    ar: "محول الأرقام",
+    it: "Convertitore di numeri"
+  },
+  chart: {
+    en: "Symbol Chart",
+    zh: "符號對照表",
+    ja: "記号チャート",
+    ko: "기호 차트",
+    es: "Tabla de símbolos",
+    de: "Symboltabelle",
+    fi: "Symbolitaulukko",
+    fr: "Tableau des symboles",
+    ar: "جدول الرموز",
+    it: "Tabella dei simboli"
+  },
+  romanNum: {
+    en: "Roman Numeral",
+    zh: "羅馬數字",
+    ja: "ローマ数字",
+    ko: "로마 숫자",
+    es: "Número romano",
+    de: "Römische Zahl",
+    fi: "Roomalainen numero",
+    fr: "Chiffre romain",
+    ar: "رقم روماني",
+    it: "Numero romano"
+  },
+  tipsTitle: {
+    en: "Rules & Tips",
+    zh: "規則小貼士",
+    ja: "ルールとヒント",
+    ko: "규칙 및 팁",
+    es: "Reglas y consejos",
+    de: "Regeln & Tipps",
+    fi: "Säännöt ja vinkit",
+    fr: "Règles et astuces",
+    ar: "القواعد والنصائح",
+    it: "Regole e suggerimenti"
+  },
+  tips: [{
+    en: "Max 3 consecutive same symbols (e.g., III = 3)",
+    zh: "最多連續出現3次 (例如: III = 3)",
+    ja: "同じ記号は最大3回連続（例：III = 3）",
+    ko: "같은 기호는 최대 3번 연속 (예: III = 3)",
+    es: "Máx 3 símbolos consecutivos iguales (ej. III = 3)",
+    de: "Max. 3 gleiche Symbole hintereinander (z.B. III = 3)",
+    fi: "Enintään 3 samaa symbolia peräkkäin (esim. III = 3)",
+    fr: "Max 3 symboles identiques consécutifs (ex. III = 3)",
+    ar: "بحد أقصى 3 رموز متتالية (مثال: III = 3)",
+    it: "Max 3 simboli consecutivi uguali (es. III = 3)"
+  }, {
+    en: "Left subtract, Right add (e.g., IV = 5-1 = 4)",
+    zh: "左減右加 (例如: IV = 5-1 = 4)",
+    ja: "左は引き算、右は足し算（例：IV = 5-1 = 4）",
+    ko: "왼쪽은 빼고, 오른쪽은 더함 (예: IV = 5-1 = 4)",
+    es: "Izquierda resta, Derecha suma (ej. IV = 5-1 = 4)",
+    de: "Links subtrahieren, Rechts addieren (z.B. IV = 5-1 = 4)",
+    fi: "Vasen vähentää, Oikea lisää (esim. IV = 5-1 = 4)",
+    fr: "Gauche soustrait, Droite ajoute (ex. IV = 5-1 = 4)",
+    ar: "اليسار يطرح، اليمين يضيف (مثال: IV = 5-1 = 4)",
+    it: "Sinistra sottrae, Destra aggiunge (es. IV = 5-1 = 4)"
+  }, {
+    en: "V, L, D cannot be repeated",
+    zh: "V, L, D 不能重複",
+    ja: "V, L, D は繰り返せません",
+    ko: "V, L, D 는 반복될 수 없습니다",
+    es: "V, L, D no se pueden repetir",
+    de: "V, L, D dürfen nicht wiederholt werden",
+    fi: "V, L, D ei voi toistaa",
+    fr: "V, L, D ne peuvent pas être répétés",
+    ar: "لا يمكن تكرار V, L, D",
+    it: "V, L, D non possono essere ripetuti"
+  }],
+  desc: {
+    1: {
+      en: "One",
+      zh: "一"
+    },
+    5: {
+      en: "Five",
+      zh: "五"
+    },
+    10: {
+      en: "Ten",
+      zh: "十"
+    },
+    50: {
+      en: "Fifty",
+      zh: "五十"
+    },
+    100: {
+      en: "Hundred",
+      zh: "一百"
+    },
+    500: {
+      en: "Five Hundred",
+      zh: "五百"
+    },
+    1000: {
+      en: "Thousand",
+      zh: "一千"
+    }
+  }
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [num, setNum] = useState(1);
+  const toRoman = n => {
+    if (n <= 0 || n > 3999) return {
+      roman: "N/A",
+      used: new Set()
+    };
+    const val = [1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1];
+    const syms = ["M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I"];
+    let roman = "";
+    let temp = n;
+    const used = new Set();
+    for (let i = 0; i < val.length; i++) {
+      while (temp >= val[i]) {
+        temp -= val[i];
+        roman += syms[i];
+        // Track base symbols actually placed (e.g. CM → C and M)
+        for (const ch of syms[i]) used.add(ch);
+      }
+    }
+    return {
+      roman,
+      used
+    };
+  };
+  const {
+    roman: romanStr,
+    used: usedSymbols
+  } = toRoman(num);
+  const symbols = [{
+    r: "I",
+    v: 1
+  }, {
+    r: "V",
+    v: 5
+  }, {
+    r: "X",
+    v: 10
+  }, {
+    r: "L",
+    v: 50
+  }, {
+    r: "C",
+    v: 100
+  }, {
+    r: "D",
+    v: 500
+  }, {
+    r: "M",
+    v: 1000
+  }];
+  const getDesc = val => t.desc[val][lang] || t.desc[val]["en"];
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-8 flex flex-col items-center text-white"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-6xl font-black text-amber-500 mb-8 mt-8 drop-shadow-lg text-center"
+  }, "🏛️ ", t.title[lang] || t.title["en"]), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col lg:flex-row gap-8 w-full max-w-6xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 bg-white/10 backdrop-blur-md rounded-3xl p-8 border border-white/20 shadow-2xl"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "text-3xl font-bold mb-6 text-amber-300"
+  }, t.converter[lang] || t.converter["en"]), /*#__PURE__*/React.createElement("div", {
+    className: "mb-8"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "1",
+    max: "3999",
+    value: num,
+    onChange: e => setNum(parseInt(e.target.value, 10)),
+    className: "w-full h-4 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-amber-500"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between text-slate-400 mt-2 font-mono"
+  }, /*#__PURE__*/React.createElement("span", null, "1"), /*#__PURE__*/React.createElement("span", null, "2000"), /*#__PURE__*/React.createElement("span", null, "3999"))), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-4 mb-8"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setNum(Math.max(1, num - 1)),
+    className: "p-4 bg-slate-700 rounded-xl hover:bg-slate-600 font-black"
+  }, "-"), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: num,
+    onChange: e => setNum(Math.max(1, Math.min(3999, parseInt(e.target.value, 10) || 1))),
+    className: "flex-1 bg-slate-800 border-2 border-slate-600 rounded-2xl py-4 text-center text-4xl font-black text-white"
+  }), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setNum(Math.min(3999, num + 1)),
+    className: "p-4 bg-slate-700 rounded-xl hover:bg-slate-600 font-black"
+  }, "+")), /*#__PURE__*/React.createElement(motion.div, {
+    key: num,
+    initial: {
+      scale: 0.8,
+      opacity: 0
+    },
+    animate: {
+      scale: 1,
+      opacity: 1
+    },
+    className: "bg-gradient-to-br from-amber-600 to-amber-800 rounded-3xl p-12 text-center border-4 border-amber-400 shadow-[0_0_30px_rgba(245,158,11,0.3)]"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-sm font-bold text-amber-200 mb-2"
+  }, t.romanNum[lang] || t.romanNum["en"]), /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl md:text-7xl font-serif font-black text-white tracking-widest break-words"
+  }, romanStr))), /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 bg-white/10 backdrop-blur-md rounded-3xl p-8 border border-white/20 shadow-2xl"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "text-3xl font-bold mb-6 text-amber-300"
+  }, t.chart[lang] || t.chart["en"]), /*#__PURE__*/React.createElement("div", {
+    className: "grid gap-3"
+  }, symbols.map(s => /*#__PURE__*/React.createElement("div", {
+    key: s.r,
+    className: `flex items-center justify-between p-4 rounded-xl ${usedSymbols.has(s.r) ? "bg-amber-500/20 border border-amber-500/50" : "bg-slate-800/50"}`
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-4"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-3xl font-serif font-black text-amber-400 w-12 text-center"
+  }, s.r), /*#__PURE__*/React.createElement("span", {
+    className: "text-lg text-slate-300"
+  }, getDesc(s.v))), /*#__PURE__*/React.createElement("span", {
+    className: "text-2xl font-black font-mono"
+  }, s.v)))), /*#__PURE__*/React.createElement("div", {
+    className: "mt-8 bg-slate-800/50 p-6 rounded-2xl border border-slate-700"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-xl font-bold text-amber-300 mb-3"
+  }, "💡 ", t.tipsTitle[lang] || t.tipsTitle["en"]), /*#__PURE__*/React.createElement("ul", {
+    className: "space-y-2 text-slate-300 list-disc list-inside"
+  }, t.tips.map((tip, i) => /*#__PURE__*/React.createElement("li", {
+    key: i
+  }, tip[lang] || tip["en"])))))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

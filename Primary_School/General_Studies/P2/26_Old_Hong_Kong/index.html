@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小二常識：香港今昔 | Old & New HK</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #fdf4ff 0%, #fae8ff 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Old & New HK",
+    zh: "香港今昔",
+    ja: "香港の今昔",
+    ko: "홍콩의 어제와 오늘",
+    es: "Viejo y Nuevo HK",
+    de: "Alt & Neu HK",
+    fi: "Vanha & Uusi HK",
+    fr: "Ancien & Nouveau HK",
+    ar: "هونج كونج القديمة والجديدة",
+    it: "Vecchia e Nuova HK"
+  },
+  instruction: {
+    en: "Match Old and New items!",
+    zh: "將新舊物品配對起來！",
+    ja: "古いものと新しいものを合わせてください！",
+    ko: "옛 물건과 새 물건을 짝지어 보세요!",
+    es: "¡Empareja artículos viejos y nuevos!",
+    de: "Ordne alte und neue Gegenstände zu!",
+    fi: "Yhdistä vanhat ja uudet esineet!",
+    fr: "Associez les anciens et les nouveaux objets !",
+    ar: "تطابق العناصر القديمة والجديدة!",
+    it: "Abbina oggetti vecchi e nuovi!"
+  },
+  correct: {
+    en: "Correct Match!",
+    zh: "配對正確！",
+    ja: "正解！",
+    ko: "정답입니다!",
+    es: "¡Emparejamiento Correcto!",
+    de: "Richtig zugeordnet!",
+    fi: "Oikea pari!",
+    fr: "Bonne correspondance !",
+    ar: "تطابق صحيح!",
+    it: "Abbinamento Corretto!"
+  },
+  wrong: {
+    en: "Not a match.",
+    zh: "不是一對的。",
+    ja: "違います。",
+    ko: "짝이 아닙니다.",
+    es: "No coinciden.",
+    de: "Kein Treffer.",
+    fi: "Ei täsmää.",
+    fr: "Ne correspond pas.",
+    ar: "ليست مطابقة.",
+    it: "Non corrispondono."
+  },
+  rickshaw: {
+    en: "Rickshaw",
+    zh: "人力車",
+    ja: "人力車",
+    ko: "인력거",
+    es: "Rickshaw",
+    de: "Rikscha",
+    fi: "Riksa",
+    fr: "Pousse-pousse",
+    ar: "عربة",
+    it: "Risciò"
+  },
+  taxi: {
+    en: "Taxi",
+    zh: "的士",
+    ja: "タクシー",
+    ko: "택시",
+    es: "Taxi",
+    de: "Taxi",
+    fi: "Taksi",
+    fr: "Taxi",
+    ar: "سيارة أجرة",
+    it: "Taxi"
+  },
+  abacus: {
+    en: "Abacus",
+    zh: "算盤",
+    ja: "そろばん",
+    ko: "주판",
+    es: "Ábaco",
+    de: "Abakus",
+    fi: "Helmitaulu",
+    fr: "Abaque",
+    ar: "معداد",
+    it: "Abaco"
+  },
+  calculator: {
+    en: "Calculator",
+    zh: "計算機",
+    ja: "電卓",
+    ko: "계산기",
+    es: "Calculadora",
+    de: "Taschenrechner",
+    fi: "Laskin",
+    fr: "Calculatrice",
+    ar: "آلة حاسبة",
+    it: "Calcolatrice"
+  },
+  fan: {
+    en: "Paper Fan",
+    zh: "葵扇",
+    ja: "紙扇",
+    ko: "부채",
+    es: "Abanico de Papel",
+    de: "Papierfächer",
+    fi: "Paperiviuhka",
+    fr: "Éventail en papier",
+    ar: "مروحة ورقية",
+    it: "Ventaglio di Carta"
+  },
+  ac: {
+    en: "Air Conditioner",
+    zh: "冷氣機",
+    ja: "エアコン",
+    ko: "에어컨",
+    es: "Aire Acondicionado",
+    de: "Klimaanlage",
+    fi: "Ilmastointi",
+    fr: "Climatiseur",
+    ar: "مكيف هواء",
+    it: "Aria Condizionata"
+  },
+  letter: {
+    en: "Letter",
+    zh: "書信",
+    ja: "手紙",
+    ko: "편지",
+    es: "Carta",
+    de: "Brief",
+    fi: "Kirje",
+    fr: "Lettre",
+    ar: "رسالة",
+    it: "Lettera"
+  },
+  email: {
+    en: "Email / Phone",
+    zh: "電郵 / 手機",
+    ja: "メール / 電話",
+    ko: "이메일 / 전화",
+    es: "Email / Teléfono",
+    de: "E-Mail / Telefon",
+    fi: "Sähköposti / Puhelin",
+    fr: "Email / Téléphone",
+    ar: "بريد إلكتروني / هاتف",
+    it: "Email / Telefono"
+  },
+  well: {
+    en: "Water Well",
+    zh: "水井",
+    ja: "井戸",
+    ko: "우물",
+    es: "Pozo de Agua",
+    de: "Brunnen",
+    fi: "Kaivo",
+    fr: "Puits",
+    ar: "بئر ماء",
+    it: "Pozzo d'Acqua"
+  },
+  tap: {
+    en: "Water Tap",
+    zh: "水龍頭",
+    ja: "水道の蛇口",
+    ko: "수도꼭지",
+    es: "Grifo",
+    de: "Wasserhahn",
+    fi: "Vesihana",
+    fr: "Robinet",
+    ar: "صنبور ماء",
+    it: "Rubinetto"
+  },
+  score: {
+    en: "Score",
+    zh: "分數",
+    ja: "スコア",
+    ko: "점수",
+    es: "Puntuación",
+    de: "Punktzahl",
+    fi: "Pisteet",
+    fr: "Score",
+    ar: "نتيجة",
+    it: "Punteggio"
+  },
+  completed: {
+    en: "History Expert!",
+    zh: "歷史小專家！",
+    ja: "歴史のエキスパート！",
+    ko: "역사 전문가!",
+    es: "¡Experto en Historia!",
+    de: "Geschichtsexperte!",
+    fi: "Historia-asiantuntija!",
+    fr: "Expert en histoire !",
+    ar: "خبير التاريخ!",
+    it: "Esperto di Storia!"
+  },
+  restart: {
+    en: "Play Again",
+    zh: "再玩一次",
+    ja: "もう一度プレイ",
+    ko: "다시 하기",
+    es: "Jugar de Nuevo",
+    de: "Nochmal spielen",
+    fi: "Pelaa uudelleen",
+    fr: "Rejouer",
+    ar: "العب مرة أخرى",
+    it: "Gioca di Nuovo"
+  }
+};
+const pairs = [{
+  id: 1,
+  old: {
+    key: "rickshaw",
+    icon: "🛺"
+  },
+  new: {
+    key: "taxi",
+    icon: "🚕"
+  }
+}, {
+  id: 2,
+  old: {
+    key: "abacus",
+    icon: "🧮"
+  },
+  new: {
+    key: "calculator",
+    icon: "📱"
+  }
+}, {
+  id: 3,
+  old: {
+    key: "fan",
+    icon: "🎋"
+  },
+  new: {
+    key: "ac",
+    icon: "❄️"
+  }
+}, {
+  id: 4,
+  old: {
+    key: "letter",
+    icon: "✉️"
+  },
+  new: {
+    key: "email",
+    icon: "📧"
+  }
+}, {
+  id: 5,
+  old: {
+    key: "well",
+    icon: "🕳️"
+  },
+  new: {
+    key: "tap",
+    icon: "🚰"
+  }
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [leftItems, setLeftItems] = useState([]);
+  const [rightItems, setRightItems] = useState([]);
+  const [selectedLeft, setSelectedLeft] = useState(null);
+  const [selectedRight, setSelectedRight] = useState(null);
+  const [matches, setMatches] = useState([]);
+  const [feedback, setFeedback] = useState(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+  useEffect(() => {
+    initGame();
+  }, []);
+  const initGame = () => {
+    const left = pairs.map(p => ({
+      ...p.old,
+      pairId: p.id,
+      side: "old"
+    })).sort(() => Math.random() - 0.5);
+    const right = pairs.map(p => ({
+      ...p.new,
+      pairId: p.id,
+      side: "new"
+    })).sort(() => Math.random() - 0.5);
+    setLeftItems(left);
+    setRightItems(right);
+    setMatches([]);
+    setFeedback(null);
+    setSelectedLeft(null);
+    setSelectedRight(null);
+  };
+  const handleSelect = (item, side) => {
+    if (feedback) return;
+    if (side === "old") setSelectedLeft(item);else setSelectedRight(item);
+  };
+  useEffect(() => {
+    if (selectedLeft && selectedRight) {
+      if (selectedLeft.pairId === selectedRight.pairId) {
+        // Match
+        setFeedback("correct");
+        setTimeout(() => {
+          setMatches(prev => [...prev, selectedLeft.pairId]);
+          setSelectedLeft(null);
+          setSelectedRight(null);
+          setFeedback(null);
+        }, 1000);
+      } else {
+        // Wrong
+        setFeedback("wrong");
+        setTimeout(() => {
+          setSelectedLeft(null);
+          setSelectedRight(null);
+          setFeedback(null);
+        }, 1000);
+      }
+    }
+  }, [selectedLeft, selectedRight]);
+  const allMatched = matches.length === pairs.length;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 flex flex-col items-center select-none"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-fuchsia-900 mb-4 mt-8 drop-shadow-sm bg-white/50 px-6 py-2 rounded-full"
+  }, "🕰️ ", getText("title")), /*#__PURE__*/React.createElement("p", {
+    className: "font-bold text-fuchsia-800 mb-8"
+  }, getText("instruction")), !allMatched ? /*#__PURE__*/React.createElement("div", {
+    className: "flex w-full max-w-4xl gap-8 justify-between"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 flex flex-col gap-4"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "text-center font-bold text-slate-500 mb-2"
+  }, "Old (昔日)"), leftItems.map((item, i) => {
+    const isMatched = matches.includes(item.pairId);
+    const isSelected = selectedLeft === item;
+    return /*#__PURE__*/React.createElement(motion.button, {
+      key: i,
+      disabled: isMatched,
+      onClick: () => handleSelect(item, "old"),
+      className: `p-4 rounded-xl shadow-md border-4 flex items-center justify-between transition-all ${isMatched ? "opacity-0 pointer-events-none" : isSelected ? "border-fuchsia-500 bg-fuchsia-100 scale-105" : "border-white bg-white hover:bg-slate-50"}`,
+      layout: true
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "text-4xl"
+    }, item.icon), /*#__PURE__*/React.createElement("span", {
+      className: "font-bold text-slate-700"
+    }, getText(item.key)));
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "w-16 flex flex-col justify-center items-center"
+  }, feedback && /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      scale: 0
+    },
+    animate: {
+      scale: 1
+    },
+    className: `text-4xl p-4 rounded-full shadow-xl z-10 ${feedback === "correct" ? "bg-green-500 text-white" : "bg-red-500 text-white"}`
+  }, feedback === "correct" ? "✅" : "❌")), /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 flex flex-col gap-4"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "text-center font-bold text-slate-500 mb-2"
+  }, "New (今日)"), rightItems.map((item, i) => {
+    const isMatched = matches.includes(item.pairId);
+    const isSelected = selectedRight === item;
+    return /*#__PURE__*/React.createElement(motion.button, {
+      key: i,
+      disabled: isMatched,
+      onClick: () => handleSelect(item, "new"),
+      className: `p-4 rounded-xl shadow-md border-4 flex items-center justify-between flex-row-reverse transition-all ${isMatched ? "opacity-0 pointer-events-none" : isSelected ? "border-blue-500 bg-blue-100 scale-105" : "border-white bg-white hover:bg-slate-50"}`,
+      layout: true
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "text-4xl"
+    }, item.icon), /*#__PURE__*/React.createElement("span", {
+      className: "font-bold text-slate-700"
+    }, getText(item.key)));
+  }))) : /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/90 p-12 rounded-3xl shadow-xl text-center mt-12"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-8xl mb-4"
+  }, "📜"), /*#__PURE__*/React.createElement("h2", {
+    className: "text-3xl font-black text-fuchsia-800 mb-6"
+  }, getText("completed")), /*#__PURE__*/React.createElement("button", {
+    onClick: initGame,
+    className: "bg-fuchsia-600 text-white px-10 py-4 rounded-full font-black text-xl hover:bg-fuchsia-700 shadow-xl"
+  }, getText("restart"), " 🔄")));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

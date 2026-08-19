@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - Carbon Footprint</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: #fdf4ff;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Carbon Footprint Calculator",
+    zh: "碳足跡計算器",
+    ja: "二酸化炭素排出量計算機",
+    ko: "탄소 발자국 계산기",
+    es: "Calculadora de huella de carbono",
+    de: "CO2-Fußabdruck-Rechner",
+    fi: "Hiilijalanjälkilaskuri",
+    fr: "Calculateur d'empreinte carbone",
+    ar: "حاسبة البصمة الكربونية",
+    it: "Calcolatore Impronta Carbonio"
+  },
+  instruction: {
+    en: "Calculate your estimated yearly CO2 usage.",
+    zh: "計算你預計的年度二氧化碳排放量。",
+    ja: "推定年間CO2使用量を計算します。",
+    ko: "예상 연간 CO2 사용량을 계산하세요.",
+    es: "Calcula tu uso anual estimado de CO2.",
+    de: "Berechne deinen geschätzten jährlichen CO2-Verbrauch.",
+    fi: "Laske arvioitu vuotuinen CO2-käyttösi.",
+    fr: "Calculez votre consommation annuelle estimée de CO2.",
+    ar: "احسب استهلاكك السنوي المقدر من ثاني أكسيد الكربون.",
+    it: "Calcola il consumo annuo stimato di CO2."
+  },
+  transport: {
+    en: "Transport (Car/Bus/MTR)",
+    zh: "交通 (汽車/巴士/港鐵)",
+    ja: "交通 (車/バス/地下鉄)",
+    ko: "교통 (자동차/버스/지하철)",
+    es: "Transporte",
+    de: "Verkehr",
+    fi: "Liikenne",
+    fr: "Transport",
+    ar: "نقل",
+    it: "Trasporti"
+  },
+  diet: {
+    en: "Diet (Meat vs Veg)",
+    zh: "飲食 (肉類 vs 蔬菜)",
+    ja: "食事 (肉 vs 野菜)",
+    ko: "식단 (고기 vs 채소)",
+    es: "Dieta",
+    de: "Ernährung",
+    fi: "Ruokavalio",
+    fr: "Régime alimentaire",
+    ar: "نظام غذائي",
+    it: "Dieta"
+  },
+  energy: {
+    en: "Home Electricity",
+    zh: "家居用電",
+    ja: "家庭用電気",
+    ko: "가정용 전기",
+    es: "Electricidad del hogar",
+    de: "Hausstrom",
+    fi: "Kodin sähkö",
+    fr: "Électricité domestique",
+    ar: "كهرباء المنزل",
+    it: "Elettricità Casa"
+  },
+  result: {
+    en: "Total CO2:",
+    zh: "總二氧化碳：",
+    ja: "総CO2：",
+    ko: "총 CO2:",
+    es: "CO2 total:",
+    de: "Gesamt-CO2:",
+    fi: "CO2 yhteensä:",
+    fr: "Total CO2 :",
+    ar: "إجمالي CO2:",
+    it: "CO2 Totale:"
+  },
+  offset: {
+    en: "Trees needed to offset:",
+    zh: "需要種植的樹木：",
+    ja: "相殺に必要な木：",
+    ko: "상쇄에 필요한 나무:",
+    es: "Árboles necesarios para compensar:",
+    de: "Bäume zum Ausgleich:",
+    fi: "Puita tarvitaan kompensoimaan:",
+    fr: "Arbres nécessaires pour compenser :",
+    ar: "الأشجار اللازمة للتعويض:",
+    it: "Alberi necessari per compensare:"
+  },
+  tons: {
+    en: "tons",
+    zh: "噸",
+    ja: "トン",
+    ko: "톤"
+  }
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [transport, setTransport] = useState(2); // 0-5 scale
+  const [diet, setDiet] = useState(2); // 0 (Vegan) - 5 (Heavy Meat)
+  const [energy, setEnergy] = useState(2); // 0-5
+
+  const getText = key => t[key][lang] || t[key]["en"];
+
+  // Approx Calc (tons per year)
+  // Transport: 0 -> 0.5t (Walk/Bike), 5 -> 5t (SUV daily)
+  // Diet: 0 -> 1t, 5 -> 3t
+  // Energy: 0 -> 0.5t, 5 -> 4t
+
+  const co2 = transport * 0.9 + 0.5 + (diet * 0.4 + 1) + (energy * 0.7 + 0.5);
+  const trees = Math.ceil(co2 * 6); // Approx 6 trees remove 1 ton CO2 in lifetime? Or per year? Let's say 1 tree absorbs ~20kg/year. So 50 trees for 1 ton. That's a lot visually. Let's say "Trees needed to plant" scaling down for kid UI. Let's display visual trees.
+
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-bold mb-8 text-slate-700"
+  }, "👣 ", getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-2xl bg-white p-8 rounded-3xl shadow-xl flex flex-col gap-8"
+  }, /*#__PURE__*/React.createElement(InputRow, {
+    label: getText("transport"),
+    value: transport,
+    setValue: setTransport,
+    icon: "🚗",
+    minLabel: "Walk",
+    maxLabel: "Drive"
+  }), /*#__PURE__*/React.createElement(InputRow, {
+    label: getText("diet"),
+    value: diet,
+    setValue: setDiet,
+    icon: "🍖",
+    minLabel: "Veg",
+    maxLabel: "Meat"
+  }), /*#__PURE__*/React.createElement(InputRow, {
+    label: getText("energy"),
+    value: energy,
+    setValue: setEnergy,
+    icon: "💡",
+    minLabel: "Low",
+    maxLabel: "High"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-50 p-6 rounded-2xl border-t-4 border-slate-300"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between items-center mb-4"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-xl font-bold text-slate-600"
+  }, getText("result")), /*#__PURE__*/React.createElement("span", {
+    className: "text-4xl font-black text-slate-800"
+  }, co2.toFixed(1), " ", getText("tons"))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full flex justify-center py-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-black/80 mask-footprint w-20 transition-all duration-500 rounded-full",
+    style: {
+      height: `${co2 * 20}px`,
+      width: `${co2 * 10}px`,
+      opacity: 0.1 + co2 / 12
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "bg-gray-800 rounded-full flex items-center justify-center text-white font-bold transition-all duration-500",
+    style: {
+      width: `${Math.max(50, co2 * 30)}px`,
+      height: `${Math.max(50, co2 * 30)}px`
+    }
+  }, "CO2")), /*#__PURE__*/React.createElement("div", {
+    className: "mt-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "font-bold text-green-700 mb-2"
+  }, getText("offset")), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-wrap gap-1"
+  }, [...Array(trees)].map((_, i) => /*#__PURE__*/React.createElement(motion.span, {
+    key: i,
+    initial: {
+      scale: 0
+    },
+    animate: {
+      scale: 1
+    },
+    transition: {
+      delay: i * 0.05
+    },
+    className: "text-xl"
+  }, "🌳")))))));
+}
+function InputRow({
+  label,
+  value,
+  setValue,
+  icon,
+  minLabel,
+  maxLabel
+}) {
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2 font-bold text-slate-700 mb-2 text-lg"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-2xl"
+  }, icon), " ", label), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "0",
+    max: "5",
+    step: "1",
+    value: value,
+    onChange: e => setValue(Number(e.target.value)),
+    className: "w-full h-4 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between text-xs text-slate-400 font-bold uppercase mt-1"
+  }, /*#__PURE__*/React.createElement("span", null, minLabel), /*#__PURE__*/React.createElement("span", null, maxLabel)));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

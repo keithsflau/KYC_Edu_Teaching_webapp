@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小五數學：異分母減法 | Subtracting Unlike Fractions</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Subtracting Unlike Fractions",
+    zh: "異分母減法",
+    ja: "異分母の引き算",
+    ko: "이분모 뺄셈",
+    es: "Resta de Fracciones Heterogéneas",
+    de: "Subtraktion ungleichnamiger Brüche",
+    fi: "Erinimisten murtolukujen vähennyslasku",
+    fr: "Soustraction de fractions différents",
+    ar: "طرح الكسور غير المتشابهة",
+    it: "Sottrazione di frazioni diverse"
+  },
+  step1: {
+    en: "Find LCD",
+    zh: "找公分母 (LCD)",
+    ja: "最小公倍数 (LCD)",
+    ko: "최소공배수 (LCD)",
+    es: "Encontrar MCD",
+    de: "kgV finden",
+    fi: "Etsi LCD",
+    fr: "Trouver le PPCM",
+    ar: "إيجاد LCD",
+    it: "Trova m.c.m."
+  },
+  step2: {
+    en: "Convert",
+    zh: "通分",
+    ja: "通分",
+    ko: "통분",
+    es: "Convertir",
+    de: "Erweitern",
+    fi: "Muunna",
+    fr: "Convertir",
+    ar: "تحويل",
+    it: "Converti"
+  },
+  step3: {
+    en: "Subtract",
+    zh: "相減",
+    ja: "引く",
+    ko: "빼기",
+    es: "Restar",
+    de: "Subtrahieren",
+    fi: "Vähennä",
+    fr: "Soustraire",
+    ar: "طرح",
+    it: "Sottrai"
+  },
+  result: {
+    en: "Result",
+    zh: "結果",
+    ja: "結果",
+    ko: "결과",
+    es: "Resultado",
+    de: "Ergebnis",
+    fi: "Tulos",
+    fr: "Résultat",
+    ar: "النتيجة",
+    it: "Risultato"
+  },
+  simplify: {
+    en: "Simply",
+    zh: "約簡",
+    ja: "約分",
+    ko: "약분",
+    es: "Simplificar",
+    de: "Vereinfachen",
+    fi: "Supista",
+    fr: "Simplifier",
+    ar: "تبسيط",
+    it: "Semplifica"
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+const Pizza = ({
+  n,
+  d,
+  color,
+  subN
+}) => {
+  // Visualizing subtraction: Shows `n` slices, and `subN` are "eaten" or crossed out.
+  const slices = [];
+  const sliceAngle = 360 / d;
+  for (let i = 0; i < n; i++) {
+    const startAngle = i * sliceAngle;
+    const endAngle = (i + 1) * sliceAngle;
+    const cx = 50,
+      cy = 50,
+      r = 45;
+    const x1 = cx + r * Math.cos((startAngle - 90) * Math.PI / 180);
+    const y1 = cy + r * Math.sin((startAngle - 90) * Math.PI / 180);
+    const x2 = cx + r * Math.cos((endAngle - 90) * Math.PI / 180);
+    const y2 = cy + r * Math.sin((endAngle - 90) * Math.PI / 180);
+    const largeArc = sliceAngle > 180 ? 1 : 0;
+    const dPath = `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`;
+
+    // Is this slice being subtracted?
+    // If we have total `n` slices, and we subtract `subN`, we can visualize the last `subN` slices as fading/crossed.
+    // Let's say we subtract from the end.
+    const isSubtracted = i >= n - subN;
+    slices.push(/*#__PURE__*/React.createElement("path", {
+      key: i,
+      d: dPath,
+      fill: isSubtracted ? "#334155" : color,
+      stroke: "rgba(255,255,255,0.2)",
+      strokeWidth: "1",
+      className: "transition-all duration-500"
+    }));
+    if (isSubtracted) {
+      // Add a cross overlay or pattern
+      // Simple cross line? Or just change color to grey (done above)
+    }
+  }
+
+  // Background ghost circle
+  const bgSlices = [];
+  for (let i = 0; i < d; i++) {
+    const startAngle = i * sliceAngle;
+    const endAngle = (i + 1) * sliceAngle;
+    const x1 = 50 + 45 * Math.cos((startAngle - 90) * Math.PI / 180);
+    const y1 = 50 + 45 * Math.sin((startAngle - 90) * Math.PI / 180);
+    const x2 = 50 + 45 * Math.cos((endAngle - 90) * Math.PI / 180);
+    const y2 = 50 + 45 * Math.sin((endAngle - 90) * Math.PI / 180);
+    const largeArc = sliceAngle > 180 ? 1 : 0;
+    const dPath = `M 50 50 L ${x1} ${y1} A 45 45 0 ${largeArc} 1 ${x2} ${y2} Z`;
+    bgSlices.push(/*#__PURE__*/React.createElement("path", {
+      key: `bg${i}`,
+      d: dPath,
+      fill: "none",
+      stroke: "rgba(255,255,255,0.1)",
+      strokeWidth: "1"
+    }));
+  }
+  return /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 100 100",
+    className: "w-full h-full drop-shadow-xl overflow-visible"
+  }, bgSlices, slices);
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [n1, setN1] = useState(3);
+  const [d1, setD1] = useState(4);
+  const [n2, setN2] = useState(1);
+  const [d2, setD2] = useState(2);
+  const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
+  const lcm = (a, b) => a * b / gcd(a, b);
+  const commonD = lcm(d1, d2);
+  const newN1 = n1 * (commonD / d1);
+  const newN2 = n2 * (commonD / d2);
+  const diffN = newN1 - newN2;
+  const absDiff = Math.abs(diffN);
+  const isNeg = diffN < 0; // Though usually in P5 we deal with positive results, good to handle.
+
+  const resGcd = gcd(absDiff, commonD);
+  const simpN = absDiff / resGcd;
+  const simpD = commonD / resGcd;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4 font-sans bg-slate-900 text-white"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-5xl flex justify-between items-center mb-10"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-black text-rose-400 drop-shadow-[0_0_15px_rgba(251,113,133,0.5)]"
+  }, "➖ ", getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "flex bg-slate-800/80 p-1.5 rounded-xl border border-white/10 flex-wrap justify-end gap-1 max-w-[50%]"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-rose-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white hover:bg-white/5"}`
+  }, l)))), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col lg:flex-row gap-8 w-full max-w-6xl items-start"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 glass-panel p-8 rounded-3xl flex flex-col gap-10"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-center items-center gap-4 md:gap-12"
+  }, /*#__PURE__*/React.createElement(FractionInput, {
+    n: n1,
+    d: d1,
+    setN: setN1,
+    setD: setD1,
+    color: "text-amber-400"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-5xl font-black text-slate-500"
+  }, "-"), /*#__PURE__*/React.createElement(FractionInput, {
+    n: n2,
+    d: d2,
+    setN: setN2,
+    setD: setD2,
+    color: "text-rose-400"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-sm font-bold text-slate-400 uppercase tracking-widest mb-4"
+  }, getText("step2", lang), " (LCD: ", commonD, ")"), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-8 md:gap-16"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-mono text-amber-400 font-bold"
+  }, newN1, "/", commonD), /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-mono text-slate-600 font-bold"
+  }, "-"), /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-mono text-rose-400 font-bold"
+  }, newN2, "/", commonD))), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-center items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-64 h-64 relative"
+  }, /*#__PURE__*/React.createElement(Pizza, {
+    n: newN1,
+    d: commonD,
+    color: "#fbbf24",
+    subN: newN2
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-2xl font-black drop-shadow-md"
+  }, isNeg ? "?" : `${diffN}/${commonD}`)))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full lg:w-80 flex flex-col gap-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 rounded-3xl bg-indigo-500/10 border-indigo-500/30 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-indigo-400 font-bold uppercase tracking-widest text-sm mb-6 border-b border-indigo-500/20 pb-2 w-full text-center"
+  }, getText("result", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center text-5xl font-black text-white"
+  }, isNeg && /*#__PURE__*/React.createElement("span", {
+    className: "mr-2 text-rose-400"
+  }, "-"), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("span", null, absDiff), /*#__PURE__*/React.createElement("div", {
+    className: "w-16 h-1 bg-white/30 my-2"
+  }), /*#__PURE__*/React.createElement("span", null, commonD)))), simpN !== absDiff && absDiff !== 0 && /*#__PURE__*/React.createElement("div", {
+    className: "mt-8 pt-6 border-t border-indigo-500/20 w-full text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold text-indigo-400 uppercase mb-2"
+  }, getText("simplify", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-black text-indigo-200 flex items-center justify-center"
+  }, isNeg && /*#__PURE__*/React.createElement("span", {
+    className: "mr-2"
+  }, "-"), simpN, " / ", simpD))))));
+}
+const FractionInput = ({
+  n,
+  d,
+  setN,
+  setD,
+  color
+}) => /*#__PURE__*/React.createElement("div", {
+  className: "flex flex-col items-center gap-2"
+}, /*#__PURE__*/React.createElement("input", {
+  type: "number",
+  min: "0",
+  value: n,
+  onChange: e => setN(Math.max(0, parseInt(e.target.value, 10) || 0)),
+  className: `w-20 bg-transparent text-center text-5xl font-black outline-none border-b-4 border-slate-600 focus:border-white transition-colors ${color}`
+}), /*#__PURE__*/React.createElement("div", {
+  className: "w-24 h-1.5 bg-slate-500 rounded-full"
+}), /*#__PURE__*/React.createElement("input", {
+  type: "number",
+  min: "1",
+  value: d,
+  onChange: e => setD(Math.max(1, parseInt(e.target.value, 10) || 1)),
+  className: `w-20 bg-transparent text-center text-5xl font-black outline-none ${color}`
+}));
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

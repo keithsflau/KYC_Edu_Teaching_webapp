@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - Carbon Footprint</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: #f1f8e9;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Eco Choices",
+    zh: "環保選擇",
+    ja: "エコチョイス",
+    ko: "에코 선택",
+    es: "Opciones ecológicas",
+    de: "Öko-Entscheidungen",
+    fi: "Ekovalinnat",
+    fr: "Choix écologiques",
+    ar: "الخيارات البيئية",
+    it: "Scelte Ecologiche"
+  },
+  instruction: {
+    en: "Choose the option with LESS carbon footprint.",
+    zh: "選擇碳足跡較少的選項。",
+    ja: "二酸化炭素排出量が少ない方を選んでください。",
+    ko: "탄소 발자국이 적은 옵션을 선택하세요.",
+    es: "Elige la opción con MENOS huella de carbono.",
+    de: "Wähle die Option mit WENIGER CO2-Fußabdruck.",
+    fi: "Valitse vaihtoehto, jolla on PIENEMPI hiilijalanjälki.",
+    fr: "Choisissez l'option avec MOINS d'empreinte carbone.",
+    ar: "اختر الخيار ذو البصمة الكربونية الأقل.",
+    it: "Scegli l'opzione con MENO impronta di carbonio."
+  },
+  correct: {
+    en: "Correct!",
+    zh: "正確！",
+    ja: "正解！",
+    ko: "정답!",
+    es: "¡Correcto!",
+    de: "Richtig!",
+    fi: "Oikein!",
+    fr: "Correct !",
+    ar: "صحيح!",
+    it: "Corretto!"
+  },
+  wrong: {
+    en: "Try the greener choice!",
+    zh: "試選更環保的一項！",
+    ja: "もっとエコな方を選んで！",
+    ko: "더 친환경적인 선택을 해보세요!",
+    es: "¡Prueba la opción más ecológica!",
+    de: "Wähle die umweltfreundlichere Option!",
+    fi: "Kokeile ekologisempaa vaihtoehtoa!",
+    fr: "Essaie l'option plus écologique !",
+    ar: "جرّب الخيار الأكثر اخضرارًا!",
+    it: "Prova la scelta più ecologica!"
+  },
+  car: {
+    en: "Private Car",
+    zh: "私家車",
+    ja: "自家用車",
+    ko: "자가용"
+  },
+  bus: {
+    en: "Public Bus",
+    zh: "公共巴士",
+    ja: "公共バス",
+    ko: "공공 버스"
+  },
+  beef: {
+    en: "Beef Burger",
+    zh: "牛肉漢堡",
+    ja: "ビーフバーガー",
+    ko: "소고기 버거"
+  },
+  veg: {
+    en: "Veggie Burger",
+    zh: "素食漢堡",
+    ja: "ベジバーガー",
+    ko: "채식 버거"
+  },
+  bottle: {
+    en: "Plastic Bottle",
+    zh: "塑料瓶",
+    ja: "ペットボトル",
+    ko: "플라스틱 병"
+  },
+  reusable: {
+    en: "Reusable Cup",
+    zh: "可重用杯",
+    ja: "再利用可能なカップ",
+    ko: "재사용 컵"
+  }
+};
+const pairs = [{
+  id: 1,
+  options: [{
+    id: "car",
+    icon: "🚗",
+    carbon: "high"
+  }, {
+    id: "bus",
+    icon: "🚌",
+    carbon: "low"
+  }]
+}, {
+  id: 2,
+  options: [{
+    id: "beef",
+    icon: "🍔",
+    carbon: "high"
+  }, {
+    id: "veg",
+    icon: "🥗",
+    carbon: "low"
+  }]
+}, {
+  id: 3,
+  options: [{
+    id: "bottle",
+    icon: "🥤",
+    carbon: "high"
+  }, {
+    id: "reusable",
+    icon: "🥛",
+    carbon: "low"
+  }]
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [idx, setIdx] = useState(0);
+  const [score, setScore] = useState(0);
+  const [feedback, setFeedback] = useState(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+  const current = pairs[idx];
+  const choose = opt => {
+    if (feedback) return;
+    if (opt.carbon === "low") {
+      setFeedback("correct");
+      setScore(score + 1);
+      setTimeout(() => {
+        setFeedback(null);
+        setIdx((idx + 1) % pairs.length);
+      }, 1000);
+    } else {
+      setFeedback("wrong"); // shake
+      setTimeout(() => setFeedback(null), 500);
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-bold mb-8 text-green-800"
+  }, getText("title")), /*#__PURE__*/React.createElement("p", {
+    className: "mb-8 font-bold text-slate-500"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 gap-8 w-full max-w-2xl"
+  }, current.options.map(opt => /*#__PURE__*/React.createElement("button", {
+    key: opt.id,
+    onClick: () => choose(opt),
+    className: "bg-white p-8 rounded-3xl shadow-xl hover:bg-green-50 transition-colors border-4 border-transparent hover:border-green-300 flex flex-col items-center gap-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-8xl"
+  }, opt.icon), /*#__PURE__*/React.createElement("div", {
+    className: "text-xl font-bold text-slate-700"
+  }, getText(opt.id))))), feedback === "correct" && /*#__PURE__*/React.createElement("div", {
+    className: "mt-8 text-4xl font-black text-green-600 animate-bounce"
+  }, getText("correct")), feedback === "wrong" && /*#__PURE__*/React.createElement("div", {
+    className: "mt-8 text-2xl font-black text-amber-600"
+  }, getText("wrong")), /*#__PURE__*/React.createElement("div", {
+    className: "mt-12 font-bold text-slate-400"
+  }, "Score: ", score));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

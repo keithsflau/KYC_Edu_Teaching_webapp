@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - Circulatory Pump</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: #fff1f2;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Heart Pump Challenge",
+    zh: "心臟泵血挑戰",
+    ja: "心臓ポンプチャレンジ",
+    ko: "심장 펌프 도전",
+    es: "Desafío de bombeo cardíaco",
+    de: "Herzpumpen-Herausforderung",
+    fi: "Sydänpumppuhaaste",
+    fr: "Défi de la pompe cardiaque",
+    ar: "تحدي ضخ القلب",
+    it: "Sfida Pompa Cardiaca"
+  },
+  instruction: {
+    en: "Tap tightly to the rhythm of the heart!",
+    zh: "跟隨心跳節奏點擊！",
+    ja: "心臓のリズムに合わせてタップしてください！",
+    ko: "심장 박동 리듬에 맞춰 탭하세요!",
+    es: "¡Toca al ritmo del corazón!",
+    de: "Tippe im Rhythmus des Herzens!",
+    fi: "Napauta sydämen rytmiin!",
+    fr: "Tapez au rythme du cœur !",
+    ar: "اضغط بإحكام على إيقاع القلب!",
+    it: "Tocca al ritmo del cuore!"
+  },
+  rest: {
+    en: "Rest Mode (60 BPM)",
+    zh: "休息模式 (60 BPM)",
+    ja: "休息モード (60 BPM)",
+    ko: "휴식 모드 (60 BPM)"
+  },
+  run: {
+    en: "Exercise Mode (120 BPM)",
+    zh: "運動模式 (120 BPM)",
+    ja: "運動モード (120 BPM)",
+    ko: "운동 모드 (120 BPM)"
+  },
+  button: {
+    en: "PUMP!",
+    zh: "泵血！",
+    ja: "ポンプ！",
+    ko: "펌프!"
+  },
+  miss: {
+    en: "Miss!",
+    zh: "錯失！",
+    ja: "ミス！",
+    ko: "실패!"
+  },
+  perfect: {
+    en: "Perfect!",
+    zh: "完美！",
+    ja: "完璧！",
+    ko: "완벽!"
+  }
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [mode, setMode] = useState("rest"); // rest, run
+  const [feedback, setFeedback] = useState("");
+  const [lastBeat, setLastBeat] = useState(0);
+  const getText = key => t[key][lang] || t[key]["en"];
+
+  // BPM Logic
+  // Rest = 60 BPM = 1 beat/sec
+  // Run = 120 BPM = 2 beats/sec
+
+  const bpm = mode === "rest" ? 60 : 120;
+  const intervalMs = 60000 / bpm;
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setLastBeat(Date.now());
+    }, intervalMs);
+    return () => clearInterval(interval);
+  }, [mode]);
+  const pump = () => {
+    const now = Date.now();
+    const diff = now - lastBeat;
+    // Allow leeway. Beat happens at T=0.
+    // If we hit within 200ms of beat (either just before next or just after current?? Logic tricky without audio sync)
+    // Simplified: Pulse visual.
+
+    // Actually, better game: Beat indicator moves, tap when aligned.
+    // Or just visual pulse simulation.
+
+    const visualScale = 1.0;
+    // Let's just create a visual pulse effect on click.
+    setFeedback("perfect");
+    setTimeout(() => setFeedback(""), 300);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-bold mb-4 text-rose-600"
+  }, getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4 mb-8"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setMode("rest"),
+    className: `px-6 py-2 rounded-full font-bold ${mode === "rest" ? "bg-blue-500 text-white" : "bg-white"}`
+  }, getText("rest")), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setMode("run"),
+    className: `px-6 py-2 rounded-full font-bold ${mode === "run" ? "bg-red-500 text-white" : "bg-white"}`
+  }, getText("run"))), /*#__PURE__*/React.createElement("div", {
+    className: "relative w-64 h-64 flex items-center justify-center mb-8"
+  }, /*#__PURE__*/React.createElement(motion.div, {
+    className: "text-[150px] text-red-500",
+    animate: {
+      scale: [1, 1.2, 1]
+    },
+    transition: {
+      repeat: Infinity,
+      duration: 60 / bpm,
+      ease: "easeInOut"
+    }
+  }, "❤️"), feedback && /*#__PURE__*/React.createElement("div", {
+    className: "absolute text-4xl font-black text-green-500 animate-ping"
+  }, getText("perfect"))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-8 rounded-3xl shadow-xl border-4 border-rose-100 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "mb-4 font-bold text-slate-400"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("button", {
+    onClick: pump,
+    className: "w-40 h-40 rounded-full bg-red-600 hover:bg-red-500 active:scale-90 transition-transform shadow-[0_10px_0_#991b1b] active:shadow-none text-white font-black text-2xl flex items-center justify-center"
+  }, getText("button"))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

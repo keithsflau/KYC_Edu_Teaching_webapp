@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小二常識：傳統習俗 | Chinese Customs</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Customs",
+    zh: "傳統習俗",
+    ja: "伝統的な習慣",
+    ko: "풍습",
+    es: "Costumbres",
+    de: "Bräuche",
+    fi: "Tavat",
+    fr: "Coutumes",
+    ar: "جمارك",
+    it: "Usanze"
+  },
+  instruction: {
+    en: "What do we do in this festival?",
+    zh: "在這個節日我們會做什麼？",
+    ja: "このお祭りでは何をしますか？",
+    ko: "이 축제 때 무엇을 하나요?",
+    es: "¿Qué hacemos en este festival?",
+    de: "Was machen wir bei diesem Fest?",
+    fi: "Mitä teemme tässä juhlassa?",
+    fr: "Que faisons-nous lors de ce festival ?",
+    ar: "ماذا نفعل في هذا المهرجان؟",
+    it: "Cosa facciamo in questa festa?"
+  },
+  correct: {
+    en: "Correct!",
+    zh: "答對了！",
+    ja: "正解！",
+    ko: "정답입니다!",
+    es: "¡Correcto!",
+    de: "Richtig!",
+    fi: "Oikein!",
+    fr: "Correct !",
+    ar: "صحيح!",
+    it: "Corretto!"
+  },
+  wrong: {
+    en: "Try Again",
+    zh: "再試一次",
+    ja: "もう一度",
+    ko: "다시 시도하세요",
+    es: "Inténtalo de Nuevo",
+    de: "Versuch es nochmal",
+    fi: "Yritä uudelleen",
+    fr: "Réessayez",
+    ar: "حاول مرة أخرى",
+    it: "Riprova"
+  },
+  cny: {
+    en: "Lunar New Year",
+    zh: "農曆新年",
+    ja: "旧正月",
+    ko: "설날",
+    es: "Año Nuevo Lunar",
+    de: "Mondneujahr",
+    fi: "Kuun uusi vuosi",
+    fr: "Nouvel An lunaire",
+    ar: "رأس السنة القمرية",
+    it: "Capodanno Lunare"
+  },
+  mid: {
+    en: "Mid-Autumn",
+    zh: "中秋節",
+    ja: "中秋節",
+    ko: "추석",
+    es: "Medio Otoño",
+    de: "Mittherbstfest",
+    fi: "Keskisyksyn juhla",
+    fr: "Mi-automne",
+    ar: "منتصف الخريف",
+    it: "Metà Autunno"
+  },
+  dragon: {
+    en: "Dragon Boat",
+    zh: "端午節",
+    ja: "端午節",
+    ko: "단오절",
+    es: "Bote del Dragón",
+    de: "Drachenbootfest",
+    fi: "Lohikäärmevene",
+    fr: "Bateau-dragon",
+    ar: "قارب التنين",
+    it: "Barca del Drago"
+  },
+  grave: {
+    en: "Ching Ming",
+    zh: "清明節",
+    ja: "清明節",
+    ko: "청명절",
+    es: "Ching Ming",
+    de: "Ching Ming",
+    fi: "Ching Ming",
+    fr: "Ching Ming",
+    ar: "تشينغ مينغ",
+    it: "Ching Ming"
+  },
+  redpacket: {
+    en: "Red Packet",
+    zh: "派利是",
+    ja: "お年玉",
+    ko: "세뱃돈",
+    es: "Sobre Rojo",
+    de: "Roter Umschlag",
+    fi: "Punainen kirjekuori",
+    fr: "Enveloppe rouge",
+    ar: "الحزمة الحمراء",
+    it: "Busta Rossa"
+  },
+  lantern: {
+    en: "Lanterns",
+    zh: "玩燈籠",
+    ja: "提灯",
+    ko: "등불 놀이",
+    es: "Linternas",
+    de: "Laternen",
+    fi: "Lyhdyt",
+    fr: "Lanternes",
+    ar: "فوانيس",
+    it: "Lanterne"
+  },
+  boat: {
+    en: "Dragon Boat Race",
+    zh: "扒龍舟",
+    ja: "ドラゴンボートレース",
+    ko: "용선 경주",
+    es: "Carrera de Botes Dr.",
+    de: "Drachenbootrennen",
+    fi: "Lohiläärmevenekisa",
+    fr: "Course bateaux-dragons",
+    ar: "سباق قوارب التنين",
+    it: "Gara Barche Drago"
+  },
+  sweep: {
+    en: "Sweep Graves",
+    zh: "掃墓",
+    ja: "墓参り",
+    ko: "성묘",
+    es: "Barrer Tumbas",
+    de: "Gräber fegen",
+    fi: "Hautojen lakaisu",
+    fr: "Balayer les tombes",
+    ar: "كنس القبور",
+    it: "Pulire le Tombe"
+  },
+  candy: {
+    en: "Candy Box",
+    zh: "全盒",
+    ja: "お菓子の箱",
+    ko: "사탕 상자",
+    es: "Caja de Dulces",
+    de: "Süßigkeitenbox",
+    fi: "Karkkilaatikko",
+    fr: "Boîte à bonbons",
+    ar: "علبة حلوى",
+    it: "Scatola di Dolci"
+  },
+  mooncake: {
+    en: "Mooncake",
+    zh: "吃月餅",
+    ja: "月餅",
+    ko: "월병 먹기",
+    es: "Pastel de Luna",
+    de: "Mondkuchen",
+    fi: "Kuukakku",
+    fr: "Gâteau de lune",
+    ar: "كعكة القمر",
+    it: "Torta Lunare"
+  },
+  dumpling: {
+    en: "Rice Dumpling",
+    zh: "吃粽子",
+    ja: "ちまき",
+    ko: "종쯔 먹기",
+    es: "Bola de Arroz",
+    de: "Reisknödel",
+    fi: "Riisi dumpling",
+    fr: "Boulette de riz",
+    ar: "زلابية الأرز",
+    it: "Gnocchi di Riso"
+  },
+  score: {
+    en: "Score",
+    zh: "分數",
+    ja: "スコア",
+    ko: "점수",
+    es: "Puntuación",
+    de: "Punktzahl",
+    fi: "Pisteet",
+    fr: "Score",
+    ar: "نتيجة",
+    it: "Punteggio"
+  },
+  next: {
+    en: "Next",
+    zh: "下一題",
+    ja: "次へ",
+    ko: "다음",
+    es: "Siguiente",
+    de: "Weiter",
+    fi: "Seuraava",
+    fr: "Suivant",
+    ar: "التالي",
+    it: "Avanti"
+  },
+  completed: {
+    en: "Festival Master!",
+    zh: "節日小達人！",
+    ja: "お祭りマスター！",
+    ko: "축제 마스터!",
+    es: "¡Maestro de Festivales!",
+    de: "Fest-Meister!",
+    fi: "Juhlamestari!",
+    fr: "Maître des festivals !",
+    ar: "سيد المهرجان!",
+    it: "Maestro delle Feste!"
+  },
+  restart: {
+    en: "Play Again",
+    zh: "再玩一次",
+    ja: "もう一度プレイ",
+    ko: "다시 하기",
+    es: "Jugar de Nuevo",
+    de: "Nochmal spielen",
+    fi: "Pelaa uudelleen",
+    fr: "Rejouer",
+    ar: "العب مرة أخرى",
+    it: "Gioca di Nuovo"
+  }
+};
+const festivals = [{
+  id: "cny",
+  icon: "🧧",
+  items: ["redpacket", "candy"]
+}, {
+  id: "mid",
+  icon: "🌕",
+  items: ["lantern", "mooncake"]
+}, {
+  id: "dragon",
+  icon: "🐉",
+  items: ["boat", "dumpling"]
+}, {
+  id: "grave",
+  icon: "⛰️",
+  items: ["sweep"]
+}];
+const allItems = [{
+  id: "redpacket",
+  icon: "🧧"
+}, {
+  id: "lantern",
+  icon: "🏮"
+}, {
+  id: "boat",
+  icon: "🚣"
+}, {
+  id: "sweep",
+  icon: "🧹"
+}, {
+  id: "candy",
+  icon: "🍬"
+}, {
+  id: "mooncake",
+  icon: "🥮"
+}, {
+  id: "dumpling",
+  icon: "🥟"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [qIdx, setQIdx] = useState(0);
+  const [score, setScore] = useState(0);
+  const [shuffledOptions, setShuffledOptions] = useState([]);
+  const [feedback, setFeedback] = useState(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+  const currentFestival = festivals[qIdx];
+  useEffect(() => {
+    if (currentFestival) {
+      // Prepare options: Corrext Ones + Some Distractors
+      const correctItems = allItems.filter(i => currentFestival.items.includes(i.id));
+      const distractors = allItems.filter(i => !currentFestival.items.includes(i.id)).sort(() => Math.random() - 0.5).slice(0, 2);
+      setShuffledOptions([...correctItems, ...distractors].sort(() => Math.random() - 0.5));
+      setFeedback(null);
+    }
+  }, [qIdx]);
+  const handleSelect = item => {
+    if (feedback === "correct") return;
+    if (currentFestival.items.includes(item.id)) {
+      setFeedback("correct");
+      setScore(s => s + 10);
+    } else {
+      setFeedback("wrong");
+      setTimeout(() => setFeedback(null), 800);
+    }
+  };
+  const next = () => {
+    if (qIdx < festivals.length - 1) setQIdx(qIdx + 1);else setQIdx(-1); // Finished
+  };
+  const restart = () => {
+    setQIdx(0);
+    setScore(0);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-red-800 mb-4 mt-8 drop-shadow-sm bg-white/50 px-6 py-2 rounded-full"
+  }, "🏮 ", getText("title")), qIdx !== -1 && currentFestival ? /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-lg flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "font-bold text-red-700 mb-4 bg-white px-4 py-1 rounded-full shadow"
+  }, getText("score"), ": ", score), /*#__PURE__*/React.createElement("div", {
+    className: "bg-red-50 p-8 rounded-3xl border-4 border-red-200 text-center mb-8 w-full shadow-lg"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-8xl mb-4 animate-bounce-slow"
+  }, currentFestival.icon), /*#__PURE__*/React.createElement("h2", {
+    className: "text-3xl font-black text-red-900"
+  }, getText(currentFestival.id)), /*#__PURE__*/React.createElement("p", {
+    className: "mt-4 text-slate-500 font-bold"
+  }, getText("instruction"))), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 gap-4 w-full"
+  }, shuffledOptions.map((opt, i) => /*#__PURE__*/React.createElement("button", {
+    key: i,
+    onClick: () => handleSelect(opt),
+    disabled: feedback === "correct",
+    className: "bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col items-center border-b-4 border-slate-200 active:border-b-0 active:translate-y-1"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-5xl mb-2"
+  }, opt.icon), /*#__PURE__*/React.createElement("span", {
+    className: "font-bold text-slate-700"
+  }, getText(opt.id))))), feedback && /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      scale: 0
+    },
+    animate: {
+      scale: 1
+    },
+    className: `mt-6 p-4 rounded-xl font-black text-2xl text-center w-full shadow-lg ${feedback === "correct" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"}`
+  }, getText(feedback), feedback === "correct" && /*#__PURE__*/React.createElement("div", {
+    className: "mt-2"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: next,
+    className: "bg-green-600 text-white px-8 py-2 rounded-full text-lg shadow"
+  }, getText("next"), " ➡️")))) : /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/90 p-12 rounded-3xl shadow-xl text-center mt-12"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-8xl mb-4"
+  }, "🏆"), /*#__PURE__*/React.createElement("h2", {
+    className: "text-3xl font-black text-red-800 mb-6"
+  }, getText("completed")), /*#__PURE__*/React.createElement("p", {
+    className: "text-xl mb-8 font-bold text-slate-600"
+  }, getText("score"), ": ", score), /*#__PURE__*/React.createElement("button", {
+    onClick: restart,
+    className: "bg-red-600 text-white px-10 py-4 rounded-full font-black text-xl hover:bg-red-700 shadow-xl"
+  }, getText("restart"), " 🔄")));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

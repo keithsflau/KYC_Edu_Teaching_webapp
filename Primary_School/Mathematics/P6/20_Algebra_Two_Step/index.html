@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小六數學：兩步方程 | Two-Step Equations</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Two-Step Equations",
+    zh: "兩步方程",
+    ja: "2ステップ方程式",
+    ko: "2단계 방정식",
+    es: "Ecuaciones de Dos Pasos",
+    de: "Zweischritt-Gleichungen",
+    fi: "Kaksivaiheiset yhtälöt",
+    fr: "Équations à deux étapes",
+    ar: "معادلات الخطوتين",
+    it: "Equazioni a Due Passi"
+  },
+  step1: {
+    en: "Step 1: Move Constant",
+    zh: "第一步：移項",
+    ja: "ステップ1：定数の移動",
+    ko: "1단계: 상수 이동",
+    es: "Paso 1: Mover Constante",
+    de: "Schritt 1: Konstante verschieben",
+    fi: "Vaihe 1: Siirrä vakio",
+    fr: "Étape 1 : Déplacer la constante",
+    ar: "الخطوة 1: نقل الثابت",
+    it: "Passo 1: Sposta Costante"
+  },
+  step2: {
+    en: "Step 2: Divide Coefficient",
+    zh: "第二步：除以係數",
+    ja: "ステップ2：係数で割る",
+    ko: "2단계: 계수로 나누기",
+    es: "Paso 2: Dividir Coeficiente",
+    de: "Schritt 2: Koeffizienten teilen",
+    fi: "Vaihe 2: Jaa kerroin",
+    fr: "Étape 2 : Diviser le coefficient",
+    ar: "الخطوة 2: قسمة المعامل",
+    it: "Passo 2: Dividi Coefficiente"
+  },
+  check: {
+    en: "Check",
+    zh: "檢查",
+    ja: "確認",
+    ko: "확인",
+    es: "Comprobar",
+    de: "Prüfen",
+    fi: "Tarkista",
+    fr: "Vérifier",
+    ar: "تحقق",
+    it: "Controlla"
+  },
+  correct: {
+    en: "Correct!",
+    zh: "答對了！",
+    ja: "正解！",
+    ko: "정답!",
+    es: "¡Correcto!",
+    de: "Richtig!",
+    fi: "Oikein!",
+    fr: "Correct !",
+    ar: "صحيح!",
+    it: "Corretto!"
+  },
+  next: {
+    en: "Next Problem",
+    zh: "下一題",
+    ja: "次の問題",
+    ko: "다음 문제",
+    es: "Siguiente Problema",
+    de: "Nächste Aufgabe",
+    fi: "Seuraava tehtävä",
+    fr: "Problème suivant",
+    ar: "المسألة التالية",
+    it: "Prossimo Problema"
+  },
+  tryAgain: {
+    en: "Try Again",
+    zh: "再試一次",
+    ja: "もう一度",
+    ko: "다시 시도",
+    es: "Intentar de nuevo",
+    de: "Nochmal versuchen",
+    fi: "Yritä uudelleen",
+    fr: "Réessayer",
+    ar: "حاول مرة أخرى",
+    it: "Riprova"
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+function App() {
+  const [lang, setLang] = useState("zh");
+  const genProblem = () => {
+    const a = Math.floor(Math.random() * 8) + 2;
+    const x = Math.floor(Math.random() * 10) + 1;
+    const b = Math.floor(Math.random() * 10) + 1;
+    const c = a * x + b;
+    return {
+      a,
+      x,
+      b,
+      c
+    };
+  };
+  const [p, setP] = useState(genProblem());
+  const [step1Val, setStep1Val] = useState("");
+  const [step2Val, setStep2Val] = useState("");
+  const [status, setStatus] = useState("s1"); // s1, s2, done
+
+  const handleCheck1 = () => {
+    if (parseInt(step1Val, 10) === p.c - p.b) {
+      setStatus("s2");
+    } else {
+      alert(getText("tryAgain", lang));
+    }
+  };
+  const handleCheck2 = () => {
+    if (parseInt(step2Val, 10) === p.x) {
+      setStatus("done");
+    } else {
+      alert(getText("tryAgain", lang));
+    }
+  };
+  const next = () => {
+    setP(genProblem());
+    setStep1Val("");
+    setStep2Val("");
+    setStatus("s1");
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4 font-sans bg-slate-900 text-white"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-5xl flex justify-between items-center mb-10"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-black text-yellow-400 drop-shadow-[0_0_15px_rgba(250,204,21,0.5)]"
+  }, "⚖️ ", getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "flex bg-slate-800/80 p-1.5 rounded-xl border border-white/10 flex-wrap justify-end gap-1 max-w-[50%]"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-yellow-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white hover:bg-white/5"}`
+  }, l)))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-3xl flex flex-col gap-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-12 rounded-3xl flex items-center justify-center relative overflow-hidden"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 bg-yellow-500/10 pointer-events-none"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl md:text-8xl font-black font-mono tracking-wider flex items-center gap-4"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-yellow-400"
+  }, p.a, "x"), /*#__PURE__*/React.createElement("span", {
+    className: "text-slate-500"
+  }, "+"), /*#__PURE__*/React.createElement("span", {
+    className: "text-orange-400"
+  }, p.b), /*#__PURE__*/React.createElement("span", {
+    className: "text-slate-500"
+  }, "="), /*#__PURE__*/React.createElement("span", {
+    className: "text-white"
+  }, p.c))), /*#__PURE__*/React.createElement("div", {
+    className: `glass-panel p-8 rounded-3xl transition-all duration-500 ${status === "s1" ? "scale-100 opacity-100" : "opacity-60 scale-95"}`
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-xl font-bold uppercase text-orange-400 mb-4"
+  }, getText("step1", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-wrap items-center gap-4 text-2xl font-mono"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-slate-400"
+  }, p.a, "x = ", p.c, " ", /*#__PURE__*/React.createElement("span", {
+    className: "text-orange-400"
+  }, "- ", p.b), " =", " "), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: step1Val,
+    onChange: e => setStep1Val(e.target.value),
+    disabled: status !== "s1",
+    className: `w-32 bg-slate-800 border-b-4 text-center outline-none rounded-lg p-2 ${status !== "s1" ? "border-green-500 text-green-400" : "border-orange-500 text-white"}`
+  }), status === "s1" && /*#__PURE__*/React.createElement("button", {
+    onClick: handleCheck1,
+    className: "bg-orange-500 text-white px-6 py-2 rounded-xl text-lg hover:bg-orange-400 font-bold transition-all shadow-lg active:scale-95"
+  }, getText("check", lang)), status !== "s1" && /*#__PURE__*/React.createElement("span", {
+    className: "text-green-500 text-3xl"
+  }, "✓"))), /*#__PURE__*/React.createElement(AnimatePresence, null, (status === "s2" || status === "done") && /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      opacity: 0,
+      y: 20
+    },
+    animate: {
+      opacity: 1,
+      y: 0
+    },
+    className: `glass-panel p-8 rounded-3xl transition-all duration-500 ${status === "s2" ? "scale-100 opacity-100" : "opacity-100 scale-100 border-green-500/50"}`
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-xl font-bold uppercase text-yellow-400 mb-4"
+  }, getText("step2", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-wrap items-center gap-4 text-2xl font-mono"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-slate-400"
+  }, "x = ", step1Val, " ", /*#__PURE__*/React.createElement("span", {
+    className: "text-yellow-400"
+  }, "÷ ", p.a), " =", " "), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: step2Val,
+    onChange: e => setStep2Val(e.target.value),
+    disabled: status !== "s2",
+    className: `w-32 bg-slate-800 border-b-4 text-center outline-none rounded-lg p-2 ${status === "done" ? "border-green-500 text-green-400" : "border-yellow-500 text-white"}`
+  }), status === "s2" && /*#__PURE__*/React.createElement("button", {
+    onClick: handleCheck2,
+    className: "bg-yellow-500 text-slate-900 px-6 py-2 rounded-xl text-lg hover:bg-yellow-400 font-bold transition-all shadow-lg active:scale-95"
+  }, getText("check", lang)), status === "done" && /*#__PURE__*/React.createElement("span", {
+    className: "text-green-500 text-3xl"
+  }, "✓")))), /*#__PURE__*/React.createElement(AnimatePresence, null, status === "done" && /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      opacity: 0,
+      scale: 0.8
+    },
+    animate: {
+      opacity: 1,
+      scale: 1
+    },
+    className: "text-center p-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-5xl font-black text-green-400 mb-6 drop-shadow-[0_0_15px_rgba(74,222,128,0.5)]"
+  }, getText("correct", lang)), /*#__PURE__*/React.createElement("button", {
+    onClick: next,
+    className: "bg-green-600 hover:bg-green-500 text-white px-12 py-4 rounded-2xl text-xl font-bold uppercase tracking-widest shadow-xl transition-all active:scale-95"
+  }, getText("next", lang))))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

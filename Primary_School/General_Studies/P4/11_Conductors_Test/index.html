@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - Conductors Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: #0f172a;
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Conductors Test",
+    zh: "導電體測試",
+    ja: "導体テスト",
+    ko: "도체 테스트",
+    es: "Prueba de conductores",
+    de: "Leitertest",
+    fi: "Johtavuustesti",
+    fr: "Test de conducteurs",
+    ar: "اختبار الموصلات",
+    it: "Test Conduttori"
+  },
+  instruction: {
+    en: "Tap an item to place it in the gap!",
+    zh: "點選物件放到缺口處測試！",
+    ja: "アイテムをタップしてギャップに置いてテスト！",
+    ko: "물건을 눌러 틈에 놓고 테스트하세요!",
+    es: "¡Toca un objeto para colocarlo en el hueco!",
+    de: "Tippe auf einen Gegenstand, um ihn in die Lücke zu legen!",
+    fi: "Napauta esinettä asettaaksesi sen aukkoon!",
+    fr: "Touchez un objet pour le placer dans l'espace !",
+    ar: "انقر عنصرًا لوضعه في الفجوة!",
+    it: "Tocca un oggetto per metterlo nel vuoto!"
+  },
+  conductor: {
+    en: "Conductor",
+    zh: "導電體",
+    ja: "導体",
+    ko: "도체",
+    es: "Conductor",
+    de: "Leiter",
+    fi: "Johdin",
+    fr: "Conducteur",
+    ar: "موصل",
+    it: "Conduttore"
+  },
+  insulator: {
+    en: "Insulator",
+    zh: "絕緣體",
+    ja: "絶縁体",
+    ko: "부도체",
+    es: "Aislante",
+    de: "Isolator",
+    fi: "Eriste",
+    fr: "Isolant",
+    ar: "عازل",
+    it: "Isolante"
+  },
+  coin: {
+    en: "Coin",
+    zh: "硬幣",
+    ja: "コイン",
+    ko: "동전",
+    es: "Moneda",
+    de: "Münze",
+    fi: "Kolikko",
+    fr: "Pièce",
+    ar: "عملة",
+    it: "Moneta"
+  },
+  eraser: {
+    en: "Eraser",
+    zh: "橡皮擦",
+    ja: "消しゴム",
+    ko: "지우개",
+    es: "Borrador",
+    de: "Radiergummi",
+    fi: "Pyyhekumi",
+    fr: "Gomme",
+    ar: "ممحاة",
+    it: "Gomma"
+  },
+  key: {
+    en: "Key",
+    zh: "鑰匙",
+    ja: "鍵",
+    ko: "열쇠",
+    es: "Llave",
+    de: "Schlüssel",
+    fi: "Avain",
+    fr: "Clé",
+    ar: "مفتاح",
+    it: "Chiave"
+  },
+  spoon: {
+    en: "Plastic Spoon",
+    zh: "膠匙",
+    ja: "プラスチックスプーン",
+    ko: "플라스틱 숟가락",
+    es: "Cuchara de plástico",
+    de: "Plastiklöffel",
+    fi: "Muovilusikka",
+    fr: "Cuillère en plastique",
+    ar: "ملعقة بلاستيكية",
+    it: "Cucchiaio di plastica"
+  },
+  paperclip: {
+    en: "Paper Clip",
+    zh: "萬字夾",
+    ja: "クリップ",
+    ko: "종이 클립",
+    es: "Clip de papel",
+    de: "Büroklammer",
+    fi: "Paperiliitin",
+    fr: "Trombone",
+    ar: "مشبك ورق",
+    it: "Fermaglio"
+  },
+  pencil: {
+    en: "Pencil (Wood)",
+    zh: "鉛筆 (木)",
+    ja: "鉛筆 (木)",
+    ko: "연필 (나무)",
+    es: "Lápiz (Madera)",
+    de: "Bleistift (Holz)",
+    fi: "Lyijykynä (Puu)",
+    fr: "Crayon (Bois)",
+    ar: "قلم رصاص (خشب)",
+    it: "Matita (Legno)"
+  }
+};
+const items = [{
+  id: "coin",
+  type: "conductor",
+  icon: "🪙",
+  color: "bg-yellow-200"
+}, {
+  id: "eraser",
+  type: "insulator",
+  icon: "🧼",
+  color: "bg-pink-200"
+}, {
+  id: "key",
+  type: "conductor",
+  icon: "🔑",
+  color: "bg-orange-200"
+}, {
+  id: "spoon",
+  type: "insulator",
+  icon: "🥄",
+  color: "bg-blue-100"
+},
+// plastic implied icon
+{
+  id: "paperclip",
+  type: "conductor",
+  icon: "📎",
+  color: "bg-gray-200"
+}, {
+  id: "pencil",
+  type: "insulator",
+  icon: "✏️",
+  color: "bg-yellow-100"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [currentItem, setCurrentItem] = useState(null);
+  const [result, setResult] = useState(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+  const handleDrop = item => {
+    setCurrentItem(item);
+    setResult(item.type === "conductor" ? "on" : "off");
+  };
+  const reset = () => {
+    setCurrentItem(null);
+    setResult(null);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-bold mb-8 text-cyan-400"
+  }, getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "relative w-full max-w-3xl h-[400px] bg-slate-900 rounded-3xl border-4 border-slate-700 shadow-2xl flex items-center justify-center overflow-hidden"
+  }, /*#__PURE__*/React.createElement("svg", {
+    className: "absolute inset-0 z-0",
+    viewBox: "0 0 800 400"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M100,200 V100 H300 V150",
+    stroke: "#fbbf24",
+    strokeWidth: "8",
+    fill: "none"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M500,150 V100 H700 V200",
+    stroke: "#fbbf24",
+    strokeWidth: "8",
+    fill: "none"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M700,300 V350 H100 V300",
+    stroke: "#fbbf24",
+    strokeWidth: "8",
+    fill: "none"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "300",
+    cy: "150",
+    r: "10",
+    fill: "#94a3b8"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "500",
+    cy: "150",
+    r: "10",
+    fill: "#94a3b8"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "absolute left-10 top-[200px] text-6xl"
+  }, "🔋"), /*#__PURE__*/React.createElement("div", {
+    className: "absolute right-10 top-[200px] flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: `text-8xl transition-all duration-300 ${result === "on" ? "drop-shadow-[0_0_50px_rgba(250,204,21,1)] scale-110" : "opacity-30 grayscale"}`
+  }, "💡")), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-[120px] left-[300px] w-[200px] h-[100px] border-4 border-dashed border-white/30 rounded-xl flex items-center justify-center z-10"
+  }, currentItem ? /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      scale: 0
+    },
+    animate: {
+      scale: 1
+    },
+    className: `text-6xl p-4 rounded-xl ${currentItem.color} cursor-pointer`,
+    onClick: reset
+  }, currentItem.icon) : /*#__PURE__*/React.createElement("div", {
+    className: "text-white/50 animate-pulse text-sm font-bold"
+  }, getText("instruction"))), currentItem && /*#__PURE__*/React.createElement("div", {
+    className: `absolute bottom-10 font-bold text-3xl px-8 py-2 rounded-full 
+                     ${result === "on" ? "bg-yellow-500 text-black" : "bg-slate-700 text-slate-400"}`
+  }, result === "on" ? getText("conductor") : getText("insulator"))), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-wrap gap-4 mt-8 justify-center"
+  }, items.map(item => /*#__PURE__*/React.createElement("button", {
+    key: item.id,
+    onClick: () => handleDrop(item),
+    disabled: !!currentItem,
+    className: `p-4 rounded-xl text-4xl shadow-lg border-2 border-white/20 hover:scale-110 transition-transform ${item.color} disabled:opacity-50 disabled:scale-100`
+  }, item.icon, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold text-slate-900 mt-1"
+  }, getText(item.id))))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>States of Matter | Junior Science</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #0f172a;
+        color: white;
+      }
+      .canvas-container {
+        background: white;
+        border-radius: 1rem;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+  <body class="bg-slate-900 text-slate-100 min-h-screen">
+    <div id="root"></div>
+
+    <script>
+const {
+  useState,
+  useEffect,
+  useRef
+} = React;
+
+// Particle Class
+class Particle {
+  constructor(canvasWidth, canvasHeight, state) {
+    this.width = canvasWidth;
+    this.height = canvasHeight;
+    this.state = state;
+    this.r = 6;
+    this.reset();
+  }
+  reset() {
+    if (this.state === "solid") {
+      // Grid position with slight jitter
+      this.baseX = Math.random() * (this.width - 40) + 20;
+      this.baseY = Math.random() * (this.height - 40) + 20;
+      // Actually solid needs arranged structure
+      this.x = this.baseX;
+      this.y = this.baseY;
+    } else {
+      this.x = Math.random() * this.width;
+      this.y = Math.random() * this.height;
+    }
+    this.vx = (Math.random() - 0.5) * (this.state === "gas" ? 8 : this.state === "liquid" ? 2 : 0.5);
+    this.vy = (Math.random() - 0.5) * (this.state === "gas" ? 8 : this.state === "liquid" ? 2 : 0.5);
+  }
+  update(ctx, width, height, state) {
+    this.state = state;
+    if (state === "solid") {
+      // Vibrate around base position
+      this.x = this.baseX + (Math.random() - 0.5) * 2;
+      this.y = this.baseY + (Math.random() - 0.5) * 2;
+    } else {
+      // Move
+      this.x += this.vx;
+      this.y += this.vy;
+
+      // Bounce walls
+      if (this.x < 0 || this.x > width) this.vx *= -1;
+      if (this.y < 0 || this.y > height) this.vy *= -1;
+
+      // Liquid gravity/bottom clustering effect (simplified)
+      if (state === "liquid") {
+        if (this.y < height * 0.4) this.vy += 0.1; // Pull down
+        if (this.y > height - 10) {
+          this.y = height - 10;
+          this.vy *= -0.5;
+        }
+      }
+    }
+    this.draw(ctx);
+  }
+  draw(ctx) {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+    ctx.fillStyle = this.state === "gas" ? "#f87171" : this.state === "liquid" ? "#60a5fa" : "#4ade80";
+    ctx.fill();
+  }
+}
+const Simulation = ({
+  state
+}) => {
+  const canvasRef = useRef(null);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    const particles = [];
+    const count = state === "gas" ? 20 : 100;
+
+    // Initialize Solid Grid
+    if (state === "solid") {
+      let cols = 10;
+      let rows = 10;
+      for (let i = 0; i < cols; i++) {
+        for (let j = 0; j < rows; j++) {
+          const p = new Particle(canvas.width, canvas.height, state);
+          p.baseX = 80 + i * 15;
+          p.baseY = 100 + j * 15;
+          particles.push(p);
+        }
+      }
+    } else {
+      for (let i = 0; i < count; i++) {
+        particles.push(new Particle(canvas.width, canvas.height, state));
+      }
+    }
+    let animationId;
+    const render = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw Container
+      ctx.strokeStyle = "#333";
+      ctx.lineWidth = 4;
+      ctx.strokeRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => p.update(ctx, canvas.width, canvas.height, state));
+      animationId = requestAnimationFrame(render);
+    };
+    render();
+    return () => cancelAnimationFrame(animationId);
+  }, [state]);
+  return /*#__PURE__*/React.createElement("canvas", {
+    ref: canvasRef,
+    width: 300,
+    height: 350,
+    className: "w-full h-full bg-white rounded-xl shadow-lg"
+  });
+};
+const App = () => {
+  const [activeState, setActiveState] = useState("solid");
+  return /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center min-h-screen p-8"
+  }, /*#__PURE__*/React.createElement("header", {
+    className: "text-center mb-10"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-blue-400 font-bold tracking-widest uppercase text-xs"
+  }, "Form 1 Science • Matter"), /*#__PURE__*/React.createElement("h1", {
+    className: "text-5xl font-extrabold mb-4 mt-2"
+  }, "States of Matter"), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-400 max-w-xl"
+  }, "Observe how the arrangement and movement of particles changes between solid, liquid, and gas.")), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col md:flex-row gap-8 items-center justify-center w-full max-w-5xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-sm h-[400px] bg-slate-800 p-4 rounded-3xl border border-slate-700 shadow-2xl"
+  }, /*#__PURE__*/React.createElement(Simulation, {
+    state: activeState
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 space-y-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-3 gap-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setActiveState("solid"),
+    className: `p-6 rounded-2xl border transition-all ${activeState === "solid" ? "bg-green-500/20 border-green-500 text-green-400" : "bg-slate-800 border-slate-700 hover:bg-slate-700"}`
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl mb-2"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-cube"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "font-bold"
+  }, "Solid")), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setActiveState("liquid"),
+    className: `p-6 rounded-2xl border transition-all ${activeState === "liquid" ? "bg-blue-500/20 border-blue-500 text-blue-400" : "bg-slate-800 border-slate-700 hover:bg-slate-700"}`
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl mb-2"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-glass-water"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "font-bold"
+  }, "Liquid")), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setActiveState("gas"),
+    className: `p-6 rounded-2xl border transition-all ${activeState === "gas" ? "bg-red-500/20 border-red-500 text-red-400" : "bg-slate-800 border-slate-700 hover:bg-slate-700"}`
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl mb-2"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-cloud"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "font-bold"
+  }, "Gas"))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-800 p-6 rounded-2xl border border-slate-600"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-xl font-bold mb-4 flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-regular fa-lightbulb text-yellow-400"
+  }), " ", "Particle Properties"), /*#__PURE__*/React.createElement("ul", {
+    className: "space-y-3 text-slate-300 list-disc list-inside"
+  }, activeState === "solid" && [/*#__PURE__*/React.createElement("li", {
+    key: "s1"
+  }, "Particles are packed closely together in a regular pattern."), /*#__PURE__*/React.createElement("li", {
+    key: "s2"
+  }, "They vibrate about fixed positions."), /*#__PURE__*/React.createElement("li", {
+    key: "s3"
+  }, "Strong forces of attraction hold them together.")], activeState === "liquid" && [/*#__PURE__*/React.createElement("li", {
+    key: "l1"
+  }, "Particles are close but arranged irregularly."), /*#__PURE__*/React.createElement("li", {
+    key: "l2"
+  }, "They can slide past each other."), /*#__PURE__*/React.createElement("li", {
+    key: "l3"
+  }, "Forces of attraction are weaker than in solids.")], activeState === "gas" && [/*#__PURE__*/React.createElement("li", {
+    key: "g1"
+  }, "Particles are far apart and move randomly at high speeds."), /*#__PURE__*/React.createElement("li", {
+    key: "g2"
+  }, "There are almost no forces of attraction."), /*#__PURE__*/React.createElement("li", {
+    key: "g3"
+  }, "They fill the entire container.")])))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

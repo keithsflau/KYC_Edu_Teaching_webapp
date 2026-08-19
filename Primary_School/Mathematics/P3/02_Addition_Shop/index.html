@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小三數學：加法大作戰 | Addition Battle</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background-color: #fff7ed; /* Orange tint */
+        background-image: radial-gradient(#ffedd5 10%, transparent 10%);
+        background-size: 30px 30px;
+      }
+      .glossy-panel {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+      }
+      .input-box {
+        background: white;
+        border: 2px solid #e2e8f0;
+        text-align: center;
+        font-weight: 900;
+        color: #1e293b;
+        transition: all 0.2s;
+      }
+      .input-box:focus {
+        border-color: #f97316;
+        transform: scale(1.05);
+        outline: none;
+        box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.1);
+      }
+      .carry-box {
+        font-size: 0.8em;
+        color: #ef4444;
+        background: #fef2f2;
+        border: 1px dashed #fca5a5;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <script>
+const {
+  useState,
+  useEffect,
+  useRef
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const ShoppingCart = ({
+  size = 24,
+  className = ""
+}) => /*#__PURE__*/React.createElement("svg", {
+  xmlns: "http://www.w3.org/2000/svg",
+  width: size,
+  height: size,
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: "2",
+  strokeLinecap: "round",
+  strokeLinejoin: "round",
+  className: className
+}, /*#__PURE__*/React.createElement("circle", {
+  cx: "8",
+  cy: "21",
+  r: "1"
+}), /*#__PURE__*/React.createElement("circle", {
+  cx: "19",
+  cy: "21",
+  r: "1"
+}), /*#__PURE__*/React.createElement("path", {
+  d: "M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"
+}));
+const Check = ({
+  size = 24,
+  className = ""
+}) => /*#__PURE__*/React.createElement("svg", {
+  xmlns: "http://www.w3.org/2000/svg",
+  width: size,
+  height: size,
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: "2",
+  strokeLinecap: "round",
+  strokeLinejoin: "round",
+  className: className
+}, /*#__PURE__*/React.createElement("path", {
+  d: "M20 6 9 17l-5-5"
+}));
+const X = ({
+  size = 24,
+  className = ""
+}) => /*#__PURE__*/React.createElement("svg", {
+  xmlns: "http://www.w3.org/2000/svg",
+  width: size,
+  height: size,
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: "2",
+  strokeLinecap: "round",
+  strokeLinejoin: "round",
+  className: className
+}, /*#__PURE__*/React.createElement("path", {
+  d: "M18 6 6 18"
+}), /*#__PURE__*/React.createElement("path", {
+  d: "m6 6 12 12"
+}));
+const Plus = ({
+  size = 24,
+  className = ""
+}) => /*#__PURE__*/React.createElement("svg", {
+  xmlns: "http://www.w3.org/2000/svg",
+  width: size,
+  height: size,
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: "2",
+  strokeLinecap: "round",
+  strokeLinejoin: "round",
+  className: className
+}, /*#__PURE__*/React.createElement("path", {
+  d: "M5 12h14"
+}), /*#__PURE__*/React.createElement("path", {
+  d: "M12 5v14"
+}));
+const t = {
+  title: {
+    en: "Supermarket Shopping",
+    zh: "超級市場大搜購",
+    ja: "スーパーマーケットでの買い物",
+    ko: "슈퍼마켓 쇼핑",
+    es: "Compras en el supermercado",
+    de: "Supermarkt-Einkauf",
+    fi: "Supermarket-ostokset",
+    fr: "Achats au supermarché",
+    ar: "التسوق في السوبر ماركت",
+    it: "Spesa al supermercato"
+  },
+  product: {
+    en: "Product",
+    zh: "商品",
+    ja: "商品",
+    ko: "상품",
+    es: "Producto",
+    de: "Produkt",
+    fi: "Tuote",
+    fr: "Produit",
+    ar: "منتج",
+    it: "Prodotto"
+  },
+  checkAnswer: {
+    en: "Check Answer",
+    zh: "核對答案",
+    ja: "答え合わせ",
+    ko: "정답 확인",
+    es: "Comprobar respuesta",
+    de: "Antwort prüfen",
+    fi: "Tarkista vastaus",
+    fr: "Vérifier la réponse",
+    ar: "تحقق من الإجابة",
+    it: "Controlla la risposta"
+  },
+  correct: {
+    en: "Correct! Total is",
+    zh: "答對了！總數是",
+    ja: "正解！合計は",
+    ko: "정답! 합계는",
+    es: "¡Correcto! El total es",
+    de: "Richtig! Summe ist",
+    fi: "Oikein! Yhteensä",
+    fr: "Correct ! Le total est",
+    ar: "صحيح! المجموع هو",
+    it: "Corretto! Il totale è"
+  },
+  incorrect: {
+    en: "Hmm... try again!",
+    zh: "唔...再算算看！",
+    ja: "うーん...もう一度！",
+    ko: "음... 다시 해보세요!",
+    es: "Mmm... ¡inténtalo de nuevo!",
+    de: "Hmm... versuch es nochmal!",
+    fi: "Hmm... yritä uudelleen!",
+    fr: "Hmm... réessayez !",
+    ar: "همم... حاول مرة أخرى!",
+    it: "Hmm... riprova!"
+  },
+  next: {
+    en: "Next",
+    zh: "下一題",
+    ja: "次へ",
+    ko: "다음",
+    es: "Siguiente",
+    de: "Weiter",
+    fi: "Seuraava",
+    fr: "Suivant",
+    ar: "التالي",
+    it: "Avanti"
+  },
+  places: [{
+    zh: "萬",
+    en: "10k"
+  }, {
+    zh: "千",
+    en: "1k"
+  }, {
+    zh: "百",
+    en: "100"
+  }, {
+    zh: "十",
+    en: "10"
+  }, {
+    zh: "個",
+    en: "1"
+  }]
+};
+const ITEMS = [{
+  name: {
+    zh: "遊戲機",
+    en: "Console"
+  },
+  priceRange: [1500, 3500],
+  icon: "🎮"
+}, {
+  name: {
+    zh: "單車",
+    en: "Bicycle"
+  },
+  priceRange: [800, 2500],
+  icon: "🚲"
+}, {
+  name: {
+    zh: "書包",
+    en: "School Bag"
+  },
+  priceRange: [200, 500],
+  icon: "🎒"
+}, {
+  name: {
+    zh: "波鞋",
+    en: "Sneakers"
+  },
+  priceRange: [300, 900],
+  icon: "👟"
+}, {
+  name: {
+    zh: "手錶",
+    en: "Watch"
+  },
+  priceRange: [1000, 4000],
+  icon: "⌚"
+}, {
+  name: {
+    zh: "結他",
+    en: "Guitar"
+  },
+  priceRange: [1200, 3000],
+  icon: "🎸"
+}, {
+  name: {
+    zh: "平板電腦",
+    en: "Tablet"
+  },
+  priceRange: [2000, 5000],
+  icon: "📱"
+}, {
+  name: {
+    zh: "玩具機械人",
+    en: "Robot"
+  },
+  priceRange: [400, 1000],
+  icon: "🤖"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [item1, setItem1] = useState(null);
+  const [item2, setItem2] = useState(null);
+  const [userInputs, setUserInputs] = useState(Array(5).fill(""));
+  const [carries, setCarries] = useState(Array(4).fill(""));
+  const [feedback, setFeedback] = useState(null);
+  const generateQuestion = () => {
+    const i1 = ITEMS[Math.floor(Math.random() * ITEMS.length)];
+    let i2 = ITEMS[Math.floor(Math.random() * ITEMS.length)];
+    while (i1 === i2) i2 = ITEMS[Math.floor(Math.random() * ITEMS.length)];
+    const price1 = Math.floor(Math.random() * (i1.priceRange[1] - i1.priceRange[0])) + i1.priceRange[0];
+    const price2 = Math.floor(Math.random() * (i2.priceRange[1] - i2.priceRange[0])) + i2.priceRange[0];
+    setItem1({
+      ...i1,
+      price: price1
+    });
+    setItem2({
+      ...i2,
+      price: price2
+    });
+    setUserInputs(Array(5).fill(""));
+    setCarries(Array(4).fill(""));
+    setFeedback(null);
+  };
+  useEffect(() => {
+    generateQuestion();
+  }, []);
+  if (!item1 || !item2) return null;
+  const correctSum = item1.price + item2.price;
+  const getDigit = (num, posFromRight) => {
+    const str = num.toString();
+    if (posFromRight >= str.length) return null;
+    return str[str.length - 1 - posFromRight];
+  };
+  const checkAnswer = () => {
+    let userString = userInputs.join("");
+    if (parseInt(userString, 10) === correctSum) {
+      setFeedback("correct");
+    } else {
+      setFeedback("incorrect");
+    }
+  };
+  const handleInput = (index, val) => {
+    if (val.length > 1) val = val.slice(-1);
+    const newInputs = [...userInputs];
+    newInputs[index] = val;
+    setUserInputs(newInputs);
+  };
+  const handleCarry = (index, val) => {
+    if (val.length > 1) val = val.slice(-1);
+    const newC = [...carries];
+    newC[index] = val;
+    setCarries(newC);
+  };
+  const getItemName = item => item.name[lang] || item.name["en"];
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 flex flex-col items-center justify-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("header", {
+    className: "mb-8 text-center mt-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "inline-flex items-center gap-2 bg-white px-6 py-2 rounded-full shadow-sm mb-4"
+  }, /*#__PURE__*/React.createElement(ShoppingCart, {
+    className: "text-orange-500",
+    size: 20
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "font-bold text-slate-600"
+  }, t.title[lang] || t.title["en"]))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col gap-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glossy-panel rounded-3xl p-6 flex items-center justify-between group cursor-default"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-5xl bg-orange-100 p-4 rounded-2xl group-hover:scale-110 transition-transform"
+  }, item1.icon), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "text-slate-500 font-bold"
+  }, t.product[lang] || t.product["en"], " 1"), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-black text-slate-800"
+  }, getItemName(item1)))), /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-black text-orange-600 bg-white/50 px-4 py-2 rounded-xl"
+  }, "$", item1.price)), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-center text-slate-400"
+  }, /*#__PURE__*/React.createElement(Plus, {
+    size: 32,
+    strokeWidth: 4
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "glossy-panel rounded-3xl p-6 flex items-center justify-between group cursor-default"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-5xl bg-blue-100 p-4 rounded-2xl group-hover:scale-110 transition-transform"
+  }, item2.icon), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "text-slate-500 font-bold"
+  }, t.product[lang] || t.product["en"], " 2"), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-black text-slate-800"
+  }, getItemName(item2)))), /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-black text-orange-600 bg-white/50 px-4 py-2 rounded-xl"
+  }, "$", item2.price))), /*#__PURE__*/React.createElement("div", {
+    className: "glossy-panel rounded-3xl p-8 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-xs"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-5 gap-2 text-center mb-2 text-slate-400 font-bold text-sm"
+  }, t.places.map((p, i) => /*#__PURE__*/React.createElement("div", {
+    key: i
+  }, p[lang === "zh" ? "zh" : "en"]))), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-5 gap-2 mb-2 h-8"
+  }, /*#__PURE__*/React.createElement("div", null), [0, 1, 2, 3].map(i => /*#__PURE__*/React.createElement("input", {
+    key: i,
+    type: "text",
+    inputMode: "numeric",
+    className: "carry-box w-full h-8 rounded-lg text-center font-bold",
+    maxLength: "1",
+    value: carries[i],
+    onChange: e => handleCarry(i, e.target.value)
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-5 gap-2 mb-2 text-2xl font-black text-slate-700 font-mono"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "col-span-1"
+  }), [3, 2, 1, 0].map(i => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "flex items-center justify-center h-12 bg-white/30 rounded-lg"
+  }, getDigit(item1.price, i)))), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-5 gap-2 mb-4 text-2xl font-black text-slate-700 font-mono relative"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute -left-6 top-2 text-slate-400"
+  }, "+"), /*#__PURE__*/React.createElement("div", {
+    className: "col-span-1"
+  }), [3, 2, 1, 0].map(i => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "flex items-center justify-center h-12 bg-white/30 rounded-lg"
+  }, getDigit(item2.price, i)))), /*#__PURE__*/React.createElement("div", {
+    className: "border-b-4 border-slate-300 mb-4"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-5 gap-2 mb-8"
+  }, [0, 1, 2, 3, 4].map(idx => /*#__PURE__*/React.createElement("input", {
+    key: idx,
+    type: "text",
+    inputMode: "numeric",
+    maxLength: "1",
+    className: "input-box aspect-square rounded-xl text-2xl",
+    placeholder: "?",
+    value: userInputs[idx],
+    onChange: e => handleInput(idx, e.target.value)
+  }))), /*#__PURE__*/React.createElement("button", {
+    onClick: checkAnswer,
+    className: "w-full py-4 bg-orange-500 hover:bg-orange-600 text-white rounded-2xl font-bold text-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
+  }, /*#__PURE__*/React.createElement(Check, {
+    strokeWidth: 3
+  }), " ", t.checkAnswer[lang] || t.checkAnswer["en"]), feedback === "correct" && /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      opacity: 0,
+      y: 10
+    },
+    animate: {
+      opacity: 1,
+      y: 0
+    },
+    className: "mt-4 w-full bg-green-100 text-green-700 p-4 rounded-xl font-bold flex flex-col items-center gap-2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement(Check, null), " ", t.correct[lang] || t.correct["en"], " $", correctSum), /*#__PURE__*/React.createElement("button", {
+    onClick: generateQuestion,
+    className: "px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700"
+  }, t.next[lang] || t.next["en"])), feedback === "incorrect" && /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      opacity: 0,
+      y: 10
+    },
+    animate: {
+      opacity: 1,
+      y: 0
+    },
+    className: "mt-4 w-full bg-red-100 text-red-700 p-4 rounded-xl font-bold flex items-center justify-center gap-2"
+  }, /*#__PURE__*/React.createElement(X, null), " ", t.incorrect[lang] || t.incorrect["en"])))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

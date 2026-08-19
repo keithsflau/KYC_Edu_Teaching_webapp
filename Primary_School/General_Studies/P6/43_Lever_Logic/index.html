@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - Lever Logic</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: #f0fdf4;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n || {
+  LanguageSelector: () => null,
+  get: (o, lang) => (o && (o[lang] || o.en)) || ""
+};
+const t = {
+  title: {
+    en: "Seesaw Balance",
+    zh: "蹺蹺板平衡",
+    ja: "シーソーバランス",
+    ko: "시소 균형",
+    es: "Equilibrio del balancín",
+    de: "Wippen-Balance",
+    fi: "Keinumisen tasapaino",
+    fr: "Équilibre de la bascule",
+    ar: "توازن الأرجوحة",
+    it: "Equilibrio dell'Altalena"
+  },
+  instruction: {
+    en: "Move the big kid to balance the seesaw!",
+    zh: "移動大個子來平衡蹺蹺板！",
+    ja: "大きな子供を動かしてシーソーのバランスを取ってください！",
+    ko: "큰 아이를 움직여 시소의 균형을 맞추세요!",
+    es: "¡Mueve al niño grande para equilibrar el balancín!",
+    de: "Bewege das große Kind, um die Wippe auszubalancieren!",
+    fi: "Siirrä isoa lasta tasapainottamaan keinu!",
+    fr: "Déplacez le grand enfant pour équilibrer la bascule !",
+    ar: "حرك الطفل الكبير لموازنة الأرجوحة!",
+    it: "Sposta il bambino grande per bilanciare l'altalena!"
+  },
+  balanced: {
+    en: "Balanced!",
+    zh: "平衡了！",
+    ja: "バランスが取れました！",
+    ko: "균형이 맞았습니다!"
+  },
+  reset: {
+    en: "Reset",
+    zh: "重置",
+    ja: "リセット",
+    ko: "재설정"
+  }
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [pos, setPos] = useState(4); // start unbalanced; balance at distance 2 (2×2 = 1×4)
+
+  // Left side: Small Kid (Weight 1) at Distance 4
+  // Torque Left = 1 * 4 = 4
+
+  // Right side: Big Kid (Weight 2) at Distance ?
+  // Needs Torque Right = 4
+  // 2 * d = 4 => d = 2
+
+  const torqueL = 1 * 4;
+  const torqueR = 2 * pos;
+  const tilt = torqueL > torqueR ? -15 : torqueL < torqueR ? 15 : 0;
+  const isBalanced = tilt === 0;
+  const getText = key => t[key][lang] || t[key]["en"];
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-bold mb-8 text-green-700"
+  }, getText("title")), /*#__PURE__*/React.createElement("p", {
+    className: "mb-12 font-bold text-slate-500"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "relative w-full max-w-2xl h-64 flex flex-col items-center justify-end mb-12"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full h-4 bg-orange-400 rounded relative transition-transform duration-500 ease-out",
+    style: {
+      transform: `rotate(${tilt}deg)`
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-4 left-[5%] -ml-4 text-6xl transform -scale-x-100"
+  }, "👶"), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-4 text-8xl transition-all duration-300",
+    style: {
+      left: `${50 + pos * 10}%`,
+      marginLeft: "-2rem"
+    }
+  }, "🧒"), [1, 2, 3, 4].map(n => /*#__PURE__*/React.createElement("div", {
+    key: n,
+    className: "absolute top-0 w-1 h-2 bg-black/20",
+    style: {
+      left: `${50 + n * 10}%`
+    }
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "w-0 h-0 border-l-[20px] border-l-transparent border-r-[20px] border-r-transparent border-b-[40px] border-b-green-700"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4 mb-8"
+  }, [1, 2, 3, 4].map(d => /*#__PURE__*/React.createElement("button", {
+    key: d,
+    onClick: () => setPos(d),
+    className: `w-12 h-12 rounded-full font-bold text-xl border-2 ${pos === d ? "bg-green-600 text-white border-green-800" : "bg-white border-slate-300 text-slate-500"}`
+  }, d))), isBalanced && /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black text-green-600 animate-bounce"
+  }, getText("balanced")));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

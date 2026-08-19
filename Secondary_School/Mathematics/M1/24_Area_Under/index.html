@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Area Under Curve | M1 Calculus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <script
+      type="text/javascript"
+      id="MathJax-script"
+      async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+    ></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+      }
+      .glass {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <div id="root" class="flex-grow flex flex-col"></div>
+    <script>
+const {
+  useState,
+  useEffect,
+  useMemo
+} = React;
+const translations = {
+  en: {
+    unit: "Module 1: Calculus",
+    title: "Area Under Curve (Integration)",
+    desc: "Approximate the definite integral using Riemann sums.",
+    function: "Function: y = x²",
+    lowerBound: "Lower Bound (a)",
+    upperBound: "Upper Bound (b)",
+    rectangles: "Number of Rectangles",
+    approxArea: "Approximate Area",
+    exactArea: "Exact Area (∫)",
+    langBtn: "中文"
+  },
+  zh: {
+    unit: "單元一：微積分",
+    title: "曲線下面積（積分）",
+    desc: "使用黎曼和近似定積分。",
+    function: "函數：y = x²",
+    lowerBound: "下界 (a)",
+    upperBound: "上界 (b)",
+    rectangles: "矩形數量",
+    approxArea: "近似面積",
+    exactArea: "精確面積 (∫)",
+    langBtn: "English"
+  }
+};
+const App = () => {
+  const [lang, setLang] = useState("en");
+  const t = translations[lang];
+  const [a, setA] = useState(1);
+  const [b, setB] = useState(4);
+  const [n, setN] = useState(8);
+  const f = x => x * x;
+
+  // Riemann Sum (Left endpoint)
+  const dx = (b - a) / n;
+  const riemannSum = useMemo(() => {
+    let sum = 0;
+    for (let i = 0; i < n; i++) {
+      const xi = a + i * dx;
+      sum += f(xi) * dx;
+    }
+    return sum;
+  }, [a, b, n]);
+
+  // Exact integral of x^2 from a to b = [x^3/3]_a^b = b^3/3 - a^3/3
+  const exactArea = (b * b * b - a * a * a) / 3;
+
+  // Graph
+  const w = 500,
+    h = 350;
+  const xRange = 5,
+    yRange = 10;
+  const scaleX = w / xRange;
+  const scaleY = h / yRange;
+  const originX = 50;
+  const originY = h - 50;
+  const toScreen = (x, y) => ({
+    x: originX + x * scaleX,
+    y: originY - y * scaleY
+  });
+
+  // Curve Path
+  const curvePath = useMemo(() => {
+    let d = "";
+    for (let px = 0; px <= xRange; px += 0.05) {
+      const y = f(px);
+      if (y > yRange) continue;
+      const pt = toScreen(px, y);
+      d += (d ? "L" : "M") + `${pt.x.toFixed(1)},${pt.y.toFixed(1)} `;
+    }
+    return d;
+  }, []);
+
+  // Rectangles
+  const rectangles = useMemo(() => {
+    const rects = [];
+    for (let i = 0; i < n; i++) {
+      const xi = a + i * dx;
+      const yi = f(xi);
+      const p1 = toScreen(xi, 0);
+      const p2 = toScreen(xi, yi);
+      rects.push({
+        x: p1.x,
+        y: p2.y,
+        width: dx * scaleX,
+        height: yi * scaleY
+      });
+    }
+    return rects;
+  }, [a, b, n]);
+  useEffect(() => {
+    if (window.MathJax) window.MathJax.typesetPromise();
+  }, [a, b, n, lang]);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "flex-grow flex flex-col items-center justify-center p-8 select-none"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 right-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLang(l => l === "en" ? "zh" : "en"),
+    className: "px-3 py-1 bg-slate-800 border border-slate-600 rounded-full text-xs font-bold text-emerald-400 hover:bg-slate-700 hover:text-white transition flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-language"
+  }), t.langBtn)), /*#__PURE__*/React.createElement("header", {
+    className: "mb-8 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-emerald-500 font-bold uppercase tracking-widest text-xs mb-2"
+  }, t.unit), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-white mb-2"
+  }, t.title), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-400 font-mono text-lg"
+  }, t.desc)), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col lg:flex-row gap-8 w-full max-w-6xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass p-4 rounded-3xl flex-[2] border border-slate-700"
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: w,
+    height: h,
+    className: "bg-slate-900 rounded-xl overflow-visible mx-auto"
+  }, /*#__PURE__*/React.createElement("line", {
+    x1: originX,
+    y1: "10",
+    x2: originX,
+    y2: h - 30,
+    stroke: "#475569",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: originX,
+    y1: originY,
+    x2: w - 20,
+    y2: originY,
+    stroke: "#475569",
+    strokeWidth: "2"
+  }), rectangles.map((r, i) => /*#__PURE__*/React.createElement("rect", {
+    key: i,
+    x: r.x,
+    y: r.y,
+    width: r.width,
+    height: r.height,
+    fill: "rgba(16, 185, 129, 0.2)",
+    stroke: "#10b981",
+    strokeWidth: "1"
+  })), /*#__PURE__*/React.createElement("path", {
+    d: curvePath,
+    stroke: "#34d399",
+    strokeWidth: "3",
+    fill: "none"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: toScreen(a, 0).x,
+    y1: originY,
+    x2: toScreen(a, 0).x,
+    y2: originY + 10,
+    stroke: "#f43f5e",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: toScreen(a, 0).x,
+    y: originY + 25,
+    textAnchor: "middle",
+    className: "text-xs fill-rose-500 font-bold"
+  }, "a=", a), /*#__PURE__*/React.createElement("line", {
+    x1: toScreen(b, 0).x,
+    y1: originY,
+    x2: toScreen(b, 0).x,
+    y2: originY + 10,
+    stroke: "#f43f5e",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: toScreen(b, 0).x,
+    y: originY + 25,
+    textAnchor: "middle",
+    className: "text-xs fill-rose-500 font-bold"
+  }, "b=", b))), /*#__PURE__*/React.createElement("div", {
+    className: "glass p-6 rounded-3xl flex-1 space-y-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-800 p-3 rounded-xl text-center font-mono border border-slate-700 text-emerald-300"
+  }, t.function), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "text-xs font-bold text-slate-400 block mb-2 uppercase"
+  }, t.lowerBound), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "0",
+    max: b - 0.5,
+    step: "0.5",
+    value: a,
+    onChange: e => setA(Number(e.target.value)),
+    className: "w-full accent-emerald-500"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-right font-mono text-emerald-400"
+  }, "a = ", a)), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "text-xs font-bold text-slate-400 block mb-2 uppercase"
+  }, t.upperBound), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: a + 0.5,
+    max: "4",
+    step: "0.5",
+    value: b,
+    onChange: e => setB(Number(e.target.value)),
+    className: "w-full accent-emerald-500"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-right font-mono text-emerald-400"
+  }, "b = ", b)), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "text-xs font-bold text-slate-400 block mb-2 uppercase"
+  }, t.rectangles), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "2",
+    max: "50",
+    value: n,
+    onChange: e => setN(Number(e.target.value)),
+    className: "w-full accent-emerald-500"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-right font-mono text-emerald-400"
+  }, "n = ", n)), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 gap-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-800 p-4 rounded-xl text-center border border-amber-500/30"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold text-amber-500 uppercase mb-1"
+  }, t.approxArea), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-bold text-amber-400 font-mono"
+  }, riemannSum.toFixed(3))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-800 p-4 rounded-xl text-center border border-emerald-500/30"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold text-emerald-500 uppercase mb-1"
+  }, t.exactArea), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-bold text-emerald-400 font-mono"
+  }, exactArea.toFixed(3)))), /*#__PURE__*/React.createElement("div", {
+    className: "text-center text-xs text-slate-500"
+  }, "Error: ", Math.abs(riemannSum - exactArea).toFixed(4), " (", (Math.abs(riemannSum - exactArea) / exactArea * 100).toFixed(1), "%)"))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

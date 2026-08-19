@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - Skeletal System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: #1e293b;
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Skeleton Puzzle",
+    zh: "骨骼拼圖",
+    ja: "骸骨パズル",
+    ko: "해골 퍼즐",
+    es: "Rompecabezas de esqueleto",
+    de: "Skelett-Puzzle",
+    fi: "Luurankopalapeli",
+    fr: "Puzzle squelette",
+    ar: "لغز الهيكل العظمي",
+    it: "Puzzle Scheletro"
+  },
+  instruction: {
+    en: "Build the human skeleton.",
+    zh: "組裝人體骨骼。",
+    ja: "人間の骨格を組み立ててください。",
+    ko: "인체 골격을 조립하세요.",
+    es: "Construye el esqueleto humano.",
+    de: "Baue das menschliche Skelett.",
+    fi: "Rakenna ihmisen luuranko.",
+    fr: "Construisez le squelette humain.",
+    ar: "بناء الهيكل العظمي البشري.",
+    it: "Costruisci lo scheletro umano."
+  },
+  skull: {
+    en: "Skull",
+    zh: "頭骨",
+    ja: "頭蓋骨",
+    ko: "두개골"
+  },
+  ribs: {
+    en: "Rib Cage",
+    zh: "胸腔",
+    ja: "胸郭",
+    ko: "흉곽"
+  },
+  pelvis: {
+    en: "Pelvis",
+    zh: "骨盆",
+    ja: "骨盤",
+    ko: "골반"
+  },
+  arms: {
+    en: "Arms",
+    zh: "手臂",
+    ja: "腕",
+    ko: "팔"
+  },
+  legs: {
+    en: "Legs",
+    zh: "腿",
+    ja: "脚",
+    ko: "다리"
+  }
+};
+const parts = [{
+  id: "skull",
+  icon: "💀",
+  x: 50,
+  y: 10
+}, {
+  id: "ribs",
+  icon: "🦴",
+  x: 50,
+  y: 30,
+  scaleX: 1.5,
+  rotate: 90
+},
+// Sideways bone as ribs
+{
+  id: "pelvis",
+  icon: "🩲",
+  x: 50,
+  y: 50,
+  opacity: 0.5
+},
+// Using shorts as pelvis proxy
+{
+  id: "arms",
+  icon: "💪",
+  x: 20,
+  y: 30
+}, {
+  id: "legs",
+  icon: "🦵",
+  x: 50,
+  y: 70
+}];
+// Note: Emulating a skeleton visual with emojis is tricky.
+// Let's use simple shapes/images if possible, or abstract.
+// Better: Draggable names to locations on a background image.
+
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [placed, setPlaced] = useState([]);
+  const getText = key => t[key][lang] || t[key]["en"];
+  const handleDrop = (e, targetId) => {
+    e.preventDefault();
+    const draggedId = e.dataTransfer.getData("id");
+    if (draggedId === targetId) {
+      setPlaced([...placed, targetId]);
+    }
+  };
+  const handleDragStart = (e, id) => {
+    e.dataTransfer.setData("id", id);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-bold mb-6 text-slate-300"
+  }, getText("title")), /*#__PURE__*/React.createElement("p", {
+    className: "mb-4 text-slate-500 font-bold"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col md:flex-row gap-8 w-full max-w-4xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "relative w-[300px] h-[500px] bg-slate-800 rounded-3xl border-4 border-slate-600 mx-auto"
+  }, /*#__PURE__*/React.createElement("div", {
+    onDragOver: e => e.preventDefault(),
+    onDrop: e => handleDrop(e, "skull"),
+    className: `absolute top-4 left-1/2 -translate-x-1/2 w-24 h-24 border-2 border-dashed border-slate-500 rounded-full flex items-center justify-center ${placed.includes("skull") ? "bg-white text-black border-none" : ""}`
+  }, placed.includes("skull") ? "💀" : /*#__PURE__*/React.createElement("span", {
+    className: "text-xs"
+  }, getText("skull"))), /*#__PURE__*/React.createElement("div", {
+    onDragOver: e => e.preventDefault(),
+    onDrop: e => handleDrop(e, "ribs"),
+    className: `absolute top-32 left-1/2 -translate-x-1/2 w-32 h-24 border-2 border-dashed border-slate-500 rounded-xl flex items-center justify-center ${placed.includes("ribs") ? "bg-white text-black border-none" : ""}`
+  }, placed.includes("ribs") ? "🦴" : /*#__PURE__*/React.createElement("span", {
+    className: "text-xs"
+  }, getText("ribs"))), /*#__PURE__*/React.createElement("div", {
+    onDragOver: e => e.preventDefault(),
+    onDrop: e => handleDrop(e, "pelvis"),
+    className: `absolute top-60 left-1/2 -translate-x-1/2 w-28 h-16 border-2 border-dashed border-slate-500 rounded-xl flex items-center justify-center ${placed.includes("pelvis") ? "bg-white text-black border-none" : ""}`
+  }, placed.includes("pelvis") ? "🩲" : /*#__PURE__*/React.createElement("span", {
+    className: "text-xs"
+  }, getText("pelvis"))), /*#__PURE__*/React.createElement("div", {
+    onDragOver: e => e.preventDefault(),
+    onDrop: e => handleDrop(e, "arms"),
+    className: `absolute top-32 left-4 w-12 h-40 border-2 border-dashed border-slate-500 rounded flex items-center justify-center ${placed.includes("arms") ? "bg-white text-black border-none" : ""}`
+  }, placed.includes("arms") ? "💪" : /*#__PURE__*/React.createElement("span", {
+    className: "text-xs rotate-90"
+  }, getText("arms"))), /*#__PURE__*/React.createElement("div", {
+    onDragOver: e => e.preventDefault(),
+    onDrop: e => handleDrop(e, "legs"),
+    className: `absolute bottom-4 left-1/2 -translate-x-1/2 w-32 h-40 border-2 border-dashed border-slate-500 rounded flex items-center justify-center ${placed.includes("legs") ? "bg-white text-black border-none" : ""}`
+  }, placed.includes("legs") ? "🦵" : /*#__PURE__*/React.createElement("span", {
+    className: "text-xs"
+  }, getText("legs")))), /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 bg-slate-700 p-6 rounded-3xl flex flex-wrap gap-4 content-start"
+  }, ["skull", "ribs", "pelvis", "arms", "legs"].map(id => !placed.includes(id) && /*#__PURE__*/React.createElement("div", {
+    key: id,
+    draggable: true,
+    onDragStart: e => handleDragStart(e, id),
+    className: "bg-slate-600 p-4 rounded-xl cursor-grab hover:bg-slate-500 text-center w-24"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl mb-1"
+  }, id === "skull" ? "💀" : id === "ribs" ? "🦴" : id === "pelvis" ? "🩲" : id === "arms" ? "💪" : "🦵"), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold"
+  }, getText(id)))), placed.length === 5 && /*#__PURE__*/React.createElement("div", {
+    className: "text-green-400 font-bold text-xl"
+  }, getText("correct") || "Great Job!"))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

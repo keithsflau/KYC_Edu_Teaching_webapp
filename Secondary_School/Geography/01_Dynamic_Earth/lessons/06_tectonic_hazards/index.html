@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>06 構造災害 | 動態地球</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../shared/earth.css">
+</head>
+<body>
+  <nav class="lesson-nav">
+    <a href="../../index.html" class="lesson-nav__back">← 動態地球</a>
+    <span class="lesson-nav__title">06 · 構造災害</span>
+    <span style="width:4rem"></span>
+  </nav>
+  <div class="layout layout--wide">
+    <div class="viz-panel">
+      <div class="boot" id="boot">載入 3D 地球儀…</div>
+      <div class="viz-toolbar">
+        <button class="btn is-active" data-layer="quake" type="button">地震帶</button>
+        <button class="btn" data-layer="volcano" type="button">火山</button>
+        <button class="btn" data-layer="tsunami" type="button">海嘯風險</button>
+        <button class="btn" data-layer="hotspot" type="button">熱點</button>
+      </div>
+      <div class="viz-canvas" id="viz"></div>
+      <div class="viz-map-legend" id="map-legend" aria-live="polite"></div>
+    </div>
+    <aside class="side-panel side-panel--wide" id="lesson-panel"></aside>
+  </div>
+  <div class="lesson-pager" id="lesson-pager" style="max-width:56rem;margin:0 auto;padding:1rem 1.25rem 2rem"></div>
+
+  <script src="../../../../History/3D_War/dse-wars/lib/three.min.js"></script>
+  <script src="../../../../History/3D_War/dse-wars/lib/OrbitControls.js"></script>
+  <script src="../../shared/earth-engine.js"></script>
+  <script src="../../shared/lesson-content.js"></script>
+  <script src="../../shared/lesson-exercises.js"></script>
+  <script src="../../shared/lesson-ui.js"></script>
+  <script>
+    const boot = document.getElementById('boot');
+    const mapLegend = document.getElementById('map-legend');
+    const globe = EarthEngine.createGlobe(document.getElementById('viz'), {
+      showPlates: false,
+      showBoundaries: false,
+    });
+    boot.classList.add('gone');
+
+    const hazardData = {
+      quake: {
+        title: '地震帶',
+        color: '#fbbf24',
+        text: '環太平洋地震帶、地中海—喜馬拉雅地震帶。震源深度與板塊俯衝有關。香港遠離主要板塊邊界，本地地震風險低。',
+        places: ['日本東北', '印尼', '智利', '土耳其', '尼泊爾', '台灣'],
+      },
+      volcano: {
+        title: '火山帶',
+        color: '#f97316',
+        text: '多沿消亡邊界分布（太平洋火環）。複式火山爆發劇烈；盾狀火山多玄武岩質。',
+        places: ['富士山', '印尼', '夏威夷', '冰島', '紐西蘭', '菲律賓'],
+      },
+      tsunami: {
+        title: '海嘯風險',
+        color: '#38bdf8',
+        text: '海底地震垂直位移、火山崩塌可觸發。環太平洋沿岸設預警系統。2011 東日本為經典案例。',
+        places: ['日本太平洋岸', '印尼', '夏威夷', '印度洋', '智利'],
+      },
+      hotspot: {
+        title: '熱點',
+        color: '#a78bfa',
+        text: '固定岩漿柱灼穿移動板塊，形成夏威夷—皇帝海山鏈。解釋板塊內部火山。',
+        places: ['夏威夷', '復活節島', '冰島', '加拉帕戈斯'],
+      },
+    };
+
+    const markerSets = {
+      quake: [[35, 139], [-15, 168], [-35, -72], [38, 27], [28, 84], [24, 121]],
+      volcano: [[35, 138], [-8, 115], [19, -155], [64, -19], [-41, 175], [14, 121]],
+      tsunami: [[35, 140], [-5, 120], [21, -157], [3, 95], [-35, -72]],
+      hotspot: [[19, -155], [-27, -109], [64, -17], [-37, -12]],
+    };
+    const colors = { quake: 0xfbbf24, volcano: 0xf97316, tsunami: 0x38bdf8, hotspot: 0xa78bfa };
+    const markers = [];
+
+    function updateMapLegend(layer) {
+      const d = hazardData[layer];
+      const places = (d.places || []).join('、');
+      mapLegend.innerHTML =
+        '<strong>圖上圓點</strong>：' + d.title + ' 代表地點（示意，非完整分布）' +
+        '<br><span style="color:rgba(255,255,255,0.55)">例子：' + places + '</span>' +
+        '<div class="legend"><span><i style="background:' + d.color + '"></i>● ' + d.title + ' 標記</span>' +
+        '<span><i style="background:#fbbf24"></i>● 香港（參考點）</span></div>';
+    }
+
+    function addMarkers(layer) {
+      markers.forEach((m) => globe.earthGroup.remove(m));
+      markers.length = 0;
+      (markerSets[layer] || []).forEach(([la, ln]) => {
+        const m = new THREE.Mesh(
+          new THREE.SphereGeometry(0.05, 14, 14),
+          new THREE.MeshBasicMaterial({ color: colors[layer] })
+        );
+        m.position.copy(EarthEngine.latLngToVec3(la, ln, 2.26));
+        globe.earthGroup.add(m);
+        markers.push(m);
+      });
+      updateMapLegend(layer);
+      const note = document.getElementById('layer-note');
+      if (note) {
+        note.innerHTML = '<h3>' + hazardData[layer].title + '</h3><p>' + hazardData[layer].text + '</p>';
+      }
+    }
+    addMarkers('quake');
+
+    document.querySelectorAll('[data-layer]').forEach((btn) => {
+      btn.onclick = () => {
+        document.querySelectorAll('[data-layer]').forEach((b) => b.classList.remove('is-active'));
+        btn.classList.add('is-active');
+        addMarkers(btn.dataset.layer);
+      };
+    });
+
+    LessonUI.initLesson('tectonic_hazards', {
+      title: '構造災害',
+      lead: '3D 地球儀上嘅<strong>彩色圓點</strong>係災害代表地點（可按上方按鈕切換圖層）。板塊彩色區塊屬第 02 課內容，本課已隱藏以免混淆。',
+      pager: {
+        prev: '../05_landform_processes/index.html',
+        prevLabel: '地貌營力',
+        next: '../07_geo_management/index.html',
+        nextLabel: '資源與管理',
+      },
+    });
+
+    const mapGuide = LessonUI.el('div', 'card');
+    mapGuide.innerHTML = `
+      <h3>點樣睇地圖？</h3>
+      <table class="data-table">
+        <tr><th>圖示</th><th>意思</th></tr>
+        <tr><td><span style="color:#fbbf24">●</span> 彩色圓點</td><td>當前圖層嘅災害<strong>代表地點</strong>（示意位置）</td></tr>
+        <tr><td><span style="color:#fbbf24">●</span> 香港黃點</td><td>參考：香港遠離主要構造災害帶</td></tr>
+        <tr><td>藍色地球</td><td>真實地形底圖（可拖曳旋轉）</td></tr>
+      </table>
+      <p class="note" style="margin-top:0.5rem">彩色<strong>多邊形區塊</strong>係板塊示意圖，請見 <a href="../02_plate_tectonics/index.html" style="color:var(--ice)">第 02 課 板塊構造</a>。</p>`;
+    document.querySelectorAll('.lesson-pane')[0].prepend(mapGuide);
+
+    const layerNote = LessonUI.el('div', 'card');
+    layerNote.id = 'layer-note';
+    layerNote.innerHTML = '<h3>' + hazardData.quake.title + '</h3><p>' + hazardData.quake.text + '</p>';
+    document.querySelectorAll('.lesson-pane')[0].appendChild(layerNote);
+
+    const casesCard = LessonUI.el('div', 'card');
+    casesCard.innerHTML = '<h3>歷史案例</h3>' + LESSON_CONTENT.tectonic_hazards.hazardCases.map((c) =>
+      `<p style="margin-bottom:0.65rem"><span class="case-tag">${c.type}</span><strong>${c.name}</strong>（${c.mag}）<br><small>${c.lesson}</small></p>`
+    ).join('');
+    document.querySelectorAll('.lesson-pane')[1].appendChild(casesCard);
+
+    const conceptCard = LessonUI.el('div', 'card');
+    conceptCard.innerHTML = `<h3>概念對照</h3>
+      <table class="data-table">
+        <tr><th>術語</th><th>定義</th></tr>
+        <tr><td>震源</td><td>地下破裂起始點（焦點）</td></tr>
+        <tr><td>震央</td><td>震源正上方地表點</td></tr>
+        <tr><td>里氏規模</td><td>地震能量（對數）</td></tr>
+        <tr><td>烈度</td><td>某地實際破壞程度</td></tr>
+      </table>`;
+    document.querySelectorAll('.lesson-pane')[0].appendChild(conceptCard);
+  </script>
+</body>
+</html>

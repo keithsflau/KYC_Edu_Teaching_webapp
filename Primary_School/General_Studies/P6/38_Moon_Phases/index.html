@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - Moon Phases</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: #0f172a;
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Moon Phase Matcher",
+    zh: "月相配對",
+    ja: "月の満ち欠け",
+    ko: "달의 위상",
+    es: "Fases de la luna",
+    de: "Mondphasen",
+    fi: "Kuun vaiheet",
+    fr: "Phases de la lune",
+    ar: "مراحل القمر",
+    it: "Fasi Lunari"
+  },
+  instruction: {
+    en: "Match the moon phase name to the image.",
+    zh: "將月相名稱與圖片配對。",
+    ja: "月の満ち欠けの名前を画像に合わせてください。",
+    ko: "달의 위상 이름을 이미지와 연결하세요.",
+    es: "Empareja el nombre de la fase lunar con la imagen.",
+    de: "Ordne den Namen der Mondphase dem Bild zu.",
+    fi: "Yhdistä kuun vaiheen nimi kuvaan.",
+    fr: "Associez le nom de la phase lunaire à l'image.",
+    ar: "طابق اسم مرحلة القمر بالصورة.",
+    it: "Abbina il nome della fase lunare all'immagine."
+  },
+  new: {
+    en: "New Moon",
+    zh: "新月",
+    ja: "新月",
+    ko: "신월"
+  },
+  full: {
+    en: "Full Moon",
+    zh: "滿月",
+    ja: "満月",
+    ko: "만월"
+  },
+  first: {
+    en: "First Quarter",
+    zh: "上弦月",
+    ja: "上弦の月",
+    ko: "상현달"
+  },
+  last: {
+    en: "Last Quarter",
+    zh: "下弦月",
+    ja: "下弦の月",
+    ko: "하현달"
+  },
+  correct: {
+    en: "Correct!",
+    zh: "正確！",
+    ja: "正解！",
+    ko: "정답!"
+  },
+  wrong: {
+    en: "Try again!",
+    zh: "再試一次！",
+    ja: "もう一度！",
+    ko: "다시 시도!"
+  }
+};
+const phases = [{
+  id: "new",
+  bg: "#0f172a",
+  border: "2px solid #64748b"
+}, {
+  id: "full",
+  bg: "#fef9c3",
+  border: "none",
+  glow: true
+}, {
+  id: "first",
+  bg: "linear-gradient(90deg, #0f172a 50%, #fef9c3 50%)",
+  border: "none"
+}, {
+  id: "last",
+  bg: "linear-gradient(90deg, #fef9c3 50%, #0f172a 50%)",
+  border: "none"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [idx, setIdx] = useState(0);
+  const [feedback, setFeedback] = useState(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+  const current = phases[idx];
+  const check = id => {
+    if (feedback) return;
+    if (id === current.id) {
+      setFeedback("correct");
+      setTimeout(() => {
+        setFeedback(null);
+        setIdx(i => (i + 1) % phases.length);
+      }, 1000);
+    } else {
+      setFeedback("wrong");
+      setTimeout(() => setFeedback(null), 800);
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-bold mb-8 text-slate-200"
+  }, getText("title")), /*#__PURE__*/React.createElement("p", {
+    className: "mb-8 font-bold text-slate-500"
+  }, getText("instruction")), /*#__PURE__*/React.createElement(motion.div, {
+    key: current.id,
+    initial: {
+      scale: 0.8,
+      opacity: 0
+    },
+    animate: {
+      scale: 1,
+      opacity: 1
+    },
+    className: "w-48 h-48 rounded-full mb-12 relative overflow-hidden",
+    style: {
+      background: current.bg,
+      border: current.border,
+      boxShadow: current.glow ? "0 0 20px white" : "0 25px 50px -12px rgb(0 0 0 / 0.5)"
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 gap-4 w-full max-w-md"
+  }, phases.map(p => /*#__PURE__*/React.createElement("button", {
+    key: p.id,
+    onClick: () => check(p.id),
+    className: "p-4 bg-slate-800 text-slate-200 hover:bg-slate-700 rounded-xl font-bold border border-slate-600"
+  }, getText(p.id)))), feedback === "correct" && /*#__PURE__*/React.createElement("div", {
+    className: "mt-8 text-3xl font-black text-green-400 animate-bounce"
+  }, getText("correct")), feedback === "wrong" && /*#__PURE__*/React.createElement("div", {
+    className: "mt-8 text-3xl font-black text-red-400 animate-bounce"
+  }, getText("wrong")));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

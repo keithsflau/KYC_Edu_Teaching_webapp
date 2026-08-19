@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Slope Fields | M2 Differential Equations</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+      }
+      .glass {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .grid-bg {
+        background-image: radial-gradient(
+          rgba(255, 255, 255, 0.1) 1px,
+          transparent 1px
+        );
+        background-size: 20px 20px;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <div id="root" class="flex-grow flex flex-col"></div>
+    <script>
+const {
+  useState,
+  useRef,
+  useEffect
+} = React;
+const translations = {
+  en: {
+    unit: "Unit 6: Differential Equations",
+    title: "Slope Fields",
+    subtitle: "Click to generate solution curves",
+    coords: "Coordinates: -5 to 5",
+    select: "Select Equation",
+    clear: "Clear Curves",
+    desc: "The colored lines represent the slope <strong>dy/dx</strong> at each point. A solution curve must follow these tangents.",
+    langBtn: "中文"
+  },
+  zh: {
+    unit: "第六單元：微分方程",
+    title: "斜率場",
+    subtitle: "點擊以生成解曲線",
+    coords: "坐標範圍: -5 至 5",
+    select: "選擇方程式",
+    clear: "清除曲線",
+    desc: "彩色線段代表每一點的斜率 <strong>dy/dx</strong>。解曲線必須沿著這些切線延伸。",
+    langBtn: "English"
+  }
+};
+const App = () => {
+  // Diff Eq: dy/dx = f(x,y)
+  // Presets
+
+  const [lang, setLang] = useState("en");
+  const t = translations[lang];
+  const presets = [{
+    name: "y' = x + y",
+    func: (x, y) => x + y
+  }, {
+    name: "y' = -x/y (Circle)",
+    func: (x, y) => -x / y
+  }, {
+    name: "y' = y(1-y) (Logistic)",
+    func: (x, y) => y * (1 - y)
+  }, {
+    name: "y' = sin(x) + cos(y)",
+    func: (x, y) => Math.sin(x) + Math.cos(y)
+  }];
+  const [eqId, setEqId] = useState(0);
+  const getSlope = presets[eqId].func;
+  const [curves, setCurves] = useState([]); // Array of {points: [{x,y}]}
+
+  // Canvas logic
+  const canvasRef = useRef(null);
+  const w = 600,
+    h = 600;
+  const range = 5;
+  const scale = w / (2 * range);
+  const originX = w / 2,
+    originY = h / 2;
+  const toScreen = (x, y) => ({
+    x: originX + x * scale,
+    y: originY - y * scale
+  });
+  const fromScreen = (sx, sy) => ({
+    x: (sx - originX) / scale,
+    y: (originY - sy) / scale
+  });
+
+  // Draw
+  useEffect(() => {
+    const ctx = canvasRef.current.getContext("2d");
+    ctx.clearRect(0, 0, w, h);
+
+    // 1. Draw Field
+    ctx.lineWidth = 1;
+    const step = 0.5;
+    const len = 10;
+    for (let x = -range; x <= range; x += step) {
+      for (let y = -range; y <= range; y += step) {
+        let m = getSlope(x, y);
+        if (!isFinite(m)) continue; // handle div by zero
+        // Limit slope visual for extreme growth
+        if (Math.abs(m) > 10) m = Math.sign(m) * 10;
+
+        // Vector direction (1, m) normalized
+        const norm = Math.sqrt(1 + m * m);
+        const dx = 1 / norm * (len / scale); // screen units length control
+        const dy = m / norm * (len / scale);
+
+        // Draw line segment
+        const p = toScreen(x, y);
+        // Convert vector to screen coords (flip y for dy)
+        // Actually simpler to calc start/end in math coords then converting
+
+        const x1 = x - 0.2 / Math.sqrt(1 + m * m);
+        const x2 = x + 0.2 / Math.sqrt(1 + m * m);
+        const y1 = y - 0.2 * m / Math.sqrt(1 + m * m);
+        const y2 = y + 0.2 * m / Math.sqrt(1 + m * m);
+        const s1 = toScreen(x1, y1);
+        const s2 = toScreen(x2, y2);
+        ctx.strokeStyle = `hsla(${Math.atan(m) * 57 + 180}, 70%, 50%, 0.5)`;
+        ctx.beginPath();
+        ctx.moveTo(s1.x, s1.y);
+        ctx.lineTo(s2.x, s2.y);
+        ctx.stroke();
+      }
+    }
+
+    // 2. Draw user curves
+    ctx.lineWidth = 3;
+    curves.forEach(curve => {
+      if (curve.points.length < 2) return;
+      ctx.strokeStyle = "#34d399";
+      ctx.beginPath();
+      const start = toScreen(curve.points[0].x, curve.points[0].y);
+      ctx.moveTo(start.x, start.y);
+      for (let i = 1; i < curve.points.length; i++) {
+        const p = toScreen(curve.points[i].x, curve.points[i].y);
+        ctx.lineTo(p.x, p.y);
+      }
+      ctx.stroke();
+
+      // Dot at start
+      ctx.fillStyle = "#f43f5e";
+      ctx.beginPath();
+      ctx.arc(start.x, start.y, 4, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  }, [eqId, curves, getSlope]); // Added getSlope dependency
+
+  // Integrate new curve on click
+  const integrate = (x0, y0) => {
+    const newPts = [];
+    // Forward
+    let x = x0,
+      y = y0;
+    const dt = 0.05;
+    for (let i = 0; i < 200; i++) {
+      newPts.push({
+        x,
+        y
+      });
+      const m = getSlope(x, y);
+      if (Math.abs(x) > range || Math.abs(y) > range) break;
+      x += dt;
+      y += m * dt;
+    }
+    // Backward
+    x = x0;
+    y = y0;
+    const backPts = [];
+    for (let i = 0; i < 200; i++) {
+      const m = getSlope(x, y);
+      if (Math.abs(x) > range || Math.abs(y) > range) break;
+      x -= dt;
+      y -= m * dt;
+      backPts.push({
+        x,
+        y
+      });
+    }
+    return [...backPts.reverse(), ...newPts];
+  };
+  const handleClick = e => {
+    const rect = canvasRef.current.getBoundingClientRect();
+    const pt = fromScreen(e.clientX - rect.left, e.clientY - rect.top);
+    const pts = integrate(pt.x, pt.y);
+    setCurves([...curves, {
+      points: pts
+    }]);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "flex-grow flex flex-col items-center justify-center p-8 select-none"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 right-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLang(l => l === "en" ? "zh" : "en"),
+    className: "px-3 py-1 bg-slate-800 border border-slate-600 rounded-full text-xs font-bold text-emerald-400 hover:bg-slate-700 hover:text-white transition flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-language"
+  }), t.langBtn)), /*#__PURE__*/React.createElement("header", {
+    className: "mb-8 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-emerald-500 font-bold uppercase tracking-widest text-xs mb-2"
+  }, t.unit), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-white mb-2"
+  }, t.title), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-400 font-mono text-lg"
+  }, t.subtitle)), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col lg:flex-row gap-8 w-full max-w-6xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 glass p-6 rounded-3xl relative flex items-center justify-center aspect-square"
+  }, /*#__PURE__*/React.createElement("canvas", {
+    ref: canvasRef,
+    width: 600,
+    height: 600,
+    className: "bg-slate-900 rounded-xl cursor-crosshair grid-bg",
+    onMouseDown: handleClick
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 left-4 text-xs text-slate-500 pointer-events-none"
+  }, t.coords)), /*#__PURE__*/React.createElement("div", {
+    className: "w-full lg:w-80 space-y-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass p-6 rounded-2xl"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-lg font-bold text-white mb-4"
+  }, t.select), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-2"
+  }, presets.map((p, i) => /*#__PURE__*/React.createElement("button", {
+    key: i,
+    onClick: () => {
+      setEqId(i);
+      setCurves([]);
+    },
+    className: `w-full text-left px-4 py-3 rounded-xl text-sm font-mono transition ${eqId === i ? "bg-emerald-600 text-white shadow-lg shadow-emerald-900/50" : "bg-slate-800 text-slate-400 hover:bg-slate-700"}`
+  }, p.name)))), /*#__PURE__*/React.createElement("div", {
+    className: "glass p-6 rounded-2xl text-center"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setCurves([]),
+    className: "px-6 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-lg font-bold text-sm"
+  }, t.clear), /*#__PURE__*/React.createElement("p", {
+    className: "text-xs text-slate-400 mt-4",
+    dangerouslySetInnerHTML: {
+      __html: t.desc
+    }
+  })))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

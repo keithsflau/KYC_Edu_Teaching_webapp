@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小四數學：因數與倍數工廠 | Factors & Multiples</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Factors & Multiples Factory",
+    zh: "因數與倍數工廠",
+    ja: "約数と倍数の工場",
+    ko: "약수와 배수 공장",
+    es: "Fábrica de Factores y Múltiplos",
+    de: "Faktoren & Vielfache Fabrik",
+    fi: "Tekijät & Kertoimet Tehdas",
+    fr: "Usine de facteurs et multiples",
+    ar: "مصنع العوامل والمضاعفات",
+    it: "Fabbrica di fattori e multipli"
+  },
+  findFactors: {
+    en: "Find Factors",
+    zh: "找因數",
+    ja: "約数を見つける",
+    ko: "약수 찾기",
+    es: "Encontrar Factores",
+    de: "Faktoren finden",
+    fi: "Etsi tekijät",
+    fr: "Trouver des facteurs",
+    ar: "إيجاد العوامل",
+    it: "Trova fattori"
+  },
+  findMultiples: {
+    en: "Find Multiples",
+    zh: "找倍數",
+    ja: "倍数を見つける",
+    ko: "배수 찾기",
+    es: "Encontrar Múltiplos",
+    de: "Vielfache finden",
+    fi: "Etsi kertoimet",
+    fr: "Trouver des multiples",
+    ar: "إيجاد المضاعفات",
+    it: "Trova multipli"
+  },
+  factorsOf: {
+    en: "Factors of this number",
+    zh: "找出這個數的因數",
+    ja: "この数の約数",
+    ko: "이 숫자의 약수",
+    es: "Factores de este número",
+    de: "Faktoren dieser Zahl",
+    fi: "Tämän luvun tekijät",
+    fr: "Facteurs de ce nombre",
+    ar: "عوامل هذا الرقم",
+    it: "Fattori di questo numero"
+  },
+  multiplesOf: {
+    en: "First 10 Multiples",
+    zh: "找出這個數的前 10 個倍數",
+    ja: "最初の10個の倍数",
+    ko: "처음 10개의 배수",
+    es: "Primeros 10 Múltiplos",
+    de: "Erste 10 Vielfache",
+    fi: "Ensimmäiset 10 kerrannaista",
+    fr: "Premiers 10 multiples",
+    ar: "أول 10 مضاعفات",
+    it: "Primi 10 multipli"
+  },
+  factorDef: {
+    en: "Factors divide {n} evenly. E.g. {n} ÷ {f} = {r}, no remainder.",
+    zh: "因數 (Factor) 是能整除 {n} 的整數。例如 {n} ÷ {f} = {r}，沒有餘數。",
+    ja: "約数は {n} を割り切れる整数です。例：{n} ÷ {f} = {r}、余りなし。",
+    ko: "약수는 {n}을 나누어 떨어지게 하는 수입니다. 예: {n} ÷ {f} = {r}, 나머지 없음.",
+    es: "Los factores dividen {n} uniformemente. Ej. {n} ÷ {f} = {r}, sin resto.",
+    de: "Faktoren teilen {n} gleichmäßig. Z.B. {n} ÷ {f} = {r}, kein Rest.",
+    fi: "Tekijät jakavat {n} tasan. Esim. {n} ÷ {f} = {r}, ei jakojaannöstä.",
+    fr: "Les facteurs divisent {n} uniformément. Ex. {n} ÷ {f} = {r}, pas de reste.",
+    ar: "العوامل تقسم {n} بالتساوي. مثال {n} ÷ {f} = {r}، لا يوجد باقي.",
+    it: "I fattori dividono {n} uniformemente. Es. {n} ÷ {f} = {r}, nessun resto."
+  },
+  multipleDef: {
+    en: "Multiples are {n} multiplied by integers. E.g. {n} × 1 = {m1}, {n} × 2 = {m2}...",
+    zh: "倍數 (Multiple) 是 {n} 乘以整數後的結果。例如 {n} × 1 = {m1}, {n} × 2 = {m2}...",
+    ja: "倍数は {n} に整数を掛けた結果です。例：{n} × 1 = {m1}, {n} × 2 = {m2}...",
+    ko: "배수는 {n}에 정수를 곱한 결과입니다. 예: {n} × 1 = {m1}, {n} × 2 = {m2}...",
+    es: "Múltiplos son {n} multiplicado por enteros. Ej. {n} × 1 = {m1}, {n} × 2 = {m2}...",
+    de: "Vielfache sind {n} multipliziert mit ganzen Zahlen. Z.B. {n} × 1 = {m1}, {n} × 2 = {m2}...",
+    fi: "Kertoimet ovat {n} kerrottuna kokonaisluvuilla. Esim. {n} × 1 = {m1}, {n} × 2 = {m2}...",
+    fr: "Les multiples sont {n} multipliés par des entiers. Ex. {n} × 1 = {m1}, {n} × 2 = {m2}...",
+    ar: "المضاعفات هي {n} مضروبة في أعداد صحيحة. مثال {n} × 1 = {m1}، {n} × 2 = {m2}...",
+    it: "I multipli sono {n} moltiplicati per interi. Es. {n} × 1 = {m1}, {n} × 2 = {m2}..."
+  }
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [num, setNum] = useState(12);
+  const [mode, setMode] = useState("factors"); // factors, multiples
+
+  const getFactors = n => {
+    const f = [];
+    for (let i = 1; i <= n; i++) if (n % i === 0) f.push(i);
+    return f;
+  };
+  const getMultiples = n => {
+    const m = [];
+    for (let i = 1; i <= 10; i++) m.push(n * i);
+    return m;
+  };
+  const getText = key => t[key][lang] || t[key]["en"];
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-8 flex flex-col items-center text-white"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-cyan-400 mb-8 mt-8 drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]"
+  }, "🏭 ", getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-800/80 backdrop-blur-md rounded-3xl p-8 shadow-2xl w-full max-w-5xl border border-slate-700"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-center gap-6 mb-12 flex-wrap"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setMode("factors"),
+    className: `px-8 py-3 rounded-full font-bold text-xl transition-all ${mode === "factors" ? "bg-cyan-500 text-black shadow-lg scale-105" : "bg-slate-700 text-slate-300 hover:bg-slate-600"}`
+  }, getText("findFactors")), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setMode("multiples"),
+    className: `px-8 py-3 rounded-full font-bold text-xl transition-all ${mode === "multiples" ? "bg-pink-500 text-white shadow-lg scale-105" : "bg-slate-700 text-slate-300 hover:bg-slate-600"}`
+  }, getText("findMultiples"))), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center mb-12"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-bold text-slate-400 mb-4"
+  }, mode === "factors" ? getText("factorsOf") : getText("multiplesOf")), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-6"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setNum(n => Math.max(1, n - 1)),
+    className: "w-12 h-12 rounded-full bg-slate-700 hover:bg-slate-600 flex items-center justify-center text-2xl font-black"
+  }, "-"), /*#__PURE__*/React.createElement("div", {
+    className: "text-8xl font-black text-white w-40 text-center"
+  }, num), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setNum(n => Math.min(50, n + 1)),
+    className: "w-12 h-12 rounded-full bg-slate-700 hover:bg-slate-600 flex items-center justify-center text-2xl font-black"
+  }, "+"))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-900/50 rounded-2xl p-8 min-h-[300px] flex items-center justify-center flex-wrap gap-4 relative overflow-hidden"
+  }, /*#__PURE__*/React.createElement(AnimatePresence, {
+    mode: "wait"
+  }, mode === "factors" ? /*#__PURE__*/React.createElement(React.Fragment, null, getFactors(num).map((f, i) => /*#__PURE__*/React.createElement(motion.div, {
+    key: `f-${num}-${f}`,
+    initial: {
+      scale: 0,
+      rotate: -180
+    },
+    animate: {
+      scale: 1,
+      rotate: 0
+    },
+    exit: {
+      scale: 0
+    },
+    transition: {
+      delay: i * 0.05,
+      type: "spring"
+    },
+    className: "w-20 h-20 rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center text-3xl font-black text-white shadow-lg"
+  }, f))) : /*#__PURE__*/React.createElement(React.Fragment, null, getMultiples(num).map((m, i) => /*#__PURE__*/React.createElement(motion.div, {
+    key: `m-${num}-${m}`,
+    initial: {
+      y: 50,
+      opacity: 0
+    },
+    animate: {
+      y: 0,
+      opacity: 1
+    },
+    exit: {
+      y: -50,
+      opacity: 0
+    },
+    transition: {
+      delay: i * 0.05
+    },
+    className: "px-6 py-4 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 text-2xl font-black text-white shadow-lg min-w-[80px] text-center"
+  }, m))))), /*#__PURE__*/React.createElement("div", {
+    className: "mt-8 bg-slate-700/50 p-6 rounded-2xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-start gap-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl"
+  }, "💡"), /*#__PURE__*/React.createElement("div", {
+    className: "text-slate-300"
+  }, mode === "factors" ? /*#__PURE__*/React.createElement("p", null, getText("factorDef").replace(/{n}/g, num).replace("{f}", getFactors(num)[0]).replace("{r}", num / getFactors(num)[0])) : /*#__PURE__*/React.createElement("p", null, getText("multipleDef").replace(/{n}/g, num).replace("{m1}", num).replace("{m2}", num * 2)))))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

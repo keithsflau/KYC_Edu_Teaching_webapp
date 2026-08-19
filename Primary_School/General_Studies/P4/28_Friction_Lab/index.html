@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - Friction Lab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: #f3f4f6;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Friction Lab",
+    zh: "摩擦力實驗室",
+    ja: "摩擦実験室",
+    ko: "마찰 실험실",
+    es: "Laboratorio de fricción",
+    de: "Reibungslabor",
+    fi: "Kitkalaboratorio",
+    fr: "Laboratoire de friction",
+    ar: "مختبر الاحتكاك",
+    it: "Laboratorio di Attrito"
+  },
+  instruction: {
+    en: "Choose a surface and slide the car!",
+    zh: "選擇一個表面並滑動汽車！",
+    ja: "表面を選んで車をスライドさせてください！",
+    ko: "표면을 선택하고 차를 미끄러뜨리세요!",
+    es: "¡Elige una superficie y desliza el coche!",
+    de: "Wähle eine Oberfläche und lass das Auto rutschen!",
+    fi: "Valitse pinta ja liu'uta autoa!",
+    fr: "Choisissez une surface et faites glisser la voiture !",
+    ar: "اختر سطحا وحرك السيارة!",
+    it: "Scegli una superficie e fai scorrere l'auto!"
+  },
+  ice: {
+    en: "Ice (Low Friction)",
+    zh: "冰面 (低摩擦力)",
+    ja: "氷 (低摩擦)",
+    ko: "얼음 (낮은 마찰)",
+    es: "Hielo (Baja fricción)",
+    de: "Eis (Geringe Reibung)",
+    fi: "Jää (Pieni kitka)",
+    fr: "Glace (Faible friction)",
+    ar: "جليد (احتكاك منخفض)",
+    it: "Ghiaccio (Basso attrito)"
+  },
+  wood: {
+    en: "Wood (Medium Friction)",
+    zh: "木板 (中摩擦力)",
+    ja: "木 (中摩擦)",
+    ko: "나무 (중간 마찰)",
+    es: "Madera (Fricción media)",
+    de: "Holz (Mittlere Reibung)",
+    fi: "Puu (Keskitason kitka)",
+    fr: "Bois (Friction moyenne)",
+    ar: "خشب (احتكاك متوسط)",
+    it: "Legno (Medio attrito)"
+  },
+  carpet: {
+    en: "Carpet (High Friction)",
+    zh: "地毯 (高摩擦力)",
+    ja: "カーペット (高摩擦)",
+    ko: "카펫 (높은 마찰)",
+    es: "Alfombra (Alta fricción)",
+    de: "Teppich (Hohe Reibung)",
+    fi: "Matto (Korkea kitka)",
+    fr: "Tapis (Friction élevée)",
+    ar: "سجاد (احتكاك عالي)",
+    it: "Tappeto (Alto attrito)"
+  },
+  push: {
+    en: "Push!",
+    zh: "推！",
+    ja: "押す！",
+    ko: "밀기!",
+    es: "¡Empujar!",
+    de: "Drücken!",
+    fi: "Työnnä!",
+    fr: "Pousser !",
+    ar: "ادفع!",
+    it: "Spingi!"
+  },
+  reset: {
+    en: "Reset",
+    zh: "重置",
+    ja: "リセット",
+    ko: "초기화",
+    es: "Reiniciar",
+    de: "Zurücksetzen",
+    fi: "Nollaa",
+    fr: "Réinitialiser",
+    ar: "إعادة تعيين",
+    it: "Ripristina"
+  }
+};
+const surfaces = [{
+  id: "ice",
+  friction: 0.1,
+  color: "bg-cyan-200"
+}, {
+  id: "wood",
+  friction: 0.5,
+  color: "bg-amber-700"
+}, {
+  id: "carpet",
+  friction: 0.9,
+  color: "bg-red-800"
+} // carpet visual
+];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [surface, setSurface] = useState(surfaces[0]);
+  const [carPos, setCarPos] = useState(0); // 0 to 100
+  const [animating, setAnimating] = useState(false);
+  const getText = key => t[key][lang] || t[key]["en"];
+  const handlePush = () => {
+    setAnimating(true);
+    // Simple physics sim: Distance = Force / Friction
+    // Assume Force constant 100.
+    // Distance = 100 * (1 - friction) ... simplified
+
+    let distance = 0;
+    if (surface.id === "ice") distance = 95;
+    if (surface.id === "wood") distance = 60;
+    if (surface.id === "carpet") distance = 30;
+    setCarPos(distance);
+  };
+  const reset = () => {
+    setAnimating(false);
+    setCarPos(0);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-bold mb-8 text-slate-700"
+  }, getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-4xl bg-white p-8 rounded-3xl shadow-xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "relative w-full h-64 bg-sky-200 rounded-xl overflow-hidden mb-8 border-4 border-slate-300"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: `absolute bottom-0 w-full h-24 ${surface.color} transition-colors duration-500`
+  }, surface.id === "wood" && /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/wood-pattern.png')]"
+  }), surface.id === "carpet" && /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/diagmonds-light.png')]"
+  })), /*#__PURE__*/React.createElement(motion.div, {
+    className: "absolute bottom-24 left-10 text-8xl",
+    animate: {
+      x: animating ? `${carPos}%` : "0%"
+    },
+    transition: {
+      type: "spring",
+      stiffness: 50,
+      damping: surface.friction * 40 // Higher friction = faster stop/damping
+    }
+  }, "🏎️")), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4 justify-center"
+  }, surfaces.map(s => /*#__PURE__*/React.createElement("button", {
+    key: s.id,
+    onClick: () => {
+      setSurface(s);
+      reset();
+    },
+    className: `px-6 py-3 rounded-xl font-bold border-4 transition-transform active:scale-95
+                              ${surface.id === s.id ? "border-blue-500 scale-110" : "border-transparent bg-slate-100 text-slate-500"}
+                           `
+  }, getText(s.id)))), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-center gap-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: handlePush,
+    disabled: animating,
+    className: "bg-green-500 text-white px-12 py-4 rounded-full font-black text-2xl shadow-lg hover:bg-green-600 disabled:opacity-50"
+  }, getText("push")), /*#__PURE__*/React.createElement("button", {
+    onClick: reset,
+    className: "bg-slate-500 text-white px-8 py-4 rounded-full font-bold text-xl hover:bg-slate-600"
+  }, getText("reset"))))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

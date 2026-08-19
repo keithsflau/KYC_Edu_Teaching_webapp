@@ -1,0 +1,1541 @@
+﻿<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>虛詞大搜查 - Ancient Chinese Particle Fill-in</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Noto Sans TC', sans-serif;
+        }
+        
+        .drag-item {
+            cursor: grab;
+            transition: all 0.3s ease;
+        }
+        
+        .drag-item:active {
+            cursor: grabbing;
+            transform: scale(0.95);
+        }
+        
+        .drag-item.dragging {
+            opacity: 0.5;
+        }
+        
+        .drop-zone {
+            min-height: 60px;
+            transition: all 0.3s ease;
+            border: 2px dashed #cbd5e1;
+        }
+        
+        .drop-zone.drag-over {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+        
+        .drop-zone.correct {
+            border-color: #10b981;
+            background-color: #d1fae5;
+            animation: correctPulse 0.5s ease;
+        }
+        
+        .drop-zone.wrong {
+            border-color: #ef4444;
+            background-color: #fee2e2;
+            animation: shake 0.5s ease;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        
+        @keyframes correctPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .particle-chip {
+            user-select: none;
+            transition: all 0.2s ease;
+        }
+        
+        .particle-chip:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .particle-chip.used {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <!-- Header -->
+        <div class="text-center mb-8 fade-in">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">虛詞大搜查</h1>
+            <p class="text-lg text-gray-600">Ancient Chinese Particle Fill-in</p>
+        </div>
+
+        <!-- Score and Level Display -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6 fade-in">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-6">
+                    <div>
+                        <div class="text-sm text-gray-500">分數</div>
+                        <div class="text-3xl font-bold text-blue-600" id="score">0</div>
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-500">等級</div>
+                        <div class="text-3xl font-bold text-purple-600" id="level">1</div>
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-500">生命值</div>
+                        <div class="text-3xl font-bold text-red-600" id="lives">3</div>
+                    </div>
+                </div>
+                <div>
+                    <div class="text-sm text-gray-500">題目</div>
+                    <div class="text-xl font-semibold text-gray-700">
+                        <span id="currentQuestion">1</span> / <span id="totalQuestions">10</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Area -->
+        <div class="bg-white rounded-lg shadow-lg p-8 mb-6 fade-in" id="gameArea">
+            <!-- Sentence Display -->
+            <div class="mb-8">
+                <div class="text-center mb-4">
+                    <p class="text-sm text-gray-500 mb-2">請將正確的虛詞拖放到空格中</p>
+                    <div class="text-3xl md:text-4xl font-medium text-gray-800 leading-relaxed" id="sentenceDisplay">
+                        <!-- Sentence will be displayed here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Drop Zone -->
+            <div class="flex justify-center mb-8">
+                <div 
+                    class="drop-zone rounded-lg px-6 py-4 text-4xl font-bold text-center"
+                    id="dropZone"
+                    data-gap-index=""
+                >
+                    <span id="dropZoneText" class="text-gray-400">拖放虛詞到這裡</span>
+                    <span id="droppedParticle" class="hidden"></span>
+                </div>
+            </div>
+
+            <!-- Translation Hint (shown after correct answer) -->
+            <div class="hidden mb-6 p-4 bg-green-50 border border-green-200 rounded-lg" id="translationBox">
+                <div class="text-sm text-green-700 font-semibold mb-1">現代中文翻譯：</div>
+                <div class="text-lg text-green-800" id="translationText"></div>
+            </div>
+
+            <!-- Feedback Message -->
+            <div class="hidden text-center mb-4" id="feedbackMessage">
+                <p class="text-xl font-semibold" id="feedbackText"></p>
+            </div>
+
+            <!-- Particle Options -->
+            <div class="mb-6">
+                <div class="text-sm text-gray-500 mb-3 text-center">選擇虛詞：</div>
+                <div class="flex flex-wrap justify-center gap-3" id="particleOptions">
+                    <!-- Particle chips will be generated here -->
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex justify-center gap-4">
+                <button 
+                    class="hidden bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-8 rounded-lg shadow-md transition-all transform hover:scale-105"
+                    id="nextButton"
+                >
+                    下一題 →
+                </button>
+                <button 
+                    class="hidden bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-all"
+                    id="resetButton"
+                >
+                    重新開始
+                </button>
+            </div>
+        </div>
+
+        <!-- Game Over Modal -->
+        <div class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" id="gameOverModal">
+            <div class="bg-white rounded-lg shadow-xl p-8 max-w-md w-full mx-4">
+                <h2 class="text-3xl font-bold text-center mb-4" id="gameOverTitle">遊戲結束</h2>
+                <div class="text-center mb-6">
+                    <p class="text-xl mb-2">最終分數：<span class="font-bold text-blue-600" id="finalScore">0</span></p>
+                    <p class="text-lg text-gray-600">等級：<span class="font-semibold" id="finalLevel">1</span></p>
+                </div>
+                <button 
+                    class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-all"
+                    id="restartButton"
+                >
+                    再玩一次
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game Data
+                const questions = [
+            {
+                sentence: "水陸草木之花",
+                gapIndex: 4,
+                answer: "之",
+                options: ["乎","者","也","以"],
+                translation: "水陸草木的花"
+            },
+            {
+                sentence: "學而時習之",
+                gapIndex: 4,
+                answer: "之",
+                options: ["乎","者","也","以"],
+                translation: "學習並且時常複習它"
+            },
+            {
+                sentence: "有朋自遠方來，不亦樂乎",
+                gapIndex: 10,
+                answer: "乎",
+                options: ["之","者","也","以"],
+                translation: "有朋友從遠方來，不是很快樂嗎？"
+            },
+            {
+                sentence: "知之者不如好之者",
+                gapIndex: 2,
+                answer: "者",
+                options: ["之","乎","也","以"],
+                translation: "知道它的人不如喜歡它的人"
+            },
+            {
+                sentence: "學而時習之，不亦說乎",
+                gapIndex: 9,
+                answer: "乎",
+                options: ["之","者","也","以"],
+                translation: "學習並且時常複習，不是很愉快嗎？"
+            },
+            {
+                sentence: "三人行，必有我師焉",
+                gapIndex: 8,
+                answer: "焉",
+                options: ["之","乎","者","也"],
+                translation: "三個人一起走，其中一定有我的老師"
+            },
+            {
+                sentence: "溫故而知新，可以為師矣",
+                gapIndex: 10,
+                answer: "矣",
+                options: ["之","乎","者","也"],
+                translation: "溫習舊知識而獲得新知識，可以當老師了"
+            },
+            {
+                sentence: "學而不思則罔，思而不學則殆",
+                gapIndex: 1,
+                answer: "而",
+                options: ["之","乎","者","也"],
+                translation: "學習而不思考就會迷惑，思考而不學習就會危險"
+            },
+            {
+                sentence: "己所不欲，勿施於人",
+                gapIndex: 7,
+                answer: "於",
+                options: ["之","乎","者","也"],
+                translation: "自己不想要的，不要施加給別人"
+            },
+            {
+                sentence: "見賢思齊焉",
+                gapIndex: 4,
+                answer: "焉",
+                options: ["之","乎","者","也"],
+                translation: "見到賢人就想向他看齊"
+            },
+            {
+                sentence: "擇其善者而從之",
+                gapIndex: 1,
+                answer: "其",
+                options: ["之","乎","者","也"],
+                translation: "選擇其中好的來跟從"
+            },
+            {
+                sentence: "敏而好學，不恥下問",
+                gapIndex: 1,
+                answer: "而",
+                options: ["之","乎","者","也"],
+                translation: "聰明而好學，不以向地位低的人請教為恥"
+            },
+            {
+                sentence: "知之為知之，不知為不知",
+                gapIndex: 1,
+                answer: "之",
+                options: ["乎","者","也","以"],
+                translation: "知道就是知道，不知道就是不知道"
+            },
+            {
+                sentence: "學而不厭，誨人不倦",
+                gapIndex: 1,
+                answer: "而",
+                options: ["之","乎","者","也"],
+                translation: "學習不厭煩，教導別人不疲倦"
+            },
+            {
+                sentence: "人而無信，不知其可也",
+                gapIndex: 1,
+                answer: "而",
+                options: ["之","乎","者","也"],
+                translation: "人如果沒有信用，不知道他還能做什麼"
+            },
+            {
+                sentence: "知之者不如好之者，好之者不如樂之者",
+                gapIndex: 2,
+                answer: "者",
+                options: ["之","乎","也","以"],
+                translation: "知道它的人不如喜歡它的人，喜歡它的人不如以它為樂的人"
+            },
+            {
+                sentence: "有則改之，無則加勉",
+                gapIndex: 3,
+                answer: "之",
+                options: ["乎","者","也","以"],
+                translation: "有錯誤就改正它，沒有就加以勉勵"
+            },
+            {
+                sentence: "學而時習之，不亦說乎？有朋自遠方來，不亦樂乎？",
+                gapIndex: 4,
+                answer: "之",
+                options: ["乎","者","也","以"],
+                translation: "學習並且時常複習，不是很愉快嗎？有朋友從遠方來，不是很快樂嗎？"
+            },
+            {
+                sentence: "三人行，必有我師焉。擇其善者而從之，其不善者而改之",
+                gapIndex: 8,
+                answer: "焉",
+                options: ["之","乎","者","也"],
+                translation: "三個人一起走，其中一定有我的老師。選擇其中好的來跟從，不好的就改正"
+            },
+            {
+                sentence: "溫故而知新，可以為師矣",
+                gapIndex: 2,
+                answer: "而",
+                options: ["之","乎","者","也"],
+                translation: "溫習舊知識而獲得新知識，可以當老師了"
+            },
+            {
+                sentence: "人而無信，不知其可也",
+                gapIndex: 9,
+                answer: "也",
+                options: ["之","乎","者","以"],
+                translation: "人如果沒有信用，不知道他還能做什麼"
+            },
+            {
+                sentence: "不患人之不己知，患不知人也",
+                gapIndex: 3,
+                answer: "之",
+                options: ["乎","者","也","以"],
+                translation: "不擔心別人不了解自己，擔心自己不了解別人"
+            },
+            {
+                sentence: "巧言令色，鮮矣仁",
+                gapIndex: 6,
+                answer: "矣",
+                options: ["之","乎","者","也"],
+                translation: "花言巧語，裝出和善的樣子，很少有仁德"
+            },
+            {
+                sentence: "君子食無求飽，居無求安",
+                gapIndex: 3,
+                answer: "無",
+                options: ["之","乎","者","也"],
+                translation: "君子吃飯不求飽足，居住不求安逸"
+            },
+            {
+                sentence: "見義不為，無勇也",
+                gapIndex: 7,
+                answer: "也",
+                options: ["之","乎","者","以"],
+                translation: "見到應該做的事卻不去做，是沒有勇氣"
+            },
+            {
+                sentence: "工欲善其事，必先利其器",
+                gapIndex: 3,
+                answer: "其",
+                options: ["之","乎","者","也"],
+                translation: "工匠想要做好工作，必須先磨利工具"
+            },
+            {
+                sentence: "己欲立而立人，己欲達而達人",
+                gapIndex: 3,
+                answer: "而",
+                options: ["之","乎","者","也"],
+                translation: "自己想要站得住，也要使別人站得住；自己想要通達，也要使別人通達"
+            },
+            {
+                sentence: "不在其位，不謀其政",
+                gapIndex: 2,
+                answer: "其",
+                options: ["之","乎","者","也"],
+                translation: "不在那個職位上，就不謀劃那個職位的事"
+            },
+            {
+                sentence: "後生可畏，焉知來者之不如今也",
+                gapIndex: 5,
+                answer: "焉",
+                options: ["之","乎","者","也"],
+                translation: "年輕人是可敬畏的，怎麼知道後來的人不如現在的人呢"
+            },
+            {
+                sentence: "三軍可奪帥也，匹夫不可奪志也",
+                gapIndex: 5,
+                answer: "也",
+                options: ["之","乎","者","以"],
+                translation: "軍隊可以奪去主帥，但普通人的志向不能改變"
+            },
+            {
+                sentence: "歲寒，然後知松柏之後凋也",
+                gapIndex: 11,
+                answer: "也",
+                options: ["之","乎","者","以"],
+                translation: "天氣寒冷，然後才知道松柏是最後凋零的"
+            },
+            {
+                sentence: "知者不惑，仁者不憂，勇者不懼",
+                gapIndex: 1,
+                answer: "者",
+                options: ["之","乎","也","以"],
+                translation: "聰明的人不迷惑，仁德的人不憂愁，勇敢的人不恐懼"
+            },
+            {
+                sentence: "過而不改，是謂過矣",
+                gapIndex: 8,
+                answer: "矣",
+                options: ["之","乎","者","也"],
+                translation: "有了過錯而不改正，這才是真正的過錯"
+            },
+            {
+                sentence: "知之為知之，不知為不知，是知也",
+                gapIndex: 14,
+                answer: "也",
+                options: ["之","乎","者","以"],
+                translation: "知道就是知道，不知道就是不知道，這才是真正的智慧"
+            },
+            {
+                sentence: "有教無類",
+                gapIndex: 2,
+                answer: "無",
+                options: ["之","乎","者","也"],
+                translation: "教育沒有類別之分"
+            },
+            {
+                sentence: "當仁不讓於師",
+                gapIndex: 4,
+                answer: "於",
+                options: ["之","乎","者","也"],
+                translation: "面對仁德，即使對老師也不謙讓"
+            },
+            {
+                sentence: "志士仁人，無求生以害仁",
+                gapIndex: 8,
+                answer: "以",
+                options: ["之","乎","者","也"],
+                translation: "志士仁人，不會為了求生而損害仁德"
+            },
+            {
+                sentence: "君子喻於義，小人喻於利",
+                gapIndex: 3,
+                answer: "於",
+                options: ["之","乎","者","也"],
+                translation: "君子明白義，小人明白利"
+            },
+            {
+                sentence: "見賢思齊焉，見不賢而內自省也",
+                gapIndex: 4,
+                answer: "焉",
+                options: ["之","乎","者","也"],
+                translation: "見到賢人就想向他看齊，見到不賢的人就反省自己"
+            },
+            {
+                sentence: "今之孝者，是謂能養",
+                gapIndex: 1,
+                answer: "之",
+                options: ["乎","者","也","以"],
+                translation: "現在的孝順，只是說能供養父母"
+            },
+            {
+                sentence: "色難。有事，弟子服其勞",
+                gapIndex: 9,
+                answer: "其",
+                options: ["之","乎","者","也"],
+                translation: "最難的是和顏悅色。有事時，年輕人為長輩效勞"
+            },
+            {
+                sentence: "視其所以，觀其所由，察其所安",
+                gapIndex: 1,
+                answer: "其",
+                options: ["之","乎","者","也"],
+                translation: "看他做什麼，觀察他為什麼做，考察他安於什麼"
+            },
+            {
+                sentence: "溫故而知新，可以為師矣",
+                gapIndex: 2,
+                answer: "而",
+                options: ["之","乎","者","也"],
+                translation: "溫習舊知識而獲得新知識，可以當老師了"
+            },
+            {
+                sentence: "學而不厭，誨人不倦，何有於我哉",
+                gapIndex: 14,
+                answer: "哉",
+                options: ["之","乎","者","也"],
+                translation: "學習不厭煩，教導別人不疲倦，這些對我來說有什麼困難呢"
+            },
+            {
+                sentence: "發憤忘食，樂以忘憂",
+                gapIndex: 6,
+                answer: "以",
+                options: ["之","乎","者","也"],
+                translation: "發憤學習忘記吃飯，快樂得忘記憂愁"
+            },
+            {
+                sentence: "我非生而知之者，好古，敏以求之者也",
+                gapIndex: 3,
+                answer: "而",
+                options: ["之","乎","者","也"],
+                translation: "我不是生來就知道的，愛好古代文化，勤奮敏捷地去求得知識"
+            },
+            {
+                sentence: "三人行，必有我師焉",
+                gapIndex: 8,
+                answer: "焉",
+                options: ["之","乎","者","也"],
+                translation: "三個人一起走，其中一定有我的老師"
+            },
+            {
+                sentence: "擇其善者而從之，其不善者而改之",
+                gapIndex: 1,
+                answer: "其",
+                options: ["之","乎","者","也"],
+                translation: "選擇其中好的來跟從，不好的就改正"
+            },
+            {
+                sentence: "天生德於予，桓魋其如予何",
+                gapIndex: 3,
+                answer: "於",
+                options: ["之","乎","者","也"],
+                translation: "上天把德賦予我，桓魋能把我怎麼樣"
+            },
+            {
+                sentence: "二三子以我為隱乎？吾無隱乎爾",
+                gapIndex: 3,
+                answer: "以",
+                options: ["之","乎","者","也"],
+                translation: "你們以為我有所隱瞞嗎？我對你們沒有隱瞞"
+            },
+            {
+                sentence: "子以四教：文、行、忠、信",
+                gapIndex: 1,
+                answer: "以",
+                options: ["之","乎","者","也"],
+                translation: "孔子用四種內容教育學生：文獻、實踐、忠誠、信用"
+            },
+            {
+                sentence: "聖人，吾不得而見之矣",
+                gapIndex: 8,
+                answer: "之",
+                options: ["乎","者","也","以"],
+                translation: "聖人，我見不到了"
+            },
+            {
+                sentence: "善人，吾不得而見之矣",
+                gapIndex: 8,
+                answer: "之",
+                options: ["乎","者","也","以"],
+                translation: "善人，我見不到了"
+            },
+            {
+                sentence: "蓋有不知而作之者，我無是也",
+                gapIndex: 4,
+                answer: "而",
+                options: ["之","乎","者","也"],
+                translation: "大概有不知道卻憑空創作的人，我不是這樣的人"
+            },
+            {
+                sentence: "多聞，擇其善者而從之",
+                gapIndex: 4,
+                answer: "其",
+                options: ["之","乎","者","也"],
+                translation: "多聽，選擇其中好的來跟從"
+            },
+            {
+                sentence: "多見而識之，知之次也",
+                gapIndex: 2,
+                answer: "而",
+                options: ["之","乎","者","也"],
+                translation: "多看而記住，這是次一等的知識"
+            },
+            {
+                sentence: "仁遠乎哉？我欲仁，斯仁至矣",
+                gapIndex: 2,
+                answer: "乎",
+                options: ["之","者","也","以"],
+                translation: "仁離我們很遠嗎？我想要仁，仁就來了"
+            },
+            {
+                sentence: "子溫而厲，威而不猛，恭而安",
+                gapIndex: 2,
+                answer: "而",
+                options: ["之","乎","者","也"],
+                translation: "孔子溫和而嚴厲，威嚴而不兇猛，恭敬而安詳"
+            },
+            {
+                sentence: "泰伯，其可謂至德也已矣",
+                gapIndex: 8,
+                answer: "也",
+                options: ["之","乎","者","以"],
+                translation: "泰伯，可以說是品德最高尚的人了"
+            },
+            {
+                sentence: "恭而無禮則勞，慎而無禮則葸",
+                gapIndex: 1,
+                answer: "而",
+                options: ["之","乎","者","也"],
+                translation: "恭敬而沒有禮節就會勞累，謹慎而沒有禮節就會畏縮"
+            },
+            {
+                sentence: "勇而無禮則亂，直而無禮則絞",
+                gapIndex: 1,
+                answer: "而",
+                options: ["之","乎","者","也"],
+                translation: "勇敢而沒有禮節就會作亂，直率而沒有禮節就會尖刻"
+            },
+            {
+                sentence: "興於詩，立於禮，成於樂",
+                gapIndex: 1,
+                answer: "於",
+                options: ["之","乎","者","也"],
+                translation: "興起於詩，立身於禮，完成於樂"
+            },
+            {
+                sentence: "民可使由之，不可使知之",
+                gapIndex: 4,
+                answer: "之",
+                options: ["乎","者","也","以"],
+                translation: "可以讓百姓按照指示去做，不必讓他們知道為什麼"
+            },
+            {
+                sentence: "好勇疾貧，亂也",
+                gapIndex: 6,
+                answer: "也",
+                options: ["之","乎","者","以"],
+                translation: "喜好勇敢而厭惡貧窮，會作亂"
+            },
+            {
+                sentence: "人而不仁，如禮何",
+                gapIndex: 1,
+                answer: "而",
+                options: ["之","乎","者","也"],
+                translation: "人如果不仁，禮又有什麼用"
+            },
+            {
+                sentence: "人而不仁，如樂何",
+                gapIndex: 1,
+                answer: "而",
+                options: ["之","乎","者","也"],
+                translation: "人如果不仁，樂又有什麼用"
+            },
+            {
+                sentence: "朝聞道，夕死可矣",
+                gapIndex: 7,
+                answer: "矣",
+                options: ["之","乎","者","也"],
+                translation: "早上聽到道，晚上死去也可以"
+            },
+            {
+                sentence: "士志於道，而恥惡衣惡食者",
+                gapIndex: 2,
+                answer: "於",
+                options: ["之","乎","者","也"],
+                translation: "士人立志於道，卻以穿破衣吃粗食為恥"
+            },
+            {
+                sentence: "不以其道得之，不處也",
+                gapIndex: 1,
+                answer: "以",
+                options: ["之","乎","者","也"],
+                translation: "不用正當的方法得到它，不接受"
+            },
+            {
+                sentence: "富與貴，是人之所欲也",
+                gapIndex: 6,
+                answer: "之",
+                options: ["乎","者","也","以"],
+                translation: "富貴，這是人們想要的"
+            },
+            {
+                sentence: "不以其道得之，不處也",
+                gapIndex: 5,
+                answer: "之",
+                options: ["乎","者","也","以"],
+                translation: "不用正當的方法得到它，不接受"
+            },
+            {
+                sentence: "貧與賤，是人之所惡也",
+                gapIndex: 6,
+                answer: "之",
+                options: ["乎","者","也","以"],
+                translation: "貧賤，這是人們厭惡的"
+            },
+            {
+                sentence: "不以其道得之，不去也",
+                gapIndex: 1,
+                answer: "以",
+                options: ["之","乎","者","也"],
+                translation: "不用正當的方法擺脫它，不離開"
+            },
+            {
+                sentence: "君子去仁，惡乎成名",
+                gapIndex: 6,
+                answer: "乎",
+                options: ["之","者","也","以"],
+                translation: "君子離開仁，怎麼能成就名聲"
+            },
+            {
+                sentence: "君子無終食之間違仁",
+                gapIndex: 2,
+                answer: "無",
+                options: ["之","乎","者","也"],
+                translation: "君子沒有一頓飯的時間違背仁"
+            },
+            {
+                sentence: "造次必於是，顛沛必於是",
+                gapIndex: 3,
+                answer: "於",
+                options: ["之","乎","者","也"],
+                translation: "匆忙時一定這樣，困頓時一定這樣"
+            },
+            {
+                sentence: "我未見好仁者，惡不仁者",
+                gapIndex: 5,
+                answer: "者",
+                options: ["之","乎","也","以"],
+                translation: "我沒有見過愛好仁德的人，厭惡不仁的人"
+            },
+            {
+                sentence: "好仁者，無以尚之",
+                gapIndex: 2,
+                answer: "者",
+                options: ["之","乎","也","以"],
+                translation: "愛好仁德的人，沒有什麼可以超過他"
+            },
+            {
+                sentence: "惡不仁者，其為仁矣",
+                gapIndex: 5,
+                answer: "其",
+                options: ["之","乎","者","也"],
+                translation: "厭惡不仁的人，他實行仁德"
+            },
+            {
+                sentence: "不使不仁者加乎其身",
+                gapIndex: 6,
+                answer: "乎",
+                options: ["之","者","也","以"],
+                translation: "不讓不仁的人影響到自己"
+            },
+            {
+                sentence: "有能一日用其力於仁矣乎",
+                gapIndex: 5,
+                answer: "其",
+                options: ["之","乎","者","也"],
+                translation: "有能夠一天用他的力量在仁上的人嗎"
+            },
+            {
+                sentence: "我未見力不足者",
+                gapIndex: 6,
+                answer: "者",
+                options: ["之","乎","也","以"],
+                translation: "我沒有見過力量不足的人"
+            },
+            {
+                sentence: "蓋有之矣，我未之見也",
+                gapIndex: 2,
+                answer: "之",
+                options: ["乎","者","也","以"],
+                translation: "大概有這樣的人，我沒有見過"
+            },
+            {
+                sentence: "人之過也，各於其黨",
+                gapIndex: 1,
+                answer: "之",
+                options: ["乎","者","也","以"],
+                translation: "人的過錯，各自屬於不同的類型"
+            },
+            {
+                sentence: "觀過，斯知仁矣",
+                gapIndex: 6,
+                answer: "矣",
+                options: ["之","乎","者","也"],
+                translation: "觀察過錯，就知道仁了"
+            },
+            {
+                sentence: "士志於道，而恥惡衣惡食者",
+                gapIndex: 2,
+                answer: "於",
+                options: ["之","乎","者","也"],
+                translation: "士人立志於道，卻以穿破衣吃粗食為恥"
+            },
+            {
+                sentence: "未足與議也",
+                gapIndex: 4,
+                answer: "也",
+                options: ["之","乎","者","以"],
+                translation: "不值得和他談論"
+            },
+            {
+                sentence: "君子之於天下也，無適也，無莫也",
+                gapIndex: 2,
+                answer: "之",
+                options: ["乎","者","也","以"],
+                translation: "君子對於天下的事，沒有一定要做的，沒有一定不要做的"
+            },
+            {
+                sentence: "義之與比",
+                gapIndex: 1,
+                answer: "之",
+                options: ["乎","者","也","以"],
+                translation: "只與義相比較"
+            },
+            {
+                sentence: "放於利而行，多怨",
+                gapIndex: 1,
+                answer: "於",
+                options: ["之","乎","者","也"],
+                translation: "依據利益而行，會有很多怨恨"
+            },
+            {
+                sentence: "能以禮讓為國乎",
+                gapIndex: 1,
+                answer: "以",
+                options: ["之","乎","者","也"],
+                translation: "能夠用禮讓來治理國家嗎"
+            },
+            {
+                sentence: "何有？不能以禮讓為國",
+                gapIndex: 5,
+                answer: "以",
+                options: ["之","乎","者","也"],
+                translation: "有什麼困難？不能用禮讓來治理國家"
+            },
+            {
+                sentence: "不患無位，患所以立",
+                gapIndex: 7,
+                answer: "以",
+                options: ["之","乎","者","也"],
+                translation: "不擔心沒有職位，擔心沒有立身的本領"
+            },
+            {
+                sentence: "不患莫己知，求為可知也",
+                gapIndex: 10,
+                answer: "也",
+                options: ["之","乎","者","以"],
+                translation: "不擔心沒有人了解自己，追求可以讓人了解的本領"
+            },
+            {
+                sentence: "參乎！吾道一以貫之",
+                gapIndex: 1,
+                answer: "乎",
+                options: ["之","者","也","以"],
+                translation: "參啊！我的道用一個東西貫穿它"
+            },
+            {
+                sentence: "夫子之道，忠恕而已矣",
+                gapIndex: 9,
+                answer: "矣",
+                options: ["之","乎","者","也"],
+                translation: "老師的道，就是忠恕罷了"
+            },
+            {
+                sentence: "君子喻於義，小人喻於利",
+                gapIndex: 3,
+                answer: "於",
+                options: ["之","乎","者","也"],
+                translation: "君子明白義，小人明白利"
+            },
+            {
+                sentence: "見賢思齊焉，見不賢而內自省也",
+                gapIndex: 13,
+                answer: "也",
+                options: ["之","乎","者","以"],
+                translation: "見到賢人就想向他看齊，見到不賢的人就反省自己"
+            },
+            {
+                sentence: "事父母幾諫，見志不從，又敬不違",
+                gapIndex: 8,
+                answer: "不",
+                options: ["之","乎","者","也"],
+                translation: "侍奉父母要委婉勸諫，看到自己的意見不被聽從，仍然恭敬不違背"
+            },
+            {
+                sentence: "勞而不怨",
+                gapIndex: 1,
+                answer: "而",
+                options: ["之","乎","者","也"],
+                translation: "勞累而不怨恨"
+            },
+            {
+                sentence: "父母之年，不可不知也",
+                gapIndex: 9,
+                answer: "也",
+                options: ["之","乎","者","以"],
+                translation: "父母的年齡，不可以不知道"
+            },
+            {
+                sentence: "一則以喜，一則以懼",
+                gapIndex: 2,
+                answer: "以",
+                options: ["之","乎","者","也"],
+                translation: "一方面因為他們長壽而高興，一方面因為他們衰老而恐懼"
+            },
+            {
+                sentence: "古者言之不出，恥躬之不逮也",
+                gapIndex: 3,
+                answer: "之",
+                options: ["乎","者","也","以"],
+                translation: "古代的人話不輕易說出口，因為以自己做不到為恥"
+            },
+            {
+                sentence: "以約失之者鮮矣",
+                gapIndex: 0,
+                answer: "以",
+                options: ["之","乎","者","也"],
+                translation: "因為約束自己而犯錯的人很少"
+            },
+            {
+                sentence: "君子欲訥於言而敏於行",
+                gapIndex: 4,
+                answer: "於",
+                options: ["之","乎","者","也"],
+                translation: "君子想要在言語上遲鈍而在行動上敏捷"
+            },
+            {
+                sentence: "事君數，斯辱矣",
+                gapIndex: 6,
+                answer: "矣",
+                options: ["之","乎","者","也"],
+                translation: "侍奉君主過於頻繁，就會招致侮辱"
+            },
+            {
+                sentence: "朋友數，斯疏矣",
+                gapIndex: 6,
+                answer: "矣",
+                options: ["之","乎","者","也"],
+                translation: "和朋友交往過於頻繁，就會疏遠"
+            },
+            {
+                sentence: "擇不處仁，焉得知",
+                gapIndex: 5,
+                answer: "焉",
+                options: ["之","乎","者","也"],
+                translation: "選擇不住在有仁德的地方，怎麼能算聰明"
+            },
+            {
+                sentence: "不仁者不可以久處約",
+                gapIndex: 2,
+                answer: "者",
+                options: ["之","乎","也","以"],
+                translation: "不仁的人不可以長久處於貧困中"
+            },
+            {
+                sentence: "不可以長處樂",
+                gapIndex: 2,
+                answer: "以",
+                options: ["之","乎","者","也"],
+                translation: "不可以長久處於安樂中"
+            },
+            {
+                sentence: "仁者安仁，知者利仁",
+                gapIndex: 1,
+                answer: "者",
+                options: ["之","乎","也","以"],
+                translation: "仁者安於仁，智者利用仁"
+            },
+            {
+                sentence: "唯仁者能好人，能惡人",
+                gapIndex: 2,
+                answer: "者",
+                options: ["之","乎","也","以"],
+                translation: "只有仁者能夠愛人，能夠恨人"
+            },
+            {
+                sentence: "苟志於仁矣，無惡也",
+                gapIndex: 2,
+                answer: "於",
+                options: ["之","乎","者","也"],
+                translation: "如果立志於仁，就不會做壞事"
+            },
+            {
+                sentence: "富與貴，是人之所欲也",
+                gapIndex: 6,
+                answer: "之",
+                options: ["乎","者","也","以"],
+                translation: "富貴，這是人們想要的"
+            },
+            {
+                sentence: "不以其道得之，不處也",
+                gapIndex: 1,
+                answer: "以",
+                options: ["之","乎","者","也"],
+                translation: "不用正當的方法得到它，不接受"
+            },
+            {
+                sentence: "貧與賤，是人之所惡也",
+                gapIndex: 6,
+                answer: "之",
+                options: ["乎","者","也","以"],
+                translation: "貧賤，這是人們厭惡的"
+            },
+            {
+                sentence: "不以其道得之，不去也",
+                gapIndex: 1,
+                answer: "以",
+                options: ["之","乎","者","也"],
+                translation: "不用正當的方法擺脫它，不離開"
+            },
+            {
+                sentence: "君子去仁，惡乎成名",
+                gapIndex: 6,
+                answer: "乎",
+                options: ["之","者","也","以"],
+                translation: "君子離開仁，怎麼能成就名聲"
+            },
+            {
+                sentence: "君子無終食之間違仁",
+                gapIndex: 2,
+                answer: "無",
+                options: ["之","乎","者","也"],
+                translation: "君子沒有一頓飯的時間違背仁"
+            },
+            {
+                sentence: "造次必於是，顛沛必於是",
+                gapIndex: 3,
+                answer: "於",
+                options: ["之","乎","者","也"],
+                translation: "匆忙時一定這樣，困頓時一定這樣"
+            },
+            {
+                sentence: "我未見好仁者，惡不仁者",
+                gapIndex: 5,
+                answer: "者",
+                options: ["之","乎","也","以"],
+                translation: "我沒有見過愛好仁德的人，厭惡不仁的人"
+            },
+            {
+                sentence: "好仁者，無以尚之",
+                gapIndex: 2,
+                answer: "者",
+                options: ["之","乎","也","以"],
+                translation: "愛好仁德的人，沒有什麼可以超過他"
+            },
+            {
+                sentence: "惡不仁者，其為仁矣",
+                gapIndex: 5,
+                answer: "其",
+                options: ["之","乎","者","也"],
+                translation: "厭惡不仁的人，他實行仁德"
+            },
+            {
+                sentence: "不使不仁者加乎其身",
+                gapIndex: 6,
+                answer: "乎",
+                options: ["之","者","也","以"],
+                translation: "不讓不仁的人影響到自己"
+            },
+            {
+                sentence: "有能一日用其力於仁矣乎",
+                gapIndex: 5,
+                answer: "其",
+                options: ["之","乎","者","也"],
+                translation: "有能夠一天用他的力量在仁上的人嗎"
+            },
+            {
+                sentence: "我未見力不足者",
+                gapIndex: 6,
+                answer: "者",
+                options: ["之","乎","也","以"],
+                translation: "我沒有見過力量不足的人"
+            },
+            {
+                sentence: "蓋有之矣，我未之見也",
+                gapIndex: 2,
+                answer: "之",
+                options: ["乎","者","也","以"],
+                translation: "大概有這樣的人，我沒有見過"
+            },
+            {
+                sentence: "人之過也，各於其黨",
+                gapIndex: 1,
+                answer: "之",
+                options: ["乎","者","也","以"],
+                translation: "人的過錯，各自屬於不同的類型"
+            },
+            {
+                sentence: "觀過，斯知仁矣",
+                gapIndex: 6,
+                answer: "矣",
+                options: ["之","乎","者","也"],
+                translation: "觀察過錯，就知道仁了"
+            },
+            {
+                sentence: "士志於道，而恥惡衣惡食者",
+                gapIndex: 2,
+                answer: "於",
+                options: ["之","乎","者","也"],
+                translation: "士人立志於道，卻以穿破衣吃粗食為恥"
+            },
+            {
+                sentence: "未足與議也",
+                gapIndex: 4,
+                answer: "也",
+                options: ["之","乎","者","以"],
+                translation: "不值得和他談論"
+            },
+            {
+                sentence: "君子之於天下也，無適也，無莫也",
+                gapIndex: 2,
+                answer: "之",
+                options: ["乎","者","也","以"],
+                translation: "君子對於天下的事，沒有一定要做的，沒有一定不要做的"
+            },
+            {
+                sentence: "義之與比",
+                gapIndex: 1,
+                answer: "之",
+                options: ["乎","者","也","以"],
+                translation: "只與義相比較"
+            },
+            {
+                sentence: "放於利而行，多怨",
+                gapIndex: 1,
+                answer: "於",
+                options: ["之","乎","者","也"],
+                translation: "依據利益而行，會有很多怨恨"
+            },
+            {
+                sentence: "能以禮讓為國乎",
+                gapIndex: 1,
+                answer: "以",
+                options: ["之","乎","者","也"],
+                translation: "能夠用禮讓來治理國家嗎"
+            },
+            {
+                sentence: "何有？不能以禮讓為國",
+                gapIndex: 5,
+                answer: "以",
+                options: ["之","乎","者","也"],
+                translation: "有什麼困難？不能用禮讓來治理國家"
+            },
+            {
+                sentence: "不患無位，患所以立",
+                gapIndex: 7,
+                answer: "以",
+                options: ["之","乎","者","也"],
+                translation: "不擔心沒有職位，擔心沒有立身的本領"
+            },
+            {
+                sentence: "不患莫己知，求為可知也",
+                gapIndex: 10,
+                answer: "也",
+                options: ["之","乎","者","以"],
+                translation: "不擔心沒有人了解自己，追求可以讓人了解的本領"
+            },
+            {
+                sentence: "參乎！吾道一以貫之",
+                gapIndex: 1,
+                answer: "乎",
+                options: ["之","者","也","以"],
+                translation: "參啊！我的道用一個東西貫穿它"
+            },
+            {
+                sentence: "夫子之道，忠恕而已矣",
+                gapIndex: 9,
+                answer: "矣",
+                options: ["之","乎","者","也"],
+                translation: "老師的道，就是忠恕罷了"
+            },
+            {
+                sentence: "事父母幾諫，見志不從，又敬不違",
+                gapIndex: 8,
+                answer: "不",
+                options: ["之","乎","者","也"],
+                translation: "侍奉父母要委婉勸諫，看到自己的意見不被聽從，仍然恭敬不違背"
+            },
+            {
+                sentence: "勞而不怨",
+                gapIndex: 1,
+                answer: "而",
+                options: ["之","乎","者","也"],
+                translation: "勞累而不怨恨"
+            },
+            {
+                sentence: "父母之年，不可不知也",
+                gapIndex: 9,
+                answer: "也",
+                options: ["之","乎","者","以"],
+                translation: "父母的年齡，不可以不知道"
+            },
+            {
+                sentence: "一則以喜，一則以懼",
+                gapIndex: 2,
+                answer: "以",
+                options: ["之","乎","者","也"],
+                translation: "一方面因為他們長壽而高興，一方面因為他們衰老而恐懼"
+            },
+            {
+                sentence: "古者言之不出，恥躬之不逮也",
+                gapIndex: 3,
+                answer: "之",
+                options: ["乎","者","也","以"],
+                translation: "古代的人話不輕易說出口，因為以自己做不到為恥"
+            },
+            {
+                sentence: "以約失之者鮮矣",
+                gapIndex: 0,
+                answer: "以",
+                options: ["之","乎","者","也"],
+                translation: "因為約束自己而犯錯的人很少"
+            },
+            {
+                sentence: "君子欲訥於言而敏於行",
+                gapIndex: 4,
+                answer: "於",
+                options: ["之","乎","者","也"],
+                translation: "君子想要在言語上遲鈍而在行動上敏捷"
+            },
+            {
+                sentence: "事君數，斯辱矣",
+                gapIndex: 6,
+                answer: "矣",
+                options: ["之","乎","者","也"],
+                translation: "侍奉君主過於頻繁，就會招致侮辱"
+            }
+        ];
+
+        // Game State
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let level = 1;
+        let lives = 3;
+        let currentQuestion = null;
+        let answered = false;
+        let shuffledQuestions = [];
+
+        // DOM Elements
+        const scoreEl = document.getElementById('score');
+        const levelEl = document.getElementById('level');
+        const livesEl = document.getElementById('lives');
+        const currentQuestionEl = document.getElementById('currentQuestion');
+        const totalQuestionsEl = document.getElementById('totalQuestions');
+        const sentenceDisplayEl = document.getElementById('sentenceDisplay');
+        const dropZoneEl = document.getElementById('dropZone');
+        const dropZoneTextEl = document.getElementById('dropZoneText');
+        const droppedParticleEl = document.getElementById('droppedParticle');
+        const particleOptionsEl = document.getElementById('particleOptions');
+        const translationBoxEl = document.getElementById('translationBox');
+        const translationTextEl = document.getElementById('translationText');
+        const feedbackMessageEl = document.getElementById('feedbackMessage');
+        const feedbackTextEl = document.getElementById('feedbackText');
+        const nextButtonEl = document.getElementById('nextButton');
+        const resetButtonEl = document.getElementById('resetButton');
+        const gameOverModalEl = document.getElementById('gameOverModal');
+        const finalScoreEl = document.getElementById('finalScore');
+        const finalLevelEl = document.getElementById('finalLevel');
+        const restartButtonEl = document.getElementById('restartButton');
+
+        // Validate all questions
+        function validateQuestions() {
+            const errors = [];
+            questions.forEach((q, index) => {
+                const sentence = q.sentence;
+                const gapIndex = q.gapIndex;
+                const answer = q.answer;
+                if (gapIndex < 0 || gapIndex >= sentence.length) {
+                    errors.push(`Question ${index + 1}: gapIndex ${gapIndex} out of range for sentence "${sentence}"`);
+                } else if (sentence[gapIndex] !== answer) {
+                    errors.push(`Question ${index + 1}: gapIndex ${gapIndex} points to "${sentence[gapIndex]}" but answer is "${answer}" in sentence "${sentence}"`);
+                }
+            });
+            if (errors.length > 0) {
+                console.error('Question validation errors:', errors);
+            } else {
+                console.log('All questions validated successfully!');
+            }
+            return errors.length === 0;
+        }
+
+        // Initialize Game
+        function initGame() {
+            // Validate questions on first load
+            if (!window.questionsValidated) {
+                validateQuestions();
+                window.questionsValidated = true;
+            }
+            
+            // Randomly select 10 questions from the pool
+            const shuffled = [...questions].sort(() => Math.random() - 0.5);
+            shuffledQuestions = shuffled.slice(0, 10);
+            currentQuestionIndex = 0;
+            score = 0;
+            level = 1;
+            lives = 3;
+            answered = false;
+            updateDisplay();
+            loadQuestion();
+        }
+
+        // Load Question
+        function loadQuestion() {
+            if (currentQuestionIndex >= shuffledQuestions.length) {
+                endGame(true);
+                return;
+            }
+
+            currentQuestion = shuffledQuestions[currentQuestionIndex];
+            answered = false;
+
+            // Reset UI
+            dropZoneEl.classList.remove('correct', 'wrong', 'drag-over');
+            dropZoneTextEl.classList.remove('hidden');
+            droppedParticleEl.classList.add('hidden');
+            translationBoxEl.classList.add('hidden');
+            feedbackMessageEl.classList.add('hidden');
+            nextButtonEl.classList.add('hidden');
+            resetButtonEl.classList.add('hidden');
+
+            // Display sentence with gap
+            const sentence = currentQuestion.sentence;
+            const gapIndex = currentQuestion.gapIndex;
+            const beforeGap = sentence.substring(0, gapIndex);
+            const afterGap = sentence.substring(gapIndex + 1);
+
+            sentenceDisplayEl.innerHTML = `
+                ${beforeGap}<span class="text-blue-500 font-bold">[&nbsp;&nbsp;&nbsp;]</span>${afterGap}
+            `;
+
+            // Create particle options
+            const allOptions = [currentQuestion.answer, ...currentQuestion.options];
+            const shuffledOptions = [...allOptions].sort(() => Math.random() - 0.5);
+
+            particleOptionsEl.innerHTML = '';
+            shuffledOptions.forEach((particle, index) => {
+                const chip = document.createElement('div');
+                chip.className = 'particle-chip bg-blue-500 hover:bg-blue-600 text-white font-bold text-2xl py-3 px-6 rounded-lg shadow-md cursor-grab';
+                chip.textContent = particle;
+                chip.draggable = true;
+                chip.dataset.particle = particle;
+                chip.dataset.index = index;
+
+                chip.addEventListener('dragstart', handleDragStart);
+                chip.addEventListener('dragend', handleDragEnd);
+
+                particleOptionsEl.appendChild(chip);
+            });
+
+            // Set drop zone gap index
+            dropZoneEl.dataset.gapIndex = gapIndex;
+        }
+
+        // Drag and Drop Handlers
+        let draggedElement = null;
+
+        function handleDragStart(e) {
+            if (answered) return;
+            draggedElement = e.target;
+            e.target.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', e.target.dataset.particle);
+        }
+
+        function handleDragEnd(e) {
+            e.target.classList.remove('dragging');
+        }
+
+        // Drop Zone Event Listeners
+        dropZoneEl.addEventListener('dragover', (e) => {
+            if (answered) return;
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            dropZoneEl.classList.add('drag-over');
+        });
+
+        dropZoneEl.addEventListener('dragleave', () => {
+            dropZoneEl.classList.remove('drag-over');
+        });
+
+        dropZoneEl.addEventListener('drop', (e) => {
+            if (answered) return;
+            e.preventDefault();
+            dropZoneEl.classList.remove('drag-over');
+
+            const droppedParticle = e.dataTransfer.getData('text/plain');
+            checkAnswer(droppedParticle);
+        });
+
+        // Check Answer
+        function checkAnswer(particle) {
+            answered = true;
+
+            // Disable all particle chips
+            document.querySelectorAll('.particle-chip').forEach(chip => {
+                chip.classList.add('used');
+                chip.draggable = false;
+            });
+
+            // Show dropped particle in drop zone
+            dropZoneTextEl.classList.add('hidden');
+            droppedParticleEl.classList.remove('hidden');
+            droppedParticleEl.textContent = particle;
+
+            if (particle === currentQuestion.answer) {
+                // Correct answer
+                dropZoneEl.classList.add('correct');
+                dropZoneEl.classList.remove('wrong');
+                score += 10;
+                feedbackTextEl.textContent = '✓ 正確！';
+                feedbackTextEl.className = 'text-xl font-semibold text-green-600';
+                feedbackMessageEl.classList.remove('hidden');
+
+                // Show translation
+                translationTextEl.textContent = currentQuestion.translation;
+                translationBoxEl.classList.remove('hidden');
+
+                // Play success sound (placeholder - can be replaced with actual audio)
+                // const audio = new Audio('success.mp3');
+                // audio.play().catch(() => {});
+
+                // Update level based on score
+                const newLevel = Math.floor(score / 50) + 1;
+                if (newLevel > level) {
+                    level = newLevel;
+                }
+
+                updateDisplay();
+                nextButtonEl.classList.remove('hidden');
+            } else {
+                // Wrong answer
+                dropZoneEl.classList.add('wrong');
+                dropZoneEl.classList.remove('correct');
+                lives--;
+                feedbackTextEl.textContent = `✗ 錯誤！正確答案是「${currentQuestion.answer}」`;
+                feedbackTextEl.className = 'text-xl font-semibold text-red-600';
+                feedbackMessageEl.classList.remove('hidden');
+
+                // Show correct answer
+                setTimeout(() => {
+                    droppedParticleEl.textContent = currentQuestion.answer;
+                    dropZoneEl.classList.remove('wrong');
+                    dropZoneEl.classList.add('correct');
+                    translationTextEl.textContent = currentQuestion.translation;
+                    translationBoxEl.classList.remove('hidden');
+                }, 1000);
+
+                updateDisplay();
+
+                if (lives <= 0) {
+                    setTimeout(() => {
+                        endGame(false);
+                    }, 2000);
+                } else {
+                    setTimeout(() => {
+                        nextButtonEl.classList.remove('hidden');
+                    }, 2000);
+                }
+            }
+        }
+
+        // Update Display
+        function updateDisplay() {
+            scoreEl.textContent = score;
+            levelEl.textContent = level;
+            livesEl.textContent = lives;
+            currentQuestionEl.textContent = currentQuestionIndex + 1;
+            totalQuestionsEl.textContent = shuffledQuestions.length;
+        }
+
+        // Next Question
+        function nextQuestion() {
+            currentQuestionIndex++;
+            loadQuestion();
+        }
+
+        // End Game
+        function endGame(completed) {
+            finalScoreEl.textContent = score;
+            finalLevelEl.textContent = level;
+            const titleEl = document.getElementById('gameOverTitle');
+            if (completed) {
+                titleEl.textContent = '恭喜完成！';
+                titleEl.className = 'text-3xl font-bold text-center mb-4 text-green-600';
+            } else {
+                titleEl.textContent = '遊戲結束';
+                titleEl.className = 'text-3xl font-bold text-center mb-4 text-red-600';
+            }
+            gameOverModalEl.classList.remove('hidden');
+        }
+
+        // Button Event Listeners
+        nextButtonEl.addEventListener('click', nextQuestion);
+        resetButtonEl.addEventListener('click', () => {
+            initGame();
+        });
+        restartButtonEl.addEventListener('click', () => {
+            gameOverModalEl.classList.add('hidden');
+            initGame();
+        });
+
+        // Click to drop (alternative to drag-and-drop)
+        particleOptionsEl.addEventListener('click', (e) => {
+            if (answered) return;
+            const chip = e.target.closest('.particle-chip');
+            if (chip && !chip.classList.contains('used')) {
+                const particle = chip.dataset.particle;
+                checkAnswer(particle);
+            }
+        });
+
+        // Initialize on load
+        initGame();
+    </script>
+    <footer style="text-align: center; padding: 16px; color: #64748b; font-size: 12px; font-family: 'Noto Sans TC', sans-serif; background: rgba(255,255,255,0.9); margin-top: 20px;">
+      <p style="font-style: italic; margin-bottom: 4px;">
+        But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his understanding. Jeremiah 10:12
+      </p>
+      <p style="font-size: 11px; margin-bottom: 4px; margin-top: 8px;">
+        「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+      </p>
+      <p style="font-size: 11px; margin-top: 8px; padding-top: 8px; border-top: 1px solid #cbd5e1;">
+        @ 2025 Primary Chinese Learning Resources | Prepared by SF Lau
+      </p>
+    </footer>
+
+</body>
+</html>
+

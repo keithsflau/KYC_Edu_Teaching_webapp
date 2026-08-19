@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小五數學：百分數應用 | Percentage Problems</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(20, 83, 45, 0.2); /* Green 900 */
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(74, 222, 128, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Percentage Problems",
+    zh: "百分數應用",
+    ja: "百分率の文章題",
+    ko: "백분율 문장제",
+    es: "Problemas de Porcentaje",
+    de: "Prozentaufgaben",
+    fi: "Prosenttiongelmat",
+    fr: "Problèmes de pourcentage",
+    ar: "مسائل النسبة المئوية",
+    it: "Problemi con le percentuali"
+  },
+  problemText: {
+    en: "{name} has {total}. He spent {percent} on books.",
+    zh: "{name} 有 {total}。他用了 {percent} 買書。",
+    ja: "{name}は {total} 持っています。彼は本に {percent} 使いました。",
+    ko: "{name}은 {total}을 가지고 있습니다. 그는 책에 {percent}를 썼습니다.",
+    es: "{name} tiene {total}. Gastó el {percent} en libros.",
+    de: "{name} hat {total}. Er gab {percent} für Bücher aus.",
+    fi: "{name}lla on {total}. Hän käytti {percent} kirjoihin.",
+    fr: "{name} a {total}. Il a dépensé {percent} pour des livres.",
+    ar: "لدى {name} {total}. أنفق {percent} على الكتب.",
+    it: "{name} ha {total}. Ha speso il {percent} in libri."
+  },
+  question: {
+    en: "How much did he spend?",
+    zh: "問：他用了多少錢？",
+    ja: "彼はいくら使いましたか？",
+    ko: "그는 얼마를 썼습니까?",
+    es: "¿Cuánto gastó?",
+    de: "Wie viel hat er ausgegeben?",
+    fi: "Kuinka paljon hän käytti?",
+    fr: "Combien a-t-il dépensé ?",
+    ar: "كم أنفق؟",
+    it: "Quanto ha speso?"
+  },
+  solutionTitle: {
+    en: "Solution",
+    zh: "解題",
+    ja: "解決策",
+    ko: "풀이",
+    es: "Solución",
+    de: "Lösung",
+    fi: "Ratkaisu",
+    fr: "Solution",
+    ar: "الحل",
+    it: "Soluzione"
+  },
+  answer: {
+    en: "Answer",
+    zh: "答案",
+    ja: "答え",
+    ko: "정답",
+    es: "Respuesta",
+    de: "Antwort",
+    fi: "Vastaus",
+    fr: "Réponse",
+    ar: "إجابة",
+    it: "Risposta"
+  },
+  tipTitle: {
+    en: "Formula",
+    zh: "公式",
+    ja: "公式",
+    ko: "공식",
+    es: "Fórmula",
+    de: "Formel",
+    fi: "Kaava",
+    fr: "Formule",
+    ar: "الصيغة",
+    it: "Formula"
+  },
+  tipText: {
+    en: "Total × Percentage ÷ 100 = Part",
+    zh: "總數 × 百分率 ÷ 100 = 部分",
+    ja: "合計 × 百分率 ÷ 100 = 部分",
+    ko: "합계 × 백분율 ÷ 100 = 부분",
+    es: "Total × Porcentaje ÷ 100 = Parte",
+    de: "Gesamt × Prozentsatz ÷ 100 = Teil",
+    fi: "Yhteensä × Prosentti ÷ 100 = Osa",
+    fr: "Total × Pourcentage ÷ 100 = Partie",
+    ar: "المجموع × النسبة المئوية ÷ 100 = الجزء",
+    it: "Totale × Percentuale ÷ 100 = Parte"
+  }
+};
+const getText = (key, lang, params = {}) => {
+  let text = t[key]?.[lang] || t[key]?.["en"] || key;
+  for (const k in params) {
+    text = text.replace(`{${k}}`, params[k]);
+  }
+  return text;
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [total, setTotal] = useState(200);
+  const [percent, setPercent] = useState(25);
+  const part = total * percent / 100;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-4xl flex justify-between items-center mb-10"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-black text-green-400 drop-shadow-[0_0_15px_rgba(74,222,128,0.5)]"
+  }, "💰 ", getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-800/80 p-1.5 rounded-xl border border-white/10 flex flex-wrap justify-end gap-1 max-w-[50%]"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-green-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white hover:bg-white/5"}`
+  }, l)))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-3xl flex flex-col gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-8 rounded-3xl flex flex-col gap-6 relative overflow-hidden"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute -top-20 -right-20 w-64 h-64 bg-green-500/20 rounded-full blur-3xl pointer-events-none"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-xl md:text-2xl text-slate-200 leading-relaxed font-bold font-mono"
+  }, (() => {
+    const template = getText("problemText", lang, {
+      name: "Xiaoming",
+      total: "___",
+      percent: "___"
+    });
+    const parts = template.split("___");
+    return /*#__PURE__*/React.createElement("span", null, parts[0], /*#__PURE__*/React.createElement("span", {
+      className: "inline-flex items-center mx-1 bg-slate-900 border border-green-500/50 rounded-lg px-2"
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "text-green-400 mr-1"
+    }, "$"), /*#__PURE__*/React.createElement("input", {
+      type: "number",
+      value: total,
+      onChange: e => setTotal(Number(e.target.value)),
+      className: "w-20 bg-transparent text-white font-mono outline-none text-center"
+    })), parts[1], /*#__PURE__*/React.createElement("span", {
+      className: "inline-flex items-center mx-1 bg-slate-900 border border-green-500/50 rounded-lg px-2"
+    }, /*#__PURE__*/React.createElement("input", {
+      type: "number",
+      value: percent,
+      onChange: e => setPercent(Math.min(100, Math.max(0, Number(e.target.value)))),
+      className: "w-16 bg-transparent text-white font-mono outline-none text-center"
+    }), /*#__PURE__*/React.createElement("span", {
+      className: "text-green-400 ml-1"
+    }, "%")), parts[2]);
+  })()), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-black text-green-300 mt-2 border-l-4 border-green-500 pl-4 py-2 bg-green-900/10 rounded-r-xl"
+  }, getText("question", lang))), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 rounded-2xl flex flex-col gap-4"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-green-400/80 uppercase tracking-widest font-bold text-sm border-b border-white/5 pb-2"
+  }, getText("solutionTitle", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "font-mono text-lg text-slate-300 space-y-2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-xs text-slate-500 font-bold border border-white/5"
+  }, "1"), /*#__PURE__*/React.createElement("span", null, total, " × ", percent, "%")), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-xs text-slate-500 font-bold border border-white/5"
+  }, "2"), /*#__PURE__*/React.createElement("span", null, "= ", total, " × ", percent, "/100")), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-xs text-slate-500 font-bold border border-white/5"
+  }, "3"), /*#__PURE__*/React.createElement("span", null, "= ", total, " × ", (percent / 100).toFixed(2))))), /*#__PURE__*/React.createElement(motion.div, {
+    key: part,
+    initial: {
+      scale: 0.9,
+      opacity: 0
+    },
+    animate: {
+      scale: 1,
+      opacity: 1
+    },
+    className: "bg-gradient-to-r from-emerald-900/40 to-green-900/40 border border-green-500/30 p-8 rounded-3xl text-center flex flex-col items-center shadow-[0_0_30px_rgba(16,185,129,0.15)]"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-green-300 font-bold uppercase tracking-widest text-sm mb-2"
+  }, getText("answer", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl font-black text-white font-mono drop-shadow-[0_0_20px_rgba(74,222,128,0.6)]"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-green-500 mr-2"
+  }, "$"), part.toLocaleString(undefined, {
+    maximumFractionDigits: 2
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-amber-500/10 border border-amber-500/20 p-4 rounded-xl flex gap-3 text-amber-200 text-sm justify-center items-center"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-2xl"
+  }, "💡"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
+    className: "font-bold uppercase mr-2"
+  }, getText("tipTitle", lang), ":"), /*#__PURE__*/React.createElement("span", {
+    className: "font-mono"
+  }, getText("tipText", lang))))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

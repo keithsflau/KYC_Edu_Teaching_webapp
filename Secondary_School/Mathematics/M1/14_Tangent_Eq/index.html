@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Equation of Tangent | M1 Calculus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <script
+      type="text/javascript"
+      id="MathJax-script"
+      async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+    ></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+      }
+      .glass {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <div id="root" class="flex-grow flex flex-col"></div>
+    <script>
+const {
+  useState,
+  useEffect,
+  useMemo
+} = React;
+const translations = {
+  en: {
+    unit: "Module 1: Calculus",
+    title: "Equation of Tangent",
+    desc: "Find the equation of the tangent line y - y₁ = m(x - x₁).",
+    func: "Function f(x) = x² - 2x",
+    point: "Point on Curve (x₁)",
+    deriv: "Derivative f'(x) = 2x - 2",
+    slope: "Slope m = f'(x₁)",
+    eqn: "Tangent Equation",
+    langBtn: "中文"
+  },
+  zh: {
+    unit: "單元一：微積分",
+    title: "切線方程",
+    desc: "求切線方程 y - y₁ = m(x - x₁)。",
+    func: "函數 f(x) = x² - 2x",
+    point: "曲線上的點 (x₁)",
+    deriv: "導數 f'(x) = 2x - 2",
+    slope: "斜率 m = f'(x₁)",
+    eqn: "切線方程",
+    langBtn: "English"
+  }
+};
+const App = () => {
+  const [lang, setLang] = useState("en");
+  const t = translations[lang];
+  const [x1, setX1] = useState(-1);
+
+  // f(x) = x^2 - 2x
+  const f = x => x * x - 2 * x;
+  const df = x => 2 * x - 2;
+  const y1 = f(x1);
+  const m = df(x1);
+
+  // Tangent Line: y - y1 = m(x - x1) => y = m(x - x1) + y1
+  const tangent = x => m * (x - x1) + y1;
+
+  // Graph
+  const w = 500,
+    h = 350;
+  const xRange = 4;
+  const yRange = 4;
+  const scaleX = w / (2 * xRange);
+  const scaleY = h / (2 * yRange); // origin at center
+  const cx = w / 2;
+  const cy = h / 2;
+  const toScreen = (x, y) => ({
+    x: cx + x * scaleX,
+    y: cy - y * scaleY
+  });
+  const curvePath = useMemo(() => {
+    let d = "";
+    for (let x = -xRange; x <= xRange; x += 0.1) {
+      const y = f(x);
+      if (Math.abs(y) > yRange * 1.5) continue;
+      const pt = toScreen(x, y);
+      d += (d ? "L" : "M") + `${pt.x.toFixed(1)},${pt.y.toFixed(1)} `;
+    }
+    return d;
+  }, []);
+  const tangentPath = useMemo(() => {
+    const p1 = toScreen(-xRange, tangent(-xRange));
+    const p2 = toScreen(xRange, tangent(xRange));
+    return `M ${p1.x},${p1.y} L ${p2.x},${p2.y}`;
+  }, [x1, m, y1]);
+  const p1Screen = toScreen(x1, y1);
+  useEffect(() => {
+    if (window.MathJax) window.MathJax.typesetPromise();
+  }, [x1, lang]);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "flex-grow flex flex-col items-center justify-center p-8 select-none"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 right-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLang(l => l === "en" ? "zh" : "en"),
+    className: "px-3 py-1 bg-slate-800 border border-slate-600 rounded-full text-xs font-bold text-emerald-400 hover:bg-slate-700 hover:text-white transition flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-language"
+  }), t.langBtn)), /*#__PURE__*/React.createElement("header", {
+    className: "mb-8 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-indigo-500 font-bold uppercase tracking-widest text-xs mb-2"
+  }, t.unit), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-white mb-2"
+  }, t.title), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-400 font-mono text-lg"
+  }, t.desc)), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col lg:flex-row gap-8 w-full max-w-5xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass p-4 rounded-3xl shadow-lg border border-indigo-500/30 flex-[2]"
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: w,
+    height: h,
+    className: "bg-slate-900 rounded-xl mx-auto overflow-hidden"
+  }, /*#__PURE__*/React.createElement("line", {
+    x1: "0",
+    y1: cy,
+    x2: w,
+    y2: cy,
+    stroke: "#475569",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: cx,
+    y1: "0",
+    x2: cx,
+    y2: h,
+    stroke: "#475569",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: curvePath,
+    stroke: "#6366f1",
+    strokeWidth: "3",
+    fill: "none"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: tangentPath,
+    stroke: "#f43f5e",
+    strokeWidth: "2",
+    strokeDasharray: "5,2"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: p1Screen.x,
+    cy: p1Screen.y,
+    r: "6",
+    fill: "#f43f5e"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "glass p-6 rounded-3xl shadow-lg border border-indigo-500/30 flex-1 space-y-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-800 p-4 rounded-xl text-center border border-slate-700"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold text-slate-400 uppercase mb-1"
+  }, t.func)), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "text-xs font-bold text-slate-400 block mb-2 uppercase"
+  }, t.point, " x₁ = ", x1), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "-1",
+    max: "3",
+    step: "0.1",
+    value: x1,
+    onChange: e => setX1(Number(e.target.value)),
+    className: "w-full accent-indigo-500"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "p-4 rounded-xl border border-slate-700 bg-slate-800"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold text-slate-400 uppercase mb-1"
+  }, t.deriv), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between items-center font-mono font-bold text-slate-300"
+  }, /*#__PURE__*/React.createElement("span", null, "f'(", x1, ") = 2(", x1, ") - 2"), /*#__PURE__*/React.createElement("span", {
+    className: "text-xl text-indigo-400"
+  }, "= ", m.toFixed(1)))), /*#__PURE__*/React.createElement("div", {
+    className: "p-4 rounded-xl border border-rose-900/50 bg-rose-900/10 shadow-sm"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold text-rose-400 uppercase mb-1"
+  }, t.eqn), /*#__PURE__*/React.createElement("div", {
+    className: "font-mono text-lg text-rose-400 font-bold mb-2"
+  }, "y - ", y1.toFixed(1), " = ", m.toFixed(1), "(x - ", x1, ")"), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs text-rose-500 font-mono"
+  }, "y = ", m.toFixed(1), "x ", y1 - m * x1 >= 0 ? "+" : "", (y1 - m * x1).toFixed(1)))))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

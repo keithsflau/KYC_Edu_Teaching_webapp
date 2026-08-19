@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小六數學：折扣計算 | Discounts</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Discount Calculator",
+    zh: "折扣計算機",
+    ja: "割引計算機",
+    ko: "할인 계산기",
+    es: "Calculadora de Descuentos",
+    de: "Rabattrechner",
+    fi: "Alennuslaskuri",
+    fr: "Calculateur de remise",
+    ar: "حاسبة الخصم",
+    it: "Calcolatrice Sconti"
+  },
+  mode1: {
+    en: "Find Sale Price",
+    zh: "計算售價",
+    ja: "売値を計算",
+    ko: "판매가 계산",
+    es: "Calcular Precio de Venta",
+    de: "Verkaufspreis berechnen",
+    fi: "Laske myyntihinta",
+    fr: "Calculer le prix de vente",
+    ar: "حساب سعر البيع",
+    it: "Calcola Prezzo di Vendita"
+  },
+  mode2: {
+    en: "Find Discount %",
+    zh: "計算折扣率",
+    ja: "割引率を計算",
+    ko: "할인율 계산",
+    es: "Calcular % de Descuento",
+    de: "Rabatt % berechnen",
+    fi: "Laske alennusprosentti",
+    fr: "Calculer % de remise",
+    ar: "حساب نسبة الخصم",
+    it: "Calcola % Sconto"
+  },
+  original: {
+    en: "Original Price",
+    zh: "原價",
+    ja: "定価",
+    ko: "원가",
+    es: "Precio Original",
+    de: "Originalpreis",
+    fi: "Alkuperäinen hinta",
+    fr: "Prix original",
+    ar: "السعر الأصلي",
+    it: "Prezzo Originale"
+  },
+  discount: {
+    en: "Discount",
+    zh: "折扣",
+    ja: "割引",
+    ko: "할인",
+    es: "Descuento",
+    de: "Rabatt",
+    fi: "Alennus",
+    fr: "Remise",
+    ar: "خصم",
+    it: "Sconto"
+  },
+  salePrice: {
+    en: "Sale Price",
+    zh: "折實價",
+    ja: "セール価格",
+    ko: "할인가",
+    es: "Precio de Venta",
+    de: "Angebotspreis",
+    fi: "Tarjoushinta",
+    fr: "Prix soldé",
+    ar: "سعر البيع",
+    it: "Prezzo Scontato"
+  },
+  saved: {
+    en: "You Save",
+    zh: "共節省",
+    ja: "節約額",
+    ko: "절약액",
+    es: "Ahorras",
+    de: "Ersparnis",
+    fi: "Säästät",
+    fr: "Économie",
+    ar: "توفير",
+    it: "Risparmio"
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [mode, setMode] = useState("findPrice");
+  const [original, setOriginal] = useState(500);
+  const [pct, setPct] = useState(20);
+  const [sale, setSale] = useState(400);
+
+  // Logic
+  const calculatedSale = original * ((100 - pct) / 100);
+  const calculatedPct = original > 0 ? (original - sale) / original * 100 : 0;
+  const diffAmount = mode === "findPrice" ? original - calculatedSale : original - sale;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4 font-sans bg-slate-900 text-white"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-5xl flex justify-between items-center mb-10"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-black text-rose-400 drop-shadow-[0_0_15px_rgba(251,113,133,0.5)]"
+  }, "🏷️ ", getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "flex bg-slate-800/80 p-1.5 rounded-xl border border-white/10 flex-wrap justify-end gap-1 max-w-[50%]"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-rose-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white hover:bg-white/5"}`
+  }, l)))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-2xl flex flex-col gap-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex bg-slate-800 p-1 rounded-2xl"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setMode("findPrice"),
+    className: `flex-1 py-3 rounded-xl font-bold text-lg transition-all ${mode === "findPrice" ? "bg-rose-500 text-white shadow-lg" : "text-slate-400 hover:text-white"}`
+  }, getText("mode1", lang)), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setMode("findPct"),
+    className: `flex-1 py-3 rounded-xl font-bold text-lg transition-all ${mode === "findPct" ? "bg-rose-500 text-white shadow-lg" : "text-slate-400 hover:text-white"}`
+  }, getText("mode2", lang))), /*#__PURE__*/React.createElement("div", {
+    className: "relative w-full aspect-[2/1] bg-white text-slate-900 rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.5)] overflow-hidden flex items-center justify-center p-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-1/2 left-8 w-6 h-6 bg-slate-900 rounded-full border-4 border-slate-300"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-center w-full max-w-md relative z-10"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-slate-400 font-bold uppercase tracking-[0.2em] mb-2"
+  }, getText("original", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl font-black mb-6 relative inline-block"
+  }, "$", original, /*#__PURE__*/React.createElement(motion.div, {
+    className: "absolute top-1/2 left-0 w-full h-2 bg-rose-500 -rotate-12 origin-center",
+    initial: {
+      scaleX: 0
+    },
+    animate: {
+      scaleX: 1
+    },
+    transition: {
+      delay: 0.5
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-center gap-4 items-end"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-rose-500 font-bold text-xl"
+  }, mode === "findPrice" ? `-${pct}%` : `-${calculatedPct.toFixed(1)}%`), /*#__PURE__*/React.createElement(motion.div, {
+    className: "text-7xl font-black text-rose-600",
+    layout: true
+  }, "$", mode === "findPrice" ? calculatedSale.toFixed(1) : sale))), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-0 right-0 bg-rose-500 text-white px-12 py-2 rotate-45 translate-x-14 translate-y-8 font-black shadow-lg uppercase"
+  }, "SALE")), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-8 rounded-3xl space-y-6"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "text-rose-300 font-bold uppercase mb-2 block"
+  }, getText("original", lang), " ($)"), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: original,
+    onChange: e => setOriginal(parseFloat(e.target.value) || 0),
+    className: "w-full bg-slate-800 text-3xl font-black text-white p-3 rounded-xl border border-rose-500/30 outline-none focus:border-rose-500"
+  })), mode === "findPrice" ? /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "text-rose-300 font-bold uppercase mb-2 block"
+  }, getText("discount", lang), " (%)"), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "0",
+    max: "95",
+    step: "5",
+    value: pct,
+    onChange: e => setPct(parseInt(e.target.value, 10) || 0),
+    className: "w-full accent-rose-500 h-3 bg-slate-700 rounded-lg cursor-pointer mb-2"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-right text-rose-400 font-mono text-xl"
+  }, pct, "% OFF")) : /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "text-rose-300 font-bold uppercase mb-2 block"
+  }, getText("salePrice", lang), " ($)"), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: sale,
+    onChange: e => setSale(parseFloat(e.target.value) || 0),
+    className: "w-full bg-slate-800 text-3xl font-black text-white p-3 rounded-xl border border-rose-500/30 outline-none focus:border-rose-500"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-800/50 p-4 rounded-xl text-center"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-slate-400"
+  }, getText("saved", lang), ":", " "), /*#__PURE__*/React.createElement("span", {
+    className: "text-green-400 font-black text-xl"
+  }, "$", diffAmount.toFixed(1))))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

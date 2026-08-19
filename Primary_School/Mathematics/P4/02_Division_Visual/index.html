@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小四數學：除法動畫視覺 | Division Visualizer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+      crossorigin
+    ></script>
+    <script
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+      crossorigin
+    ></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+          font-family: 'Fredoka', 'Noto Sans TC', sans-serif;
+          background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+          min-height: 100vh;
+      }
+      .item-box {
+          width: 50px;
+          height: 50px;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-center;
+          font-size: 1.5rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Division Visualizer",
+    zh: "除法動畫視覺",
+    ja: "除算ビジュアライザー",
+    ko: "나눗셈 시각화",
+    es: "Visualizador de División",
+    de: "Divisionsvisualisierer",
+    fi: "Jakolaskun visualisointi",
+    fr: "Visualiseur de division",
+    ar: "مصور القسمة",
+    it: "Visualizzatore di divisione"
+  },
+  header: {
+    en: "P4 Math",
+    zh: "小四數學",
+    ja: "小4算数",
+    ko: "초4 수학",
+    es: "Matemáticas P4",
+    de: "Mathe 4. Klasse",
+    fi: "4. luokan matematiikka",
+    fr: "Maths P4",
+    ar: "الرياضيات للصف الرابع",
+    it: "Matematica 4a elementare"
+  },
+  subtitle: {
+    en: "Grouping Animations",
+    zh: "分組學習法",
+    ja: "グループ化アニメーション",
+    ko: "그룹화 학습법",
+    es: "Animaciones de agrupación",
+    de: "Gruppierungsanimationen",
+    fi: "Ryhmittelyanimaatiot",
+    fr: "Animations de groupement",
+    ar: "رسوم متحركة للتجميع",
+    it: "Animazioni di raggruppamento"
+  },
+  problemDesc: {
+    en: "Divide {dividend} items equally into {divisor} groups",
+    zh: "將 {dividend} 個物品平均分給 {divisor} 組",
+    ja: "{dividend} 個のアイテムを {divisor} グループに等しく分けます",
+    ko: "{dividend} 개의 아이템을 {divisor} 그룹으로 균등하게 나눕니다",
+    es: "Dividir {dividend} elementos equitativamente en {divisor} grupos",
+    de: "Teile {dividend} Gegenstände gleichmäßig in {divisor} Gruppen",
+    fi: "Jaa {dividend} kohdetta tasan {divisor} ryhmään",
+    fr: "Divisez {dividend} éléments équitablement en {divisor} groupes",
+    ar: "قسّم {dividend} عنصرًا بالتساوي على {divisor} مجموعات",
+    it: "Dividi {dividend} elementi equamente in {divisor} gruppi"
+  },
+  groupLabel: {
+    en: "Group {n}",
+    zh: "第 {n} 組",
+    ja: "グループ {n}",
+    ko: "그룹 {n}",
+    es: "Grupo {n}",
+    de: "Gruppe {n}",
+    fi: "Ryhmä {n}",
+    fr: "Groupe {n}",
+    ar: "المجموعة {n}",
+    it: "Gruppo {n}"
+  },
+  items: {
+    en: "items",
+    zh: "個",
+    ja: "個",
+    ko: "개",
+    es: "elementos",
+    de: "Stück",
+    fi: "kohdetta",
+    fr: "éléments",
+    ar: "عناصر",
+    it: "elementi"
+  },
+  startPrompt: {
+    en: "Click 'Start Grouping' to watch animation!",
+    zh: "點擊「開始分組」來觀看動畫！",
+    ja: "「グループ化開始」をクリックしてアニメーションを見よう！",
+    ko: "'그룹화 시작'을 클릭하여 애니메이션을 보세요!",
+    es: "¡Haz clic en 'Iniciar agrupación' para ver la animación!",
+    de: "Klicke auf 'Gruppierung starten', um die Animation zu sehen!",
+    fi: "Napsauta 'Aloita ryhmittely' katsoaksesi animaation!",
+    fr: "Cliquez sur 'Commencer le groupement' pour voir l'animation !",
+    ar: "انقر على 'بدء التجميع' لمشاهدة الرسوم المتحركة!",
+    it: "Clicca su 'Inizia raggruppamento' per guardare l'animazione!"
+  },
+  answer: {
+    en: "Answer:",
+    zh: "答案：",
+    ja: "答え：",
+    ko: "정답:",
+    es: "Respuesta:",
+    de: "Antwort:",
+    fi: "Vastaus:",
+    fr: "Réponse :",
+    ar: "الإجابة:",
+    it: "Risposta:"
+  },
+  quotient: {
+    en: "Quotient",
+    zh: "商數",
+    ja: "商",
+    ko: "몫",
+    es: "Cociente",
+    de: "Quotient",
+    fi: "Osamäärä",
+    fr: "Quotient",
+    ar: "الناتج",
+    it: "Quoziente"
+  },
+  remainder: {
+    en: "Remainder",
+    zh: "餘數",
+    ja: "余り",
+    ko: "나머지",
+    es: "Resto",
+    de: "Rest",
+    fi: "Jakojaannös",
+    fr: "Reste",
+    ar: "الباقي",
+    it: "Resto"
+  },
+  resultExplain: {
+    en: "{q} items per group",
+    zh: "每組有 {q} 個",
+    ja: "各グループに {q} 個",
+    ko: "그룹당 {q} 개",
+    es: "{q} elementos por grupo",
+    de: "{q} Gegenstände pro Gruppe",
+    fi: "{q} kohdetta ryhmässä",
+    fr: "{q} éléments par groupe",
+    ar: "{q} عناصر لكل مجموعة",
+    it: "{q} elementi per gruppo"
+  },
+  remainderExplain: {
+    en: ", remaining {r} items",
+    zh: "，剩餘 {r} 個",
+    ja: "、残り {r} 個",
+    ko: ", {r} 개가 남음",
+    es: ", sobran {r} elementos",
+    de: ", {r} verbleibende Gegenstände",
+    fi: ", jäljellä {r} kohdetta",
+    fr: ", reste {r} éléments",
+    ar: "، يتبقى {r} عناصر",
+    it: ", rimanenti {r} elementi"
+  },
+  settings: {
+    en: "Settings",
+    zh: "設定問題",
+    ja: "設定",
+    ko: "설정",
+    es: "Ajustes",
+    de: "Einstellungen",
+    fi: "Asetukset",
+    fr: "Paramètres",
+    ar: "الإعدادات",
+    it: "Impostazioni"
+  },
+  dividend: {
+    en: "Dividend (Total)",
+    zh: "被除數 (總數量)",
+    ja: "被除数 (合計)",
+    ko: "피제수 (총 수량)",
+    es: "Dividendo (Total)",
+    de: "Dividend (Gesamt)",
+    fi: "Jaettava (Yhteensä)",
+    fr: "Dividende (Total)",
+    ar: "المقسوم (الإجمالي)",
+    it: "Dividendo (Totale)"
+  },
+  divisor: {
+    en: "Divisor (Groups)",
+    zh: "除數 (組數)",
+    ja: "除数 (グループ数)",
+    ko: "제수 (그룹 수)",
+    es: "Divisor (Grupos)",
+    de: "Divisor (Gruppen)",
+    fi: "Jakaja (Ryhmät)",
+    fr: "Diviseur (Groupes)",
+    ar: "المقسوم عليه (المجموعات)",
+    it: "Divisore (Gruppi)"
+  },
+  start: {
+    en: "Start Grouping",
+    zh: "開始分組",
+    ja: "グループ化開始",
+    ko: "그룹화 시작",
+    es: "Iniciar agrupación",
+    de: "Gruppierung starten",
+    fi: "Aloita ryhmittely",
+    fr: "Commencer le groupement",
+    ar: "بدء التجميع",
+    it: "Inizia raggruppamento"
+  },
+  restart: {
+    en: "Restart",
+    zh: "重新開始",
+    ja: "再開",
+    ko: "다시 시작",
+    es: "Reiniciar",
+    de: "Neustart",
+    fi: "Käynnistä uudelleen",
+    fr: "Redémarrer",
+    ar: "إعادة التشغيل",
+    it: "Riavvia"
+  },
+  tips: {
+    en: "Tips",
+    zh: "小貼士",
+    ja: "ヒント",
+    ko: "팁",
+    es: "Consejos",
+    de: "Tipps",
+    fi: "Vinkit",
+    fr: "Astuces",
+    ar: "نصائح",
+    it: "Suggerimenti"
+  },
+  tip1: {
+    en: "Division is 'Equal Sharing':",
+    zh: "除法就是「平均分配」：",
+    ja: "除算は「等分」です：",
+    ko: "나눗셈은 '균등 분배'입니다:",
+    es: "La división es 'Reparto Equitativo':",
+    de: "Division ist 'Gerechtes Teilen':",
+    fi: "Jakolasku on 'Tasan jakamista':",
+    fr: "La division est un 'Partage égal' :",
+    ar: "القسمة هي 'مشاركة متساوية':",
+    it: "La divisione è 'Condivisione equa':"
+  },
+  tipDividend: {
+    en: "Dividend: Total amount to share",
+    zh: "被除數：要分的總數",
+    ja: "被除数：分ける総量",
+    ko: "피제수: 나눌 총량",
+    es: "Dividendo: Cantidad total a repartir",
+    de: "Dividend: Gesamtmenge zum Teilen",
+    fi: "Jaettava: Jaettava kokonaismäärä",
+    fr: "Dividende : Montant total à partager",
+    ar: "المقسوم: المبلغ الإجمالي للمشاركة",
+    it: "Dividendo: Importo totale da condividere"
+  },
+  tipDivisor: {
+    en: "Divisor: Number of groups",
+    zh: "除數：要分成幾組",
+    ja: "除数：グループの数",
+    ko: "제수: 그룹의 수",
+    es: "Divisor: Número de grupos",
+    de: "Divisor: Anzahl der Gruppen",
+    fi: "Jakaja: Ryhmien määrä",
+    fr: "Diviseur : Nombre de groupes",
+    ar: "المقسوم عليه: عدد المجموعات",
+    it: "Divisore: Numero di gruppi"
+  },
+  tipQuotient: {
+    en: "Quotient: Amount per group",
+    zh: "商數：每組有多少",
+    ja: "商：グループごとの量",
+    ko: "몫: 그룹당 수량",
+    es: "Cociente: Cantidad por grupo",
+    de: "Quotient: Menge pro Gruppe",
+    fi: "Osamäärä: Määrä ryhmää kohti",
+    fr: "Quotient : Montant par groupe",
+    ar: "الناتج: المبلغ لكل مجموعة",
+    it: "Quoziente: Importo per gruppo"
+  },
+  tipRemainder: {
+    en: "Remainder: Leftovers",
+    zh: "餘數：分不完剩下的",
+    ja: "余り：残ったもの",
+    ko: "나머지: 남은 것",
+    es: "Resto: Sobras",
+    de: "Rest: Übriggebliebenes",
+    fi: "Jakojaannös: Tähteet",
+    fr: "Reste : Restes",
+    ar: "الباقي: البقايا",
+    it: "Resto: Avanzi"
+  }
+};
+const Package = ({
+  size = 24,
+  className = ""
+}) => /*#__PURE__*/React.createElement("svg", {
+  xmlns: "http://www.w3.org/2000/svg",
+  width: size,
+  height: size,
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: "2",
+  strokeLinecap: "round",
+  strokeLinejoin: "round",
+  className: className
+}, /*#__PURE__*/React.createElement("path", {
+  d: "m16.5 9.4-9-5.19"
+}), /*#__PURE__*/React.createElement("path", {
+  d: "M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"
+}), /*#__PURE__*/React.createElement("polyline", {
+  points: "3.27 6.96 12 12.01 20.73 6.96"
+}), /*#__PURE__*/React.createElement("line", {
+  x1: "12",
+  y1: "22.08",
+  x2: "12",
+  y2: "12"
+}));
+const Users = ({
+  size = 24,
+  className = ""
+}) => /*#__PURE__*/React.createElement("svg", {
+  xmlns: "http://www.w3.org/2000/svg",
+  width: size,
+  height: size,
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: "2",
+  strokeLinecap: "round",
+  strokeLinejoin: "round",
+  className: className
+}, /*#__PURE__*/React.createElement("path", {
+  d: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"
+}), /*#__PURE__*/React.createElement("circle", {
+  cx: "9",
+  cy: "7",
+  r: "4"
+}), /*#__PURE__*/React.createElement("path", {
+  d: "M22 21v-2a4 4 0 0 0-3-3.87"
+}), /*#__PURE__*/React.createElement("path", {
+  d: "M16 3.13a4 4 0 0 1 0 7.75"
+}));
+const Play = ({
+  size = 24,
+  className = ""
+}) => /*#__PURE__*/React.createElement("svg", {
+  xmlns: "http://www.w3.org/2000/svg",
+  width: size,
+  height: size,
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: "2",
+  strokeLinecap: "round",
+  strokeLinejoin: "round",
+  className: className
+}, /*#__PURE__*/React.createElement("polygon", {
+  points: "5 3 19 12 5 21 5 3"
+}));
+const RotateCcw = ({
+  size = 24,
+  className = ""
+}) => /*#__PURE__*/React.createElement("svg", {
+  xmlns: "http://www.w3.org/2000/svg",
+  width: size,
+  height: size,
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: "2",
+  strokeLinecap: "round",
+  strokeLinejoin: "round",
+  className: className
+}, /*#__PURE__*/React.createElement("path", {
+  d: "M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"
+}), /*#__PURE__*/React.createElement("path", {
+  d: "M3 3v5h5"
+}));
+const ArrowRight = ({
+  size = 24,
+  className = ""
+}) => /*#__PURE__*/React.createElement("svg", {
+  xmlns: "http://www.w3.org/2000/svg",
+  width: size,
+  height: size,
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: "2",
+  strokeLinecap: "round",
+  strokeLinejoin: "round",
+  className: className
+}, /*#__PURE__*/React.createElement("path", {
+  d: "M5 12h14"
+}), /*#__PURE__*/React.createElement("path", {
+  d: "m12 5 7 7-7 7"
+}));
+const ITEMS = ["🍎", "🍊", "🍇", "🍓", "🍌", "🍉", "🥝", "🍑"];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [dividend, setDividend] = useState(24);
+  const [divisor, setDivisor] = useState(4);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [groups, setGroups] = useState([]);
+  const [currentItem, setCurrentItem] = useState(ITEMS[0]);
+  const quotient = Math.floor(dividend / divisor);
+  const remainder = dividend % divisor;
+  const startAnimation = () => {
+    setIsAnimating(true);
+    setGroups([]);
+
+    // Distribute items into groups with animation
+    const newGroups = Array(divisor).fill(0).map(() => []);
+    let itemIndex = 0;
+    const distributeNext = () => {
+      if (itemIndex < dividend) {
+        const targetGroup = itemIndex % divisor;
+        newGroups[targetGroup].push(itemIndex);
+        setGroups([...newGroups.map(g => [...g])]);
+        itemIndex++;
+        setTimeout(distributeNext, 200);
+      } else {
+        setIsAnimating(false);
+      }
+    };
+    setTimeout(distributeNext, 300);
+  };
+  const resetAnimation = () => {
+    setGroups([]);
+    setIsAnimating(false);
+    setCurrentItem(ITEMS[Math.floor(Math.random() * ITEMS.length)]);
+  };
+  const getText = key => t[key][lang] || t[key]["en"];
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-8 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("header", {
+    className: "text-center mb-8 mt-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "inline-flex items-center gap-3 bg-white/20 backdrop-blur-md px-6 py-3 rounded-full mb-4"
+  }, /*#__PURE__*/React.createElement(Package, {
+    className: "text-white",
+    size: 24
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "text-white font-bold text-lg"
+  }, getText("header"))), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-6xl font-black text-white mb-2 tracking-tight"
+  }, getText("title")), /*#__PURE__*/React.createElement("p", {
+    className: "text-xl text-white/80 font-medium"
+  }, getText("subtitle"))), /*#__PURE__*/React.createElement("main", {
+    className: "w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "lg:col-span-8 bg-white/95 backdrop-blur-md rounded-3xl p-8 shadow-2xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-center mb-8 p-6 bg-gradient-to-r from-pink-50 to-purple-50 rounded-2xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black text-slate-800 mb-2"
+  }, dividend, " ÷ ", divisor, " = ?"), /*#__PURE__*/React.createElement("div", {
+    className: "text-lg text-slate-600 font-medium"
+  }, getText("problemDesc").replace("{dividend}", dividend).replace("{divisor}", divisor))), groups.length > 0 ? /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-8"
+  }, groups.map((group, groupIdx) => /*#__PURE__*/React.createElement(motion.div, {
+    key: groupIdx,
+    initial: {
+      opacity: 0,
+      scale: 0.8
+    },
+    animate: {
+      opacity: 1,
+      scale: 1
+    },
+    className: "bg-white rounded-2xl p-4 shadow-lg border-2 border-purple-200"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2 mb-3 pb-2 border-b-2 border-purple-100"
+  }, /*#__PURE__*/React.createElement(Users, {
+    className: "text-purple-500",
+    size: 20
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "font-black text-purple-600"
+  }, getText("groupLabel").replace("{n}", groupIdx + 1))), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-wrap gap-2"
+  }, group.map(itemIdx => /*#__PURE__*/React.createElement(motion.div, {
+    key: itemIdx,
+    initial: {
+      opacity: 0,
+      y: -50,
+      scale: 0
+    },
+    animate: {
+      opacity: 1,
+      y: 0,
+      scale: 1
+    },
+    className: "item-box bg-gradient-to-br from-yellow-200 to-orange-200 shadow-md"
+  }, currentItem))), /*#__PURE__*/React.createElement("div", {
+    className: "mt-3 text-center text-sm font-bold text-slate-600"
+  }, group.length, " ", getText("items"))))) : /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-center min-h-[300px]"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl mb-4"
+  }, currentItem), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-bold text-slate-400"
+  }, getText("startPrompt")))), groups.length > 0 && !isAnimating && /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      opacity: 0,
+      y: 20
+    },
+    animate: {
+      opacity: 1,
+      y: 0
+    },
+    className: "bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-6 text-center border-2 border-green-200"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-black text-slate-700 mb-4"
+  }, getText("answer")), /*#__PURE__*/React.createElement("div", {
+    className: "text-5xl font-black text-green-600 mb-2"
+  }, getText("quotient"), " = ", quotient), remainder > 0 && /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-black text-orange-600"
+  }, getText("remainder"), " = ", remainder), /*#__PURE__*/React.createElement("div", {
+    className: "mt-4 text-slate-600 font-medium"
+  }, getText("resultExplain").replace("{q}", quotient), remainder > 0 ? getText("remainderExplain").replace("{r}", remainder) : ""))), /*#__PURE__*/React.createElement("div", {
+    className: "lg:col-span-4 flex flex-col gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/95 backdrop-blur-md rounded-3xl p-6 shadow-lg"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-xl font-black text-pink-600 mb-4"
+  }, getText("settings")), /*#__PURE__*/React.createElement("div", {
+    className: "mb-4"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "block text-sm font-bold text-slate-600 mb-2"
+  }, getText("dividend")), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "10",
+    max: "50",
+    value: dividend,
+    onChange: e => {
+      setDividend(parseInt(e.target.value, 10));
+      resetAnimation();
+    },
+    className: "w-full",
+    disabled: isAnimating
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-black text-center text-slate-800 mt-2"
+  }, dividend)), /*#__PURE__*/React.createElement("div", {
+    className: "mb-6"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "block text-sm font-bold text-slate-600 mb-2"
+  }, getText("divisor")), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "2",
+    max: "8",
+    value: divisor,
+    onChange: e => {
+      setDivisor(parseInt(e.target.value, 10));
+      resetAnimation();
+    },
+    className: "w-full",
+    disabled: isAnimating
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-black text-center text-slate-800 mt-2"
+  }, divisor)), /*#__PURE__*/React.createElement("button", {
+    onClick: startAnimation,
+    disabled: isAnimating || groups.length > 0,
+    className: "w-full py-4 bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white rounded-2xl font-bold text-lg shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+  }, /*#__PURE__*/React.createElement(Play, {
+    size: 20
+  }), " ", getText("start")), groups.length > 0 && /*#__PURE__*/React.createElement("button", {
+    onClick: resetAnimation,
+    className: "w-full mt-3 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl font-bold transition-all flex items-center justify-center gap-2"
+  }, /*#__PURE__*/React.createElement(RotateCcw, {
+    size: 20
+  }), " ", getText("restart"))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/95 backdrop-blur-md rounded-3xl p-6 shadow-lg"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-lg font-black text-slate-800 mb-3 flex items-center gap-2"
+  }, "💡 ", getText("tips")), /*#__PURE__*/React.createElement("div", {
+    className: "text-sm text-slate-600 leading-relaxed space-y-2"
+  }, /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, getText("tip1"))), /*#__PURE__*/React.createElement("p", null, "• ", /*#__PURE__*/React.createElement("strong", null, getText("tipDividend"))), /*#__PURE__*/React.createElement("p", null, "• ", /*#__PURE__*/React.createElement("strong", null, getText("tipDivisor"))), /*#__PURE__*/React.createElement("p", null, "• ", /*#__PURE__*/React.createElement("strong", null, getText("tipQuotient"))), /*#__PURE__*/React.createElement("p", null, "• ", /*#__PURE__*/React.createElement("strong", null, getText("tipRemainder"))))))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

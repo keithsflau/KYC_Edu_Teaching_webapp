@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Eigenvalues & Eigenvectors | M2 Matrix</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+      }
+      .glass {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .draggable {
+        cursor: grab;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <div id="root" class="flex-grow flex flex-col"></div>
+    <script>
+const {
+  useState,
+  useRef
+} = React;
+const translations = {
+  en: {
+    unit: "Unit 4: Matrices",
+    title: "Eigen Vector Game",
+    subtitle: "Find the vectors that stay parallel!",
+    goal: "Goal",
+    goalDesc: "Drag the yellow vector <strong class='text-amber-400'>v</strong> until it lines up perfectly with the red vector <strong class='text-rose-400'>Av</strong>.",
+    scale: "Scale Factor:",
+    matrix: "Matrix M",
+    edit: "Edit matrix values to change problem",
+    trueEigen: "True Eigenvalues:",
+    found: "EIGENVECTOR FOUND!",
+    langBtn: "中文"
+  },
+  zh: {
+    unit: "第四單元：矩陣",
+    title: "特徵向量遊戲",
+    subtitle: "尋找保持平行的向量！",
+    goal: "目標",
+    goalDesc: "拖動黃色向量 <strong class='text-amber-400'>v</strong>，直到它與紅色向量 <strong class='text-rose-400'>Av</strong> 完全重合（平行）。",
+    scale: "縮放因子 (特徵值):",
+    matrix: "矩陣 M",
+    edit: "修改矩陣數值以變更題目",
+    trueEigen: "真實特徵值:",
+    found: "找到特徵向量！",
+    langBtn: "English"
+  }
+};
+const App = () => {
+  // Matrix M = [2 1; 1 2] (Symmetric, real eigenvalues)
+  // Default M
+
+  const [lang, setLang] = useState("en");
+  const t = translations[lang];
+  const [m, setM] = useState([3, 1, 2, 2]); // a b c d
+
+  // Test Vector v
+  const [v, setV] = useState({
+    x: 1,
+    y: 0
+  });
+  const [dragging, setDragging] = useState(false);
+
+  // Calc Av
+  const Av = {
+    x: m[0] * v.x + m[1] * v.y,
+    y: m[2] * v.x + m[3] * v.y
+  };
+
+  // Check Collinearity (Eigen condition)
+  // v cross Av = 0
+  // Also check if Av is not zero vector (unless lambda is 0, but v cannot be zero)
+  const cp = v.x * Av.y - v.y * Av.x;
+  const isEigen = Math.abs(cp) < 0.5 && (Math.abs(v.x) > 0.1 || Math.abs(v.y) > 0.1); // tolerance
+
+  // Calculate Eigenvalues for display
+  // det(M - lambda I) = 0
+  // (a-l)(d-l) - bc = 0 => l^2 - (a+d)l + (ad-bc) = 0
+  const tr = m[0] + m[3];
+  const det = m[0] * m[3] - m[1] * m[2];
+  const delta = Math.sqrt(Math.max(0, tr * tr - 4 * det)); // Ensure no NaN
+  const l1 = (tr + delta) / 2;
+  const l2 = (tr - delta) / 2;
+
+  // Current Scale Factor
+  const magV = Math.sqrt(v.x * v.x + v.y * v.y);
+  const magAv = Math.sqrt(Av.x * Av.x + Av.y * Av.y);
+  // Approximate lambda if eigen
+  // lambda = (v . Av) / |v|^2
+  const lambdaApprox = (v.x * Av.x + v.y * Av.y) / (magV * magV || 1);
+
+  // Coords
+  const w = 600,
+    h = 600;
+  const range = 6;
+  const scale = w / (2 * range);
+  const originX = w / 2,
+    originY = h / 2;
+  const toScreen = (x, y) => ({
+    x: originX + x * scale,
+    y: originY - y * scale
+  });
+  const fromScreen = (sx, sy) => ({
+    x: (sx - originX) / scale,
+    y: (originY - sy) / scale
+  });
+  const handleMouseMove = e => {
+    if (!dragging) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const pt = fromScreen(e.clientX - rect.left, e.clientY - rect.top);
+    // Normalize drag to unit circle ish? No, let them drag freely but maybe cap length
+    setV(pt);
+  };
+  const Arrow = ({
+    end,
+    color,
+    width,
+    label
+  }) => /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("line", {
+    x1: originX,
+    y1: originY,
+    x2: toScreen(end.x, end.y).x,
+    y2: toScreen(end.x, end.y).y,
+    stroke: color,
+    strokeWidth: width,
+    markerEnd: `url(#head-${color.replace("#", "")})`
+  }));
+  return /*#__PURE__*/React.createElement("div", {
+    className: "flex-grow flex flex-col items-center justify-center p-8 select-none",
+    onMouseUp: () => setDragging(false)
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 right-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLang(l => l === "en" ? "zh" : "en"),
+    className: "px-3 py-1 bg-slate-800 border border-slate-600 rounded-full text-xs font-bold text-emerald-400 hover:bg-slate-700 hover:text-white transition flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-language"
+  }), t.langBtn)), /*#__PURE__*/React.createElement("header", {
+    className: "mb-8 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-emerald-500 font-bold uppercase tracking-widest text-xs mb-2"
+  }, t.unit), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-white mb-2"
+  }, t.title), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-400 font-mono text-lg"
+  }, t.subtitle)), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col lg:flex-row gap-8 w-full max-w-6xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 glass p-6 rounded-3xl relative flex items-center justify-center aspect-square"
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: "100%",
+    height: "100%",
+    viewBox: "0 0 600 600",
+    className: "overflow-visible bg-slate-900 rounded-xl",
+    onMouseMove: handleMouseMove
+  }, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("marker", {
+    id: "head-f43f5e",
+    markerWidth: "6",
+    markerHeight: "6",
+    refX: "5",
+    refY: "3",
+    orient: "auto"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M0,0 L6,3 L0,6",
+    fill: "#f43f5e"
+  })), /*#__PURE__*/React.createElement("marker", {
+    id: "head-10b981",
+    markerWidth: "6",
+    markerHeight: "6",
+    refX: "5",
+    refY: "3",
+    orient: "auto"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M0,0 L6,3 L0,6",
+    fill: "#10b981"
+  })), /*#__PURE__*/React.createElement("marker", {
+    id: "head-fbbf24",
+    markerWidth: "6",
+    markerHeight: "6",
+    refX: "5",
+    refY: "3",
+    orient: "auto"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M0,0 L6,3 L0,6",
+    fill: "#fbbf24"
+  }))), /*#__PURE__*/React.createElement("line", {
+    x1: originX,
+    y1: "0",
+    x2: originX,
+    y2: h,
+    stroke: "#334155"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "0",
+    y1: originY,
+    x2: w,
+    y2: originY,
+    stroke: "#334155"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: originX,
+    cy: originY,
+    r: scale,
+    stroke: "#334155",
+    fill: "none",
+    strokeDasharray: "5,5"
+  }), /*#__PURE__*/React.createElement(Arrow, {
+    end: Av,
+    color: "#f43f5e",
+    width: isEigen ? 6 : 4
+  }), /*#__PURE__*/React.createElement(Arrow, {
+    end: v,
+    color: "#fbbf24",
+    width: "4"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: toScreen(v.x, v.y).x,
+    cy: toScreen(v.x, v.y).y,
+    r: "12",
+    fill: isEigen ? "#10b981" : "#fbbf24",
+    opacity: "0.5",
+    className: "draggable",
+    onMouseDown: () => setDragging(true)
+  }), isEigen && /*#__PURE__*/React.createElement("text", {
+    x: w / 2,
+    y: h - 50,
+    textAnchor: "middle",
+    fill: "#10b981",
+    fontSize: "24",
+    fontWeight: "bold"
+  }, t.found))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full lg:w-96 space-y-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass p-6 rounded-2xl"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-lg font-bold text-white mb-4"
+  }, t.goal), /*#__PURE__*/React.createElement("p", {
+    className: "text-sm text-slate-300 mb-4",
+    dangerouslySetInnerHTML: {
+      __html: t.goalDesc
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "p-4 bg-slate-800 rounded-xl space-y-2 font-mono text-sm"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-amber-400"
+  }, "v:"), /*#__PURE__*/React.createElement("span", null, "(", v.x.toFixed(2), ", ", v.y.toFixed(2), ")")), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-rose-400"
+  }, "Av:"), /*#__PURE__*/React.createElement("span", null, "(", Av.x.toFixed(2), ", ", Av.y.toFixed(2), ")")), /*#__PURE__*/React.createElement("div", {
+    className: "border-t border-slate-600 my-2"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-blue-400"
+  }, t.scale), /*#__PURE__*/React.createElement("span", {
+    className: isEigen ? "text-emerald-400 font-bold" : "text-slate-500"
+  }, isEigen ? lambdaApprox.toFixed(2) : "---")))), /*#__PURE__*/React.createElement("div", {
+    className: "glass p-6 rounded-2xl"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-xs font-bold text-slate-400 uppercase mb-2"
+  }, t.matrix), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 gap-4 text-center font-mono text-xl bg-slate-800 p-4 rounded-xl mb-4"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: m[0],
+    onChange: e => setM([Number(e.target.value), m[1], m[2], m[3]]),
+    className: "bg-transparent text-center w-full"
+  }), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: m[1],
+    onChange: e => setM([m[0], Number(e.target.value), m[2], m[3]]),
+    className: "bg-transparent text-center w-full"
+  }), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: m[2],
+    onChange: e => setM([m[0], m[1], Number(e.target.value), m[3]]),
+    className: "bg-transparent text-center w-full"
+  }), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: m[3],
+    onChange: e => setM([m[0], m[1], m[2], Number(e.target.value)]),
+    className: "bg-transparent text-center w-full"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs text-center text-slate-500"
+  }, t.edit)), /*#__PURE__*/React.createElement("div", {
+    className: "text-center text-xs text-slate-600"
+  }, t.trueEigen, " ", l1.toFixed(2), ", ", l2.toFixed(2)))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

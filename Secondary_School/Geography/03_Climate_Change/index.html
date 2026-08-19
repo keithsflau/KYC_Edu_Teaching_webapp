@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>氣候變化 | HKDSE Geography</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --void:#060912; --aurora:#4ade80; --ice:#2dd4bf; }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:'Inter',system-ui,sans-serif; background:var(--void); color:#e2e8f0; min-height:100vh; }
+    .hero {
+      min-height:45vh; display:flex; flex-direction:column; justify-content:flex-end;
+      padding:5rem 1.5rem 3rem;
+      background:
+        radial-gradient(ellipse 70% 50% at 50% 30%, rgba(45,212,191,0.12), transparent),
+        linear-gradient(180deg,#0a1420,#060912);
+    }
+    .back { color:rgba(255,255,255,0.45); font-size:0.75rem; text-decoration:none; margin-bottom:1.5rem; }
+    h1 { font-size:clamp(1.75rem,5vw,2.5rem); font-weight:700; margin-bottom:0.5rem; }
+    .sub { color:rgba(255,255,255,0.5); font-size:0.9rem; max-width:32rem; line-height:1.6; }
+    main { max-width:42rem; margin:0 auto; padding:2rem 1.5rem 4rem; }
+    .card {
+      background:rgba(12,18,35,0.8); border:1px solid rgba(45,212,191,0.15);
+      border-radius:1rem; padding:1.5rem; margin-bottom:1.25rem;
+    }
+    .card h2 { font-size:1rem; color:var(--ice); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:1rem; }
+    .slider-row { margin-bottom:1.25rem; }
+    .slider-row label { display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:0.5rem; }
+    .slider-row output { color:var(--aurora); font-weight:600; }
+    input[type=range] { width:100%; accent-color:#4ade80; }
+    .meter {
+      height:8px; border-radius:4px; background:rgba(255,255,255,0.08); margin-top:1.5rem; overflow:hidden;
+    }
+    .meter-fill {
+      height:100%; width:50%; border-radius:4px;
+      background:linear-gradient(90deg,#22d3ee,#4ade80,#fbbf24,#ef4444);
+      transition:width 0.4s ease;
+    }
+    .meter-label { display:flex; justify-content:space-between; font-size:0.7rem; color:rgba(255,255,255,0.35); margin-top:0.35rem; }
+    .choices { display:grid; gap:0.6rem; margin-top:1rem; }
+    .choice {
+      padding:0.85rem 1rem; border-radius:0.75rem; border:1px solid rgba(255,255,255,0.1);
+      background:rgba(0,0,0,0.25); cursor:pointer; font-size:0.85rem; transition:all 0.25s;
+    }
+    .choice:hover { border-color:rgba(74,222,128,0.4); }
+    .choice.picked { border-color:var(--aurora); background:rgba(74,222,128,0.08); }
+    .result { margin-top:1rem; padding:1rem; border-radius:0.75rem; font-size:0.9rem; line-height:1.6; display:none; }
+    .result.show { display:block; background:rgba(45,212,191,0.1); border:1px solid rgba(45,212,191,0.25); }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <a href="../index.html" class="back">← 地理科</a>
+    <p style="font-size:0.65rem;letter-spacing:0.3em;text-transform:uppercase;color:rgba(45,212,191,0.6);margin-bottom:0.5rem">Unit 3 · C3</p>
+    <h1>氣候變化</h1>
+    <p class="sub">調整溫室氣體排放與緩解策略，觀察對全球升溫路徑的影響。</p>
+  </header>
+  <main>
+    <div class="card">
+      <h2>2100 升溫情景模擬</h2>
+      <div class="slider-row">
+        <label>可再生能源比例 <output id="out-renew">50%</output></label>
+        <input type="range" id="renew" min="10" max="95" value="50">
+      </div>
+      <div class="slider-row">
+        <label>森林保護 / 植樹 <output id="out-forest">50%</output></label>
+        <input type="range" id="forest" min="10" max="95" value="50">
+      </div>
+      <div class="slider-row">
+        <label>交通與工業減排 <output id="out-transport">50%</output></label>
+        <input type="range" id="transport" min="10" max="95" value="50">
+      </div>
+      <p style="font-size:0.8rem;color:rgba(255,255,255,0.45);margin-bottom:0.5rem">預估本世紀末升溫（相對工業化前）</p>
+      <div class="meter"><div class="meter-fill" id="meter-fill"></div></div>
+      <div class="meter-label"><span>1.5°C 目標</span><span id="temp-label">+2.4°C</span><span>4°C+</span></div>
+      <div class="choices" id="choices">
+        <div class="choice" data-tier="good">《巴黎協定》路徑：積極減排 + 碳中和目標</div>
+        <div class="choice" data-tier="mid">現行政策延伸：部分減排</div>
+        <div class="choice" data-tier="bad">無額外行動：化石燃料主導</div>
+      </div>
+      <div class="result" id="result"></div>
+    </div>
+    <div class="card">
+      <h2>DSE 重點</h2>
+      <p style="font-size:0.85rem;line-height:1.7;color:rgba(255,255,255,0.6)">
+        溫室氣體（CO₂、CH₄）吸收長波輻射。冰圈消融降低<strong style="color:#fbbf24">反照率</strong>，形成正反饋。
+        香港作為沿海城市，海平面上升與極端天氣是主要氣候風險。
+      </p>
+    </div>
+    <p style="text-align:center;margin-top:2rem"><a href="../aurora-atlas/index.html" style="color:rgba(125,211,252,0.6);font-size:0.8rem;text-decoration:none">← 返回極光地圖</a></p>
+  </main>
+  <script>
+    const renew = document.getElementById('renew');
+    const forest = document.getElementById('forest');
+    const transport = document.getElementById('transport');
+    const meter = document.getElementById('meter-fill');
+    const tempLabel = document.getElementById('temp-label');
+    const result = document.getElementById('result');
+
+    function calc() {
+      const r = +renew.value, f = +forest.value, t = +transport.value;
+      document.getElementById('out-renew').textContent = r + '%';
+      document.getElementById('out-forest').textContent = f + '%';
+      document.getElementById('out-transport').textContent = t + '%';
+      const avg = (r + f + t) / 3;
+      const temp = 4.2 - (avg / 100) * 2.5;
+      const pct = Math.min(100, Math.max(0, ((temp - 1.5) / 2.5) * 100));
+      meter.style.width = pct + '%';
+      tempLabel.textContent = '+' + temp.toFixed(1) + '°C';
+      return temp;
+    }
+    [renew, forest, transport].forEach(el => el.oninput = calc);
+    calc();
+
+    document.querySelectorAll('.choice').forEach(c => {
+      c.onclick = () => {
+        document.querySelectorAll('.choice').forEach(x => x.classList.remove('picked'));
+        c.classList.add('picked');
+        const tier = c.dataset.tier;
+        const presets = {
+          good: [85, 80, 75],
+          mid: [50, 45, 40],
+          bad: [20, 25, 15],
+        };
+        const [a, b, d] = presets[tier];
+        renew.value = a; forest.value = b; transport.value = d;
+        const temp = calc();
+        result.className = 'result show';
+        const msgs = {
+          good: '✓ 積極路徑有望把升溫控制在 1.5–2°C 附近，需各國履行 NDC 並加速能源轉型。',
+          mid: '現行政策不足以達標，升溫可能超過 2.5°C，極端天氣與海平面風險顯著。',
+          bad: '高排放情景下升溫或逾 3.5°C，冰蓋不穩定與生態系統崩潰風險大增。',
+        };
+        result.textContent = msgs[tier] + ' （模擬：' + temp.toFixed(1) + '°C）';
+      };
+    });
+  </script>
+</body>
+</html>

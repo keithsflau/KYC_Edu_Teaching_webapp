@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pythagoras Proof 畢氏定理視覺化 | S3 Math</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+      }
+    </style>
+  </head>
+  <body class="bg-amber-50 text-slate-800 min-h-screen">
+    <div id="root"></div>
+    <script>
+const {
+  useState
+} = React;
+const App = () => {
+  const [lang, setLang] = useState("en");
+  const [a, setA] = useState(3);
+  const [b, setB] = useState(4);
+  const t = {
+    title: {
+      en: "Pythagoras Visual Proof",
+      zh: "畢氏定理視覺化"
+    },
+    sideA: {
+      en: "Side a",
+      zh: "邊長 a"
+    },
+    sideB: {
+      en: "Side b",
+      zh: "邊長 b"
+    },
+    area: {
+      en: "Area",
+      zh: "面積"
+    },
+    hyp: {
+      en: "Hypotenuse",
+      zh: "斜邊 c"
+    },
+    back: {
+      en: "Back to Dashboard",
+      zh: "返回主頁"
+    },
+    drag: {
+      en: "Adjust Dimensions",
+      zh: "調整尺寸"
+    }
+  };
+  const c = Math.sqrt(a * a + b * b);
+  const areaA = a * a;
+  const areaB = b * b;
+  const areaC = c * c;
+
+  // Visualization Logic
+  // Triangle Vertices in internal unit space usually 0..10
+  // We scale it up for SVG display (e.g., 20px per unit)
+  const scale = 25;
+  const ox = 150; // Origin X offset
+  const oy = 150; // Origin Y offset (Where the right angle corner is)
+
+  // C coordinates
+  // Triangle: (ox, oy) -> right angle corner
+  // Point A: (ox, oy - a*scale) [Up]
+  // Point B: (ox + b*scale, oy) [Right]
+
+  // Square A (Left of the vertical side) - Wait, let's put it to the Left
+  // Verts: (ox, oy), (ox, oy-a), (-a, oy-a), (-a, oy)
+
+  // Actually, let's flip it for standard view
+  // Right Angle at bottom right for clearer visual?
+  // Let's stick to standard:
+  // Right Angle at (ox, oy)
+  // Leg a goes up: (ox, oy-a*scale)
+  // Leg b goes right: (ox+b*scale, oy)
+
+  // Square on a (on the left side of vertical leg)
+  // Top-Right: (ox, oy-a*scale)
+  // Bottom-Right: (ox, oy)
+  // Bottom-Left: (ox-a*scale, oy)
+  // Top-Left: (ox-a*scale, oy-a*scale)
+
+  // Square on b (below the horizontal leg)
+  // Top-Left: (ox, oy)
+  // Top-Right: (ox+b*scale, oy)
+  // Bottom-Right: (ox+b*scale, oy+b*scale)
+  // Bottom-Left: (ox, oy+b*scale)
+
+  // Square on c (Hypotenuse)
+  // Vector from Top-of-a to Right-of-b is (b, a) (down and right)
+  // Normal vector is (a, -b) or (-a, b)...
+  // Let's use rotation. Angle of hypotenuse
+
+  const rotation = Math.atan2(a, b) * 180 / Math.PI;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "p-6 max-w-4xl mx-auto min-h-screen flex flex-col"
+  }, /*#__PURE__*/React.createElement("header", {
+    className: "mb-6 flex justify-between items-center"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "text-amber-600 font-bold uppercase text-xs tracking-widest mb-1"
+  }, "S3 Math"), /*#__PURE__*/React.createElement("h1", {
+    className: "text-3xl font-extrabold text-slate-900"
+  }, t.title[lang])), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLang(lang === "en" ? "zh" : "en"),
+    className: "px-3 py-1 bg-white border border-amber-200 rounded-lg text-sm font-bold hover:bg-amber-100"
+  }, lang === "en" ? "中文" : "ENG")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-4 rounded-xl border border-amber-100 mb-6 text-center shadow-sm"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-mono font-bold text-amber-600"
+  }, "a² + b² = c²")), /*#__PURE__*/React.createElement("div", {
+    className: "grid md:grid-cols-2 gap-8 items-start mb-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-4 rounded-2xl border border-amber-100 flex justify-center overflow-hidden relative",
+    style: {
+      height: "420px"
+    }
+  }, /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 400 400",
+    className: "w-full h-full"
+  }, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("pattern", {
+    id: "grid",
+    width: "25",
+    height: "25",
+    patternUnits: "userSpaceOnUse"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M 25 0 L 0 0 0 25",
+    fill: "none",
+    stroke: "#f1f5f9",
+    strokeWidth: "1"
+  }))), /*#__PURE__*/React.createElement("rect", {
+    width: "100%",
+    height: "100%",
+    fill: "url(#grid)"
+  }), /*#__PURE__*/React.createElement("g", {
+    transform: `translate(${ox}, ${oy})`
+  }, " ", /*#__PURE__*/React.createElement("rect", {
+    x: -a * scale,
+    y: -a * scale,
+    width: a * scale,
+    height: a * scale,
+    fill: "rgba(59, 130, 246, 0.4)",
+    stroke: "#3b82f6",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: -a * scale / 2,
+    y: -a * scale / 2,
+    textAnchor: "middle",
+    dominantBaseline: "middle",
+    className: "fill-blue-700 font-bold opacity-70 text-sm"
+  }, areaA.toFixed(1)), /*#__PURE__*/React.createElement("rect", {
+    x: "0",
+    y: "0",
+    width: b * scale,
+    height: b * scale,
+    fill: "rgba(239, 68, 68, 0.4)",
+    stroke: "#ef4444",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: b * scale / 2,
+    y: b * scale / 2,
+    textAnchor: "middle",
+    dominantBaseline: "middle",
+    className: "fill-red-700 font-bold opacity-70 text-sm"
+  }, areaB.toFixed(1)), /*#__PURE__*/React.createElement("polygon", {
+    points: `0,0 0,${-a * scale} ${b * scale},0`,
+    fill: "white",
+    stroke: "#334155",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: b * scale / 3,
+    y: -a * scale / 3,
+    className: "fill-slate-400 text-xs text-center font-bold"
+  }, "c"), /*#__PURE__*/React.createElement("text", {
+    x: -15,
+    y: -a * scale / 2,
+    className: "fill-blue-500 text-xs font-bold text-center"
+  }, "a"), /*#__PURE__*/React.createElement("text", {
+    x: b * scale / 2,
+    y: 15,
+    className: "fill-red-500 text-xs font-bold text-center"
+  }, "b"), /*#__PURE__*/React.createElement("g", {
+    transform: `translate(0, ${-a * scale}) rotate(${Math.atan2(b, a) * 180 / Math.PI})`
+  }, /*#__PURE__*/React.createElement("rect", {
+    x: "0",
+    y: -c * scale,
+    width: c * scale,
+    height: c * scale,
+    fill: "rgba(16, 185, 129, 0.4)",
+    stroke: "#10b981",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: c * scale / 2,
+    y: -c * scale / 2,
+    transform: `rotate(${-Math.atan2(b, a) * 180 / Math.PI} ${c * scale / 2} ${-c * scale / 2})`,
+    textAnchor: "middle",
+    dominantBaseline: "middle",
+    className: "fill-emerald-700 font-bold opacity-70 text-sm"
+  }, areaC.toFixed(1)))))), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-6 rounded-2xl border border-amber-100 shadow-sm"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-sm font-bold text-slate-400 uppercase mb-4"
+  }, t.drag[lang] || (lang === "en" ? "Adjust Dimensions" : "調整尺寸")), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-4"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "flex justify-between text-xs font-bold text-blue-600 mb-1"
+  }, /*#__PURE__*/React.createElement("span", null, t.sideA[lang]), /*#__PURE__*/React.createElement("span", null, a)), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "1",
+    max: "8",
+    step: "0.5",
+    value: a,
+    onChange: e => setA(Number(e.target.value)),
+    className: "w-full accent-blue-500"
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "flex justify-between text-xs font-bold text-red-600 mb-1"
+  }, /*#__PURE__*/React.createElement("span", null, t.sideB[lang]), /*#__PURE__*/React.createElement("span", null, b)), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "1",
+    max: "8",
+    step: "0.5",
+    value: b,
+    onChange: e => setB(Number(e.target.value)),
+    className: "w-full accent-red-500"
+  })))), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-1 gap-3"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-between bg-blue-50 p-3 rounded-lg border border-blue-100"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-blue-600 font-bold"
+  }, "a²"), /*#__PURE__*/React.createElement("span", {
+    className: "font-mono"
+  }, a, "² = ", areaA.toFixed(2))), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-between bg-red-50 p-3 rounded-lg border border-red-100"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-red-600 font-bold"
+  }, "b²"), /*#__PURE__*/React.createElement("span", {
+    className: "font-mono"
+  }, b, "² = ", areaB.toFixed(2))), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-between bg-emerald-500 text-white p-4 rounded-xl shadow-lg border border-emerald-400 transform scale-105"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "font-bold"
+  }, "c² = a² + b²"), /*#__PURE__*/React.createElement("span", {
+    className: "font-mono text-xl"
+  }, areaC.toFixed(2))), /*#__PURE__*/React.createElement("div", {
+    className: "text-right text-xs text-slate-400 mt-1"
+  }, "c = √", areaC.toFixed(2), " ≈ ", c.toFixed(4))))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

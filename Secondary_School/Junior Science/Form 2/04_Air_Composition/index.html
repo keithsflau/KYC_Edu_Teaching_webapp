@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Air Composition Analyst | S2 Science</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #f0f9ff;
+      }
+    </style>
+  </head>
+  <body class="bg-sky-50 text-slate-800 min-h-screen">
+    <div id="root"></div>
+
+    <script>
+const {
+  useState,
+  useEffect,
+  useRef
+} = React;
+const dataInhaled = {
+  Nitrogen: 78,
+  Oxygen: 21,
+  "Noble Gases": 0.9,
+  "Carbon Dioxide": 0.04,
+  "Water Vapour": "Variable"
+};
+const dataExhaled = {
+  Nitrogen: 78,
+  Oxygen: 16,
+  "Noble Gases": 0.9,
+  "Carbon Dioxide": 4,
+  "Water Vapour": "Saturated"
+};
+const gasIcon = key => key === "Water Vapour" ? "💧" : key === "Oxygen" ? "O₂" : key === "Carbon Dioxide" ? "CO₂" : key === "Nitrogen" ? "N₂" : "He";
+const App = () => {
+  const chartRef = useRef(null);
+  const chartInstanceRef = useRef(null);
+  const [mode, setMode] = useState("inhaled"); // inhaled, exhaled
+  useEffect(() => {
+    const data = mode === "inhaled" ? dataInhaled : dataExhaled;
+    const labels = ["Nitrogen", "Oxygen", "Carbon Dioxide", "Noble Gases"];
+    const values = [
+      data["Nitrogen"],
+      data["Oxygen"],
+      data["Carbon Dioxide"],
+      data["Noble Gases"]
+    ];
+
+    if (!chartRef.current) return;
+    const ctx = chartRef.current.getContext("2d");
+    if (chartInstanceRef.current) {
+      chartInstanceRef.current.data.labels = labels;
+      chartInstanceRef.current.data.datasets[0].data = values;
+      chartInstanceRef.current.update();
+    } else {
+      chartInstanceRef.current = new Chart(ctx, {
+        type: "doughnut",
+        data: {
+          labels: labels,
+          datasets: [{
+            data: values,
+            backgroundColor: ["#bae6fd", "#3b82f6", "#ef4444", "#cbd5e1"],
+            hoverOffset: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: {
+              position: "bottom"
+            }
+          },
+          animation: {
+            animateScale: true,
+            animateRotate: true
+          }
+        }
+      });
+    }
+  }, [mode]);
+  useEffect(() => {
+    return () => {
+      if (chartInstanceRef.current) {
+        try {
+          chartInstanceRef.current.destroy();
+        } catch (e) {}
+        chartInstanceRef.current = null;
+      }
+    };
+  }, []);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "p-8 max-w-5xl mx-auto min-h-screen flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("header", {
+    className: "text-center mb-10 w-full"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-sky-600 font-bold uppercase text-xs tracking-widest"
+  }, "Form 2 Science • Unit 7"), /*#__PURE__*/React.createElement("h1", {
+    className: "text-5xl font-extrabold text-slate-800 mb-2"
+  }, "Air Composition"), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-500"
+  }, "Compare what we breathe in vs what we breathe out.")), /*#__PURE__*/React.createElement("nav", {
+    className: "flex bg-white p-2 rounded-2xl shadow-sm border border-slate-200 mb-12"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setMode("inhaled"),
+    className: `px-8 py-3 rounded-xl font-bold transition-all ${mode === "inhaled" ? "bg-sky-500 text-white shadow-lg" : "text-slate-500 hover:bg-slate-50"}`
+  }, "Inhaled Air →"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setMode("exhaled"),
+    className: `px-8 py-3 rounded-xl font-bold transition-all ${mode === "exhaled" ? "bg-indigo-500 text-white shadow-lg" : "text-slate-500 hover:bg-slate-50"}`
+  }, "← Exhaled Air")), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-1 md:grid-cols-2 gap-12 w-full items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-8 rounded-3xl shadow-xl border border-sky-100 relative"
+  }, /*#__PURE__*/React.createElement("canvas", {
+    ref: chartRef
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[40%] text-center pointer-events-none"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-sm font-bold text-slate-400 uppercase"
+  }, "Total"), /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-bold text-slate-800"
+  }, "100%"))), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-1 gap-4"
+  }, Object.entries(mode === "inhaled" ? dataInhaled : dataExhaled).map(([key, val]) => /*#__PURE__*/React.createElement("div", {
+    key: key,
+    className: "bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex items-center justify-between group hover:border-sky-300 transition-colors"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-3"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: `w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white ${key === "Oxygen" ? "bg-blue-500" : key === "Carbon Dioxide" ? "bg-red-500" : key === "Nitrogen" ? "bg-sky-200 text-sky-700" : "bg-slate-300"}`
+  }, gasIcon(key)), /*#__PURE__*/React.createElement("span", {
+    className: "font-bold text-slate-700"
+  }, key)), /*#__PURE__*/React.createElement("div", {
+    className: `text-xl font-bold font-mono ${mode === "exhaled" && (key === "Oxygen" || key === "Carbon Dioxide") ? "text-indigo-600" : "text-slate-600"}`
+  }, key === "Water Vapour" ? val : val + "%", mode === "exhaled" && key === "Oxygen" && " ↓", mode === "exhaled" && key === "Carbon Dioxide" && " ↑"))), /*#__PURE__*/React.createElement("div", {
+    className: "mt-4 p-4 bg-sky-50 rounded-xl text-sm text-sky-800 border-l-4 border-sky-500"
+  }, /*#__PURE__*/React.createElement("strong", null, "Why change?"), " We consume Oxygen for respiration and produce Carbon Dioxide as a waste product. Water vapour increases because our lung lining is moist."))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

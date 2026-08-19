@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Circle Sector | S2 Math</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+      }
+    </style>
+  </head>
+  <body class="bg-rose-50 text-slate-800 min-h-screen">
+    <div id="root"></div>
+    <script>
+const {
+  useState
+} = React;
+const App = () => {
+  const [r, setR] = useState(8);
+  const [theta, setTheta] = useState(120);
+
+  // Calculations
+  const percentage = theta / 360;
+  const arcLength = (2 * Math.PI * r * percentage).toFixed(2);
+  const area = (Math.PI * r * r * percentage).toFixed(2);
+
+  // SVG Arc Path
+  // Move to center, Line to start, Arc to end, Close
+  const cx = 150,
+    cy = 150;
+  const radius = 100; // Fixed visual radius
+  const startX = cx + radius; // 0 degrees (Right)
+  const startY = cy;
+
+  // Convert angle to rad (subtract from 0 for clockwise or purely math coords)
+  // SVG Y is down.
+  // 0 deg = (cx + r, cy)
+  // theta deg = (cx + r*cos(theta), cy - r*sin(theta)) (Standard math, counter-clockwise)
+  // Let's stick to standard SVG arcs.
+  const rad = theta * Math.PI / 180;
+  const endX = cx + radius * Math.cos(-rad); // negative for SVG Y coords up/down flip? No, standard is clockwise?
+  // Math.cos(ang) for X, Math.sin(ang) for Y.
+  // Let's do standard math, 0 at 3 o'clock, counter-clockwise.
+  // Y is inverted in SVG (down positive). So y = cy - r*sin(theta).
+
+  const p2x = cx + radius * Math.cos(rad);
+  const p2y = cy - radius * Math.sin(rad); // Up is negative Y
+
+  const largeArcFlag = theta > 180 ? 1 : 0;
+
+  // Path: M cx cy L cx+r cy A r r 0 large 0 p2x p2y Z
+  // Note: SVG Arc is A rx ry rot large_arc sweep endX endY
+  // Sweep flag 0 = counter-clockwise.
+  const d = `M ${cx} ${cy} L ${cx + radius} ${cy} A ${radius} ${radius} 0 ${largeArcFlag} 0 ${p2x} ${p2y} Z`;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "p-8 max-w-4xl mx-auto min-h-screen flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("header", {
+    className: "mb-8 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-rose-600 font-bold uppercase text-xs tracking-widest mb-2"
+  }, "Unit 5: Geometry"), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-slate-900"
+  }, "Circle Sector"), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-500"
+  }, "Calculate Arc Length and Sector Area.")), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col md:flex-row gap-12 w-full items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-8 rounded-full shadow-2xl border-4 border-rose-100 w-[350px] h-[350px] flex items-center justify-center shrink-0"
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: "300",
+    height: "300",
+    className: "overflow-visible"
+  }, /*#__PURE__*/React.createElement("circle", {
+    cx: cx,
+    cy: cy,
+    r: radius,
+    fill: "none",
+    stroke: "#e2e8f0",
+    strokeWidth: "2",
+    strokeDasharray: "5,5"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: d,
+    fill: "rgba(244, 63, 94, 0.2)",
+    stroke: "#f43f5e",
+    strokeWidth: "3"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: cx,
+    y1: cy,
+    x2: cx + radius,
+    y2: cy,
+    stroke: "#f43f5e",
+    strokeWidth: "2",
+    markerEnd: "url(#dot)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: cx + radius / 2,
+    y: cy + 20,
+    className: "text-xs font-bold fill-rose-600"
+  }, "r"), theta > 10 && /*#__PURE__*/React.createElement("text", {
+    x: cx + 20,
+    y: cy - 10,
+    className: "text-xs font-bold fill-slate-500"
+  }, theta, "°"), /*#__PURE__*/React.createElement("text", {
+    x: cx + radius + 10,
+    y: cy - 20,
+    className: "text-xs font-bold fill-rose-500"
+  }, "Arc: L"))), /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 w-full max-w-sm flex flex-col gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-6 rounded-2xl shadow-sm border border-slate-100"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "block text-xs font-bold text-slate-400 uppercase mb-2"
+  }, "Radius (r)"), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "1",
+    max: "20",
+    value: r,
+    onChange: e => setR(Number(e.target.value)),
+    className: "w-full h-2 bg-slate-200 rounded-lg accent-rose-500 mb-2"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-right font-bold text-rose-600"
+  }, r, " cm")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-6 rounded-2xl shadow-sm border border-slate-100"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "block text-xs font-bold text-slate-400 uppercase mb-2"
+  }, "Angle (θ)"), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "1",
+    max: "360",
+    value: theta,
+    onChange: e => setTheta(Number(e.target.value)),
+    className: "w-full h-2 bg-slate-200 rounded-lg accent-rose-500 mb-2"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-right font-bold text-rose-600"
+  }, theta, "°")), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 gap-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-rose-500 text-white p-4 rounded-xl shadow-lg hover:scale-105 transition-transform"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold opacity-80 uppercase mb-1"
+  }, "Arc Length"), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-bold"
+  }, arcLength), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs opacity-60"
+  }, "cm")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-800 text-white p-4 rounded-xl shadow-lg hover:scale-105 transition-transform"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold opacity-80 uppercase mb-1"
+  }, "Area"), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-bold"
+  }, area), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs opacity-60"
+  }, "cm²"))))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

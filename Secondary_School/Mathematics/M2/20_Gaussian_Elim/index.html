@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gaussian Elimination | M2 Matrix</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+      }
+      .glass {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .bracket {
+        border-left: 3px solid white;
+        border-right: 3px solid white;
+        padding: 0 10px;
+        border-radius: 8px;
+      }
+      .row-op {
+        border-left: 2px solid #ef4444;
+        padding-left: 10px;
+        margin-bottom: 5px;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <div id="root" class="flex-grow flex flex-col"></div>
+    <script>
+const {
+  useState,
+  useMemo
+} = React;
+const translations = {
+  en: {
+    unit: "Unit 5: Matrices",
+    title: "Gaussian Elimination",
+    subtitle: "Row Reduction / Row Echelon Form",
+    stepTitles: ["Initial Augmented Matrix", "Column 1 Elimination", "Column 2 Elimination", "Clear z in R2", "Scale R2 (solve y)", "Clear y in R1", "Final Solution"],
+    stepDescs: [
+      "System: x+y+z=6, 2x−y+3z=5, −x+2y−z=3 → augmented matrix [A|b]",
+      "Eliminate x: R2 ← R2 − 2R1 and R3 ← R3 + R1.",
+      "Eliminate y in R3: R3 ← R3 + R2 → z = 2.",
+      "Clear z in R2: R2 ← R2 − R3.",
+      "Scale: R2 ← R2 / (−3) → y = 3.",
+      "Clear y in R1: R1 ← R1 − R2.",
+      "Clear z in R1: R1 ← R1 − R3 → x = 1, y = 3, z = 2."
+    ],
+    stepOps: ["", "R2 ← R2−2R1; R3 ← R3+R1", "R3 ← R3+R2", "R2 ← R2−R3", "R2 ← R2/(−3)", "R1 ← R1−R2", "R1 ← R1−R3"],
+    langBtn: "中文"
+  },
+  zh: {
+    unit: "第五單元：矩陣",
+    title: "高斯消去法",
+    subtitle: "列運算 / 列梯陣形式",
+    stepTitles: ["初始增廣矩陣", "第 1 行消去", "第 2 行消去", "消去 R2 的 z", "縮放 R2（求 y）", "消去 R1 的 y", "最終解"],
+    stepDescs: [
+      "方程組：x+y+z=6, 2x−y+3z=5, −x+2y−z=3 → 增廣矩陣 [A|b]",
+      "消去 x：R2 ← R2 − 2R1 且 R3 ← R3 + R1。",
+      "消去 R3 的 y：R3 ← R3 + R2 → z = 2。",
+      "消去 R2 的 z：R2 ← R2 − R3。",
+      "縮放：R2 ← R2 / (−3) → y = 3。",
+      "消去 R1 的 y：R1 ← R1 − R2。",
+      "消去 R1 的 z：R1 ← R1 − R3 → x = 1, y = 3, z = 2。"
+    ],
+    stepOps: ["", "R2 ← R2−2R1; R3 ← R3+R1", "R3 ← R3+R2", "R2 ← R2−R3", "R2 ← R2/(−3)", "R1 ← R1−R2", "R1 ← R1−R3"],
+    langBtn: "English"
+  }
+};
+const App = () => {
+  const [lang, setLang] = useState("en");
+  const t = translations[lang];
+
+  // System 3x3 (solution x=1, y=3, z=2)
+  // x + y + z = 6
+  // 2x - y + 3z = 5
+  // -x + 2y - z = 3
+
+  const steps = useMemo(() => [{
+    mat: [[1, 1, 1, 6], [2, -1, 3, 5], [-1, 2, -1, 3]]
+  }, {
+    mat: [[1, 1, 1, 6], [0, -3, 1, -7], [0, 3, 0, 9]]
+  }, {
+    mat: [[1, 1, 1, 6], [0, -3, 1, -7], [0, 0, 1, 2]]
+  }, {
+    mat: [[1, 1, 1, 6], [0, -3, 0, -9], [0, 0, 1, 2]]
+  }, {
+    mat: [[1, 1, 1, 6], [0, 1, 0, 3], [0, 0, 1, 2]]
+  }, {
+    mat: [[1, 0, 1, 3], [0, 1, 0, 3], [0, 0, 1, 2]]
+  }, {
+    mat: [[1, 0, 0, 1], [0, 1, 0, 3], [0, 0, 1, 2]]
+  }], []);
+  const [step, setStep] = useState(0);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "flex-grow flex flex-col items-center justify-center p-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 right-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLang(l => l === "en" ? "zh" : "en"),
+    className: "px-3 py-1 bg-slate-800 border border-slate-600 rounded-full text-xs font-bold text-emerald-400 hover:bg-slate-700 hover:text-white transition flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-language"
+  }), t.langBtn)), /*#__PURE__*/React.createElement("header", {
+    className: "mb-12 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-amber-500 font-bold uppercase tracking-widest text-xs mb-2"
+  }, t.unit), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-white mb-2"
+  }, t.title), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-400 font-mono text-lg"
+  }, t.subtitle)), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-4xl flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4 mb-8 items-center w-full"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setStep(Math.max(0, step - 1)),
+    disabled: step === 0,
+    className: `p-4 rounded-full ${step === 0 ? "text-slate-700" : "bg-slate-700 text-white hover:bg-slate-600"}`
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-arrow-left"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "glass flex-grow p-8 rounded-3xl flex flex-col items-center min-h-[400px]"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "text-xl font-bold text-sky-400 mb-2"
+  }, t.stepTitles[step]), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-400 text-sm mb-6"
+  }, t.stepDescs[step]), t.stepOps[step] && /*#__PURE__*/React.createElement("div", {
+    className: "mb-6 px-4 py-1 bg-rose-900/50 text-rose-300 font-mono text-sm rounded border border-rose-500/30"
+  }, t.stepOps[step]), /*#__PURE__*/React.createElement("div", {
+    className: "bracket text-3xl font-mono flex gap-8 items-center bg-slate-900/50 py-8 text-white"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-3 gap-6 text-right"
+  }, steps[step].mat.map((row, r) => row.slice(0, 3).map((val, c) => /*#__PURE__*/React.createElement("div", {
+    key: `m-${r}-${c}`,
+    className: `${step === 0 && r === 0 || step === 1 && (r === 1 || r === 2) || step === 2 && r === 2 || step === 3 && r === 1 || step === 4 && r === 1 || step === 5 && r === 0 || step === 6 && r === 0 ? "text-amber-400 font-bold" : ""}`
+  }, Number.isInteger(val) ? val : val.toFixed(1))))), /*#__PURE__*/React.createElement("div", {
+    className: "w-px h-full bg-slate-500"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-1 gap-6 text-right"
+  }, steps[step].mat.map((row, r) => /*#__PURE__*/React.createElement("div", {
+    key: `b-${r}`,
+    className: "text-emerald-400 font-bold"
+  }, Number.isInteger(row[3]) ? row[3] : row[3].toFixed(1)))))), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setStep(Math.min(steps.length - 1, step + 1)),
+    disabled: step === steps.length - 1,
+    className: `p-4 rounded-full ${step === steps.length - 1 ? "text-slate-700" : "bg-slate-700 text-white hover:bg-slate-600"}`
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-arrow-right"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-2"
+  }, steps.map((_, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: `w-3 h-3 rounded-full ${i === step ? "bg-sky-500 scale-125" : "bg-slate-700"}`
+  })))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

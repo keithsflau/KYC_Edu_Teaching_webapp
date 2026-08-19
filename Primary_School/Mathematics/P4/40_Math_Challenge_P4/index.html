@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小四數學：數學終極挑戰 | Math Ultimate Challenge</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #111827 0%, #4c1d95 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Ultimate Math Challenge",
+    zh: "數學終極挑戰",
+    ja: "究極の数学チャレンジ",
+    ko: "수학 궁극의 도전",
+    es: "Desafío Matemático Supremo",
+    de: "Ultimative Mathe-Herausforderung",
+    fi: "Lopullinen matematiikkahaaste",
+    fr: "Défi mathématique ultime",
+    ar: "تحدي الرياضيات النهائي",
+    it: "Sfida matematica finale"
+  },
+  start: {
+    en: "Start Challenge",
+    zh: "開始挑戰",
+    ja: "チャレンジ開始",
+    ko: "도전 시작",
+    es: "Iniciar Desafío",
+    de: "Herausforderung starten",
+    fi: "Aloita haaste",
+    fr: "Commencer le défi",
+    ar: "ابدأ التحدي",
+    it: "Inizia la sfida"
+  },
+  question: {
+    en: "Question",
+    zh: "問題",
+    ja: "質問",
+    ko: "질문",
+    es: "Pregunta",
+    de: "Frage",
+    fi: "Kysymys",
+    fr: "Question",
+    ar: "سؤال",
+    it: "Domanda"
+  },
+  points: {
+    en: "Points",
+    zh: "分",
+    ja: "点",
+    ko: "점",
+    es: "Puntos",
+    de: "Punkte",
+    fi: "Pistettä",
+    fr: "Points",
+    ar: "نقاط",
+    it: "Punti"
+  },
+  completed: {
+    en: "Challenge Completed!",
+    zh: "挑戰完成！",
+    ja: "チャレンジ完了！",
+    ko: "도전 완료!",
+    es: "¡Desafío Completado!",
+    de: "Herausforderung abgeschlossen!",
+    fi: "Haaste suoritettu!",
+    fr: "Défi terminé !",
+    ar: "تم التحدي!",
+    it: "Sfida completata!"
+  },
+  menu: {
+    en: "Back to Menu",
+    zh: "回主選單",
+    ja: "メニューに戻る",
+    ko: "메뉴로 돌아가기",
+    es: "Volver al Menú",
+    de: "Zurück zum Menü",
+    fi: "Takaisin valikkoon",
+    fr: "Retour au menu",
+    ar: "العودة للقائمة",
+    it: "Torna al menu"
+  }
+};
+const questionsData = [{
+  q: {
+    en: "How many factors does 12 have?",
+    zh: "12 的因數有幾個？",
+    ja: "12の因数はいくつありますか？",
+    ko: "12의 약수는 몇 개입니까?",
+    es: "¿Cuántos factores tiene 12?",
+    de: "Wie viele Faktoren hat 12?",
+    fi: "Kuinka monta tekijää luvulla 12 on?",
+    fr: "Combien de facteurs a 12 ?",
+    ar: "كم عدد قواسم 12؟",
+    it: "Quanti fattori ha 12?"
+  },
+  options: ["4", "5", "6", "8"],
+  ans: "6"
+}, {
+  q: {
+    en: "What is the L.C.M. of 15 and 20?",
+    zh: "15 和 20 的最小公倍數 (L.C.M.) 是？",
+    ja: "15と20の最小公倍数(L.C.M.)は？",
+    ko: "15와 20의 최소공배수(L.C.M.)는?",
+    es: "¿Cuál es el m.c.m. de 15 y 20?",
+    de: "Was ist das KGV von 15 und 20?",
+    fi: "Mikä on lukujen 15 ja 20 pienin yhteinen jaettava?",
+    fr: "Quel est le PPCM de 15 et 20 ?",
+    ar: "ما هو المضاعف المشترك الأصغر لـ 15 و 20؟",
+    it: "Qual è il m.c.m. di 15 e 20?"
+  },
+  options: ["30", "60", "45", "100"],
+  ans: "60"
+}, {
+  q: {
+    en: "Square perimeter is 36cm, side length?",
+    zh: "正方形周界是 36cm，邊長是？",
+    ja: "正方形の周囲は36cmです、辺の長さは？",
+    ko: "정사각형 둘레가 36cm일 때, 한 변의 길이는?",
+    es: "El perímetro cuadrado es 36cm, ¿longitud del lado?",
+    de: "Der quadratische Umfang beträgt 36cm, Seitenlänge?",
+    fi: "Neliön piiri on 36cm, sivun pituus?",
+    fr: "Le périmètre du carré est 36cm, longueur du côté ?",
+    ar: "محيط المربع 36 سم، طول الضلع؟",
+    it: "Il perimetro quadrato è 36cm, lunghezza del lato?"
+  },
+  options: ["6cm", "9cm", "12cm", "4cm"],
+  ans: "9cm"
+}, {
+  q: {
+    en: "½ + ¼ = ?",
+    zh: "½ + ¼ = ?",
+    ja: "½ + ¼ = ?",
+    ko: "½ + ¼ = ?",
+    es: "½ + ¼ = ?",
+    de: "½ + ¼ = ?",
+    fi: "½ + ¼ = ?",
+    fr: "½ + ¼ = ?",
+    ar: "½ + ¼ = ?",
+    it: "½ + ¼ = ?"
+  },
+  options: ["¾", "2/6", "3/8", "1"],
+  ans: "¾"
+}, {
+  q: {
+    en: "7.5 - 2.3 = ?",
+    zh: "7.5 - 2.3 = ?",
+    ja: "7.5 - 2.3 = ?",
+    ko: "7.5 - 2.3 = ?",
+    es: "7.5 - 2.3 = ?",
+    de: "7.5 - 2.3 = ?",
+    fi: "7.5 - 2.3 = ?",
+    fr: "7.5 - 2.3 = ?",
+    ar: "7.5 - 2.3 = ?",
+    it: "7.5 - 2.3 = ?"
+  },
+  options: ["5.2", "5.8", "4.2", "9.8"],
+  ans: "5.2"
+}, {
+  q: {
+    en: "Which is a prime number?",
+    zh: "下列哪個是質數？",
+    ja: "素数はどれですか？",
+    ko: "다음 중 소수는?",
+    es: "¿Cuál es un número primo?",
+    de: "Welches ist eine Primzahl?",
+    fi: "Mikä on alkuluku?",
+    fr: "Lequel est un nombre premier ?",
+    ar: "أي مما يلي عدد أولي؟",
+    it: "Quale è un numero primo?"
+  },
+  options: ["9", "15", "17", "21"],
+  ans: "17"
+}, {
+  q: {
+    en: "Rectangle area 40cm², length 8cm, width?",
+    zh: "長方形面積 40cm²，長 8cm，闊是？",
+    ja: "長方形の面積40cm²、長さ8cm、幅は？",
+    ko: "직사각형 면적 40cm², 길이 8cm, 너비는?",
+    es: "Área rectángulo 40cm², largo 8cm, ¿ancho?",
+    de: "Rechteckfläche 40cm², Länge 8cm, Breite?",
+    fi: "Suorakulmion pinta-ala 40cm², pituus 8cm, leveys?",
+    fr: "Aire du rectangle 40cm², longueur 8cm, largeur ?",
+    ar: "مساحة المستطيل 40 سم²، الطول 8 سم، العرض؟",
+    it: "Area rettangolo 40cm², lunghezza 8cm, larghezza?"
+  },
+  options: ["5cm", "32cm", "4cm", "12cm"],
+  ans: "5cm"
+}, {
+  q: {
+    en: "MMXXIV represents?",
+    zh: "MMXXIV 代表？",
+    ja: "MMXXIV は何を表していますか？",
+    ko: "MMXXIV는 무엇을 나타냅니까?",
+    es: "¿MMXXIV representa?",
+    de: "MMXXIV steht für?",
+    fi: "MMXXIV edustaa?",
+    fr: "MMXXIV représente ?",
+    ar: "MMXXIV يمثل؟",
+    it: "MMXXIV rappresenta?"
+  },
+  options: ["2024", "2023", "2025", "2124"],
+  ans: "2024"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const getText = key => t[key][lang] || t[key]["en"];
+  const [gameState, setGameState] = useState("menu"); // menu, playing, end
+  const [score, setScore] = useState(0);
+  const [qIdx, setQIdx] = useState(0);
+  const handleAnswer = opt => {
+    if (opt === questionsData[qIdx].ans) {
+      setScore(s => s + 100);
+    }
+    if (qIdx < questionsData.length - 1) {
+      setQIdx(prev => prev + 1);
+    } else {
+      setGameState("end");
+    }
+  };
+  const startGame = () => {
+    setScore(0);
+    setQIdx(0);
+    setGameState("playing");
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-8 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 right-4 z-50"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  })), gameState === "menu" && /*#__PURE__*/React.createElement("div", {
+    className: "text-center mt-20"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-6xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-pink-500 mb-8 drop-shadow-lg p-4"
+  }, "🏆 ", getText("title")), /*#__PURE__*/React.createElement("button", {
+    onClick: startGame,
+    className: "bg-gradient-to-r from-purple-500 to-pink-500 text-white px-12 py-6 rounded-full text-4xl font-black hover:scale-110 transition-transform shadow-2xl ring-4 ring-white/20"
+  }, getText("start"))), gameState === "playing" && /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-2xl bg-white/10 backdrop-blur-xl rounded-3xl p-8 md:p-12 border border-white/20 mt-12 text-white"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between items-center mb-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-bold text-purple-300"
+  }, getText("question"), " ", qIdx + 1, "/", questionsData.length), /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black text-yellow-400"
+  }, score, " ", getText("points"))), /*#__PURE__*/React.createElement("h2", {
+    className: "text-3xl md:text-4xl font-black mb-12 text-center min-h-32 flex items-center justify-center"
+  }, questionsData[qIdx].q[lang] || questionsData[qIdx].q["en"]), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 gap-6"
+  }, questionsData[qIdx].options.map((opt, i) => /*#__PURE__*/React.createElement(motion.button, {
+    key: i,
+    whileHover: {
+      scale: 1.05
+    },
+    whileTap: {
+      scale: 0.95
+    },
+    onClick: () => handleAnswer(opt),
+    className: "bg-white/20 hover:bg-white/30 p-6 rounded-2xl text-2xl font-bold border-2 border-white/10 transition-colors"
+  }, opt)))), gameState === "end" && /*#__PURE__*/React.createElement("div", {
+    className: "text-center bg-white/10 backdrop-blur-xl p-12 rounded-3xl border border-white/20 mt-20 text-white"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "text-5xl font-black mb-4"
+  }, getText("completed")), /*#__PURE__*/React.createElement("div", {
+    className: "text-8xl font-black text-yellow-400 mb-8"
+  }, score), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setGameState("menu"),
+    className: "bg-white text-purple-900 px-8 py-3 rounded-full font-black text-xl hover:bg-gray-200"
+  }, getText("menu"))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

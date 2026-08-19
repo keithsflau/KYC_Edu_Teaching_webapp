@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Mathematical Modelling Coach | S6 Math AI 數學建模教練</title>
+  <!--
+    Curriculum Alignment
+    - Audience: Form 6 / enrichment across F2–F6
+    - Curriculum: Mathematical modelling cycle + HKDSE applied maths habits; NSE via scenario content
+    - Tech: Offline rule-based "AI coach" (heuristics + transparent reasoning) — no API keys
+    - Objectives:
+      K: Apply modelling cycle to multi-domain problems
+      S: Choose assumptions, run models, interpret with coach critique
+      A: Value transparent reasoning & data integrity (anti-misinfo)
+  -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    body { font-family: "Outfit", "Noto Sans TC", sans-serif; }
+    .chat-bubble { animation: fadeIn .35s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useMemo, useEffect, useRef } = React;
+
+    const SCENARIOS = {
+      mtr: {
+        id: "mtr",
+        ns: { en: "Societal resilience", zh: "社會韌性" },
+        en: { name: "MTR Peak Queue", blurb: "Linear rate model for passenger queues", level: "F2+" },
+        zh: { name: "港鐵高峰人龍", blurb: "乘客排隊的線性速率模型", level: "中二+" },
+        params: [
+          { key: "rin", label: { en: "Arrival / min", zh: "到達／分" }, min: 20, max: 80, def: 53 },
+          { key: "rout", label: { en: "Exit / min", zh: "離開／分" }, min: 20, max: 80, def: 41 },
+          { key: "q0", label: { en: "Initial queue", zh: "初始排隊" }, min: 0, max: 120, def: 14 },
+          { key: "t", label: { en: "Minutes", zh: "分鐘" }, min: 5, max: 40, def: 18 }
+        ],
+        solve: (p) => {
+          const net = p.rin - p.rout;
+          const q = Math.max(0, p.q0 + net * p.t);
+          return {
+            headline: { en: `Queue after ${p.t} min ≈ ${Math.round(q)}`, zh: `${p.t} 分鐘後排隊 ≈ ${Math.round(q)}` },
+            metrics: [
+              { en: `Net rate ${net}/min`, zh: `淨速率 ${net}/分` },
+              { en: `Model Q=Q₀+(r_in−r_out)t`, zh: `模型 Q=Q₀+(r_入−r_出)t` }
+            ],
+            ok: q <= 100,
+            tags: ["linear", "rates"]
+          };
+        },
+        coach: (p, r, lang) => {
+          const steps = [];
+          steps.push(lang === "en" ? "① Assumptions: constant rates, single gate bank." : "① 假設：速率恆定、單組閘機。");
+          steps.push(lang === "en" ? `② Model: Q(t)=${p.q0}+(${p.rin}−${p.rout})t` : `② 模型：Q(t)=${p.q0}+(${p.rin}−${p.rout})t`);
+          steps.push(lang === "en" ? `③ Solve: Q(${p.t})≈${Math.round(Math.max(0, p.q0+(p.rin-p.rout)*p.t))}` : `③ 求解：Q(${p.t})≈${Math.round(Math.max(0, p.q0+(p.rin-p.rout)*p.t))}`);
+          if (p.rin > p.rout) steps.push(lang === "en" ? "④ Risk: queue grows — refine capacity or stagger arrivals." : "④ 風險：人龍增長——修正容量或錯峰。");
+          else steps.push(lang === "en" ? "④ Queue drains — check if surge arrivals break the assumption." : "④ 人龍消散——檢查突增會否打破假設。");
+          return steps;
+        }
+      },
+      water: {
+        id: "water",
+        ns: { en: "Resource security", zh: "資源安全" },
+        en: { name: "Reservoir Balance", blurb: "Weekly storage recursion (Mm³)", level: "F3+" },
+        zh: { name: "水塘平衡", blurb: "每週存量遞推（10⁶ m³）", level: "中三+" },
+        // Aligned with Form 3 Reservoir Security: absolute Mm³ flows + capacity, report %.
+        params: [
+          { key: "cap", label: { en: "Capacity (10⁶ m³)", zh: "容量（10⁶ m³）" }, min: 200, max: 800, def: 473 },
+          { key: "startPct", label: { en: "Start %", zh: "起始 %" }, min: 20, max: 100, def: 58 },
+          { key: "rain", label: { en: "Rain (10⁶ m³)/wk", zh: "雨量（10⁶ m³）／週" }, min: 0, max: 25, def: 5 },
+          { key: "demand", label: { en: "Demand/wk", zh: "需求／週" }, min: 10, max: 35, def: 17 },
+          { key: "imp", label: { en: "Import/wk", zh: "輸入／週" }, min: 0, max: 30, def: 11 },
+          { key: "w", label: { en: "Weeks", zh: "週數" }, min: 4, max: 20, def: 12 }
+        ],
+        solve: (p) => {
+          const cap = Math.max(Number(p.cap) || 0, 1);
+          const weeks = Number(p.w) || 0;
+          const rain = Number(p.rain) || 0;
+          const imp = Number(p.imp) || 0;
+          const demand = Number(p.demand) || 0;
+          let s = Math.max(0, Math.min(cap, ((Number(p.startPct) || 0) / 100) * cap));
+          let minS = s;
+          for (let i = 0; i < weeks; i++) {
+            s = Math.max(0, Math.min(cap, s + rain + imp - demand));
+            minS = Math.min(minS, s);
+          }
+          const finalPct = (s / cap) * 100;
+          const minPct = (minS / cap) * 100;
+          return {
+            headline: { en: `Final storage ≈ ${finalPct.toFixed(0)}% (min ${minPct.toFixed(0)}%)`, zh: `最終存量 ≈ ${finalPct.toFixed(0)}%（最低 ${minPct.toFixed(0)}%）` },
+            metrics: [
+              { en: `Net ${rain + imp - demand} ×10⁶ m³/wk`, zh: `淨 ${rain + imp - demand} ×10⁶ m³／週` },
+              { en: `Sₙ₊₁ = min(C, max(0, Sₙ + rain + import − demand))`, zh: `Sₙ₊₁ = min(C, max(0, Sₙ + 雨 + 輸入 − 需求))` }
+            ],
+            ok: minPct >= 35,
+            tags: ["recursion", "resource"]
+          };
+        },
+        coach: (p, r, lang) => {
+          const net = p.rain + p.imp - p.demand;
+          return [
+            lang === "en" ? "① Real problem: keep strategic freshwater buffer." : "① 現實問題：維持戰略淡水緩衝。",
+            lang === "en" ? `② Model (Mm³): Sₙ₊₁ = clamp(Sₙ + rain + import − demand); net/wk = ${net}.` : `② 模型（10⁶ m³）：Sₙ₊₁ = clamp(Sₙ + 雨 + 輸入 − 需求)；淨／週 = ${net}。`,
+            net < 0
+              ? (lang === "en" ? "③ Dry trajectory — raise import or cut demand; rain is uncertain." : "③ 乾燥軌跡——增輸入或減需求；雨量不確定。")
+              : net > 0
+                ? (lang === "en" ? "③ Buffer recovers — still stress-test rain = 0." : "③ 緩衝回升——仍應壓力測試雨量=0。")
+                : (lang === "en" ? "③ Net = 0 — level stable; still stress-test rain = 0." : "③ 淨變=0——水位穩定；仍應壓力測試雨量=0。"),
+            lang === "en" ? "④ NSE lens: resource security via quantitative planning." : "④ 國安視角：以量化規劃談資源安全。"
+          ];
+        }
+      },
+      cyber: {
+        id: "cyber",
+        ns: { en: "Data / tech security", zh: "數據／科技安全" },
+        en: { name: "Phishing Risk Tree", blurb: "Compound probability of compromise", level: "F4+" },
+        zh: { name: "釣魚風險樹", blurb: "入侵的複合概率", level: "中四+" },
+        params: [
+          { key: "pp", label: { en: "P(phish)%", zh: "P(釣魚)%" }, min: 5, max: 80, def: 42 },
+          { key: "pc", label: { en: "P(click|phish)%", zh: "P(點擊|釣魚)%" }, min: 5, max: 70, def: 22 },
+          { key: "pr", label: { en: "P(cred|click)%", zh: "P(憑證|點擊)%" }, min: 5, max: 70, def: 38 },
+          { key: "mfa", label: { en: "MFA strength %", zh: "MFA 強度 %" }, min: 0, max: 95, def: 0 }
+        ],
+        solve: (p) => {
+          const breach = (p.pp / 100) * (p.pc / 100) * (p.pr / 100) * (1 - p.mfa / 100);
+          return {
+            headline: { en: `P(breach) ≈ ${(breach * 100).toFixed(2)}%`, zh: `P(入侵) ≈ ${(breach * 100).toFixed(2)}%` },
+            metrics: [
+              { en: "Path product of conditionals", zh: "條件概率路徑乘積" }
+            ],
+            ok: breach < 0.045,
+            tags: ["probability", "cyber"]
+          };
+        },
+        coach: (p, r, lang) => [
+          lang === "en" ? "① Model: P = P(phish)·P(click|phish)·P(cred|click)·(1−MFA)." : "① 模型：P = P(釣魚)·P(點擊|…)·P(憑證|…)·(1−MFA)。",
+          lang === "en" ? "② Defence multiplies onto one factor — layered controls beat single tweaks." : "② 防衛作用於單一因子——分層控制優於單點微調。",
+          lang === "en" ? "③ Attitude: probability literacy supports data security habits." : "③ 態度：概率素養支持數據安全習慣。",
+          r.ok
+            ? (lang === "en" ? "④ Risk under 4.5% — document assumptions for your report." : "④ 風險低於 4.5%——報告中寫明假設。")
+            : (lang === "en" ? "④ Risk high — increase MFA or cut click rate via training." : "④ 風險偏高——提高 MFA 或經培訓降低點擊率。")
+        ]
+      },
+      energy: {
+        id: "energy",
+        ns: { en: "Energy / economic security", zh: "能源／經濟安全" },
+        en: { name: "Grid Reserve Margin", blurb: "Supply mix vs peak demand", level: "F5+" },
+        zh: { name: "電網備用率", blurb: "供應組合對高峰需求", level: "中五+" },
+        params: [
+          { key: "D", label: { en: "Demand GW", zh: "需求 GW" }, min: 5, max: 12, def: 9.2 },
+          { key: "firm", label: { en: "Firm GW", zh: "穩定電源 GW" }, min: 3, max: 12, def: 9.1 },
+          { key: "var", label: { en: "Variable GW", zh: "變動電源 GW" }, min: 0, max: 6, def: 2.4 },
+          { key: "stress", label: { en: "Variable haircut %", zh: "變動折減 %" }, min: 0, max: 80, def: 30 }
+        ],
+        solve: (p) => {
+          const Seff = p.firm + p.var * (1 - p.stress / 100);
+          const margin = (Seff - p.D) / p.D;
+          return {
+            headline: { en: `Reserve ≈ ${(margin * 100).toFixed(1)}% (S_eff=${Seff.toFixed(2)})`, zh: `備用 ≈ ${(margin * 100).toFixed(1)}%（S_eff=${Seff.toFixed(2)}）` },
+            metrics: [{ en: "Stress-tested variable output", zh: "經壓力測試的變動輸出" }],
+            ok: margin >= 0.15,
+            tags: ["optimisation", "energy"]
+          };
+        },
+        coach: (p, r, lang) => [
+          lang === "en" ? "① Effective supply discounts variable sources under stress." : "① 有效供應在壓力下折減變動電源。",
+          lang === "en" ? `② Margin target 15%: currently ${(r.ok ? "met" : "missed")}.` : `② 備用目標 15%：目前${r.ok ? "達標" : "未達標"}。`,
+          lang === "en" ? "③ Refine: diversify firm capacity; do not treat weather-dependent output as guaranteed." : "③ 修正：多元化穩定容量；勿把天氣依賴輸出視為保證。",
+          lang === "en" ? "④ NSE: energy security framed as constraint satisfaction." : "④ 國安：能源安全以約束滿足來表述。"
+        ]
+      },
+      misinfo: {
+        id: "misinfo",
+        ns: { en: "Information literacy", zh: "資訊素養" },
+        en: { name: "Misleading Chart Detector", blurb: "Truncated axes exaggerate differences", level: "F6" },
+        zh: { name: "誤導圖表偵察", blurb: "截斷軸誇大差異", level: "中六" },
+        params: [
+          { key: "a", label: { en: "Series A", zh: "數列 A" }, min: 50, max: 150, def: 87 },
+          { key: "b", label: { en: "Series B", zh: "數列 B" }, min: 50, max: 150, def: 94 },
+          { key: "trunc", label: { en: "Truncate axis (0/1)", zh: "截斷軸 (0/1)" }, min: 0, max: 1, def: 1 }
+        ],
+        solve: (p) => {
+          const truePct = Math.abs(p.b - p.a) / Math.max(p.a, 1) * 100;
+          const min = Math.min(p.a, p.b);
+          const max = Math.max(p.a, p.b);
+          const visual = p.trunc
+            ? Math.abs(p.b - p.a) / Math.max(0.01, max - min * 0.95) * 100
+            : truePct;
+          const exaggerate = visual / Math.max(truePct, 0.01);
+          return {
+            headline: { en: `True Δ ${truePct.toFixed(1)}% · Visual ≈ ${visual.toFixed(0)} (×${exaggerate.toFixed(1)})`, zh: `真實差 ${truePct.toFixed(1)}% · 視覺 ≈ ${visual.toFixed(0)}（×${exaggerate.toFixed(1)}）` },
+            metrics: [{ en: "Compare honest vs truncated scales", zh: "比較誠實與截斷刻度" }],
+            ok: !p.trunc || exaggerate < 1.5,
+            tags: ["statistics", "misinfo"]
+          };
+        },
+        coach: (p, r, lang) => [
+          lang === "en" ? "① Always ask: does the axis start at zero?" : "① 常問：座標軸是否從 0 開始？",
+          lang === "en" ? "② Compute relative change (B−A)/A — do not trust bar height alone." : "② 計算相對變化 (B−A)/A——勿只信柱高。",
+          lang === "en" ? "③ Attitude: resist sharing charts that fail basic integrity checks." : "③ 態度：拒絕分享未通過基本誠信檢查的圖表。",
+          lang === "en" ? "④ NSE link: information literacy protects public decision-making." : "④ 國安連結：資訊素養保障公眾決策品質。"
+        ]
+      }
+    };
+
+    const UI = {
+      en: {
+        back: "← Form 6", lang: "中文",
+        title: "AI Mathematical Modelling Coach",
+        sub: "Offline heuristic coach · transparent reasoning · no API keys",
+        pick: "Choose a scenario",
+        cycle: "Modelling cycle",
+        stages: ["Problem", "Assumptions", "Model", "Solve", "Interpret", "Refine"],
+        params: "Your parameters",
+        result: "Model output",
+        coach: "AI Coach reasoning",
+        ask: "Ask coach…",
+        send: "Analyse",
+        presets: ["Why this model?", "What if stress-test?", "NSE angle?", "Improve assumptions"],
+        offline: "100% offline — rule-based tutor with visible steps",
+        obj: "Objectives: apply the cycle · critique assumptions · link maths to civic data literacy",
+        links: "Related labs",
+        stageHelp: [
+          "Clarify the real-world question and constraints.",
+          "List what you include, ignore, and hold constant.",
+          "Write the equation / tree / recursion you will use.",
+          "Compute outputs from your current parameters.",
+          "Explain results in context — who is affected?",
+          "Change one assumption and compare the new outcome."
+        ]
+      },
+      zh: {
+        back: "← 中六", lang: "ENG",
+        title: "AI 數學建模教練",
+        sub: "離線啟發式教練 · 透明推理 · 無需 API",
+        pick: "選擇情境",
+        cycle: "建模循環",
+        stages: ["問題", "假設", "模型", "求解", "詮釋", "修正"],
+        params: "你的參數",
+        result: "模型輸出",
+        coach: "AI 教練推理",
+        ask: "向教練提問…",
+        send: "分析",
+        presets: ["為何用此模型？", "壓力測試？", "國安角度？", "改進假設"],
+        offline: "完全離線——規則式導師，步驟可見",
+        obj: "目標：運用循環 · 批判假設 · 連結數學與公民數據素養",
+        links: "相關實驗室",
+        stageHelp: [
+          "釐清現實問題與限制條件。",
+          "列出納入、忽略與保持不變的量。",
+          "寫下將使用的方程／樹形圖／遞推。",
+          "用目前參數計算輸出。",
+          "在情境中詮釋結果——誰受影響？",
+          "改變一個假設並比較新結果。"
+        ]
+      }
+    };
+
+    function heuristicReply(q, scenario, params, result, lang) {
+      const ql = q.toLowerCase();
+      const base = scenario.coach(params, result, lang);
+      if (/stress|壓力|what if|如果/.test(ql)) {
+        return lang === "en"
+          ? [...base, "⑤ Stress tip: worsen one parameter by ~30% and recompute — note which assumption breaks first."]
+          : [...base, "⑤ 壓力提示：把某一參數惡化約 30% 再算——留意哪個假設最先失效。"];
+      }
+      if (/nse|國安|security|安全/.test(ql)) {
+        return lang === "en"
+          ? [...base, `⑤ NSE field for this lab: ${scenario.ns.en}. Keep the discussion mathematical and evidence-based.`]
+          : [...base, `⑤ 本實驗國安範疇：${scenario.ns.zh}。討論保持數學與實證。`];
+      }
+      if (/assum|假設|why|為何|模型/.test(ql)) {
+        return lang === "en"
+          ? ["Assumptions drive validity.", ...base, "⑤ Write assumptions explicitly in your solution script."]
+          : ["假設決定模型有效性。", ...base, "⑤ 在解題過程清楚寫出假設。"];
+      }
+      return base;
+    }
+
+    function defaultParams(id) {
+      return Object.fromEntries(SCENARIOS[id].params.map(p => [p.key, p.def]));
+    }
+
+    function App() {
+      const [lang, setLang] = useState("en");
+      const t = UI[lang];
+      const [sid, setSid] = useState("mtr");
+      const scenario = SCENARIOS[sid];
+      const [params, setParams] = useState(() => defaultParams("mtr"));
+      const [step, setStep] = useState(3);
+      const [chat, setChat] = useState([]);
+      const [draft, setDraft] = useState("");
+      const endRef = useRef(null);
+
+      // Reset params in the same event as sid so solve never runs with a stale param set
+      // (useEffect was one render too late — Reservoir called .toFixed on undefined).
+      const selectScenario = (id) => {
+        setSid(id);
+        setParams(defaultParams(id));
+        setChat([]);
+        setStep(0);
+      };
+
+      const result = useMemo(() => {
+        const clean = Object.fromEntries(
+          scenario.params.map(p => [p.key, params[p.key] ?? p.def])
+        );
+        return scenario.solve(clean);
+      }, [scenario, params]);
+
+      useEffect(() => {
+        endRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, [chat]);
+
+      const runCoach = (q) => {
+        const steps = heuristicReply(q || "analyse", scenario, params, result, lang);
+        setChat(c => [...c, { role: "user", text: q || t.presets[0] }, { role: "ai", steps }]);
+      };
+
+      const meta = scenario[lang];
+
+      return (
+        <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_#1e293b_0%,_#020617_55%)]">
+          <a href="../index.html" className="fixed top-4 left-4 z-50 text-sm text-slate-300 hover:text-sky-300 bg-slate-900/80 px-3 py-1.5 rounded-lg border border-slate-700">{t.back}</a>
+          <button onClick={() => setLang(lang === "en" ? "zh" : "en")} className="fixed top-4 right-4 z-50 text-sm font-bold text-sky-300 bg-slate-900/80 px-3 py-1.5 rounded-lg border border-sky-800">{t.lang}</button>
+
+          <header className="max-w-6xl mx-auto pt-16 px-4 text-center">
+            <div className="inline-flex items-center gap-2 text-sky-400 text-xs font-bold tracking-widest uppercase mb-3">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />{t.offline}
+            </div>
+            <h1 className="text-3xl md:text-5xl font-extrabold text-white mb-2">{t.title}</h1>
+            <p className="text-slate-400 max-w-2xl mx-auto">{t.sub}</p>
+            <p className="text-xs text-slate-500 mt-3">{t.obj}</p>
+          </header>
+
+          <div className="max-w-6xl mx-auto px-4 mt-8">
+            <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">{t.pick}</div>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+              {Object.values(SCENARIOS).map(sc => (
+                <button key={sc.id} onClick={() => selectScenario(sc.id)} className={`text-left p-3 rounded-2xl border transition ${sid === sc.id ? "bg-sky-600 border-sky-400 text-white" : "bg-slate-900/70 border-slate-700 hover:border-sky-700"}`}>
+                  <div className="font-bold text-sm">{sc[lang].name}</div>
+                  <div className="text-[10px] opacity-70 mt-1">{sc[lang].level} · {sc.ns[lang]}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="max-w-6xl mx-auto px-4 mt-6">
+            <div className="flex flex-wrap gap-2 justify-center mb-3">
+              {t.stages.map((s, i) => (
+                <button key={s} onClick={() => setStep(i)} className={`px-3 py-1.5 rounded-full text-xs font-bold border ${step === i ? "bg-emerald-500 text-slate-900 border-emerald-400" : "bg-slate-900 text-slate-400 border-slate-700"}`}>{i + 1}. {s}</button>
+              ))}
+            </div>
+            <p className="text-center text-sm text-slate-400 max-w-2xl mx-auto bg-slate-900/60 border border-slate-700 rounded-2xl px-4 py-3">
+              <span className="font-bold text-emerald-400">{t.cycle}: {t.stages[step]}</span>
+              <span className="mx-2 text-slate-600">·</span>
+              {t.stageHelp[step]}
+            </p>
+          </div>
+
+          <main className="max-w-6xl mx-auto px-4 py-8 grid lg:grid-cols-2 gap-6">
+            <section className="bg-slate-900/80 rounded-3xl border border-slate-700 p-6 shadow-2xl">
+              <div className="flex items-start justify-between gap-3 mb-4">
+                <div>
+                  <h2 className="text-xl font-bold text-white">{meta.name}</h2>
+                  <p className="text-sm text-slate-400">{meta.blurb}</p>
+                </div>
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30">{scenario.ns[lang]}</span>
+              </div>
+
+              <div className="text-xs font-bold text-slate-500 uppercase mb-3">{t.params}</div>
+              <div className="space-y-3 mb-6">
+                {scenario.params.map(p => (
+                  <div key={p.key}>
+                    <div className="flex justify-between text-sm mb-1"><span className="text-slate-400">{p.label[lang]}</span><span className="font-mono text-sky-300">{params[p.key]}</span></div>
+                    <input type="range" min={p.min} max={p.max} value={params[p.key]} onChange={e => setParams({ ...params, [p.key]: +e.target.value })} className="w-full accent-sky-500" />
+                  </div>
+                ))}
+              </div>
+
+              <div className={`rounded-2xl p-5 border-2 ${result.ok ? "bg-emerald-950/40 border-emerald-500/40" : "bg-rose-950/40 border-rose-500/40"}`}>
+                <div className="text-xs uppercase tracking-widest text-slate-400 mb-1">{t.result}</div>
+                <div className="text-lg font-bold text-white">{result.headline[lang]}</div>
+                <ul className="mt-2 text-sm text-slate-300 space-y-1">
+                  {result.metrics.map((m, i) => <li key={i}>• {m[lang]}</li>)}
+                </ul>
+              </div>
+
+              <div className="mt-4 text-xs text-slate-500">
+                {t.links}:{" "}
+                <a className="text-sky-400 underline" href="../../Form%202/41_Modelling_Cycle/index.html">Modelling Cycle</a>
+                {" · "}
+                <a className="text-sky-400 underline" href="../../Form%203/42_Reservoir_Security/index.html">Reservoir</a>
+                {" · "}
+                <a className="text-sky-400 underline" href="../../Form%204/39_Cyber_Risk_Model/index.html">Cyber</a>
+                {" · "}
+                <a className="text-sky-400 underline" href="../../Form%205/31_Energy_Grid_Model/index.html">Energy</a>
+              </div>
+            </section>
+
+            <section className="bg-slate-900/80 rounded-3xl border border-slate-700 p-6 shadow-2xl flex flex-col min-h-[520px]">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-violet-600 flex items-center justify-center"><i className="fa-solid fa-robot" /></div>
+                <div>
+                  <div className="font-bold">{t.coach}</div>
+                  <div className="text-[10px] text-slate-500">Transparent · local heuristics</div>
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto space-y-3 mb-4 max-h-[360px] pr-1">
+                {chat.length === 0 && (
+                  <div className="text-sm text-slate-500 border border-dashed border-slate-700 rounded-2xl p-4">
+                    {lang === "en"
+                      ? "Press Analyse or a preset. The coach shows numbered reasoning steps — not a black box."
+                      : "按「分析」或預設問題。教練會顯示編號推理步驟——非黑箱。"}
+                  </div>
+                )}
+                {chat.map((m, i) => (
+                  <div key={i} className={`chat-bubble ${m.role === "user" ? "text-right" : ""}`}>
+                    {m.role === "user" ? (
+                      <span className="inline-block bg-sky-600/30 border border-sky-500/40 text-sky-100 text-sm px-3 py-2 rounded-2xl rounded-br-sm">{m.text}</span>
+                    ) : (
+                      <div className="bg-slate-800/80 border border-slate-600 rounded-2xl rounded-bl-sm p-3 text-sm space-y-1.5 text-left">
+                        {m.steps.map((s, j) => <div key={j} className="text-slate-200">{s}</div>)}
+                      </div>
+                    )}
+                  </div>
+                ))}
+                <div ref={endRef} />
+              </div>
+
+              <div className="flex flex-wrap gap-2 mb-3">
+                {t.presets.map(p => (
+                  <button key={p} onClick={() => runCoach(p)} className="text-[11px] px-2.5 py-1 rounded-full bg-slate-800 border border-slate-600 text-slate-300 hover:border-sky-500">{p}</button>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <input value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => e.key === "Enter" && (runCoach(draft), setDraft(""))} placeholder={t.ask} className="flex-1 bg-slate-950 border border-slate-600 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-sky-500" />
+                <button onClick={() => { runCoach(draft); setDraft(""); }} className="px-4 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-900 font-bold text-sm">{t.send}</button>
+              </div>
+            </section>
+          </main>
+
+          <footer className="text-center py-6 text-slate-600 text-xs border-t border-slate-800">Jeremiah 10:12 · SF Lau · Offline AI modelling suite</footer>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>

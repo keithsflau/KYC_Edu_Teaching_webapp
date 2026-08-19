@@ -1,0 +1,1718 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>詩歌播放器 | AI 歌曲</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      :root {
+        --primary: #6366f1;
+        --primary-light: #818cf8;
+        --accent: #10b981;
+        --bg-card: #ffffff;
+        --text-primary: #1e293b;
+        --text-secondary: #64748b;
+        --border: #e2e8f0;
+      }
+      body {
+        font-family: "Noto Sans TC", sans-serif;
+        background: linear-gradient(
+          180deg,
+          #f0f9ff 0%,
+          #e0f2fe 50%,
+          #f0fdf4 100%
+        );
+        color: var(--text-primary);
+        min-height: 100vh;
+      }
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        gap: 24px;
+        min-height: 100vh;
+      }
+      .card {
+        background: var(--bg-card);
+        border-radius: 20px;
+        border: 1px solid var(--border);
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+      }
+      .header {
+        grid-column: 1 / -1;
+        padding: 20px 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .header-left {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+      .logo {
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+      }
+      .header h1 {
+        font-size: 1.8rem;
+        font-weight: 700;
+      }
+      .header p {
+        color: var(--text-secondary);
+      }
+      .upload-btn {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 24px;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+      .upload-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+      }
+      #file-input {
+        display: none;
+      }
+      .playlist-section {
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        max-height: calc(100vh - 130px);
+      }
+      .playlist-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid var(--border);
+      }
+      .playlist-header h2 {
+        font-size: 1.2rem;
+        font-weight: 600;
+      }
+      .song-count {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+      }
+      .playlist {
+        flex: 1;
+        overflow-y: auto;
+      }
+      .song-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-bottom: 6px;
+        border: 2px solid transparent;
+      }
+      .song-item:hover {
+        background: #f1f5f9;
+        border-color: var(--primary-light);
+      }
+      .song-item.active {
+        background: linear-gradient(135deg, #ede9fe, #e0e7ff);
+        border-color: var(--primary);
+      }
+      .song-item.active .song-index {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+      }
+      .song-index {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.85rem;
+        font-weight: 600;
+        flex-shrink: 0;
+      }
+      .song-info {
+        flex: 1;
+        overflow: hidden;
+      }
+      .song-title {
+        font-size: 0.9rem;
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .song-theme {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        margin-top: 2px;
+      }
+      .song-delete {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        background: transparent;
+        border: none;
+        color: var(--text-secondary);
+        cursor: pointer;
+        opacity: 0;
+        transition: all 0.2s ease;
+      }
+      .song-item:hover .song-delete {
+        opacity: 1;
+      }
+      .song-delete:hover {
+        background: #fee2e2;
+        color: #ef4444;
+      }
+      .player-section {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        padding: 20px;
+      }
+      .video-container {
+        background: #000;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        position: relative;
+      }
+      #video-player {
+        width: 100%;
+        display: block;
+        max-height: 400px;
+      }
+      .video-placeholder {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        min-height: 300px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #1e1b4b, #312e81);
+        color: white;
+      }
+      .video-placeholder-icon {
+        font-size: 4rem;
+        margin-bottom: 15px;
+      }
+      .video-placeholder p {
+        font-size: 1.1rem;
+        opacity: 0.8;
+      }
+      /* Lyrics Section */
+      .lyrics-section {
+        background: linear-gradient(135deg, #fefce8, #fef9c3);
+        border-radius: 16px;
+        padding: 20px;
+        max-height: 300px;
+        overflow-y: auto;
+        display: none;
+      }
+      .lyrics-section.active {
+        display: block;
+      }
+      .lyrics-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #fde047;
+      }
+      .lyrics-header h3 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #854d0e;
+      }
+      .lyrics-toggle {
+        padding: 6px 14px;
+        background: #fde047;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #854d0e;
+        cursor: pointer;
+      }
+      .lyrics-content {
+        font-size: 1rem;
+        line-height: 1.8;
+        color: #713f12;
+        white-space: pre-wrap;
+      }
+      .lyrics-content .section-tag {
+        font-weight: 700;
+        color: #a16207;
+        margin-top: 12px;
+        display: block;
+      }
+      .now-playing {
+        text-align: center;
+        padding: 20px;
+        background: linear-gradient(135deg, #fef3c7, #fde68a);
+        border-radius: 16px;
+      }
+      .now-playing-label {
+        font-size: 0.85rem;
+        color: #92400e;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-bottom: 10px;
+      }
+      .now-playing-title {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #78350f;
+      }
+      .progress-bar {
+        width: 100%;
+        height: 10px;
+        background: #e2e8f0;
+        border-radius: 5px;
+        cursor: pointer;
+        overflow: hidden;
+      }
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #6366f1, #8b5cf6);
+        border-radius: 5px;
+        transition: width 0.1s linear;
+      }
+      .time-display {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        margin-top: 10px;
+      }
+      .controls {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+        padding: 15px;
+      }
+      .control-btn {
+        width: 54px;
+        height: 54px;
+        border-radius: 50%;
+        border: none;
+        background: #f1f5f9;
+        color: var(--text-primary);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        font-size: 1.3rem;
+      }
+      .control-btn:hover {
+        background: #e2e8f0;
+        transform: scale(1.1);
+      }
+      .control-btn.active {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+      }
+      .control-btn.play-btn {
+        width: 72px;
+        height: 72px;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+        font-size: 1.8rem;
+        box-shadow: 0 8px 30px rgba(99, 102, 241, 0.4);
+      }
+      .control-btn.play-btn:hover {
+        transform: scale(1.15);
+      }
+      .volume-section {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 18px;
+        background: #f8fafc;
+        border-radius: 14px;
+      }
+      .volume-icon {
+        font-size: 1.4rem;
+        cursor: pointer;
+      }
+      .volume-slider {
+        flex: 1;
+        height: 8px;
+        appearance: none;
+        -webkit-appearance: none;
+        background: #e2e8f0;
+        border-radius: 4px;
+        outline: none;
+      }
+      .volume-slider::-webkit-slider-thumb {
+        appearance: none;
+        -webkit-appearance: none;
+        width: 22px;
+        height: 22px;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        border-radius: 50%;
+        cursor: pointer;
+      }
+      .volume-value {
+        font-size: 1rem;
+        font-weight: 600;
+        min-width: 50px;
+        text-align: right;
+      }
+      .drop-zone {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(99, 102, 241, 0.95);
+        z-index: 1000;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        color: white;
+      }
+      .drop-zone.active {
+        display: flex;
+      }
+      .drop-zone-icon {
+        font-size: 5rem;
+        margin-bottom: 20px;
+        animation: bounce 1s infinite;
+      }
+      @keyframes bounce {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-20px);
+        }
+      }
+      @media (max-width: 900px) {
+        .container {
+          grid-template-columns: 1fr;
+        }
+        .header {
+          flex-direction: column;
+          gap: 15px;
+          text-align: center;
+        }
+        .playlist-section {
+          max-height: 300px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="drop-zone" id="drop-zone">
+      <div class="drop-zone-icon">📥</div>
+      <p>放開以添加歌曲</p>
+    </div>
+    <div class="container">
+      <header class="header card">
+        <div class="header-left">
+          <a
+            href="../index.html"
+            style="
+              margin-right: 15px;
+              text-decoration: none;
+              font-size: 1.2rem;
+              color: var(--text-primary);
+            "
+            title="返回聖經研讀"
+            >⬅️</a
+          >
+          <div class="logo">🎵</div>
+          <div>
+            <h1>AI 詩歌播放器</h1>
+            <p>聆聽屬靈詩歌，親近神的話語</p>
+          </div>
+        </div>
+        <button class="upload-btn" id="upload-btn">
+          <span>📁</span><span>上傳歌曲</span>
+        </button>
+        <input type="file" id="file-input" accept="video/*,audio/*" multiple />
+      </header>
+      <section class="playlist-section card">
+        <div class="playlist-header">
+          <h2>🎶 播放清單</h2>
+          <span class="song-count" id="song-count">0 首</span>
+        </div>
+        <div class="playlist" id="playlist"></div>
+      </section>
+      <section class="player-section card">
+        <div class="video-container">
+          <video id="video-player"></video>
+          <div class="video-placeholder" id="video-placeholder">
+            <div class="video-placeholder-icon">🎬</div>
+            <p>選擇一首歌曲開始播放</p>
+            <p style="font-size: 0.9rem; margin-top: 10px; opacity: 0.6">
+              歌詞將在下方顯示
+            </p>
+          </div>
+        </div>
+        <!-- Lyrics Display -->
+        <div class="lyrics-section" id="lyrics-section">
+          <div class="lyrics-header">
+            <h3>📜 歌詞</h3>
+            <button class="lyrics-toggle" id="lyrics-toggle">隱藏歌詞</button>
+          </div>
+          <div class="lyrics-content" id="lyrics-content"></div>
+        </div>
+        <div class="now-playing">
+          <div class="now-playing-label">🎵 正在播放</div>
+          <div class="now-playing-title" id="now-playing-title">
+            等待選擇歌曲...
+          </div>
+        </div>
+        <div class="progress-container">
+          <div class="progress-bar" id="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+          </div>
+          <div class="time-display">
+            <span id="current-time">0:00</span><span id="duration">0:00</span>
+          </div>
+        </div>
+        <div class="controls">
+          <button class="control-btn" id="shuffle-btn" title="隨機播放">
+            🔀
+          </button>
+          <button class="control-btn" id="prev-btn" title="上一首">⏮️</button>
+          <button class="control-btn play-btn" id="play-btn" title="播放">
+            ▶️
+          </button>
+          <button class="control-btn" id="next-btn" title="下一首">⏭️</button>
+          <button class="control-btn" id="repeat-btn" title="循環模式">
+            🔁
+          </button>
+        </div>
+        <div class="volume-section">
+          <span class="volume-icon" id="mute-btn">🔊</span>
+          <input
+            type="range"
+            class="volume-slider"
+            id="volume-slider"
+            min="0"
+            max="100"
+            value="80"
+          />
+          <span class="volume-value" id="volume-value">80%</span>
+        </div>
+      </section>
+    </div>
+    <script>
+      // Song database with lyrics
+      const defaultSongs = [
+        {
+          file: "歌名： 《彼此》 (One Another) 主題： 團契生活，彼此相愛（參：希.mp4",
+          title: "彼此 (One Another)",
+          theme: "團契生活",
+          lyrics: `[Verse 1]
+一個人走得快 一群人走得遠
+在這屬靈家裡 我們手相連
+雖然性格不同 背景也不相見
+但在基督裡 我們血脈相連
+
+[Chorus]
+彼此包容 彼此饒恕 像主愛我們
+彼此代求 彼此扶持 抹去那淚痕
+激發愛心 勉勵行善 直到主再來
+這是教會 這是身體 見證神大能
+
+[Verse 2]
+高山低谷 一起經過
+歡笑眼淚 一起交錯
+
+[Outro]
+我們是一家人 在主裡合一 (Clap Clap)`,
+        },
+        {
+          file: "歌名： 《磐石的話》 (Words on the Rock) 主題： 神的話語是.mp4",
+          title: "磐石的話 (Words on the Rock)",
+          theme: "神的話語",
+          lyrics: `[Verse 1]
+世界聲音太吵雜 真的假的太複雜
+潮流每天在變化 真理到底在哪呀
+有人蓋樓在沙土 雨淋水沖就倒塌
+我想尋找那磐石 建立生命的根基
+
+[Chorus]
+你的話語 是腳前的燈
+你的律法 是路上的光
+天地都要廢去 唯有你話語長存
+像錨拋在深海 抓緊靈魂不放
+
+[Bridge]
+不只聽道 也要行道
+聰明的人 聽主引導
+
+[Outro]
+立在磐石上 永不動搖`,
+        },
+        {
+          file: "歌名： 《不再是孤兒》 (No Longer Orphans) 主題： 兒子的名.mp4",
+          title: "不再是孤兒 (No Longer Orphans)",
+          theme: "兒子的名分",
+          lyrics: `[Verse 1]
+曾經我在流浪 尋找一個家
+以為表現完美 才值得被誇
+但我聽見微聲 溫柔地說話
+孩子你屬於我 不用再害怕
+
+[Chorus]
+我呼叫阿爸父 你就擁抱我
+不再是個孤兒 獨自在角落
+這份愛不僅是 感覺或承諾
+是血脈的連結 永遠不剝落
+我是神的孩子 這身份最快樂
+
+[Verse 2]
+不用恐懼刑罰 只有愛完全
+在你眼中我看見 恩慈的笑臉
+
+[Outro]
+I am a child of God, Yes I am, Oh yeah`,
+        },
+        {
+          file: "歌名： 《血價》 (The Price of Blood) 主題： 十字架的代贖.mp4",
+          title: "血價 (The Price of Blood)",
+          theme: "十字架的代贖",
+          lyrics: `[Verse 1]
+在那古舊十架 懸掛著救主
+背負世人罪孽 走上受苦路
+並非因為無辜 受刑罰之苦
+是愛驅使你 踏入死蔭幽谷
+
+[Verse 2]
+荊棘冠冕刺入 尊貴的頭顱
+寶血點點滴落 寫下救贖書
+幔子裂開瞬間 隔膜已消除
+罪人竟可坦然 稱呼你阿父
+
+[Chorus]
+看哪 神的羔羊 除去世人罪孽
+付上極重代價 立下平安之約
+死亡毒鉤折斷 墳墓無法阻絕
+三天復活大能 宣告永恆喜悅
+是你流出寶血 洗淨我的歲月
+
+[Outro]
+哈利路亞 救贖成全 (Fade out)`,
+        },
+        {
+          file: "歌名： 《走進人群》 (Into the Crowd) 主題： 城市宣教，踐行大.mp4",
+          title: "走進人群 (Into the Crowd)",
+          theme: "城市宣教",
+          lyrics: `[Intro]
+(Fast Drum Fill) Let's go!
+
+[Verse 1]
+不要留在四面牆壁 唱著舒適的歌
+這城市有太多靈魂 在黑暗中淚流
+拿起聖經穿上鞋子 別再猶豫閃躲
+這是一場屬靈爭戰 為了真理戰鬥
+
+[Chorus]
+衝進世界 帶著福音的火
+走進人群 分享生命的果
+不管冷眼 不管路途坎坷
+耶穌同在 就是最大的承諾
+Go Go Go 讓愛流動成河
+
+[Verse 2]
+看見鄰舍看見窮人 看見受傷的心
+不只言語要有行動 活出基督樣式
+
+[Outro]
+我們是世上的光 照亮這地方 Yeah!`,
+        },
+        {
+          file: "歌名： 《靈風》 (Wind of the Spirit) 主題： 聖靈的引導與.mp4",
+          title: "靈風 (Wind of the Spirit)",
+          theme: "聖靈的引導",
+          lyrics: `[Intro]
+(Soft Synth Pad)
+
+[Verse 1]
+風隨著意思吹 聽見風的聲音
+卻不知從哪裡來 往哪裡去
+聖靈啊 求你來 甦醒我的靈
+像春雨降下來 滋潤乾旱地
+
+[Chorus]
+聖靈請你吹煦 吹走心中恐懼
+點燃聖潔火把 燒盡一切空虛
+我願順服引領 跟隨你的步履
+不再依靠勢力 單單靠你應許
+
+[Bridge]
+充滿我 充滿我
+讓活水江河 流出不息
+充滿我 充滿我
+
+[Outro]
+如風吹過 如火煉淨 阿們`,
+        },
+        {
+          file: "歌詞：  外表看來 堅強無缺 內心深處 充滿妥協 我也試過 靠自己修補一切 卻發.mp4",
+          title: "破碎瓦器",
+          theme: "恩典與更新",
+          lyrics: `[Verse 1]
+外表看來 堅強無缺 內心深處 充滿妥協
+我也試過 靠自己修補一切
+卻發現靈魂 慢慢枯竭
+
+[Verse 2]
+許多罪債 沒法償還 許多羞愧 不敢去揀
+直到那天 你釘痕手在召喚
+告訴我回家 不必驚歎
+
+[Chorus]
+我是破碎瓦器 裝載你的寶貝
+不配得的恩典 竟洗去我污穢
+不用再作奴隸 恩主你是依歸
+生命裂縫之中 彰顯你的光輝 (你的榮美)
+
+[Bridge]
+舊事已過 都變成新
+是你大能 重塑我心
+
+[Outro]
+破碎瓦器 因你完整`,
+        },
+        {
+          file: "Oh-oh-oh.mp4",
+          title: "新的開始",
+          theme: "敬拜讚美",
+          lyrics: `[Intro]
+(Guitar Strumming) Oh-oh-oh
+
+[Verse 1]
+窗邊透進第一道光線 提醒我恩典 又是新一天
+諸天訴說 你榮耀彰顯 微小如我 竟被你看見
+
+[Verse 2]
+或是晴天 或是暴雨天 你手掌權 在萬有之間
+放下掛慮 來到你座前 單單仰望 你慈愛榮面
+
+[Chorus]
+願全地都向你歌唱 造物主宰 配得至高讚賞
+是你氣息 使枯骨生長 是你真光 照亮心底圍牆
+哈利路亞 唯你配得頌揚
+
+[Outro]
+新的開始 全心獻上 Oh-oh-oh`,
+        },
+        {
+          file: "主題：聖靈的運行 (The Holy Spirit) Suno Prompt_ .mp4",
+          title: "聖靈的運行 (The Holy Spirit)",
+          theme: "Dream Pop",
+          lyrics: `[Intro]
+(充滿回音的吉他，營造空間感)
+
+[Verse 1]
+像 風 隨著 意思 吹送
+聽見 聲音 卻 不見 影蹤
+從 哪裡來 往 哪裡去
+奧祕 運行 在 虛空 之中
+
+[Verse 2]
+像 火 燃燒 枯乾 骸骨
+賜下 氣息 讓 生命 復甦
+煉淨 雜質 燒去 束縛
+點亮 心燈 照亮 了 歸途
+
+[Pre-Chorus]
+親愛 聖靈 請 充滿 我
+像 活水 江河 湧流 不 乾涸
+
+[Chorus]
+充滿 此地 運行 在 這 空間
+軟化 剛硬 賜下 造化 容顏
+開啟 雙眼 看見 榮耀 彰顯
+在這 寧靜 時刻 與 祢 相連
+Spirit, come...
+
+[Bridge]
+不要 銷滅 感動 不要 叫 祢 擔憂
+願 祢 旨意 成就 在我 生命 漫遊
+
+[Outro]
+Breathe on me... Breathe on me...`,
+        },
+        {
+          file: "主題：奇異恩典的深度 (Depth of Grace) Suno Prompt_.mp4",
+          title: "奇異恩典的深度",
+          theme: "Gospel Soul",
+          lyrics: `[Intro]
+(鋼琴與風琴的慢板前奏)
+
+[Verse 1]
+我曾 是一個 迷路 的 浪子
+在 罪惡 泥沼 尋找 快樂 意思
+換來 只有 傷痕 纍纍 的 羞恥
+不敢 抬頭 仰望 祢的 聖潔 名字
+
+[Verse 2]
+律法 的聲音 指證 我的 錯失
+良心 的 控訴 像 鋒利 的 倒刺
+我 以為 必須 償還 所有 債務
+才配 得過 踏入 恩典 的 門戶
+
+[Pre-Chorus]
+但祢 卻 跑來 擁抱 我
+連 責備 都 沒有 說
+
+[Chorus]
+何等 奇妙 恩典 超越 理性 邊界
+破碎 的 瓦器 祢竟 視為 寶貴 牌解
+不是 依靠 行為 乃是 依靠 祢的 諒解
+寶血 洗淨 污點 重獲 新生 的 地界
+Amazing Grace, 永遠 難解
+
+[Bridge]
+鎖鏈 已經 脫落 監門 已經 大開
+我 得著 自由 不再 做 罪 的 奴才
+(Choir: Hallelujah, I am free!)
+
+[Outro]
+祢愛 我 到底... (高音轉音結束)`,
+        },
+        {
+          file: "主題：婚盟與誓約 (Covenant & Love) Suno Prompt_ .mp4",
+          title: "婚盟與誓約 (Covenant & Love)",
+          theme: "Acoustic Ballad",
+          lyrics: `[Intro]
+(溫柔的鋼琴伴奏)
+
+[Verse 1]
+祢說 祢愛我 早在 創世 之前
+揀選 我 在 茫茫 人海 裡面
+不是 因為 我 有 甚麼 優點
+只因 祢的 信實 永不 改變
+
+[Verse 2]
+像 新郎 迎娶 新婦 的 誓言
+祢用 捨命 立下 血 的 婚宴
+縱然 我 曾 背棄 走到 天邊
+祢仍 等候 盼望 我 會 遇見
+
+[Pre-Chorus]
+這份 愛 是 盟約 不是 感覺
+穿越 高山 低谷 永不 推卻
+
+[Chorus]
+我 屬 祢 祢 也 屬 我
+這 是 宇宙 最美 的 情歌
+沒有 誰 能 將 祢我 分隔
+患難 困苦 刀劍 都 不可
+祢是 我 永恆 的 選擇
+
+[Bridge]
+將我 放在 心上 如 印記
+戴在 臂上 如 戳記
+愛情 如 死 之 堅強
+眾水 不能 熄滅 這 火氣
+
+[Outro]
+My Beloved... You are mine...`,
+        },
+        {
+          file: "主題：末世論與新天新地 (Eschatology) Suno Prompt_ S.mp4",
+          title: "末世論與新天新地",
+          theme: "Synthwave",
+          lyrics: `[Intro]
+(電子合成器強勁節奏，帶有未來感)
+
+[Verse 1]
+號角 聲 劃破 了 寧靜 夜空
+七印 揭開 展現 異象 之中
+地上 萬族 驚惶 失措 惶恐
+曾經 繁華 轉眼 變成 虛空
+
+[Verse 2]
+巴比倫 城 傾倒 在 一夕 之間
+貪婪 與 奢華 化作 灰燼 雲煙
+唯有 名字 記在 生命冊 裡面
+方能 站立 在 玻璃海 的 面前
+
+[Pre-Chorus]
+擦去 所有 眼淚 不再 會有 死亡
+痛苦 悲哀 過去 這是 新的 曙光
+
+[Chorus]
+新天 新地 降臨 榮耀 充滿 穹蒼
+聖城 耶路撒冷 像 新婦 的 妝亮
+神 的 帳幕 在 人間 永遠 的 盼望
+公義 太陽 升起 照耀 萬代 輝煌
+Hallelujah, 君王 之王!
+
+[Bridge]
+我是 阿拉法 我是 俄梅戛
+是 初 也是 終 快將 醒來 吧
+
+[Outro]
+主耶穌啊 我願 祢來...`,
+        },
+        {
+          file: "主題：生命的四季 (Seasons of Life _ Ecclesiastes.mp4",
+          title: "生命的四季 (Ecclesiastes)",
+          theme: "Indie Folk",
+          lyrics: `[Intro]
+(輕快的木吉他指法)
+
+[Verse 1]
+萬事 都有 定時 像 潮汐 漲退
+栽種 有時 拔出 有時 總有 次序
+曾經 以為 青春 可以 揮霍 盡取
+轉眼 白髮 蒼蒼 歲月 無情 且去
+
+[Verse 2]
+哭泣 有時 歡笑 有時 誰能 預算
+拆毀 有時 建造 有時 世事 兜轉
+日光 之下 勞碌 到底 為了 甚麼
+若無 永恆 結局 全部 也是 虛空
+
+[Pre-Chorus]
+將 永生 安置 在 世人 心裡
+卻 參不透 始終 奧祕 的 伴隨
+
+[Chorus]
+原來 祢手 掌管 春夏 秋冬 變遷
+讓 生命 在 順逆 之中 學會 沉澱
+順服 祢的 帶領 活在 每個 今天
+敬畏 耶和華 是 智慧 開端 的 盛宴
+看透 雲霧 遇見 恩典
+
+[Bridge]
+趁著 年日 尚在 記念 造你 的主
+不要 等到 衰敗 才去 尋找 歸宿
+
+[Outro]
+虛空中的 實體 是祢...`,
+        },
+        {
+          file: "主題：靈魂的黑夜與呼喊 (Dark night of the soul) Sun.mp4",
+          title: "靈魂的黑夜與呼喊",
+          theme: "Progressive Rock",
+          lyrics: `[Intro]
+(迷幻的吉他前奏，長度約20秒)
+
+[Verse 1]
+這夜 靈魂 彷彿 跌入 深淵
+禱告 聲音 撞向 銅牆 邊緣
+祢曾 應許 同在 為何 不見
+剩下 回音 嘲笑 我的 膚淺
+
+[Verse 2]
+約伯 的苦 難道 我要 體驗
+大衛 的淚 流乾 幾多 遍
+信心 像 殘燭 在風中 搖曳
+懷疑 的種子 在 心底 蔓延
+
+[Pre-Chorus]
+神啊 祢在 哪裡 靜默 無聲
+難道 祢已 忘記 造物 之情
+
+[Chorus]
+但我 仍要 呼喊 即使 喉嚨 沙啞
+抓緊 祢的 衣襟 哪怕 代價 增加
+或許 信心 就是 在 黑暗中 開花
+相信 黎明 之前 必有 最黑 的 剎那
+祢是 我 唯一 籌碼
+
+[Bridge]
+祢說 恩典 夠用 在 軟弱中 顯得 完全
+這根刺 提醒我 不要 依靠 自己 盤旋
+
+[Outro]
+我等候 我靜默 直到 晨星 出現...`,
+        },
+        {
+          file: "號角 吹響 震動 天際 的四方 七印 揭開 審判 臨到 這 貪妄 日月 無光 星.mp4",
+          title: "號角吹響 (啟示錄)",
+          theme: "Power Metal",
+          lyrics: `[Verse 1]
+號角 吹響 震動 天際 的四方
+七印 揭開 審判 臨到 這 貪妄
+日月 無光 星辰 墜落 像 羅網
+世人 驚惶 躲藏 卻無 處 逃亡
+
+[Verse 2]
+巴比倫 城 傾倒 奢華 變 灰燼
+公義 烈火 試驗 誰是 那 精金
+唯有 羔羊 展開 生命 冊 指引
+名字 記在 其中 方可 進 聖城
+
+[Chorus]
+看哪 祂 駕雲 降臨 眾目 都要 看見
+萬族 哀哭 切齒 就在 審判 面前
+唯有 聖徒 忍耐 守住 真理 諾言
+在 玻璃海 歌唱 頌讚 直到 永遠
+Hallelujah! 主神 全能 者!
+
+[Guitar Solo]
+(極速的新古典金屬獨奏)
+
+[Bridge]
+不再 有 死亡 不再 有 悲哀
+舊事 已 過去 新天 新地 開
+
+[Outro]
+願 祢 快來! 主耶穌 啊!`,
+        },
+        {
+          file: "並非 獻祭 能夠 換取 祢恩寵 並非 善行 能夠 填補 這裂縫 律法 要求 嚴苛.mp4",
+          title: "唯獨恩典",
+          theme: "Gospel Soul",
+          lyrics: `[Verse 1]
+並非 獻祭 能夠 換取 祢恩寵
+並非 善行 能夠 填補 這裂縫
+律法 要求 嚴苛 誰能夠 服從
+罪債 高築 壓在 肩膊 這種痛
+
+[Verse 2]
+是祢 穿起 肉身 來到 這地土
+並無 佳形 美容 卻有 真法度
+代替 罪人 受罰 踏上 這歸途
+義袍 加身 遮蓋 羞恥 與赤露
+
+[Chorus]
+奇異 恩典 湧流 像那 江河水
+洗滌 污穢 心靈 除去 我恐懼
+不再 定罪 只有 寬恕 的字句
+安穩 躺臥 都在 牧者 的竿裡
+這愛 永不 減退
+
+[Verse 3]
+從此 活著 不再 是我 舊生命
+基督 在我 裡面 掌管 我路程
+雖有 軟弱 跌倒 仍靠 主得勝
+天上 國民 擁有 尊貴 的名聲
+
+[Bridge]
+鎖鏈 盡脫落 監門 已打開
+奴僕 變 兒子 繼承 父 的愛
+
+[Outro]
+Amen, Amen... 恩典 夠用...`,
+        },
+        {
+          file: "獨自 一塊 炭火 很快 變灰暗 聚在 一起 燃燒 火光 照 遠近 並非 只是 聚.mp4",
+          title: "炭火團契 (Koinonia)",
+          theme: "Classical Jazz",
+          lyrics: `[Verse 1]
+獨自 一塊 炭火 很快 變灰暗
+聚在 一起 燃燒 火光 照 遠近
+並非 只是 聚會 唱歌 彈琴
+乃是 生命 交流 真實 的 對沈
+
+[Verse 2]
+各人 恩賜 不同 卻是 同 身體
+互相 補足 缺欠 不分 高 與低
+若有 一個 受苦 大家 同 經歷
+若有 一個 得榮 分享 那 決堤
+
+[Chorus]
+愛是 恆久 忍耐 加上 了恩慈
+包容 凡事 相信 盼望 沒 停止
+鐵磨 鐵 磨出 刃 朋友 顯 真義
+在 基督 裡 結連 譜寫 這 故事
+Koinonia (團契) 的意思
+
+[Instrumental Solo]
+(低音大提琴與鋼琴即興 Solo)
+
+[Bridge]
+用 和平 彼此 聯絡 竭力 保守 合一
+雖有 摩擦 軟弱 靠主 總會 結實
+
+[Chorus]
+愛是 恆久 忍耐 加上 了恩慈
+包容 凡事 相信 盼望 沒 停止
+鐵磨 鐵 磨出 刃 朋友 顯 真義
+在 基督 裡 結連 譜寫 這 故事
+這是 教會 的 意思
+
+[Outro]
+彼此 相愛... 眾人 就認出...`,
+        },
+        {
+          file: "1所以，弟兄們，我以上帝的慈悲勸你們，將身體獻上當作活祭，是聖潔的，是上帝所喜悅.mp4",
+          title: "活祭 (羅馬書12)",
+          theme: "獻身讚美",
+          lyrics: `[Verse 1]
+所以 弟兄們 我以 上帝的 慈悲 勸你們
+將 身體 獻上 當作 活祭
+是 聖潔的 是 上帝 所 喜悅的
+你們 如此 事奉 乃是 理所當然的
+
+[Verse 2]
+不要 效法 這個 世界
+只要 心意 更新 而 變化
+叫 你們 察驗 何為 上帝 的 善良
+純全 可喜悅 的 旨意
+
+[Chorus]
+獻上 我的 全人 成為 活祭
+不是 死的 祭物 乃是 活的 事奉
+每一天 每個時刻 都 為祢 而活
+這是 我 敬拜 的 心意
+
+[Bridge]
+心意 更新 生命 轉變
+不再 一樣 被主 陶造
+
+[Outro]
+活祭... 獻給祢... 阿們`,
+        },
+        {
+          file: "1耶和華是我的牧者， (in cantonese).mp4",
+          title: "詩篇23 (粵語)",
+          theme: "信靠安慰",
+          lyrics: `[Verse 1]
+耶和華 是 我的 牧者
+我 必 不至 缺乏
+祂 使 我 躺臥 在 青草地上
+領 我 在 可安歇的 水邊
+
+[Verse 2]
+祂 使 我的 靈魂 甦醒
+為 自己的 名 引導 我
+走 義路
+
+[Chorus]
+我 雖然 行過 死蔭的 幽谷
+也 不怕 遭害
+因為 祢 與 我 同在
+祢的 杖 祢的 竿 都 安慰 我
+
+[Verse 3]
+在 我 敵人 面前
+祢 為 我 擺設 筵席
+祢 用 油 膏了 我的 頭
+使 我的 福杯 滿溢
+
+[Outro]
+我 一生 一世 必有 恩惠 慈愛 隨著 我
+我且要 住在 耶和華的 殿中 直到 永遠`,
+        },
+        {
+          file: "我若能說人間的方言，甚至天使的語言，卻沒有愛，我就成為鳴的鑼、響的鈸一般。2我若.mp4",
+          title: "愛的頌歌 (哥林多前書13)",
+          theme: "愛的真諦",
+          lyrics: `[Verse 1]
+我 若能 說 人間的 方言
+甚至 天使的 語言
+卻 沒有 愛
+我 就 成為 鳴的 鑼 響的 鈸 一般
+
+[Verse 2]
+我 若有 先知 講道 之能
+也 明白 各樣的 奧秘
+各樣的 知識
+而且 有 全備的 信 叫 我 能夠 移山
+卻 沒有 愛 我 就 算不得 甚麼
+
+[Chorus]
+愛 是 恆久 忍耐 又有 恩慈
+愛 是 不 嫉妒
+愛 是 不 自誇 不 張狂
+不做 害羞 的 事
+不求 自己的 益處
+不 輕易 發怒
+不 計算 人的 惡
+不喜歡 不義 只 喜歡 真理
+
+[Bridge]
+凡事 包容 凡事 相信
+凡事 盼望 凡事 忍耐
+愛 是 永不 止息
+
+[Outro]
+如今 常存的 有 信 有 望 有 愛
+其中 最大的 是 愛...`,
+        },
+        {
+          file: "我說，你們要順著聖靈而行，絕不可滿足肉體的情慾。17因為肉體的情慾和聖靈相爭，聖.mp4",
+          title: "聖靈的果子 (加拉太書5)",
+          theme: "成聖生活",
+          lyrics: `[Verse 1]
+你們 要 順著 聖靈 而行
+絕 不可 滿足 肉體的 情慾
+因為 肉體的 情慾 和 聖靈 相爭
+聖靈 和 肉體 相爭
+
+[Verse 2]
+這 兩個 是 彼此 相敵
+使 你們 不能 做 所 願意 做的
+但 你們 若 被 聖靈 引導
+就 不在 律法 以下
+
+[Chorus]
+聖靈 所結 的 果子
+就是 仁愛 喜樂 和平
+忍耐 恩慈 良善
+信實 溫柔 節制
+這樣的 事 沒有 律法 禁止
+
+[Bridge]
+凡 屬 基督 耶穌的 人
+是 已經 把 肉體
+連 肉體的 邪情 私慾
+同 釘在 十字架 上了
+
+[Outro]
+我們 若是 靠 聖靈 得生
+就 當 靠 聖靈 行事...`,
+        },
+        {
+          file: "當我行在死蔭幽谷，.mp4",
+          title: "死蔭幽谷 (詩篇23)",
+          theme: "安慰盼望",
+          lyrics: `[Intro]
+(柔和的鋼琴前奏)
+
+[Verse 1]
+當我 行在 死蔭 幽谷
+四圍 黑暗 看不見 路
+恐懼 像 浪濤 要 將我 淹沒
+心中 疑問 祢 在 何處
+
+[Verse 2]
+眼淚 成了 我的 飲食
+晝夜 不停 哭泣 嘆息
+朋友 都 離棄 無人 明白我
+只剩 孤獨 與 我 為伴
+
+[Chorus]
+但我 知道 祢 與 我 同在
+祢的 杖 祢的 竿 都 安慰 我
+在 最深的 黑夜 祢 從未 離開
+帶領 我 走過 山谷 到 青草地
+
+[Bridge]
+雖然 艱難 我 仍要 相信
+祢的 應許 永不 改變
+死蔭 幽谷 只是 過渡
+榮耀 的 晨曦 就在 前面
+
+[Outro]
+我 不怕 遭害 因祢 同在...
+阿們`,
+        },
+        {
+          file: "詩歌歌詞：永恆的君王（基於啟示錄主題）.mp4",
+          title: "永恆的君王 (啟示錄)",
+          theme: "榮耀敬拜",
+          lyrics: `[Intro]
+(莊嚴的管弦樂前奏)
+
+[Verse 1]
+祢是 那 坐在 寶座上的
+配得 榮耀 尊貴 權柄
+萬膝 跪拜 萬口 承認
+祢是 萬王之王 萬主之主
+
+[Verse 2]
+眾天使 環繞 寶座 歌唱
+千萬 聲音 如同 雷響
+聖哉 聖哉 全能的 主
+昔在 今在 以後 永在
+
+[Chorus]
+永恆的 君王 榮耀的 主宰
+從 亙古 到 永遠 祢 掌權不改
+天地 都要 廢去 祢 話語 長存
+我們 俯伏 敬拜 高舉 祢聖名
+
+[Bridge]
+阿拉法 俄梅戛
+是 初 也是 終
+創造 萬有 的 主
+配得 一切的 讚美
+
+[Outro]
+哈利路亞... 榮耀歸於 羔羊...
+阿們 阿們`,
+        },
+        {
+          file: "仰望.mp4",
+          title: "仰望",
+          theme: "信心盼望",
+          lyrics: `[Verse 1]
+當 風暴 來襲 遮蔽 了 天空
+當 道路 迷茫 看不見 前程
+我 選擇 抬頭 仰望 那 光明
+因 祢的 應許 永不 落空
+
+[Verse 2]
+不看 環境 不看 自己
+只 定睛 仰望 那 十字架
+軟弱 變為 剛強 懼怕 變 勇敢
+在祢 裡面 重新 得力
+
+[Chorus]
+仰望 仰望 仰望 耶穌
+祂是 我 信心的 創始成終
+仰望 仰望 高舉 雙手
+等候 的 人 必重新 得力
+
+[Bridge]
+如鷹 展翅 上騰
+奔跑 不 困倦
+行走 不 疲乏
+
+[Outro]
+我要 仰望 祢...`,
+        },
+        {
+          file: "節1.mp4",
+          title: "恩典節拍",
+          theme: "讚美敬拜",
+          lyrics: `[Verse 1]
+每個 清晨 都是 新的 恩典
+每個 呼吸 都是 祢的 禮物
+數不盡 的 祝福 環繞 我身邊
+祢的 愛 無條件 不改變
+
+[Chorus]
+在 恩典的 節拍中 起舞
+隨著 聖靈 的 引導 邁步
+歡喜 快樂 向 主 唱新歌
+因祢 配得 所有 的 讚美
+
+[Bridge]
+感謝 感謝 再 感謝
+讚美 讚美 再 讚美
+
+[Outro]
+恩典 夠用... 每一天...`,
+        },
+        {
+          file: "主歌1.mp4",
+          title: "主的歌",
+          theme: "敬拜詩歌",
+          lyrics: `[Verse 1]
+主啊 我 來到 祢 面前
+帶著 我的 心 我的 愛
+不是 因為 我 配得
+乃是 因為 祢的 恩典
+
+[Verse 2]
+在 祢 聖潔的 光中
+我看見 自己的 不足
+但 祢的 愛 遮蓋 一切
+使我 能 坦然 無懼
+
+[Chorus]
+這是 主的 歌 愛的 歌
+從 心底 湧流 不止息
+獻給 祢 我的 王 我的 主
+唯有 祢 配得 這 敬拜
+
+[Bridge]
+榮耀 頌讚 尊貴 權柄
+永遠 歸於 坐寶座的
+
+[Outro]
+阿們... 阿們...`,
+        },
+      ];
+
+      // State
+      let songs = [...defaultSongs];
+      let uploadedSongs = [];
+      let currentIndex = -1;
+      let isPlaying = false;
+      let isShuffle = false;
+      let repeatMode = 0;
+      let shuffleOrder = [];
+      let lyricsVisible = true;
+
+      // DOM
+      const player = document.getElementById("video-player");
+      const videoPlaceholder = document.getElementById("video-placeholder");
+      const playlistEl = document.getElementById("playlist");
+      const playBtn = document.getElementById("play-btn");
+      const prevBtn = document.getElementById("prev-btn");
+      const nextBtn = document.getElementById("next-btn");
+      const shuffleBtn = document.getElementById("shuffle-btn");
+      const repeatBtn = document.getElementById("repeat-btn");
+      const progressBar = document.getElementById("progress-bar");
+      const progressFill = document.getElementById("progress-fill");
+      const currentTimeEl = document.getElementById("current-time");
+      const durationEl = document.getElementById("duration");
+      const nowPlayingTitle = document.getElementById("now-playing-title");
+      const volumeSlider = document.getElementById("volume-slider");
+      const volumeValue = document.getElementById("volume-value");
+      const muteBtn = document.getElementById("mute-btn");
+      const uploadBtn = document.getElementById("upload-btn");
+      const fileInput = document.getElementById("file-input");
+      const dropZone = document.getElementById("drop-zone");
+      const lyricsSection = document.getElementById("lyrics-section");
+      const lyricsContent = document.getElementById("lyrics-content");
+      const lyricsToggle = document.getElementById("lyrics-toggle");
+
+      function getAllSongs() {
+        return [...songs, ...uploadedSongs];
+      }
+
+      function renderPlaylist() {
+        const allSongs = getAllSongs();
+        playlistEl.innerHTML = "";
+        if (allSongs.length === 0) {
+          playlistEl.innerHTML =
+            '<div style="text-align:center;padding:40px;color:#64748b;">📂 播放清單是空的</div>';
+          document.getElementById("song-count").textContent = "0 首";
+          return;
+        }
+        allSongs.forEach((song, index) => {
+          const isUploaded = index >= songs.length;
+          const item = document.createElement("div");
+          item.className = `song-item ${
+            index === currentIndex ? "active" : ""
+          }`;
+          item.innerHTML = `
+            <div class="song-index">${index + 1}</div>
+            <div class="song-info">
+              <div class="song-title">${song.title}</div>
+              <div class="song-theme">${song.theme}${
+            isUploaded ? " 📤" : ""
+          }</div>
+            </div>
+            ${
+              isUploaded
+                ? `<button class="song-delete" data-index="${index}">✕</button>`
+                : ""
+            }
+          `;
+          item.addEventListener("click", (e) => {
+            if (!e.target.classList.contains("song-delete")) playSong(index);
+          });
+          playlistEl.appendChild(item);
+        });
+        document.querySelectorAll(".song-delete").forEach((btn) => {
+          btn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            deleteUploadedSong(parseInt(btn.dataset.index, 10) - songs.length);
+          });
+        });
+        document.getElementById(
+          "song-count"
+        ).textContent = `${allSongs.length} 首`;
+      }
+
+      function deleteUploadedSong(uploadIndex) {
+        if (uploadIndex >= 0 && uploadIndex < uploadedSongs.length) {
+          if (uploadedSongs[uploadIndex].blobUrl)
+            URL.revokeObjectURL(uploadedSongs[uploadIndex].blobUrl);
+          uploadedSongs.splice(uploadIndex, 1);
+          const deletedGlobalIndex = songs.length + uploadIndex;
+          if (currentIndex === deletedGlobalIndex) {
+            currentIndex = -1;
+            player.src = "";
+            videoPlaceholder.style.display = "flex";
+            nowPlayingTitle.textContent = "等待選擇歌曲...";
+            isPlaying = false;
+            updatePlayButton();
+            lyricsSection.classList.remove("active");
+          } else if (currentIndex > deletedGlobalIndex) currentIndex--;
+          renderPlaylist();
+        }
+      }
+
+      function displayLyrics(song) {
+        if (song.lyrics && lyricsVisible) {
+          lyricsSection.classList.add("active");
+          const formattedLyrics = song.lyrics.replace(
+            /\[(.*?)\]/g,
+            '<span class="section-tag">[$1]</span>'
+          );
+          lyricsContent.innerHTML = formattedLyrics;
+        } else {
+          lyricsSection.classList.remove("active");
+        }
+      }
+
+      function playSong(index) {
+        const allSongs = getAllSongs();
+        if (index < 0 || index >= allSongs.length) return;
+        currentIndex = index;
+        const song = allSongs[index];
+        player.src = song.blobUrl || song.file;
+        videoPlaceholder.style.display = "none";
+        displayLyrics(song);
+        player
+          .play()
+          .then(() => {
+            isPlaying = true;
+            updatePlayButton();
+            renderPlaylist();
+            nowPlayingTitle.textContent = song.title;
+          })
+          .catch((err) => {
+            console.error("Playback error:", err);
+            nowPlayingTitle.textContent = song.title + " (點擊播放)";
+            renderPlaylist();
+          });
+      }
+
+      function updatePlayButton() {
+        playBtn.textContent = isPlaying ? "⏸️" : "▶️";
+      }
+
+      function togglePlay() {
+        const allSongs = getAllSongs();
+        if (allSongs.length === 0) return;
+        if (currentIndex === -1) {
+          playSong(0);
+          return;
+        }
+        if (isPlaying) player.pause();
+        else player.play();
+        isPlaying = !isPlaying;
+        updatePlayButton();
+      }
+
+      function prevSong() {
+        const allSongs = getAllSongs();
+        if (allSongs.length === 0) return;
+        if (isShuffle) {
+          const idx = shuffleOrder.indexOf(currentIndex);
+          playSong(shuffleOrder[idx > 0 ? idx - 1 : shuffleOrder.length - 1]);
+        } else
+          playSong(currentIndex > 0 ? currentIndex - 1 : allSongs.length - 1);
+      }
+
+      function nextSong() {
+        const allSongs = getAllSongs();
+        if (allSongs.length === 0) return;
+        if (repeatMode === 2) {
+          playSong(currentIndex);
+          return;
+        }
+        if (isShuffle) {
+          const idx = shuffleOrder.indexOf(currentIndex);
+          playSong(shuffleOrder[idx < shuffleOrder.length - 1 ? idx + 1 : 0]);
+        } else {
+          if (currentIndex < allSongs.length - 1) playSong(currentIndex + 1);
+          else if (repeatMode === 1) playSong(0);
+        }
+      }
+
+      function toggleShuffle() {
+        isShuffle = !isShuffle;
+        shuffleBtn.classList.toggle("active", isShuffle);
+        if (isShuffle) {
+          const allSongs = getAllSongs();
+          shuffleOrder = [...Array(allSongs.length).keys()];
+          for (let i = shuffleOrder.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffleOrder[i], shuffleOrder[j]] = [
+              shuffleOrder[j],
+              shuffleOrder[i],
+            ];
+          }
+          if (currentIndex >= 0) {
+            const pos = shuffleOrder.indexOf(currentIndex);
+            shuffleOrder.splice(pos, 1);
+            shuffleOrder.unshift(currentIndex);
+          }
+        }
+      }
+
+      function toggleRepeat() {
+        repeatMode = (repeatMode + 1) % 3;
+        const icons = ["🔁", "🔂", "🔂"];
+        repeatBtn.textContent = icons[repeatMode];
+        repeatBtn.classList.toggle("active", repeatMode > 0);
+      }
+
+      function formatTime(seconds) {
+        if (isNaN(seconds)) return "0:00";
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs.toString().padStart(2, "0")}`;
+      }
+
+      function updateProgress() {
+        if (player.duration) {
+          progressFill.style.width = `${
+            (player.currentTime / player.duration) * 100
+          }%`;
+          currentTimeEl.textContent = formatTime(player.currentTime);
+          durationEl.textContent = formatTime(player.duration);
+        }
+      }
+
+      progressBar.addEventListener("click", (e) => {
+        if (!player.duration) return;
+        const rect = progressBar.getBoundingClientRect();
+        player.currentTime =
+          ((e.clientX - rect.left) / rect.width) * player.duration;
+      });
+
+      volumeSlider.addEventListener("input", () => {
+        player.volume = volumeSlider.value / 100;
+        volumeValue.textContent = `${volumeSlider.value}%`;
+        muteBtn.textContent =
+          volumeSlider.value == 0
+            ? "🔇"
+            : volumeSlider.value < 50
+            ? "🔉"
+            : "🔊";
+      });
+
+      let prevVolume = 80;
+      muteBtn.addEventListener("click", () => {
+        if (volumeSlider.value > 0) {
+          prevVolume = volumeSlider.value;
+          volumeSlider.value = 0;
+        } else volumeSlider.value = prevVolume;
+        player.volume = volumeSlider.value / 100;
+        volumeValue.textContent = `${volumeSlider.value}%`;
+        muteBtn.textContent = volumeSlider.value == 0 ? "🔇" : "🔊";
+      });
+
+      lyricsToggle.addEventListener("click", () => {
+        lyricsVisible = !lyricsVisible;
+        lyricsToggle.textContent = lyricsVisible ? "隱藏歌詞" : "顯示歌詞";
+        if (currentIndex >= 0) displayLyrics(getAllSongs()[currentIndex]);
+      });
+
+      uploadBtn.addEventListener("click", () => fileInput.click());
+      fileInput.addEventListener("change", (e) => {
+        handleFiles(e.target.files);
+        fileInput.value = "";
+      });
+
+      function handleFiles(files) {
+        for (const file of files) {
+          if (
+            file.type.startsWith("video/") ||
+            file.type.startsWith("audio/")
+          ) {
+            const blobUrl = URL.createObjectURL(file);
+            const title = file.name.replace(/\.[^/.]+$/, "");
+            uploadedSongs.push({
+              file: file.name,
+              title: title.length > 30 ? title.substring(0, 30) + "..." : title,
+              theme: "自訂上傳",
+              blobUrl: blobUrl,
+              lyrics: "",
+            });
+          }
+        }
+        renderPlaylist();
+      }
+
+      document.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        dropZone.classList.add("active");
+      });
+      document.addEventListener("dragleave", (e) => {
+        if (e.relatedTarget === null) dropZone.classList.remove("active");
+      });
+      document.addEventListener("drop", (e) => {
+        e.preventDefault();
+        dropZone.classList.remove("active");
+        handleFiles(e.dataTransfer.files);
+      });
+
+      playBtn.addEventListener("click", togglePlay);
+      prevBtn.addEventListener("click", prevSong);
+      nextBtn.addEventListener("click", nextSong);
+      shuffleBtn.addEventListener("click", toggleShuffle);
+      repeatBtn.addEventListener("click", toggleRepeat);
+      player.addEventListener("timeupdate", updateProgress);
+      player.addEventListener("ended", nextSong);
+      player.addEventListener(
+        "loadedmetadata",
+        () => (durationEl.textContent = formatTime(player.duration))
+      );
+      player.addEventListener("play", () => {
+        isPlaying = true;
+        updatePlayButton();
+      });
+      player.addEventListener("pause", () => {
+        isPlaying = false;
+        updatePlayButton();
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.target.tagName === "INPUT") return;
+        switch (e.code) {
+          case "Space":
+            e.preventDefault();
+            togglePlay();
+            break;
+          case "ArrowLeft":
+            player.currentTime -= 5;
+            break;
+          case "ArrowRight":
+            player.currentTime += 5;
+            break;
+          case "ArrowUp":
+            e.preventDefault();
+            volumeSlider.value = Math.min(
+              100,
+              parseInt(volumeSlider.value, 10) + 5
+            );
+            volumeSlider.dispatchEvent(new Event("input"));
+            break;
+          case "ArrowDown":
+            e.preventDefault();
+            volumeSlider.value = Math.max(0, parseInt(volumeSlider.value, 10) - 5);
+            volumeSlider.dispatchEvent(new Event("input"));
+            break;
+        }
+      });
+
+      renderPlaylist();
+      player.volume = 0.8;
+    </script>
+  </body>
+</html>

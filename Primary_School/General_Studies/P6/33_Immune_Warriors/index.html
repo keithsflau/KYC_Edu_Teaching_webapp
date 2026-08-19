@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - Immune Warriors</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: #fef2f2;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Immune Warriors",
+    zh: "免疫戰士",
+    ja: "免疫戦士",
+    ko: "면역 전사",
+    es: "Guerreros inmunes",
+    de: "Immun-Krieger",
+    fi: "Immuunisoturit",
+    fr: "Guerriers immunitaires",
+    ar: "محاربو المناعة",
+    it: "Guerrieri Immunitari"
+  },
+  instruction: {
+    en: "Tap viruses to destroy them!",
+    zh: "點擊病毒消滅它們！",
+    ja: "ウイルスをタップして破壊しましょう！",
+    ko: "바이러스를 탭하여 파괴하세요!",
+    es: "¡Toca los virus para destruirlos!",
+    de: "Tippe auf Viren, um sie zu zerstören!",
+    fi: "Napauta viruksia tuhotaksesi ne!",
+    fr: "Tapez sur les virus pour les détruire !",
+    ar: "اضغط على الفيروسات لتدميرها!",
+    it: "Tocca i virus per distruggerli!"
+  },
+  score: {
+    en: "Score",
+    zh: "分數",
+    ja: "スコア",
+    ko: "점수"
+  },
+  start: {
+    en: "Start Defending",
+    zh: "開始防禦",
+    ja: "防御開始",
+    ko: "방어 시작"
+  }
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [score, setScore] = useState(0);
+  const [enemies, setEnemies] = useState([]);
+  const [playing, setPlaying] = useState(false);
+  const idRef = React.useRef(0);
+  const getText = key => t[key][lang] || t[key]["en"];
+  useEffect(() => {
+    if (!playing) return;
+    const interval = setInterval(() => {
+      idRef.current += 1;
+      const id = idRef.current;
+      setEnemies(prev => [...prev, {
+        id,
+        x: Math.random() * 90,
+        y: -10
+      }]);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [playing]);
+  useEffect(() => {
+    if (!playing) return;
+    const loop = setInterval(() => {
+      setEnemies(prev => prev.map(e => ({
+        ...e,
+        y: e.y + 1
+      })).filter(e => e.y < 100));
+    }, 50);
+    return () => clearInterval(loop);
+  }, [playing]);
+  const hit = id => {
+    setEnemies(prev => prev.filter(e => e.id !== id));
+    setScore(s => s + 10);
+  };
+  const startGame = () => {
+    setScore(0);
+    setEnemies([]);
+    setPlaying(true);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-bold mb-4 text-red-600"
+  }, getText("title")), /*#__PURE__*/React.createElement("p", {
+    className: "mb-4 font-bold text-slate-500"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "relative w-full max-w-lg h-[500px] bg-red-50 rounded-xl border-4 border-red-300 overflow-hidden shadow-2xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 opacity-20 pointer-events-none"
+  }, Array.from({
+    length: 20
+  }).map((_, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "absolute w-8 h-8 bg-red-400 rounded-full",
+    style: {
+      left: Math.random() * 100 + "%",
+      top: Math.random() * 100 + "%"
+    }
+  }))), enemies.map(e => /*#__PURE__*/React.createElement(motion.button, {
+    key: e.id,
+    className: "absolute text-4xl",
+    style: {
+      left: `${e.x}%`,
+      top: `${e.y}%`
+    },
+    onClick: () => hit(e.id),
+    whileTap: {
+      scale: 1.5,
+      opacity: 0
+    }
+  }, "🦠")), !playing && /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 flex items-center justify-center bg-black/40"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: startGame,
+    className: "px-8 py-4 bg-white text-red-600 font-black rounded-xl shadow-xl text-xl hover:scale-105 transition-transform"
+  }, getText("start"))), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 right-4 text-2xl font-black text-red-800"
+  }, getText("score"), ": ", score)));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

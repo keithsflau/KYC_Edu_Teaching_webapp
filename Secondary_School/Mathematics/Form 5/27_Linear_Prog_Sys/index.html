@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>System of Inequalities | S5 Math</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+      }
+    </style>
+  </head>
+  <body class="bg-emerald-50 text-slate-800 min-h-screen">
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const translations = {
+  en: {
+    unit: "Unit 4: Locus & Linear Prog",
+    title: "System of Inequalities",
+    desc: "Visualize feasible region for multiple inequalities.",
+    ineq1: "Inequality 1: x + y ≤ 6",
+    ineq2: "Inequality 2: y ≥ x",
+    ineq3: "Inequality 3: y ≥ 1",
+    toggle: "Toggle",
+    feasible: "Feasible Region",
+    point: "Point P(x, y)"
+  },
+  zh: {
+    unit: "單元四：軌跡與線性規劃",
+    title: "不等式組",
+    desc: "圖像化多個不等式的可行域。",
+    ineq1: "不等式 1: x + y ≤ 6",
+    ineq2: "不等式 2: y ≥ x",
+    ineq3: "不等式 3: y ≥ 1",
+    toggle: "切換",
+    feasible: "可行域",
+    point: "點 P(x, y)"
+  }
+};
+const App = () => {
+  const [lang, setLang] = useState("en");
+  const t = translations[lang];
+  const [show1, setShow1] = useState(true);
+  const [show2, setShow2] = useState(true);
+  const [show3, setShow3] = useState(true);
+
+  // Hardcoded system for simplicity of intersection logic
+  // 1. x + y <= 6
+  // 2. y >= x
+  // 3. y >= 1
+
+  // Intersections:
+  // 2 & 3: y=1, y=x => (1, 1)
+  // 1 & 3: y=1, x+1=6 => x=5 => (5, 1)
+  // 1 & 2: y=x, x+x=6 => x=3, y=3 => (3, 3)
+
+  // Triangle: (1,1), (5,1), (3,3)
+  // Check test point inside: (3, 2)
+  // 3+2=5 <= 6 (OK)
+  // 2 >= 3 (False). Wait.
+  // y >= x. (3, 3) is on line. (1, 1) on line. (5, 1) -> 1 >= 5 False.
+  // So region is above y=x, below x+y=6, above y=1.
+  // Vertices are correct?
+  // (3,3): 3>=3 OK. 3+3<=6 OK.
+  // (1,1): 1>=1 OK. 1+1<=6 OK.
+  // (5,1): 1>=5 FAIL.
+  // Ah, y >= x means x <= y.
+  // 2 & 3: y=1, 1>=x => x<=1.
+  // 1 & 3: y=1, x<=5.
+  // 1 & 2: x=3, y=3.
+
+  // So Region Vertices:
+  // (1, 1) -> x <= 1, y=1.
+  // Wait, let's just plot the lines and the region.
+  // Line 1: (0, 6) to (6, 0)
+  // Line 2: (0, 0) to (6, 6)
+  // Line 3: y=1 horizontal
+
+  // Graph
+  const size = 400;
+  const range = 10;
+  const scale = size / (2 * range); // 20 units total. (-5 to 15?)
+  // Let's center at (5, 5) might be better? Or just standard (-5 to 15).
+  // range=10 means -10 to 10 if center is 0.
+  const cx = size / 2,
+    cy = size / 2;
+  const toScreen = (x, y) => ({
+    x: cx + x * scale,
+    y: cy - y * scale
+  });
+
+  // Feasible Polygon
+  const polyPoints = `${toScreen(1, 1).x},${toScreen(1, 1).y} ${toScreen(3, 3).x},${toScreen(3, 3).y} ${toScreen(-4, 1).x},${toScreen(-4, 1).y}`;
+  // Wait, region is not just a triangle?
+  // x + y <= 6 (below)
+  // y >= x (above/left)
+  // y >= 1 (above)
+  // Vertex (3,3) is top.
+  // Vertex (1,1) is bottom right of y>=x and y>=1.
+  // Wait intersection of y=x and y=1 is (1,1).
+  // Intersection of x+y=6 and y=1 is (5,1).
+  // Intersection of x+y=6 and y=x is (3,3).
+  // Valid region test (2, 2):
+  // 2+2=4<=6 (T)
+  // 2>=2 (T)
+  // 2>=1 (T)
+  // So triangle (1,1), (5,1), (3,3) IS the region?
+  // Test (5,1): 5+1=6 (T), 1>=5 (False).
+  // So (5,1) is NOT in region if y>=x.
+  // y>=x means x must be small.
+  // So region must be left of y=x.
+  // The vertices are (3,3) and (1,1). Where does it go?
+  // It goes to x -> -inf?
+  // x+y <= 6. y=1 => x<=5.
+  // y>=x. y=1 => x<=1.
+  // So at y=1, range is (-inf, 1].
+  // Region is unbounded to the left?
+  // Let's add x >= 0 to make it a bounded polygon for simplicity.
+  // Or just visualize the unbounded region with a cut-off.
+
+  // Let's change inequalities to make a nice bounded triangle in first quadrant.
+  // 1. x + y <= 6
+  // 2. y <= x + 2
+  // 3. y >= 0, x >= 0 (implicit)
+  // Let's just stick to 3 arbitrary lines that form a triangle.
+  // L1: x + y = 6
+  // L2: y = 2x
+  // L3: y = 0.5x
+  // Region inside triangle formed by (0,0), and intersection of L1/L2, L1/L3.
+  // L1/L2: x+2x=6 => 3x=6 => x=2, y=4. (2,4)
+  // L1/L3: x+0.5x=6 => 1.5x=6 => x=4, y=2. (4,2)
+  // Origin (0,0).
+  // Test point (2,2): 2+2=4<=6 (T), 2<=4 (T), 2>=1 (T).
+  // OK, let's use:
+  // 1. x + y <= 6
+  // 2. y <= 2x
+  // 3. y >= 0.5x
+
+  const pA = {
+    x: 0,
+    y: 0
+  };
+  const pB = {
+    x: 4,
+    y: 2
+  };
+  const pC = {
+    x: 2,
+    y: 4
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "p-8 max-w-5xl mx-auto min-h-screen flex flex-col items-center select-none"
+  }, /*#__PURE__*/React.createElement("header", {
+    className: "mb-8 text-center w-full relative"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLang(lang === "en" ? "zh" : "en"),
+    className: "absolute right-0 top-0 px-4 py-2 bg-white rounded-full shadow border border-emerald-200 text-sm font-bold text-emerald-600 hover:bg-emerald-50 transition"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-globe mr-2"
+  }), lang === "en" ? "中文" : "ENG"), /*#__PURE__*/React.createElement("div", {
+    className: "text-emerald-600 font-bold uppercase text-xs tracking-widest mb-2"
+  }, t.unit), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-slate-900 mb-2"
+  }, t.title), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-500"
+  }, t.desc)), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col lg:flex-row gap-8 w-full"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-4 rounded-3xl shadow-lg border border-emerald-100 flex-1 flex justify-center items-center"
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: size,
+    height: size,
+    className: "bg-slate-50 rounded-xl overflow-hidden"
+  }, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("pattern", {
+    id: "hatchgreen",
+    width: "10",
+    height: "10",
+    patternTransform: "rotate(45 0 0)",
+    patternUnits: "userSpaceOnUse"
+  }, /*#__PURE__*/React.createElement("line", {
+    x1: "0",
+    y1: "0",
+    x2: "0",
+    y2: "10",
+    stroke: "#10b981",
+    strokeWidth: "1",
+    strokeOpacity: "1"
+  }))), /*#__PURE__*/React.createElement("line", {
+    x1: "0",
+    y1: cy,
+    x2: size,
+    y2: cy,
+    stroke: "#cbd5e1",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: cx,
+    y1: "0",
+    x2: cx,
+    y2: size,
+    stroke: "#cbd5e1",
+    strokeWidth: "2"
+  }), show1 && show2 && show3 && /*#__PURE__*/React.createElement("polygon", {
+    points: `${toScreen(pA.x, pA.y).x},${toScreen(pA.x, pA.y).y} ${toScreen(pB.x, pB.y).x},${toScreen(pB.x, pB.y).y} ${toScreen(pC.x, pC.y).x},${toScreen(pC.x, pC.y).y}`,
+    fill: "url(#hatchgreen)",
+    opacity: "0.5"
+  }), show1 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("line", {
+    x1: toScreen(-2, 8).x,
+    y1: toScreen(-2, 8).y,
+    x2: toScreen(8, -2).x,
+    y2: toScreen(8, -2).y,
+    stroke: "#ef4444",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: toScreen(6, 0).x + 5,
+    y: toScreen(6, 0).y - 5,
+    className: "text-xs fill-red-500 font-bold"
+  }, "x+y=6"), /*#__PURE__*/React.createElement("polygon", {
+    points: `${toScreen(-2, 8).x},${toScreen(-2, 8).y} ${toScreen(8, -2).x},${toScreen(8, -2).y} 0,400 0,0`,
+    fill: "#ef4444",
+    opacity: "0.1"
+  })), show2 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("line", {
+    x1: toScreen(-3, -6).x,
+    y1: toScreen(-3, -6).y,
+    x2: toScreen(3, 6).x,
+    y2: toScreen(3, 6).y,
+    stroke: "#3b82f6",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: toScreen(3, 6).x,
+    y: toScreen(3, 6).y,
+    className: "text-xs fill-blue-500 font-bold"
+  }, "y=2x"), /*#__PURE__*/React.createElement("polygon", {
+    points: `${toScreen(-3, -6).x},${toScreen(-3, -6).y} ${toScreen(3, 6).x},${toScreen(3, 6).y} 400,400`,
+    fill: "#3b82f6",
+    opacity: "0.1"
+  })), show3 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("line", {
+    x1: toScreen(-6, -3).x,
+    y1: toScreen(-6, -3).y,
+    x2: toScreen(8, 4).x,
+    y2: toScreen(8, 4).y,
+    stroke: "#f59e0b",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: toScreen(8, 4).x,
+    y: toScreen(8, 4).y,
+    className: "text-xs fill-amber-500 font-bold"
+  }, "y=0.5x"), /*#__PURE__*/React.createElement("polygon", {
+    points: `${toScreen(-6, -3).x},${toScreen(-6, -3).y} ${toScreen(8, 4).x},${toScreen(8, 4).y} 0,0 400,0`,
+    fill: "#f59e0b",
+    opacity: "0.1"
+  })), /*#__PURE__*/React.createElement("circle", {
+    cx: toScreen(0, 0).x,
+    cy: toScreen(0, 0).y,
+    r: "4",
+    fill: "black"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: toScreen(2, 4).x,
+    cy: toScreen(2, 4).y,
+    r: "4",
+    fill: "black"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: toScreen(4, 2).x,
+    cy: toScreen(4, 2).y,
+    r: "4",
+    fill: "black"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-6 rounded-3xl shadow-lg border border-emerald-100 flex-1 space-y-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "space-y-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: `p-4 rounded-xl border flex justify-between items-center transition ${show1 ? "bg-red-50 border-red-200" : "bg-slate-50 border-slate-100 opacity-60"}`
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "font-mono font-bold text-red-700"
+  }, "x + y ≤ 6"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setShow1(!show1),
+    className: "px-3 py-1 bg-white rounded shadow-sm text-xs font-bold uppercase tracking-wider text-slate-500"
+  }, t.toggle)), /*#__PURE__*/React.createElement("div", {
+    className: `p-4 rounded-xl border flex justify-between items-center transition ${show2 ? "bg-blue-50 border-blue-200" : "bg-slate-50 border-slate-100 opacity-60"}`
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "font-mono font-bold text-blue-700"
+  }, "y ≤ 2x"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setShow2(!show2),
+    className: "px-3 py-1 bg-white rounded shadow-sm text-xs font-bold uppercase tracking-wider text-slate-500"
+  }, t.toggle)), /*#__PURE__*/React.createElement("div", {
+    className: `p-4 rounded-xl border flex justify-between items-center transition ${show3 ? "bg-amber-50 border-amber-200" : "bg-slate-50 border-slate-100 opacity-60"}`
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "font-mono font-bold text-amber-700"
+  }, "y ≥ 0.5x"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setShow3(!show3),
+    className: "px-3 py-1 bg-white rounded shadow-sm text-xs font-bold uppercase tracking-wider text-slate-500"
+  }, t.toggle))), show1 && show2 && show3 && /*#__PURE__*/React.createElement("div", {
+    className: "bg-emerald-50 p-4 rounded-xl border border-emerald-100 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xl font-bold text-emerald-700 mb-2"
+  }, t.feasible), /*#__PURE__*/React.createElement("div", {
+    className: "text-sm text-emerald-600"
+  }, "Vertices: (0,0), (2,4), (4,2)")))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

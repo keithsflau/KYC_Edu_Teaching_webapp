@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小六數學：代數式 | Algebraic Expressions</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+      .perspective-1000 {
+        perspective: 1000px;
+      }
+      .preserve-3d {
+        transform-style: preserve-3d;
+      }
+      .backface-hidden {
+        backface-visibility: hidden;
+      }
+      .rotate-y-180 {
+        transform: rotateY(180deg);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Algebraic Expressions",
+    zh: "代數式",
+    ja: "代数式",
+    ko: "대수식",
+    es: "Expresiones Algebraicas",
+    de: "Algebraische Ausdrücke",
+    fi: "Algebralliset lausekkeet",
+    fr: "Expressions algébriques",
+    ar: "تعبيرات جبرية",
+    it: "Espressioni Algebriche"
+  },
+  instruction: {
+    en: "Click cards to reveal the expression",
+    zh: "點擊卡片查看代數式",
+    ja: "カードをクリックして式を表示",
+    ko: "카드를 클릭하여 식 확인",
+    es: "Haz clic en las tarjetas para revelar la expresión",
+    de: "Klicken Sie auf die Karten, um den Ausdruck anzuzeigen",
+    fi: "Napsauta kortteja nähdäksesi lausekkeen",
+    fr: "Cliquez sur les cartes pour révéler l'expression",
+    ar: "انقر على البطاقات للكشف عن التعبير",
+    it: "Clicca sulle carte per rivelare l'espressione"
+  },
+  rules: {
+    en: "Writing Rules",
+    zh: "書寫規則",
+    ja: "書き方のルール",
+    ko: "작성 규칙",
+    es: "Reglas de escritura",
+    de: "Schreibregeln",
+    fi: "Kirjoitussäännöt",
+    fr: "Règles d'écriture",
+    ar: "قواعد الكتابة",
+    it: "Regole di scrittura"
+  },
+  rule1: {
+    en: "Omit multiplication sign",
+    zh: "乘號通常省略",
+    ja: "乗算記号は省略",
+    ko: "곱셈 기호 생략",
+    es: "Omitir signo de multiplicación",
+    de: "Multiplikationszeichen weglassen",
+    fi: "Jätä kertomerkki pois",
+    fr: "Ommettre le signe de multiplication",
+    ar: "حذف علامة الضرب",
+    it: "Omettere segno di moltiplicazione"
+  },
+  rule2: {
+    en: "Use fraction for division",
+    zh: "除號寫成分數",
+    ja: "除算には分数を使用",
+    ko: "나눗셈은 분수로",
+    es: "Usar fracción para división",
+    de: "Bruch für Division verwenden",
+    fi: "Käytä murtolukua jakolaskuun",
+    fr: "Utiliser une fraction pour la division",
+    ar: "استخدم الكسر للقسمة",
+    it: "Usa frazione per divisione"
+  },
+  rule3: {
+    en: "Number before letter",
+    zh: "數字寫在字母前",
+    ja: "文字の前に数字",
+    ko: "문자 앞에 숫자",
+    es: "Número antes de letra",
+    de: "Zahl vor Buchstabe",
+    fi: "Numero ennen kirjainta",
+    fr: "Nombre avant lettre",
+    ar: "الرقم قبل الحرف",
+    it: "Numero prima della lettera"
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+const DATA = [{
+  q: {
+    en: "x plus 5",
+    zh: "x 加上 5",
+    ja: "x たす 5",
+    ko: "x 더하기 5",
+    es: "x más 5",
+    de: "x plus 5",
+    fr: "x plus 5",
+    it: "x più 5"
+  },
+  ans: "x + 5"
+}, {
+  q: {
+    en: "y minus 3",
+    zh: "y 減去 3",
+    ja: "y ひく 3",
+    ko: "y 빼기 3",
+    es: "y menos 3",
+    de: "y minus 3",
+    fr: "y moins 3",
+    it: "y meno 3"
+  },
+  ans: "y - 3"
+}, {
+  q: {
+    en: "4 times k",
+    zh: "k 的 4 倍",
+    ja: "k の 4 倍",
+    ko: "k의 4배",
+    es: "4 veces k",
+    de: "4 mal k",
+    fr: "4 fois k",
+    it: "4 volte k"
+  },
+  ans: "4k"
+}, {
+  q: {
+    en: "m divided by 2",
+    zh: "m 除以 2",
+    ja: "m わる 2",
+    ko: "m 나누기 2",
+    es: "m dividido por 2",
+    de: "m geteilt durch 2",
+    fr: "m divisé par 2",
+    it: "m diviso 2"
+  },
+  ans: "m / 2"
+}, {
+  q: {
+    en: "10 minus z",
+    zh: "10 減去 z",
+    ja: "10 ひく z",
+    ko: "10 빼기 z",
+    es: "10 menos z",
+    de: "10 minus z",
+    fr: "10 moins z",
+    it: "10 meno z"
+  },
+  ans: "10 - z"
+}, {
+  q: {
+    en: "half of n",
+    zh: "n 的一半",
+    ja: "n の半分",
+    ko: "n의 절반",
+    es: "mitad de n",
+    de: "Hälfte von n",
+    fr: "moitié de n",
+    it: "metà di n"
+  },
+  ans: "n / 2"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [flipped, setFlipped] = useState(Array(DATA.length).fill(false));
+  const toggle = i => {
+    const newFlipped = [...flipped];
+    newFlipped[i] = !newFlipped[i];
+    setFlipped(newFlipped);
+  };
+  const getQ = item => item.q[lang] || item.q["en"];
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4 font-sans bg-slate-900 text-white"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-5xl flex justify-between items-center mb-8"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-black text-indigo-400 drop-shadow-[0_0_15px_rgba(129,140,248,0.5)]"
+  }, "🔤 ", getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "flex bg-slate-800/80 p-1.5 rounded-xl border border-white/10 flex-wrap justify-end gap-1 max-w-[50%]"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-indigo-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white hover:bg-white/5"}`
+  }, l)))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-5xl space-y-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-center text-slate-400 font-bold tracking-widest uppercase text-sm"
+  }, getText("instruction", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+  }, DATA.map((item, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    onClick: () => toggle(i),
+    className: "group perspective-1000 cursor-pointer h-48"
+  }, /*#__PURE__*/React.createElement(motion.div, {
+    className: "relative w-full h-full preserve-3d transition duration-500",
+    animate: {
+      rotateY: flipped[i] ? 180 : 0
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 backface-hidden bg-slate-800 rounded-2xl border border-slate-600 flex items-center justify-center p-6 shadow-xl group-hover:border-indigo-400/50 group-hover:bg-slate-700 transition-colors"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xl font-bold text-slate-200 text-center"
+  }, getQ(item))), /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 backface-hidden rotate-y-180 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl border border-indigo-400 flex items-center justify-center p-6 shadow-xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black font-mono text-white text-center drop-shadow-md"
+  }, item.ans)))))), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 rounded-2xl border-l-4 border-indigo-500"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-lg font-bold text-indigo-300 mb-4"
+  }, getText("rules", lang)), /*#__PURE__*/React.createElement("ul", {
+    className: "grid grid-cols-1 md:grid-cols-3 gap-4 text-sm font-medium text-slate-300"
+  }, /*#__PURE__*/React.createElement("li", {
+    className: "bg-slate-800/50 p-3 rounded-lg flex items-center gap-3"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "w-2 h-2 rounded-full bg-indigo-500"
+  }), getText("rule1", lang), " (4 × k → 4k)"), /*#__PURE__*/React.createElement("li", {
+    className: "bg-slate-800/50 p-3 rounded-lg flex items-center gap-3"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "w-2 h-2 rounded-full bg-indigo-500"
+  }), getText("rule2", lang), " (m ÷ 2 → m/2)"), /*#__PURE__*/React.createElement("li", {
+    className: "bg-slate-800/50 p-3 rounded-lg flex items-center gap-3"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "w-2 h-2 rounded-full bg-indigo-500"
+  }), getText("rule3", lang), " (k × 4 → 4k)")))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

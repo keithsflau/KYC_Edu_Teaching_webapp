@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Volume Visualizer | S1 Math</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+      }
+    </style>
+  </head>
+  <body class="bg-cyan-50 text-slate-800 min-h-screen">
+    <div id="root"></div>
+    <script>
+const {
+  useState
+} = React;
+const App = () => {
+  const [L, setL] = useState(4); // x
+  const [W, setW] = useState(3); // y
+  const [H, setH] = useState(5); // z
+
+  // Isometric projection constants
+  const tileW = 40;
+  const tileH = 24; // flattness
+
+  // Generates styles for a cube at grid x,y,z
+  const Cube = ({
+    x,
+    y,
+    z
+  }) => {
+    // Screen X: (x - y) * tileW
+    // Screen Y: (x + y) * tileH - z * (tileH * 1.5)
+
+    // Adjust scale for view
+    const sx = (x - y) * (tileW / 2);
+    const sy = (x + y) * (tileH / 2) - z * 35; // 35 is vertical step
+
+    return /*#__PURE__*/React.createElement("div", {
+      className: "absolute transition-all duration-300",
+      style: {
+        left: `calc(50% + ${sx}px)`,
+        top: `calc(60% + ${sy}px)`,
+        zIndex: x + y + z // Painter's algo sort
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "relative w-10 h-10 group"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "absolute w-10 h-10 bg-cyan-400 border border-cyan-500 origin-bottom-right transform skew-x-[60deg] rotate-[-75deg] scale-y-[0.6] -translate-y-[22px] translate-x-[2px] opacity-90 group-hover:bg-cyan-300"
+    }), /*#__PURE__*/React.createElement("svg", {
+      width: "44",
+      height: "50",
+      viewBox: "0 0 44 50",
+      className: "drop-shadow-sm"
+    }, /*#__PURE__*/React.createElement("path", {
+      d: "M22 0 L44 11 L22 22 L0 11 Z",
+      fill: "#22d3ee",
+      stroke: "#0891b2",
+      strokeWidth: "1"
+    }), " ", /*#__PURE__*/React.createElement("path", {
+      d: "M0 11 L22 22 L22 46 L0 35 Z",
+      fill: "#06b6d4",
+      stroke: "#0891b2",
+      strokeWidth: "1"
+    }), " ", /*#__PURE__*/React.createElement("path", {
+      d: "M22 22 L44 11 L44 35 L22 46 Z",
+      fill: "#0ea5e9",
+      stroke: "#0891b2",
+      strokeWidth: "1"
+    }), " "), /*#__PURE__*/React.createElement("div", {
+      className: "absolute top-4 left-4 text-[8px] text-white/50"
+    }, x, ",", y, ",", z)));
+  };
+  const cubes = [];
+  // Order: z bottom up, then x/y back to front
+  // Back corner is low X, low Y.
+  // Painter's Algo for Isometric: Draw furthest away first.
+  // Further away = Smallest X+Y?
+  // Lowest Z is bottom.
+
+  for (let z = 0; z < H; z++) {
+    for (let y = 0; y < W; y++) {
+      for (let x = 0; x < L; x++) {
+        cubes.push(/*#__PURE__*/React.createElement(Cube, {
+          key: `${x}-${y}-${z}`,
+          x: x,
+          y: y,
+          z: z
+        }));
+      }
+    }
+  }
+  return /*#__PURE__*/React.createElement("div", {
+    className: "p-8 max-w-4xl mx-auto min-h-screen flex flex-col items-center overflow-hidden"
+  }, /*#__PURE__*/React.createElement("header", {
+    className: "mb-8 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-cyan-600 font-bold uppercase text-xs tracking-widest mb-2"
+  }, "Unit 2: Geometry"), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-slate-900"
+  }, "Volume Visualizer"), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-500"
+  }, "Volume = Area of Base × Height")), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col md:flex-row gap-12 w-full pt-8 h-[600px] relative"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full md:w-1/3 bg-white p-6 rounded-3xl shadow-xl border border-cyan-100 z-50 h-fit"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "font-bold text-xl mb-6"
+  }, "Dimensions"), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-6"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "flex justify-between font-bold text-slate-500 mb-2"
+  }, /*#__PURE__*/React.createElement("span", null, "Length (x)"), " ", /*#__PURE__*/React.createElement("span", {
+    className: "bg-slate-100 px-2 rounded"
+  }, L)), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "1",
+    max: "8",
+    value: L,
+    onChange: e => setL(Number(e.target.value)),
+    className: "w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-cyan-500"
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "flex justify-between font-bold text-slate-500 mb-2"
+  }, /*#__PURE__*/React.createElement("span", null, "Width (y)"), " ", /*#__PURE__*/React.createElement("span", {
+    className: "bg-slate-100 px-2 rounded"
+  }, W)), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "1",
+    max: "8",
+    value: W,
+    onChange: e => setW(Number(e.target.value)),
+    className: "w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-cyan-500"
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "flex justify-between font-bold text-slate-500 mb-2"
+  }, /*#__PURE__*/React.createElement("span", null, "Height (z)"), " ", /*#__PURE__*/React.createElement("span", {
+    className: "bg-slate-100 px-2 rounded"
+  }, H)), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "1",
+    max: "8",
+    value: H,
+    onChange: e => setH(Number(e.target.value)),
+    className: "w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-cyan-500"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "mt-8 pt-8 border-t border-slate-100"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs uppercase font-bold text-slate-400"
+  }, "Total Volume"), /*#__PURE__*/React.createElement("div", {
+    className: "text-5xl font-extrabold text-cyan-600 my-2"
+  }, L * W * H), /*#__PURE__*/React.createElement("div", {
+    className: "text-sm font-mono text-slate-500 bg-slate-50 p-2 rounded"
+  }, L, " × ", W, " × ", H, " = ", L * W * H, " units³"))), /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 relative"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 flex items-center justify-center -translate-y-20"
+  }, cubes))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

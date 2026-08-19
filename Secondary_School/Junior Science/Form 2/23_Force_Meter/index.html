@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Force Meter (Hooke's Law) | S2 Science</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #fff7ed;
+      }
+      .spring {
+        stroke: #94a3b8;
+        stroke-width: 4;
+        fill: none;
+        transition: d 0.2s;
+      }
+    </style>
+  </head>
+  <body class="bg-orange-50 text-slate-800 min-h-screen">
+    <div id="root"></div>
+
+    <script>
+const {
+  useState,
+  useEffect,
+  useRef
+} = React;
+const App = () => {
+  const chartRef = useRef(null);
+  const [chartInstance, setChartInstance] = useState(null);
+  const [mass, setMass] = useState(0); // g
+  const [data, setData] = useState([]); // Array of {load, extension}
+
+  // Physics Constants
+  const initialLength = 100; // px
+  const k = 0.5; // Spring constant (px per g roughly)
+
+  const extension = mass * k;
+  const currentLength = initialLength + extension;
+  const force = mass / 1000 * 10; // N (approx g=10)
+
+  const recordData = () => {
+    const newData = [...data, {
+      x: force,
+      y: extension
+    }];
+    setData(newData);
+  };
+  const reset = () => {
+    setData([]);
+    setMass(0);
+  };
+
+  // Chart
+  useEffect(() => {
+    if (chartRef.current) {
+      const ctx = chartRef.current.getContext("2d");
+      if (chartInstance) {
+        chartInstance.data.datasets[0].data = data;
+        chartInstance.update();
+      } else {
+        const newChart = new Chart(ctx, {
+          type: "scatter",
+          data: {
+            datasets: [{
+              label: "Extension vs Force",
+              data: data,
+              backgroundColor: "#f97316"
+            }]
+          },
+          options: {
+            responsive: true,
+            scales: {
+              x: {
+                type: "linear",
+                position: "bottom",
+                title: {
+                  display: true,
+                  text: "Force (N)"
+                },
+                min: 0,
+                max: 5
+              },
+              y: {
+                title: {
+                  display: true,
+                  text: "Extension (cm approx)"
+                }
+              }
+            }
+          }
+        });
+        setChartInstance(newChart);
+      }
+    }
+  }, [data]);
+
+  // Spring Path Generator
+  const generateSpringPath = length => {
+    const coils = 10;
+    let d = `M 100 0 `;
+    const step = length / coils;
+    for (let i = 0; i < coils; i++) {
+      d += `l -20 ${step / 2} l 40 ${step / 2} `; // Zigzag
+    }
+    d += `l -20 0 L 100 ${length + 20}`; // End hook
+    return d;
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "p-8 max-w-6xl mx-auto min-h-screen flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("header", {
+    className: "text-center mb-10 w-full"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-orange-600 font-bold uppercase text-xs tracking-widest"
+  }, "Form 2 Science • Unit 11"), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-slate-800 mb-2"
+  }, "Force Meter Lab"), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-500"
+  }, "Investigate the relationship between Force (Load) and Spring Extension.")), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col lg:flex-row gap-12 w-full"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full lg:w-1/3 bg-white rounded-3xl shadow-xl border border-orange-100 relative min-h-[600px] flex justify-center pt-10"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-0 left-10 w-4 h-full bg-slate-200"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-10 left-10 w-32 h-4 bg-slate-300"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-10 right-10 w-12 h-[500px] bg-yellow-100 border border-yellow-200 flex flex-col items-end pt-10 font-mono text-xs text-slate-400"
+  }, Array.from({
+    length: 11
+  }).map((_, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "border-t border-slate-300 w-full pr-1 h-[50px] relative"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "absolute -top-2 right-1"
+  }, i * 5)))), /*#__PURE__*/React.createElement("div", {
+    className: "relative z-10"
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: "200",
+    height: "600",
+    className: "overflow-visible"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: generateSpringPath(currentLength),
+    className: "spring"
+  }), /*#__PURE__*/React.createElement("g", {
+    transform: `translate(100, ${currentLength + 20})`
+  }, /*#__PURE__*/React.createElement("rect", {
+    x: "-30",
+    y: "0",
+    width: "60",
+    height: "10",
+    fill: "#64748b"
+  }), " ", /*#__PURE__*/React.createElement("rect", {
+    x: "-2",
+    y: "10",
+    width: "4",
+    height: "40",
+    fill: "#64748b"
+  }), " ", /*#__PURE__*/React.createElement("circle", {
+    cx: "0",
+    cy: "55",
+    r: "5",
+    fill: "#64748b"
+  }), " ", Array.from({
+    length: mass / 100
+  }).map((_, i) => /*#__PURE__*/React.createElement("rect", {
+    key: i,
+    x: "-25",
+    y: 40 - i * 15,
+    width: "50",
+    height: "12",
+    rx: "2",
+    fill: "#f59e0b",
+    stroke: "#b45309"
+  }))), /*#__PURE__*/React.createElement("path", {
+    d: `M 140 ${currentLength + 20} L 160 ${currentLength + 20} L 150 ${currentLength + 25} Z`,
+    fill: "red"
+  })))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full lg:w-2/3 flex flex-col gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-6 rounded-3xl shadow-md border border-orange-100 flex items-center justify-between"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h3", {
+    className: "font-bold text-slate-600 mb-2"
+  }, "Mass Loading (g)"), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-2"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setMass(Math.max(0, mass - 100)),
+    className: "w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 font-bold"
+  }, "-"), /*#__PURE__*/React.createElement("div", {
+    className: "w-20 text-center text-2xl font-black text-slate-800 self-center"
+  }, mass), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setMass(Math.min(500, mass + 100)),
+    className: "w-10 h-10 rounded-full bg-orange-100 text-orange-600 hover:bg-orange-200 font-bold"
+  }, "+"))), /*#__PURE__*/React.createElement("div", {
+    className: "text-right"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-sm text-slate-500"
+  }, "Resultant Force"), /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-black text-orange-500"
+  }, force.toFixed(1), " N"))), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: recordData,
+    className: "flex-1 py-4 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-2xl shadow-lg transition-transform hover:scale-105 active:scale-95"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-pen-to-square mr-2"
+  }), " Record Measurement"), /*#__PURE__*/React.createElement("button", {
+    onClick: reset,
+    className: "px-6 py-4 bg-slate-200 hover:bg-slate-300 text-slate-500 font-bold rounded-2xl"
+  }, "Reset")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-6 rounded-3xl shadow-md border border-slate-100 flex-grow"
+  }, /*#__PURE__*/React.createElement("canvas", {
+    ref: chartRef
+  })))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

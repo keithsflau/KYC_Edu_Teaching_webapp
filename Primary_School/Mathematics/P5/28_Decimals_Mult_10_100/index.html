@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小五數學：小數乘法視像化 | Decimal Multiplication Visualizer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+        color: white;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      }
+      .digit-box {
+        font-family: "JetBrains Mono", monospace;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Decimal Jump",
+    zh: "小數跳跳變",
+    ja: "小数ジャンプ",
+    ko: "소수 점프",
+    es: "Salto Decimal",
+    de: "Dezimalsprung",
+    fi: "Desimaaliloukkaus",
+    fr: "Saut Décimal",
+    ar: "قفزة عشرية",
+    it: "Salto Decimale"
+  },
+  instruction: {
+    en: "Observe how x10, x100 moves the decimal point!",
+    zh: "觀察 x10, x100 如何移動小數點！",
+    ja: "x10、x100で小数点がどう動くか観察しよう！",
+    ko: "x10, x100이 소수점을 어떻게 이동시키는지 관찰하세요!",
+    es: "¡Observa cómo x10, x100 mueven el punto decimal!",
+    de: "Beobachte, wie x10, x100 das Dezimalkomma verschiebt!",
+    fi: "Katso miten x10, x100 siirtää desimaalipilkkua!",
+    fr: "Observez comment x10, x100 déplacent le point décimal !",
+    ar: "لاحظ كيف يحرك x10, x100 العلامة العشرية!",
+    it: "Osserva come x10, x100 spostano il punto decimale!"
+  },
+  multiply: {
+    en: "Multiply by",
+    zh: "乘以",
+    ja: "掛ける",
+    ko: "곱하기",
+    es: "Multiplicar por",
+    de: "Multiplizieren mit",
+    fi: "Kerro",
+    fr: "Multiplier par",
+    ar: "ضرب في",
+    it: "Moltiplica per"
+  },
+  reset: {
+    en: "Reset",
+    zh: "重置",
+    ja: "リセット",
+    ko: "초기화",
+    es: "Reiniciar",
+    de: "Zurücksetzen",
+    fi: "Nollaa",
+    fr: "Réinitialiser",
+    ar: "إعادة ضبط",
+    it: "Reimposta"
+  },
+  result: {
+    en: "Result",
+    zh: "結果",
+    ja: "結果",
+    ko: "결과",
+    es: "Resultado",
+    de: "Ergebnis",
+    fi: "Tulos",
+    fr: "Résultat",
+    ar: "النتيجة",
+    it: "Risultato"
+  },
+  moveRight: {
+    en: "Decimal point moves {n} place(s) right",
+    zh: "小數點向右移 {n} 位",
+    ja: "小数点が右に {n} 桁移動",
+    ko: "소수점이 오른쪽으로 {n} 자리 이동",
+    es: "El punto decimal se mueve {n} lugar(es) a la derecha",
+    de: "Dezimalkomma verschiebt sich um {n} Stelle(n) nach rechts",
+    fi: "Desimaalipilkku siirtyy {n} askel(ta) oikealle",
+    fr: "Le point décimal se déplace de {n} rang(s) vers la droite",
+    ar: "تتحرك العلامة العشرية {n} منزلة (منازل) لليمين",
+    it: "Il punto decimale si sposta di {n} posto(i) a destra"
+  },
+  original: {
+    en: "Original",
+    zh: "原本",
+    ja: "元",
+    ko: "원래",
+    es: "Original",
+    de: "Original",
+    fi: "Alkuperäinen",
+    fr: "Original",
+    ar: "أصلي",
+    it: "Originale"
+  }
+};
+const getText = (key, lang, params = {}) => {
+  let text = t[key]?.[lang] || t[key]?.["en"] || key;
+  for (const param in params) {
+    text = text.replace(`{${param}}`, params[param]);
+  }
+  return text;
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [baseNumber, setBaseNumber] = useState("12.345");
+  const [multiplier, setMultiplier] = useState(1);
+  const jumps = Math.log10(multiplier);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 md:p-8 flex flex-col items-center justify-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-4xl flex justify-between items-center mb-12"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 to-orange-400"
+  }, getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-800/80 p-1.5 rounded-xl flex flex-wrap justify-center gap-1 backdrop-blur-md border border-white/10 max-w-[40%]"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-yellow-500 text-black shadow-lg scale-105" : "text-white/60 hover:text-white hover:bg-white/5"}`
+  }, l)))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-5xl glass-panel rounded-3xl p-8 md:p-16 flex flex-col items-center gap-12 relative overflow-hidden"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-yellow-500 to-orange-600"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center gap-4 z-10 w-full"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: baseNumber,
+    onChange: e => {
+      if (e.target.value.length < 12) setBaseNumber(e.target.value);
+    },
+    className: "bg-transparent border-b-4 border-yellow-500/50 text-center text-5xl font-black text-white outline-none focus:border-yellow-400 w-full max-w-md pb-2 font-mono"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-center gap-2 font-mono text-6xl md:text-8xl font-bold bg-black/30 p-8 rounded-2xl shadow-inner relative w-full overflow-x-auto min-h-[160px]"
+  }, (() => {
+    const parts = baseNumber.split(".");
+    const integer = parts[0] || "0";
+    const fraction = parts[1] || "";
+    const fullStr = integer + fraction + "000"; // Pad zeros for jumps
+
+    // Where is the dot initially? After integer.length digits.
+    const initialDotPos = integer.length;
+    const currentDotPos = initialDotPos + jumps;
+
+    // Render digits
+    return /*#__PURE__*/React.createElement("div", {
+      className: "flex items-end gap-1 relative"
+    }, fullStr.split("").map((d, i) => {
+      return /*#__PURE__*/React.createElement("div", {
+        key: i,
+        className: `flex items-end transition-all duration-500 ${i >= integer.length + fraction.length + jumps ? "opacity-0 w-0" : "opacity-100 w-auto"}`
+      }, /*#__PURE__*/React.createElement("span", {
+        className: "digit-box px-1 relative"
+      }, d), i === currentDotPos - 1 && /*#__PURE__*/React.createElement(motion.div, {
+        layoutId: "decimal-dot",
+        className: "w-4 h-4 rounded-full bg-yellow-400 mb-4 mx-1 shadow-[0_0_20px_#facc15]",
+        transition: {
+          type: "spring",
+          stiffness: 300,
+          damping: 20
+        }
+      }));
+    }));
+  })()), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-4 gap-4 w-full max-w-2xl z-10"
+  }, [1, 10, 100, 1000].map(m => /*#__PURE__*/React.createElement("button", {
+    key: m,
+    onClick: () => setMultiplier(m),
+    className: `py-4 rounded-xl font-black text-xl transition-all border-2
+                            ${multiplier === m ? "bg-yellow-500 text-black border-yellow-400 shadow-[0_0_20px_rgba(234,179,8,0.5)] transform scale-105" : "bg-white/5 border-white/10 hover:bg-white/10 text-slate-400"}`
+  }, m === 1 ? getText("original", lang) : `× ${m}`))), /*#__PURE__*/React.createElement("div", {
+    className: "text-slate-400 text-sm font-bold bg-black/20 px-6 py-3 rounded-full border border-white/5"
+  }, jumps === 0 ? getText("instruction", lang) : getText("moveRight", lang, {
+    n: jumps
+  }))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

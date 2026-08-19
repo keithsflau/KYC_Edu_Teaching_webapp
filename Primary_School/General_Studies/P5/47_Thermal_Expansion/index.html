@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - Thermal Expansion</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: #f1f5f9;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Thermal Expansion Lab",
+    zh: "熱脹冷縮實驗",
+    ja: "熱膨張実験",
+    ko: "열팽창 실험",
+    es: "Laboratorio de expansión térmica",
+    de: "Labor für thermische Ausdehnung",
+    fi: "Lämpölaajenemislaboratorio",
+    fr: "Laboratoire de dilatation thermique",
+    ar: "مختبر التمدد الحراري",
+    it: "Laboratorio di Espansione Termica"
+  },
+  instruction: {
+    en: "Heat expands, Cool contracts. Fit the ball through the ring!",
+    zh: "熱脹、冷縮。讓球通過圓環！",
+    ja: "熱は膨張し、冷は収縮します。ボールをリングに通してください！",
+    ko: "열은 팽창하고 냉은 수축합니다. 공을 링에 통과시키세요!",
+    es: "El calor expande, el frío contrae. ¡Haz pasar la bola por el anillo!",
+    de: "Wärme dehnt aus, Kälte zieht zusammen. Passe den Ball durch den Ring!",
+    fi: "Lämpö laajentaa, kylmä supistaa. Sovita pallo renkaan läpi!",
+    fr: "La chaleur dilate, le froid contracte. Faites passer la balle à travers l'anneau !",
+    ar: "الحرارة تتمدد، والبرودة تنكمش. مرر الكرة عبر الحلقة!",
+    it: "Il calore espande, il freddo contrae. Fai passare la palla attraverso l'anello!"
+  },
+  heat: {
+    en: "Heat (+)",
+    zh: "加熱 (+)",
+    ja: "加熱 (+)",
+    ko: "가열 (+)"
+  },
+  cool: {
+    en: "Cool (-)",
+    zh: "冷卻 (-)",
+    ja: "冷却 (-)",
+    ko: "냉각 (-)"
+  },
+  pass: {
+    en: "Drop Ball",
+    zh: "放下球",
+    ja: "ボールを落とす",
+    ko: "공 떨어뜨리기"
+  },
+  success: {
+    en: "Success! It fits!",
+    zh: "成功！通過了！",
+    ja: "成功！通りました！",
+    ko: "성공! 통과했습니다!"
+  },
+  fail: {
+    en: "Stuck! Too big!",
+    zh: "卡住了！太大了！",
+    ja: "詰まった！大きすぎます！",
+    ko: "걸렸어요! 너무 큽니다!"
+  }
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [temp, setTemp] = useState(40); // Start warm so ball is larger than ring
+  const [dropping, setDropping] = useState(false);
+  const [result, setResult] = useState(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+
+  // Ring size fixed at 50px
+  // Ball size at 25C = 50px
+  // Temp > 25 -> Size > 50 (Stuck)
+  // Temp < 25 -> Size < 50 (Pass)
+
+  const ballSize = 50 + (temp - 25);
+  const drop = () => {
+    setDropping(true);
+    setResult(null);
+    setTimeout(() => {
+      if (ballSize <= 50) {
+        setResult("success");
+      } else {
+        setResult("fail");
+      }
+      setDropping(false);
+    }, 1000);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-bold mb-8 text-slate-700"
+  }, getText("title")), /*#__PURE__*/React.createElement("p", {
+    className: "mb-8 font-bold text-slate-500 max-w-lg text-center"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center bg-white p-8 rounded-3xl shadow-xl w-full max-w-md border-2 border-slate-200"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-mono font-bold mb-4"
+  }, temp, "°C"), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4 mb-8"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setTemp(t => Math.max(0, t - 10)),
+    className: "p-4 bg-blue-500 rounded-full text-white shadow hover:scale-110"
+  }, "❄️ ", getText("cool")), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setTemp(t => Math.min(100, t + 10)),
+    className: "p-4 bg-red-500 rounded-full text-white shadow hover:scale-110"
+  }, "🔥 ", getText("heat"))), /*#__PURE__*/React.createElement("div", {
+    className: "relative h-[300px] w-full flex justify-center items-start border-b-4 border-slate-800"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-[100px] w-[100px] h-4 bg-slate-400 flex justify-between items-center z-10"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-4 h-4 bg-slate-600 rounded-full"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "w-[60px] h-2 bg-transparent border-x-4 border-slate-600"
+  }), " ", /*#__PURE__*/React.createElement("div", {
+    className: "w-4 h-4 bg-slate-600 rounded-full"
+  })), /*#__PURE__*/React.createElement(motion.div, {
+    className: `rounded-full shadow-inner border border-slate-400 z-0 ${result === "fail" ? "bg-red-500" : "bg-slate-500"}`,
+    style: {
+      width: ballSize,
+      height: ballSize,
+      backgroundColor: temp > 50 ? "#ef4444" : temp < 10 ? "#3b82f6" : "#64748b"
+    },
+    animate: {
+      y: dropping ? ballSize > 50 ? 80 : 200 : 0 // 100 is ring level. Stuck at 80 (center 100-20), pass to 200
+    },
+    transition: {
+      duration: 1,
+      type: "sping",
+      bounce: 0.2
+    }
+  })), /*#__PURE__*/React.createElement("button", {
+    onClick: drop,
+    disabled: dropping,
+    className: "mt-8 px-8 py-3 bg-slate-800 text-white font-bold rounded-xl shadow-lg disabled:opacity-50"
+  }, getText("pass")), result && /*#__PURE__*/React.createElement("div", {
+    className: `mt-4 text-xl font-bold ${result === "success" ? "text-green-600" : "text-red-500"} animate-bounce`
+  }, getText(result))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

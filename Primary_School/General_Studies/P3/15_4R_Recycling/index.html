@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小三常識：環保 4R | 4R Recycling</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: radial-gradient(circle at center, #86efac 0%, #15803d 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const { LanguageSelector,
+  get } = window.MathI18n || { LanguageSelector: () => null, get: (key) => key };
+const t = {
+  title: {
+    en: "4R Challenge",
+    zh: "環保 4R 挑戰",
+    ja: "4Rチャレンジ",
+    ko: "4R 챌린지",
+    es: "Desafío 4R",
+    de: "4R-Herausforderung",
+    fi: "4R-haaste",
+    fr: "Défi 4R",
+    ar: "تحدي 4R",
+    it: "Sfida 4R"
+  },
+  instruction: {
+    en: "Which R is this?",
+    zh: "這是哪一個 R？",
+    ja: "これはどのRですか？",
+    ko: "어떤 R인가요?",
+    es: "¿Qué R es esta?",
+    de: "Welches R ist das?",
+    fi: "Mikä R tämä on?",
+    fr: "Quel R est-ce ?",
+    ar: "أي R هذا؟",
+    it: "Quale R è questa?"
+  },
+  reduce: {
+    en: "Reduce",
+    zh: "減少使用",
+    ja: "リデュース (減らす)",
+    ko: "절약 (Reduce)",
+    es: "Reducir",
+    de: "Reduzieren",
+    fi: "Vähennä",
+    fr: "Réduire",
+    ar: "تقليل",
+    it: "Ridurre"
+  },
+  reuse: {
+    en: "Reuse",
+    zh: "物盡其用",
+    ja: "リユース (再利用)",
+    ko: "재사용 (Reuse)",
+    es: "Reutilizar",
+    de: "Wiederverwenden",
+    fi: "Käytä uudelleen",
+    fr: "Réutiliser",
+    ar: "إعادة الاستخدام",
+    it: "Riutilizzare"
+  },
+  recycle: {
+    en: "Recycle",
+    zh: "循環再造",
+    ja: "リサイクル (再生利用)",
+    ko: "재활용 (Recycle)",
+    es: "Reciclar",
+    de: "Recyceln",
+    fi: "Kierrätä",
+    fr: "Recycler",
+    ar: "إعادة التدوير",
+    it: "Riciclare"
+  },
+  replace: {
+    en: "Replace",
+    zh: "替代使用",
+    ja: "リプレイス (代替)",
+    ko: "대체 (Replace)",
+    es: "Reemplazar",
+    de: "Ersetzen",
+    fi: "Korvaa",
+    fr: "Remplacer",
+    ar: "استبدال",
+    it: "Sostituire"
+  },
+  desc_reduce: {
+    en: "Buy less, waste less",
+    zh: "少買，少浪費",
+    ja: "無駄を減らす",
+    ko: "적게 사고 낭비 줄이기",
+    es: "Compra menos, desperdicia menos",
+    de: "Kaufe weniger, verschwende weniger",
+    fi: "Osta vähemmän, tuhlaa vähemmän",
+    fr: "Achetez moins, gaspillez moins",
+    ar: "اشتري أقل، أهدر أقل",
+    it: "Compra meno, spreca meno"
+  },
+  desc_reuse: {
+    en: "Use it again",
+    zh: "重複使用",
+    ja: "もう一度使う",
+    ko: "다시 사용하기",
+    es: "Úsalo de nuevo",
+    de: "Benutze es wieder",
+    fi: "Käytä uudelleen",
+    fr: "Utilisez-le à nouveau",
+    ar: "استخدمه مرة أخرى",
+    it: "Usalo di nuovo"
+  },
+  desc_recycle: {
+    en: "Make into new things",
+    zh: "製成新物品",
+    ja: "新しいものに変える",
+    ko: "새로운 물건으로 만들기",
+    es: "Convertir en cosas nuevas",
+    de: "Zu neuen Dingen machen",
+    fi: "Tee uusiksi asioiksi",
+    fr: "Faire de nouvelles choses",
+    ar: "تحويل إلى أشياء جديدة",
+    it: "Trasforma in cose nuove"
+  },
+  desc_replace: {
+    en: "Use eco-friendly items",
+    zh: "用環保產品代替",
+    ja: "環境に優しいものを使う",
+    ko: "친환경 제품 사용하기",
+    es: "Usa artículos ecológicos",
+    de: "Benutze umweltfreundliche Artikel",
+    fi: "Käytä ympäristöystävällisiä tuotteita",
+    fr: "Utilisez des articles écologiques",
+    ar: "استخدم مواد صديقة للبيئة",
+    it: "Usa articoli ecologici"
+  },
+  // Items
+  item_towel: {
+    en: "Handkerchief instead of Tissue",
+    zh: "用手帕代替紙巾",
+    ja: "ティッシュの代わりにハンカチ",
+    ko: "화장지 대신 손수건",
+    es: "Pañuelo en lugar de pañuelo de papel",
+    de: "Taschentuch statt Papiertuch",
+    fi: "Nenäliina paperiliinan sijaan",
+    fr: "Mouchoir au lieu de mouchoir en papier",
+    ar: "المنديل بدلاً من المناديل الورقية",
+    it: "Fazzoletto invece di fazzoletto di carta"
+  },
+  item_bottle: {
+    en: "Refill Water Bottle",
+    zh: "自備水樽",
+    ja: "水筒を持ち歩く",
+    ko: "물병 리필",
+    es: "Rellenar botella de agua",
+    de: "Wasserflasche auffüllen",
+    fi: "Täytä vesipullo",
+    fr: "Remplir la bouteille d'eau",
+    ar: "إعادة ملء زجاجة الماء",
+    it: "Riempi borraccia"
+  },
+  item_can: {
+    en: "Aluminum Can",
+    zh: "鋁罐",
+    ja: "アルミ缶",
+    ko: "알루미늄 캔",
+    es: "Lata de aluminio",
+    de: "Alu-Dose",
+    fi: "Alumiinitölkki",
+    fr: "Canette en aluminium",
+    ar: "علبة ألومنيوم",
+    it: "Lattina di alluminio"
+  },
+  item_bag: {
+    en: "Bring your own bag",
+    zh: "自備購物袋",
+    ja: "マイバッグを持参",
+    ko: "장바구니 가져오기",
+    es: "Trae tu propia bolsa",
+    de: "Bringe deine eigene Tasche mit",
+    fi: "Tuo oma kassi",
+    fr: "Apportez votre propre sac",
+    ar: "أحضر حقيبتك الخاصة",
+    it: "Porta la tua borsa"
+  },
+  item_paper: {
+    en: "Write on both sides",
+    zh: "紙張雙面用",
+    ja: "両面に書く",
+    ko: "양면 사용",
+    es: "Escribir en ambos lados",
+    de: "Auf beiden Seiten schreiben",
+    fi: "Kirjoita molemmille puolille",
+    fr: "Écrire des deux côtés",
+    ar: "اكتب على كلا الجانبين",
+    it: "Scrivi su entrambi i lati"
+  },
+  item_plastic: {
+    en: "Plastic Bottle -> Jersey",
+    zh: "膠樽 -> 球衣",
+    ja: "ペットボトル -> ジャージ",
+    ko: "플라스틱 병 -> 운동복",
+    es: "Botella de plástico -> Camiseta",
+    de: "Plastikflasche -> Trikot",
+    fi: "Muovipullo -> Paita",
+    fr: "Bouteille en plastique -> Maillot",
+    ar: "زجاجة بلاستيكية -> قميص",
+    it: "Bottiglia di plastica -> Maglia"
+  },
+  item_donation: {
+    en: "Donate old clothes",
+    zh: "捐贈舊衣",
+    ja: "古着を寄付",
+    ko: "헌 옷 기부",
+    es: "Donar ropa vieja",
+    de: "Alte Kleidung spenden",
+    fi: "Lahjoita vanhat vaatteet",
+    fr: "Donner de vieux vêtements",
+    ar: "تبرع بالملابس القديمة",
+    it: "Dona vecchi vestiti"
+  },
+  item_less: {
+    en: "Buy only what you need",
+    zh: "只買需要的東西",
+    ja: "必要なものだけ買う",
+    ko: "필요한 것만 사기",
+    es: "Compra solo lo que necesitas",
+    de: "Kaufe nur was du brauchst",
+    fi: "Osta vain mitä tarvitset",
+    fr: "Achetez seulement ce dont vous avez besoin",
+    ar: "اشتري ما تحتاجه فقط",
+    it: "Compra solo ciò di cui hai bisogno"
+  },
+  correct: {
+    en: "Correct!",
+    zh: "答對了！",
+    ja: "正解！",
+    ko: "정답입니다!",
+    es: "¡Correcto!",
+    de: "Richtig!",
+    fi: "Oikein!",
+    fr: "Correct !",
+    ar: "صحيح!",
+    it: "Corretto!"
+  },
+  wrong: {
+    en: "Try Again",
+    zh: "再試一次",
+    ja: "もう一度",
+    ko: "다시 시도하세요",
+    es: "Inténtalo de nuevo",
+    de: "Versuch es nochmal",
+    fi: "Yritä uudelleen",
+    fr: "Réessayez",
+    ar: "حاول مرة أخرى",
+    it: "Riprova"
+  },
+  completed: {
+    en: "Green Hero!",
+    zh: "環保小先鋒！",
+    ja: "エコヒーロー！",
+    ko: "환경 영웅!",
+    es: "¡Héroe Verde!",
+    de: "Umweltheld!",
+    fi: "Vihreä sankari!",
+    fr: "Héros vert !",
+    ar: "بطل أخضر!",
+    it: "Eroe Verde!"
+  },
+  reset: {
+    en: "Play Again",
+    zh: "再玩一次",
+    ja: "もう一度プレイ",
+    ko: "다시 하기",
+    es: "Jugar de Nuevo",
+    de: "Nochmal spielen",
+    fi: "Pelaa uudelleen",
+    fr: "Rejouer",
+    ar: "العب مرة أخرى",
+    it: "Gioca di Nuovo"
+  }
+};
+const categories = [{
+  id: "reduce",
+  color: "bg-red-500",
+  icon: "📉"
+}, {
+  id: "reuse",
+  color: "bg-yellow-500",
+  icon: "🔄"
+}, {
+  id: "recycle",
+  color: "bg-blue-500",
+  icon: "♻️"
+}, {
+  id: "replace",
+  color: "bg-green-500",
+  icon: "🌿"
+}];
+const items = [{
+  id: "item_towel",
+  type: "replace",
+  icon: "🤧➡️🟩"
+}, {
+  id: "item_bottle",
+  type: "reuse",
+  icon: "🚰"
+},
+// Can be reuse or replace (disposable). Standard: Reuse
+{
+  id: "item_can",
+  type: "recycle",
+  icon: "🥫"
+}, {
+  id: "item_bag",
+  type: "reduce",
+  icon: "🛍️"
+},
+// Reduce plastic bags usage
+{
+  id: "item_paper",
+  type: "reduce",
+  icon: "📄"
+},
+// Also reuse. But Reduce waste is key. Let's strictly map for P3.
+{
+  id: "item_plastic",
+  type: "recycle",
+  icon: "👕"
+}, {
+  id: "item_donation",
+  type: "reuse",
+  icon: "👚"
+}, {
+  id: "item_less",
+  type: "reduce",
+  icon: "🛒"
+}];
+
+// Strict mapping overrides for clearer teaching
+// Reduce: Buy less, use less (Paper both sides, No plastic bag)
+// Reuse: Use again (Water bottle refill, Donate clothes)
+// Recycle: Blue/Brown/Yellow bins (Can, Plastic to Jersey)
+// Replace: Use X instead of Y (Handkerchief instead of tissue)
+
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [queue, setQueue] = useState([]);
+  const [current, setCurrent] = useState(null);
+  const [feedback, setFeedback] = useState(null);
+  const [score, setScore] = useState(0);
+  const getText = key => t[key][lang] || t[key]["en"];
+  useEffect(() => {
+    initGame();
+  }, []);
+  const initGame = () => {
+    const q = [...items].sort(() => Math.random() - 0.5);
+    setQueue(q);
+    setCurrent(q[0]);
+    setScore(0);
+    setFeedback(null);
+  };
+  const handleSort = catId => {
+    if (feedback) return;
+    if (current.type === catId) {
+      setFeedback("correct");
+      setScore(s => s + 10);
+      setTimeout(() => {
+        setFeedback(null);
+        const nextIdx = queue.indexOf(current) + 1;
+        if (nextIdx < queue.length) setCurrent(queue[nextIdx]);else setCurrent(null);
+      }, 800);
+    } else {
+      setFeedback("wrong");
+      setScore(s => Math.max(0, s - 5));
+      setTimeout(() => setFeedback(null), 800);
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 flex flex-col items-center select-none font-sans overflow-hidden"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-white mb-2 mt-8 drop-shadow-md z-10"
+  }, "♻️ ", getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "font-bold text-green-900 bg-white/60 px-6 py-2 rounded-full mb-6 text-xl"
+  }, "Score: ", score), current ? /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-4xl flex flex-col items-center flex-1 justify-center relative"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "relative z-20 mb-8"
+  }, /*#__PURE__*/React.createElement(motion.div, {
+    key: current.id,
+    initial: {
+      scale: 0,
+      rotate: 180
+    },
+    animate: {
+      scale: 1,
+      rotate: 0
+    },
+    exit: {
+      scale: 0
+    },
+    className: "bg-white p-10 rounded-[3rem] shadow-2xl border-8 border-green-200 flex flex-col items-center text-center w-80 h-80 justify-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-8xl mb-4"
+  }, current.icon), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-black text-slate-700 leading-tight"
+  }, getText(current.id))), feedback && /*#__PURE__*/React.createElement("div", {
+    className: `absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 px-6 py-4 rounded-3xl font-black text-3xl shadow-2xl whitespace-nowrap ${feedback === "correct" ? "bg-green-600 text-white" : "bg-red-500 text-white"}`
+  }, getText(feedback))), /*#__PURE__*/React.createElement("p", {
+    className: "font-bold text-white mb-8 text-2xl drop-shadow-lg"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 md:grid-cols-4 gap-4 w-full"
+  }, categories.map(cat => /*#__PURE__*/React.createElement("button", {
+    key: cat.id,
+    onClick: () => handleSort(cat.id),
+    className: `${cat.color} text-white rounded-2xl p-4 flex flex-col items-center shadow-lg hover:brightness-110 active:scale-95 transition-all border-b-8 border-black/20`
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-5xl mb-2"
+  }, cat.icon), /*#__PURE__*/React.createElement("div", {
+    className: "font-black text-xl md:text-2xl"
+  }, getText(cat.id)), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs md:text-sm font-bold opacity-80 mt-1 leading-tight text-center"
+  }, getText(`desc_${cat.id}`)))))) : /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/95 p-12 rounded-[3rem] shadow-2xl text-center mt-20 backdrop-blur-sm"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-8xl mb-4"
+  }, "🌍"), /*#__PURE__*/React.createElement("h2", {
+    className: "text-4xl font-black text-green-700 mb-6"
+  }, getText("completed")), /*#__PURE__*/React.createElement("p", {
+    className: "text-2xl font-bold text-slate-600 mb-8"
+  }, "Score: ", score), /*#__PURE__*/React.createElement("button", {
+    onClick: initGame,
+    className: "bg-green-600 text-white px-12 py-4 rounded-full font-black text-2xl hover:bg-green-700 shadow-xl"
+  }, getText("reset"), " 🔄")));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

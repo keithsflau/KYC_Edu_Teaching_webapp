@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - Eclipse Viewer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: #000;
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Eclipse Maker",
+    zh: "日食/月食製造器",
+    ja: "日食・月食メーカー",
+    ko: "일식/월식 메이커",
+    es: "Creador de eclipses",
+    de: "Finsternis-Macher",
+    fi: "Pimennystekijä",
+    fr: "Faiseur d'éclipse",
+    ar: "صانع الكسوف",
+    it: "Creatore di Eclissi"
+  },
+  instruction: {
+    en: "Align Sun, Moon, Earth to create a Solar Eclipse!",
+    zh: "排列太陽、月球、地球以製造日食！",
+    ja: "太陽、月、地球を並べて日食を作りましょう！",
+    ko: "태양, 달, 지구를 정렬하여 일식을 만드세요!",
+    es: "¡Alinea el Sol, la Luna y la Tierra para crear un eclipse solar!",
+    de: "Richte Sonne, Mond und Erde aus, um eine Sonnenfinsternis zu erzeugen!",
+    fi: "Kohdista Aurinko, Kuu ja Maa luodaksesi auringonpimennyksen!",
+    fr: "Alignez le Soleil, la Lune et la Terre pour créer une éclipse solaire !",
+    ar: "قم بمحاذاة الشمس والقمر والأرض لإنشاء كسوف شمسي!",
+    it: "Allinea Sole, Luna e Terra per creare un'eclissi solare!"
+  },
+  sun: {
+    en: "Sun",
+    zh: "太陽",
+    ja: "太陽",
+    ko: "태양"
+  },
+  moon: {
+    en: "Moon",
+    zh: "月球",
+    ja: "月",
+    ko: "달"
+  },
+  earth: {
+    en: "Earth",
+    zh: "地球",
+    ja: "地球",
+    ko: "지구"
+  },
+  solar: {
+    en: "Solar Eclipse!",
+    zh: "日食！",
+    ja: "日食！",
+    ko: "일식!"
+  },
+  lunar: {
+    en: "Lunar Eclipse (Not target)",
+    zh: "月食 (非目標)",
+    ja: "月食 (ターゲットではない)",
+    ko: "월식 (목표 아님)"
+  }
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [moonPos, setMoonPos] = useState(50); // 0 to 100 percentage between Sun and Earth?
+
+  const getText = key => t[key][lang] || t[key]["en"];
+
+  // Setup: Sun (Left), Earth (Right). Moon slides.
+  // Solar Eclipse: Sun ---- Moon ---- Earth
+  // Lunar Eclipse: Sun ---- Earth ---- Moon (Moon needs to be on right of earth, but let's simplify to 3 objects in line)
+  // Let's do: Slider controls Moon position relative to Earth.
+  // Positions: Sun at 10%, Earth at 90%.
+  // Moon moves from 20% to 100%.
+  // If Moon at ~25% (between Sun/Earth) -> Solar blocked? No, Moon is tiny.
+  // Actually best visualization: Top down view. Sun fixed. Earth Orbits?
+  // Simpler: Just drag Moon.
+  // Sun (Fixed Left). Earth (Fixed Right). Moon (Draggable).
+
+  // Target: Solar Eclipse. Moon must be in middle.
+
+  const isSolar = Math.abs(moonPos - 50) < 5; // Middle
+
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-bold mb-8 text-yellow-500"
+  }, getText("title")), /*#__PURE__*/React.createElement("p", {
+    className: "mb-8 font-bold text-slate-400"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "relative w-full max-w-4xl h-64 bg-slate-900 rounded-3xl border border-slate-700 flex items-center px-12 overflow-hidden"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-32 h-32 bg-yellow-500 rounded-full shadow-[0_0_50px_orange] flex items-center justify-center text-black font-bold z-10"
+  }, getText("sun")), /*#__PURE__*/React.createElement("div", {
+    className: "absolute left-32 top-1/2 -translate-y-1/2 w-full h-32 bg-yellow-500/10 blur-xl"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute right-12 w-24 h-24 bg-blue-500 rounded-full shadow-[0_0_20px_blue] flex items-center justify-center text-white font-bold z-10"
+  }, getText("earth")), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-1/2 -translate-y-1/2 w-8 h-8 bg-gray-400 rounded-full z-20 shadow-lg cursor-grab active:cursor-grabbing flex items-center justify-center text-[8px] text-black font-bold",
+    style: {
+      left: `${moonPos}%`
+    }
+  }, getText("moon")), isSolar && /*#__PURE__*/React.createElement("div", {
+    className: "absolute right-12 w-24 h-24 rounded-full bg-black/80 z-20 flex items-center justify-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs text-center text-white p-1"
+  }, "Shadow on Earth"))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-xl mt-8"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "20",
+    max: "80",
+    value: moonPos,
+    onChange: e => setMoonPos(Number(e.target.value)),
+    className: "w-full h-4 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+  })), isSolar && /*#__PURE__*/React.createElement("div", {
+    className: "mt-8 text-4xl font-black text-white animate-pulse"
+  }, getText("solar")));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

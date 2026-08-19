@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小五數學：小數單位換算 | Decimal Unit Conversion</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(20, 83, 45, 0.2); /* Green 900/800 mix */
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(74, 222, 128, 0.1); /* Green 400 */
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Decimal Unit Conversion",
+    zh: "小數單位換算",
+    ja: "小数の単位変換",
+    ko: "소수 단위 변환",
+    es: "Conversión de Unidades Decimales",
+    de: "Dezimalumrechnung",
+    fi: "Desimaaliyksiköiden muunnos",
+    fr: "Conversion d'unités décimales",
+    ar: "تحويل الوحدات العشرية",
+    it: "Conversione unità decimali"
+  },
+  length: {
+    en: "Length",
+    zh: "長度",
+    ja: "長さ",
+    ko: "길이",
+    es: "Longitud",
+    de: "Länge",
+    fi: "Pituus",
+    fr: "Longueur",
+    ar: "طول",
+    it: "Lunghezza"
+  },
+  weight: {
+    en: "Weight",
+    zh: "重量",
+    ja: "重さ",
+    ko: "무게",
+    es: "Peso",
+    de: "Gewicht",
+    fi: "Paino",
+    fr: "Poids",
+    ar: "وزن",
+    it: "Peso"
+  },
+  capacity: {
+    en: "Capacity",
+    zh: "容量",
+    ja: "容量",
+    ko: "용량",
+    es: "Capacidad",
+    de: "Kapazität",
+    fi: "Tilavuus",
+    fr: "Capacité",
+    ar: "سعة",
+    it: "Capacità"
+  },
+  equals: {
+    en: "Equals",
+    zh: "等於",
+    ja: "等しい",
+    ko: "같음",
+    es: "Igual a",
+    de: "Gleicht",
+    fi: "Yhtä kuin",
+    fr: "Égale",
+    ar: "يساوي",
+    it: "Uguale a"
+  },
+  m: {
+    en: "m",
+    zh: "米",
+    ja: "m",
+    ko: "m",
+    es: "m",
+    de: "m",
+    fi: "m",
+    fr: "m",
+    ar: "م",
+    it: "m"
+  },
+  cm: {
+    en: "cm",
+    zh: "厘米",
+    ja: "cm",
+    ko: "cm",
+    es: "cm",
+    de: "cm",
+    fi: "cm",
+    fr: "cm",
+    ar: "سم",
+    it: "cm"
+  },
+  kg: {
+    en: "kg",
+    zh: "千克",
+    ja: "kg",
+    ko: "kg",
+    es: "kg",
+    de: "kg",
+    fi: "kg",
+    fr: "kg",
+    ar: "كجم",
+    it: "kg"
+  },
+  g: {
+    en: "g",
+    zh: "克",
+    ja: "g",
+    ko: "g",
+    es: "g",
+    de: "g",
+    fi: "g",
+    fr: "g",
+    ar: "جم",
+    it: "g"
+  },
+  L: {
+    en: "L",
+    zh: "公升",
+    ja: "L",
+    ko: "L",
+    es: "L",
+    de: "L",
+    fi: "L",
+    fr: "L",
+    ar: "ل",
+    it: "L"
+  },
+  mL: {
+    en: "mL",
+    zh: "毫升",
+    ja: "mL",
+    ko: "mL",
+    es: "mL",
+    de: "mL",
+    fi: "mL",
+    fr: "mL",
+    ar: "مل",
+    it: "mL"
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [val, setVal] = useState(2.5);
+  const [type, setType] = useState("length");
+  const conversions = {
+    length: {
+      from: "m",
+      to: "cm",
+      factor: 100
+    },
+    weight: {
+      from: "kg",
+      to: "g",
+      factor: 1000
+    },
+    capacity: {
+      from: "L",
+      to: "mL",
+      factor: 1000
+    }
+  };
+  const c = conversions[type];
+  const result = val * c.factor;
+  const fromUnit = `${c.from} ${getText(c.from, lang)}`;
+  const toUnit = `${c.to} ${getText(c.to, lang)}`;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-4xl flex justify-between items-center mb-10"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-black text-green-400 drop-shadow-[0_0_15px_rgba(74,222,128,0.5)]"
+  }, "📐 ", getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-800/80 p-1.5 rounded-xl border border-white/10 flex flex-wrap justify-end gap-1 max-w-[50%]"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-green-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white hover:bg-white/5"}`
+  }, l)))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-3xl flex flex-col gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-center gap-4 bg-slate-900/50 p-2 rounded-2xl border border-white/5"
+  }, ["length", "weight", "capacity"].map(t => /*#__PURE__*/React.createElement("button", {
+    key: t,
+    onClick: () => setType(t),
+    className: `px-6 py-3 rounded-xl font-bold transition-all ${type === t ? "bg-green-600 text-white shadow-lg shadow-green-500/20" : "text-slate-400 hover:text-green-300 hover:bg-white/5"}`
+  }, getText(t, lang)))), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-8 rounded-3xl flex flex-col items-center justify-center gap-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col md:flex-row items-center gap-4 w-full justify-center"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    step: "0.01",
+    value: val,
+    onChange: e => setVal(parseFloat(e.target.value) || 0),
+    className: "w-40 bg-slate-900 border-2 border-green-500/50 rounded-xl px-4 py-3 text-3xl font-mono font-black text-center text-white focus:border-green-400 outline-none"
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "text-2xl font-bold text-green-300"
+  }, fromUnit)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-800/50 p-6 rounded-2xl border border-white/5 w-full text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-slate-400 font-mono mb-2"
+  }, "Formula"), /*#__PURE__*/React.createElement("div", {
+    className: "text-xl text-green-100"
+  }, "1 ", c.from, " =", " ", /*#__PURE__*/React.createElement("span", {
+    className: "text-green-400 font-bold"
+  }, c.factor), " ", c.to), /*#__PURE__*/React.createElement("div", {
+    className: "text-sm text-slate-500 mt-2 font-mono"
+  }, val, " × ", c.factor, " = ", result))), /*#__PURE__*/React.createElement(motion.div, {
+    key: result,
+    initial: {
+      scale: 0.9,
+      opacity: 0
+    },
+    animate: {
+      scale: 1,
+      opacity: 1
+    },
+    className: "bg-gradient-to-r from-green-900/40 to-emerald-900/40 border border-green-500/30 p-8 rounded-3xl text-center flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-green-300 font-bold uppercase tracking-widest text-sm mb-2"
+  }, getText("equals", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "text-5xl md:text-6xl font-black text-white font-mono drop-shadow-[0_0_20px_rgba(34,197,94,0.6)]"
+  }, result, " ", /*#__PURE__*/React.createElement("span", {
+    className: "text-3xl text-green-200/50 ml-2"
+  }, toUnit)))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

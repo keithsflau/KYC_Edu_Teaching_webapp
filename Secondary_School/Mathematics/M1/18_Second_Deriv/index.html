@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Second Derivative Concavity | S6 Math 二階導數</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+      }
+    </style>
+  </head>
+  <body class="bg-purple-50 text-slate-800 min-h-screen">
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const translations = {
+  en: {
+    unit: "Unit 2: Calculus",
+    title: "Concavity & 2nd Derivative",
+    desc: "Explore how f''(x) relates to the shape of the graph.",
+    concaveUp: "Concave Up (Happy)",
+    concaveDown: "Concave Down (Sad)",
+    inflection: "Inflection Point",
+    val: "Value"
+  },
+  zh: {
+    unit: "單元二：微積分",
+    title: "凹凸性與二階導數",
+    desc: "探索 f''(x) 與圖形形狀的關係。",
+    concaveUp: "上凹 (笑臉)",
+    concaveDown: "下凹 (哭臉)",
+    inflection: "拐點",
+    val: "數值"
+  }
+};
+const App = () => {
+  const [lang, setLang] = useState("en");
+  const t = translations[lang];
+
+  // Function: Quartic or Cubic to show multiple concavities
+  // f(x) = x^3 - 3x. f'(x) = 3x^2 - 3. f''(x) = 6x. Inflection at x=0.
+  // Let's use f(x) = 0.5x^3 - 3x.
+
+  const [markerX, setMarkerX] = useState(0);
+  const f = x => 0.5 * Math.pow(x, 3) - 3 * x;
+  const df = x => 1.5 * x * x - 3;
+  const ddf = x => 3 * x;
+
+  // Graph
+  const size = 400;
+  const rangeX = 5;
+  const rangeY = 10;
+  const scaleX = size / (2 * rangeX);
+  const scaleY = size / (2 * rangeY);
+  const cx = size / 2;
+  const cy = size / 2;
+  const toScreen = (x, y) => ({
+    x: cx + x * scaleX,
+    y: cy - y * scaleY
+  });
+
+  // Path
+  const points = [];
+  for (let x = -rangeX; x <= rangeX; x += 0.1) {
+    points.push(toScreen(x, f(x)));
+  }
+  const pathD = `M ${points.map(p => `${p.x},${p.y}`).join(" L ")}`;
+
+  // Marker Details
+  const pp = toScreen(markerX, f(markerX));
+  const y2 = ddf(markerX);
+  const shape = y2 > 0.1 ? "up" : y2 < -0.1 ? "down" : "zero";
+  return /*#__PURE__*/React.createElement("div", {
+    className: "p-8 max-w-5xl mx-auto min-h-screen flex flex-col items-center select-none"
+  }, /*#__PURE__*/React.createElement("header", {
+    className: "mb-8 text-center w-full relative"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLang(lang === "en" ? "zh" : "en"),
+    className: "absolute right-0 top-0 px-4 py-2 bg-white rounded-full shadow border border-purple-200 text-sm font-bold text-purple-600 hover:bg-purple-50 transition"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-globe mr-2"
+  }), lang === "en" ? "中文" : "ENG"), /*#__PURE__*/React.createElement("div", {
+    className: "text-purple-600 font-bold uppercase text-xs tracking-widest mb-2"
+  }, t.unit), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-slate-900 mb-2"
+  }, t.title), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-500"
+  }, t.desc)), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col lg:flex-row gap-8 w-full"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-4 rounded-3xl shadow-lg border border-purple-100 flex-1 flex justify-center items-center relative"
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: size,
+    height: size,
+    className: "bg-slate-50 rounded-xl overflow-hidden cursor-crosshair",
+    onMouseMove: e => {
+      const rect = e.target.getBoundingClientRect();
+      const x = (e.clientX - rect.left - cx) / scaleX;
+      setMarkerX(x);
+    },
+    onTouchMove: e => {
+      const rect = e.target.getBoundingClientRect();
+      const x = (e.touches[0].clientX - rect.left - cx) / scaleX;
+      setMarkerX(x);
+    }
+  }, /*#__PURE__*/React.createElement("line", {
+    x1: "0",
+    y1: cy,
+    x2: size,
+    y2: cy,
+    stroke: "#cbd5e1",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: cx,
+    y1: "0",
+    x2: cx,
+    y2: size,
+    stroke: "#cbd5e1",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: "0",
+    y: "0",
+    width: cx,
+    height: size,
+    fill: "#f43f5e",
+    fillOpacity: "0.05"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: cx,
+    y: "0",
+    width: cx,
+    height: size,
+    fill: "#10b981",
+    fillOpacity: "0.05"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: pathD,
+    fill: "none",
+    stroke: "#6366f1",
+    strokeWidth: "3"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: cx,
+    cy: cy,
+    r: "4",
+    fill: "black"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: pp.x,
+    cy: pp.y,
+    r: "8",
+    fill: shape === "up" ? "#10b981" : shape === "down" ? "#f43f5e" : "#64748b",
+    stroke: "white",
+    strokeWidth: "2"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-6 rounded-3xl shadow-lg border border-purple-100 flex-1 space-y-8 flex flex-col justify-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-50 p-6 rounded-2xl border border-slate-100 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-sm font-bold text-slate-500 uppercase mb-2"
+  }, "f''(x) ", t.val), /*#__PURE__*/React.createElement("div", {
+    className: `text-4xl font-mono font-bold ${shape === "up" ? "text-emerald-500" : shape === "down" ? "text-rose-500" : "text-slate-600"}`
+  }, y2.toFixed(2))), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-center gap-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: `flex flex-col items-center p-4 rounded-xl border-2 transition-all ${shape === "down" ? "border-rose-500 bg-rose-50 scale-110 shadow-lg" : "border-transparent opacity-50"}`
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-regular fa-face-frown text-4xl text-rose-500 mb-2"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "font-bold text-rose-700 text-sm"
+  }, t.concaveDown), /*#__PURE__*/React.createElement("div", {
+    className: "font-mono text-xs text-rose-500"
+  }, "f''(x) < 0")), /*#__PURE__*/React.createElement("div", {
+    className: `flex flex-col items-center p-4 rounded-xl border-2 transition-all ${shape === "up" ? "border-emerald-500 bg-emerald-50 scale-110 shadow-lg" : "border-transparent opacity-50"}`
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-regular fa-face-smile text-4xl text-emerald-500 mb-2"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "font-bold text-emerald-700 text-sm"
+  }, t.concaveUp), /*#__PURE__*/React.createElement("div", {
+    className: "font-mono text-xs text-emerald-500"
+  }, "f''(x) > 0"))), shape === "zero" && /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-800 text-white p-3 rounded-lg text-center font-bold animate-bounce"
+  }, t.inflection))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小一常識：刷牙特工隊 | Teeth Brushing</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #e0f2fe 0%, #38bdf8 100%);
+        cursor: none; /* Custom cursor */
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect,
+  useRef
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Teeth Brushing Squad",
+    zh: "刷牙特工隊",
+    ja: "歯磨き隊",
+    ko: "양치질 특공대",
+    es: "Escuadrón de cepillado de dientes",
+    de: "Zahnputz-Truppe",
+    fi: "Hampaiden harjausryhmä",
+    fr: "Escouade de brossage des dents",
+    ar: "فرقة تنظيف الأسنان",
+    it: "Squadra lavaggio denti"
+  },
+  instruction: {
+    en: "Move the toothbrush to clean the germs!",
+    zh: "移動牙刷清除細菌！",
+    ja: "歯ブラシを動かしてバイキンを消そう！",
+    ko: "칫솔을 움직여 세균을 없애세요!",
+    es: "¡Mueve el cepillo de dientes para limpiar los gérmenes!",
+    de: "Bewege die Zahnbürste, um die Keime zu entfernen!",
+    fi: "Liikuta hammasharjaa puhdistaaksesi bakteerit!",
+    fr: "Déplacez la brosse à dents pour nettoyer les microbes !",
+    ar: "حرك فرشاة الأسنان لتنظيف الجراثيم!",
+    it: "Muovi lo spazzolino per pulire i germi!"
+  },
+  clean: {
+    en: "Sparkling Clean!",
+    zh: "亮晶晶！",
+    es: "¡Brillantemente limpio!",
+    de: "Blitzsauber!",
+    fi: "Häikäisevän puhdas!",
+    fr: "Scintillant de propreté !",
+    ar: "نظيفة ومتألقة!",
+    it: "Splendente e pulito!"
+  },
+  restart: {
+    en: "Brush Again",
+    zh: "再刷一次",
+    es: "Cepillar de nuevo",
+    de: "Nochmal putzen",
+    fi: "Harjaa uudelleen",
+    fr: "Brosser à nouveau",
+    ar: "فرش مرة أخرى",
+    it: "Spazzola di nuovo"
+  }
+};
+
+// Generate teeth positions
+const teethConfig = [
+// Top Row
+{
+  id: 1,
+  x: 50,
+  y: 100
+}, {
+  id: 2,
+  x: 100,
+  y: 90
+}, {
+  id: 3,
+  x: 150,
+  y: 85
+}, {
+  id: 4,
+  x: 200,
+  y: 85
+}, {
+  id: 5,
+  x: 250,
+  y: 90
+}, {
+  id: 6,
+  x: 300,
+  y: 100
+},
+// Bottom Row
+{
+  id: 7,
+  x: 60,
+  y: 220
+}, {
+  id: 8,
+  x: 100,
+  y: 230
+}, {
+  id: 9,
+  x: 150,
+  y: 240
+}, {
+  id: 10,
+  x: 200,
+  y: 240
+}, {
+  id: 11,
+  x: 250,
+  y: 230
+}, {
+  id: 12,
+  x: 290,
+  y: 220
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [germs, setGerms] = useState([]);
+  const [mousePos, setMousePos] = useState({
+    x: 0,
+    y: 0
+  });
+  const [completed, setCompleted] = useState(false);
+  const mouthRef = useRef(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+  // Local mouth coords (same space as teethConfig); avoid stale closure via ref
+  const germsRef = useRef(germs);
+  useEffect(() => {
+    germsRef.current = germs;
+  }, [germs]);
+  const resetGerms = () => {
+    const newGerms = [];
+    teethConfig.forEach(tooth => {
+      const count = Math.floor(Math.random() * 2) + 1;
+      for (let i = 0; i < count; i++) {
+        newGerms.push({
+          id: `${tooth.id}_${i}`,
+          x: tooth.x + (Math.random() * 30 - 15),
+          y: tooth.y + (Math.random() * 30 - 15),
+          isClean: false
+        });
+      }
+    });
+    setGerms(newGerms);
+    setCompleted(false);
+  };
+  const checkCollision = (clientX, clientY) => {
+    const mouth = mouthRef.current;
+    if (!mouth) return;
+    const rect = mouth.getBoundingClientRect();
+    const mx = clientX - rect.left;
+    const my = clientY - rect.top;
+    let changed = false;
+    const nextGerms = germsRef.current.map(g => {
+      if (g.isClean) return g;
+      // Rendered at left:g.x+5, top:g.y-50 with ~24px emoji center
+      const gx = g.x + 5 + 14;
+      const gy = g.y - 50 + 14;
+      const dist = Math.sqrt(Math.pow(mx - gx, 2) + Math.pow(my - gy, 2));
+      if (dist < 48) {
+        changed = true;
+        return {
+          ...g,
+          isClean: true
+        };
+      }
+      return g;
+    });
+    if (changed) {
+      germsRef.current = nextGerms;
+      setGerms(nextGerms);
+      if (nextGerms.every(g => g.isClean)) {
+        setCompleted(true);
+      }
+    }
+  };
+  useEffect(() => {
+    resetGerms();
+    const handleMouseMove = e => {
+      setMousePos({
+        x: e.clientX,
+        y: e.clientY
+      });
+      checkCollision(e.clientX, e.clientY);
+    };
+    const handleTouchMove = e => {
+      if (e.touches.length > 0) {
+        const t = e.touches[0];
+        setMousePos({
+          x: t.clientX,
+          y: t.clientY
+        });
+        checkCollision(t.clientX, t.clientY);
+      }
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("touchmove", handleTouchMove, {
+      passive: true
+    });
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("touchmove", handleTouchMove);
+    };
+  }, []);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen relative overflow-hidden flex flex-col items-center select-none cursor-none"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "fixed pointer-events-none z-50 text-6xl",
+    style: {
+      left: mousePos.x - 20,
+      top: mousePos.y - 40,
+      transform: "rotate(-45deg)"
+    }
+  }, "🪥"), /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-blue-900 mb-4 mt-8 drop-shadow-sm select-auto"
+  }, "🦷 ", getText("title")), /*#__PURE__*/React.createElement("p", {
+    className: "text-xl font-bold text-blue-700 mb-8 select-auto"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    ref: mouthRef,
+    className: "relative w-[360px] h-[400px] bg-red-100 rounded-full border-8 border-red-200 shadow-inner"
+  }, teethConfig.map(t => /*#__PURE__*/React.createElement("div", {
+    key: t.id,
+    className: "absolute w-12 h-14 bg-white rounded-xl border-2 border-slate-200 shadow-sm",
+    style: {
+      left: t.x + 5,
+      top: t.y - 50
+    }
+  })), germs.map(g => !g.isClean && /*#__PURE__*/React.createElement(motion.div, {
+    key: g.id,
+    className: "absolute text-2xl",
+    style: {
+      left: g.x + 5,
+      top: g.y - 50
+    },
+    initial: {
+      scale: 0
+    },
+    animate: {
+      scale: 1
+    },
+    exit: {
+      scale: 0,
+      opacity: 0
+    }
+  }, "🦠")), /*#__PURE__*/React.createElement(AnimatePresence, null, germs.map(g => g.isClean && /*#__PURE__*/React.createElement(motion.div, {
+    key: g.id + "clean",
+    className: "absolute text-xl pointer-events-none",
+    style: {
+      left: g.x + 5,
+      top: g.y - 50
+    },
+    initial: {
+      scale: 0,
+      opacity: 1
+    },
+    animate: {
+      scale: 1.5,
+      opacity: 0,
+      y: -20
+    },
+    transition: {
+      duration: 0.5
+    }
+  }, "✨")))), completed && /*#__PURE__*/React.createElement("div", {
+    className: "fixed inset-0 bg-white/80 backdrop-blur z-40 flex flex-col items-center justify-center cursor-auto"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-8xl mb-4"
+  }, "😁"), /*#__PURE__*/React.createElement("h2", {
+    className: "text-4xl font-black text-blue-600 mb-8"
+  }, getText("clean")), /*#__PURE__*/React.createElement("button", {
+    onClick: resetGerms,
+    className: "bg-blue-500 text-white px-10 py-4 rounded-full font-black text-2xl hover:bg-blue-600 shadow-xl cursor-pointer"
+  }, getText("restart"), " 🔄")));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

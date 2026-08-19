@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小一常識：校規知多少 | Classroom Rules</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #fef9c3 0%, #fde047 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n || {
+  LanguageSelector: () => null,
+  get: (o, lang) => (o && (o[lang] || o.en)) || ""
+};
+const t = {
+  title: {
+    en: "Classroom Rules",
+    zh: "校規知多少",
+    ja: "教室のルール",
+    ko: "교실 규칙",
+    es: "Reglas del aula",
+    de: "Klassenregeln",
+    fi: "Luokkahuoneen säännöt",
+    fr: "Règles de la classe",
+    ar: "قواعد الفصل",
+    it: "Regole della classe"
+  },
+  instruction: {
+    en: "Is this behavior correct?",
+    zh: "這個行為正確嗎？",
+    ja: "この行動は正しいですか？",
+    ko: "이 행동이 올바른가요?",
+    es: "¿Es correcto este comportamiento?",
+    de: "Ist dieses Verhalten richtig?",
+    fi: "Onko tämä käytös oikein?",
+    fr: "Ce comportement est-il correct ?",
+    ar: "هل هذا السلوك صحيح؟",
+    it: "Questo comportamento è corretto?"
+  },
+  right: {
+    en: "Right",
+    zh: "正確",
+    es: "Correcto",
+    de: "Richtig",
+    fi: "Oikein",
+    fr: "Vrai",
+    ar: "صحيح",
+    it: "Giusto"
+  },
+  wrong: {
+    en: "Wrong",
+    zh: "錯誤",
+    es: "Incorrecto",
+    de: "Falsch",
+    fi: "Väärin",
+    fr: "Faux",
+    ar: "خطأ",
+    it: "Sbagliato"
+  },
+  s1: {
+    en: "Raising hand before speaking",
+    zh: "舉手後才發言",
+    es: "Levantar la mano antes de hablar",
+    de: "Hand heben vor dem Sprechen",
+    fi: "Viittaa ennen puhumista",
+    fr: "Lever la main avant de parler",
+    ar: "رفع اليد قبل التحدث",
+    it: "Alzare la mano prima di parlare"
+  },
+  s2: {
+    en: "Running in the corridor",
+    zh: "在走廊奔跑",
+    es: "Correr en el pasillo",
+    de: "Im Flur rennen",
+    fi: "Juokseminen käytävällä",
+    fr: "Courir dans le couloir",
+    ar: "الجري في الممر",
+    it: " correre nel corridoio"
+  },
+  s3: {
+    en: "Listening to the teacher",
+    zh: "專心聽老師講課",
+    es: "Escuchar al maestro",
+    de: "Dem Lehrer zuhören",
+    fi: "Opettajan kuunteleminen",
+    fr: "Écouter le professeur",
+    ar: "الاستماع إلى المعلم",
+    it: "Ascoltare l'insegnante"
+  },
+  s4: {
+    en: "Sleeping in class",
+    zh: "上課睡覺",
+    es: "Dormir en clase",
+    de: "Im Unterricht schlafen",
+    fi: "Nukkuminen luokassa",
+    fr: "Dormir en classe",
+    ar: "النوم في الفصل",
+    it: "Dormire in classe"
+  },
+  s5: {
+    en: "Fighting with classmates",
+    zh: "與同學打架",
+    es: "Pelear con compañeros",
+    de: "Kämpfen mit Klassenkameraden",
+    fi: "Tappeleminen luokkatovereiden kanssa",
+    fr: "Se battre avec ses camarades",
+    ar: "الشجار مع زملاء الدراسة",
+    it: "Litigare con i compagni"
+  },
+  s6: {
+    en: "Queueing up properly",
+    zh: "乖乖排隊",
+    es: "Hacer fila correctamente",
+    de: "Ordentlich anstellen",
+    fi: "Jonottaminen kunnolla",
+    fr: "Faire la queue correctement",
+    ar: "الاصطفاف بشكل صحيح",
+    it: "Mettersi in fila correttamente"
+  },
+  s7: {
+    en: "Eating in class",
+    zh: "上課偷吃東西",
+    es: "Comer en clase",
+    de: "Essen im Unterricht",
+    fi: "Syöminen luokassa",
+    fr: "Manger en classe",
+    ar: "الأكل في الفصل",
+    it: "Mangiare in classe"
+  },
+  s8: {
+    en: "Saying 'Good Morning'",
+    zh: "向老師說「早安」",
+    es: "Decir 'Buenos días'",
+    de: "'Guten Morgen' sagen",
+    fi: "Sanoa 'Hyvää huomenta'",
+    fr: "Dire 'Bonjour'",
+    ar: "قول 'صباح الخير'",
+    it: "Dire 'Buongiorno'"
+  },
+  feedback_good: {
+    en: "Yes! Good students do this!",
+    zh: "做得好！好學生應該這樣做！",
+    es: "¡Sí! ¡Los buenos estudiantes hacen esto!",
+    de: "Ja! Gute Schüler machen das!",
+    fi: "Kyllä! Hyvät oppilaat tekevät näin!",
+    fr: "Oui ! Les bons élèves font ça !",
+    ar: "نعم! الطلاب الجيدون يفعلون هذا!",
+    it: "Sì! I bravi studenti fanno così!"
+  },
+  feedback_bad_correct: {
+    en: "Correct! We should NOT do this!",
+    zh: "答對了！我們不應該這樣做！",
+    es: "¡Correcto! ¡NO deberíamos hacer esto!",
+    de: "Richtig! Das sollten wir NICHT tun!",
+    fi: "Oikein! Emme saa tehdä näin!",
+    fr: "Correct ! Nous NE devrions PAS faire ça !",
+    ar: "صحيح! لا ينبغي لنا أن نفعل هذا!",
+    it: "Corretto! NON dovremmo farlo!"
+  },
+  feedback_oops: {
+    en: "Oops! Think again.",
+    zh: "哎呀！再想一想。",
+    es: "¡uy! Piénsalo de nuevo.",
+    de: "Hoppla! Denk noch einmal nach.",
+    fi: "Hups! Mieti uudestaan.",
+    fr: "Oups ! Réfléchis encore.",
+    ar: "عفوًا! فكر مرة أخرى.",
+    it: "Ops! Pensaci ancora."
+  },
+  score: {
+    en: "Score: ",
+    zh: "分數：",
+    es: "Puntuación: ",
+    de: "Punktzahl: ",
+    fi: "Pisteet: ",
+    fr: "Score : ",
+    ar: "النتيجة: ",
+    it: "Punteggio: "
+  },
+  final: {
+    en: "Quiz Completed!",
+    zh: "測驗完成！",
+    es: "¡Prueba completada!",
+    de: "Quiz beendet!",
+    fi: "Tietokilpailu valmis!",
+    fr: "Quiz terminé !",
+    ar: "اكتمال الاختبار!",
+    it: "Quiz completato!"
+  },
+  restart: {
+    en: "Play Again",
+    zh: "再玩一次",
+    es: "Jugar de nuevo",
+    de: "Nochmal spielen",
+    fi: "Pelaa uudelleen",
+    fr: "Rejouer",
+    ar: "العب مرة أخرى",
+    it: "Gioca di nuovo"
+  }
+};
+const scenarios = [{
+  id: "s1",
+  isGood: true,
+  emoji: "🙋‍♂️"
+}, {
+  id: "s2",
+  isGood: false,
+  emoji: "🏃‍♂️💨"
+}, {
+  id: "s3",
+  isGood: true,
+  emoji: "👂👩‍🏫"
+}, {
+  id: "s4",
+  isGood: false,
+  emoji: "😴"
+}, {
+  id: "s5",
+  isGood: false,
+  emoji: "🤼"
+}, {
+  id: "s6",
+  isGood: true,
+  emoji: "🚶🚶‍♀️🚶‍♂️"
+}, {
+  id: "s7",
+  isGood: false,
+  emoji: "🍔"
+}, {
+  id: "s8",
+  isGood: true,
+  emoji: "🗣️👋"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [index, setIndex] = useState(0);
+  const [score, setScore] = useState(0);
+  const [showFeedback, setShowFeedback] = useState(null); // 'correct' | 'wrong'
+
+  const getText = key => t[key][lang] || t[key]["en"];
+  const currentScenario = scenarios[index];
+  const handleAnswer = userSaysGood => {
+    if (showFeedback) return;
+    const isCorrect = userSaysGood === currentScenario.isGood;
+    if (isCorrect) {
+      setScore(s => s + 10);
+      setShowFeedback("correct");
+    } else {
+      setShowFeedback("wrong");
+    }
+    setTimeout(() => {
+      setShowFeedback(null);
+      setIndex(i => i < scenarios.length - 1 ? i + 1 : -1);
+    }, 1500);
+  };
+  const restart = () => {
+    setIndex(0);
+    setScore(0);
+    setShowFeedback(null);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-amber-700 mb-2 mt-8 drop-shadow-sm"
+  }, "📏 ", getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-black text-amber-600 mb-6 bg-white px-6 py-2 rounded-full shadow-sm"
+  }, getText("score"), score), index !== -1 ? /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-lg relative"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white rounded-3xl p-8 shadow-2xl text-center border-4 border-amber-300 min-h-[400px] flex flex-col justify-center items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-9xl mb-6"
+  }, currentScenario.emoji), /*#__PURE__*/React.createElement("h2", {
+    className: "text-3xl font-black text-slate-800 mb-4"
+  }, getText(currentScenario.id)), /*#__PURE__*/React.createElement("p", {
+    className: "text-xl text-slate-500 font-bold mb-8"
+  }, getText("instruction"))), showFeedback && /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      opacity: 0,
+      scale: 0.5
+    },
+    animate: {
+      opacity: 1,
+      scale: 1
+    },
+    className: `absolute inset-0 rounded-3xl flex items-center justify-center p-6 z-10 ${showFeedback === "correct" ? "bg-green-500/90" : "bg-red-500/90"}`
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-white text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-8xl mb-4"
+  }, showFeedback === "correct" ? "🌟" : "🤔"), /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-black"
+  }, showFeedback === "correct" ? currentScenario.isGood ? getText("feedback_good") : getText("feedback_bad_correct") : getText("feedback_oops")))), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 gap-4 mt-6"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => handleAnswer(true),
+    className: "bg-green-500 text-white rounded-2xl py-6 flex flex-col items-center hover:bg-green-600 transition-colors shadow-lg active:scale-95 transform"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-5xl mb-2"
+  }, "🙆‍♂️"), /*#__PURE__*/React.createElement("span", {
+    className: "text-2xl font-black"
+  }, getText("right"))), /*#__PURE__*/React.createElement("button", {
+    onClick: () => handleAnswer(false),
+    className: "bg-red-500 text-white rounded-2xl py-6 flex flex-col items-center hover:bg-red-600 transition-colors shadow-lg active:scale-95 transform"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-5xl mb-2"
+  }, "🙅‍♂️"), /*#__PURE__*/React.createElement("span", {
+    className: "text-2xl font-black"
+  }, getText("wrong"))))) : /*#__PURE__*/React.createElement("div", {
+    className: "text-center mt-20"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-8xl mb-6"
+  }, "🏆"), /*#__PURE__*/React.createElement("h2", {
+    className: "text-4xl font-black text-amber-800 mb-8"
+  }, getText("final")), /*#__PURE__*/React.createElement("div", {
+    className: "text-5xl font-black text-amber-600 mb-12"
+  }, getText("score"), score), /*#__PURE__*/React.createElement("button", {
+    onClick: restart,
+    className: "bg-amber-500 text-white px-10 py-4 rounded-full font-black text-2xl hover:bg-amber-600 shadow-xl"
+  }, getText("restart"))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

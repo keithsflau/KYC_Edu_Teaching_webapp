@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - Water Treatment Process</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: #ecfeff;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  Reorder
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Water Treatment Process",
+    zh: "食水處理過程",
+    ja: "水処理プロセス",
+    ko: "수처리 과정",
+    es: "Proceso de tratamiento de agua",
+    de: "Wasseraufbereitungsprozess",
+    fi: "Vedenkäsittelyprosessi",
+    fr: "Processus de traitement de l'eau",
+    ar: "عملية معالجة المياه",
+    it: "Processo di Trattamento Acqua"
+  },
+  instruction: {
+    en: "Arrange the steps in the correct order!",
+    zh: "按正確順序排列步驟！",
+    ja: "手順を正しい順序に並べてください！",
+    ko: "단계를 올바른 순서로 정렬하세요!",
+    es: "¡Arregla los pasos en el orden correcto!",
+    de: "Ordne die Schritte in der richtigen Reihenfolge an!",
+    fi: "Järjestä vaiheet oikeaan järjestykseen!",
+    fr: "Organisez les étapes dans le bon ordre !",
+    ar: "رتب الخطوات بالترتيب الصحيح!",
+    it: "Disponi i passaggi nell'ordine corretto!"
+  },
+  step1: {
+    en: "Screening (Remove big trash)",
+    zh: "篩選 (去除大垃圾)",
+    ja: "スクリーニング (大きなゴミの除去)",
+    ko: "스크리닝 (큰 쓰레기 제거)",
+    es: "Filtrado (Eliminar basura grande)",
+    de: "Sieben (Groben Müll entfernen)",
+    fi: "Seulonta (Poista suuret roskat)",
+    fr: "Dépistage (Enlever les gros déchets)",
+    ar: "الغربلة (إزالة القمامة الكبيرة)",
+    it: "Vagliatura (Rimuovi rifiuti grandi)"
+  },
+  step2: {
+    en: "Sedimentation (Dirt settles)",
+    zh: "沉澱 (泥沙沉底)",
+    ja: "沈殿 (汚れが沈む)",
+    ko: "침전 (먼지 가라앉음)",
+    es: "Sedimentación (La suciedad se asienta)",
+    de: "Sedimentation (Schmutz setzt sich ab)",
+    fi: "Sedimentaatio (Lika laskeutuu)",
+    fr: "Sédimentation (La saleté se dépose)",
+    ar: "الترسيب (تستقر الأوساخ)",
+    it: "Sedimentazione (Lo sporco si deposita)"
+  },
+  step3: {
+    en: "Filtration (Sand filter)",
+    zh: "過濾 (沙濾)",
+    ja: "ろ過 (砂フィルター)",
+    ko: "여과 (모래 필터)",
+    es: "Filtración (Filtro de arena)",
+    de: "Filtration (Sandfilter)",
+    fi: "Suodatus (Hiekkasuodatin)",
+    fr: "Filtration (Filtre à sable)",
+    ar: "الترشيح (فلتر رملي)",
+    it: "Filtrazione (Filtro a sabbia)"
+  },
+  step4: {
+    en: "Chlorination (Add chlorine)",
+    zh: "消毒 (加氯)",
+    ja: "塩素消毒 (塩素添加)",
+    ko: "염소 소독 (염소 첨가)",
+    es: "Cloración (Agregar cloro)",
+    de: "Chlorung (Chlor hinzufügen)",
+    fi: "Klooraus (Lisää klooria)",
+    fr: "Chloration (Ajouter du chlore)",
+    ar: "الكلورة (إضافة الكلور)",
+    it: "Clorazione (Aggiungi cloro)"
+  },
+  check: {
+    en: "Check Order",
+    zh: "檢查順序",
+    ja: "順序を確認",
+    ko: "순서 확인",
+    es: "Verificar orden",
+    de: "Reihenfolge prüfen",
+    fi: "Tarkista järjestys",
+    fr: "Vérifier l'ordre",
+    ar: "تحقق من الطلب",
+    it: "Controlla Ordine"
+  },
+  correct: {
+    en: "Correct!",
+    zh: "正確！",
+    ja: "正解！",
+    ko: "정답!",
+    es: "¡Correcto!",
+    de: "Richtig!",
+    fi: "Oikein!",
+    fr: "Correct !",
+    ar: "صحيح!",
+    it: "Corretto!"
+  },
+  wrong: {
+    en: "Not quite right.",
+    zh: "不太正確。",
+    ja: "少し違います。",
+    ko: "맞지 않습니다.",
+    es: "No está del todo bien.",
+    de: "Nicht ganz richtig.",
+    fi: "Ei aivan oikein.",
+    fr: "Pas tout à fait correct.",
+    ar: "ليس صحيحا تماما.",
+    it: "Non proprio giusto."
+  }
+};
+const correctOrder = ["step1", "step2", "step3", "step4"];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [items, setItems] = useState([]);
+  const [feedback, setFeedback] = useState(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+  useEffect(() => {
+    // Shuffle
+    setItems([...correctOrder].sort(() => Math.random() - 0.5));
+  }, []);
+  const check = () => {
+    const currentIds = items;
+    const isCorrect = currentIds.every((id, idx) => id === correctOrder[idx]);
+    setFeedback(isCorrect ? "correct" : "wrong");
+  };
+  const moveUp = index => {
+    if (index === 0) return;
+    const newItems = [...items];
+    [newItems[index - 1], newItems[index]] = [newItems[index], newItems[index - 1]];
+    setItems(newItems);
+    setFeedback(null);
+  };
+  const moveDown = index => {
+    if (index === items.length - 1) return;
+    const newItems = [...items];
+    [newItems[index + 1], newItems[index]] = [newItems[index], newItems[index + 1]];
+    setItems(newItems);
+    setFeedback(null);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-bold mb-8 text-cyan-700"
+  }, getText("title")), /*#__PURE__*/React.createElement("p", {
+    className: "mb-6 font-bold text-slate-500"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col gap-4 w-full max-w-md"
+  }, items.map((id, index) => /*#__PURE__*/React.createElement("div", {
+    key: id,
+    className: "bg-white p-4 rounded-xl shadow-md border-l-8 border-cyan-400 flex items-center justify-between"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "font-bold text-lg text-slate-800 flex-1"
+  }, getText(id)), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col gap-1 ml-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => moveUp(index),
+    className: "bg-slate-100 hover:bg-slate-200 p-1 rounded text-xs active:bg-cyan-200"
+  }, "⬆️"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => moveDown(index),
+    className: "bg-slate-100 hover:bg-slate-200 p-1 rounded text-xs active:bg-cyan-200"
+  }, "⬇️"))))), /*#__PURE__*/React.createElement("button", {
+    onClick: check,
+    className: "mt-8 bg-cyan-600 text-white px-10 py-3 rounded-full font-bold shadow-lg hover:bg-cyan-700 active:scale-95 transition-transform"
+  }, getText("check")), feedback && /*#__PURE__*/React.createElement("div", {
+    className: `mt-6 text-2xl font-black ${feedback === "correct" ? "text-green-500" : "text-red-500"}`
+  }, getText(feedback)));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

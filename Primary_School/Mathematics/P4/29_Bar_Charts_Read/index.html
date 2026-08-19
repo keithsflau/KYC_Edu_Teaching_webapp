@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小四數學：閱讀棒形圖 | Reading Bar Charts</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #e0e7ff 0%, #6366f1 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState
+} = React;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Bar Chart Master",
+    zh: "閱讀數據大師",
+    ja: "棒グラフマスター",
+    ko: "막대 그래프 마스터",
+    es: "Maestro de Gráficos de Barras",
+    de: "Balkendiagramm-Meister",
+    fi: "Pylväskaaviomestari",
+    fr: "Maître des graphiques à barres",
+    ar: "سيد الرسم البياني الشريطي",
+    it: "Maestro dei grafici a barre"
+  },
+  q1: {
+    en: "Who read the most books?",
+    zh: "誰閱讀的書本最多？",
+    ja: "誰が一番本を読みましたか？",
+    ko: "누가 가장 많은 책을 읽었습니까?",
+    es: "¿Quién leyó más libros?",
+    de: "Wer hat die meisten Bücher gelesen?",
+    fi: "Kuka luki eniten kirjoja?",
+    fr: "Qui a lu le plus de livres ?",
+    ar: "من قرأ أكبر عدد من الكتب؟",
+    it: "Chi ha letto più libri?"
+  },
+  q2: {
+    en: "How many books did David and Amy read together?",
+    zh: "小明和小美共讀了多少本？",
+    ja: "小明と小美は合計で何冊読みましたか？",
+    ko: "데이비드와 에이미는 함께 몇 권의 책을 읽었습니까?",
+    es: "¿Cuántos libros leyeron David y Amy juntos?",
+    de: "Wie viele Bücher haben David und Amy zusammen gelesen?",
+    fi: "Kuinka monta kirjaa David ja Amy lukivat yhdessä?",
+    fr: "Combien de livres David et Amy ont-ils lus ensemble ?",
+    ar: "كم عدد الكتب التي قرأها ديفيد وآمي معًا؟",
+    it: "Quanti libri hanno letto David e Amy insieme?"
+  },
+  q3: {
+    en: "How many more books did Sarah read than Ben?",
+    zh: "心怡比大文多讀了多少本？",
+    ja: "心怡は大文より何冊多く読みましたか？",
+    ko: "사라는 벤보다 몇 권 더 읽었습니까?",
+    es: "¿Cuántos libros más leyó Sarah que Ben?",
+    de: "Wie viele Bücher mehr hat Sarah als Ben gelesen?",
+    fi: "Kuinka monta kirjaa enemmän Sarah luki kuin Ben?",
+    fr: "Combien de livres Sarah a-t-elle lus de plus que Ben ?",
+    ar: "كم عدد الكتب التي قرأتها سارة أكثر من بن؟",
+    it: "Quanti libri ha letto Sarah più di Ben?"
+  },
+  correct: {
+    en: "Correct!",
+    zh: "答對了！",
+    ja: "正解！",
+    ko: "정답!",
+    es: "¡Correcto!",
+    de: "Richtig!",
+    fi: "Oikein!",
+    fr: "Correct !",
+    ar: "صحيح!",
+    it: "Corretto!"
+  },
+  incorrect: {
+    en: "Look closer!",
+    zh: "再看清楚一點！",
+    ja: "よく見て！",
+    ko: "자세히 보세요!",
+    es: "¡Mira más de cerca!",
+    de: "Schau genauer hin!",
+    fi: "Katso tarkemmin!",
+    fr: "Regarde de plus près !",
+    ar: "انظر عن كثب!",
+    it: "Guarda meglio!"
+  },
+  question: {
+    en: "Question",
+    zh: "問題",
+    ja: "質問",
+    ko: "질문",
+    es: "Pregunta",
+    de: "Frage",
+    fi: "Kysymys",
+    fr: "Question",
+    ar: "سؤال",
+    it: "Domanda"
+  },
+  David: {
+    en: "David",
+    zh: "小明",
+    ja: "小明",
+    ko: "데이비드",
+    es: "David",
+    de: "David",
+    fi: "David",
+    fr: "David",
+    ar: "ديفيد",
+    it: "David"
+  },
+  Amy: {
+    en: "Amy",
+    zh: "小美",
+    ja: "小美",
+    ko: "에이미",
+    es: "Amy",
+    de: "Amy",
+    fi: "Amy",
+    fr: "Amy",
+    ar: "آمي",
+    it: "Amy"
+  },
+  Ben: {
+    en: "Ben",
+    zh: "大文",
+    ja: "大文",
+    ko: "벤",
+    es: "Ben",
+    de: "Ben",
+    fi: "Ben",
+    fr: "Ben",
+    ar: "بن",
+    it: "Ben"
+  },
+  Sarah: {
+    en: "Sarah",
+    zh: "心怡",
+    ja: "心怡",
+    ko: "사라",
+    es: "Sarah",
+    de: "Sarah",
+    fi: "Sarah",
+    fr: "Sarah",
+    ar: "سارة",
+    it: "Sarah"
+  }
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const getText = key => t[key][lang] || t[key]["en"];
+
+  // Data: Books read by students
+  const data = [{
+    name: getText("David"),
+    val: 12
+  }, {
+    name: getText("Amy"),
+    val: 18
+  }, {
+    name: getText("Ben"),
+    val: 8
+  }, {
+    name: getText("Sarah"),
+    val: 24
+  }];
+
+  // Need to reconstruct questions based on lang
+  // Since questions depend on data values which are static, we can hardcode logic but need translated strings for Q and A options
+  // For Option names, we should use the translated names. The answer check compares string.
+  // It's better to verify by index or keep English internally for logic?
+  // Let's use logic check.
+
+  const questions = [{
+    qKey: "q1",
+    optionsKeys: ["David", "Amy", "Ben", "Sarah"],
+    ansIndex: 3 // Sarah
+  }, {
+    qKey: "q2",
+    // 30 is number, no translation needed
+    options: ["20", "30", "40", "25"],
+    ans: "30"
+  }, {
+    qKey: "q3",
+    options: ["12", "16", "14", "18"],
+    ans: "16"
+  }];
+  const [qIdx, setQIdx] = useState(0);
+  const [feedback, setFeedback] = useState(null);
+  const currentQ = questions[qIdx];
+  const currentQText = getText(currentQ.qKey);
+  const check = (opt, index) => {
+    let isCorrect = false;
+    // Logic based on question type
+    if (qIdx === 0) {
+      // Option is translated name. Ans is translated name.
+      // We stored ansIndex
+      if (index === currentQ.ansIndex) isCorrect = true;
+    } else {
+      // Number comparison
+      if (opt === currentQ.ans) isCorrect = true;
+    }
+    if (isCorrect) {
+      setFeedback("correct");
+      setTimeout(() => {
+        setFeedback(null);
+        setQIdx((qIdx + 1) % questions.length);
+      }, 1500);
+    } else {
+      setFeedback("incorrect");
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-8 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-indigo-900 mb-8 mt-8"
+  }, "📊 ", getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/95 backdrop-blur-md rounded-3xl p-8 shadow-2xl max-w-5xl w-full flex flex-col md:flex-row gap-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 bg-slate-50 border-2 border-slate-200 rounded-2xl p-6 relative h-[400px] flex items-end justify-around"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 flex flex-col justify-between p-6 pointer-events-none"
+  }, [...Array(6)].map((_, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "w-full h-px bg-slate-300 relative"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "absolute -left-8 -top-3 text-sm font-bold text-slate-500"
+  }, (5 - i) * 5)))), data.map((d, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "relative w-16 bg-indigo-500 rounded-t-lg z-10 group hover:opacity-90 transition-all cursor-pointer",
+    style: {
+      height: `${d.val / 25 * 100}%`
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-[-30px] w-full text-center font-bold text-slate-700"
+  }, d.name), /*#__PURE__*/React.createElement("div", {
+    className: "absolute -top-8 w-full text-center font-bold text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity bg-white shadow rounded p-1"
+  }, d.val)))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full md:w-80 flex flex-col justify-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-indigo-50 p-6 rounded-2xl border-2 border-indigo-200 mb-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold text-indigo-400 mb-2"
+  }, getText("question"), " ", qIdx + 1, "/", questions.length), /*#__PURE__*/React.createElement("h3", {
+    className: "text-xl font-bold text-indigo-900 mb-6"
+  }, currentQText), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-3"
+  }, qIdx === 0 ? currentQ.optionsKeys.map((key, i) => /*#__PURE__*/React.createElement("button", {
+    key: getText(key),
+    onClick: () => check(getText(key), i),
+    className: "w-full py-3 bg-white border-2 border-indigo-100 rounded-xl font-bold text-indigo-700 hover:bg-indigo-500 hover:text-white transition-all"
+  }, getText(key))) : currentQ.options.map(opt => /*#__PURE__*/React.createElement("button", {
+    key: opt,
+    onClick: () => check(opt, -1),
+    className: "w-full py-3 bg-white border-2 border-indigo-100 rounded-xl font-bold text-indigo-700 hover:bg-indigo-500 hover:text-white transition-all"
+  }, opt)))), feedback === "correct" && /*#__PURE__*/React.createElement("div", {
+    className: "bg-green-500 text-white p-4 rounded-xl text-center font-black text-xl animate-bounce"
+  }, "✓ ", getText("correct")), feedback === "incorrect" && /*#__PURE__*/React.createElement("div", {
+    className: "bg-red-500 text-white p-4 rounded-xl text-center font-black text-xl animate-shake"
+  }, "✗ ", getText("incorrect")))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

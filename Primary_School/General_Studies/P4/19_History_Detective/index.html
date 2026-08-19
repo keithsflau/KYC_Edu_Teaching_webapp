@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - History Detective</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: #fdf2f8;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "History Detective",
+    zh: "歷史偵探",
+    ja: "歴史探偵",
+    ko: "역사 탐정",
+    es: "Detective de historia",
+    de: "Geschichtsdetektiv",
+    fi: "Historiaetsivä",
+    fr: "Détective d'histoire",
+    ar: "محقق التاريخ",
+    it: "Detective di Storia"
+  },
+  instruction: {
+    en: "Is this item OLD (Past) or NEW (Modern)?",
+    zh: "這是舊時 (過去) 還是新式 (現代) 的物品？",
+    ja: "これは古い（過去）アイテムですか、それとも新しい（現代）アイテムですか？",
+    ko: "이것은 오래된(과거) 물건인가요, 아니면 새로운(현대) 물건인가요?",
+    es: "¿Este artículo es ANTIGUO (pasado) o NUEVO (moderno)?",
+    de: "Ist dieser Gegenstand ALT (Vergangenheit) oder NEU (Modern)?",
+    fi: "Onko tämä esine VANHA (menneisyys) vai UUSI (nykyaika)?",
+    fr: "Cet article est-il VIEUX (passé) ou NOUVEAU (moderne) ?",
+    ar: "هل هذا العنصر قديم (ماضي) أم جديد (حديث)؟",
+    it: "Questo oggetto è VECCHIO (Passato) o NUOVO (Moderno)?"
+  },
+  old: {
+    en: "Old / Past",
+    zh: "舊時 / 過去",
+    ja: "古い / 過去",
+    ko: "오래된 / 과거",
+    es: "Antiguo / Pasado",
+    de: "Alt / Vergangenheit",
+    fi: "Vanha / Mennyt",
+    fr: "Vieux / Passé",
+    ar: "قديم / ماضي",
+    it: "Vecchio / Passato"
+  },
+  new: {
+    en: "New / Modern",
+    zh: "新式 / 現代",
+    ja: "新しい / 現代",
+    ko: "새로운 / 현대",
+    es: "Nuevo / Moderno",
+    de: "Neu / Modern",
+    fi: "Uusi / Nykyaika",
+    fr: "Nouveau / Moderne",
+    ar: "جديد / حديث",
+    it: "Nuovo / Moderno"
+  },
+  rickshaw: {
+    en: "Rickshaw",
+    zh: "人力車",
+    ja: "人力車",
+    ko: "인력거",
+    es: "Rickshaw",
+    de: "Rikscha",
+    fi: "Riksakuljetus",
+    fr: "Pousse-pousse",
+    ar: "عربة يد",
+    it: "Risciò"
+  },
+  mrt: {
+    en: "MTR Train",
+    zh: "港鐵列車",
+    ja: "MTR列車",
+    ko: "MTR 기차",
+    es: "Tren MTR",
+    de: "MTR-Zug",
+    fi: "MTR-juna",
+    fr: "Train MTR",
+    ar: "قطار MTR",
+    it: "Treno MTR"
+  },
+  abacus: {
+    en: "Abacus",
+    zh: "算盤",
+    ja: "そろばん",
+    ko: "주판",
+    es: "Ábaco",
+    de: "Abakus",
+    fi: "Helmikone",
+    fr: "Abaque",
+    ar: "عداد",
+    it: "Abaco"
+  },
+  tablet: {
+    en: "Tablet Computer",
+    zh: "平板電腦",
+    ja: "タブレット",
+    ko: "태블릿 컴퓨터",
+    es: "Tableta",
+    de: "Tablet-Computer",
+    fi: "Tabletti",
+    fr: "Tablette",
+    ar: "كمبيوتر لوحي",
+    it: "Tablet"
+  },
+  letter: {
+    en: "Handwritten Letter",
+    zh: "手寫信",
+    ja: "手書きの手紙",
+    ko: "손으로 쓴 편지",
+    es: "Carta manuscrita",
+    de: "Handgeschriebener Brief",
+    fi: "Käsin kirjoitettu kirje",
+    fr: "Lettre manuscrite",
+    ar: "رسالة مكتوبة بخط اليد",
+    it: "Lettera manoscritta"
+  },
+  email: {
+    en: "Email",
+    zh: "電子郵件",
+    ja: "Eメール",
+    ko: "이메일",
+    es: "Correo electrónico",
+    de: "E-Mail",
+    fi: "Sähköposti",
+    fr: "E-mail",
+    ar: "بريد إلكتروني",
+    it: "Email"
+  },
+  correct: {
+    en: "Correct!",
+    zh: "答對了！",
+    ja: "正解！",
+    ko: "정답!",
+    es: "¡Correcto!",
+    de: "Richtig!",
+    fi: "Oikein!",
+    fr: "Correct !",
+    ar: "صحيح!",
+    it: "Corretto!"
+  },
+  wrong: {
+    en: "Try Again",
+    zh: "再試一次",
+    ja: "もう一度",
+    ko: "다시 시도",
+    es: "Intentar de nuevo",
+    de: "Versuch es nochmal",
+    fi: "Yritä uudelleen",
+    fr: "Réessayez",
+    ar: "حاول مرة أخرى",
+    it: "Riprova"
+  }
+};
+const items = [{
+  id: "rickshaw",
+  type: "old",
+  icon: "🛺"
+},
+// Using auto rickshaw emoji as proxy
+{
+  id: "mrt",
+  type: "new",
+  icon: "🚄"
+}, {
+  id: "abacus",
+  type: "old",
+  icon: "🧮"
+}, {
+  id: "tablet",
+  type: "new",
+  icon: "📱"
+}, {
+  id: "letter",
+  type: "old",
+  icon: "✉️"
+}, {
+  id: "email",
+  type: "new",
+  icon: "📧"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [index, setIndex] = useState(0);
+  const [feedback, setFeedback] = useState(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+  const currentItem = items[index];
+  const handleChoice = type => {
+    if (feedback) return;
+    if (currentItem.type === type) {
+      setFeedback("correct");
+      setTimeout(() => {
+        setFeedback(null);
+        setIndex((index + 1) % items.length);
+      }, 1000);
+    } else {
+      setFeedback("wrong");
+      setTimeout(() => setFeedback(null), 500);
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center justify-center p-4"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-bold mb-8 text-amber-800"
+  }, getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-lg bg-orange-50 p-8 rounded-[40px] shadow-xl border-8 border-orange-200 text-center relative"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white rounded-3xl p-10 mb-8 shadow-inner border-2 border-slate-100 min-h-[250px] flex flex-col items-center justify-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-9xl mb-4 filter drop-shadow-md select-none transform hover:scale-110 transition-transform"
+  }, currentItem.icon), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-bold text-slate-700"
+  }, getText(currentItem.id))), /*#__PURE__*/React.createElement("p", {
+    className: "mb-6 font-bold text-slate-500"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => handleChoice("old"),
+    className: "flex-1 bg-amber-200 hover:bg-amber-300 text-amber-900 py-4 rounded-xl font-bold text-xl border-b-4 border-amber-400 active:border-b-0 active:translate-y-1 transition-all"
+  }, "🕰️ ", getText("old")), /*#__PURE__*/React.createElement("button", {
+    onClick: () => handleChoice("new"),
+    className: "flex-1 bg-blue-200 hover:bg-blue-300 text-blue-900 py-4 rounded-xl font-bold text-xl border-b-4 border-blue-400 active:border-b-0 active:translate-y-1 transition-all"
+  }, "🚀 ", getText("new"))), feedback && /*#__PURE__*/React.createElement("div", {
+    className: `absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-8 py-4 rounded-xl text-3xl font-black text-white shadow-2xl rotate-[-10deg]
+                     ${feedback === "correct" ? "bg-green-500" : "bg-red-500"}
+                  `
+  }, getText(feedback))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

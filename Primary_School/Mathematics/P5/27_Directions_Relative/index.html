@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小五數學：相對位置 | Relative Position</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #022c22; /* Dark Green */
+        color: white;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(6, 78, 59, 0.4);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(52, 211, 153, 0.2);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+      .grid-cell {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Relative Position",
+    zh: "相對位置",
+    ja: "相対位置",
+    ko: "상대 위치",
+    es: "Posición Relativa",
+    de: "Relative Position",
+    fi: "Suhteellinen sijainti",
+    fr: "Position relative",
+    ar: "الموقع النسبي",
+    it: "Posizione relativa"
+  },
+  from: {
+    en: "From:",
+    zh: "起點:",
+    ja: "出発点:",
+    ko: "출발점:",
+    es: "Desde:",
+    de: "Von:",
+    fi: "Lähtöpaikka:",
+    fr: "De :",
+    ar: "من:",
+    it: "Da:"
+  },
+  to: {
+    en: "To:",
+    zh: "終點:",
+    ja: "目的地:",
+    ko: "도착점:",
+    es: "A:",
+    de: "Nach:",
+    fi: "Kohde:",
+    fr: "À :",
+    ar: "إلى:",
+    it: "A:"
+  },
+  school: {
+    en: "School",
+    zh: "學校",
+    ja: "学校",
+    ko: "학교",
+    es: "Escuela",
+    de: "Schule",
+    fi: "Koulu",
+    fr: "École",
+    ar: "مدرسة",
+    it: "Scuola"
+  },
+  park: {
+    en: "Park",
+    zh: "公園",
+    ja: "公園",
+    ko: "공원",
+    es: "Parque",
+    de: "Park",
+    fi: "Puisto",
+    fr: "Parc",
+    ar: "حديقة",
+    it: "Parco"
+  },
+  shop: {
+    en: "Shop",
+    zh: "商店",
+    ja: "店",
+    ko: "가게",
+    es: "Tienda",
+    de: "Laden",
+    fi: "Kauppa",
+    fr: "Magasin",
+    ar: "متجر",
+    it: "Negozio"
+  },
+  home: {
+    en: "Home",
+    zh: "家",
+    ja: "家",
+    ko: "집",
+    es: "Casa",
+    de: "Zuhause",
+    fi: "Koti",
+    fr: "Maison",
+    ar: "منزل",
+    it: "Casa"
+  },
+  library: {
+    en: "Library",
+    zh: "圖書館",
+    ja: "図書館",
+    ko: "도서관",
+    es: "Biblioteca",
+    de: "Bibliothek",
+    fi: "Kirjasto",
+    fr: "Bibliothèque",
+    ar: "مكتبة",
+    it: "Biblioteca"
+  },
+  samePos: {
+    en: "Same Position",
+    zh: "同一位置",
+    ja: "同じ位置",
+    ko: "같은 위치",
+    es: "Misma Posición",
+    de: "Gleiche Position",
+    fi: "Sama sijainti",
+    fr: "Même position",
+    ar: "نفس الموقع",
+    it: "Stessa posizione"
+  },
+  unknown: {
+    en: "Unknown",
+    zh: "未知",
+    ja: "不明",
+    ko: "알 수 없음",
+    es: "Desconocido",
+    de: "Unbekannt",
+    fi: "Tuntematon",
+    fr: "Inconnu",
+    ar: "مجهول",
+    it: "Sconosciuto"
+  },
+  N: {
+    en: "North",
+    zh: "北方",
+    ja: "北",
+    ko: "북쪽",
+    es: "Norte",
+    de: "Norden",
+    fi: "Pohjoinen",
+    fr: "Nord",
+    ar: "شمال",
+    it: "Nord"
+  },
+  S: {
+    en: "South",
+    zh: "南方",
+    ja: "南",
+    ko: "남쪽",
+    es: "Sur",
+    de: "Süden",
+    fi: "Etelä",
+    fr: "Sud",
+    ar: "جنوب",
+    it: "Sud"
+  },
+  E: {
+    en: "East",
+    zh: "東方",
+    ja: "東",
+    ko: "동쪽",
+    es: "Este",
+    de: "Osten",
+    fi: "Itä",
+    fr: "Est",
+    ar: "شرق",
+    it: "Est"
+  },
+  W: {
+    en: "West",
+    zh: "西方",
+    ja: "西",
+    ko: "서쪽",
+    es: "Oeste",
+    de: "Westen",
+    fi: "Länsi",
+    fr: "Ouest",
+    ar: "غرب",
+    it: "Ovest"
+  },
+  NE: {
+    en: "Northeast",
+    zh: "東北方",
+    ja: "北東",
+    ko: "북동쪽",
+    es: "Noreste",
+    de: "Nordosten",
+    fi: "Koillinen",
+    fr: "Nord-est",
+    ar: "شمال شرق",
+    it: "Nord-est"
+  },
+  NW: {
+    en: "Northwest",
+    zh: "西北方",
+    ja: "北西",
+    ko: "북서쪽",
+    es: "Noroeste",
+    de: "Nordwesten",
+    fi: "Luode",
+    fr: "Nord-ouest",
+    ar: "شمال غرب",
+    it: "Nord-ovest"
+  },
+  SE: {
+    en: "Southeast",
+    zh: "東南方",
+    ja: "南東",
+    ko: "남동쪽",
+    es: "Sureste",
+    de: "Südosten",
+    fi: "Kaakko",
+    fr: "Sud-est",
+    ar: "جنوب شرق",
+    it: "Sud-est"
+  },
+  SW: {
+    en: "Southwest",
+    zh: "西南方",
+    ja: "南西",
+    ko: "남서쪽",
+    es: "Suroeste",
+    de: "Südwesten",
+    fi: "Lounas",
+    fr: "Sud-ouest",
+    ar: "جنوب غرب",
+    it: "Sud-ovest"
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [from, setFrom] = useState("school");
+  const [to, setTo] = useState("park");
+  const places = [{
+    id: "school",
+    x: 2,
+    y: 2,
+    emoji: "🏫"
+  }, {
+    id: "park",
+    x: 4,
+    y: 1,
+    emoji: "🌳"
+  }, {
+    id: "shop",
+    x: 1,
+    y: 3,
+    emoji: "🏪"
+  }, {
+    id: "home",
+    x: 3,
+    y: 4,
+    emoji: "🏠"
+  }, {
+    id: "library",
+    x: 4,
+    y: 3,
+    emoji: "📚"
+  }];
+  const fromPlace = places.find(p => p.id === from);
+  const toPlace = places.find(p => p.id === to);
+  const dx = toPlace.x - fromPlace.x;
+  const dy = toPlace.y - fromPlace.y;
+  const getDirectionKey = () => {
+    if (dx === 0 && dy === 0) return "samePos";
+    if (dy < 0 && dx === 0) return "N"; // y decreases upwards? Wait. Grid is usually 0,0 top-left in web, but math usually bottom-left.
+    // Let's check how the grid is rendered.
+    // 280: y = Math.floor(i / 5) -> y increases downwards.
+    // So y-1 is North, y+1 is South.
+    // dx+1 is East, dx-1 is West.
+    if (dy < 0 && dx === 0) return "N";
+    if (dy > 0 && dx === 0) return "S";
+    if (dy === 0 && dx > 0) return "E";
+    if (dy === 0 && dx < 0) return "W";
+    if (dy < 0 && dx > 0) return "NE";
+    if (dy < 0 && dx < 0) return "NW";
+    if (dy > 0 && dx > 0) return "SE";
+    if (dy > 0 && dx < 0) return "SW";
+    return "unknown";
+  };
+  const renderSentence = () => {
+    const toName = getText(toPlace.id, lang);
+    const fromName = getText(fromPlace.id, lang);
+    const dir = getText(getDirectionKey(), lang);
+
+    // Sentence structure varies by language, simplified here for now.
+    // ZH: [To] 在 [From] 的 [Dir]
+    // EN: [To] is to the [Dir] of [From]
+    // But strict translation key usage is safer
+
+    if (lang === "zh" || lang === "ja" || lang === "ko") {
+      return /*#__PURE__*/React.createElement("div", {
+        className: "flex flex-col items-center"
+      }, /*#__PURE__*/React.createElement("span", {
+        className: "text-xl md:text-2xl text-emerald-200"
+      }, toName), /*#__PURE__*/React.createElement("span", {
+        className: "text-sm opacity-60 my-1"
+      }, "在 (is at)"), /*#__PURE__*/React.createElement("span", {
+        className: "text-xl md:text-2xl text-emerald-200"
+      }, fromName), /*#__PURE__*/React.createElement("span", {
+        className: "text-sm opacity-60 my-1"
+      }, "的 (relative to)"), /*#__PURE__*/React.createElement(motion.div, {
+        key: dir,
+        initial: {
+          scale: 0.5,
+          opacity: 0
+        },
+        animate: {
+          scale: 1,
+          opacity: 1
+        },
+        className: "text-4xl md:text-5xl font-black text-emerald-400 mt-2 drop-shadow-[0_0_15px_rgba(52,211,153,0.8)]"
+      }, dir));
+    }
+    return /*#__PURE__*/React.createElement("div", {
+      className: "flex flex-col items-center"
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "text-xl md:text-2xl text-emerald-200"
+    }, toName), /*#__PURE__*/React.createElement("span", {
+      className: "text-sm opacity-60 my-1"
+    }, "is to the"), /*#__PURE__*/React.createElement(motion.div, {
+      key: dir,
+      initial: {
+        scale: 0.5,
+        opacity: 0
+      },
+      animate: {
+        scale: 1,
+        opacity: 1
+      },
+      className: "text-4xl md:text-5xl font-black text-emerald-400 my-2 drop-shadow-[0_0_15px_rgba(52,211,153,0.8)]"
+    }, dir), /*#__PURE__*/React.createElement("span", {
+      className: "text-sm opacity-60"
+    }, "of ", fromName));
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-5xl flex justify-between items-center mb-10"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-black text-emerald-400 drop-shadow-lg"
+  }, "📍 ", getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-1.5 rounded-xl flex flex-wrap justify-end gap-1 max-w-[50%]"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-emerald-600 text-white shadow-lg scale-105" : "text-emerald-200/60 hover:text-white hover:bg-emerald-600/20"}`
+  }, l)))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-5xl flex flex-col md:flex-row gap-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 glass-panel p-6 rounded-3xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-5 gap-2 aspect-square relative"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-2 right-2 opacity-30 pointer-events-none"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl"
+  }, "🧭")), [...Array(25)].map((_, i) => {
+    const x = i % 5;
+    const y = Math.floor(i / 5);
+    const place = places.find(p => p.x === x && p.y === y);
+    const isFrom = fromPlace.x === x && fromPlace.y === y;
+    const isTo = toPlace.x === x && toPlace.y === y;
+    return /*#__PURE__*/React.createElement(motion.div, {
+      key: i,
+      whileHover: {
+        scale: 1.05
+      },
+      className: `grid-cell rounded-xl flex items-center justify-center text-3xl border relative
+                                        ${isFrom ? "bg-blue-600/50 border-blue-400 ring-2 ring-blue-400 z-10" : isTo ? "bg-red-600/50 border-red-400 ring-2 ring-red-400 z-10" : "bg-black/20 border-white/5 hover:bg-white/10"}
+                                    `
+    }, place?.emoji, isFrom && /*#__PURE__*/React.createElement("div", {
+      className: "absolute -top-2 -left-2 bg-blue-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold"
+    }, "FROM"), isTo && /*#__PURE__*/React.createElement("div", {
+      className: "absolute -bottom-2 -right-2 bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold"
+    }, "TO"));
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full md:w-80 flex flex-col gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 rounded-2xl flex flex-col gap-4"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "text-emerald-300 font-bold text-sm uppercase tracking-wider"
+  }, getText("from", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-1 gap-2"
+  }, places.map(p => /*#__PURE__*/React.createElement("button", {
+    key: p.id,
+    onClick: () => setFrom(p.id),
+    className: `p-3 rounded-xl flex items-center gap-3 border transition-all text-left ${from === p.id ? "bg-blue-600/30 border-blue-500 text-white" : "bg-black/20 border-transparent hover:bg-black/40 text-emerald-100" // Changed text-slate-300 to text-emerald-100 for better visibility
+    }`
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-2xl"
+  }, p.emoji), /*#__PURE__*/React.createElement("span", {
+    className: "font-bold"
+  }, getText(p.id, lang)))))), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 rounded-2xl flex flex-col gap-4"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "text-emerald-300 font-bold text-sm uppercase tracking-wider"
+  }, getText("to", lang)), /*#__PURE__*/React.createElement("select", {
+    value: to,
+    onChange: e => setTo(e.target.value),
+    className: "w-full p-4 bg-black/30 border border-emerald-500/30 rounded-xl text-white font-bold outline-none focus:border-emerald-500"
+  }, places.map(p => /*#__PURE__*/React.createElement("option", {
+    key: p.id,
+    value: p.id,
+    className: "bg-slate-900 text-white"
+  }, p.emoji, " ", getText(p.id, lang))))), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 rounded-2xl flex items-center justify-center text-center bg-gradient-to-br from-emerald-900/50 to-emerald-800/30"
+  }, renderSentence()))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

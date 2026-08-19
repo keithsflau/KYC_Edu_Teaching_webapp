@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小五數學：小數四捨五入 | Decimal Rounding</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(79, 70, 229, 0.15); /* Indigo 600 alpha */
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(129, 140, 248, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Decimal Rounding",
+    zh: "小數四捨五入",
+    ja: "小数の四捨五入",
+    ko: "소수 반올림",
+    es: "Redondeo de Decimales",
+    de: "Dezimalzahlen runden",
+    fi: "Desimaalien pyöristys",
+    fr: "Arrondi décimal",
+    ar: "تقريب الكسور العشرية",
+    it: "Arrotondamento decimale"
+  },
+  decimalPlaces: {
+    en: "{p} d.p.",
+    zh: "{p} 位小數",
+    ja: "小数第 {p} 位",
+    ko: "소수점 {p} 자리",
+    es: "{p} decimales",
+    de: "{p} Dezimalst.",
+    fi: "{p} desimaalia",
+    fr: "{p} décimales",
+    ar: "{p} منازل عشرية",
+    it: "{p} cifre dec."
+  },
+  correctTo: {
+    en: "Correct to <b>{places}</b> decimal place(s)",
+    zh: "準確至 <b>{places}</b> 位小數",
+    ja: "小数第 <b>{places}</b> 位まで",
+    ko: "소수점 <b>{places}</b> 자리까지 반올림",
+    es: "Correcto a <b>{places}</b> lugar(es) decimal(es)",
+    de: "Auf <b>{places}</b> Dezimalstelle(n) runden",
+    fi: "Tarkkuus <b>{places}</b> desimaaliin",
+    fr: "Arrondir à <b>{places}</b> décimale(s)",
+    ar: "تقريب إلى <b>{places}</b> منازل عشرية",
+    it: "Arrotonda a <b>{places}</b> cifre decimali"
+  },
+  checkDigit: {
+    en: "Check <b>{n}</b>th decimal place =",
+    zh: "看第 <b>{n}</b> 位小數 =",
+    ja: "小数第 <b>{n}</b> 位を見る =",
+    ko: "소수점 <b>{n}</b> 자리를 확인 =",
+    es: "Verificar el <b>{n}</b>° lugar decimal =",
+    de: "Prüfe <b>{n}</b>. Dezimalstelle =",
+    fi: "Tarkista <b>{n}</b>. desimaalipaikka =",
+    fr: "Vérifier la <b>{n}</b>e décimale =",
+    ar: "تحقق من المنزلة العشرية <b>{n}</b> =",
+    it: "Controlla la <b>{n}</b>ª cifra decimale ="
+  },
+  roundUp: {
+    en: "≥ 5, Round Up",
+    zh: "≥ 5，進位",
+    ja: "≥ 5、切り上げ",
+    ko: "≥ 5, 올림",
+    es: "≥ 5, Redondeo hacia arriba",
+    de: "≥ 5, Aufrunden",
+    fi: "≥ 5, Pyöristä ylöspäin",
+    fr: "≥ 5, Arrondir au supérieur",
+    ar: "≥ 5، تقريب للأعلى",
+    it: "≥ 5, Arrotonda per eccesso"
+  },
+  roundDown: {
+    en: "< 5, Round Down",
+    zh: "< 5，捨去",
+    ja: "< 5、切り捨て",
+    ko: "< 5, 내림",
+    es: "< 5, Redondeo hacia abajo",
+    de: "< 5, Abrunden",
+    fi: "< 5, Pyöristä alaspäin",
+    fr: "< 5, Arrondir à l'inférieur",
+    ar: "< 5، تقريب للأسفل",
+    it: "< 5, Arrotonda per difetto"
+  },
+  afterRounding: {
+    en: "Result",
+    zh: "四捨五入後",
+    ja: "四捨五入後",
+    ko: "반올림 후",
+    es: "Resultado",
+    de: "Ergebnis",
+    fi: "Tulos",
+    fr: "Résultat",
+    ar: "النتيجة",
+    it: "Risultato"
+  },
+  ruleTitle: {
+    en: "Rounding Rule:",
+    zh: "四捨五入規則:",
+    ja: "四捨五入のルール:",
+    ko: "반올림 규칙:",
+    es: "Regla de Redondeo:",
+    de: "Rundungsregel:",
+    fi: "Pyöristyssääntö:",
+    fr: "Règle d'arrondi :",
+    ar: "قاعدة التقريب:",
+    it: "Regola di arrotondamento:"
+  },
+  ruleText: {
+    en: "Look at the next digit: 0-4 Round Down, 5-9 Round Up.",
+    zh: "看保留位數的下一位：0-4 捨去，5-9 進位。",
+    ja: "次の数字を見る：0-4 は切り捨て、5-9 は切り上げ。",
+    ko: "다음 숫자 확인: 0-4 내림, 5-9 올림.",
+    es: "Mira el siguiente dígito: 0-4 Abajo, 5-9 Arriba.",
+    de: "Schaue auf die nächste Ziffer: 0-4 Abrunden, 5-9 Aufrunden.",
+    fi: "Katso seuraavaa numeroa: 0-4 alas, 5-9 ylös.",
+    fr: "Regardez le chiffre suivant : 0-4 vers le bas, 5-9 vers le haut.",
+    ar: "انظر للرقم التالي: 0-4 للأسفل، 5-9 للأعلى.",
+    it: "Guarda la cifra successiva: 0-4 Giù, 5-9 Su."
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+/** Half-up rounding from a decimal digit string (avoids toFixed FP traps). */
+function decimalParts(num) {
+  if (!Number.isFinite(num)) return {
+    sign: 1,
+    intStr: "0",
+    decStr: ""
+  };
+  const sign = num < 0 ? -1 : 1;
+  const abs = Math.abs(num);
+  // Prefer fixed expansion for typical primary-school magnitudes
+  let raw = abs.toString();
+  if (/e/i.test(raw)) raw = abs.toFixed(12).replace(/\.?0+$/, "");
+  const [intStr, decStr = ""] = raw.split(".");
+  return {
+    sign,
+    intStr,
+    decStr
+  };
+}
+function roundHalfUp(num, places) {
+  const {
+    sign,
+    intStr,
+    decStr
+  } = decimalParts(num);
+  const digits = (decStr + "0".repeat(places + 1)).slice(0, places + 1);
+  const checkDigit = parseInt(digits[places] || "0", 10);
+  let kept = digits.slice(0, places).split("").map(d => parseInt(d, 10));
+  let carry = checkDigit >= 5 ? 1 : 0;
+  for (let i = kept.length - 1; i >= 0 && carry; i--) {
+    const sum = kept[i] + carry;
+    kept[i] = sum % 10;
+    carry = Math.floor(sum / 10);
+  }
+  let intVal = parseInt(intStr, 10) + carry;
+  const decOut = places === 0 ? "" : kept.join("");
+  const asNum = places === 0 ? intVal : parseFloat(`${intVal}.${decOut}`);
+  return sign < 0 ? -asNum : asNum;
+}
+function checkDigitAt(num, places) {
+  const {
+    decStr
+  } = decimalParts(num);
+  return (decStr + "0".repeat(places + 1))[places] || "0";
+}
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [num, setNum] = useState(3.4567);
+  const [places, setPlaces] = useState(2);
+  const rounded = roundHalfUp(num, places);
+  const digitToCheck = checkDigitAt(num, places);
+  const isRoundUp = parseInt(digitToCheck, 10) >= 5;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-4xl flex justify-between items-center mb-10"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-black text-indigo-400 drop-shadow-[0_0_15px_rgba(129,140,248,0.5)]"
+  }, "🔢 ", getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-800/80 p-1.5 rounded-xl border border-white/10 flex flex-wrap justify-end gap-1 max-w-[50%]"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-indigo-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white hover:bg-white/5"}`
+  }, l)))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-3xl flex flex-col gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-8 rounded-3xl flex flex-col  items-center justify-center gap-6 border-indigo-500/30"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center w-full gap-4"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    step: "0.0001",
+    value: num,
+    onChange: e => setNum(parseFloat(e.target.value) || 0),
+    className: "bg-slate-900/50 border-b-2 border-indigo-400 text-4xl font-mono font-black text-center w-64 p-3 outline-none focus:border-indigo-300 text-white"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-2"
+  }, [0, 1, 2, 3].map(p => /*#__PURE__*/React.createElement("button", {
+    key: p,
+    onClick: () => setPlaces(p),
+    className: `px-4 py-2 rounded-xl font-bold transition-all ${places === p ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/50" : "bg-slate-800/50 text-indigo-200 hover:bg-slate-700"}`
+  }, getText("decimalPlaces", lang).replace("{p}", p)))))), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 rounded-2xl flex flex-col gap-4 text-center"
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "text-xl text-indigo-100",
+    dangerouslySetInnerHTML: {
+      __html: getText("correctTo", lang).replace("{places}", `<span class="text-indigo-300 font-bold text-2xl mx-1">${places}</span>`)
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col md:flex-row items-center justify-center gap-4 bg-black/20 p-4 rounded-xl"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-slate-300",
+    dangerouslySetInnerHTML: {
+      __html: getText("checkDigit", lang).replace("{n}", places + 1)
+    }
+  }), /*#__PURE__*/React.createElement(motion.div, {
+    key: digitToCheck,
+    initial: {
+      scale: 0.5
+    },
+    animate: {
+      scale: 1
+    },
+    className: `w-12 h-12 flex items-center justify-center rounded-full text-2xl font-black border-2
+                                ${isRoundUp ? "bg-red-500/20 border-red-500 text-red-400" : "bg-blue-500/20 border-blue-500 text-blue-400"}
+                            `
+  }, digitToCheck), /*#__PURE__*/React.createElement("span", {
+    className: `font-bold ${isRoundUp ? "text-red-400" : "text-blue-400"}`
+  }, "➜", " ", isRoundUp ? getText("roundUp", lang) : getText("roundDown", lang)))), /*#__PURE__*/React.createElement(motion.div, {
+    key: rounded,
+    initial: {
+      scale: 0.9,
+      opacity: 0
+    },
+    animate: {
+      scale: 1,
+      opacity: 1
+    },
+    className: "bg-gradient-to-r from-indigo-900/40 to-blue-900/40 border border-indigo-500/30 p-8 rounded-3xl text-center flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-indigo-300 font-bold uppercase tracking-widest text-sm mb-2"
+  }, getText("afterRounding", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl font-black text-white font-mono drop-shadow-[0_0_20px_rgba(79,70,229,0.6)]"
+  }, rounded.toFixed(places))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-amber-500/10 border border-amber-500/20 p-4 rounded-xl flex gap-3 text-amber-200 text-sm justify-center items-center"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-2xl"
+  }, "💡"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
+    className: "font-bold mr-2 uppercase"
+  }, getText("ruleTitle", lang)), getText("ruleText", lang)))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

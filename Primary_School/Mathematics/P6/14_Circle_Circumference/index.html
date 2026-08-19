@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小六數學：圓周長 | Circumference Roller</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect,
+  useRef
+} = React;
+const {
+  motion,
+  useAnimation
+} = window.Motion;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Circumference Roller",
+    zh: "圓周滾動實驗",
+    ja: "円周ローラー",
+    ko: "원둘레 롤러",
+    es: "Rodillo de Circunferencia",
+    de: "Umfangsroller",
+    fi: "Kehärulla",
+    fr: "Rouleau de circonférence",
+    ar: "أسطوانة المحيط",
+    it: "Rullo Circonferenza"
+  },
+  diameter: {
+    en: "Diameter",
+    zh: "直徑",
+    ja: "直径",
+    ko: "지름",
+    es: "Diámetro",
+    de: "Durchmesser",
+    fi: "Halkaisija",
+    fr: "Diamètre",
+    ar: "القطر",
+    it: "Diametro"
+  },
+  circumference: {
+    en: "Circumference",
+    zh: "圓周",
+    ja: "円周",
+    ko: "원둘레",
+    es: "Circunferencia",
+    de: "Umfang",
+    fi: "Kehä",
+    fr: "Circonférence",
+    ar: "المحيط",
+    it: "Circonferenza"
+  },
+  roll: {
+    en: "Roll It!",
+    zh: "滾動它！",
+    ja: "転がそう！",
+    ko: "굴려보세요!",
+    es: "¡Ruedalo!",
+    de: "Roll es!",
+    fi: "Pyöritä!",
+    fr: "Roulez !",
+    ar: "دحرجها!",
+    it: "Rotola!"
+  },
+  reset: {
+    en: "Reset",
+    zh: "重置",
+    ja: "リセット",
+    ko: "초기화",
+    es: "Reiniciar",
+    de: "Zurücksetzen",
+    fi: "Nollaa",
+    fr: "Rétablir",
+    ar: "إعادة ضبط",
+    it: "Reimposta"
+  },
+  formula: {
+    en: "C = π × d",
+    zh: "圓周 = π × 直徑",
+    ja: "C = π × d",
+    ko: "C = π × d",
+    es: "C = π × d",
+    de: "C = π × d",
+    fi: "C = π × d",
+    fr: "C = π × d",
+    ar: "C = π × d",
+    it: "C = π × d"
+  },
+  explanation: {
+    en: "When a circle rolls one full turn, the distance it covers is equal to its circumference.",
+    zh: "當圓形滾動一整圈時，它覆蓋的距離等於它的圓周。",
+    ja: "円が1回転すると、移動距離は円周に等しくなります。",
+    ko: "원이 한 바퀴 구르면 이동한 거리는 원둘레와 같습니다.",
+    es: "Cuando un círculo da una vuelta completa, la distancia que cubre es igual a su circunferencia.",
+    de: "Wenn ein Kreis eine volle Umdrehung macht, entspricht die zurückgelegte Strecke seinem Umfang.",
+    fi: "Kun ympyrä pyörii yhden täyden kierroksen, sen kattama matka on yhtä suuri kuin sen kehä.",
+    fr: "Lorsqu'un cercle fait un tour complet, la distance parcourue est égale à sa circonférence.",
+    ar: "عندما تدور الدائرة دورة كاملة، تكون المسافة التي تقطعها مساوية لمحيطها.",
+    it: "Quando un cerchio fa un giro completo, la distanza che copre è uguale alla sua circonferenza."
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [d, setD] = useState(10);
+  const [isRolling, setIsRolling] = useState(false);
+  const [rollProgress, setRollProgress] = useState(0); // 0 to 1
+
+  // Animation
+  const controls = useAnimation();
+  const PI = 3.14159;
+  const C = d * PI;
+
+  // Canvas Scale: 1 unit = 10px
+  const SCALE = 10;
+  const radiusPx = d / 2 * SCALE;
+  const circumPx = C * SCALE;
+  const animateRoll = async () => {
+    if (isRolling) return;
+    setIsRolling(true);
+
+    // Animate progress 0 -> 1
+    await controls.start({
+      x: circumPx,
+      rotate: 360,
+      transition: {
+        duration: 3,
+        ease: "easeInOut"
+      }
+    });
+    setRollProgress(1);
+  };
+  const reset = () => {
+    controls.set({
+      x: 0,
+      rotate: 0
+    });
+    setRollProgress(0);
+    setIsRolling(false);
+  };
+
+  // Reset when diameter changes
+  useEffect(() => {
+    reset();
+  }, [d]);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4 font-sans bg-slate-900 text-white"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-5xl flex justify-between items-center mb-8"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-black text-lime-400 drop-shadow-[0_0_10px_rgba(163,230,53,0.5)]"
+  }, "🌀 ", getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "flex bg-slate-800/80 p-1.5 rounded-xl border border-white/10 flex-wrap justify-end gap-1 max-w-[50%]"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-lime-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white hover:bg-white/5"}`
+  }, l)))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-5xl glass-panel p-8 rounded-3xl mb-8 overflow-hidden relative border border-white/10 shadow-2xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 bg-slate-900/50 -z-10"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "h-64 relative border-b-4 border-slate-600 mb-8 flex items-end"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-0 left-10 right-0 h-4 flex items-end overflow-hidden"
+  }, Array.from({
+    length: 40
+  }).map((_, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "absolute bottom-0 w-px bg-slate-500",
+    style: {
+      left: `${i * SCALE * 10}px`,
+      height: i % 5 === 0 ? "16px" : "8px"
+    }
+  }, i % 5 === 0 && /*#__PURE__*/React.createElement("span", {
+    className: "absolute -top-6 -left-2 text-xs text-slate-500 font-mono"
+  }, i * 10)))), /*#__PURE__*/React.createElement(motion.div, {
+    animate: controls,
+    className: "absolute bottom-[4px]" // Sit on the line
+    ,
+    style: {
+      left: "40px",
+      // Start padding
+      width: d * SCALE,
+      height: d * SCALE,
+      originX: 0.5,
+      originY: 0.5
+    }
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: d * SCALE,
+    height: d * SCALE,
+    viewBox: `0 0 ${d * SCALE} ${d * SCALE}`,
+    className: "overflow-visible"
+  }, /*#__PURE__*/React.createElement("circle", {
+    cx: d * SCALE / 2,
+    cy: d * SCALE / 2,
+    r: d * SCALE / 2 - 2,
+    fill: "rgba(132, 204, 22, 0.2)",
+    stroke: "#a3e635",
+    strokeWidth: "4"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: d * SCALE / 2,
+    y1: d * SCALE / 2,
+    x2: d * SCALE / 2,
+    y2: 0,
+    stroke: "#a3e635",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: d * SCALE / 2,
+    y1: d * SCALE / 2,
+    x2: d * SCALE,
+    y2: d * SCALE / 2,
+    stroke: "#a3e635",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: d * SCALE / 2,
+    y1: d * SCALE / 2,
+    x2: 0,
+    y2: d * SCALE / 2,
+    stroke: "#a3e635",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: d * SCALE / 2,
+    y1: d * SCALE / 2,
+    x2: d * SCALE / 2,
+    y2: d * SCALE,
+    stroke: "#a3e635",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "0",
+    y1: d * SCALE / 2,
+    x2: d * SCALE,
+    y2: d * SCALE / 2,
+    stroke: "#ef4444",
+    strokeWidth: "4",
+    strokeDasharray: "8,4"
+  }), /*#__PURE__*/React.createElement("foreignObject", {
+    x: 0,
+    y: d * SCALE / 2 - 30,
+    width: d * SCALE,
+    height: "30"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full text-center text-red-400 font-bold text-xs bg-black/50 rounded backdrop-blur-sm"
+  }, "d=", d)))), /*#__PURE__*/React.createElement("svg", {
+    className: "absolute bottom-[4px] left-[40px] overflow-visible pointer-events-none",
+    width: circumPx + 100,
+    height: "20"
+  }, isRolling && /*#__PURE__*/React.createElement(motion.line, {
+    x1: "0",
+    y1: "0",
+    x2: circumPx,
+    y2: "0",
+    stroke: "#ec4899",
+    strokeWidth: "6",
+    strokeLinecap: "round",
+    initial: {
+      pathLength: 0
+    },
+    animate: {
+      pathLength: 1
+    },
+    transition: {
+      duration: 3,
+      ease: "easeInOut"
+    }
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col md:flex-row gap-8 items-center justify-between"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full md:w-1/2 space-y-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between font-bold text-lime-200"
+  }, /*#__PURE__*/React.createElement("label", null, getText("diameter", lang)), /*#__PURE__*/React.createElement("span", {
+    className: "font-mono text-xl"
+  }, d, " cm")), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "2",
+    max: "25",
+    step: "1",
+    value: d,
+    onChange: e => setD(Number(e.target.value)),
+    disabled: isRolling,
+    className: `w-full h-4 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-lime-500 ${isRolling ? "opacity-50 cursor-not-allowed" : ""}`
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4 mt-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: animateRoll,
+    disabled: isRolling && rollProgress < 1,
+    className: `flex-1 py-3 rounded-xl font-black text-lg uppercase tracking-wide transition-all ${isRolling ? "bg-slate-700 text-slate-500" : "bg-lime-500 hover:bg-lime-400 text-slate-900 shadow-[0_0_20px_rgba(132,204,22,0.4)]"}`
+  }, getText("roll", lang)), /*#__PURE__*/React.createElement("button", {
+    onClick: reset,
+    className: "px-6 py-3 rounded-xl font-bold bg-slate-700 text-white hover:bg-slate-600"
+  }, getText("reset", lang)))), /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 bg-black/30 p-6 rounded-2xl border border-white/5 w-full"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-slate-400 text-xs font-bold uppercase tracking-widest mb-2"
+  }, getText("circumference", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black text-white font-mono mb-2"
+  }, C.toFixed(2), " ", /*#__PURE__*/React.createElement("span", {
+    className: "text-lg text-slate-500"
+  }, "cm")), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col gap-1 text-sm text-lime-400 font-mono"
+  }, /*#__PURE__*/React.createElement("div", null, getText("formula", lang)), /*#__PURE__*/React.createElement("div", null, PI.toFixed(4), " × ", d, " ≈ ", C.toFixed(2))), /*#__PURE__*/React.createElement("div", {
+    className: "mt-4 pt-4 border-t border-white/10 text-xs text-slate-400 italic"
+  }, getText("explanation", lang))))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

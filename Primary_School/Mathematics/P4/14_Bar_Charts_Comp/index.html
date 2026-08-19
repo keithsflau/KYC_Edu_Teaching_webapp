@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小四數學：複合棒形圖 | Composite Bar Charts</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #fef9c3 0%, #facc15 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState
+} = React;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Composite Bar Charts",
+    zh: "複合棒形圖",
+    ja: "複合棒グラフ",
+    ko: "복합 막대 그래프",
+    es: "Gráficos de Barras Compuestos",
+    de: "Zusammengesetzte Balkendiagramme",
+    fi: "Yhdistelmäpylväskaaviot",
+    fr: "Graphiques à barres composites",
+    ar: "الرسوم البيانية الشريطية المركبة",
+    it: "Grafici a barre composti"
+  },
+  firstHalf: {
+    en: "1st Half",
+    zh: "上半年",
+    ja: "上半期",
+    ko: "상반기",
+    es: "1er Semestre",
+    de: "1. Halbjahr",
+    fi: "1. vuosipuolisko",
+    fr: "1er semestre",
+    ar: "النصف الأول",
+    it: "1° Semestre"
+  },
+  secondHalf: {
+    en: "2nd Half",
+    zh: "下半年",
+    ja: "下半期",
+    ko: "하반기",
+    es: "2do Semestre",
+    de: "2. Halbjahr",
+    fi: "2. vuosipuolisko",
+    fr: "2e semestre",
+    ar: "النصف الثاني",
+    it: "2° Semestre"
+  },
+  apple: {
+    en: "Apple",
+    zh: "蘋果",
+    ja: "リンゴ",
+    ko: "사과",
+    es: "Manzana",
+    de: "Apfel",
+    fi: "Omena",
+    fr: "Pomme",
+    ar: "تفاحة",
+    it: "Mela"
+  },
+  orange: {
+    en: "Orange",
+    zh: "橙",
+    ja: "オレンジ",
+    ko: "오렌지",
+    es: "Naranja",
+    de: "Orange",
+    fi: "Appelsiini",
+    fr: "Orange",
+    ar: "برتقال",
+    it: "Arancia"
+  },
+  banana: {
+    en: "Banana",
+    zh: "香蕉",
+    ja: "バナナ",
+    ko: "바나나",
+    es: "Plátano",
+    de: "Banane",
+    fi: "Banaani",
+    fr: "Banane",
+    ar: "موز",
+    it: "Banana"
+  },
+  pear: {
+    en: "Pear",
+    zh: "梨",
+    ja: "梨",
+    ko: "배",
+    es: "Pera",
+    de: "Birne",
+    fi: "Päärynä",
+    fr: "Poire",
+    ar: "كمثرى",
+    it: "Pera"
+  },
+  whyUse: {
+    en: "Why use Composite Bar Charts?",
+    zh: "為什麼要用複合棒形圖？",
+    ja: "なぜ複合棒グラフを使うのですか？",
+    ko: "왜 복합 막대 그래프를 사용하나요?",
+    es: "¿Por qué usar gráficos de barras compuestos?",
+    de: "Warum zusammengesetzte Balkendiagramme verwenden?",
+    fi: "Miksi käyttää yhdistelmäpylväskaavioita?",
+    fr: "Pourquoi utiliser des graphiques à barres composites ?",
+    ar: "لماذا نستخدم الرسوم البيانية الشريطية المركبة؟",
+    it: "Perché usare grafici a barre composti?"
+  },
+  explanation: {
+    en: "Composite bar charts allow us to compare two sets of related data (e.g., sales in 1st vs 2nd half) at a glance!",
+    zh: "當我們要同時比較兩組相關的資料（例如上半年和下半年的銷量）時，複合棒形圖可以讓我們一目了然！",
+    ja: "複合棒グラフを使用すると、関連する2つのデータセット（例：上半期と下半期の売上）を一目で比較できます！",
+    ko: "복합 막대 그래프를 사용하면 두 가지 관련 데이터 집합(예: 상반기 대 하반기 매출)을 한눈에 비교할 수 있습니다!",
+    es: "¡Los gráficos de barras compuestos nos permiten comparar dos conjuntos de datos relacionados (por ejemplo, ventas en el 1er vs 2do semestre) de un vistazo!",
+    de: "Mit zusammengesetzten Balkendiagrammen können wir zwei Sätze verwandter Daten (z. B. Umsatz im 1. vs. 2. Halbjahr) auf einen Blick vergleichen!",
+    fi: "Yhdistelmäpylväskaaviot mahdollistavat kahden toisiinsa liittyvän tietoaineiston (esim. myynti 1. vs. 2. vuosipuolisko) vertailun yhdellä silmäyksellä!",
+    fr: "Les graphiques à barres composites nous permettent de comparer deux ensembles de données connexes (par exemple, les ventes au 1er semestre par rapport au 2e semestre) en un coup d'œil !",
+    ar: "تسمح لنا الرسوم البيانية الشريطية المركبة بمقارنة مجموعتين من البيانات ذات الصلة (على سبيل المثال، المبيعات في النصف الأول مقابل النصف الثاني) في لمحة واحدة!",
+    it: "I grafici a barre composti ci permettono di confrontare due serie di dati correlati (ad es., vendite nel 1° vs 2° semestre) a colpo d'occhio!"
+  }
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const getText = key => t[key][lang] || t[key]["en"];
+  const data = [{
+    item: getText("apple"),
+    a: 15,
+    b: 20
+  }, {
+    item: getText("orange"),
+    a: 25,
+    b: 18
+  }, {
+    item: getText("banana"),
+    a: 10,
+    b: 15
+  }, {
+    item: getText("pear"),
+    a: 22,
+    b: 28
+  }];
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-8 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-yellow-900 mb-8 mt-8"
+  }, "📊 ", getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/95 backdrop-blur-md rounded-3xl p-8 shadow-2xl max-w-4xl w-full"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-end gap-6 mb-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-4 h-4 bg-blue-500 rounded"
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "font-bold text-slate-600"
+  }, getText("firstHalf"))), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-4 h-4 bg-orange-500 rounded"
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "font-bold text-slate-600"
+  }, getText("secondHalf")))), /*#__PURE__*/React.createElement("div", {
+    className: "h-[400px] bg-slate-50 border-l-4 border-b-4 border-slate-600 relative ml-12 mb-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 flex flex-col justify-between pointer-events-none"
+  }, [...Array(6)].map((_, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "w-full h-px bg-slate-200 relative"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "absolute -left-10 -top-3 text-sm font-bold text-slate-500"
+  }, (5 - i) * 10)))), /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 flex items-end justify-around px-8"
+  }, data.map((d, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "flex gap-1 items-end h-full pt-8 group"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "relative w-8 bg-blue-500 rounded-t-md hover:opacity-90 transition-all",
+    style: {
+      height: `${d.a / 50 * 100}%`
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute -top-6 left-0 right-0 text-center font-bold text-blue-600 opacity-0 group-hover:opacity-100"
+  }, d.a)), /*#__PURE__*/React.createElement("div", {
+    className: "relative w-8 bg-orange-500 rounded-t-md hover:opacity-90 transition-all",
+    style: {
+      height: `${d.b / 50 * 100}%`
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute -top-6 left-0 right-0 text-center font-bold text-orange-600 opacity-0 group-hover:opacity-100"
+  }, d.b)), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-[-30px] font-bold text-slate-700 w-20 text-center -ml-1"
+  }, d.item))))), /*#__PURE__*/React.createElement("div", {
+    className: "mt-8 bg-yellow-50 p-6 rounded-2xl text-center"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-xl font-bold text-yellow-900 mb-2"
+  }, getText("whyUse")), /*#__PURE__*/React.createElement("p", {
+    className: "text-yellow-800"
+  }, getText("explanation")))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

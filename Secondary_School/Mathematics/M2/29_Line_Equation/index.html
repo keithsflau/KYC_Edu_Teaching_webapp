@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Equation of a Line | M2 Vectors</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+        overflow: hidden;
+      }
+      .glass {
+        background: rgba(15, 23, 42, 0.8);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      input[type="range"] {
+        -webkit-appearance: none;
+        background: transparent;
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        height: 12px;
+        width: 12px;
+        border-radius: 50%;
+        background: white;
+        margin-top: -4px;
+        cursor: pointer;
+      }
+      input[type="range"]::-webkit-slider-runnable-track {
+        width: 100%;
+        height: 4px;
+        background: #475569;
+        border-radius: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="absolute top-4 left-4 z-10 glass p-6 rounded-2xl max-w-sm">
+      <!-- Language Toggle -->
+      <div class="absolute top-4 right-4">
+        <button
+          id="lang-btn"
+          class="px-2 py-1 bg-slate-800 border border-slate-600 rounded-full text-[10px] font-bold text-emerald-400 hover:bg-slate-700 hover:text-white transition flex items-center gap-1"
+        >
+          <i class="fa-solid fa-language"></i>
+          <span id="lang-text">中文</span>
+        </button>
+      </div>
+
+      <h1
+        id="app-title"
+        class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-amber-400 mb-2"
+      >
+        Equation of Line
+      </h1>
+      <p id="app-subtitle" class="text-xs text-slate-300 mb-4">r = a + t b</p>
+
+      <div class="space-y-4">
+        <!-- Point a -->
+        <div>
+          <h3
+            id="label-ptA"
+            class="text-xs font-bold text-yellow-400 uppercase mb-2"
+          >
+            Point a (Position)
+          </h3>
+          <div class="flex gap-2">
+            <input
+              type="range"
+              min="-5"
+              max="5"
+              step="0.5"
+              id="ax"
+              value="1.5"
+              class="flex-1 accent-yellow-500"
+            />
+            <input
+              type="range"
+              min="-5"
+              max="5"
+              step="0.5"
+              id="ay"
+              value="-0.5"
+              class="flex-1 accent-yellow-500"
+            />
+            <input
+              type="range"
+              min="-5"
+              max="5"
+              step="0.5"
+              id="az"
+              value="2"
+              class="flex-1 accent-yellow-500"
+            />
+          </div>
+        </div>
+        <!-- Direction b -->
+        <div>
+          <h3
+            id="label-dirB"
+            class="text-xs font-bold text-amber-500 uppercase mb-2"
+          >
+            Direction b
+          </h3>
+          <div class="flex gap-2">
+            <input
+              type="range"
+              min="-1"
+              max="1"
+              step="0.1"
+              id="bx"
+              value="0.6"
+              class="flex-1 accent-amber-500"
+            />
+            <input
+              type="range"
+              min="-1"
+              max="1"
+              step="0.1"
+              id="by"
+              value="0.2"
+              class="flex-1 accent-amber-500"
+            />
+            <input
+              type="range"
+              min="-1"
+              max="1"
+              step="0.1"
+              id="bz"
+              value="0.8"
+              class="flex-1 accent-amber-500"
+            />
+          </div>
+        </div>
+
+        <div
+          class="p-4 bg-slate-900/50 rounded-xl font-mono text-xs border border-slate-700"
+        >
+          <div id="label-vecEq" class="text-slate-400 mb-1">
+            Vector Equation
+          </div>
+          <div id="eq_text" class="text-white font-bold"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="canvas-container" class="w-screen h-screen"></div>
+
+    <script>
+      // Bilingual
+      const translations = {
+        en: {
+          title: "Equation of Line",
+          subtitle: "r = a + t b",
+          ptA: "Point a (Position)",
+          dirB: "Direction b",
+          vecEq: "Vector Equation",
+          langBtn: "中文",
+        },
+        zh: {
+          title: "直線方程式",
+          subtitle: "r = a + t b",
+          ptA: "點 a (位置向量)",
+          dirB: "方向向量 b",
+          vecEq: "向量方程式",
+          langBtn: "English",
+        },
+      };
+
+      let currentLang = "en";
+
+      function updateLanguage() {
+        const t = translations[currentLang];
+        document.getElementById("lang-text").textContent = t.langBtn;
+        document.getElementById("app-title").textContent = t.title;
+        document.getElementById("app-subtitle").textContent = t.subtitle;
+        document.getElementById("label-ptA").textContent = t.ptA;
+        document.getElementById("label-dirB").textContent = t.dirB;
+        document.getElementById("label-vecEq").textContent = t.vecEq;
+      }
+
+      document.getElementById("lang-btn").addEventListener("click", () => {
+        currentLang = currentLang === "en" ? "zh" : "en";
+        updateLanguage();
+      });
+
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0f172a);
+      const camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        100
+      );
+      camera.position.set(5, 5, 8);
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document
+        .getElementById("canvas-container")
+        .appendChild(renderer.domElement);
+
+      const controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+
+      scene.add(new THREE.GridHelper(10, 10, 0x334155, 0x1e293b));
+      scene.add(new THREE.AxesHelper(2)); // Origin
+      scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+
+      // Objects
+      // Vector a (Position)
+      const arrowA = new THREE.ArrowHelper(
+        new THREE.Vector3(1, 0, 0),
+        new THREE.Vector3(0, 0, 0),
+        1,
+        0xfacc15
+      ); // Yellow
+      scene.add(arrowA);
+
+      // Line Geometry
+      const lineMat = new THREE.LineBasicMaterial({
+        color: 0xf59e0b,
+        linewidth: 2,
+      });
+      const lineGeo = new THREE.BufferGeometry();
+      const lineObj = new THREE.Line(lineGeo, lineMat);
+      scene.add(lineObj);
+
+      // Direction b Arrow (at point a)
+      const arrowB = new THREE.ArrowHelper(
+        new THREE.Vector3(1, 0, 0),
+        new THREE.Vector3(0, 0, 0),
+        2,
+        0xf59e0b
+      ); // Amber
+      scene.add(arrowB);
+
+      function update() {
+        const ax = parseFloat(document.getElementById("ax").value);
+        const ay = parseFloat(document.getElementById("ay").value);
+        const az = parseFloat(document.getElementById("az").value);
+
+        const bx = parseFloat(document.getElementById("bx").value);
+        const by = parseFloat(document.getElementById("by").value);
+        const bz = parseFloat(document.getElementById("bz").value);
+
+        const a = new THREE.Vector3(ax, ay, az);
+        const b = new THREE.Vector3(bx, by, bz);
+
+        // HUD
+        document.getElementById(
+          "eq_text"
+        ).innerText = `r = (${ax},${ay},${az}) + t(${bx},${by},${bz})`;
+
+        // Arrow A
+        if (a.length() > 0.01) {
+          arrowA.visible = true;
+          arrowA.setDirection(a.clone().normalize());
+          arrowA.setLength(a.length());
+        } else {
+          arrowA.visible = false;
+        }
+
+        // Draw Line (infinite-ish)
+        // t from -10 to 10
+        const p1 = a.clone().addScaledVector(b, -10);
+        const p2 = a.clone().addScaledVector(b, 10);
+        const pts = [p1, p2];
+        lineGeo.setFromPoints(pts);
+
+        // Arrow B
+        arrowB.position.copy(a);
+        if (b.length() > 0.01) {
+          arrowB.visible = true;
+          arrowB.setDirection(b.clone().normalize());
+        } else {
+          arrowB.visible = false;
+        }
+      }
+
+      document
+        .querySelectorAll("input")
+        .forEach((i) => i.addEventListener("input", update));
+      update();
+      updateLanguage();
+
+      function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+      }
+      animate();
+
+      window.addEventListener("resize", () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+    </script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

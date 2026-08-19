@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - Disease Prevention</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: #f0fdfa;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Hygiene Hero",
+    zh: "衛生小英雄",
+    ja: "衛生ヒーロー",
+    ko: "위생 영웅",
+    es: "Héroe de la higiene",
+    de: "Hygiene-Held",
+    fi: "Hygieniasankari",
+    fr: "Héros de l'hygiène",
+    ar: "بطل النظافة",
+    it: "Eroe dell'Igiene"
+  },
+  instruction: {
+    en: "Good Habit or Bad Habit?",
+    zh: "這是好習慣還是壞習慣？",
+    ja: "良い習慣ですか、悪い習慣ですか？",
+    ko: "좋은 습관인가요, 나쁜 습관인가요?",
+    es: "¿Buen hábito o mal hábito?",
+    de: "Gute Gewohnheit oder schlechte Gewohnheit?",
+    fi: "Hyvä tapa vai huono tapa?",
+    fr: "Bonne habitude ou mauvaise habitude ?",
+    ar: "عادة جيدة أم عادة سيئة؟",
+    it: "Buona Abitudine o Cattiva Abitudine?"
+  },
+  good: {
+    en: "Good Habit 👍",
+    zh: "好習慣 👍",
+    ja: "良い習慣 👍",
+    ko: "좋은 습관 👍",
+    es: "Buen hábito 👍",
+    de: "Gute Gewohnheit 👍",
+    fi: "Hyvä tapa 👍",
+    fr: "Bonne habitude 👍",
+    ar: "عادة جيدة 👍",
+    it: "Buona Abitudine 👍"
+  },
+  bad: {
+    en: "Bad Habit 🦠",
+    zh: "壞習慣 🦠",
+    ja: "悪い習慣 🦠",
+    ko: "나쁜 습관 🦠",
+    es: "Mal hábito 🦠",
+    de: "Schlechte Gewohnheit 🦠",
+    fi: "Huono tapa 🦠",
+    fr: "Mauvaise habitude 🦠",
+    ar: "عادة سيئة 🦠",
+    it: "Cattiva Abitudine 🦠"
+  },
+  h1: {
+    en: "Wash hands for 20s",
+    zh: "洗手20秒",
+    ja: "20秒間手を洗う",
+    ko: "20초 동안 손 씻기"
+  },
+  h2: {
+    en: "Share towel with others",
+    zh: "共用毛巾",
+    ja: "タオルを共有する",
+    ko: "수건 공유하기"
+  },
+  h3: {
+    en: "Cover nose when sneezing",
+    zh: "打噴嚏時掩蓋口鼻",
+    ja: "くしゃみをする時は鼻と口を覆う",
+    ko: "재채기할 때 코와 입 가리기"
+  },
+  h4: {
+    en: "Rub eyes with dirty hands",
+    zh: "用髒手揉眼睛",
+    ja: "汚れた手で目をこする",
+    ko: "더러운 손으로 눈 비비기"
+  },
+  h5: {
+    en: "Wear mask when sick",
+    zh: "生病時戴口罩",
+    ja: "病気の時はマスクをする",
+    ko: "아플 때 마스크 착용"
+  },
+  h6: {
+    en: "Do not flush toilet",
+    zh: "如廁後不沖水",
+    ja: "トイレを流さない",
+    ko: "화장실 물 내리지 않기"
+  },
+  correct: {
+    en: "Correct!",
+    zh: "正確！",
+    ja: "正解！",
+    ko: "정답!"
+  },
+  wrong: {
+    en: "Wrong!",
+    zh: "錯誤！",
+    ja: "不正解！",
+    ko: "틀렸습니다!"
+  }
+};
+const items = [{
+  id: "h1",
+  type: "good",
+  icon: "🧼"
+}, {
+  id: "h2",
+  type: "bad",
+  icon: "🤢"
+}, {
+  id: "h3",
+  type: "good",
+  icon: "🤧"
+}, {
+  id: "h4",
+  type: "bad",
+  icon: "👀"
+}, {
+  id: "h5",
+  type: "good",
+  icon: "😷"
+}, {
+  id: "h6",
+  type: "bad",
+  icon: "🚽"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [index, setIndex] = useState(0);
+  const [feedback, setFeedback] = useState(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+  const current = items[index];
+  const handleAnswer = ans => {
+    if (feedback) return;
+    if (ans === current.type) {
+      setFeedback("correct");
+      setTimeout(() => {
+        setFeedback(null);
+        setIndex((index + 1) % items.length);
+      }, 1000);
+    } else {
+      setFeedback("wrong");
+      setTimeout(() => setFeedback(null), 500);
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center justify-center p-4"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-bold mb-8 text-teal-700"
+  }, getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-lg bg-white p-8 rounded-3xl shadow-xl border-4 border-teal-200 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "font-bold text-slate-500 mb-6"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-teal-50 p-10 rounded-2xl mb-8 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-8xl mb-4 animate-bounce-slow"
+  }, current.icon), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-bold text-slate-800"
+  }, getText(current.id))), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => handleAnswer("good"),
+    className: "flex-1 bg-green-100 hover:bg-green-200 text-green-900 py-6 rounded-xl font-bold text-xl border-b-4 border-green-300 active:border-b-0 active:translate-y-1"
+  }, getText("good")), /*#__PURE__*/React.createElement("button", {
+    onClick: () => handleAnswer("bad"),
+    className: "flex-1 bg-red-100 hover:bg-red-200 text-red-900 py-6 rounded-xl font-bold text-xl border-b-4 border-red-300 active:border-b-0 active:translate-y-1"
+  }, getText("bad"))), feedback && /*#__PURE__*/React.createElement("div", {
+    className: `mt-6 text-3xl font-black ${feedback === "correct" ? "text-green-600" : "text-red-500"} animate-pulse`
+  }, getText(feedback))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

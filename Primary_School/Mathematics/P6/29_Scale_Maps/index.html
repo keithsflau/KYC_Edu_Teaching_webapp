@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小六數學：比例尺地圖 | Map Scales</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect,
+  useRef
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Scale on Maps",
+    zh: "地圖比例尺",
+    ja: "地図の縮尺",
+    ko: "지도 축척",
+    es: "Escala en Mapas",
+    de: "Maßstab auf Karten",
+    fi: "Karttamittakaava",
+    fr: "Échelle des cartes",
+    ar: "مقياس الرسم في الخرائط",
+    it: "Scala delle Mappe"
+  },
+  scale: {
+    en: "Map Scale",
+    zh: "比例尺",
+    ja: "縮尺",
+    ko: "축척",
+    es: "Escala del Mapa",
+    de: "Kartenmaßstab",
+    fi: "Mittakaava",
+    fr: "Échelle",
+    ar: "مقياس الرسم",
+    it: "Scala Mappa"
+  },
+  mapDist: {
+    en: "Map Distance",
+    zh: "地圖距離",
+    ja: "地図上の距離",
+    ko: "지도 거리",
+    es: "Distancia en Mapa",
+    de: "Kartenentfernung",
+    fi: "Matka kartalla",
+    fr: "Distance sur carte",
+    ar: "المسافة على الخريطة",
+    it: "Distanza su Mappa"
+  },
+  realDist: {
+    en: "Real Distance",
+    zh: "實際距離",
+    ja: "実際の距離",
+    ko: "실제 거리",
+    es: "Distancia Real",
+    de: "Tatsächliche Entfernung",
+    fi: "Todellinen matka",
+    fr: "Distance réelle",
+    ar: "المسافة الحقيقية",
+    it: "Distanza Reale"
+  },
+  calculation: {
+    en: "Calculation",
+    zh: "計算過程",
+    ja: "計算",
+    ko: "계산",
+    es: "Cálculo",
+    de: "Berechnung",
+    fi: "Laskelma",
+    fr: "Calcul",
+    ar: "حساب",
+    it: "Calcolo"
+  },
+  school: {
+    en: "School",
+    zh: "學校",
+    ja: "学校",
+    ko: "학교",
+    es: "Escuela",
+    de: "Schule",
+    fi: "Koulu",
+    fr: "École",
+    ar: "مدرسة",
+    it: "Scuola"
+  },
+  park: {
+    en: "Park",
+    zh: "公園",
+    ja: "公園",
+    ko: "공원",
+    es: "Parque",
+    de: "Park",
+    fi: "Puisto",
+    fr: "Parc",
+    ar: "حديقة",
+    it: "Parco"
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [scaleRatio, setScaleRatio] = useState(100); // 1:X
+  const [mapCm, setMapCm] = useState(5);
+  const realMetres = mapCm * scaleRatio / 100;
+
+  // Visual Zoom Level (inverse of scale ratio for visual metaphor)
+  // Ratio 100 -> Zoom 1.0
+  // Ratio 500 -> Zoom 0.2
+  const zoomLevel = 100 / scaleRatio;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4 font-sans bg-slate-900 text-white"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-5xl flex justify-between items-center mb-8"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-black text-violet-400 drop-shadow-[0_0_15px_rgba(139,92,246,0.5)]"
+  }, "🗺️ ", getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "flex bg-slate-800/80 p-1.5 rounded-xl border border-white/10 flex-wrap justify-end gap-1 max-w-[50%]"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-violet-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white hover:bg-white/5"}`
+  }, l)))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-5xl grid grid-cols-1 lg:grid-cols-2 gap-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-4 rounded-3xl aspect-square relative overflow-hidden flex items-center justify-center"
+  }, /*#__PURE__*/React.createElement(motion.div, {
+    className: "absolute inset-0 bg-slate-800",
+    style: {
+      backgroundImage: "radial-gradient(#4c1d95 1px, transparent 1px)",
+      backgroundSize: "20px 20px"
+    },
+    animate: {
+      scale: zoomLevel
+    },
+    transition: {
+      type: "spring",
+      stiffness: 50
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-1/2 left-0 right-0 h-4 bg-slate-700 -translate-y-1/2"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute left-1/2 top-0 bottom-0 w-4 bg-slate-700 -translate-x-1/2"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-1/2 left-[30%] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl"
+  }, "🏫"), /*#__PURE__*/React.createElement("span", {
+    className: "text-white text-xs font-bold bg-slate-900/50 px-1 rounded"
+  }, getText("school", lang)))), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 pointer-events-none w-full max-w-[300px] h-12 flex items-center justify-center"
+  }, /*#__PURE__*/React.createElement(motion.div, {
+    className: "h-8 bg-yellow-400/90 rounded shadow-lg flex items-end px-2",
+    animate: {
+      width: `${mapCm * 20}px`
+    } // visual scaling factor 20px per cm
+    ,
+    transition: {
+      type: "spring"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full h-full border-b border-black/20 flex justify-between items-end pb-1"
+  }, Array.from({
+    length: Math.floor(mapCm) + 1
+  }).map((_, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "w-px h-3 bg-black/40"
+  })))), /*#__PURE__*/React.createElement("div", {
+    className: "absolute -top-6 text-yellow-400 font-bold drop-shadow-md"
+  }, mapCm, " cm")), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 w-full max-w-[300px] h-0 flex items-center justify-center pointer-events-none"
+  }, /*#__PURE__*/React.createElement(motion.div, {
+    className: "relative h-0",
+    animate: {
+      width: `${mapCm * 20}px`
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute left-0 -translate-x-1/2 -translate-y-1/2 text-4xl transform -translate-y-8"
+  }, "📍"), /*#__PURE__*/React.createElement("div", {
+    className: "absolute right-0 translate-x-1/2 -translate-y-1/2 text-4xl transform -translate-y-8"
+  }, "🏁")))), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 rounded-3xl"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-slate-400 font-bold uppercase mb-4"
+  }, getText("scale", lang), " (1 : X)"), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-2"
+  }, [50, 100, 200, 500, 1000].map(s => /*#__PURE__*/React.createElement("button", {
+    key: s,
+    onClick: () => setScaleRatio(s),
+    className: `flex-1 py-3 rounded-xl font-bold transition-all ${scaleRatio === s ? "bg-violet-600 text-white shadow-lg scale-105" : "bg-slate-700 text-slate-300 hover:bg-slate-600"}`
+  }, "1:", s)))), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 rounded-3xl border-l-4 border-yellow-400"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-yellow-400 font-bold uppercase mb-4"
+  }, getText("mapDist", lang)), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "1",
+    max: "15",
+    value: mapCm,
+    onChange: e => setMapCm(parseInt(e.target.value, 10)),
+    className: "w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-yellow-400 mb-2"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between items-center"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-xs text-slate-500 font-bold"
+  }, "1 cm"), /*#__PURE__*/React.createElement("span", {
+    className: "text-3xl font-black text-white"
+  }, mapCm, " ", /*#__PURE__*/React.createElement("span", {
+    className: "text-sm text-slate-400"
+  }, "cm")), /*#__PURE__*/React.createElement("span", {
+    className: "text-xs text-slate-500 font-bold"
+  }, "15 cm"))), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-8 rounded-3xl border-l-4 border-violet-500 bg-violet-500/10"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-violet-400 font-bold uppercase mb-4"
+  }, getText("realDist", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-2 mb-6 text-sm text-slate-300 font-mono"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between border-b border-white/10 pb-2"
+  }, /*#__PURE__*/React.createElement("span", null, getText("mapDist", lang)), /*#__PURE__*/React.createElement("span", null, mapCm, " cm")), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between border-b border-white/10 pb-2"
+  }, /*#__PURE__*/React.createElement("span", null, getText("scale", lang)), /*#__PURE__*/React.createElement("span", null, "× ", scaleRatio)), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between pt-2 opacity-50"
+  }, /*#__PURE__*/React.createElement("span", null, "Type"), /*#__PURE__*/React.createElement("span", null, "= ", mapCm * scaleRatio, " cm"))), /*#__PURE__*/React.createElement("div", {
+    className: "text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl font-black text-white mb-1"
+  }, realMetres, " ", /*#__PURE__*/React.createElement("span", {
+    className: "text-2xl text-violet-300"
+  }, "m")), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs text-slate-400 uppercase tracking-widest font-bold"
+  }, "(", mapCm * scaleRatio / 100, " meters)"))))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

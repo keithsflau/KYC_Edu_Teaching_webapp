@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dynamic Periodic Table | 動態元素週期表</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+      }
+      .element-card {
+        aspect-ratio: 1;
+        transition: all 0.2s ease;
+        min-height: 52px;
+        font-size: 10px;
+      }
+      .element-card:hover {
+        transform: scale(1.12);
+        z-index: 10;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+      }
+      .element-card.dimmed {
+        opacity: 0.15;
+        pointer-events: none;
+      }
+      .element-card.highlight {
+        box-shadow: 0 0 0 2px #38bdf8;
+      }
+      .periodic-grid {
+        display: grid;
+        grid-template-columns: repeat(18, minmax(0, 1fr));
+        gap: 3px;
+        width: 100%;
+        max-width: 1400px;
+      }
+      @media (min-width: 768px) {
+        .periodic-grid {
+          gap: 4px;
+        }
+        .element-card {
+          min-height: 64px;
+          font-size: 11px;
+        }
+      }
+      .f-block-label {
+        grid-column: 3;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        color: #94a3b8;
+        border: 1px dashed #475569;
+        border-radius: 6px;
+        background: rgba(15, 23, 42, 0.5);
+        cursor: default;
+        aspect-ratio: 1;
+      }
+      .section-label {
+        grid-column: 1 / -1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 600;
+        color: #cbd5e1;
+        border: 1px dashed #64748b;
+        border-radius: 8px;
+        background: rgba(30, 41, 59, 0.8);
+        padding: 8px 12px;
+        margin-top: 4px;
+        cursor: default;
+        min-height: 36px;
+      }
+      .element-card.predicted {
+        border-style: dashed;
+        opacity: 0.92;
+      }
+      /* Categories Colors */
+      .cat-alkali {
+        background-color: #ef4444;
+        border-color: #b91c1c;
+        color: white;
+      } /* Group 1 */
+      .cat-alkaline {
+        background-color: #f97316;
+        border-color: #c2410c;
+        color: white;
+      } /* Group 2 */
+      .cat-transition {
+        background-color: #eab308;
+        border-color: #a16207;
+        color: black;
+      }
+      .cat-post-transition {
+        background-color: #84cc16;
+        border-color: #4d7c0f;
+        color: black;
+      }
+      .cat-metalloid {
+        background-color: #10b981;
+        border-color: #047857;
+        color: white;
+      }
+      .cat-nonmetal {
+        background-color: #06b6d4;
+        border-color: #0e7490;
+        color: white;
+      }
+      .cat-halogen {
+        background-color: #3b82f6;
+        border-color: #1d4ed8;
+        color: white;
+      } /* Group 7 */
+      .cat-noble {
+        background-color: #8b5cf6;
+        border-color: #6d28d9;
+        color: white;
+      } /* Group 0 */
+
+      .cat-lanthanide {
+        background-color: #d946ef;
+        border-color: #a21caf;
+        color: white;
+      }
+      .cat-actinide {
+        background-color: #ec4899;
+        border-color: #be185d;
+        color: white;
+      }
+      .cat-unknown {
+        background-color: #64748b;
+        border-color: #475569;
+        color: white;
+      }
+
+      .empty-cell {
+        pointer-events: none;
+        visibility: hidden;
+      }
+    </style>
+  </head>
+
+  <body class="bg-slate-950 text-white min-h-screen flex flex-col">
+    <!-- Header -->
+    <header
+      class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex flex-col md:flex-row justify-between items-center z-10 sticky top-0"
+    >
+      <div class="flex items-center gap-4 mb-4 md:mb-0">
+        <a href="../../index.html" class="text-slate-400 hover:text-white transition-colors" aria-label="Back to Chemistry hub">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+        </a>
+        <div>
+          <h1 class="text-xl font-bold">
+            Scientific Periodic Table
+            <span class="text-slate-500 font-normal text-sm ml-2">元素週期表</span>
+          </h1>
+          <p class="text-xs text-slate-500 mt-1">210 elements · 118 confirmed + 92 predicted (119–210)</p>
+        </div>
+      </div>
+
+      <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center w-full md:w-auto">
+        <input
+          id="search-input"
+          type="search"
+          placeholder="Search symbol / name / number…"
+          class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 w-full sm:w-56"
+          oninput="filterElements(this.value)"
+        />
+        <div class="text-sm text-slate-400">View Mode:</div>
+        <div class="bg-slate-800 p-1 rounded-lg flex" id="mode-buttons">
+          <button
+            id="mode-standard"
+            class="px-3 py-1 bg-slate-700 rounded text-xs font-semibold text-white shadow"
+            onclick="setMode('standard')"
+          >
+            Groups
+          </button>
+          <button
+            id="mode-mp"
+            class="px-3 py-1 hover:bg-slate-700 rounded text-xs text-slate-400 font-medium transition-colors"
+            onclick="setMode('mp')"
+          >
+            Melting Point
+          </button>
+          <button
+            id="mode-radius"
+            class="px-3 py-1 hover:bg-slate-700 rounded text-xs text-slate-400 font-medium transition-colors"
+            onclick="setMode('radius')"
+          >
+            Atomic Radius
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main
+      class="flex-grow p-4 md:p-8 flex flex-col items-center justify-start overflow-y-auto"
+    >
+      <!-- Legend/Info Bar -->
+      <div
+        class="w-full max-w-[1400px] mb-8 flex flex-wrap gap-4 text-xs justify-center"
+        id="legend-container"
+      >
+        <div class="flex items-center gap-2">
+          <div class="w-3 h-3 bg-red-500 rounded"></div>
+          Alkali Metals
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-3 h-3 bg-orange-500 rounded"></div>
+          Alkaline Earth
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-3 h-3 bg-yellow-500 rounded"></div>
+          Transition Metals
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-3 h-3 bg-blue-500 rounded"></div>
+          Halogens
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-3 h-3 bg-purple-500 rounded"></div>
+          Noble Gases
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-3 h-3 bg-fuchsia-500 rounded"></div>
+          Lanthanides
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-3 h-3 bg-pink-500 rounded"></div>
+          Actinides
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-3 h-3 bg-lime-500 rounded"></div>
+          Post-transition
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-3 h-3 bg-emerald-500 rounded"></div>
+          Metalloids
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-3 h-3 bg-slate-500 rounded border border-dashed border-slate-400"></div>
+          Predicted (119+)
+        </div>
+      </div>
+
+      <div id="grid-container" class="periodic-grid">
+        <!-- JS will populate this -->
+      </div>
+
+      <!-- Lanthanides / Actinides separate rows placeholder if needed, 
+             but for F3 simple table usually puts them in grid or below.
+             We will simulate standard 18-col layout. -->
+    </main>
+
+    <!-- Detail Modal -->
+    <div
+      id="modal"
+      class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300"
+    >
+      <div
+        class="bg-slate-900 border border-slate-700 rounded-2xl p-8 max-w-2xl w-full mx-4 shadow-2xl transform scale-95 transition-transform duration-300"
+        id="modal-content"
+      >
+        <div class="flex justify-between items-start mb-6">
+          <div>
+            <h2
+              class="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400"
+              id="m-name"
+            >
+              Hydrogen
+            </h2>
+            <p class="text-slate-400 text-lg" id="m-category">Non-metal</p>
+          </div>
+          <button
+            onclick="closeModal()"
+            class="text-slate-400 hover:text-white"
+          >
+            <svg
+              class="w-8 h-8"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <div class="flex flex-col md:flex-row gap-8">
+          <!-- Visual Box -->
+          <div
+            class="w-40 h-40 flex items-center justify-center bg-slate-800 rounded-xl border border-slate-700 relative overflow-hidden group"
+          >
+            <span class="text-6xl font-bold text-white z-10" id="m-symbol"
+              >H</span
+            >
+            <span
+              class="absolute top-2 left-3 text-sm text-slate-500"
+              id="m-number"
+              >1</span
+            >
+            <span
+              class="absolute bottom-2 right-3 text-xs text-slate-500 font-mono"
+              id="m-mass"
+              >1.008</span
+            >
+            <!-- Background glow -->
+            <div
+              class="absolute inset-0 bg-blue-500/20 blur-xl group-hover:bg-blue-500/30 transition-colors"
+            ></div>
+          </div>
+
+          <!-- Stats Grid -->
+          <div class="flex-grow grid grid-cols-2 gap-4">
+            <div class="bg-slate-800/50 p-4 rounded-lg">
+              <div class="text-xs text-slate-500 uppercase">
+                Electron Config
+              </div>
+              <div class="text-lg font-mono text-blue-300" id="m-config">1</div>
+            </div>
+            <div class="bg-slate-800/50 p-4 rounded-lg">
+              <div class="text-xs text-slate-500 uppercase">Phase (RTP)</div>
+              <div class="text-lg text-slate-200" id="m-phase">Gas</div>
+            </div>
+            <div class="bg-slate-800/50 p-4 rounded-lg">
+              <div class="text-xs text-slate-500 uppercase">Melting Point</div>
+              <div class="text-lg text-slate-200" id="m-mp">-259 °C</div>
+            </div>
+            <div class="bg-slate-800/50 p-4 rounded-lg">
+              <div class="text-xs text-slate-500 uppercase">Boiling Point</div>
+              <div class="text-lg text-slate-200" id="m-bp">-253 °C</div>
+            </div>
+            <div class="bg-slate-800/50 p-4 rounded-lg">
+              <div class="text-xs text-slate-500 uppercase">Atomic Radius</div>
+              <div class="text-lg text-slate-200" id="m-radius">53 pm</div>
+            </div>
+            <div class="bg-slate-800/50 p-4 rounded-lg">
+              <div class="text-xs text-slate-500 uppercase">Atomic Number</div>
+              <div class="text-lg text-slate-200" id="m-z">1</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-8 pt-6 border-t border-slate-800">
+          <p class="text-slate-400 text-sm leading-relaxed" id="m-desc">
+            Hydrogen is the chemical element with the symbol H and atomic number
+            1. It is the lightest element and, at standard conditions, is a gas
+            of diatomic molecules having the formula H2.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <script src="elements-data.js"></script>
+    <script>
+      const CAT_LABELS = {
+        alkali: "Alkali Metal",
+        alkaline: "Alkaline Earth Metal",
+        transition: "Transition Metal",
+        "post-transition": "Post-transition Metal",
+        metalloid: "Metalloid",
+        nonmetal: "Non-metal",
+        halogen: "Halogen",
+        noble: "Noble Gas",
+        lanthanide: "Lanthanide",
+        actinide: "Actinide",
+        unknown: "Unknown / Predicted",
+      };
+
+      const ELEMENT_COUNT = 210;
+      const PREDICTED_START = 119;
+
+      const ORBITAL_ORDER = [
+        { n: 1, l: "s", cap: 2 },
+        { n: 2, l: "s", cap: 2 }, { n: 2, l: "p", cap: 6 },
+        { n: 3, l: "s", cap: 2 }, { n: 3, l: "p", cap: 6 },
+        { n: 4, l: "s", cap: 2 }, { n: 3, l: "d", cap: 10 }, { n: 4, l: "p", cap: 6 },
+        { n: 5, l: "s", cap: 2 }, { n: 4, l: "d", cap: 10 }, { n: 5, l: "p", cap: 6 },
+        { n: 6, l: "s", cap: 2 }, { n: 4, l: "f", cap: 14 }, { n: 5, l: "d", cap: 10 }, { n: 6, l: "p", cap: 6 },
+        { n: 7, l: "s", cap: 2 }, { n: 5, l: "f", cap: 14 }, { n: 6, l: "d", cap: 10 }, { n: 7, l: "p", cap: 6 },
+        { n: 8, l: "s", cap: 2 }, { n: 5, l: "g", cap: 18 }, { n: 6, l: "f", cap: 14 },
+        { n: 7, l: "d", cap: 10 }, { n: 8, l: "p", cap: 6 },
+        { n: 9, l: "s", cap: 2 }, { n: 6, l: "g", cap: 18 }, { n: 7, l: "f", cap: 14 },
+        { n: 8, l: "d", cap: 10 }, { n: 9, l: "p", cap: 6 },
+      ];
+
+      function toSuperscript(number) {
+        const map = { 0: "⁰", 1: "¹", 2: "²", 3: "³", 4: "⁴", 5: "⁵", 6: "⁶", 7: "⁷", 8: "⁸", 9: "⁹" };
+        return String(number).split("").map((d) => map[d] || "").join("");
+      }
+
+      function getElectronConfig(z) {
+        if (z === 24) return "1s² 2s² 2p⁶ 3s² 3p⁶ 4s¹ 3d⁵";
+        if (z === 29) return "1s² 2s² 2p⁶ 3s² 3p⁶ 4s¹ 3d¹⁰";
+        let left = z;
+        const parts = [];
+        for (const orbital of ORBITAL_ORDER) {
+          if (left <= 0) break;
+          const count = Math.min(left, orbital.cap);
+          parts.push(`${orbital.n}${orbital.l}${toSuperscript(count)}`);
+          left -= count;
+        }
+        return parts.join(" ");
+      }
+
+      function getGridPos(n) {
+        if (n === 1) return { r: 1, c: 1 };
+        if (n === 2) return { r: 1, c: 18 };
+        if (n >= 3 && n <= 4) return { r: 2, c: n - 2 };
+        if (n >= 5 && n <= 10) return { r: 2, c: n + 8 };
+        if (n >= 11 && n <= 12) return { r: 3, c: n - 10 };
+        if (n >= 13 && n <= 18) return { r: 3, c: n };
+        if (n >= 19 && n <= 36) return { r: 4, c: n - 18 };
+        if (n >= 37 && n <= 54) return { r: 5, c: n - 36 };
+        if (n === 55) return { r: 6, c: 1 };
+        if (n === 56) return { r: 6, c: 2 };
+        if (n >= 72 && n <= 86) return { r: 6, c: n - 68 };
+        if (n === 87) return { r: 7, c: 1 };
+        if (n === 88) return { r: 7, c: 2 };
+        if (n >= 104 && n <= 118) return { r: 7, c: n - 100 };
+        if (n >= 57 && n <= 71) return { r: 9, c: n - 53 };
+        if (n >= 89 && n <= 103) return { r: 10, c: n - 85 };
+        if (n >= PREDICTED_START && n <= ELEMENT_COUNT) {
+          const idx = n - PREDICTED_START;
+          return { r: 12 + Math.floor(idx / 18), c: (idx % 18) + 1 };
+        }
+        return { r: 11, c: 1 };
+      }
+
+      const PLACEHOLDERS = [
+        { r: 6, c: 3, label: "57–71", title: "Lanthanides" },
+        { r: 7, c: 3, label: "89–103", title: "Actinides" },
+        {
+          r: 11,
+          section: true,
+          label: "Predicted superheavy elements 119–210 · 預測超重元素",
+          title: "Not yet officially discovered",
+        },
+      ];
+
+      const GRID_ROWS = 12 + Math.ceil((ELEMENT_COUNT - PREDICTED_START + 1) / 18);
+
+      const container = document.getElementById("grid-container");
+      let currentMode = "standard";
+      let searchQuery = "";
+
+      function formatTemp(value) {
+        return value === null || value === undefined ? "N/A" : `${value} °C`;
+      }
+
+      function heatmapColor(value, min, max) {
+        const tNorm = Math.min(Math.max((value - min) / (max - min), 0), 1);
+        const r = Math.floor(tNorm * 255);
+        const b = Math.floor((1 - tNorm) * 255);
+        return `rgb(${r}, 50, ${b})`;
+      }
+
+      function matchesSearch(el, query) {
+        if (!query) return true;
+        const q = query.trim().toLowerCase();
+        return (
+          el.s.toLowerCase().includes(q) ||
+          el.name.toLowerCase().includes(q) ||
+          String(el.n) === q ||
+          String(el.n).startsWith(q)
+        );
+      }
+
+      function styleCard(card, el) {
+        card.style.color = "white";
+        card.style.backgroundColor = "";
+        card.style.borderColor = "";
+
+        if (currentMode === "standard") {
+          card.classList.add(`cat-${el.cat}`);
+        } else if (currentMode === "mp") {
+          const mpVal = el.mp ?? 500;
+          const color = heatmapColor(mpVal, -273, 3500);
+          card.style.backgroundColor = color;
+          card.style.borderColor = color;
+        } else if (currentMode === "radius") {
+          const color = heatmapColor(el.r, 31, 298);
+          card.style.backgroundColor = color;
+          card.style.borderColor = color;
+        }
+      }
+
+      function renderGrid() {
+        container.innerHTML = "";
+        container.style.gridTemplateRows = `repeat(${GRID_ROWS}, minmax(52px, auto))`;
+
+        PLACEHOLDERS.forEach((ph) => {
+          const label = document.createElement("div");
+          label.className = ph.section ? "section-label" : "f-block-label";
+          if (!ph.section) label.style.gridColumn = ph.c;
+          label.style.gridRow = ph.r;
+          label.title = ph.title || "";
+          label.textContent = ph.label;
+          container.appendChild(label);
+        });
+
+        ELEMENTS_DATA.forEach((el) => {
+          const pos = getGridPos(el.n);
+          const card = document.createElement("div");
+          card.dataset.z = el.n;
+          const predictedClass = el.predicted ? " predicted" : "";
+          card.className =
+            `element-card rounded-lg border border-slate-700/50 p-0.5 md:p-1 flex flex-col items-center justify-center cursor-pointer relative overflow-hidden${predictedClass}`;
+          card.style.gridColumn = pos.c;
+          card.style.gridRow = pos.r;
+
+          const matched = matchesSearch(el, searchQuery);
+          if (!matched) card.classList.add("dimmed");
+          if (searchQuery && matched) card.classList.add("highlight");
+
+          styleCard(card, el);
+
+          const extra =
+            currentMode === "mp"
+              ? `<span class="text-[7px] md:text-[8px] opacity-70 leading-none">${el.mp ?? "N/A"}°C</span>`
+              : currentMode === "radius"
+              ? `<span class="text-[7px] md:text-[8px] opacity-70 leading-none">${el.r} pm</span>`
+              : "";
+
+          const nameShort = el.name.length > 9 ? el.name.slice(0, 8) + "…" : el.name;
+
+          card.innerHTML = `
+            <span class="text-[8px] md:text-[10px] self-start opacity-70 font-mono leading-none">${el.n}</span>
+            <span class="text-sm md:text-xl font-bold leading-none my-0.5">${el.s}</span>
+            <span class="text-[7px] md:text-[9px] truncate w-full text-center opacity-80 leading-tight px-0.5">${nameShort}</span>
+            ${extra}
+          `;
+
+          card.onclick = () => openModal(el);
+          container.appendChild(card);
+        });
+      }
+
+      function filterElements(query) {
+        searchQuery = query;
+        renderGrid();
+      }
+
+      function setMode(mode) {
+        currentMode = mode;
+        ["standard", "mp", "radius"].forEach((m) => {
+          const btn = document.getElementById(`mode-${m}`);
+          if (m === mode) {
+            btn.className =
+              "px-3 py-1 bg-slate-700 rounded text-xs font-semibold text-white shadow";
+          } else {
+            btn.className =
+              "px-3 py-1 hover:bg-slate-700 rounded text-xs text-slate-400 font-medium transition-colors";
+          }
+        });
+        renderGrid();
+      }
+
+      function openModal(el) {
+        document.getElementById("m-name").innerText = el.name;
+        document.getElementById("m-symbol").innerText = el.s;
+        document.getElementById("m-number").innerText = el.n;
+        document.getElementById("m-z").innerText = el.n;
+        document.getElementById("m-mass").innerText = el.m;
+        document.getElementById("m-category").innerText = CAT_LABELS[el.cat] || el.cat;
+        document.getElementById("m-desc").innerText = el.desc;
+        document.getElementById("m-mp").innerText = formatTemp(el.mp);
+        document.getElementById("m-bp").innerText = formatTemp(el.bp);
+        document.getElementById("m-phase").innerText = el.phase || "—";
+        document.getElementById("m-radius").innerText = `${el.r} pm`;
+        const config = getElectronConfig(el.n);
+        document.getElementById("m-config").innerText = el.predicted
+          ? `${config} (predicted)`
+          : config;
+
+        const m = document.getElementById("modal");
+        m.classList.remove("hidden");
+        requestAnimationFrame(() => {
+          m.classList.remove("opacity-0");
+          document.getElementById("modal-content").classList.remove("scale-95");
+          document.getElementById("modal-content").classList.add("scale-100");
+        });
+      }
+
+      function closeModal() {
+        const m = document.getElementById("modal");
+        m.classList.add("opacity-0");
+        document.getElementById("modal-content").classList.remove("scale-100");
+        document.getElementById("modal-content").classList.add("scale-95");
+        setTimeout(() => m.classList.add("hidden"), 300);
+      }
+
+      document.getElementById("modal").addEventListener("click", (e) => {
+        if (e.target.id === "modal") closeModal();
+      });
+
+      if (!window.ELEMENTS_DATA || ELEMENTS_DATA.length !== ELEMENT_COUNT) {
+        console.error(`Expected ${ELEMENT_COUNT} elements in elements-data.js`);
+      }
+
+      renderGrid();
+    </script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

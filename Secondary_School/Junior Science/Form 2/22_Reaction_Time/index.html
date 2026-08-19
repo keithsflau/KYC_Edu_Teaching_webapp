@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reaction Time Test | S2 Science</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #f0f9ff;
+        user-select: none;
+      }
+      .game-area {
+        transition: background-color 0.1s;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body class="bg-sky-50 text-slate-800 min-h-screen">
+    <div id="root"></div>
+
+    <script>
+const {
+  useState,
+  useRef
+} = React;
+const App = () => {
+  const [state, setState] = useState("idle"); // idle, waiting, ready, result
+  const [startTime, setStartTime] = useState(0);
+  const [time, setTime] = useState(0);
+  const [history, setHistory] = useState([]);
+  const timerRef = useRef(null);
+  const startTest = () => {
+    setState("waiting");
+    const delay = 2000 + Math.random() * 3000; // 2-5s random delay
+    timerRef.current = setTimeout(() => {
+      setState("ready");
+      setStartTime(performance.now());
+    }, delay);
+  };
+  const handleClick = () => {
+    if (state === "waiting") {
+      // False start
+      clearTimeout(timerRef.current);
+      setState("idle");
+      alert("Too early! Wait for the green color.");
+    } else if (state === "ready") {
+      const endTime = performance.now();
+      const reactionTime = Math.round(endTime - startTime);
+      setTime(reactionTime);
+      setHistory(prev => [...prev, reactionTime]);
+      setState("result");
+    } else if (state === "result" || state === "idle") {
+      startTest();
+    }
+  };
+  const reset = e => {
+    e.stopPropagation();
+    setHistory([]);
+    setState("idle");
+    setTime(0);
+  };
+  const average = history.length > 0 ? Math.round(history.reduce((a, b) => a + b, 0) / history.length) : 0;
+  let bgColor = "bg-sky-500";
+  let icon = "fa-bolt";
+  let text = "Click to Start";
+  let subtext = "Test your reflexes";
+  if (state === "waiting") {
+    bgColor = "bg-red-500";
+    icon = "fa-hand-paper"; // Stop
+    text = "Wait for Green...";
+    subtext = "Do not click yet.";
+  } else if (state === "ready") {
+    bgColor = "bg-green-500";
+    icon = "fa-computer-mouse";
+    text = "CLICK NOW!";
+    subtext = "";
+  } else if (state === "result") {
+    bgColor = "bg-sky-500";
+    icon = "fa-clock";
+    text = `${time} ms`;
+    subtext = "Click to try again";
+  }
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col"
+  }, /*#__PURE__*/React.createElement("header", {
+    className: "absolute top-0 w-full p-4 lg:p-8 flex justify-between items-center pointer-events-none z-10"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
+    className: "text-white/80 font-bold uppercase text-xs tracking-widest drop-shadow-md"
+  }, "Form 2 Science • Unit 10"), /*#__PURE__*/React.createElement("h1", {
+    className: "text-3xl font-extrabold text-white drop-shadow-md"
+  }, "Reaction Time")), /*#__PURE__*/React.createElement("a", {
+    href: "../index.html",
+    className: "pointer-events-auto bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg font-bold backdrop-blur-sm transition"
+  }, "Back")), /*#__PURE__*/React.createElement("div", {
+    onMouseDown: handleClick,
+    className: `flex-grow flex flex-col items-center justify-center ${bgColor} game-area relative overflow-hidden`
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "z-10 text-center animate-bounce-subtle"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-9xl text-white mb-8 drop-shadow-lg"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: `fa-solid ${icon}`
+  })), /*#__PURE__*/React.createElement("h2", {
+    className: "text-6xl md:text-8xl font-black text-white drop-shadow-lg"
+  }, text), /*#__PURE__*/React.createElement("p", {
+    className: "text-2xl text-white/80 mt-4 font-bold"
+  }, subtext)), /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-6 grid grid-cols-1 md:grid-cols-2 gap-8 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] z-20"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h3", {
+    className: "font-bold text-slate-400 uppercase text-xs tracking-widest mb-4"
+  }, "Results History"), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-2 flex-wrap"
+  }, history.map((t, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "bg-slate-100 text-slate-600 px-3 py-1 rounded font-mono font-bold"
+  }, t, " ms")))), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-between"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h3", {
+    className: "font-bold text-slate-400 uppercase text-xs tracking-widest"
+  }, "Average"), /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black text-sky-600"
+  }, average, " ", /*#__PURE__*/React.createElement("span", {
+    className: "text-lg text-slate-400 font-normal"
+  }, "ms"))), /*#__PURE__*/React.createElement("button", {
+    onClick: reset,
+    className: "px-6 py-2 bg-slate-200 hover:bg-slate-300 text-slate-600 rounded-lg font-bold transition"
+  }, "Reset"))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

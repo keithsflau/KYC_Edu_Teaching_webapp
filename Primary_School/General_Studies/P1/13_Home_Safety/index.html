@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小一常識：家居安全找錯處 | Home Safety</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Home Safety Hunt",
+    zh: "家居安全找錯處",
+    ja: "家庭の安全探し",
+    ko: "가정 안전 찾기",
+    es: "Búsqueda de seguridad en el hogar",
+    de: "Suche nach Sicherheit zu Hause",
+    fi: "Kodin turvallisuuden etsintä",
+    fr: "Chasse à la sécurité domestique",
+    ar: "البحث عن السلامة المنزلية",
+    it: "Caccia alla sicurezza domestica"
+  },
+  instruction: {
+    en: "Find 5 dangerous things!",
+    zh: "找出 5 個危險的地方！",
+    ja: "5つの危険な場所を見つけよう！",
+    ko: "위험한 것 5가지를 찾으세요!",
+    es: "¡Encuentra 5 cosas peligrosas!",
+    de: "Finde 5 gefährliche Dinge!",
+    fi: "Löydä 5 vaarallista asiaa!",
+    fr: "Trouvez 5 choses dangereuses !",
+    ar: "ابحث عن 5 أشياء خطيرة!",
+    it: "Trova 5 cose pericolose!"
+  },
+  found: {
+    en: "Found:",
+    zh: "已找到：",
+    es: "Encontrado:",
+    de: "Gefunden:",
+    fi: "Löydetty:",
+    fr: "Trouvé :",
+    ar: "تم العثور على:",
+    it: "Trovato:"
+  },
+  h1: {
+    en: "Hot Kettle (Scald)",
+    zh: "熱水壺放得太低 (燙傷)",
+    es: "Hervidor caliente (Escaldadura)",
+    de: "Heißer Wasserkocher (Verbrühung)",
+    fi: "Kuuma vedenkeitin (Palovamma)",
+    fr: "Bouilloire chaude (Brûlure)",
+    ar: "غلاية ساخنة (حرق)",
+    it: "Bollitore caldo (Scottatura)"
+  },
+  h2: {
+    en: "Wet Floor (Slip)",
+    zh: "地板濕滑 (滑倒)",
+    es: "Suelo mojado (Resbalón)",
+    de: "Nasser Boden (Ausrutschen)",
+    fi: "Märkä lattia (Liukastuminen)",
+    fr: "Sol mouillé (Glissade)",
+    ar: "أرضية مبللة (انزلاق)",
+    it: "Pavimento bagnato (Scivolata)"
+  },
+  h3: {
+    en: "Knife on Edge (Cut)",
+    zh: "刀放在邊緣 (割傷)",
+    es: "Cuchillo en el borde (Corte)",
+    de: "Messer an der Kante (Schnitt)",
+    fi: "Veitsi reunalla (Haava)",
+    fr: "Couteau sur le bord (Coupure)",
+    ar: "سكين على الحافة (جرح)",
+    it: "Coltello sul bordo (Taglio)"
+  },
+  h4: {
+    en: "Toys on Stairs (Trip)",
+    zh: "玩具放在樓梯 (絆倒)",
+    es: "Juguetes en las escaleras (Tropezón)",
+    de: "Spielzeug auf der Treppe (Stolpern)",
+    fi: "Lelut portaissa (Kompastuminen)",
+    fr: "Jouets dans les escaliers (Trébuchement)",
+    ar: "ألعاب على الدرج (تعثر)",
+    it: "Giocattoli sulle scale (Inciampo)"
+  },
+  h5: {
+    en: "Overloaded Socket (Fire)",
+    zh: "插座過載 (火災)",
+    es: "Enchufe sobrecargado (Incendio)",
+    de: "Überlastete Steckdose (Feuer)",
+    fi: "Ylikuormitettu pistorasia (Tulipalo)",
+    fr: "Prise surchargée (Incendie)",
+    ar: "مقبس محمل بشكل زائد (حريق)",
+    it: "Presa sovraccarica (Incendio)"
+  },
+  safe: {
+    en: "Safe now!",
+    zh: "現在安全了！",
+    es: "¡Seguro ahora!",
+    de: "Jetzt sicher!",
+    fi: "Nyt turvallista!",
+    fr: "Sûr maintenant !",
+    ar: "آمن الآن!",
+    it: "Sicuro ora!"
+  },
+  completed: {
+    en: "Great Job! Stay Safe!",
+    zh: "做得好！注意安全！",
+    es: "¡Gran trabajo! ¡Mantente seguro!",
+    de: "Gut gemacht! Bleib sicher!",
+    fi: "Hyvää työtä! Pysy turvassa!",
+    fr: "Bon travail ! Restez en sécurité !",
+    ar: "عمل رائع! ابق آمنًا!",
+    it: "Ottimo lavoro! Rimanete al sicuro!"
+  },
+  restart: {
+    en: "Play Again",
+    zh: "再玩一次",
+    es: "Jugar de nuevo",
+    de: "Nochmal spielen",
+    fi: "Pelaa uudelleen",
+    fr: "Rejouer",
+    ar: "العب مرة أخرى",
+    it: "Gioca di nuovo"
+  }
+};
+const hazards = [{
+  id: "h1",
+  icon: "🫖",
+  dangerIcon: "🔥",
+  x: 20,
+  y: 60,
+  explanation: "h1"
+}, {
+  id: "h2",
+  icon: "💧",
+  dangerIcon: "⚠️",
+  x: 50,
+  y: 80,
+  explanation: "h2"
+}, {
+  id: "h3",
+  icon: "🔪",
+  dangerIcon: "🩸",
+  x: 80,
+  y: 55,
+  explanation: "h3"
+}, {
+  id: "h4",
+  icon: "🧸",
+  dangerIcon: "🤕",
+  x: 10,
+  y: 80,
+  explanation: "h4"
+}, {
+  id: "h5",
+  icon: "🔌",
+  dangerIcon: "⚡",
+  x: 90,
+  y: 70,
+  explanation: "h5"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [found, setFound] = useState([]);
+  const [lastMsg, setLastMsg] = useState(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+  const handleFound = id => {
+    if (found.includes(id)) return;
+    setFound([...found, id]);
+    setLastMsg(getText(hazards.find(h => h.id === id).explanation));
+  };
+  const reset = () => {
+    setFound([]);
+    setLastMsg(null);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-red-800 mb-2 mt-8 drop-shadow-sm"
+  }, "🏠 ", getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white px-8 py-3 rounded-full shadow-lg border-2 border-red-200 mb-6 font-bold text-red-600 flex gap-4"
+  }, /*#__PURE__*/React.createElement("span", null, getText("found"), " ", found.length, " / ", hazards.length)), /*#__PURE__*/React.createElement("div", {
+    className: "relative w-full max-w-4xl h-[400px] md:h-[500px] bg-amber-50 rounded-3xl border-8 border-amber-200 shadow-2xl overflow-hidden cursor-crosshair"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-0 w-full h-32 bg-amber-200/50"
+  }), " ", /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-20 left-10 w-40 h-60 bg-amber-100 border-4 border-amber-300 rounded-t-full"
+  }), " ", /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-40 right-20 w-60 h-40 bg-zinc-200 rounded-xl border-4 border-zinc-300"
+  }), " ", /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-40 left-0 w-20 h-full bg-orange-100 border-r-4 border-orange-200 transform -skew-y-12 origin-bottom-left"
+  }), " ", hazards.map(h => {
+    const isFix = found.includes(h.id);
+    return /*#__PURE__*/React.createElement("div", {
+      key: h.id,
+      onClick: () => handleFound(h.id),
+      className: "absolute cursor-pointer transition-transform hover:scale-110",
+      style: {
+        left: `${h.x}%`,
+        top: `${h.y}%`
+      }
+    }, /*#__PURE__*/React.createElement(AnimatePresence, {
+      mode: "wait"
+    }, !isFix ? /*#__PURE__*/React.createElement(motion.div, {
+      key: "danger",
+      initial: {
+        scale: 0
+      },
+      animate: {
+        scale: 1
+      },
+      exit: {
+        scale: 0
+      },
+      className: "relative"
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "text-6xl md:text-7xl filter drop-shadow-lg"
+    }, h.icon), /*#__PURE__*/React.createElement(motion.span, {
+      animate: {
+        opacity: [1, 0.5, 1]
+      },
+      transition: {
+        repeat: Infinity,
+        duration: 1
+      },
+      className: "absolute -top-2 -right-2 text-3xl"
+    }, h.dangerIcon)) : /*#__PURE__*/React.createElement(motion.div, {
+      key: "safe",
+      initial: {
+        scale: 0
+      },
+      animate: {
+        scale: 1
+      },
+      className: "text-6xl md:text-7xl opacity-50 grayscale flex flex-col items-center"
+    }, /*#__PURE__*/React.createElement("span", null, h.icon), /*#__PURE__*/React.createElement("span", {
+      className: "text-green-500 text-3xl absolute -top-4 font-black"
+    }, "✓"))));
+  }), /*#__PURE__*/React.createElement(AnimatePresence, null, lastMsg && /*#__PURE__*/React.createElement(motion.div, {
+    key: lastMsg,
+    initial: {
+      y: 50,
+      opacity: 0
+    },
+    animate: {
+      y: 0,
+      opacity: 1
+    },
+    exit: {
+      y: 20,
+      opacity: 0
+    },
+    className: "absolute bottom-8 left-0 right-0 mx-auto max-w-md bg-red-600 text-white p-4 rounded-xl shadow-xl text-center z-10 font-bold"
+  }, "⚠️ ", lastMsg))), found.length === hazards.length && /*#__PURE__*/React.createElement("div", {
+    className: "mt-8 text-center bg-white/50 p-8 rounded-3xl backdrop-blur"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-7xl mb-4"
+  }, "🛡️"), /*#__PURE__*/React.createElement("h2", {
+    className: "text-3xl font-black text-red-800 mb-6"
+  }, getText("completed")), /*#__PURE__*/React.createElement("button", {
+    onClick: reset,
+    className: "bg-red-500 text-white px-8 py-3 rounded-full font-black text-xl hover:bg-red-600 shadow-xl"
+  }, getText("restart"), " 🔄")), /*#__PURE__*/React.createElement("p", {
+    className: "mt-4 text-red-400 font-bold"
+  }, getText("instruction")));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

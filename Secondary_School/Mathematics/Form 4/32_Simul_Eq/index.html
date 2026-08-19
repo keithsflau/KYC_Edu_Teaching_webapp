@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simultaneous Equations | S4 Math 聯立方程</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <script
+      type="text/javascript"
+      id="MathJax-script"
+      async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+    ></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+      }
+    </style>
+  </head>
+  <body class="bg-teal-50 text-slate-800 min-h-screen">
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect,
+  useMemo
+} = React;
+const translations = {
+  en: {
+    unit: "Unit 1: Algebra",
+    title: "Simultaneous Equations Solver",
+    desc: "Solve 2 linear equations with visual intersection.",
+    eq1: "Equation 1",
+    eq2: "Equation 2",
+    solution: "Solution",
+    noSolution: "No Solution (Parallel)",
+    infinite: "Infinite Solutions"
+  },
+  zh: {
+    unit: "單元一：代數",
+    title: "聯立方程求解器",
+    desc: "求解二元一次聯立方程並視像化交點。",
+    eq1: "方程 1",
+    eq2: "方程 2",
+    solution: "解",
+    noSolution: "無解（平行線）",
+    infinite: "無限多解"
+  }
+};
+const App = () => {
+  const [lang, setLang] = useState("en");
+  const t = translations[lang];
+
+  // a1*x + b1*y = c1, a2*x + b2*y = c2
+  const [a1, setA1] = useState(5);
+  const [b1, setB1] = useState(2);
+  const [c1, setC1] = useState(19);
+  const [a2, setA2] = useState(3);
+  const [b2, setB2] = useState(-1);
+  const [c2, setC2] = useState(7);
+
+  // Solve using Cramer's rule
+  const det = a1 * b2 - a2 * b1;
+  const detX = c1 * b2 - c2 * b1;
+  const detY = a1 * c2 - a2 * c1;
+  const solution = useMemo(() => {
+    if (det === 0) {
+      // Check if same line
+      if (detX === 0 && detY === 0) return {
+        type: "infinite"
+      };
+      return {
+        type: "none"
+      };
+    }
+    return {
+      type: "unique",
+      x: detX / det,
+      y: detY / det
+    };
+  }, [det, detX, detY]);
+
+  // Graph
+  const w = 400,
+    h = 400;
+  const xRange = 8,
+    yRange = 8;
+  const scaleX = w / (2 * xRange);
+  const scaleY = h / (2 * yRange);
+  const originX = w / 2;
+  const originY = h / 2;
+  const toScreen = (x, y) => ({
+    x: originX + x * scaleX,
+    y: originY - y * scaleY
+  });
+
+  // Line paths
+  const linePath = (a, b, c) => {
+    if (b === 0) {
+      // Vertical line x = c/a
+      if (a === 0) return "";
+      const x = c / a;
+      const p1 = toScreen(x, -yRange);
+      const p2 = toScreen(x, yRange);
+      return `M ${p1.x} ${p1.y} L ${p2.x} ${p2.y}`;
+    }
+    // y = (c - ax) / b
+    const y1 = (c - a * -xRange) / b;
+    const y2 = (c - a * xRange) / b;
+    const p1 = toScreen(-xRange, y1);
+    const p2 = toScreen(xRange, y2);
+    return `M ${p1.x} ${p1.y} L ${p2.x} ${p2.y}`;
+  };
+  useEffect(() => {
+    if (window.MathJax) window.MathJax.typesetPromise();
+  }, [a1, b1, c1, a2, b2, c2, lang]);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "p-8 max-w-5xl mx-auto min-h-screen flex flex-col items-center select-none"
+  }, /*#__PURE__*/React.createElement("header", {
+    className: "mb-8 text-center w-full relative"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLang(lang === "en" ? "zh" : "en"),
+    className: "absolute right-0 top-0 px-4 py-2 bg-white rounded-full shadow border border-teal-200 text-sm font-bold text-teal-600 hover:bg-teal-50 transition"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-globe mr-2"
+  }), lang === "en" ? "中文" : "ENG"), /*#__PURE__*/React.createElement("div", {
+    className: "text-teal-600 font-bold uppercase text-xs tracking-widest mb-2"
+  }, t.unit), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-slate-900 mb-2"
+  }, t.title), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-500"
+  }, t.desc)), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col lg:flex-row gap-8 w-full"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-4 rounded-3xl shadow-lg border border-teal-100 flex-1"
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: w,
+    height: h,
+    className: "bg-slate-50 rounded-xl mx-auto"
+  }, Array.from({
+    length: 17
+  }).map((_, i) => {
+    const val = i - 8;
+    const sx = originX + val * scaleX;
+    const sy = originY - val * scaleY;
+    return /*#__PURE__*/React.createElement(React.Fragment, {
+      key: i
+    }, /*#__PURE__*/React.createElement("line", {
+      x1: sx,
+      y1: "0",
+      x2: sx,
+      y2: h,
+      stroke: val === 0 ? "#64748b" : "#e2e8f0",
+      strokeWidth: val === 0 ? 2 : 1
+    }), /*#__PURE__*/React.createElement("line", {
+      x1: "0",
+      y1: sy,
+      x2: w,
+      y2: sy,
+      stroke: val === 0 ? "#64748b" : "#e2e8f0",
+      strokeWidth: val === 0 ? 2 : 1
+    }));
+  }), /*#__PURE__*/React.createElement("path", {
+    d: linePath(a1, b1, c1),
+    stroke: "#3b82f6",
+    strokeWidth: "3",
+    fill: "none"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: linePath(a2, b2, c2),
+    stroke: "#22c55e",
+    strokeWidth: "3",
+    fill: "none"
+  }), solution.type === "unique" && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("circle", {
+    cx: toScreen(solution.x, solution.y).x,
+    cy: toScreen(solution.x, solution.y).y,
+    r: "8",
+    fill: "#f43f5e",
+    stroke: "white",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: toScreen(solution.x, solution.y).x + 10,
+    y: toScreen(solution.x, solution.y).y - 10,
+    className: "text-xs fill-rose-600 font-bold font-mono"
+  }, "(", solution.x.toFixed(2), ", ", solution.y.toFixed(2), ")")))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-6 rounded-3xl shadow-lg border border-teal-100 flex-1 space-y-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-blue-50 p-4 rounded-xl border border-blue-100"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold text-blue-400 uppercase mb-2"
+  }, t.eq1), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2 font-mono"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: a1,
+    onChange: e => setA1(Number(e.target.value)),
+    className: "w-14 p-2 border rounded text-center"
+  }), /*#__PURE__*/React.createElement("span", null, "x +"), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: b1,
+    onChange: e => setB1(Number(e.target.value)),
+    className: "w-14 p-2 border rounded text-center"
+  }), /*#__PURE__*/React.createElement("span", null, "y ="), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: c1,
+    onChange: e => setC1(Number(e.target.value)),
+    className: "w-14 p-2 border rounded text-center"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-green-50 p-4 rounded-xl border border-green-100"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold text-green-400 uppercase mb-2"
+  }, t.eq2), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2 font-mono"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: a2,
+    onChange: e => setA2(Number(e.target.value)),
+    className: "w-14 p-2 border rounded text-center"
+  }), /*#__PURE__*/React.createElement("span", null, "x +"), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: b2,
+    onChange: e => setB2(Number(e.target.value)),
+    className: "w-14 p-2 border rounded text-center"
+  }), /*#__PURE__*/React.createElement("span", null, "y ="), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: c2,
+    onChange: e => setC2(Number(e.target.value)),
+    className: "w-14 p-2 border rounded text-center"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: `p-6 rounded-xl text-center border ${solution.type === "unique" ? "bg-rose-50 border-rose-100" : "bg-slate-50 border-slate-100"}`
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-sm font-bold text-slate-500 uppercase mb-2"
+  }, t.solution), solution.type === "unique" ? /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-mono font-bold text-rose-700"
+  }, "x = ", solution.x.toFixed(2), ", y = ", solution.y.toFixed(2)) : solution.type === "none" ? /*#__PURE__*/React.createElement("div", {
+    className: "text-xl text-red-500 font-bold"
+  }, t.noSolution) : /*#__PURE__*/React.createElement("div", {
+    className: "text-xl text-amber-600 font-bold"
+  }, t.infinite)))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

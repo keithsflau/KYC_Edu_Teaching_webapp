@@ -1,0 +1,244 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Angle Explorer | S1 Math</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+      }
+    </style>
+  </head>
+  <body class="bg-emerald-50 text-slate-800 min-h-screen">
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect,
+  useRef
+} = React;
+const App = () => {
+  const [angle, setAngle] = useState(67);
+  const svgRef = useRef(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  // Angle Type Logic
+  let type = "Acute";
+  let color = "text-emerald-500";
+  if (angle === 90) {
+    type = "Right Angle";
+    color = "text-blue-600";
+  } else if (angle > 90 && angle < 180) {
+    type = "Obtuse";
+    color = "text-amber-500";
+  } else if (angle === 180) {
+    type = "Straight";
+    color = "text-slate-600";
+  } else if (angle > 180 && angle < 360) {
+    type = "Reflex";
+    color = "text-purple-500";
+  } else if (angle === 360 || angle === 0) {
+    type = "Complete";
+    color = "text-slate-800";
+  }
+  const handleMouseMove = e => {
+    if (!isDragging || !svgRef.current) return;
+    const rect = svgRef.current.getBoundingClientRect();
+    const cx = rect.width / 2;
+    const cy = rect.height / 2;
+    const x = e.clientX - rect.left - cx;
+    const y = e.clientY - rect.top - cy;
+
+    // Calculate angle using atan2
+    let theta = Math.atan2(y, x) * (180 / Math.PI);
+    // Adjust to start from +X axis clockwise? normally standard trig is CCW from +X.
+    // Let's standard: 0 is Right (+X). dragging point.
+    // My fixed arm is at 0 degrees.
+
+    // atan2 returns -180 to 180.
+    // We want 0 to 360.
+    if (theta < 0) theta += 360;
+    setAngle(Math.round(theta));
+  };
+  const handleMouseUp = () => setIsDragging(false);
+
+  // Calculate endpoint of rotating arm
+  const r = 120; // radius
+  const endX = 150 + r * Math.cos(angle * Math.PI / 180);
+  const endY = 150 + r * Math.sin(angle * Math.PI / 180);
+
+  // Arc Path
+  const describeArc = (x, y, radius, startAngle, endAngle) => {
+    const start = {
+      x: x + radius * Math.cos(endAngle * Math.PI / 180),
+      y: y + radius * Math.sin(endAngle * Math.PI / 180)
+    };
+    const end = {
+      x: x + radius * Math.cos(startAngle * Math.PI / 180),
+      y: y + radius * Math.sin(startAngle * Math.PI / 180)
+    };
+    const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+    return ["M", start.x, start.y, "A", radius, radius, 0, largeArcFlag, 0, end.x, end.y].join(" ");
+  };
+
+  // Standard trig is CCW (increasing angle goes UP from Right).
+  // Screen Y is down. So +Angle is Clockwise if we use standard cos/sin on screen coords directly?
+  // cos(0)=1, sin(0)=0 -> (1,0) Right.
+  // cos(90)=0, sin(90)=1 -> (0,1) Down.
+  // So dragging down increases angle. This matches "Bearing" style somewhat but usually Math is CCW.
+  // Let's invert Y for display to make it standard Counter-Clockwise?
+  // Actually, keep it simple. 0 is East. Positive is Clockwise (Screen Y down).
+  // Wait, Standard Math Protractor: 0 East, 90 North (CCW).
+  // If I want CCW: endY = 150 - r * sin(angle).
+  // Mouse angle calculation needs to flip Y.
+
+  // Let's stick to standard Math: CCW.
+  // Mouse: y = cy - clientY.
+
+  const handleMouseMoveCCW = e => {
+    if (!isDragging || !svgRef.current) return;
+    const rect = svgRef.current.getBoundingClientRect();
+    const cx = rect.width / 2;
+    const cy = rect.height / 2;
+    const x = e.clientX - rect.left - cx;
+    const y = -(e.clientY - rect.top - cy); // Up is positive Y in math
+
+    let theta = Math.atan2(y, x) * (180 / Math.PI);
+    if (theta < 0) theta += 360;
+    setAngle(Math.round(theta));
+  };
+  const endXCCW = 150 + r * Math.cos(angle * Math.PI / 180);
+  const endYCCW = 150 - r * Math.sin(angle * Math.PI / 180); // Subtract for screen Y
+
+  // SVG Path for filled arc
+  const arcPath = describeArc(150, 150, 40, 0, angle);
+  // Note: describeArc needs to handle the coordinate flip if I use CCW logic?
+  // My describeArc assumes standard SVG coords (Y down).
+  // If angle is 45 (CCW), end point is (X>150, Y<150).
+  // start is (190, 150) (0 degrees).
+  // describeArc expects (startAngle, endAngle).
+  // In SVG Y-Down: 0 is Right. 45 is Right-Down. -45 is Right-Up.
+  // So I pass -angle to describeArc?
+
+  const svgArc = (cx, cy, r, a) => {
+    // simple arc path
+    // Start at (cx+r, cy).
+    // Go to (endXCCW, endYCCW).
+    // Sweep flag?
+    const large = a > 180 ? 1 : 0;
+    // Sweep flag 0 for CCW (since Y is flipped relative to circle math? No, SVG arc sweep 0 is CCW... wait. 1 is clockwise.)
+    // In math coords (Y up), from 0 to 45 is CCW.
+    // In screen coords (Y down), that same movement (Right to Right-Up) is "Negative Angle".
+    return `M ${cx + r} ${cy} A ${r} ${r} 0 ${large} 0 ${endXCCW} ${endYCCW} L ${cx} ${cy} Z`;
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "p-8 max-w-4xl mx-auto min-h-screen flex flex-col items-center select-none",
+    onMouseMove: handleMouseMoveCCW,
+    onMouseUp: handleMouseUp
+  }, /*#__PURE__*/React.createElement("header", {
+    className: "mb-10 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-emerald-600 font-bold uppercase text-xs tracking-widest mb-2"
+  }, "Unit 2: Geometry"), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-slate-900"
+  }, "Angle Explorer"), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-500"
+  }, "Drag the red point to measure different angles.")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-8 rounded-3xl shadow-xl border border-emerald-100 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "relative w-[300px] h-[300px] bg-slate-50 rounded-full border border-slate-200 shadow-inner mb-8 cursor-crosshair",
+    onMouseDown: () => setIsDragging(true),
+    ref: svgRef
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 flex items-center justify-center pointer-events-none opacity-20"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full h-px bg-slate-400"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "h-full w-px bg-slate-400 absolute"
+  })), /*#__PURE__*/React.createElement("svg", {
+    width: "300",
+    height: "300",
+    className: "absolute top-0 left-0 pointer-events-none"
+  }, /*#__PURE__*/React.createElement("line", {
+    x1: "150",
+    y1: "150",
+    x2: "270",
+    y2: "150",
+    stroke: "#cbd5e1",
+    strokeWidth: "4",
+    strokeLinecap: "round"
+  }), /* Filled Sector */
+  angle === 360 ? /*#__PURE__*/React.createElement("circle", {
+    cx: "150",
+    cy: "150",
+    r: "40",
+    fill: "rgba(16, 185, 129, 0.2)",
+    stroke: "none"
+  }) : /*#__PURE__*/React.createElement("path", {
+    d: svgArc(150, 150, 40, angle),
+    fill: "rgba(16, 185, 129, 0.2)",
+    stroke: "none"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "150",
+    y1: "150",
+    x2: endXCCW,
+    y2: endYCCW,
+    stroke: "#10b981",
+    strokeWidth: "4",
+    strokeLinecap: "round"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "150",
+    cy: "150",
+    r: "6",
+    fill: "#0f172a"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: endXCCW,
+    cy: endYCCW,
+    r: "12",
+    fill: "white",
+    stroke: "#ef4444",
+    strokeWidth: "3",
+    className: "cursor-pointer pointer-events-auto"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 left-4 text-xs font-mono text-slate-300"
+  }, "Drag Anywhere")), /*#__PURE__*/React.createElement("div", {
+    className: "text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: `text-6xl font-extrabold mb-2 ${color}`
+  }, angle, "°"), /*#__PURE__*/React.createElement("div", {
+    className: `text-xl font-bold uppercase tracking-widest ${color}`
+  }, type))), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 w-full max-w-2xl"
+  }, [30, 45, 90, 120, 180, 225, 270, 315].map(a => /*#__PURE__*/React.createElement("button", {
+    key: a,
+    onClick: () => setAngle(a),
+    className: "bg-white hover:bg-emerald-50 text-emerald-700 font-bold py-2 rounded-xl shadow border border-emerald-100 transition"
+  }, a, "°"))), /*#__PURE__*/React.createElement("footer", {
+    className: "mt-12"
+  }, /*#__PURE__*/React.createElement("a", {
+    href: "../index.html",
+    className: "text-emerald-500 hover:text-emerald-700 font-bold"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-arrow-left mr-2"
+  }), " Back to Dashboard")));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

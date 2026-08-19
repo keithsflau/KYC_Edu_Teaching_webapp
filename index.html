@@ -1,0 +1,600 @@
+﻿<!DOCTYPE html>
+<html lang="zh-HK">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Education Engineering Portfolio | 教育工程作品集</title>
+  <meta name="description" content="Interactive learning experiences and web applications for Hong Kong education">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif+TC:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --paper: #f8fafc;
+      --paper-warm: #fffbeb;
+      --ink: #0f172a;
+      --muted: #475569;
+      --accent: #0891b2;
+      --accent-soft: #e0f2fe;
+    }
+
+    html.lenis, html.lenis body { height: auto; }
+    .lenis.lenis-smooth { scroll-behavior: auto !important; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--paper);
+      color: var(--ink);
+      overflow-x: hidden;
+    }
+
+    .serif { font-family: 'Noto Serif TC', serif; }
+
+    /* ── Scroll sequence (YouTube Burger Lab pattern) ── */
+    .scroll-sequence {
+      position: relative;
+      height: 480vh;
+    }
+
+    .scroll-sequence__sticky {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    #scroll-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .hero-vignette {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 100% 90% at 50% 45%, transparent 35%, rgba(248, 250, 252, 0.12) 75%, rgba(248, 250, 252, 0.35) 100%),
+        linear-gradient(to bottom, transparent 0%, rgba(255, 255, 255, 0.08) 50%, rgba(248, 250, 252, 0.42) 100%);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .scroll-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 0 1.5rem 5rem;
+      pointer-events: none;
+    }
+
+    @media (min-width: 640px) {
+      .scroll-overlay { padding: 0 2rem 6rem; }
+    }
+
+    .scroll-chapter {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: flex-start;
+      padding: 6rem 1.5rem 7rem;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    @media (min-width: 640px) {
+      .scroll-chapter { padding: 8rem 3rem 8rem; }
+    }
+
+    .scroll-chapter--intro {
+      justify-content: center;
+      padding-bottom: 5rem;
+    }
+
+    .verse-intro {
+      border-left: 3px solid rgba(8, 145, 178, 0.55);
+      padding: 1.25rem 1.25rem 1.25rem 1.25rem;
+      background: rgba(255, 255, 255, 0.82);
+      border-radius: 0 0.75rem 0.75rem 0;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 32px rgba(15, 23, 42, 0.08);
+    }
+
+    @media (min-width: 640px) {
+      .verse-intro { padding: 1.5rem 1.75rem 1.5rem 1.75rem; }
+    }
+
+    .scroll-item {
+      max-width: 36rem;
+      width: 100%;
+      padding: 1.5rem 1.75rem;
+      border-radius: 1.25rem;
+      background: rgba(255, 255, 255, 0.94);
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      box-shadow: 0 4px 24px rgba(15, 23, 42, 0.06);
+      backdrop-filter: blur(14px);
+      transition: border-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+      color: var(--ink);
+    }
+
+    a.scroll-item:hover {
+      border-color: rgba(8, 145, 178, 0.35);
+      transform: translateY(-4px);
+      box-shadow: 0 16px 40px rgba(15, 23, 42, 0.1);
+    }
+
+    .scroll-item__tag {
+      font-size: 0.65rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      opacity: 0.75;
+    }
+
+    .scroll-item__cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      margin-top: 1rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .frame-dots {
+      position: absolute;
+      right: 1.25rem;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 4;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .frame-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(15, 23, 42, 0.15);
+      transition: background 0.3s, transform 0.3s;
+    }
+
+    .frame-dot.is-active {
+      background: #0891b2;
+      transform: scale(1.35);
+    }
+
+    .scroll-progress {
+      position: absolute;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 4;
+      width: min(280px, 70vw);
+      height: 2px;
+      background: rgba(15, 23, 42, 0.08);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .scroll-progress__bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #0891b2, #6366f1);
+      border-radius: 2px;
+      transition: none;
+    }
+
+    .scroll-hint {
+      position: absolute;
+      bottom: 3.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 4;
+      color: rgba(15, 23, 42, 0.4);
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .scroll-hint svg {
+      animation: hintBounce 2s ease-in-out infinite;
+    }
+
+    @keyframes hintBounce {
+      0%, 100% { transform: translateY(0); opacity: 0.5; }
+      50% { transform: translateY(6px); opacity: 1; }
+    }
+
+    .grain {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.02;
+      z-index: 100;
+      mix-blend-mode: multiply;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    .nav-blur {
+      backdrop-filter: blur(16px);
+      background: rgba(255, 255, 255, 0.82);
+      border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+    }
+
+    .gradient-text {
+      background: linear-gradient(135deg, #0891b2 0%, #4f46e5 45%, #7c3aed 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .card-glass {
+      background: #ffffff;
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04);
+      transition: border-color 0.35s ease, transform 0.35s ease, box-shadow 0.35s ease;
+    }
+
+    .card-glass:hover {
+      border-color: rgba(8, 145, 178, 0.3);
+      transform: translateY(-6px);
+      box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+    }
+
+    .stat-pill {
+      background: #ffffff;
+      border: 1px solid rgba(15, 23, 42, 0.08);
+    }
+
+    .content-wrap {
+      position: relative;
+      z-index: 10;
+      background: var(--paper);
+    }
+
+    #loader {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: var(--paper);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      transition: opacity 0.6s ease, visibility 0.6s;
+      color: var(--ink);
+    }
+
+    #loader.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .loader-bar {
+      width: 200px;
+      height: 2px;
+      background: rgba(15, 23, 42, 0.08);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .loader-bar__fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #0891b2, #6366f1);
+      transition: width 0.2s ease;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Preloader -->
+  <div id="loader">
+    <p class="text-xs tracking-[0.3em] uppercase text-slate-500">Loading experience</p>
+    <div class="loader-bar"><div class="loader-bar__fill" id="loader-fill"></div></div>
+    <p class="text-[10px] text-slate-400" id="loader-text">0%</p>
+  </div>
+
+  <div class="grain" aria-hidden="true"></div>
+
+  <nav class="nav-blur fixed top-0 inset-x-0 z-50 px-6 py-4">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <a href="#" class="text-sm font-semibold tracking-wide text-slate-800">Education Engineering Portfolio - By Lau Siu Fung (Kau Yan College)</a>
+      <div class="hidden sm:flex gap-6 text-xs text-slate-600">
+        <a href="Secondary_School/index.html" class="hover:text-cyan-700 transition-colors">中學</a>
+        <a href="Primary_School/index.html" class="hover:text-cyan-700 transition-colors">小學</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══ SCROLL-DRIVEN SEQUENCE (like YouTube demo) ═══ -->
+  <section id="scroll-experience" class="scroll-sequence" aria-label="Scroll-driven cinematic intro">
+    <div class="scroll-sequence__sticky">
+      <canvas id="scroll-canvas" aria-hidden="true"></canvas>
+      <div class="hero-vignette"></div>
+
+      <!-- Frame 1: Intro + 經文 -->
+      <div class="scroll-chapter scroll-chapter--intro max-w-7xl mx-auto w-full" id="chapter-1" data-frame="0">
+        <blockquote class="verse-intro max-w-3xl">
+          <p class="text-xl sm:text-2xl lg:text-3xl font-medium serif leading-relaxed text-slate-800">
+            「神造萬物，各按其時成為美好，又將永生安置在世人心裡。然而神從始至終的作為，人不能參透。」
+          </p>
+          <cite class="block mt-5 text-sm text-cyan-700 not-italic tracking-wide">傳道書 3:11</cite>
+        </blockquote>
+        <p class="mt-10 text-xs tracking-[0.35em] uppercase text-slate-500">教育工程作品集 · Education Engineering Portfolio</p>
+      </div>
+
+      <!-- Frame 2: 救恩書院 → 中學教材 -->
+      <div class="scroll-chapter max-w-7xl mx-auto w-full" id="chapter-2" data-frame="1">
+        <a href="Secondary_School/index.html" class="scroll-item block group">
+          <p class="scroll-item__tag text-blue-700">救恩書院 · Secondary</p>
+          <h2 class="text-2xl sm:text-4xl font-bold serif mt-2 leading-snug text-slate-900">中學教材</h2>
+          <p class="text-sm text-slate-600 mt-2 leading-relaxed">F1–F6 互動模擬、溫習與專題 — 配合中學課程與 DSE 準備</p>
+          <span class="scroll-item__cta text-blue-700 group-hover:text-blue-800">進入中學資源 →</span>
+        </a>
+      </div>
+
+      <!-- Frame 3: 香島道官立小學（2024 殺校）→ 小學教材 -->
+      <div class="scroll-chapter max-w-7xl mx-auto w-full" id="chapter-3" data-frame="2">
+        <a href="Primary_School/index.html" class="scroll-item block group">
+          <p class="scroll-item__tag text-amber-700">香島道官立小學 · 2024 停辦</p>
+          <h2 class="text-2xl sm:text-4xl font-bold serif mt-2 leading-snug text-slate-900">小學教材</h2>
+          <p class="text-sm text-slate-600 mt-2 leading-relaxed">P1–P6 常識、中文、英文 — 為現役小學而建的互動課堂資源</p>
+          <span class="scroll-item__cta text-amber-700 group-hover:text-amber-800">進入小學資源 →</span>
+        </a>
+      </div>
+
+      <div class="frame-dots" id="frame-dots" aria-hidden="true">
+        <span class="frame-dot is-active" data-i="0"></span>
+        <span class="frame-dot" data-i="1"></span>
+        <span class="frame-dot" data-i="2"></span>
+      </div>
+
+      <div class="scroll-progress" aria-hidden="true">
+        <div class="scroll-progress__bar" id="progress-bar"></div>
+      </div>
+      <div class="scroll-hint" id="scroll-hint">
+        <span>Scroll to explore</span>
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 9l-7 7-7-7"/></svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ MAIN CONTENT (slides up after sequence) ═══ -->
+  <div class="content-wrap">
+
+    <section id="more" class="relative py-20 px-6 border-t border-slate-200 bg-white">
+      <div class="max-w-7xl mx-auto">
+        <div class="mb-10 text-center">
+          <p class="text-xs tracking-[0.3em] uppercase text-indigo-600 mb-3">More</p>
+          <h2 class="text-2xl sm:text-3xl font-bold serif text-slate-900">其他工具</h2>
+        </div>
+        <a href="typing test/index.html" class="cat-card card-glass rounded-2xl p-8 group block max-w-md mx-auto">
+          <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500 to-pink-500 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+          </div>
+          <h3 class="text-xl font-semibold mb-2 text-slate-900 group-hover:text-indigo-700 transition-colors">打字測試</h3>
+          <p class="text-sm text-slate-600">中英文打字速度測試</p>
+          <span class="inline-block mt-6 text-xs text-indigo-600 group-hover:text-indigo-700">進入 →</span>
+        </a>
+      </div>
+    </section>
+
+<footer class="text-center py-10 px-6 border-t border-slate-200 bg-white text-slate-500 text-sm">
+      <p class="italic mb-2 text-slate-600">But God made the earth by his power, he founded the world by his wisdom and stretched out the heavens by his understanding. Jeremiah 10:12</p>
+      <p class="text-xs mb-4 text-slate-500">「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」耶利米書 10:12</p>
+      <p class="text-xs text-slate-400">© 2025 Education Engineering Portfolio · Prepared by SF Lau</p>
+      <p class="text-[10px] text-slate-400 mt-2">背景圖：Wikimedia Commons · 救恩書院、香島道官立小學</p>
+    </footer>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+  <script>
+gsap.registerPlugin(ScrollTrigger);
+
+    /** 一帧 = 一个分类；替换 assets/scroll-frames/ 内图片即可（救恩書院 / 小學 / 教會） */
+    const FRAME_PATHS = [
+      './assets/scroll-frames/frame-intro.png',
+      './assets/scroll-frames/frame-secondary.png',
+      './assets/scroll-frames/frame-primary.png',
+      './assets/scroll-frames/frame-church.png'
+    ];
+
+    const canvas = document.getElementById('scroll-canvas');
+    const ctx = canvas.getContext('2d');
+    const images = [];
+    const loader = document.getElementById('loader');
+    const loaderFill = document.getElementById('loader-fill');
+    const loaderText = document.getElementById('loader-text');
+    const progressBar = document.getElementById('progress-bar');
+    const scrollHint = document.getElementById('scroll-hint');
+
+    function resizeCanvas() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      canvas.style.width = window.innerWidth + 'px';
+      canvas.style.height = window.innerHeight + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function drawCover(img) {
+      if (!img || !img.complete) return;
+      const cw = window.innerWidth;
+      const ch = window.innerHeight;
+      const scale = Math.max(cw / img.width, ch / img.height);
+      const w = img.width * scale;
+      const h = img.height * scale;
+      const x = (cw - w) / 2;
+      const y = (ch - h) / 2;
+      ctx.drawImage(img, x, y, w, h);
+    }
+
+    /** 畫面與文字共用同一分段：每格 1/n 滾動，中段 hold、尾段 crossfade */
+    const SCRUB_HOLD = 0.72;
+
+    function segmentLocal(p, index, total) {
+      const seg = 1 / total;
+      const start = index * seg;
+      const end = (index + 1) * seg;
+      if (p < start || p >= end) return null;
+      return (p - start) / seg;
+    }
+
+    function getScrubFrame(p) {
+      const n = images.length;
+      const seg = 1 / n;
+      const idx = Math.min(n - 1, Math.floor(p / seg));
+      const local = segmentLocal(p, idx, n);
+      if (local === null) return { idx: n - 1, blend: 0 };
+      if (idx >= n - 1) return { idx: n - 1, blend: 0 };
+      const blend = local > SCRUB_HOLD ? (local - SCRUB_HOLD) / (1 - SCRUB_HOLD) : 0;
+      return { idx, blend: Math.min(1, blend) };
+    }
+
+    function chapterOpacity(p, index, total) {
+      const local = segmentLocal(p, index, total);
+      if (local === null) return 0;
+      const trans = 1 - SCRUB_HOLD;
+      if (local < trans) return local / trans;
+      if (local <= SCRUB_HOLD) return 1;
+      return Math.max(0, 1 - (local - SCRUB_HOLD) / trans);
+    }
+
+    /** Crossfade between frames — mimics video scrub (YouTube technique) */
+    function renderScrub(progress) {
+      const { idx, blend } = getScrubFrame(progress);
+      const imgA = images[idx];
+      const imgB = images[Math.min(idx + 1, images.length - 1)];
+
+      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      if (imgA) drawCover(imgA);
+      if (blend > 0.001 && imgB && imgB !== imgA) {
+        ctx.globalAlpha = blend;
+        drawCover(imgB);
+        ctx.globalAlpha = 1;
+      }
+    }
+
+    function preloadFrames() {
+      let loaded = 0;
+      return Promise.all(FRAME_PATHS.map((src, i) => new Promise((resolve) => {
+        const img = new Image();
+        const done = () => {
+          loaded++;
+          const pct = Math.round((loaded / FRAME_PATHS.length) * 100);
+          loaderFill.style.width = pct + '%';
+          loaderText.textContent = pct + '%';
+          resolve();
+        };
+        img.onload = () => {
+          images[i] = img;
+          done();
+        };
+        img.onerror = done;
+        img.src = src;
+      })));
+    }
+
+    function initScrollScrub() {
+      resizeCanvas();
+      renderScrub(0);
+
+      const total = FRAME_PATHS.length;
+      const chapters = FRAME_PATHS.map((_, i) => ({
+        el: `#chapter-${i + 1}`,
+        index: i
+      }));
+      const frameDots = document.querySelectorAll('.frame-dot');
+
+      ScrollTrigger.create({
+        trigger: '#scroll-experience',
+        start: 'top top',
+        end: 'bottom bottom',
+        scrub: 0.65,
+        onUpdate: (self) => {
+          const p = self.progress;
+          renderScrub(p);
+          progressBar.style.width = (p * 100) + '%';
+
+          const { idx: activeFrame } = getScrubFrame(p);
+          frameDots.forEach((dot, i) => {
+            dot.classList.toggle('is-active', i === activeFrame);
+          });
+
+          chapters.forEach(({ el, index }) => {
+            const node = document.querySelector(el);
+            if (!node) return;
+            const opacity = chapterOpacity(p, index, total);
+            const y = (1 - opacity) * 36;
+            const visible = opacity > 0.15;
+            gsap.set(node, { opacity: Math.max(0, opacity), y });
+            node.style.pointerEvents = visible && index > 0 ? 'auto' : 'none';
+          });
+
+          if (p > 0.04) {
+            gsap.to(scrollHint, { opacity: 0, duration: 0.3 });
+          }
+        }
+      });
+
+      window.addEventListener('resize', () => {
+        resizeCanvas();
+        ScrollTrigger.refresh();
+      });
+    }
+
+    function initContentAnimations() {
+      gsap.from('#more .cat-card', {
+        opacity: 0,
+        y: 70,
+        duration: 0.9,
+        ease: 'power3.out',
+        scrollTrigger: { trigger: '#more', start: 'top 80%' }
+      });
+
+      gsap.from('#featured .card-glass', {
+        opacity: 0,
+        y: 50,
+        duration: 0.8,
+        stagger: 0.08,
+        ease: 'power3.out',
+        scrollTrigger: { trigger: '#featured', start: 'top 85%' }
+      });
+    }
+
+    preloadFrames()
+      .then(() => {
+        loader.classList.add('hidden');
+        const lenis = new Lenis({ duration: 1.15, smoothWheel: true });
+        lenis.on('scroll', ScrollTrigger.update);
+        gsap.ticker.add((t) => lenis.raf(t * 1000));
+        gsap.ticker.lagSmoothing(0);
+        initScrollScrub();
+        initContentAnimations();
+      })
+      .catch((err) => {
+        console.error('Frame load failed', err);
+        loaderText.textContent = 'Load failed — refresh';
+      });
+  </script>
+</body>
+</html>

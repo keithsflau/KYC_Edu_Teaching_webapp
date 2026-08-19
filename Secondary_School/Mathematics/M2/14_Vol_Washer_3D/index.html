@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Volumes of Revolution | M2 Calculus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+        overflow: hidden;
+      }
+      .glass {
+        background: rgba(15, 23, 42, 0.8);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      input[type="range"] {
+        -webkit-appearance: none;
+        background: transparent;
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        height: 12px;
+        width: 12px;
+        border-radius: 50%;
+        background: white;
+        margin-top: -4px;
+        cursor: pointer;
+      }
+      input[type="range"]::-webkit-slider-runnable-track {
+        width: 100%;
+        height: 4px;
+        background: #475569;
+        border-radius: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      class="absolute top-4 left-4 z-10 glass p-6 rounded-2xl max-w-sm max-h-screen overflow-y-auto"
+    >
+      <!-- Language Toggle -->
+      <div class="absolute top-4 right-4">
+        <button
+          id="lang-btn"
+          class="px-2 py-1 bg-slate-800 border border-slate-600 rounded-full text-[10px] font-bold text-emerald-400 hover:bg-slate-700 hover:text-white transition flex items-center gap-1"
+        >
+          <i class="fa-solid fa-language"></i>
+          <span id="lang-text">中文</span>
+        </button>
+      </div>
+
+      <h1
+        id="app-title"
+        class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-400 mb-2"
+      >
+        Washer Method
+      </h1>
+      <p id="app-subtitle" class="text-xs text-slate-300 mb-4">
+        Volume of solid revolution around X-axis.
+      </p>
+
+      <div class="space-y-6">
+        <!-- Function Controls -->
+        <div>
+          <h3
+            id="label-Router"
+            class="text-xs font-bold text-orange-400 uppercase mb-2"
+          >
+            Outer Radius R(x)
+          </h3>
+          <div id="eq-Router" class="text-[10px] text-slate-400 mb-1">
+            R(x) = k + ax
+          </div>
+          <div class="flex items-center gap-2 mb-2">
+            <label class="text-[10px] w-6">k</label>
+            <input
+              type="range"
+              min="1"
+              max="4"
+              step="0.1"
+              id="bk"
+              value="2.5"
+              class="flex-1 accent-orange-500"
+            />
+          </div>
+          <div class="flex items-center gap-2">
+            <label class="text-[10px] w-6">a</label>
+            <input
+              type="range"
+              min="-0.5"
+              max="0.5"
+              step="0.1"
+              id="ba"
+              value="0.1"
+              class="flex-1 accent-orange-500"
+            />
+          </div>
+        </div>
+
+        <div>
+          <h3
+            id="label-Rinner"
+            class="text-xs font-bold text-sky-400 uppercase mb-2"
+          >
+            Inner Radius r(x)
+          </h3>
+          <div id="eq-Rinner" class="text-[10px] text-slate-400 mb-1">
+            r(x) = sin(fx) + 1.5
+          </div>
+          <div class="flex items-center gap-2">
+            <label id="label-freq" class="text-[10px] w-6">Freq</label>
+            <input
+              type="range"
+              min="0.5"
+              max="3"
+              step="0.1"
+              id="freq"
+              value="2"
+              class="flex-1 accent-sky-500"
+            />
+          </div>
+        </div>
+
+        <div class="pt-4 border-t border-slate-700">
+          <h3
+            id="label-rev"
+            class="text-xs font-bold text-emerald-400 uppercase mb-2"
+          >
+            Revolution
+          </h3>
+          <div class="flex items-center gap-2">
+            <label id="label-angle" class="text-[10px] w-6">Angle</label>
+            <input
+              type="range"
+              min="0"
+              max="6.28"
+              step="0.1"
+              id="angle"
+              value="4.0"
+              class="flex-1 accent-emerald-500"
+            />
+          </div>
+          <div class="flex items-center gap-2 mt-2">
+            <label id="label-slices" class="text-[10px] w-6">Slices</label>
+            <input
+              type="range"
+              min="5"
+              max="50"
+              step="1"
+              id="slices"
+              value="20"
+              class="flex-1 accent-emerald-500"
+            />
+          </div>
+        </div>
+
+        <div class="p-3 bg-slate-800 rounded text-center">
+          <div id="label-volForm" class="text-[10px] uppercase text-slate-500">
+            Volume Formula
+          </div>
+          <div class="font-mono text-sm text-white">π ∫ [R(x)² - r(x)²] dx</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="canvas-container" class="w-screen h-screen"></div>
+
+    <script>
+      // Bilingual Support
+      const translations = {
+        en: {
+          title: "Washer Method",
+          subtitle: "Volume of solid revolution around X-axis.",
+          outerR: "Outer Radius R(x)",
+          innerR: "Inner Radius r(x)",
+          rev: "Revolution",
+          angle: "Angle",
+          slices: "Slices",
+          freq: "Freq",
+          volForm: "Volume Formula",
+          langBtn: "中文",
+        },
+        zh: {
+          title: "圓盤法 (Washer Method)",
+          subtitle: "繞 X 軸旋轉體的體積",
+          outerR: "外半徑 R(x)",
+          innerR: "內半徑 r(x)",
+          rev: "旋轉",
+          angle: "角度",
+          slices: "切片數",
+          freq: "頻率",
+          volForm: "體積公式",
+          langBtn: "English",
+        },
+      };
+
+      let currentLang = "en";
+
+      function updateLanguage() {
+        const t = translations[currentLang];
+        document.getElementById("lang-text").textContent = t.langBtn;
+        document.getElementById("app-title").textContent = t.title;
+        document.getElementById("app-subtitle").textContent = t.subtitle;
+        document.getElementById("label-Router").textContent = t.outerR;
+        document.getElementById("label-Rinner").textContent = t.innerR;
+        document.getElementById("label-rev").textContent = t.rev;
+        document.getElementById("label-angle").textContent = t.angle;
+        document.getElementById("label-slices").textContent = t.slices;
+        document.getElementById("label-freq").textContent = t.freq;
+        document.getElementById("label-volForm").textContent = t.volForm;
+      }
+
+      document.getElementById("lang-btn").addEventListener("click", () => {
+        currentLang = currentLang === "en" ? "zh" : "en";
+        updateLanguage();
+      });
+
+      // ThreeJS setup
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0f172a);
+      const camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        100
+      );
+      camera.position.set(4, 3, 6);
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document
+        .getElementById("canvas-container")
+        .appendChild(renderer.domElement);
+
+      const controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+
+      scene.add(new THREE.GridHelper(10, 10, 0x334155, 0x1e293b));
+      scene.add(new THREE.AxesHelper(2));
+      scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+      const dl = new THREE.DirectionalLight(0xffffff, 0.8);
+      dl.position.set(5, 10, 5);
+      scene.add(dl);
+
+      // Solid Object Group
+      const solidGroup = new THREE.Group();
+      scene.add(solidGroup);
+
+      // Functions
+      // R(x) = bk + ba*x
+      // r(x) = sin(freq*x) + 1.2
+
+      function getR(x) {
+        const k = parseFloat(document.getElementById("bk").value);
+        const a = parseFloat(document.getElementById("ba").value);
+        return Math.max(0.1, k + a * (x - 2)); // shift x center
+      }
+
+      function getr(x) {
+        const f = parseFloat(document.getElementById("freq").value);
+        return 0.5 * Math.sin(f * x) + 1.0;
+      }
+
+      function updateSolid() {
+        while (solidGroup.children.length > 0)
+          solidGroup.remove(solidGroup.children[0]);
+
+        const n = parseInt(document.getElementById("slices").value, 10);
+        const angleMax = parseFloat(document.getElementById("angle").value);
+
+        const startX = 0;
+        const endX = 4;
+        const dx = (endX - startX) / n;
+
+        for (let i = 0; i < n; i++) {
+          const x = startX + i * dx + dx / 2;
+          const Router = getR(x);
+          const Rinner = getr(x);
+
+          // RingGeometry to create washers
+          const geo = new THREE.RingGeometry(
+            Rinner,
+            Router,
+            32,
+            1,
+            0,
+            angleMax
+          );
+          const mat = new THREE.MeshPhysicalMaterial({
+            color: 0xf97316,
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0.8,
+            metalness: 0.2,
+            roughness: 0.2,
+          });
+
+          // Extrude to give thickness
+          const shape = new THREE.Shape();
+          shape.absarc(0, 0, Router, 0, angleMax, false);
+          shape.lineTo(
+            Math.cos(angleMax) * Rinner,
+            Math.sin(angleMax) * Rinner
+          );
+          shape.absarc(0, 0, Rinner, angleMax, 0, true);
+
+          const extrudeSettings = { depth: dx * 0.9, bevelEnabled: false };
+          const eGeo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+          const eMesh = new THREE.Mesh(eGeo, mat);
+
+          // Orient: Extrude is along Z. We want along X.
+          // Rotate -90 deg around Y.
+          eMesh.rotation.y = -Math.PI / 2;
+          eMesh.rotation.z = -Math.PI / 2; // Align start angle
+
+          eMesh.position.set(x - dx / 2, 0, 0);
+
+          solidGroup.add(eMesh);
+        }
+      }
+
+      updateSolid();
+
+      document
+        .querySelectorAll("input")
+        .forEach((el) => el.addEventListener("input", updateSolid));
+
+      function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+      }
+      animate();
+
+      window.addEventListener("resize", () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      // Init Lang
+      updateLanguage();
+    </script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

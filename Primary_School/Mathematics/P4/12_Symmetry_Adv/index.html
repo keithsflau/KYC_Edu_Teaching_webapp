@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小四數學：對稱圖形工廠 | Symmetry Factory</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #f0abfc 0%, #c026d3 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState
+} = React;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Symmetry Factory",
+    zh: "對稱圖形工廠",
+    ja: "対称性工場",
+    ko: "대칭 공장",
+    es: "Fábrica de Simetría",
+    de: "Symmetriefabrik",
+    fi: "Symmetriatehdas",
+    fr: "Usine de symétrie",
+    ar: "مصنع التماثل",
+    it: "Fabbrica di simmetria"
+  },
+  clearBoard: {
+    en: "Clear Board",
+    zh: "清除畫板",
+    ja: "ボードをクリア",
+    ko: "보드 지우기",
+    es: "Borrar Pizarra",
+    de: "Tafel löschen",
+    fi: "Tyhjennä taulu",
+    fr: "Effacer le tableau",
+    ar: "مسح اللوحة",
+    it: "Pulisci lavagna"
+  },
+  instruction: {
+    en: "Draw on the left, and watch the symmetry appear on the right!",
+    zh: "點擊左邊方格繪畫，右邊會自動出現對稱圖形！",
+    ja: "左側に描くと、右側に対称形が表示されます！",
+    ko: "왼쪽에 그리면 오른쪽에 대칭이 나타나는 것을 확인하세요!",
+    es: "¡Dibuja a la izquierda y observa cómo aparece la simetría a la derecha!",
+    de: "Zeichne links und sieh zu, wie die Symmetrie rechts erscheint!",
+    fi: "Piirrä vasemmalle ja katso symmetrian ilmestymistä oikealle!",
+    fr: "Dessinez à gauche et regardez la symétrie apparaître à droite !",
+    ar: "ارسم على اليسار، وشاهد التماثل يظهر على اليمين!",
+    it: "Disegna a sinistra e guarda la simmetria apparire a destra!"
+  }
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  // 8x8 Grid
+  // User draws on left, app mirrors on right
+  const [grid, setGrid] = useState(Array(8).fill().map(() => Array(4).fill(false))); // Only modify left 4 cols
+
+  const getText = key => t[key][lang] || t[key]["en"];
+  const toggle = (r, c) => {
+    const newGrid = [...grid];
+    newGrid[r] = [...newGrid[r]];
+    newGrid[r][c] = !newGrid[r][c];
+    setGrid(newGrid);
+  };
+  const clear = () => setGrid(Array(8).fill().map(() => Array(4).fill(false)));
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-8 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-white mb-8 mt-8"
+  }, "🦋 ", getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/90 backdrop-blur-md rounded-3xl p-8 shadow-2xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex mb-4 gap-4 justify-center"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: clear,
+    className: "bg-fuchsia-500 text-white px-6 py-2 rounded-xl font-bold hover:bg-fuchsia-600"
+  }, getText("clearBoard"))), /*#__PURE__*/React.createElement("div", {
+    className: "relative border-4 border-fuchsia-200 rounded-xl overflow-hidden bg-white shadow-inner"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-0 bottom-0 left-1/2 w-1 bg-fuchsia-500 z-10 border-l border-dashed border-white"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "flex"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-4 gap-1 p-1 bg-fuchsia-50 border-r-2 border-fuchsia-200"
+  }, grid.map((row, r) => row.map((active, c) => /*#__PURE__*/React.createElement("div", {
+    key: `l-${r}-${c}`,
+    onClick: () => toggle(r, c),
+    className: `w-12 h-12 rounded cursor-pointer transition-all border border-slate-100 ${active ? "bg-fuchsia-500 scale-90" : "bg-white hover:bg-fuchsia-100"}`
+  })))), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-4 gap-1 p-1 bg-fuchsia-50"
+  }, grid.map((row, r) =>
+  // Reverse column order for mirroring
+  [...row].reverse().map((active, c) => /*#__PURE__*/React.createElement("div", {
+    key: `r-${r}-${c}`,
+    className: `w-12 h-12 rounded transition-all border border-slate-100 ${active ? "bg-fuchsia-500/50" : "bg-white"}`
+  })))))), /*#__PURE__*/React.createElement("div", {
+    className: "mt-8 text-center font-bold text-fuchsia-800"
+  }, getText("instruction"))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

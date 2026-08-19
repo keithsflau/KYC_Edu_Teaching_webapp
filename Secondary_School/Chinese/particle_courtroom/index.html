@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>虛詞法庭</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .evidence-box {
+            animation: slideIn 0.5s;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gradient-to-br from-red-900 to-orange-900 text-white p-4">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-5xl font-bold text-center mb-6">⚖️ 虛詞法庭</h1>
+        <div class="bg-slate-800/90 backdrop-blur rounded-2xl p-6 mb-4">
+            <div class="flex items-center gap-4 mb-4">
+                <div class="text-6xl">👨‍⚖️</div>
+                <div class="flex-1">
+                    <h2 class="text-2xl font-bold">案件：<span id="case-title" class="text-yellow-400"></span></h2>
+                    <p class="text-gray-300" id="sentence"></p>
+                </div>
+            </div>
+            <div class="bg-slate-900 rounded-xl p-4 mb-4">
+                <h3 class="font-bold mb-2">爭議焦點</h3>
+                <p class="text-lg">句中的「<span id="particle" class="text-red-400 text-2xl font-bold"></span>」是什麼詞性？</p>
+            </div>
+            <div id="evidence" class="bg-blue-900/30 rounded-xl p-4 mb-4 hidden evidence-box">
+                <h3 class="font-bold mb-2">📜 證據</h3>
+                <p id="evidence-text"></p>
+            </div>
+            <div class="grid grid-cols-3 gap-3" id="options"></div>
+        </div>
+        <div class="text-center">
+            <div class="text-sm text-gray-400">案件進度：<span id="progress">1/5</span></div>
+        </div>
+    </div>
+    <script>
+        const CASES = [
+            { sentence: "何陋之有？", particle: "之", options: ["代詞 (它)", "助詞 (賓語前置標誌)", "動詞 (到/往)"], correct: 1, evidence: "此為賓語前置句，原句為「有何陋」。「之」是賓語前置的結構助詞，標示「陋」前置，不是代詞。" },
+            { sentence: "吾欲之南海。", particle: "之", options: ["代詞", "助詞", "動詞 (到/往)"], correct: 2, evidence: "此處「之」解作「前往」，為動詞。" },
+            { sentence: "師者，所以傳道授業解惑也。", particle: "也", options: ["語氣助詞", "代詞", "動詞"], correct: 0, evidence: "「也」用於句末，表示判斷語氣，為語氣助詞。" },
+            { sentence: "此誠危急存亡之秋也。", particle: "之", options: ["代詞", "助詞 (的)", "動詞"], correct: 1, evidence: "「存亡之秋」即「存亡的時候」，「之」為結構助詞，相當於「的」。" },
+            { sentence: "學而時習之。", particle: "之", options: ["代詞 (它)", "助詞", "動詞"], correct: 0, evidence: "「習之」即「複習它（所學的知識）」，「之」為代詞。" }
+        ];
+        let currentCase = 0;
+        let judging = false;
+
+        function loadCase() {
+            judging = false;
+            if (currentCase >= CASES.length) {
+                alert('全部案件審理完畢！你是虛詞大師！');
+                currentCase = 0;
+                loadCase();
+                return;
+            }
+            const c = CASES[currentCase];
+            document.getElementById('case-title').textContent = `虛詞辨析案 ${currentCase + 1}`;
+            document.getElementById('sentence').textContent = c.sentence;
+            document.getElementById('particle').textContent = c.particle;
+            document.getElementById('progress').textContent = `${currentCase + 1}/${CASES.length}`;
+            document.getElementById('evidence').classList.add('hidden');
+
+            const opts = document.getElementById('options');
+            opts.innerHTML = '';
+            c.options.forEach((opt, i) => {
+                const btn = document.createElement('button');
+                btn.className = 'bg-gradient-to-br from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 p-4 rounded-xl font-bold transition-all';
+                btn.textContent = opt;
+                btn.onclick = () => judge(i);
+                opts.appendChild(btn);
+            });
+        }
+
+        function setOptionsDisabled(disabled) {
+            document.querySelectorAll('#options button').forEach((btn) => {
+                btn.disabled = disabled;
+                btn.classList.toggle('opacity-60', disabled);
+                btn.classList.toggle('cursor-not-allowed', disabled);
+            });
+        }
+
+        function judge(choice) {
+            const c = CASES[currentCase];
+            if (!c || judging) return;
+            judging = true;
+            setOptionsDisabled(true);
+            document.getElementById('evidence').classList.remove('hidden');
+            document.getElementById('evidence-text').textContent = c.evidence;
+
+            if (choice === c.correct) {
+                alert('✅ 判決正確！');
+                currentCase++;
+                setTimeout(loadCase, 1000);
+            } else {
+                alert('❌ 判決錯誤！請重新審理。');
+                judging = false;
+                setOptionsDisabled(false);
+            }
+        }
+
+        loadCase();
+    </script>
+
+</body>
+
+</html>
+

@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Euler's Identity | M2 Algebra</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+        overflow: hidden;
+      }
+      .glass {
+        background: rgba(15, 23, 42, 0.8);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      input[type="range"] {
+        -webkit-appearance: none;
+        background: transparent;
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        height: 16px;
+        width: 16px;
+        border-radius: 50%;
+        background: #2dd4bf;
+        margin-top: -6px;
+        cursor: pointer;
+        border: 2px solid white;
+      }
+      input[type="range"]::-webkit-slider-runnable-track {
+        width: 100%;
+        height: 4px;
+        background: #334155;
+        border-radius: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="absolute top-4 left-4 z-10 glass p-6 rounded-2xl max-w-sm">
+      <div class="flex justify-between items-start mb-2">
+        <h1
+          id="app_title"
+          class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-emerald-400"
+        >
+          Euler's Identity
+        </h1>
+        <button
+          onclick="toggleLang()"
+          class="ml-2 px-2 py-1 bg-slate-700 hover:bg-slate-600 rounded text-[10px] font-bold text-teal-400 border border-slate-500 transition flex items-center gap-1"
+        >
+          <i class="fa-solid fa-language"></i>
+          <span id="lang_btn">中文</span>
+        </button>
+      </div>
+
+      <p class="text-xs text-slate-300 mb-4">e^(iθ) = cos(θ) + i sin(θ)</p>
+
+      <div class="space-y-6">
+        <div class="relative pt-6 pb-2">
+          <div
+            class="flex justify-between text-xs font-bold uppercase text-slate-500 mb-1"
+          >
+            <span id="label_theta">Angle θ</span>
+            <span id="val_theta" class="text-teal-400 font-mono text-lg"
+              >0π</span
+            >
+          </div>
+          <input
+            type="range"
+            min="0"
+            max="6.28"
+            step="0.01"
+            id="theta"
+            value="0"
+            class="w-full"
+          />
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div
+            class="p-3 bg-slate-900/50 rounded-xl text-center border border-slate-700"
+          >
+            <div
+              class="text-[10px] uppercase text-slate-500 mb-1"
+              id="label_real"
+            >
+              Real (cos)
+            </div>
+            <div id="val_real" class="font-mono text-rose-400 font-bold">
+              1.00
+            </div>
+          </div>
+          <div
+            class="p-3 bg-slate-900/50 rounded-xl text-center border border-slate-700"
+          >
+            <div
+              class="text-[10px] uppercase text-slate-500 mb-1"
+              id="label_imag"
+            >
+              Imag (sin)
+            </div>
+            <div id="val_imag" class="font-mono text-amber-400 font-bold">
+              0.00
+            </div>
+          </div>
+        </div>
+
+        <p
+          class="text-[10px] text-center text-slate-500 leading-relaxed"
+          id="desc"
+        >
+          This 3D helix shows the path of <strong>e^(ix)</strong>. <br />
+          The Real part tracks cosine.<br />
+          The Imaginary part tracks sine.
+        </p>
+      </div>
+    </div>
+
+    <div id="canvas-container" class="w-screen h-screen"></div>
+
+    <script>
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0f172a);
+      const camera = new THREE.PerspectiveCamera(
+        50,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        100
+      );
+      camera.position.set(5, 3, 8);
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document
+        .getElementById("canvas-container")
+        .appendChild(renderer.domElement);
+
+      const controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+
+      // Axes
+      // X = Real Part (cos)
+      // Y = Imag Part (sin)
+      // Z = Angle Theta
+
+      scene.add(new THREE.GridHelper(20, 20, 0x1e293b, 0x0f172a));
+
+      // Custom Axes labels
+      // Would be nice, but simple lines for now
+      const axes = new THREE.Group();
+      // Z axis (Theta)
+      const zAxis = new THREE.ArrowHelper(
+        new THREE.Vector3(0, 0, 1),
+        new THREE.Vector3(0, 0, -2),
+        12,
+        0x64748b
+      );
+      axes.add(zAxis);
+      // X axis (Real)
+      const xAxis = new THREE.ArrowHelper(
+        new THREE.Vector3(1, 0, 0),
+        new THREE.Vector3(0, 0, 0),
+        2,
+        0xf43f5e
+      );
+      axes.add(xAxis);
+      // Y axis (Imag)
+      const yAxis = new THREE.ArrowHelper(
+        new THREE.Vector3(0, 1, 0),
+        new THREE.Vector3(0, 0, 0),
+        2,
+        0xfbbf24
+      );
+      axes.add(yAxis);
+      scene.add(axes);
+
+      // Helix Curve
+      const pts = [];
+      for (let t = 0; t <= 10; t += 0.05) {
+        // e^it = cos t + i sin t
+        // x = cos t, y = sin t, z = t
+        pts.push(new THREE.Vector3(Math.cos(t), Math.sin(t), t));
+      }
+      const geometry = new THREE.BufferGeometry().setFromPoints(pts);
+      const material = new THREE.LineBasicMaterial({
+        color: 0x2dd4bf,
+        linewidth: 2,
+      });
+      const helix = new THREE.Line(geometry, material);
+      scene.add(helix);
+
+      // Current Point Marker
+      const marker = new THREE.Mesh(
+        new THREE.SphereGeometry(0.15, 16, 16),
+        new THREE.MeshBasicMaterial({ color: 0xffffff })
+      );
+      scene.add(marker);
+
+      // Projections
+      const projReal = new THREE.Mesh(
+        new THREE.SphereGeometry(0.1, 16, 16),
+        new THREE.MeshBasicMaterial({ color: 0xf43f5e })
+      ); // Red for Cos
+      const projImag = new THREE.Mesh(
+        new THREE.SphereGeometry(0.1, 16, 16),
+        new THREE.MeshBasicMaterial({ color: 0xfbbf24 })
+      ); // Amber for Sin
+      scene.add(projReal);
+      scene.add(projImag);
+
+      // Connecting Lines
+      const connectors = new THREE.Group();
+      scene.add(connectors);
+
+      // Bilingual
+      const translations = {
+        en: {
+          title: "Euler's Identity",
+          langBtn: "中文",
+          theta: "Angle θ",
+          real: "Real (cos)",
+          imag: "Imag (sin)",
+          desc: "This 3D helix shows the path of <strong>e^(ix)</strong>. <br />The Real part tracks cosine.<br />The Imaginary part tracks sine.",
+        },
+        zh: {
+          title: "歐拉公式",
+          langBtn: "English",
+          theta: "角度 θ",
+          real: "實部 (cos)",
+          imag: "虛部 (sin)",
+          desc: "此 3D 螺旋展示了 <strong>e^(ix)</strong> 的路徑。<br />實部對應餘弦 (cos)。<br />虛部對應正弦 (sin)。",
+        },
+      };
+
+      let currentLang = "en";
+
+      window.toggleLang = () => {
+        currentLang = currentLang === "en" ? "zh" : "en";
+        const t = translations[currentLang];
+        document.getElementById("app_title").innerText = t.title;
+        document.getElementById("lang_btn").innerText = t.langBtn;
+        document.getElementById("label_theta").innerText = t.theta;
+        document.getElementById("label_real").innerText = t.real;
+        document.getElementById("label_imag").innerText = t.imag;
+        document.getElementById("desc").innerHTML = t.desc;
+      };
+
+      function update() {
+        const theta = parseFloat(document.getElementById("theta").value);
+
+        // HUD
+        document.getElementById("val_theta").innerText =
+          (theta / Math.PI).toFixed(2) + "π";
+        document.getElementById("val_real").innerText =
+          Math.cos(theta).toFixed(2);
+        document.getElementById("val_imag").innerText =
+          Math.sin(theta).toFixed(2);
+
+        // Position
+        const x = Math.cos(theta);
+        const y = Math.sin(theta);
+        const z = theta;
+
+        marker.position.set(x, y, z);
+
+        // Projections
+        // Real Projection is on XZ plane (y=0)? Or just X-axis tracker?
+        // Educationally:
+        // "Real" wall is XZ plane (Cos wave).
+        // "Imag" wall is YZ plane (Sin wave).
+
+        // Simple markers on axes at current Z
+        projReal.position.set(x, 0, z);
+        projImag.position.set(0, y, z);
+
+        // Rebuild connectors
+        while (connectors.children.length > 0)
+          connectors.remove(connectors.children[0]);
+
+        // Line from center to point (radius vector)
+        const rGeo = new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(0, 0, z),
+          new THREE.Vector3(x, y, z),
+        ]);
+        connectors.add(
+          new THREE.Line(
+            rGeo,
+            new THREE.LineBasicMaterial({
+              color: 0xffffff,
+              transparent: true,
+              opacity: 0.5,
+            })
+          )
+        );
+
+        // Line to Real
+        const realGeo = new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(x, y, z),
+          new THREE.Vector3(x, 0, z),
+        ]);
+        connectors.add(
+          new THREE.Line(
+            realGeo,
+            new THREE.LineDashedMaterial({
+              color: 0xfbbf24,
+              dashSize: 0.1,
+              gapSize: 0.1,
+            })
+          )
+        );
+
+        // Line to Imag
+        const imagGeo = new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(x, y, z),
+          new THREE.Vector3(0, y, z),
+        ]);
+        connectors.add(
+          new THREE.Line(
+            imagGeo,
+            new THREE.LineDashedMaterial({
+              color: 0xf43f5e,
+              dashSize: 0.1,
+              gapSize: 0.1,
+            })
+          )
+        );
+
+        // Connectors need computeLineDistances for dashed
+        connectors.children.forEach((c) => {
+          if (c.material.isLineDashedMaterial) c.computeLineDistances();
+        });
+
+        // Center tracking camera
+        controls.target.set(0, 0, z);
+        camera.position.z = z + 8;
+        camera.lookAt(0, 0, z);
+      }
+
+      document.getElementById("theta").addEventListener("input", update);
+      update();
+
+      function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+      }
+      animate();
+
+      window.addEventListener("resize", () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+    </script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

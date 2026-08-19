@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Skin Sensitivity Lab | S2 Science</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #fff1f2;
+        cursor: none;
+      }
+      .skin-layer {
+        transition: all 0.3s;
+      }
+      .cursor-tool {
+        pointer-events: none;
+        position: fixed;
+        z-index: 50;
+        font-size: 2rem;
+        transform: translate(-50%, -50%);
+        transition: transform 0.1s;
+      }
+      .nerve-fire {
+        animation: flash 0.5s;
+      }
+      @keyframes flash {
+        0% {
+          stroke: #fbbf24;
+          stroke-width: 4;
+          filter: drop-shadow(0 0 5px #fbbf24);
+        }
+        100% {
+          stroke: #fca5a5;
+          stroke-width: 2;
+        }
+      }
+    </style>
+  </head>
+  <body
+    class="bg-rose-50 text-slate-800 min-h-screen"
+    onmousemove="updateCursor(event)"
+  >
+    <div id="root"></div>
+
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+
+// Custom Cursor Logic
+window.updateCursor = e => {
+  const cursor = document.getElementById("custom-cursor");
+  if (cursor) {
+    cursor.style.left = e.clientX + "px";
+    cursor.style.top = e.clientY + "px";
+  }
+};
+const tools = [{
+  id: "feather",
+  name: "Feather",
+  icon: "fa-feather",
+  type: "touch",
+  color: "#38bdf8"
+}, {
+  id: "pin",
+  name: "Pin",
+  icon: "fa-thumbtack",
+  type: "pain",
+  color: "#ef4444"
+}, {
+  id: "ice",
+  name: "Ice Cube",
+  icon: "fa-snowflake",
+  type: "cold",
+  color: "#60a5fa"
+}, {
+  id: "fire",
+  name: "Match",
+  icon: "fa-fire",
+  type: "heat",
+  color: "#f59e0b"
+}];
+const App = () => {
+  const [selectedTool, setSelectedTool] = useState(null); // idle state
+  const [activeNerve, setActiveNerve] = useState(null); // which nerve fired
+  const [message, setMessage] = useState("Select a tool to test nerve endings.");
+  const handleStimulus = nerveType => {
+    if (!selectedTool) return;
+
+    // Logic: Does tool match nerve?
+    let match = false;
+    if (selectedTool.type === "touch" && nerveType === "touch") match = true;
+    if (selectedTool.type === "pain" && nerveType === "pain") match = true;
+    if (selectedTool.type === "cold" && (nerveType === "cold" || nerveType === "temp")) match = true;
+    if (selectedTool.type === "heat" && (nerveType === "heat" || nerveType === "temp")) match = true;
+
+    // Pain overrides all extreme stimuli usually, simplified here
+    if (selectedTool.type === "pain" || selectedTool.type === "heat" || selectedTool.type === "cold") {
+      // Pain receptors can react to extremes
+      if (nerveType === "pain") match = true;
+    }
+    if (match) {
+      setActiveNerve(nerveType);
+      setMessage(`Signal Sent: ${nerveType.toUpperCase()} Detected!`);
+      setTimeout(() => setActiveNerve(null), 500); // Pulse
+    } else {
+      setMessage("No response from this receptor.");
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-8 cursor-none"
+  }, /*#__PURE__*/React.createElement("div", {
+    id: "custom-cursor",
+    className: `cursor-tool text-3xl ${selectedTool ? "scale-100 opacity-100" : "scale-0 opacity-0"}`,
+    style: {
+      color: selectedTool?.color
+    }
+  }, /*#__PURE__*/React.createElement("i", {
+    className: `fa-solid ${selectedTool?.icon}`
+  })), /*#__PURE__*/React.createElement("div", {
+    className: `fixed top-0 left-0 w-full h-full pointer-events-none z-40 flex items-center justify-center ${selectedTool ? "hidden" : "visible"}`
+  }), /*#__PURE__*/React.createElement("header", {
+    className: "text-center mb-10 w-full"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-rose-600 font-bold uppercase text-xs tracking-widest"
+  }, "Form 2 Science • Unit 10"), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-slate-800 mb-2"
+  }, "Skin Sensitivity"), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-500"
+  }, "Stimulate specific nerve endings in the skin.")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-4 rounded-full shadow-xl border border-rose-100 flex gap-4 mb-12 relative z-50 pointer-events-auto cursor-auto"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "font-bold text-slate-400 uppercase text-xs tracking-widest self-center px-4"
+  }, "Tools:"), tools.map(tool => /*#__PURE__*/React.createElement("button", {
+    key: tool.id,
+    onClick: () => setSelectedTool(tool),
+    className: `w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${selectedTool?.id === tool.id ? "bg-rose-500 text-white scale-110 shadow-lg" : "bg-slate-100 text-slate-400 hover:bg-slate-200"}`
+  }, /*#__PURE__*/React.createElement("i", {
+    className: `fa-solid ${tool.icon}`
+  })))), /*#__PURE__*/React.createElement("div", {
+    className: "relative w-full max-w-4xl h-[500px] pointer-events-auto cursor-none"
+  }, /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 800 500",
+    className: "w-full h-full drop-shadow-2xl"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M 0 100 Q 400 80 800 100 L 800 150 L 0 150 Z",
+    fill: "#fda4af"
+  }), " ", /*#__PURE__*/React.createElement("rect", {
+    x: "0",
+    y: "150",
+    width: "800",
+    height: "250",
+    fill: "#fecdd3"
+  }), " ", /*#__PURE__*/React.createElement("path", {
+    d: "M 0 400 L 800 400 L 800 500 L 0 500 Z",
+    fill: "#fef3c7"
+  }), " ", /*#__PURE__*/React.createElement("path", {
+    d: "M 100 150 L 80 0",
+    stroke: "#78350f",
+    strokeWidth: "4"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M 100 150 Q 110 300 90 350",
+    stroke: "#78350f",
+    strokeWidth: "4",
+    fill: "none"
+  }), " ", /*#__PURE__*/React.createElement("g", {
+    className: "receptor group"
+  }, /*#__PURE__*/React.createElement("ellipse", {
+    cx: "300",
+    cy: "140",
+    rx: "15",
+    ry: "25",
+    fill: "#fde047",
+    opacity: "0.8",
+    onMouseEnter: () => handleStimulus("touch")
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M 300 165 L 300 500",
+    stroke: "#fca5a5",
+    strokeWidth: "2",
+    className: activeNerve === "touch" ? "nerve-fire" : ""
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "300",
+    y: "110",
+    textAnchor: "middle",
+    fontSize: "12",
+    fontWeight: "bold",
+    fill: "#be123c",
+    opacity: "0.5"
+  }, "Touch")), /*#__PURE__*/React.createElement("g", {
+    className: "receptor group"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M 500 100 L 500 140 L 480 160 L 500 300",
+    fill: "none",
+    stroke: "#ef4444",
+    strokeWidth: "2",
+    onMouseEnter: () => handleStimulus("pain"),
+    className: activeNerve === "pain" ? "nerve-fire" : ""
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "500",
+    cy: "100",
+    r: "15",
+    fill: "transparent",
+    onMouseEnter: () => handleStimulus("pain")
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "500",
+    y: "90",
+    textAnchor: "middle",
+    fontSize: "12",
+    fontWeight: "bold",
+    fill: "#be123c",
+    opacity: "0.5"
+  }, "Pain")), /*#__PURE__*/React.createElement("g", {
+    className: "receptor group"
+  }, /*#__PURE__*/React.createElement("ellipse", {
+    cx: "600",
+    cy: "350",
+    rx: "30",
+    ry: "20",
+    fill: "#60a5fa",
+    opacity: "0.8",
+    onMouseEnter: () => handleStimulus("touch")
+    // Deep pressure usually touch but specialized.
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M 600 370 L 600 500",
+    stroke: "#fca5a5",
+    strokeWidth: "2",
+    className: activeNerve === "touch" ? "nerve-fire" : ""
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "600",
+    y: "320",
+    textAnchor: "middle",
+    fontSize: "12",
+    fontWeight: "bold",
+    fill: "#be123c",
+    opacity: "0.5"
+  }, "Pressure")), /*#__PURE__*/React.createElement("g", {
+    className: "receptor group"
+  }, /*#__PURE__*/React.createElement("circle", {
+    cx: "200",
+    cy: "180",
+    r: "15",
+    fill: "#f97316",
+    opacity: "0.8",
+    onMouseEnter: () => handleStimulus("heat")
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M 200 195 L 200 500",
+    stroke: "#fca5a5",
+    strokeWidth: "2",
+    className: activeNerve === "heat" ? "nerve-fire" : ""
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "200",
+    y: "160",
+    textAnchor: "middle",
+    fontSize: "12",
+    fontWeight: "bold",
+    fill: "#be123c",
+    opacity: "0.5"
+  }, "Heat")), /*#__PURE__*/React.createElement("g", {
+    className: "receptor group"
+  }, /*#__PURE__*/React.createElement("circle", {
+    cx: "400",
+    cy: "180",
+    r: "15",
+    fill: "#a5f3fc",
+    opacity: "0.8",
+    onMouseEnter: () => handleStimulus("cold")
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M 400 195 L 400 500",
+    stroke: "#fca5a5",
+    strokeWidth: "2",
+    className: activeNerve === "cold" ? "nerve-fire" : ""
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "400",
+    y: "160",
+    textAnchor: "middle",
+    fontSize: "12",
+    fontWeight: "bold",
+    fill: "#be123c",
+    opacity: "0.5"
+  }, "Cold"))), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 left-4 bg-white/90 px-6 py-3 rounded-xl shadow-lg border border-rose-100 pointer-events-none"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "font-bold text-rose-600 text-lg typewriter"
+  }, message))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

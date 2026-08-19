@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小三常識：隧道收費員 | Tunnel Toll</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Tunnel Toll",
+    zh: "隧道收費員",
+    ja: "トンネル料金",
+    ko: "터널 통행료",
+    es: "Peaje del Túnel",
+    de: "Tunnelmaut",
+    fi: "Tunnelimaksu",
+    fr: "Péage du tunnel",
+    ar: "رسوم النفق",
+    it: "Pedaggio del Tunnel"
+  },
+  instruction: {
+    en: "Calculate the total toll!",
+    zh: "計算總收費！",
+    ja: "合計料金を計算してください！",
+    ko: "총 통행료를 계산하세요!",
+    es: "¡Calcula el peaje total!",
+    de: "Berechne die Gesamtmaut!",
+    fi: "Laske kokonaismaksu!",
+    fr: "Calculez le péage total !",
+    ar: "احسب إجمالي الرسوم!",
+    it: "Calcola il pedaggio totale!"
+  },
+  car: {
+    en: "Car ($5)",
+    zh: "私家車 ($5)",
+    ja: "車 ($5)",
+    ko: "자동차 ($5)",
+    es: "Coche ($5)",
+    de: "Auto ($5)",
+    fi: "Auto ($5)",
+    fr: "Voiture ($5)",
+    ar: "سيارة ($5)",
+    it: "Auto ($5)"
+  },
+  van: {
+    en: "Van ($10)",
+    zh: "輕型貨車 ($10)",
+    ja: "バン ($10)",
+    ko: "밴 ($10)",
+    es: "Furgoneta ($10)",
+    de: "Transporter ($10)",
+    fi: "Pakettiauto ($10)",
+    fr: "Camionnette ($10)",
+    ar: "فان ($10)",
+    it: "Furgone ($10)"
+  },
+  bus: {
+    en: "Bus ($20)",
+    zh: "巴士 ($20)",
+    ja: "バス ($20)",
+    ko: "버스 ($20)",
+    es: "Autobús ($20)",
+    de: "Bus ($20)",
+    fi: "Bussi ($20)",
+    fr: "Bus ($20)",
+    ar: "حافلة ($20)",
+    it: "Autobus ($20)"
+  },
+  total: {
+    en: "Total:",
+    zh: "總計:",
+    ja: "合計:",
+    ko: "합계:",
+    es: "Total:",
+    de: "Gesamt:",
+    fi: "Yhteensä:",
+    fr: "Total :",
+    ar: "المجموع:",
+    it: "Totale:"
+  },
+  submit: {
+    en: "Collect",
+    zh: "收費",
+    ja: "徴収",
+    ko: "징수",
+    es: "Cobrar",
+    de: "Kassieren",
+    fi: "Kerää",
+    fr: "Collecter",
+    ar: "جمع",
+    it: "Riscuoti"
+  },
+  correct: {
+    en: "Fees Collected!",
+    zh: "收費正確！",
+    ja: "料金徴収完了！",
+    ko: "요금 징수 완료!",
+    es: "¡Tasas Cobradas!",
+    de: "Gebühren kassiert!",
+    fi: "Maksut kerätty!",
+    fr: "Frais collectés !",
+    ar: "تم تحصيل الرسوم!",
+    it: "Pedaggi Riscossi!"
+  },
+  wrong: {
+    en: "Wrong amount!",
+    zh: "金額錯誤！",
+    ja: "金額が間違っています！",
+    ko: "금액이 틀렸습니다!",
+    es: "¡Cantidad incorrecta!",
+    de: "Falscher Betrag!",
+    fi: "Väärä summa!",
+    fr: "Mauvais montant !",
+    ar: "مبلغ خاطئ!",
+    it: "Importo errato!"
+  },
+  score: {
+    en: "Revenue",
+    zh: "收入",
+    ja: "収益",
+    ko: "수입",
+    es: "Ingresos",
+    de: "Einnahmen",
+    fi: "Tulot",
+    fr: "Revenu",
+    ar: "إيرادات",
+    it: "Entrate"
+  }
+};
+const prices = {
+  car: 5,
+  van: 10,
+  bus: 20
+};
+const vehicles = [{
+  id: "car",
+  icon: "🚗",
+  price: 5
+}, {
+  id: "van",
+  icon: "🚐",
+  price: 10
+}, {
+  id: "bus",
+  icon: "🚌",
+  price: 20
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [queue, setQueue] = useState([]);
+  const [input, setInput] = useState(0);
+  const [score, setScore] = useState(0);
+  const [feedback, setFeedback] = useState(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+  useEffect(() => {
+    generateQueue();
+  }, []);
+  const generateQueue = () => {
+    // Random 2-4 vehicles
+    const count = Math.floor(Math.random() * 3) + 2;
+    const newQueue = [];
+    for (let i = 0; i < count; i++) {
+      newQueue.push(vehicles[Math.floor(Math.random() * vehicles.length)]);
+    }
+    setQueue(newQueue);
+    setInput(0);
+    setFeedback(null);
+  };
+  const correctTotal = queue.reduce((acc, v) => acc + v.price, 0);
+  const check = () => {
+    if (input === correctTotal) {
+      setScore(s => s + correctTotal);
+      setFeedback("correct");
+      setTimeout(generateQueue, 1500);
+    } else {
+      setFeedback("wrong");
+      setTimeout(() => setFeedback(null), 1000);
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 flex flex-col items-center select-none font-sans overflow-hidden text-white"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-yellow-400 mb-4 mt-8 drop-shadow-[0_0_10px_rgba(250,204,21,0.5)]"
+  }, "🛂 ", getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-4xl flex flex-col items-center flex-1 relative"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-0 right-0 font-black text-2xl text-green-400 border-2 border-green-500 rounded-xl px-4 py-2"
+  }, getText("score"), ": $", score), /*#__PURE__*/React.createElement("div", {
+    className: "w-full h-48 bg-slate-800 rounded-3xl border-b-8 border-slate-600 relative overflow-hidden flex items-end px-12 mb-8 mt-16 shadow-inner"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-4 left-0 w-full h-0 border-t-4 border-dashed border-white/20"
+  }), /*#__PURE__*/React.createElement(AnimatePresence, null, queue.map((v, i) => /*#__PURE__*/React.createElement(motion.div, {
+    key: `${i}-${v.id}` // Unique key per generation
+    ,
+    initial: {
+      x: 300,
+      opacity: 0
+    },
+    animate: {
+      x: 0,
+      opacity: 1
+    },
+    exit: {
+      x: -300,
+      opacity: 0
+    },
+    transition: {
+      delay: i * 0.2
+    },
+    className: "relative mr-4 mb-2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-7xl drop-shadow-lg"
+  }, v.icon), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-0 right-0 bg-black/50 text-white text-xs font-bold px-1 rounded backdrop-blur"
+  }, "$", v.price)))), /*#__PURE__*/React.createElement("div", {
+    className: "absolute right-0 bottom-0 h-full w-24 bg-yellow-600 border-l-4 border-yellow-700 z-10 flex items-center justify-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-black p-2 rounded text-red-500 font-mono font-bold"
+  }, "STOP"))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-700 p-8 rounded-[2rem] shadow-2xl w-full max-w-md border-4 border-slate-600"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-black/40 rounded-xl p-4 mb-6 text-right font-mono text-5xl text-green-400 shadow-inner"
+  }, "$", input), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-3 gap-4"
+  }, [1, 2, 3, 4, 5, 6, 7, 8, 9, "C", 0].map(btn => /*#__PURE__*/React.createElement("button", {
+    key: btn,
+    onClick: () => {
+      if (btn === "C") setInput(0);else setInput(curr => parseInt(`${curr}${btn}`.substring(0, 3), 10)); // Limit length
+    },
+    className: "bg-slate-600 hover:bg-slate-500 text-white font-black text-2xl py-4 rounded-xl shadow active:scale-95 transition-transform border-b-4 border-slate-800 active:border-b-0 active:translate-y-1"
+  }, btn)), /*#__PURE__*/React.createElement("button", {
+    onClick: check,
+    className: "bg-green-500 hover:bg-green-600 text-white font-black text-xl py-4 rounded-xl shadow active:scale-95 transition-transform border-b-4 border-green-700 active:border-b-0 active:translate-y-1"
+  }, getText("submit")))), feedback && /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      scale: 0
+    },
+    animate: {
+      scale: 1
+    },
+    className: `absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-6 rounded-3xl font-black text-3xl shadow-2xl z-20 whitespace-nowrap ${feedback === "correct" ? "bg-green-500 text-white" : "bg-red-500 text-white"}`
+  }, getText(feedback))), /*#__PURE__*/React.createElement("div", {
+    className: "mt-8 flex gap-4 opacity-70 text-sm"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-2xl"
+  }, "🚗"), " $", prices.car), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-2xl"
+  }, "🚐"), " $", prices.van), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-2xl"
+  }, "🚌"), " $", prices.bus)));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

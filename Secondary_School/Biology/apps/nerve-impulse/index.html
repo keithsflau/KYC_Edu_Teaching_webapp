@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Action Potential Simulator</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Share+Tech+Mono&display=swap');
+
+        body {
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .font-tech {
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .neon-shadow {
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+        }
+
+        .grid-bg {
+            background-image: linear-gradient(rgba(139, 92, 246, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(139, 92, 246, 0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-950 h-screen overflow-hidden flex flex-col text-white">
+    <div id="root" class="h-full flex flex-col"></div>
+
+    <script>
+const {
+  useState,
+  useEffect,
+  useRef
+} = React;
+const App = () => {
+  const chartRef = useRef(null);
+  const chartInstance = useRef(null);
+  const stimRef = useRef(false);
+  const phaseRef = useRef("rest");
+  const voltRef = useRef(-70);
+  const rafRef = useRef(0);
+  const [volt, setVolt] = useState(-70);
+  const [stimulating, setStimulating] = useState(false);
+  const [naOpen, setNaOpen] = useState(false);
+  const [kOpen, setKOpen] = useState(false);
+
+  // Chart once on mount — avoid destroy/recreate races with Chart.js
+  useEffect(() => {
+    const canvas = chartRef.current;
+    if (!canvas || chartInstance.current) return;
+    Chart.defaults.color = "#64748b";
+    const chart = new Chart(canvas.getContext("2d"), {
+      type: "line",
+      data: {
+        labels: Array(100).fill(""),
+        datasets: [{
+          data: Array(100).fill(-70),
+          borderColor: "#8b5cf6",
+          borderWidth: 2,
+          backgroundColor: context => {
+            const c = context.chart.ctx;
+            const gradient = c.createLinearGradient(0, 0, 0, 200);
+            gradient.addColorStop(0, "rgba(139, 92, 246, 0.5)");
+            gradient.addColorStop(1, "rgba(139, 92, 246, 0)");
+            return gradient;
+          },
+          fill: true,
+          pointRadius: 0,
+          tension: 0.4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: false,
+        scales: {
+          y: {
+            min: -100,
+            max: 50,
+            grid: {
+              color: "rgba(255,255,255,0.05)"
+            }
+          },
+          x: {
+            display: false
+          }
+        },
+        plugins: {
+          legend: {
+            display: false
+          }
+        }
+      }
+    });
+    chartInstance.current = chart;
+
+    const pushVolt = v => {
+      const ch = chartInstance.current;
+      if (!ch || !ch.canvas || !ch.canvas.isConnected) return;
+      const data = ch.data.datasets[0].data;
+      data.shift();
+      data.push(v);
+      try {
+        ch.update("none");
+      } catch (_) {}
+      voltRef.current = v;
+      setVolt(v);
+    };
+
+    const step = () => {
+      let currentV = voltRef.current;
+      if (!stimRef.current) {
+        if (Math.random() < 0.1) currentV = -70 + (Math.random() - 0.5);
+        pushVolt(currentV);
+        rafRef.current = requestAnimationFrame(step);
+        return;
+      }
+      let phase = phaseRef.current;
+      if (phase === "depol") {
+        currentV += 5;
+        if (currentV >= 40) {
+          phase = "repol";
+          phaseRef.current = phase;
+          setNaOpen(false);
+          setKOpen(true);
+        }
+      } else if (phase === "repol") {
+        currentV -= 5;
+        if (currentV <= -80) {
+          phase = "hyper";
+          phaseRef.current = phase;
+          setKOpen(false);
+        }
+      } else if (phase === "hyper") {
+        currentV += 0.5;
+        if (currentV >= -70) {
+          phase = "rest";
+          phaseRef.current = phase;
+          currentV = -70;
+          stimRef.current = false;
+          setStimulating(false);
+        }
+      }
+      pushVolt(currentV);
+      rafRef.current = requestAnimationFrame(step);
+    };
+    rafRef.current = requestAnimationFrame(step);
+
+    return () => {
+      cancelAnimationFrame(rafRef.current);
+      if (chartInstance.current) {
+        try {
+          chartInstance.current.destroy();
+        } catch (_) {}
+        chartInstance.current = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    stimRef.current = stimulating;
+    if (stimulating) {
+      phaseRef.current = "depol";
+      setNaOpen(true);
+      setKOpen(false);
+    }
+  }, [stimulating]);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "flex h-full bg-slate-950 font-sans"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-96 bg-slate-900 border-r border-violet-900/30 p-8 flex flex-col z-20 shadow-[0_0_50px_rgba(0,0,0,0.5)]"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "mb-8 relative"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute -top-4 -left-4 w-12 h-12 border-t-2 border-l-2 border-violet-500 rounded-tl-xl opacity-50"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-3 mb-2"
+  }, /*#__PURE__*/React.createElement("i", {
+    "data-lucide": "zap-off",
+    className: "text-violet-400 w-8 h-8"
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "text-xs font-tech font-bold text-violet-400 px-2 py-1 rounded bg-violet-900/20 border border-violet-500/20"
+  }, "MOD_04")), /*#__PURE__*/React.createElement("h1", {
+    className: "text-3xl font-bold text-white tracking-tight"
+  }, "Nerve Impulse"), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-400 text-sm mt-1"
+  }, "Axon Membrane Potential")), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-6"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => !stimulating && setStimulating(true),
+    disabled: stimulating,
+    className: `w-full py-6 rounded text-xl font-bold tracking-widest transition-all relative overflow-hidden group
+                                    ${stimulating ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700' : 'bg-violet-600 text-white hover:bg-violet-500 border border-violet-400 neon-shadow'}
+                                `
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "relative z-10"
+  }, stimulating ? 'REFRACTORY...' : 'STIMULATE'), !stimulating && /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-shimmer"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "bg-black/30 p-6 rounded border border-violet-500/20 relative"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-0 left-0 w-2 h-2 bg-violet-500"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-0 right-0 w-2 h-2 bg-violet-500"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-0 left-0 w-2 h-2 bg-violet-500"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-0 right-0 w-2 h-2 bg-violet-500"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-tech text-violet-400 uppercase mb-2"
+  }, "Membrane Voltage"), /*#__PURE__*/React.createElement("div", {
+    className: `text-5xl font-tech font-bold ${volt > -55 ? 'text-emerald-400 animate-pulse' : 'text-slate-200'}`
+  }, Math.round(volt), /*#__PURE__*/React.createElement("span", {
+    className: "text-lg text-slate-500 ml-2"
+  }, "mV"))), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-3"
+  }, /*#__PURE__*/React.createElement("h4", {
+    className: "text-xs font-bold text-slate-500 uppercase"
+  }, "Gated Channels"), /*#__PURE__*/React.createElement("div", {
+    className: `flex items-center justify-between p-3 rounded border ${naOpen ? 'bg-emerald-900/20 border-emerald-500/50' : 'bg-slate-800 border-slate-700'}`
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-sm font-bold text-slate-300"
+  }, "Na+ Channel"), /*#__PURE__*/React.createElement("span", {
+    className: `text-xs font-mono font-bold px-2 py-0.5 rounded ${naOpen ? 'bg-emerald-500 text-black' : 'bg-slate-700 text-slate-400'}`
+  }, naOpen ? 'OPEN' : 'CLOSED')), /*#__PURE__*/React.createElement("div", {
+    className: `flex items-center justify-between p-3 rounded border ${kOpen ? 'bg-blue-900/20 border-blue-500/50' : 'bg-slate-800 border-slate-700'}`
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-sm font-bold text-slate-300"
+  }, "K+ Channel"), /*#__PURE__*/React.createElement("span", {
+    className: `text-xs font-mono font-bold px-2 py-0.5 rounded ${kOpen ? 'bg-blue-500 text-black' : 'bg-slate-700 text-slate-400'}`
+  }, kOpen ? 'OPEN' : 'CLOSED'))))), /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 flex flex-col bg-slate-950 relative"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "h-1/2 relative bg-slate-900 overflow-hidden flex items-center justify-center grid-bg"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full h-32 relative flex items-center justify-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-0 left-0 right-0 h-2 bg-violet-500/50 blur-sm"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-[1px] left-0 right-0 h-1 bg-white"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-0 left-0 right-0 h-2 bg-violet-500/50 blur-sm"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-[1px] left-0 right-0 h-1 bg-white"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute -top-10 w-full flex justify-around opacity-50"
+  }, Array(10).fill(0).map((_, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: `w-3 h-3 bg-emerald-400 rounded-full shadow-[0_0_10px_#34d399] transition-all duration-300 ${naOpen ? 'translate-y-20 scale-150' : ''}`
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "absolute -bottom-10 w-full flex justify-around opacity-50"
+  }, Array(10).fill(0).map((_, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: `w-3 h-3 bg-blue-400 rounded-full shadow-[0_0_10px_#60a5fa] transition-all duration-300 ${kOpen ? '-translate-y-20 scale-150' : ''}`
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "z-10 text-6xl font-black text-white/5 uppercase tracking-[1em]"
+  }, "Axon"))), /*#__PURE__*/React.createElement("div", {
+    className: "h-1/2 border-t border-violet-900/30 bg-black/50 p-6 relative"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full h-full"
+  }, /*#__PURE__*/React.createElement("canvas", {
+    ref: chartRef
+  })))));
+};
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(/*#__PURE__*/React.createElement(App, null));
+setTimeout(() => lucide.createIcons(), 100);
+</script>
+
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+
+</html>

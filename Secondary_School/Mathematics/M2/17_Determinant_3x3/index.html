@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3x3 Determinant | M2 Matrix</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+      }
+      .glass {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .det-bar {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: white;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <div id="root" class="flex-grow flex flex-col"></div>
+    <script>
+const {
+  useState
+} = React;
+const translations = {
+  en: {
+    unit: "Unit 5: Matrices",
+    title: "Rule of Sarrus",
+    subtitle: "Visualizing 3x3 Determinants",
+    augCols: "Augmented Columns",
+    copy: "(Copy C1, C2)",
+    pos: "Positives (↘)",
+    neg: "Negatives (↙)",
+    langBtn: "中文"
+  },
+  zh: {
+    unit: "第五單元：矩陣",
+    title: "薩魯斯法則 (Sarrus Rule)",
+    subtitle: "3x3 行列式視覺化",
+    augCols: "增廣列",
+    copy: "(複製 C1, C2)",
+    pos: "正向 (↘)",
+    neg: "負向 (↙)",
+    langBtn: "English"
+  }
+};
+const App = () => {
+  // Rule of Sarrus Visualizer
+  // Copy col 1 and 2 to the right
+
+  const [lang, setLang] = useState("en");
+  const t = translations[lang];
+  const [mat, setMat] = useState([[3, 1, 2], [1, -1, 4], [2, 0, 1]]);
+  const [hoverDiag, setHoverDiag] = useState(null); // 'p1', 'p2', 'p3', 'n1', 'n2', 'n3'
+
+  // Diagonals
+  // P1: 0,0 -> 1,1 -> 2,2
+  // P2: 0,1 -> 1,2 -> 2,0
+  // P3: 0,2 -> 1,0 -> 2,1
+  // N1: 2,0 -> 1,1 -> 0,2
+  // N2: 2,1 -> 1,2 -> 0,0
+  // N3: 2,2 -> 1,0 -> 0,1
+
+  // Visualization Helper: We augment the matrix for display
+  const augMat = mat.map(row => [...row, row[0], row[1]]);
+  const getDiagColor = id => {
+    if (!hoverDiag) return "text-slate-600 opacity-30";
+    if (hoverDiag === id) return id.startsWith("p") ? "text-emerald-400 scale-110 font-bold" : "text-rose-400 scale-110 font-bold";
+    return "text-slate-700 opacity-20 blur-[1px]";
+  };
+  const Cell = ({
+    val,
+    r,
+    c
+  }) => {
+    // Determine if this cell is part of the hovered diagonal
+    let active = false;
+    if (hoverDiag === "p1" && (r === 0 && c === 0 || r === 1 && c === 1 || r === 2 && c === 2)) active = true;
+    if (hoverDiag === "p2" && (r === 0 && c === 1 || r === 1 && c === 2 || r === 2 && c === 3)) active = true;
+    if (hoverDiag === "p3" && (r === 0 && c === 2 || r === 1 && c === 3 || r === 2 && c === 4)) active = true;
+
+    // Note: In standard Sarrus diagram, "Positives" usually go Top-Left to Bottom-Right (Diagonal Main)
+    // "Negatives" usually go Bottom-Left to Top-Right (Diagonal Off) OR Top-Right to Bottom-Left.
+    // Let's adjust arrows in text to match standard direction.
+    // ↘ : Top-Left to Bottom-Right (Positive)
+    // ↙ : Top-Right to Bottom-Left (Negative)
+
+    if (hoverDiag === "n1" && (r === 2 && c === 0 || r === 1 && c === 1 || r === 0 && c === 2)) active = true;
+    if (hoverDiag === "n2" && (r === 2 && c === 1 || r === 1 && c === 2 || r === 0 && c === 3)) active = true;
+    if (hoverDiag === "n3" && (r === 2 && c === 2 || r === 1 && c === 3 || r === 0 && c === 4)) active = true;
+    return /*#__PURE__*/React.createElement("div", {
+      className: `w-12 h-12 flex items-center justify-center transition-all duration-300 font-mono ${active ? hoverDiag.startsWith("p") ? "bg-emerald-900 text-emerald-300" : "bg-rose-900 text-rose-300" : c > 2 ? "text-slate-500 bg-slate-800/50" : "text-white bg-slate-800"}`
+    }, val);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "flex-grow flex flex-col items-center justify-center p-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 right-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLang(l => l === "en" ? "zh" : "en"),
+    className: "px-3 py-1 bg-slate-800 border border-slate-600 rounded-full text-xs font-bold text-emerald-400 hover:bg-slate-700 hover:text-white transition flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-language"
+  }), t.langBtn)), /*#__PURE__*/React.createElement("header", {
+    className: "mb-12 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-amber-500 font-bold uppercase tracking-widest text-xs mb-2"
+  }, t.unit), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-white mb-2"
+  }, t.title), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-400 font-mono text-lg"
+  }, t.subtitle)), /*#__PURE__*/React.createElement("div", {
+    className: "glass p-8 rounded-3xl mb-8 relative"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute left-6 top-8 bottom-8 w-1 bg-white rounded"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute right-[35%] top-8 bottom-8 w-1 bg-white rounded"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-5 gap-4"
+  }, augMat.map((row, r) => row.map((val, c) => /*#__PURE__*/React.createElement(Cell, {
+    key: `${r}-${c}`,
+    val: val,
+    r: r,
+    c: c
+  })))), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-0 right-10 bottom-0 flex flex-col justify-center text-xs text-slate-500 font-mono w-24 border-l border-slate-700/50 pl-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "mb-2"
+  }, t.augCols), /*#__PURE__*/React.createElement("div", null, t.copy))), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-8 mb-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col gap-2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-center font-bold text-emerald-500 uppercase text-xs"
+  }, t.pos), /*#__PURE__*/React.createElement("button", {
+    onMouseEnter: () => setHoverDiag("p1"),
+    onMouseLeave: () => setHoverDiag(null),
+    className: "glass px-4 py-2 hover:bg-emerald-900/30 transition border-l-2 border-emerald-500"
+  }, "(", mat[0][0], ")(", mat[1][1], ")(", mat[2][2], ") =", " ", mat[0][0] * mat[1][1] * mat[2][2]), /*#__PURE__*/React.createElement("button", {
+    onMouseEnter: () => setHoverDiag("p2"),
+    onMouseLeave: () => setHoverDiag(null),
+    className: "glass px-4 py-2 hover:bg-emerald-900/30 transition border-l-2 border-emerald-500"
+  }, "(", mat[0][1], ")(", mat[1][2], ")(", mat[2][0], ") =", " ", mat[0][1] * mat[1][2] * mat[2][0]), /*#__PURE__*/React.createElement("button", {
+    onMouseEnter: () => setHoverDiag("p3"),
+    onMouseLeave: () => setHoverDiag(null),
+    className: "glass px-4 py-2 hover:bg-emerald-900/30 transition border-l-2 border-emerald-500"
+  }, "(", mat[0][2], ")(", mat[1][0], ")(", mat[2][1], ") =", " ", mat[0][2] * mat[1][0] * mat[2][1])), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col gap-2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-center font-bold text-rose-500 uppercase text-xs"
+  }, t.neg), /*#__PURE__*/React.createElement("button", {
+    onMouseEnter: () => setHoverDiag("n1"),
+    onMouseLeave: () => setHoverDiag(null),
+    className: "glass px-4 py-2 hover:bg-rose-900/30 transition border-l-2 border-rose-500"
+  }, "-(", mat[0][2], ")(", mat[1][1], ")(", mat[2][0], ") =", " ", -mat[0][2] * mat[1][1] * mat[2][0]), /*#__PURE__*/React.createElement("button", {
+    onMouseEnter: () => setHoverDiag("n2"),
+    onMouseLeave: () => setHoverDiag(null),
+    className: "glass px-4 py-2 hover:bg-rose-900/30 transition border-l-2 border-rose-500"
+  }, "-(", mat[0][0], ")(", mat[1][2], ")(", mat[2][1], ") =", " ", -mat[0][0] * mat[1][2] * mat[2][1]), /*#__PURE__*/React.createElement("button", {
+    onMouseEnter: () => setHoverDiag("n3"),
+    onMouseLeave: () => setHoverDiag(null),
+    className: "glass px-4 py-2 hover:bg-rose-900/30 transition border-l-2 border-rose-500"
+  }, "-(", mat[0][1], ")(", mat[1][0], ")(", mat[2][2], ") =", " ", -mat[0][1] * mat[1][0] * mat[2][2]))), /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-mono font-bold text-white"
+  }, "Total Δ =", " ", mat[0][0] * mat[1][1] * mat[2][2] + mat[0][1] * mat[1][2] * mat[2][0] + mat[0][2] * mat[1][0] * mat[2][1] - mat[0][2] * mat[1][1] * mat[2][0] - mat[0][0] * mat[1][2] * mat[2][1] - mat[0][1] * mat[1][0] * mat[2][2]));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

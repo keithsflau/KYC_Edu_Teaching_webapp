@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小一常識：認識我的好同學 | Meeting Friends</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #fdf4ff 0%, #fae8ff 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Meeting Friends",
+    zh: "認識我的好同學",
+    ja: "友達作り",
+    ko: "친구 만나기",
+    es: "Conocer amigos",
+    de: "Freunde treffen",
+    fi: "Ystävien tapaaminen",
+    fr: "Rencontrer des amis",
+    ar: "لقاء الأصدقاء",
+    it: "Incontrare amici"
+  },
+  friendship: {
+    en: "Friendship",
+    zh: "友誼值",
+    es: "Amistad",
+    de: "Freundschaft",
+    fi: "Ystävyys",
+    fr: "Amitié",
+    ar: "صداقة",
+    it: "Amicizia"
+  },
+  next: {
+    en: "Next",
+    zh: "繼續",
+    es: "Siguiente",
+    de: "Weiter",
+    fi: "Seuraava",
+    fr: "Suivant",
+    ar: "التالي",
+    it: "Avanti"
+  },
+  restart: {
+    en: "Play Again",
+    zh: "再玩一次",
+    es: "Jugar de nuevo",
+    de: "Nochmal spielen",
+    fi: "Pelaa uudelleen",
+    fr: "Rejouer",
+    ar: "العب مرة أخرى",
+    it: "Gioca di nuovo"
+  },
+  s1_desc: {
+    en: "It's morning. You see a classmate.",
+    zh: "早上，你看見一位同學。",
+    es: "Es de mañana. Ves a un compañero de clase.",
+    de: "Es ist Morgen. Du siehst einen Klassenkameraden.",
+    fi: "On aamu. Näet luokkatoverin.",
+    fr: "C'est le matin. Vous voyez un camarade de classe.",
+    ar: "إنه الصباح. ترى زميل في الفصل.",
+    it: "È mattina. Vedi un compagno di classe."
+  },
+  s1_opt1: {
+    en: "Say 'Good Morning!'",
+    zh: "說「早晨！」",
+    es: "Decir '¡Buenos días!'",
+    de: "Sag 'Guten Morgen!'",
+    fi: "Sano 'Hyvää huomenta!'",
+    fr: "Dire 'Bonjour !'",
+    ar: "قل 'صباح الخير!'",
+    it: "Dì 'Buongiorno!'"
+  },
+  s1_opt2: {
+    en: "Walk away",
+    zh: "轉身走開",
+    es: "Alejarse",
+    de: "Weggehen",
+    fi: "Kävele pois",
+    fr: "S'éloigner",
+    ar: "ابتعد",
+    it: "Allontanati"
+  },
+  s1_opt3: {
+    en: "Stick out your tongue",
+    zh: "向他做鬼臉",
+    es: "Sacar la lengua",
+    de: "Zunge rausstrecken",
+    fi: "Näytä kieltä",
+    fr: "Tirer la langue",
+    ar: "أخرج لسانك",
+    it: "Tira fuori la lingua"
+  },
+  s2_desc: {
+    en: "A classmate forgot their pencil.",
+    zh: "有同學忘記帶鉛筆。",
+    es: "Un compañero de clase olvidó su lápiz.",
+    de: "Ein Klassenkamerad hat seinen Bleistift vergessen.",
+    fi: "Luokkatoveri unohti kynänsä.",
+    fr: "Un camarade a oublié son crayon.",
+    ar: "نسي زميل في الفصل قلمه.",
+    it: "Un compagno di classe ha dimenticato la matita."
+  },
+  s2_opt1: {
+    en: "Laugh at him",
+    zh: "嘲笑他",
+    es: "Reírse claramente",
+    de: "Laut auslachen",
+    fi: "Naurata selvästi",
+    fr: "Rire ouvertement",
+    ar: "اضحك بوضوح",
+    it: "Ridi chiaramente"
+  },
+  s2_opt2: {
+    en: "Lend him a pencil",
+    zh: "借他一支鉛筆",
+    es: "Prestarle un lápiz",
+    de: "Ihm einen Bleistift leihen",
+    fi: "Lainaa hänelle kynä",
+    fr: "Lui prêter un crayon",
+    ar: "أعيره قلم رصاص",
+    it: "Prestagli una matita"
+  },
+  s2_opt3: {
+    en: "Ignore him",
+    zh: "不理會",
+    es: "Ignorarlo",
+    de: "Ihn ignorieren",
+    fi: "Jätä hänet huomiotta",
+    fr: "L'ignorer",
+    ar: "تجاهله",
+    it: "Ignoralo"
+  },
+  s3_desc: {
+    en: "You accidentally bumped into someone.",
+    zh: "你不小心撞到了同學。",
+    es: "Chocaste accidentalmente con alguien.",
+    de: "Du bist versehentlich mit jemandem zusammengestoßen.",
+    fi: "Törmäsit vahingossa johonkuhun.",
+    fr: "Vous avez accidentellement bousculé quelqu'un.",
+    ar: "لقد اصطدمت بشخص ما عن طريق الخطأ.",
+    it: "Hai urtato accidentalmente qualcuno."
+  },
+  s3_opt1: {
+    en: "Run away fast",
+    zh: "立刻跑走",
+    es: "Huir rápido",
+    de: "Schnell weglaufen",
+    fi: "Juokse karkuun nopeasti",
+    fr: "S'enfuir vite",
+    ar: "اهرب بسرعة",
+    it: "Scappa velocemente"
+  },
+  s3_opt2: {
+    en: "Say 'Watch out!'",
+    zh: "說「小心點！」",
+    es: "Decir '¡Cuidado!'",
+    de: "Sag 'Pass auf!'",
+    fi: "Sano 'Varo!'",
+    fr: "Dire 'Fais attention !'",
+    ar: "قل 'انتبه!'",
+    it: "Dì 'Attento!'"
+  },
+  s3_opt3: {
+    en: "Say 'Sorry!'",
+    zh: "說「對不起！」",
+    es: "Decir '¡Lo siento!'",
+    de: "Sag 'Entschuldigung!'",
+    fi: "Sano 'Anteeksi!'",
+    fr: "Dire 'Pardon !'",
+    ar: "قل 'آسف!'",
+    it: "Dì 'Scusa!'"
+  },
+  res_good: {
+    en: "They are happy! (+Friendship)",
+    zh: "他很開心！(+友誼值)",
+    es: "¡Están felices! (+Amistad)",
+    de: "Sie sind glücklich! (+Freundschaft)",
+    fi: "He ovat onnellisia! (+Ystävyys)",
+    fr: "Ils sont contents ! (+Amitié)",
+    ar: "هم سعداء! (+صداقة)",
+    it: "Sono felici! (+Amicizia)"
+  },
+  res_bad: {
+    en: "They are sad... (-Friendship)",
+    zh: "他很傷心... (-友誼值)",
+    es: "Están tristes... (-Amistad)",
+    de: "Sie sind traurig... (-Freundschaft)",
+    fi: "He ovat surullisia... (-Ystävyys)",
+    fr: "Ils sont tristes... (-Amitié)",
+    ar: "إنهم حزينون... (-صداقة)",
+    it: "Sono tristi... (-Amicizia)"
+  },
+  res_neutral: {
+    en: "Nothing happened.",
+    zh: "沒有特別的事情發生。",
+    es: "No pasó nada.",
+    de: "Nichts ist passiert.",
+    fi: "Mitään ei tapahtunut.",
+    fr: "Rien ne s'est passé.",
+    ar: "لم يحدث شيء.",
+    it: "Non è successo niente."
+  },
+  final_win: {
+    en: "You made great friends!",
+    zh: "你結識了好朋友！",
+    es: "¡Hiciste grandes amigos!",
+    de: "Du hast tolle Freunde gefunden!",
+    fi: "Sait hyviä ystäviä!",
+    fr: "Tu t'es fait de super amis !",
+    ar: "لقد كونت أصدقاء رائعين!",
+    it: "Ti sei fatto dei grandi amici!"
+  },
+  final_lose: {
+    en: "Try to be nicer next time.",
+    zh: "下次嘗試對人好一點吧。",
+    es: "Intenta ser más amable la próxima vez.",
+    de: "Versuche beim nächsten Mal netter zu sein.",
+    fi: "Yritä olla mukavampi ensi kerralla.",
+    fr: "Essaie d'être plus gentil la prochaine fois.",
+    ar: "حاول أن تكون ألطف في المرة القادمة.",
+    it: "Cerca di essere più gentile la prossima volta."
+  }
+};
+const scenarios = [{
+  id: "s1",
+  char: "👦",
+  bg: "bg-blue-100",
+  options: [{
+    id: "opt1",
+    score: 20,
+    fb: "res_good"
+  }, {
+    id: "opt2",
+    score: 0,
+    fb: "res_neutral"
+  }, {
+    id: "opt3",
+    score: -10,
+    fb: "res_bad"
+  }]
+}, {
+  id: "s2",
+  char: "👧",
+  bg: "bg-pink-100",
+  options: [{
+    id: "opt1",
+    score: -20,
+    fb: "res_bad"
+  }, {
+    id: "opt2",
+    score: 20,
+    fb: "res_good"
+  }, {
+    id: "opt3",
+    score: 0,
+    fb: "res_neutral"
+  }]
+}, {
+  id: "s3",
+  char: "🧒",
+  bg: "bg-green-100",
+  options: [{
+    id: "opt1",
+    score: -10,
+    fb: "res_bad"
+  }, {
+    id: "opt2",
+    score: -10,
+    fb: "res_bad"
+  }, {
+    id: "opt3",
+    score: 20,
+    fb: "res_good"
+  }]
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [index, setIndex] = useState(0);
+  const [friendship, setFriendship] = useState(50); // Start middle
+  const [showResult, setShowResult] = useState(null); // null or {score, fb}
+
+  const getText = key => t[key][lang] || t[key]["en"];
+  const scene = scenarios[index];
+  const handleChoice = opt => {
+    setFriendship(f => Math.min(100, Math.max(0, f + opt.score)));
+    setShowResult({
+      score: opt.score,
+      fb: opt.fb
+    });
+  };
+  const nextScene = () => {
+    setShowResult(null);
+    setIndex(prev => prev < scenarios.length - 1 ? prev + 1 : -1);
+  };
+  const restart = () => {
+    setIndex(0);
+    setFriendship(50);
+    setShowResult(null);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-lg bg-white rounded-full h-8 border-2 border-slate-300 relative mt-16 shadow-md overflow-hidden"
+  }, /*#__PURE__*/React.createElement(motion.div, {
+    className: "h-full bg-gradient-to-r from-red-400 via-yellow-400 to-green-400",
+    animate: {
+      width: `${friendship}%`
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 flex items-center justify-center text-xs font-bold text-slate-700 shadow-white drop-shadow-md"
+  }, getText("friendship"))), index !== -1 ? /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-lg mt-8 flex-1 flex flex-col justify-end pb-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: `flex-1 rounded-t-3xl border-x-4 border-t-4 border-slate-200 flex items-end justify-center pb-0 overflow-hidden relative ${scene.bg}`
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 left-4 text-slate-400 text-6xl opacity-20"
+  }, "🏫"), /*#__PURE__*/React.createElement(motion.div, {
+    key: index,
+    initial: {
+      y: 50,
+      opacity: 0
+    },
+    animate: {
+      y: 0,
+      opacity: 1
+    },
+    className: "text-[150px] leading-none filter drop-shadow-xl"
+  }, scene.char)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white rounded-b-3xl border-4 border-slate-200 p-6 shadow-xl z-10"
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "text-xl font-bold text-slate-700 mb-6 min-h-[3rem]"
+  }, showResult ? getText(showResult.fb) : getText(`${scene.id}_desc`)), !showResult ? /*#__PURE__*/React.createElement("div", {
+    className: "space-y-3"
+  }, scene.options.map(opt => /*#__PURE__*/React.createElement("button", {
+    key: opt.id,
+    onClick: () => handleChoice(opt),
+    className: "w-full bg-sky-100 hover:bg-sky-200 text-sky-800 font-bold py-4 rounded-xl text-lg text-left px-6 border-2 border-sky-200 transition-colors"
+  }, getText(`${scene.id}_${opt.id}`)))) : /*#__PURE__*/React.createElement("button", {
+    onClick: nextScene,
+    className: "w-full bg-indigo-500 text-white font-black py-4 rounded-xl text-xl hover:bg-indigo-600 shadow-lg"
+  }, getText("next"), " ➡️"))) : /*#__PURE__*/React.createElement("div", {
+    className: "mt-20 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-9xl mb-6"
+  }, friendship >= 60 ? "🥰" : "😟"), /*#__PURE__*/React.createElement("h2", {
+    className: "text-4xl font-black text-slate-800 mb-4"
+  }, friendship >= 60 ? getText("final_win") : getText("final_lose")), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-bold text-slate-500 mb-10"
+  }, getText("friendship"), ": ", friendship, "/100"), /*#__PURE__*/React.createElement("button", {
+    onClick: restart,
+    className: "bg-indigo-500 text-white px-10 py-4 rounded-full font-black text-2xl hover:bg-indigo-600 shadow-xl"
+  }, getText("restart"), " 🔄")));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

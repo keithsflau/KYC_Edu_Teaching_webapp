@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小一常識：為誰服務 | Helping Professions</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #cbd5e1 0%, #64748b 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Who Uses This?",
+    zh: "這是誰的工具？",
+    ja: "誰の道具ですか？",
+    ko: "이것은 누가 사용합니까?",
+    es: "¿Quién usa esto?",
+    de: "Wer benutzt das?",
+    fi: "Kuka käyttää tätä?",
+    fr: "Qui utilise ça ?",
+    ar: "من يستخدم هذا؟",
+    it: "Chi usa questo?"
+  },
+  instruction: {
+    en: "Match the tool to the correct job!",
+    zh: "把工具配對到正確的職業！",
+    ja: "道具を正しい職業に合わせてください！",
+    ko: "도구를 올바른 직업에 맞추세요!",
+    es: "¡Une la herramienta con el trabajo correcto!",
+    de: "Ordne das Werkzeug dem richtigen Job zu!",
+    fi: "Yhdistä työkalu oikeaan työhön!",
+    fr: "Associez l'outil au bon travail !",
+    ar: "طابق الأداة بالوظيفة الصحيحة!",
+    it: "Abbina lo strumento al lavoro corretto!"
+  },
+  correct: {
+    en: "Correct!",
+    zh: "答對了！",
+    es: "¡Correcto!",
+    de: "Richtig!",
+    fi: "Oikein!",
+    fr: "Correct !",
+    ar: "صحيح!",
+    it: "Corretto!"
+  },
+  wrong: {
+    en: "Try Again",
+    zh: "再試一次",
+    es: "Inténtalo de nuevo",
+    de: "Versuch es noch einmal",
+    fi: "Yritä uudelleen",
+    fr: "Réessayez",
+    ar: "حاول مرة أخرى",
+    it: "Riprova"
+  },
+  next: {
+    en: "Next Tool",
+    zh: "下一個工具",
+    es: "Siguiente herramienta",
+    de: "Nächstes Werkzeug",
+    fi: "Seuraava työkalu",
+    fr: "Outil suivant",
+    ar: "الأداة التالية",
+    it: "Strumento successivo"
+  },
+  score: {
+    en: "Score",
+    zh: "分數",
+    es: "Puntuación",
+    de: "Punktzahl",
+    fi: "Pisteet",
+    fr: "Score",
+    ar: "نتيجة",
+    it: "Punteggio"
+  },
+  completed: {
+    en: "Job Master!",
+    zh: "職業大師！",
+    es: "¡Maestro de trabajos!",
+    de: "Berufsmeister!",
+    fi: "Työmestari!",
+    fr: "Maître des métiers !",
+    ar: "سيد الوظيفة!",
+    it: "Maestro del lavoro!"
+  },
+  restart: {
+    en: "Play Again",
+    zh: "再玩一次",
+    es: "Jugar de nuevo",
+    de: "Nochmal spielen",
+    fi: "Pelaa uudelleen",
+    fr: "Rejouer",
+    ar: "العب مرة أخرى",
+    it: "Gioca di nuovo"
+  },
+  doctor: {
+    en: "Doctor",
+    zh: "醫生",
+    es: "Doctor",
+    de: "Arzt",
+    fi: "Lääkäri",
+    fr: "Médecin",
+    ar: "طبيب",
+    it: "Dottore"
+  },
+  firefighter: {
+    en: "Firefighter",
+    zh: "消防員",
+    es: "Bombero",
+    de: "Feuerwehrmann",
+    fi: "Palomies",
+    fr: "Pompier",
+    ar: "رجل إطفاء",
+    it: "Vigile del fuoco"
+  },
+  police: {
+    en: "Police Officer",
+    zh: "警察",
+    es: "Oficial de policía",
+    de: "Polizist",
+    fi: "Poliisi",
+    fr: "Policier",
+    ar: "ضابط شرطة",
+    it: "Agente di polizia"
+  },
+  chef: {
+    en: "Chef",
+    zh: "廚師",
+    es: "Chef",
+    de: "Koch",
+    fi: "Kokki",
+    fr: "Chef",
+    ar: "طاه",
+    it: "Cuoco"
+  },
+  teacher: {
+    en: "Teacher",
+    zh: "老師",
+    es: "Maestro",
+    de: "Lehrer",
+    fi: "Opettaja",
+    fr: "Enseignant",
+    ar: "معلم",
+    it: "Insegnante"
+  },
+  worker: {
+    en: "Builder",
+    zh: "建築工人",
+    es: "Constructor",
+    de: "Bauarbeiter",
+    fi: "Rakentaja",
+    fr: "Constructeur",
+    ar: "بناء",
+    it: "Costruttore"
+  },
+  postman: {
+    en: "Postman",
+    zh: "郵差",
+    es: "Cartero",
+    de: "Postbote",
+    fi: "Postinkantaja",
+    fr: "Facteur",
+    ar: "ساعي البريد",
+    it: "Postino"
+  },
+  tool_stethoscope: {
+    en: "Stethoscope",
+    zh: "聽診器",
+    es: "Estetoscopio",
+    de: "Stethoskop",
+    fi: "Stetoskooppi",
+    fr: "Stéthoscope",
+    ar: "سماعة الطبيب",
+    it: "Stetoscopio"
+  },
+  tool_hose: {
+    en: "Fire Hose",
+    zh: "消防喉",
+    es: "Manguera de incendios",
+    de: "Feuerlöschschlauch",
+    fi: "Paloletku",
+    fr: "Tuyau d'incendie",
+    ar: "خرطوم حريق",
+    it: "Manichetta antincendio"
+  },
+  tool_badge: {
+    en: "Badge",
+    zh: "警徽",
+    es: "Placa",
+    de: "Abzeichen",
+    fi: "Merkki",
+    fr: "Insigne",
+    ar: "شارة",
+    it: "Distintivo"
+  },
+  tool_hat: {
+    en: "Chef Hat",
+    zh: "廚師帽",
+    es: "Gorro de chef",
+    de: "Kochmütze",
+    fi: "Kokin hattu",
+    fr: "Toque de chef",
+    ar: "قبعة الشيف",
+    it: "Cappello da cuoco"
+  },
+  tool_board: {
+    en: "Blackboard",
+    zh: "黑板",
+    es: "Pizarra",
+    de: "Tafel",
+    fi: "Liitutaulu",
+    fr: "Tableau noir",
+    ar: "سبورة سوداء",
+    it: "Lavagna"
+  },
+  tool_helmet: {
+    en: "Safety Helmet",
+    zh: "安全帽",
+    es: "Casco de seguridad",
+    de: "Schutzhelm",
+    fi: "Suojakypärä",
+    fr: "Casque de sécurité",
+    ar: "خوذة الأمان",
+    it: "Elmetto di sicurezza"
+  },
+  tool_mail: {
+    en: "Mail Bag",
+    zh: "郵袋",
+    es: "Saca de correos",
+    de: "Postsack",
+    fi: "Postisäkki",
+    fr: "Sac postal",
+    ar: "حقيبة بريد",
+    it: "Sacco postale"
+  }
+};
+const professions = [{
+  id: "doctor",
+  icon: "👨‍⚕️",
+  color: "bg-white"
+}, {
+  id: "firefighter",
+  icon: "👨‍🚒",
+  color: "bg-red-200"
+}, {
+  id: "police",
+  icon: "👮",
+  color: "bg-blue-200"
+}, {
+  id: "chef",
+  icon: "👨‍🍳",
+  color: "bg-yellow-100"
+}, {
+  id: "teacher",
+  icon: "👩‍🏫",
+  color: "bg-green-100"
+}, {
+  id: "worker",
+  icon: "👷",
+  color: "bg-orange-200"
+}, {
+  id: "postman",
+  icon: "📮",
+  color: "bg-green-200"
+} // Using postbox emoji for postman slightly inaccurate but recognizable context
+];
+const questions = [{
+  id: "q1",
+  toolIcon: "🩺",
+  toolName: "tool_stethoscope",
+  answer: "doctor"
+}, {
+  id: "q2",
+  toolIcon: "🚒",
+  toolName: "tool_hose",
+  answer: "firefighter"
+}, {
+  id: "q3",
+  toolIcon: "🚓",
+  toolName: "tool_badge",
+  answer: "police"
+},
+// Using Car for visual simplicity
+{
+  id: "q4",
+  toolIcon: "🍳",
+  toolName: "tool_hat",
+  answer: "chef"
+}, {
+  id: "q5",
+  toolIcon: "🏫",
+  toolName: "tool_board",
+  answer: "teacher"
+}, {
+  id: "q6",
+  toolIcon: "⛑️",
+  toolName: "tool_helmet",
+  answer: "worker"
+}, {
+  id: "q7",
+  toolIcon: "✉️",
+  toolName: "tool_mail",
+  answer: "postman"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [qIdx, setQIdx] = useState(0);
+  const [options, setOptions] = useState([]);
+  const [score, setScore] = useState(0);
+  const [feedback, setFeedback] = useState(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+  const currentQ = qIdx < questions.length ? questions[qIdx] : null;
+  useEffect(() => {
+    if (currentQ) generateOptions();
+  }, [qIdx]);
+  const generateOptions = () => {
+    const ans = currentQ.answer;
+    // Select distractors
+    const distractors = professions.filter(p => p.id !== ans).sort(() => Math.random() - 0.5).slice(0, 2);
+    const correct = professions.find(p => p.id === ans);
+    setOptions([correct, ...distractors].sort(() => Math.random() - 0.5));
+    setFeedback(null);
+  };
+  const handleAnswer = profId => {
+    if (feedback) return;
+    if (profId === currentQ.answer) {
+      setFeedback("correct");
+      setScore(s => s + 10);
+      setTimeout(() => {
+        setFeedback(null);
+        setQIdx(i => i + 1);
+      }, 1000);
+    } else {
+      setFeedback("wrong");
+      setScore(s => Math.max(0, s - 5));
+      setTimeout(() => setFeedback(null), 1000);
+    }
+  };
+  const restart = () => {
+    setQIdx(0);
+    setScore(0);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-white mb-4 mt-8 drop-shadow-md"
+  }, "🛠️ ", getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/90 px-6 py-2 rounded-full shadow mb-6 font-bold text-slate-600"
+  }, getText("score"), ": ", score), currentQ ? /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-2xl bg-white rounded-3xl p-8 shadow-2xl flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "font-bold text-slate-500 mb-6"
+  }, getText("instruction")), /*#__PURE__*/React.createElement(motion.div, {
+    key: currentQ.id,
+    initial: {
+      scale: 0.8,
+      opacity: 0
+    },
+    animate: {
+      scale: 1,
+      opacity: 1
+    },
+    className: "w-48 h-48 bg-slate-100 rounded-full flex items-center justify-center text-8xl mb-4 border-4 border-slate-200"
+  }, currentQ.toolIcon), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-black text-slate-800 mb-8"
+  }, getText(currentQ.toolName)), feedback && /*#__PURE__*/React.createElement("div", {
+    className: `text-4xl font-black mb-6 ${feedback === "correct" ? "text-green-500" : "text-red-500"}`
+  }, getText(feedback)), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-3 gap-4 w-full"
+  }, options.map(opt => /*#__PURE__*/React.createElement("button", {
+    key: opt.id,
+    onClick: () => handleAnswer(opt.id),
+    className: `${opt.color} p-4 rounded-xl flex flex-col items-center justify-center shadow-md hover:scale-105 active:scale-95 transition-transform h-32 md:h-40 border-b-4 border-black/10`
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-5xl mb-2"
+  }, opt.icon), /*#__PURE__*/React.createElement("span", {
+    className: "font-bold text-sm md:text-base leading-tight"
+  }, getText(opt.id)))))) : /*#__PURE__*/React.createElement("div", {
+    className: "mt-12 text-center bg-white/90 p-12 rounded-3xl shadow-xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-8xl mb-4"
+  }, "🌟"), /*#__PURE__*/React.createElement("h2", {
+    className: "text-3xl font-black text-slate-800 mb-6"
+  }, getText("completed")), /*#__PURE__*/React.createElement("button", {
+    onClick: restart,
+    className: "bg-blue-500 text-white px-10 py-4 rounded-full font-black text-xl hover:bg-blue-600 shadow-xl"
+  }, getText("restart"), " 🔄")));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

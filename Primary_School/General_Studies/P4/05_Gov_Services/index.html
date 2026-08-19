@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - Gov Services</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: #f3f4f6;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const { LanguageSelector,
+  get } = window.MathI18n || { LanguageSelector: () => null, get: (key) => key };
+const t = {
+  title: {
+    en: "Government Services",
+    zh: "政府服務",
+    ja: "政府サービス",
+    ko: "정부 서비스",
+    es: "Servicios gubernamentales",
+    de: "Regierungsdienste",
+    fi: "Hallituksen palvelut",
+    fr: "Services gouvernementaux",
+    ar: "خدمات حكومية",
+    it: "Servizi Governativi"
+  },
+  instruction: {
+    en: "Match the service to the department!",
+    zh: "將服務配對到正確的部門！",
+    ja: "サービスを正しい部門に合わせてください！",
+    ko: "서비스를 올바른 부서에 맞추세요!",
+    es: "¡Relaciona el servicio con el departamento!",
+    de: "Ordne den Dienst der Abteilung zu!",
+    fi: "Yhdistä palvelu osastoon!",
+    fr: "Associez le service au département !",
+    ar: "طابق الخدمة بالقسم!",
+    it: "Abbina il servizio al dipartimento!"
+  },
+  correct: {
+    en: "Correct!",
+    zh: "答對了！",
+    ja: "正解！",
+    ko: "정답!",
+    es: "¡Correcto!",
+    de: "Richtig!",
+    fi: "Oikein!",
+    fr: "Correct !",
+    ar: "صحيح!",
+    it: "Corretto!"
+  },
+  police: {
+    en: "Police Force",
+    zh: "警務處",
+    ja: "警察",
+    ko: "경찰",
+    es: "Fuerza policial",
+    de: "Polizei",
+    fi: "Poliisi",
+    fr: "Force de police",
+    ar: "قوة الشرطة",
+    it: "Polizia"
+  },
+  fire: {
+    en: "Fire Services",
+    zh: "消防處",
+    ja: "消防署",
+    ko: "소방서",
+    es: "Bomberos",
+    de: "Feuerwehr",
+    fi: "Palokunta",
+    fr: "Services d'incendie",
+    ar: "خدمات الإطفاء",
+    it: "Vigili del Fuoco"
+  },
+  library: {
+    en: "Public Library",
+    zh: "公共圖書館",
+    ja: "公共図書館",
+    ko: "공공 도서관",
+    es: "Biblioteca pública",
+    de: "Öffentliche Bibliothek",
+    fi: "Yleinen kirjasto",
+    fr: "Bibliothèque publique",
+    ar: "مكتبة عامة",
+    it: "Biblioteca Pubblica"
+  },
+  park: {
+    en: "Leisure & Cultural Services",
+    zh: "康樂及文化事務署",
+    ja: "康楽及文化事務署",
+    ko: "레저 및 문화 서비스",
+    es: "Servicios culturales y de ocio",
+    de: "Freizeit- & Kulturdienste",
+    fi: "Vapaa-ajan ja kulttuuripalvelut",
+    fr: "Services de loisirs et culturels",
+    ar: "خدمات الترفيه والثقافة",
+    it: "Servizi Culturali e Ricreativi"
+  },
+  post: {
+    en: "Post Office",
+    zh: "郵政局",
+    ja: "郵便局",
+    ko: "우체국",
+    es: "Oficina de correos",
+    de: "Postamt",
+    fi: "Posti",
+    fr: "Bureau de poste",
+    ar: "مكتب البريد",
+    it: "Ufficio Postale"
+  },
+  desc_police: {
+    en: "Catch thieves, Keep safe",
+    zh: "捉賊，維持治安",
+    ja: "泥棒を捕まえる、安全を守る",
+    ko: "도둑 잡기, 안전 유지",
+    es: "Atrapar ladrones, mantener la seguridad",
+    de: "Diebe fangen, Sicherheit wahren",
+    fi: "Ota varkaat kiinni, pidä turvassa",
+    fr: "Attraper les voleurs, Assurer la sécurité",
+    ar: "القبض على اللصوص، الحفاظ على السلامة",
+    it: "Catturare ladri, Mantenere la sicurezza"
+  },
+  desc_fire: {
+    en: "Put out fires, Ambulance",
+    zh: "滅火，救護服務",
+    ja: "消火、救急車",
+    ko: "화재 진압, 구급차",
+    es: "Apagar incendios, Ambulancia",
+    de: "Feuer löschen, Krankenwagen",
+    fi: "Sammuta tulipalot, ambulanssi",
+    fr: "Éteindre les incendies, Ambulance",
+    ar: "إخماد الحرائق، الإسعاف",
+    it: "Spegnere incendi, Ambulanza"
+  },
+  desc_library: {
+    en: "Borrow books, Read",
+    zh: "借書，閱讀",
+    ja: "本を借りる、読む",
+    ko: "책 대출, 읽기",
+    es: "Pedir libros prestados, leer",
+    de: "Bücher ausleihen, lesen",
+    fi: "Lainaa kirjoja, lue",
+    fr: "Emprunter des livres, Lire",
+    ar: "استعارة الكتب، القراءة",
+    it: "Prendere in prestito libri, Leggere"
+  },
+  desc_park: {
+    en: "Parks, Museums, Sports",
+    zh: "公園，博物館，體育館",
+    ja: "公園、博物館、スポーツ",
+    ko: "공원, 박물관, 스포츠",
+    es: "Parques, Museos, Deportes",
+    de: "Parks, Museen, Sport",
+    fi: "Puistot, museot, urheilu",
+    fr: "Parcs, Musées, Sports",
+    ar: "الحدائق، المتاحف، الرياضة",
+    it: "Parchi, Musei, Sport"
+  },
+  desc_post: {
+    en: "Send letters, Parcels",
+    zh: "寄信，包裹",
+    ja: "手紙、小包を送る",
+    ko: "편지, 소포 보내기",
+    es: "Enviar cartas, paquetes",
+    de: "Briefe, Pakete senden",
+    fi: "Lähetä kirjeitä, paketteja",
+    fr: "Envoyer des lettres, Colis",
+    ar: "إرسال الرسائل، الطرود",
+    it: "Inviare lettere, Pacchi"
+  }
+};
+const pairs = [{
+  id: "police",
+  icon: "👮‍♂️",
+  desc: "desc_police",
+  color: "bg-blue-200"
+}, {
+  id: "fire",
+  icon: "👨‍🚒",
+  desc: "desc_fire",
+  color: "bg-red-200"
+}, {
+  id: "library",
+  icon: "📚",
+  desc: "desc_library",
+  color: "bg-yellow-200"
+}, {
+  id: "park",
+  icon: "🌳",
+  desc: "desc_park",
+  color: "bg-green-200"
+}, {
+  id: "post",
+  icon: "📮",
+  desc: "desc_post",
+  color: "bg-purple-200"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [leftSide, setLeftSide] = useState([]);
+  const [rightSide, setRightSide] = useState([]);
+  const [selectedLeft, setSelectedLeft] = useState(null);
+  const [matched, setMatched] = useState([]);
+  const getText = key => t[key][lang] || t[key]["en"];
+  useEffect(() => {
+    // Randomize sides
+    setLeftSide([...pairs].sort(() => Math.random() - 0.5));
+    setRightSide([...pairs].sort(() => Math.random() - 0.5));
+  }, []);
+  const handleSelect = item => {
+    if (matched.includes(item.id)) return;
+    if (!selectedLeft) {
+      setSelectedLeft(item);
+    } else if (selectedLeft.id === item.id) {
+      // Same left item again → deselect (do not auto-match)
+      setSelectedLeft(null);
+    } else {
+      // Switch selection to another left item
+      setSelectedLeft(item);
+    }
+  };
+  const handleRightClick = item => {
+    if (matched.includes(item.id)) return;
+    if (selectedLeft && selectedLeft.id === item.id) {
+      setMatched([...matched, item.id]);
+      setSelectedLeft(null);
+    }
+    // Wrong pair: keep left selected so the student can try another department
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-8 font-sans"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-bold mb-8 text-slate-800"
+  }, getText("title")), /*#__PURE__*/React.createElement("p", {
+    className: "mb-8 font-bold text-xl text-slate-500"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "flex w-full max-w-5xl justify-between gap-12"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col gap-4 w-1/2"
+  }, leftSide.map(item => /*#__PURE__*/React.createElement(motion.div, {
+    key: item.id,
+    layout: true,
+    onClick: () => handleSelect(item),
+    className: `p-6 rounded-2xl shadow-md cursor-pointer border-4 flex items-center gap-4 transition-colors
+                           ${matched.includes(item.id) ? "bg-gray-200 border-gray-300 opacity-50" : selectedLeft?.id === item.id ? "bg-sky-100 border-sky-500" : "bg-white border-white hover:bg-slate-50"}
+                        `
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl"
+  }, item.icon), /*#__PURE__*/React.createElement("div", {
+    className: "font-bold text-lg text-slate-700"
+  }, getText(item.desc))))), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col gap-4 w-1/2"
+  }, rightSide.map(item => /*#__PURE__*/React.createElement(motion.div, {
+    key: item.id,
+    layout: true,
+    onClick: () => handleRightClick(item),
+    className: `p-6 rounded-2xl shadow-md cursor-pointer border-4 flex items-center justify-end gap-4 transition-colors
+                           ${matched.includes(item.id) ? "bg-green-100 border-green-500" : "bg-white border-white hover:bg-slate-50"}
+                        `
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "font-bold text-lg text-slate-700 text-right"
+  }, getText(item.id)), /*#__PURE__*/React.createElement("div", {
+    className: `w-12 h-12 rounded-full ${item.color} flex items-center justify-center font-bold text-xl`
+  }, item.id[0].toUpperCase()))))), matched.length === pairs.length && /*#__PURE__*/React.createElement("div", {
+    className: "mt-12 p-8 bg-green-500 text-white rounded-3xl shadow-2xl text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl mb-4"
+  }, "🏆"), /*#__PURE__*/React.createElement("h2", {
+    className: "text-3xl font-black"
+  }, getText("correct"))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

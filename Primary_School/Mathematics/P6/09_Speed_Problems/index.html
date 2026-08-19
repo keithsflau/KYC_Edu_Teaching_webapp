@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小六數學：速率應用題 | Speed Problems</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Speed Word Problems",
+    zh: "速率應用題",
+    ja: "速さの文章題",
+    ko: "속력 문장제",
+    es: "Problemas de Velocidad",
+    de: "Geschwindigkeitsaufgaben",
+    fi: "Nopeustehtävät",
+    fr: "Problèmes de vitesse",
+    ar: "مسائل السرعة",
+    it: "Problemi di Velocità"
+  },
+  findDist: {
+    en: "Find Distance",
+    zh: "求距離",
+    ja: "距離を求める",
+    ko: "거리 구하기",
+    es: "Encontrar Distancia",
+    de: "Distanz finden",
+    fi: "Etsi matka",
+    fr: "Trouver Distance",
+    ar: "إيجاد المسافة",
+    it: "Trova Distanza"
+  },
+  findTime: {
+    en: "Find Time",
+    zh: "求時間",
+    ja: "時間を求める",
+    ko: "시간 구하기",
+    es: "Encontrar Tiempo",
+    de: "Zeit finden",
+    fi: "Etsi aika",
+    fr: "Trouver Temps",
+    ar: "إيجاد الزمن",
+    it: "Trova Tempo"
+  },
+  findSpeed: {
+    en: "Find Speed",
+    zh: "求速率",
+    ja: "速さを求める",
+    ko: "속력 구하기",
+    es: "Encontrar Velocidad",
+    de: "Geschwindigkeit finden",
+    fi: "Etsi nopeus",
+    fr: "Trouver Vitesse",
+    ar: "إيجاد السرعة",
+    it: "Trova Velocità"
+  },
+  carTravels: {
+    en: "A car travels at",
+    zh: "一輛車以",
+    ja: "車が",
+    ko: "차가",
+    es: "Un coche viaja a",
+    de: "Ein Auto fährt mit",
+    fi: "Auto kulkee",
+    fr: "Une voiture roule à",
+    ar: "تسير سيارة بسرعة",
+    it: "Un'auto viaggia a"
+  },
+  forTime: {
+    en: "for",
+    zh: "行駛",
+    ja: "の間",
+    ko: "동안",
+    es: "durante",
+    de: "für",
+    fi: "ajan",
+    fr: "pendant",
+    ar: "لمدة",
+    it: "per"
+  },
+  covers: {
+    en: "covers",
+    zh: "行駛了",
+    ja: "移動する",
+    ko: "이동함",
+    es: "recorre",
+    de: "legt zurück",
+    fi: "kattaa",
+    fr: "couvre",
+    ar: "يغطي",
+    it: "copre"
+  },
+  questionDist: {
+    en: "How far did it go?",
+    zh: "它行駛了多遠？",
+    ja: "どれくらい進んだ？",
+    ko: "얼마나 갔나요?",
+    es: "¿Qué distancia recorrió?",
+    de: "Wie weit ist es gefahren?",
+    fi: "Kuinka kauas se meni?",
+    fr: "Quelle distance a-t-elle parcourue ?",
+    ar: "كم المسافة التي قطعتها؟",
+    it: "Quanto è andata lontano?"
+  },
+  questionTime: {
+    en: "How long did it take?",
+    zh: "需時多久？",
+    ja: "どれくらいかかった？",
+    ko: "얼마나 걸렸나요?",
+    es: "¿Cuánto tiempo tomó?",
+    de: "Wie lange hat es gedauert?",
+    fi: "Kauanko se kesti?",
+    fr: "Combien de temps cela a-t-il pris ?",
+    ar: "كم استغرقت من الوقت؟",
+    it: "Quanto tempo ci è voluto?"
+  },
+  questionSpeed: {
+    en: "What was the speed?",
+    zh: "速率是多少？",
+    ja: "速さは？",
+    ko: "속력은 얼마인가요?",
+    es: "¿Cuál fue la velocidad?",
+    de: "Was war die Geschwindigkeit?",
+    fi: "Mikä oli nopeus?",
+    fr: "Quelle était la vitesse ?",
+    ar: "كم كانت السرعة؟",
+    it: "Qual era la velocità?"
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [mode, setMode] = useState("findDist");
+  const [val1, setVal1] = useState(60); // Speed or Speed or Time
+  const [val2, setVal2] = useState(2); // Time or Dist or Dist
+
+  // Mapping inputs based on mode
+  // findDist: val1=Speed, val2=Time
+  // findTime: val1=Speed, val2=Dist
+  // findSpeed: val1=Time, val2=Dist
+
+  const getResult = () => {
+    if (mode === "findDist") return val1 * val2; // S * T
+    if (mode === "findTime") return val2 / val1; // D / S
+    if (mode === "findSpeed") return val2 / val1; // D / T
+    return 0;
+  };
+  const result = getResult();
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4 font-sans bg-slate-900 text-white"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-5xl flex justify-between items-center mb-10"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-black text-amber-400 drop-shadow-[0_0_15px_rgba(251,191,36,0.5)]"
+  }, "🚀 ", getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "flex bg-slate-800/80 p-1.5 rounded-xl border border-white/10 flex-wrap justify-end gap-1 max-w-[50%]"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-amber-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white hover:bg-white/5"}`
+  }, l)))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-4xl flex flex-col gap-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-2 rounded-2xl flex p-1 bg-slate-800/50"
+  }, [{
+    id: "findDist",
+    icon: "📏"
+  }, {
+    id: "findTime",
+    icon: "⏱️"
+  }, {
+    id: "findSpeed",
+    icon: "⚡"
+  }].map(m => /*#__PURE__*/React.createElement("button", {
+    key: m.id,
+    onClick: () => setMode(m.id),
+    className: `flex-1 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${mode === m.id ? "bg-amber-500 text-slate-900 shadow-lg" : "text-slate-400 hover:bg-white/5"}`
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-xl"
+  }, m.icon), /*#__PURE__*/React.createElement("span", null, getText(m.id, lang))))), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-8 rounded-3xl relative overflow-hidden"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-0 right-0 p-8 opacity-10 text-9xl"
+  }, "🏎️"), /*#__PURE__*/React.createElement("div", {
+    className: "text-xl md:text-2xl font-bold leading-loose text-slate-200"
+  }, mode === "findDist" && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", null, getText("carTravels", lang)), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: val1,
+    onChange: e => setVal1(Math.max(1, parseFloat(e.target.value) || 1)),
+    className: "inline-block w-24 mx-2 bg-slate-800 border-b-2 border-amber-500 text-center text-amber-400 outline-none"
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "text-amber-400"
+  }, "km/h"), /*#__PURE__*/React.createElement("span", null, " ", getText("forTime", lang), " "), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: val2,
+    onChange: e => setVal2(Math.max(0.1, parseFloat(e.target.value) || 1)),
+    className: "inline-block w-24 mx-2 bg-slate-800 border-b-2 border-lime-500 text-center text-lime-400 outline-none"
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "text-lime-400"
+  }, "h"), ".", /*#__PURE__*/React.createElement("div", {
+    className: "mt-4 text-amber-200"
+  }, getText("questionDist", lang))), mode === "findTime" && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", null, getText("carTravels", lang)), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: val1,
+    onChange: e => setVal1(Math.max(1, parseFloat(e.target.value) || 1)),
+    className: "inline-block w-24 mx-2 bg-slate-800 border-b-2 border-amber-500 text-center text-amber-400 outline-none"
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "text-amber-400"
+  }, "km/h"), /*#__PURE__*/React.createElement("span", null, " ", getText("covers", lang), " "), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: val2,
+    onChange: e => setVal2(Math.max(1, parseFloat(e.target.value) || 1)),
+    className: "inline-block w-24 mx-2 bg-slate-800 border-b-2 border-blue-500 text-center text-blue-400 outline-none"
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "text-blue-400"
+  }, "km"), ".", /*#__PURE__*/React.createElement("div", {
+    className: "mt-4 text-lime-200"
+  }, getText("questionTime", lang))), mode === "findSpeed" && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", null, getText("carTravels", lang)), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: val2,
+    onChange: e => setVal2(Math.max(1, parseFloat(e.target.value) || 1)),
+    className: "inline-block w-24 mx-2 bg-slate-800 border-b-2 border-blue-500 text-center text-blue-400 outline-none"
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "text-blue-400"
+  }, "km"), /*#__PURE__*/React.createElement("span", null, " ", getText("forTime", lang), " "), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: val1,
+    onChange: e => setVal1(Math.max(0.1, parseFloat(e.target.value) || 1)),
+    className: "inline-block w-24 mx-2 bg-slate-800 border-b-2 border-lime-500 text-center text-lime-400 outline-none"
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "text-lime-400"
+  }, "h"), ".", /*#__PURE__*/React.createElement("div", {
+    className: "mt-4 text-amber-200"
+  }, getText("questionSpeed", lang))))), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-1 md:grid-cols-2 gap-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-8 rounded-3xl bg-slate-800/50 flex flex-col justify-center"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-slate-400 font-bold uppercase mb-4 text-sm"
+  }, "Formula"), /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-mono text-white"
+  }, mode === "findDist" && /*#__PURE__*/React.createElement(React.Fragment, null, val1, " ", /*#__PURE__*/React.createElement("span", {
+    className: "text-amber-500"
+  }, "×"), " ", val2), mode === "findTime" && /*#__PURE__*/React.createElement(React.Fragment, null, val2, " ", /*#__PURE__*/React.createElement("span", {
+    className: "text-amber-500"
+  }, "÷"), " ", val1), mode === "findSpeed" && /*#__PURE__*/React.createElement(React.Fragment, null, val2, " ", /*#__PURE__*/React.createElement("span", {
+    className: "text-amber-500"
+  }, "÷"), " ", val1))), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-8 rounded-3xl border-l-4 border-amber-500 bg-amber-500/10 flex flex-col justify-center items-center"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-amber-400 font-bold uppercase mb-2"
+  }, "Answer"), /*#__PURE__*/React.createElement("div", {
+    className: "text-5xl font-black text-white"
+  }, parseFloat(result.toFixed(2)), /*#__PURE__*/React.createElement("span", {
+    className: "text-xl ml-2 text-slate-300"
+  }, mode === "findDist" && "km", mode === "findTime" && "h", mode === "findSpeed" && "km/h"))))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小四數學：分數加減 (同分母) | Fractions +/-</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #f0fdf4 0%, #15803d 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState
+} = React;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Fraction Addition & Subtraction (Same Denominator)",
+    zh: "分數加減 (同分母)",
+    ja: "分数の足し算と引き算 (同分母)",
+    ko: "분수 덧셈 및 뺄셈 (동일 분모)",
+    es: "Suma y Resta de Fracciones (Mismo Denominador)",
+    de: "Bruchrechnung Addition & Subtraktion (Gleicher Nenner)",
+    fi: "Murtolukujen yhteen- ja vähennyslasku (sama nimittäjä)",
+    fr: "Addition et soustraction de fractions (même dénominateur)",
+    ar: "جمع وطرح الكسور (نفس المقام)",
+    it: "Addizione e sottrazione di frazioni (stesso denominatore)"
+  },
+  denominatorSetting: {
+    en: "Denominator:",
+    zh: "分母設定：",
+    ja: "分母設定：",
+    ko: "분모 설정:",
+    es: "Denominador:",
+    de: "Nenner:",
+    fi: "Nimittäjä:",
+    fr: "Dénominateur :",
+    ar: "المقام:",
+    it: "Denominatore:"
+  }
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [d, setD] = useState(8); // Denominator
+  const [n1, setN1] = useState(2);
+  const [n2, setN2] = useState(3);
+  const [op, setOp] = useState("+");
+  const maxN2 = op === "+" ? Math.max(0, d - n1) : n1;
+  const safeN2 = Math.min(Math.max(0, n2), maxN2);
+  const resN = op === "+" ? n1 + safeN2 : n1 - safeN2;
+  const getText = key => t[key][lang] || t[key]["en"];
+  const clampN1 = v => {
+    const n = Number.isFinite(v) ? v : 0;
+    return Math.min(Math.max(0, n), d);
+  };
+  const clampN2 = (v, nextOp = op, nextN1 = n1, nextD = d) => {
+    const n = Number.isFinite(v) ? v : 0;
+    const max = nextOp === "+" ? Math.max(0, nextD - nextN1) : nextN1;
+    return Math.min(Math.max(0, n), max);
+  };
+  const toggleOp = () => {
+    const next = op === "+" ? "-" : "+";
+    setOp(next);
+    setN2(n => clampN2(n, next, n1, d));
+  };
+  const Pie = ({
+    num,
+    den,
+    color
+  }) => /*#__PURE__*/React.createElement("svg", {
+    width: "100",
+    height: "100",
+    viewBox: "0 0 100 100",
+    className: "transform -rotate-90"
+  }, /*#__PURE__*/React.createElement("circle", {
+    cx: "50",
+    cy: "50",
+    r: "48",
+    fill: "white",
+    stroke: "#e5e7eb",
+    strokeWidth: "2"
+  }), [...Array(den)].map((_, i) => {
+    const deg = 360 / den;
+    const start = i * deg;
+    const end = (i + 1) * deg;
+    // Using conic gradient logic or paths. Path is better for coloring specific slices.
+    // Simple path for slice: M 50 50 L x1 y1 A 48 48 0 0 1 x2 y2 Z
+    const r = 48;
+    const x1 = 50 + r * Math.cos(Math.PI * 2 * (start / 360));
+    const y1 = 50 + r * Math.sin(Math.PI * 2 * (start / 360));
+    const x2 = 50 + r * Math.cos(Math.PI * 2 * (end / 360));
+    const y2 = 50 + r * Math.sin(Math.PI * 2 * (end / 360));
+    // Large arc flag
+    const largeArc = deg > 180 ? 1 : 0;
+    const isFilled = i < num;
+
+    // Full circle case
+    if (den === 1) {
+      return /*#__PURE__*/React.createElement("circle", {
+        cx: "50",
+        cy: "50",
+        r: "48",
+        fill: isFilled ? color : "transparent",
+        stroke: "white",
+        strokeWidth: "1"
+      });
+    }
+    return /*#__PURE__*/React.createElement("path", {
+      key: i,
+      d: `M 50 50 L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`,
+      fill: isFilled ? color : "transparent",
+      stroke: "white",
+      strokeWidth: "1"
+    });
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "50",
+    cy: "50",
+    r: "48",
+    fill: "none",
+    stroke: "#e5e7eb",
+    strokeWidth: "2"
+  }));
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-8 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-white mb-8 mt-8"
+  }, "🍰 ", getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/95 backdrop-blur-md rounded-3xl p-8 shadow-2xl max-w-3xl w-full"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-center items-center gap-4 md:gap-8 mb-12 flex-wrap"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    min: "0",
+    max: d,
+    value: n1,
+    onChange: e => {
+      const nextN1 = clampN1(parseInt(e.target.value, 10));
+      setN1(nextN1);
+      setN2(n => clampN2(n, op, nextN1, d));
+    },
+    className: "w-20 text-4xl font-black text-center border-b-4 border-green-500 outline-none"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black text-slate-500 mt-2"
+  }, d)), /*#__PURE__*/React.createElement("button", {
+    onClick: toggleOp,
+    className: "w-16 h-16 rounded-full bg-slate-100 hover:bg-slate-200 text-4xl font-black flex items-center justify-center"
+  }, op), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    min: "0",
+    max: maxN2,
+    value: safeN2,
+    onChange: e => setN2(clampN2(parseInt(e.target.value, 10))),
+    className: "w-20 text-4xl font-black text-center border-b-4 border-green-500 outline-none"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black text-slate-500 mt-2"
+  }, d)), /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black text-slate-400"
+  }, "="), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-5xl font-black text-green-600 border-b-4 border-green-600 px-4 mb-2"
+  }, resN), /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black text-slate-500"
+  }, d))), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-around items-center bg-slate-50 rounded-2xl p-8 flex-wrap gap-4"
+  }, /*#__PURE__*/React.createElement(Pie, {
+    num: n1,
+    den: d,
+    color: "#4ade80"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black text-slate-300"
+  }, op), /*#__PURE__*/React.createElement(Pie, {
+    num: safeN2,
+    den: d,
+    color: "#4ade80"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black text-slate-300"
+  }, "="), /*#__PURE__*/React.createElement(Pie, {
+    num: resN,
+    den: d,
+    color: "#22c55e"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "mt-8 text-center text-slate-500 font-bold"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "mr-2"
+  }, getText("denominatorSetting")), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "3",
+    max: "12",
+    value: d,
+    onChange: e => {
+      const nextD = parseInt(e.target.value, 10);
+      setD(nextD);
+      setN1(n => {
+        const cappedN1 = Math.min(n, nextD);
+        setN2(n2prev => clampN2(n2prev, op, cappedN1, nextD));
+        return cappedN1;
+      });
+    }
+  }), " ", d)));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小一常識：浮沉實驗室 | Sink or Float</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #e0f2fe 0%, #0ea5e9 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Sink or Float?",
+    zh: "浮沈實驗室",
+    ja: "沈む？浮く？",
+    ko: "가라앉을까요, 뜰까요?",
+    es: "¿Hundirse o flotar?",
+    de: "Sinken oder Schwimmen?",
+    fi: "Uppoaako vai kelluuko?",
+    fr: "Couler ou flotter ?",
+    ar: "يغرق أم يطفو؟",
+    it: "Affondare o galleggiare?"
+  },
+  instruction: {
+    en: "Will this object sink or float?",
+    zh: "這件物件會浮還是沉？",
+    ja: "この物体は沈みますか、それとも浮きますか？",
+    ko: "이 물체는 가라앉을까요, 아니면 뜰까요?",
+    es: "¿Este objeto se hundirá o flotará?",
+    de: "Wird dieses Objekt sinken oder schwimmen?",
+    fi: "Uppoaako vai kelluuko tämä esine?",
+    fr: "Cet objet va-t-il couler ou flotter ?",
+    ar: "هل سيغرق هذا الجسم أم يطفو؟",
+    it: "Questo oggetto affonderà o galleggerà?"
+  },
+  sink: {
+    en: "Sink",
+    zh: "沉下去 ↓",
+    es: "Hundirse",
+    de: "Sinken",
+    fi: "Uppoaa",
+    fr: "Couler",
+    ar: "يغرق",
+    it: "Affondare"
+  },
+  float: {
+    en: "Float",
+    zh: "浮起來 ↑",
+    es: "Flotar",
+    de: "Schwimmen",
+    fi: "Kelluu",
+    fr: "Flotter",
+    ar: "يطفو",
+    it: "Galleggiare"
+  },
+  correct: {
+    en: "Correct!",
+    zh: "答對了！",
+    es: "¡Correcto!",
+    de: "Richtig!",
+    fi: "Oikein!",
+    fr: "Correct !",
+    ar: "صحيح!",
+    it: "Corretto!"
+  },
+  wrong: {
+    en: "Oops! Try to remember.",
+    zh: "哎呀！記住結果哦。",
+    es: "¡Vaya! Intenta recordar.",
+    de: "Hoppla! Versuch dich zu erinnern.",
+    fi: "Hups! Yritä muistaa.",
+    fr: "Oups ! Essayez de vous souvenir.",
+    ar: "أوبس! حاول أن تتذكر.",
+    it: "Ops! Cerca di ricordare."
+  },
+  next: {
+    en: "Next Object",
+    zh: "下一個物件",
+    es: "Siguiente objeto",
+    de: "Nächstes Objekt",
+    fi: "Seuraava esine",
+    fr: "Objet suivant",
+    ar: "الجسم التالي",
+    it: "Oggetto successivo"
+  },
+  completed: {
+    en: "Great Scientist!",
+    zh: "小小科學家！",
+    es: "¡Gran científico!",
+    de: "Toller Wissenschaftler!",
+    fi: "Hieno tieteilijä!",
+    fr: "Grand scientifique !",
+    ar: "عالم عظيم!",
+    it: "Grande scienziato!"
+  },
+  restart: {
+    en: "Experiment Again",
+    zh: "再做一次實驗",
+    es: "Experimentar de nuevo",
+    de: "Wieder experimentieren",
+    fi: "Kokeile uudelleen",
+    fr: "Expérimenter à nouveau",
+    ar: "التجربة مرة أخرى",
+    it: "Sperimenta di nuovo"
+  },
+  stone: {
+    en: "Stone",
+    zh: "石頭",
+    es: "Piedra",
+    de: "Stein",
+    fi: "Kivi",
+    fr: "Pierre",
+    ar: "حجر",
+    it: "Pietra"
+  },
+  leaf: {
+    en: "Leaf",
+    zh: "樹葉",
+    es: "Hoja",
+    de: "Blatt",
+    fi: "Lehti",
+    fr: "Feuille",
+    ar: "ورقة",
+    it: "Foglia"
+  },
+  coin: {
+    en: "Coin",
+    zh: "硬幣",
+    es: "Moneda",
+    de: "Münze",
+    fi: "Kolikko",
+    fr: "Pièce",
+    ar: "عملة",
+    it: "Moneta"
+  },
+  duck: {
+    en: "Rubber Duck",
+    zh: "橡皮鴨",
+    es: "Pato de goma",
+    de: "Gummiente",
+    fi: "Kumiankka",
+    fr: "Canard en caoutchouc",
+    ar: "بطة مطاطية",
+    it: "Papera di gomma"
+  },
+  key: {
+    en: "Key",
+    zh: "鑰匙",
+    es: "Llave",
+    de: "Schlüssel",
+    fi: "Avain",
+    fr: "Clé",
+    ar: "مفتاح",
+    it: "Chiave"
+  },
+  sponge: {
+    en: "Sponge",
+    zh: "海綿",
+    es: "Esponja",
+    de: "Schwamm",
+    fi: "Sieni",
+    fr: "Éponge",
+    ar: "إسفنجة",
+    it: "Spugna"
+  },
+  spoon: {
+    en: "Metal Spoon",
+    zh: "鐵匙羹",
+    es: "Cuchara de metal",
+    de: "Metalllöffel",
+    fi: "Metallilusikka",
+    fr: "Cuillère en métal",
+    ar: "ملعقة معدنية",
+    it: "Cucchiaio di metallo"
+  },
+  boat: {
+    en: "Paper Boat",
+    zh: "紙船",
+    es: "Barco de papel",
+    de: "Papierboot",
+    fi: "Paperivene",
+    fr: "Bateau en papier",
+    ar: "قارب ورقي",
+    it: "Barca di carta"
+  }
+};
+const items = [{
+  id: "stone",
+  icon: "🪨",
+  result: "sink"
+}, {
+  id: "leaf",
+  icon: "🍃",
+  result: "float"
+}, {
+  id: "coin",
+  icon: "🪙",
+  result: "sink"
+}, {
+  id: "duck",
+  icon: "🦆",
+  result: "float"
+}, {
+  id: "key",
+  icon: "🔑",
+  result: "sink"
+}, {
+  id: "sponge",
+  icon: "🧽",
+  result: "float"
+}, {
+  id: "spoon",
+  icon: "🥄",
+  result: "sink"
+}, {
+  id: "boat",
+  icon: "⛵",
+  result: "float"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [queue, setQueue] = useState([]);
+  const [currentItem, setCurrentItem] = useState(null);
+  const [state, setState] = useState("predict"); // predict, animating, result
+  const [feedback, setFeedback] = useState("");
+  const getText = key => t[key][lang] || t[key]["en"];
+  useEffect(() => {
+    reset();
+  }, []);
+  const reset = () => {
+    const q = [...items].sort(() => Math.random() - 0.5);
+    setQueue(q);
+    setCurrentItem(q[0]);
+    setState("predict");
+    setFeedback("");
+  };
+  const handlePredict = prediction => {
+    if (state !== "predict") return;
+    setState("animating");
+    const isCorrect = prediction === currentItem.result;
+
+    // Animation hold
+    setTimeout(() => {
+      setFeedback(isCorrect ? "correct" : "wrong");
+      setState("result");
+    }, 2000); // 2s Drop animation
+  };
+  const next = () => {
+    const nextIdx = items.indexOf(currentItem); // Not reliable with shuffled queue?
+    // Use queue logic
+    const currentIndex = queue.indexOf(currentItem);
+    if (currentIndex < queue.length - 1) {
+      setCurrentItem(queue[currentIndex + 1]);
+      setState("predict");
+      setFeedback("");
+    } else {
+      setState("completed");
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-blue-900 mb-4 mt-8 drop-shadow-sm"
+  }, "🧪 ", getText("title")), state === "completed" ? /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/90 p-12 rounded-3xl shadow-xl text-center mt-12"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-8xl mb-4"
+  }, "🏆"), /*#__PURE__*/React.createElement("h2", {
+    className: "text-3xl font-black text-blue-800 mb-6"
+  }, getText("completed")), /*#__PURE__*/React.createElement("button", {
+    onClick: reset,
+    className: "bg-blue-500 text-white px-10 py-4 rounded-full font-black text-xl hover:bg-blue-600 shadow-xl"
+  }, getText("restart"), " 🔄")) : /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center w-full max-w-2xl"
+  }, currentItem && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    className: "relative w-80 h-96 bg-white/30 rounded-b-3xl border-x-8 border-b-8 border-white/50 backdrop-blur shadow-2xl mb-8 overflow-hidden"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-0 w-full h-2/3 bg-blue-400/50 border-t border-blue-300"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full h-2 bg-blue-300 opacity-50"
+  })), /*#__PURE__*/React.createElement(motion.div, {
+    className: "absolute left-1/2 -translate-x-1/2 text-8xl z-10",
+    initial: {
+      top: "20px"
+    },
+    animate: {
+      top: state === "predict" ? "20px" : state === "animating" || state === "result" ? currentItem.result === "sink" ? "300px" : "120px" : "20px"
+    },
+    transition: {
+      type: "spring",
+      stiffness: 100,
+      damping: 10,
+      duration: 2 // Slower for effect
+    }
+  }, currentItem.icon), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-2 left-0 w-full text-center font-bold text-slate-600"
+  }, getText(currentItem.id))), state === "predict" && /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center w-full"
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "text-xl font-bold text-white mb-6 bg-blue-800/20 px-4 py-2 rounded-lg"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-8 w-full max-w-md"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => handlePredict("float"),
+    className: "flex-1 bg-white hover:bg-blue-50 text-blue-500 p-6 rounded-2xl shadow-lg border-b-8 border-blue-200 active:border-b-0 active:translate-y-2 transition-all font-black text-xl"
+  }, "🌊 ", getText("float")), /*#__PURE__*/React.createElement("button", {
+    onClick: () => handlePredict("sink"),
+    className: "flex-1 bg-white hover:bg-slate-50 text-slate-600 p-6 rounded-2xl shadow-lg border-b-8 border-slate-300 active:border-b-0 active:translate-y-2 transition-all font-black text-xl"
+  }, "⬇️ ", getText("sink")))), state === "result" && /*#__PURE__*/React.createElement("div", {
+    className: "text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: `text-3xl font-black mb-4 ${feedback === "correct" ? "text-white drop-shadow-md" : "text-red-200"}`
+  }, getText(feedback)), /*#__PURE__*/React.createElement("button", {
+    onClick: next,
+    className: "bg-yellow-400 text-yellow-900 px-12 py-4 rounded-full font-black text-2xl hover:bg-yellow-500 shadow-xl animate-bounce"
+  }, getText("next"), " ➡️")))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

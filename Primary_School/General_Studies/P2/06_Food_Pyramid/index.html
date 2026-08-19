@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小二常識：食物金字塔 | Food Pyramid</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #fefce8 0%, #fde047 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Food Pyramid",
+    zh: "食物金字塔",
+    ja: "食品ピラミッド",
+    ko: "식품 피라미드",
+    es: "Pirámide Alimenticia",
+    de: "Lebensmittelpyramide",
+    fi: "Ruokapyramidi",
+    fr: "Pyramide Alimentaire",
+    ar: "الهرم الغذائي",
+    it: "Piramide Alimentare"
+  },
+  instruction: {
+    en: "Drag the food to the correct level!",
+    zh: "把食物拖到正確的層級！",
+    ja: "食べ物を正しいレベルにドラッグしてください！",
+    ko: "음식을 올바른 단계로 드래그하세요!",
+    es: "¡Arrastra la comida al nivel correcto!",
+    de: "Zieh das Essen auf die richtige Ebene!",
+    fi: "Raahaa ruoka oikealle tasolle!",
+    fr: "Faites glisser les aliments au bon niveau !",
+    ar: "اسحب الطعام إلى المستوى الصحيح!",
+    it: "Trascina il cibo al livello corretto!"
+  },
+  level1: {
+    en: "Eat Most (Grains)",
+    zh: "吃最多 (五穀類)",
+    ja: "最も食べる (穀物)",
+    ko: "가장 많이 드세요 (곡물)",
+    es: "Comer Más (Granos)",
+    de: "Am meisten essen (Getreide)",
+    fi: "Syö eniten (Viljat)",
+    fr: "Manger le plus (Céréales)",
+    ar: "تأكل أكثر (حبوب)",
+    it: "Mangia di Più (Cereali)"
+  },
+  level2: {
+    en: "Eat More (Fruit & Veg)",
+    zh: "吃多些 (蔬果類)",
+    ja: "多めに食べる (野菜・果物)",
+    ko: "많이 드세요 (과일 및 채소)",
+    es: "Comer Mucho (Frutas/Verduras)",
+    de: "Viel essen (Obst & Gemüse)",
+    fi: "Syö paljon (Hedelmät & Vihannekset)",
+    fr: "Manger beaucoup (Fruits et Légumes)",
+    ar: "تأكل كثيرا (فواكه وخضروات)",
+    it: "Mangia Molto (Frutta e Verdura)"
+  },
+  level3: {
+    en: "Eat Moderately (Meat/Dairy)",
+    zh: "吃適量 (肉奶類)",
+    ja: "適度に食べる (肉・乳製品)",
+    ko: "적당히 드세요 (고기/유제품)",
+    es: "Comer Moderadamente (Carne/Lácteos)",
+    de: "Mäßig essen (Fleisch/Milchprodukte)",
+    fi: "Syö kohtuullisesti (Liha/Maitotuotteet)",
+    fr: "Manger modérément (Viande/Laitages)",
+    ar: "تأكل باعتدال (لحم/ألبان)",
+    it: "Mangia Moderatamente (Carne/Latticini)"
+  },
+  level4: {
+    en: "Eat Less (Fat/Sugar)",
+    zh: "吃最少 (油糖鹽)",
+    ja: "少なく食べる (脂肪・糖分)",
+    ko: "적게 드세요 (지방/설탕)",
+    es: "Comer Menos (Grasa/Azúcar)",
+    de: "Wenig essen (Fett/Zucker)",
+    fi: "Syö vähän (Rasva/Sokeri)",
+    fr: "Manger moins (Gras/Sucre)",
+    ar: "تأكل أقل (دهون/سكر)",
+    it: "Mangia Meno (Grassi/Zucchero)"
+  },
+  check: {
+    en: "Check",
+    zh: "檢查",
+    ja: "確認",
+    ko: "확인",
+    es: "Comprobar",
+    de: "Prüfen",
+    fi: "Tarkista",
+    fr: "Vérifier",
+    ar: "تحقق",
+    it: "Controlla"
+  },
+  reset: {
+    en: "Reset",
+    zh: "重置",
+    ja: "リセット",
+    ko: "리셋",
+    es: "Reiniciar",
+    de: "Zurücksetzen",
+    fi: "Nollaa",
+    fr: "Réinitialiser",
+    ar: "إعادة تعيين",
+    it: "Resetta"
+  },
+  correct: {
+    en: "Healthy Choice!",
+    zh: "健康之選！",
+    ja: "ヘルシーな選択！",
+    ko: "건강한 선택!",
+    es: "¡Elección Saludable!",
+    de: "Gesunde Wahl!",
+    fi: "Terveellinen valinta!",
+    fr: "Choix Sain !",
+    ar: "خيار صحي!",
+    it: "Scelta Salutare!"
+  },
+  wrong: {
+    en: "Some items are misplaced.",
+    zh: "有些食物放錯位置了。",
+    ja: "いくつかのアイテムが間違っています。",
+    ko: "일부 항목이 잘못 배치되었습니다.",
+    es: "Algunos artículos están mal colocados.",
+    de: "Einige Gegenstände sind falsch platziert.",
+    fi: "Jotkut tavarat ovat väärässä paikassa.",
+    fr: "Certains objets sont mal placés.",
+    ar: "بعض العناصر في غير مكانها.",
+    it: "Alcuni oggetti sono fuori posto."
+  },
+  rice: {
+    en: "Rice",
+    zh: "米飯",
+    ja: "ご飯",
+    ko: "밥",
+    es: "Arroz",
+    de: "Reis",
+    fi: "Riisi",
+    fr: "Riz",
+    ar: "أرز",
+    it: "Riso"
+  },
+  bread: {
+    en: "Bread",
+    zh: "麵包",
+    ja: "パン",
+    ko: "빵",
+    es: "Pan",
+    de: "Brot",
+    fi: "Leipä",
+    fr: "Pain",
+    ar: "خبز",
+    it: "Pane"
+  },
+  noodle: {
+    en: "Noodles",
+    zh: "麵條",
+    ja: "麺",
+    ko: "국수",
+    es: "Fideos",
+    de: "Nudeln",
+    fi: "Nuudelit",
+    fr: "Nouilles",
+    ar: "معكرونة",
+    it: "Tagliatelle"
+  },
+  apple: {
+    en: "Apple",
+    zh: "蘋果",
+    ja: "りんご",
+    ko: "사과",
+    es: "Manzana",
+    de: "Apfel",
+    fi: "Omena",
+    fr: "Pomme",
+    ar: "تفاحة",
+    it: "Mela"
+  },
+  carrot: {
+    en: "Carrot",
+    zh: "紅蘿蔔",
+    ja: "人参",
+    ko: "당근",
+    es: "Zanahoria",
+    de: "Karotte",
+    fi: "Porkkana",
+    fr: "Carotte",
+    ar: "جزرة",
+    it: "Carota"
+  },
+  banana: {
+    en: "Banana",
+    zh: "香蕉",
+    ja: "バナナ",
+    ko: "바나나",
+    es: "Plátano",
+    de: "Banane",
+    fi: "Banaani",
+    fr: "Banane",
+    ar: "موز",
+    it: "Banana"
+  },
+  fish: {
+    en: "Fish",
+    zh: "魚",
+    ja: "魚",
+    ko: "생선",
+    es: "Pescado",
+    de: "Fisch",
+    fi: "Kala",
+    fr: "Poisson",
+    ar: "سمك",
+    it: "Pesce"
+  },
+  egg: {
+    en: "Egg",
+    zh: "雞蛋",
+    ja: "卵",
+    ko: "달걀",
+    es: "Huevo",
+    de: "Ei",
+    fi: "Kananmuna",
+    fr: "Œuf",
+    ar: "بيض",
+    it: "Uovo"
+  },
+  milk: {
+    en: "Milk",
+    zh: "牛奶",
+    ja: "牛乳",
+    ko: "우유",
+    es: "Leche",
+    de: "Milch",
+    fi: "Maito",
+    fr: "Lait",
+    ar: "حليب",
+    it: "Latte"
+  },
+  candy: {
+    en: "Candy",
+    zh: "糖果",
+    ja: "キャンディ",
+    ko: "사탕",
+    es: "Dulces",
+    de: "Süßigkeiten",
+    fi: "Karkki",
+    fr: "Bonbon",
+    ar: "حلوى",
+    it: "Caramella"
+  },
+  cake: {
+    en: "Cake",
+    zh: "蛋糕",
+    ja: "ケーキ",
+    ko: "케이크",
+    es: "Pastel",
+    de: "Kuchen",
+    fi: "Kakku",
+    fr: "Gâteau",
+    ar: "كعكة",
+    it: "Torta"
+  },
+  fries: {
+    en: "Fries",
+    zh: "薯條",
+    ja: "フライドポテト",
+    ko: "감자튀김",
+    es: "Papas Fritas",
+    de: "Pommes",
+    fi: "Ranskalaiset",
+    fr: "Frites",
+    ar: "بطاطس مقلية",
+    it: "Patatine Fritte"
+  }
+};
+const levels = [{
+  id: "level4",
+  label: "level4",
+  color: "bg-red-400 border-red-600",
+  shape: "clip-path-triangle-top",
+  correct: ["candy", "cake", "fries"]
+}, {
+  id: "level3",
+  label: "level3",
+  color: "bg-blue-400 border-blue-600",
+  shape: "clip-path-trapezoid",
+  correct: ["fish", "egg", "milk"]
+}, {
+  id: "level2",
+  label: "level2",
+  color: "bg-green-400 border-green-600",
+  shape: "clip-path-trapezoid",
+  correct: ["apple", "carrot", "banana"]
+}, {
+  id: "level1",
+  label: "level1",
+  color: "bg-yellow-400 border-yellow-600",
+  shape: "clip-path-trapezoid-bottom",
+  correct: ["rice", "bread", "noodle"]
+}];
+const foods = [{
+  id: "rice",
+  icon: "🍚"
+}, {
+  id: "bread",
+  icon: "🍞"
+}, {
+  id: "noodle",
+  icon: "🍜"
+}, {
+  id: "apple",
+  icon: "🍎"
+}, {
+  id: "carrot",
+  icon: "🥕"
+}, {
+  id: "banana",
+  icon: "🍌"
+}, {
+  id: "fish",
+  icon: "🐟"
+}, {
+  id: "egg",
+  icon: "🥚"
+}, {
+  id: "milk",
+  icon: "🥛"
+}, {
+  id: "candy",
+  icon: "🍬"
+}, {
+  id: "cake",
+  icon: "🍰"
+}, {
+  id: "fries",
+  icon: "🍟"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [placements, setPlacements] = useState({}); // foodId -> levelId
+  const [available, setAvailable] = useState([]);
+  const [status, setStatus] = useState(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+  useEffect(() => {
+    reset();
+  }, []);
+  const reset = () => {
+    setAvailable(foods.map(f => f.id).sort(() => Math.random() - 0.5));
+    setPlacements({});
+    setStatus(null);
+  };
+  const handleDrop = (foodId, levelId) => {
+    setPlacements(prev => ({
+      ...prev,
+      [foodId]: levelId
+    }));
+    setAvailable(prev => prev.filter(id => id !== foodId));
+    setStatus(null);
+  };
+  const checkAnswers = () => {
+    const allPlaced = available.length === 0;
+    if (!allPlaced) {
+      setStatus("wrong"); // Or prompt to finish
+      // Actually allow checking anytime? No, logic needs placement.
+    }
+
+    // Check valid
+    let isCorrect = true;
+    Object.entries(placements).forEach(([fId, lId]) => {
+      const level = levels.find(l => l.id === lId);
+      if (!level.correct.includes(fId)) isCorrect = false;
+    });
+    if (isCorrect && allPlaced) setStatus("correct");else setStatus("wrong");
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-amber-800 mb-4 mt-8 drop-shadow-sm bg-white/50 px-6 py-2 rounded-full"
+  }, "🥪 ", getText("title")), /*#__PURE__*/React.createElement("p", {
+    className: "font-bold text-amber-700 mb-6"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col lg:flex-row gap-8 w-full max-w-6xl items-start"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 w-full flex flex-col items-center scale-90 md:scale-100 origin-top"
+  }, levels.map(lvl => /*#__PURE__*/React.createElement("div", {
+    key: lvl.id,
+    className: `w-full flex justify-center py-2 transition-all`,
+    onDragOver: e => e.preventDefault(),
+    onDrop: e => {
+      e.preventDefault();
+      const id = e.dataTransfer.getData("foodId");
+      if (id) handleDrop(id, lvl.id);
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: `${lvl.color} flex flex-wrap items-center justify-center gap-2 transition-colors border-4 border-dashed border-white/40 shadow-xl rounded-xl relative`,
+    style: {
+      width: lvl.id === "level4" ? "200px" : lvl.id === "level3" ? "350px" : lvl.id === "level2" ? "500px" : "650px",
+      height: "140px"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "absolute top-1 left-2 bg-black/20 text-white text-xs font-bold px-2 rounded opacity-80 backdrop-blur-sm pointer-events-none"
+  }, getText(lvl.label)), Object.entries(placements).filter(([_, l]) => l === lvl.id).map(([fId, _]) => {
+    const food = foods.find(f => f.id === fId);
+    return /*#__PURE__*/React.createElement("div", {
+      key: fId,
+      className: "bg-white rounded-full p-2 text-3xl shadow-md cursor-pointer hover:scale-110 transition-transform",
+      onClick: () => {
+        const next = {
+          ...placements
+        };
+        delete next[fId];
+        setPlacements(next);
+        setAvailable(prev => [...prev, fId]);
+      }
+    }, food.icon);
+  }))))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full lg:w-1/3 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/80 p-6 rounded-3xl shadow-lg w-full min-h-[300px]"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "font-bold text-slate-500 mb-4 text-center"
+  }, "Food Items"), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-wrap gap-4 justify-center"
+  }, available.map(fId => {
+    const f = foods.find(x => x.id === fId);
+    return /*#__PURE__*/React.createElement("div", {
+      key: f.id,
+      draggable: true,
+      onDragStart: e => e.dataTransfer.setData("foodId", f.id),
+      className: "w-16 h-16 bg-white rounded-xl shadow-md flex items-center justify-center text-4xl cursor-grab active:cursor-grabbing hover:scale-110 transition-transform border-2 border-slate-100"
+    }, f.icon);
+  }))), status && /*#__PURE__*/React.createElement("div", {
+    className: `mt-4 p-4 rounded-2xl font-black text-center text-xl shadow w-full ${status === "correct" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"}`
+  }, getText(status)), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4 w-full mt-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: checkAnswers,
+    className: "flex-1 bg-amber-500 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-amber-600"
+  }, getText("check")), /*#__PURE__*/React.createElement("button", {
+    onClick: reset,
+    className: "flex-1 bg-slate-200 text-slate-600 py-3 rounded-xl font-bold shadow-lg hover:bg-slate-300"
+  }, getText("reset"))))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

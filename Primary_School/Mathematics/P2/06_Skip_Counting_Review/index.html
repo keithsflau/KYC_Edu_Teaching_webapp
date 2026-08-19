@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小二數學：跳數複習 | Skip Counting Review</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #e0f2fe 0%, #0369a1 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "🐇 Skip Counting Review",
+    zh: "🐇 跳數複習",
+    ja: "🐇 スキップカウント復習",
+    ko: "🐇 건너뛰기 복습",
+    es: "🐇 Contar saltando",
+    de: "🐇 Überspringen Zählen",
+    fi: "🐇 Hyppylaskenta",
+    fr: "🐇 Compter par sauts",
+    ar: "🐇 العد بالقفز",
+    it: "🐇 Saltare il conteggio"
+  },
+  countBy: {
+    en: "Count by {n}",
+    zh: "{n}個一數",
+    ja: "{n}ずつ数える",
+    ko: "{n}씩 세기",
+    es: "Contar de {n} en {n}",
+    de: "Zählen in {n}er Schritten",
+    fi: "Laske {n} välein",
+    fr: "Compter par {n}",
+    ar: "عد بـ {n}",
+    it: "Conta per {n}"
+  },
+  check: {
+    en: "Check",
+    zh: "檢查",
+    ja: "確認",
+    ko: "확인",
+    es: "Comprobar",
+    de: "Prüfen",
+    fi: "Tarkista",
+    fr: "Vérifier",
+    ar: "تحقق",
+    it: "Controlla"
+  }
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [step, setStep] = useState(2);
+  const [seq, setSeq] = useState([]);
+  const [ans, setAns] = useState(null);
+  const [input, setInput] = useState("");
+  const [feedback, setFeedback] = useState("");
+  const newGame = s => {
+    setStep(s);
+    // Start at random reasonable number
+    const start = Math.floor(Math.random() * 80) + 1;
+    const newSeq = [];
+    for (let i = 0; i < 5; i++) {
+      newSeq.push(start + i * s);
+    }
+    setSeq(newSeq.slice(0, 4));
+    setAns(newSeq[4]);
+    setInput("");
+    setFeedback("");
+  };
+  useEffect(() => newGame(2), []);
+  const checkGame = () => {
+    if (parseInt(input, 10) === ans) {
+      setFeedback("CORRECT");
+      setTimeout(() => newGame(step), 1500);
+    } else {
+      setFeedback("WRONG");
+    }
+  };
+  const getCountBy = n => {
+    let txt = t.countBy[lang] || t.countBy["en"];
+    return txt.replace("{n}", n);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-8 flex flex-col items-center justify-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-5xl font-black text-sky-900 mb-8 max-w-2xl text-center"
+  }, t.title[lang] || t.title["en"]), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/90 rounded-3xl p-8 shadow-2xl w-full max-w-4xl text-center border-4 border-sky-300"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-center gap-4 mb-12"
+  }, [2, 5, 10].map(s => /*#__PURE__*/React.createElement("button", {
+    key: s,
+    onClick: () => newGame(s),
+    className: `px-6 py-2 rounded-full font-bold ${step === s ? "bg-sky-500 text-white" : "bg-sky-100 text-sky-600"}`
+  }, getCountBy(s)))), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-center gap-4 md:gap-8 mb-12 flex-wrap"
+  }, seq.map((n, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "w-24 h-24 rounded-full bg-sky-100 border-4 border-sky-400 flex items-center justify-center text-4xl font-black text-sky-800 shadow-md"
+  }, n)), /*#__PURE__*/React.createElement("div", {
+    className: "w-24 h-24 rounded-full bg-white border-4 border-dashed border-sky-400 flex items-center justify-center text-4xl font-black text-sky-300 shadow-md animate-pulse"
+  }, "?")), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-center gap-4"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: input,
+    onChange: e => setInput(e.target.value),
+    className: "w-32 text-center text-4xl font-black p-2 border-4 border-sky-400 rounded-xl",
+    placeholder: "?"
+  }), /*#__PURE__*/React.createElement("button", {
+    onClick: checkGame,
+    className: "px-8 bg-sky-500 text-white rounded-xl font-bold text-xl hover:bg-sky-600 shadow-lg"
+  }, t.check[lang] || t.check["en"])), /*#__PURE__*/React.createElement("div", {
+    className: "h-16 mt-8"
+  }, feedback === "CORRECT" && /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black text-green-500 animate-bounce"
+  }, get("correct", lang)), feedback === "WRONG" && /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black text-red-500 animate-shake"
+  }, get("wrong", lang)))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

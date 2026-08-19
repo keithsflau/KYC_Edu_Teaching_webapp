@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>常識科：電路大師 | Circuit Master</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      }
+      .component-drag {
+        cursor: grab;
+      }
+      .component-drag:active {
+        cursor: grabbing;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect,
+  useRef
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Circuit Master",
+    zh: "電路大師",
+    ja: "回路マスター",
+    ko: "회로 마스터",
+    es: "Maestro de Circuitos",
+    de: "Schaltungsmeister",
+    fi: "Piirimestari",
+    fr: "Maître du Circuit",
+    ar: "سيد الدائرة",
+    it: "Maestro del Circuito"
+  },
+  instruction: {
+    en: "Drag components to build!",
+    zh: "拖動組件來構建！",
+    ja: "コンポーネントをドラッグして構築！",
+    ko: "부품을 드래그하여 만드세요!",
+    es: "¡Arrastra componentes para construir!",
+    de: "Ziehe Komponenten zum Bauen!",
+    fi: "Vedä komponentteja rakentaaksesi!",
+    fr: "Faites glisser les composants pour construire !",
+    ar: "اسحب المكونات للبناء!",
+    it: "Trascina i componenti per costruire!"
+  },
+  battery: {
+    en: "Battery",
+    zh: "電池",
+    ja: "電池",
+    ko: "배터리",
+    es: "Batería",
+    de: "Batterie",
+    fi: "Paristo",
+    fr: "Batterie",
+    ar: "بطارية",
+    it: "Batteria"
+  },
+  bulb: {
+    en: "Bulb",
+    zh: "燈泡",
+    ja: "電球",
+    ko: "전구",
+    es: "Bombilla",
+    de: "Glühbirne",
+    fi: "Lamppu",
+    fr: "Ampoule",
+    ar: "مصباح",
+    it: "Lampadina"
+  },
+  switch: {
+    en: "Switch",
+    zh: "開關",
+    ja: "スイッチ",
+    ko: "스위치",
+    es: "Interruptor",
+    de: "Schalter",
+    fi: "Kytkin",
+    fr: "Interrupteur",
+    ar: "مفتاح",
+    it: "Interruttore"
+  },
+  wire: {
+    en: "Wire",
+    zh: "電線",
+    ja: "ワイヤー",
+    ko: "전선",
+    es: "Cable",
+    de: "Drht",
+    fi: "Johto",
+    fr: "Fil",
+    ar: "سلك",
+    it: "Cavo"
+  },
+  clear: {
+    en: "Clear",
+    zh: "清除",
+    ja: "クリア",
+    ko: "지우기",
+    es: "Borrar",
+    de: "Löschen",
+    fi: "Tyhjennä",
+    fr: "Effacer",
+    ar: "مسح",
+    it: "Cancella"
+  },
+  on: {
+    en: "ON",
+    zh: "開",
+    ja: "オン",
+    ko: "켜짐",
+    es: "ENCENDIDO",
+    de: "AN",
+    fi: "PÄÄLLÄ",
+    fr: "MARCHE",
+    ar: "تشغيل",
+    it: "ACCESO"
+  },
+  off: {
+    en: "OFF",
+    zh: "關",
+    ja: "オフ",
+    ko: "꺼짐",
+    es: "APAGADO",
+    de: "AUS",
+    fi: "POIS",
+    fr: "ARRÊT",
+    ar: "إيقاف",
+    it: "SPENTO"
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+
+// Simple Grid System
+const GRID_SIZE = 40;
+const SNAP = val => Math.round(val / GRID_SIZE) * GRID_SIZE;
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [components, setComponents] = useState([]);
+  const [wires, setWires] = useState([]);
+  const [drawingWire, setDrawingWire] = useState(null);
+  const containerRef = useRef(null);
+
+  // Simulation State
+  const [isPowered, setIsPowered] = useState(false);
+
+  // Check Connectivity: battery↔bulb path via wires whose ends touch components.
+  useEffect(() => {
+    const bat = components.find(c => c.type === "battery");
+    const bulb = components.find(c => c.type === "bulb");
+    if (!bat || !bulb || wires.length < 1) {
+      setIsPowered(false);
+      return;
+    }
+
+    // Any open switch breaks the whole circuit (P6 simplified model).
+    if (components.some(c => c.type === "switch" && !c.state)) {
+      setIsPowered(false);
+      return;
+    }
+
+    const TOUCH = 55;
+    const near = (a, b) => Math.hypot(a.x - b.x, a.y - b.y) <= TOUCH;
+    const adj = new Map(components.map(c => [c.id, []]));
+    const link = (a, b) => {
+      if (a === b) return;
+      adj.get(a).push(b);
+      adj.get(b).push(a);
+    };
+
+    for (const w of wires) {
+      const at1 = components.filter(c => near(c, w.p1)).map(c => c.id);
+      const at2 = components.filter(c => near(c, w.p2)).map(c => c.id);
+      for (const a of at1) for (const b of at2) link(a, b);
+    }
+
+    // Also merge wire endpoints that meet (junctions without a component).
+    for (let i = 0; i < wires.length; i++) {
+      for (let j = i + 1; j < wires.length; j++) {
+        const endsI = [wires[i].p1, wires[i].p2];
+        const endsJ = [wires[j].p1, wires[j].p2];
+        let touch = false;
+        for (const a of endsI) for (const b of endsJ) if (near(a, b)) touch = true;
+        if (!touch) continue;
+        const compsI = components.filter(c => near(c, wires[i].p1) || near(c, wires[i].p2)).map(c => c.id);
+        const compsJ = components.filter(c => near(c, wires[j].p1) || near(c, wires[j].p2)).map(c => c.id);
+        for (const a of compsI) for (const b of compsJ) link(a, b);
+      }
+    }
+
+    const seen = new Set([bat.id]);
+    const q = [bat.id];
+    while (q.length) {
+      const cur = q.shift();
+      if (cur === bulb.id) {
+        setIsPowered(true);
+        return;
+      }
+      for (const n of adj.get(cur) || []) {
+        if (!seen.has(n)) {
+          seen.add(n);
+          q.push(n);
+        }
+      }
+    }
+    setIsPowered(false);
+  }, [components, wires]);
+  const addComponent = type => {
+    setComponents([...components, {
+      id: Date.now() + Math.random(),
+      type,
+      x: 120 + components.length * 30,
+      y: 120 + components.length * 20,
+      // Switches start closed so a simple battery–wire–bulb path can light.
+      state: true
+    }]);
+  };
+  const updateCompPos = (id, x, y) => {
+    setComponents(prev => prev.map(c => c.id === id ? {
+      ...c,
+      x: SNAP(x),
+      y: SNAP(y)
+    } : c));
+  };
+  const toggleSwitch = id => {
+    setComponents(prev => prev.map(c => c.id === id ? {
+      ...c,
+      state: !c.state
+    } : c));
+  };
+  const startWire = e => {
+    // Only start on empty canvas (components stopPropagation while dragging).
+    if (!containerRef.current) return;
+    if (e.target.closest && e.target.closest(".component-drag")) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = SNAP(e.clientX - rect.left);
+    const y = SNAP(e.clientY - rect.top);
+    setDrawingWire({
+      start: {
+        x,
+        y
+      },
+      current: {
+        x,
+        y
+      }
+    });
+  };
+  const handleMouseMove = e => {
+    if (drawingWire && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      setDrawingWire({
+        ...drawingWire,
+        current: {
+          x: e.clientX - rect.left,
+          y: e.clientY - rect.top
+        }
+      });
+    }
+  };
+  const handleMouseUp = e => {
+    if (drawingWire && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const endX = SNAP(e.clientX - rect.left);
+      const endY = SNAP(e.clientY - rect.top);
+      if (Math.abs(endX - drawingWire.start.x) > 10 || Math.abs(endY - drawingWire.start.y) > 10) {
+        setWires(prev => [...prev, {
+          id: Date.now(),
+          p1: drawingWire.start,
+          p2: {
+            x: endX,
+            y: endY
+          }
+        }]);
+      }
+      setDrawingWire(null);
+    }
+  };
+  const clear = () => {
+    setComponents([]);
+    setWires([]);
+    setDrawingWire(null);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-6xl flex justify-between items-center mb-6"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-3xl font-black text-yellow-400"
+  }, getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-2 flex-wrap justify-end"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: clear,
+    className: "bg-red-500 hover:bg-red-600 px-4 py-2 rounded-lg font-bold transition-all text-sm"
+  }, getText("clear", lang)), ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-slate-700 text-white" : "text-slate-500 hover:text-white"}`
+  }, l)))), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4 mb-4 glass-panel p-4 rounded-xl flex-wrap justify-center"
+  }, [{
+    type: "battery",
+    icon: "🔋",
+    label: "battery"
+  }, {
+    type: "bulb",
+    icon: "💡",
+    label: "bulb"
+  }, {
+    type: "switch",
+    icon: "🔌",
+    label: "switch"
+  }].map(tool => /*#__PURE__*/React.createElement("button", {
+    key: tool.type,
+    onClick: () => addComponent(tool.type),
+    className: "flex flex-col items-center gap-2 px-6 py-2 bg-slate-800 rounded-lg hover:bg-slate-700 active:scale-95 transition-all border border-slate-600"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-2xl"
+  }, tool.icon), /*#__PURE__*/React.createElement("span", {
+    className: "font-bold text-sm text-slate-300"
+  }, getText(tool.label, lang)))), /*#__PURE__*/React.createElement("div", {
+    className: "border-l border-slate-600 pl-4 flex items-center text-sm text-slate-400 font-bold"
+  }, getText("instruction", lang))), /*#__PURE__*/React.createElement("div", {
+    ref: containerRef,
+    className: "relative w-full max-w-5xl aspect-video bg-[#1e293b] rounded-3xl overflow-hidden shadow-2xl border-4 border-slate-700 cursor-crosshair touch-none",
+    onMouseDown: startWire,
+    onMouseMove: handleMouseMove,
+    onMouseUp: handleMouseUp,
+    onMouseLeave: () => setDrawingWire(null)
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 pointer-events-none opacity-20",
+    style: {
+      backgroundImage: `radial-gradient(#94a3b8 1px, transparent 1px)`,
+      backgroundSize: `${GRID_SIZE}px ${GRID_SIZE}px`
+    }
+  }), /*#__PURE__*/React.createElement("svg", {
+    className: "absolute inset-0 w-full h-full pointer-events-none"
+  }, wires.map(w => /*#__PURE__*/React.createElement("line", {
+    key: w.id,
+    x1: w.p1.x,
+    y1: w.p1.y,
+    x2: w.p2.x,
+    y2: w.p2.y,
+    stroke: "#facc15",
+    strokeWidth: "4",
+    strokeLinecap: "round",
+    className: "opacity-80"
+  })), drawingWire && /*#__PURE__*/React.createElement("line", {
+    x1: drawingWire.start.x,
+    y1: drawingWire.start.y,
+    x2: drawingWire.current.x,
+    y2: drawingWire.current.y,
+    stroke: "#facc15",
+    strokeWidth: "4",
+    strokeLinecap: "round",
+    strokeDasharray: "10,10",
+    opacity: "0.5"
+  })), components.map(c => /*#__PURE__*/React.createElement(Component, {
+    key: c.id,
+    data: c,
+    onMove: updateCompPos,
+    onToggle: () => toggleSwitch(c.id),
+    powered: isPowered
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "mt-4 text-slate-500 text-sm"
+  }, "Pro Tip: Drag on empty canvas to draw wires. Snap ends near components. Click switch to open/close."));
+}
+function Component({
+  data,
+  onMove,
+  onToggle,
+  powered
+}) {
+  const [dragging, setDragging] = useState(false);
+  const ref = useRef(null);
+  const handleMouseDown = e => {
+    e.stopPropagation();
+    setDragging(true);
+  };
+  useEffect(() => {
+    const handleGlobalMove = e => {
+      if (dragging && ref.current) {
+        // Use offset parent relative coords
+        // The parent is the container.
+        // We need parent rect.
+        // But ref.current.parentElement might not be ready or reliable via refs in effect?
+        // Actually we can just querySelector closest container or use ref.current.parentElement
+        if (ref.current.parentElement) {
+          const parent = ref.current.parentElement.getBoundingClientRect();
+          onMove(data.id, e.clientX - parent.left, e.clientY - parent.top);
+        }
+      }
+    };
+    const handleGlobalUp = () => setDragging(false);
+    if (dragging) {
+      window.addEventListener("mousemove", handleGlobalMove);
+      window.addEventListener("mouseup", handleGlobalUp);
+    }
+    return () => {
+      window.removeEventListener("mousemove", handleGlobalMove);
+      window.removeEventListener("mouseup", handleGlobalUp);
+    };
+  }, [dragging, data.id, onMove]);
+  return /*#__PURE__*/React.createElement("div", {
+    ref: ref,
+    onMouseDown: handleMouseDown,
+    className: "absolute w-20 h-20 -ml-10 -mt-10 flex items-center justify-center component-drag group z-10",
+    style: {
+      left: data.x,
+      top: data.y
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 border-2 border-transparent group-hover:border-blue-400/50 rounded-lg pointer-events-none"
+  }), data.type === "battery" && /*#__PURE__*/React.createElement("div", {
+    className: "w-16 h-8 bg-slate-600 border-2 border-slate-400 rounded flex items-center justify-center relative"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-xs font-bold text-yellow-400"
+  }, "⚡"), /*#__PURE__*/React.createElement("div", {
+    className: "absolute -left-2 w-2 h-4 bg-gray-400 rounded-l"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute -right-2 w-2 h-4 bg-gray-400 rounded-r"
+  })), data.type === "bulb" && /*#__PURE__*/React.createElement("div", {
+    className: "relative flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: `w-10 h-10 rounded-full border-2 border-slate-500 transition-all duration-300 ${powered ? "bg-yellow-400 shadow-[0_0_30px_#facc15]" : "bg-slate-700"}`
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "w-6 h-4 bg-gray-500 rounded-b"
+  })), data.type === "switch" && /*#__PURE__*/React.createElement("div", {
+    onClick: e => {
+      e.stopPropagation();
+      onToggle();
+    },
+    className: "cursor-pointer w-16 h-8 bg-black/50 rounded flex items-center justify-center border border-slate-500"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: `w-8 h-4 rounded transition-all ${data.state ? "bg-green-500 ml-6" : "bg-red-500 mr-6"}`
+  })));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小五數學：簡易方程 (乘除) | Simple Equations</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "One-Step Equations (×/÷)",
+    zh: "一步方程 (乘/除)",
+    ja: "一次方程式 (×/÷)",
+    ko: "일차 방정식 (×/÷)",
+    es: "Ecuaciones de un paso (×/÷)",
+    de: "Einschritt-Gleichungen (×/÷)",
+    fi: "Yhden askeleen yhtälöt (×/÷)",
+    fr: "Équations à une étape (×/÷)",
+    ar: "معادلات من خطوة واحدة (×/÷)",
+    it: "Equazioni a un passo (×/÷)"
+  },
+  find: {
+    en: "Find value of x",
+    zh: "求 x 的值",
+    ja: "x の値を求める",
+    ko: "x의 값 구하기",
+    es: "Encontrar valor de x",
+    de: "Finde den Wert von x",
+    fi: "Etsi x:n arvo",
+    fr: "Trouver la valeur de x",
+    ar: "أوجد قيمة x",
+    it: "Trova il valore di x"
+  },
+  check: {
+    en: "Check",
+    zh: "檢查",
+    ja: "確認",
+    ko: "확인",
+    es: "Comprobar",
+    de: "Prüfen",
+    fi: "Tarkista",
+    fr: "Vérifier",
+    ar: "تحقق",
+    it: "Controlla"
+  },
+  correct: {
+    en: "Correct!",
+    zh: "答對了！",
+    ja: "正解！",
+    ko: "정답!",
+    es: "¡Correcto!",
+    de: "Richtig!",
+    fi: "Oikein!",
+    fr: "Correct !",
+    ar: "صحيح!",
+    it: "Corretto!"
+  },
+  wrong: {
+    en: "Try Again",
+    zh: "再試一次",
+    ja: "もう一度",
+    ko: "다시 시도",
+    es: "Inténtalo de nuevo",
+    de: "Versuch es nochmal",
+    fi: "Yritä uudelleen",
+    fr: "Réessayer",
+    ar: "حاول مرة أخرى",
+    it: "Riprova"
+  },
+  next: {
+    en: "Next Problem",
+    zh: "下一題",
+    ja: "次の問題",
+    ko: "다음 문제",
+    es: "Siguiente Problema",
+    de: "Nächstes Problem",
+    fi: "Seuraava tehtävä",
+    fr: "Problème suivant",
+    ar: "المسألة التالية",
+    it: "Prossimo problema"
+  },
+  hint: {
+    en: "Reverse the operation!",
+    zh: "使用相反運算！",
+    ja: "逆の操作をしよう！",
+    ko: "반대 연산을 사용하세요!",
+    es: "¡Invierte la operación!",
+    de: "Kehre die Operation um!",
+    fi: "Käännä operaatio!",
+    fr: "Inversez l'opération !",
+    ar: "اعكس العملية!",
+    it: "Inverti l'operazione!"
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [problem, setProblem] = useState({
+    type: "mult",
+    a: 3,
+    b: 12
+  });
+  const [input, setInput] = useState("");
+  const [status, setStatus] = useState(null);
+  const generate = () => {
+    const type = Math.random() > 0.5 ? "mult" : "div";
+    const a = Math.floor(Math.random() * 9) + 2;
+    const x = Math.floor(Math.random() * 12) + 2;
+
+    // If mult: a * x = b  => b = a*x
+    // If div: x / a = b   => b = b (wait, b is result). x = a*b?
+    // x / a = result. Let's make "b" represents RHS.
+    // x / a = b => x = a * b.
+
+    let finalProb = {};
+    if (type === "mult") {
+      finalProb = {
+        type,
+        a,
+        b: a * x,
+        x
+      }; // ax = b
+    } else {
+      finalProb = {
+        type,
+        a,
+        b: x,
+        x: a * x
+      }; // x/a = b actually. No.
+      // We want x / a = Result.
+      // Let result be 'b'.
+      // We want nice integer result.
+      // result = x_orig.
+      // x = result * a.
+      // Let's call RHS 'b' in all cases.
+      // Case 2: x / a = b.  x = a * b.
+      // Wait, problem state is a, b.
+      // let RHS be the visual "b".
+      const RHS = Math.floor(Math.random() * 10) + 2;
+      finalProb = {
+        type,
+        a,
+        b: RHS,
+        x: a * RHS
+      };
+    }
+    setProblem(finalProb);
+    setInput("");
+    setStatus(null);
+  };
+  useEffect(generate, []);
+  const check = () => {
+    const val = parseInt(input, 10);
+    if (val === problem.x) {
+      setStatus("correct");
+    } else {
+      setStatus("wrong");
+    }
+  };
+  const eqStr = problem.type === "mult" ? `${problem.a}x = ${problem.b}` : `x ÷ ${problem.a} = ${problem.b}`; // or x/a
+
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4 font-sans bg-slate-900 text-white"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-5xl flex justify-between items-center mb-10"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-black text-amber-400 drop-shadow-[0_0_15px_rgba(251,191,36,0.5)]"
+  }, "✖️ ", getText("title", lang), " ➗"), /*#__PURE__*/React.createElement("div", {
+    className: "flex bg-slate-800/80 p-1.5 rounded-xl border border-white/10 flex-wrap justify-end gap-1 max-w-[50%]"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-amber-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white hover:bg-white/5"}`
+  }, l)))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-2xl flex flex-col gap-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-8 rounded-3xl min-h-[200px] flex items-center justify-center relative overflow-hidden"
+  }, problem.type === "mult" ? /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-wrap gap-4 justify-center"
+  }, Array.from({
+    length: problem.a
+  }).map((_, i) => /*#__PURE__*/React.createElement(motion.div, {
+    key: i,
+    initial: {
+      scale: 0
+    },
+    animate: {
+      scale: 1
+    },
+    transition: {
+      delay: i * 0.1
+    },
+    className: "w-20 h-24 bg-amber-500/20 border-2 border-amber-500/50 rounded-xl flex items-center justify-center relative group"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-2xl font-black text-amber-300"
+  }, "x"), status === "correct" && /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      opacity: 0
+    },
+    animate: {
+      opacity: 1
+    },
+    className: "absolute inset-0 bg-amber-500 flex items-center justify-center text-white text-2xl font-black rounded-xl"
+  }, problem.x))), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center text-4xl font-black text-white ml-4"
+  }, "= ", problem.b)) : /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center gap-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-1 bg-slate-800 p-2 rounded-xl"
+  }, Array.from({
+    length: problem.a
+  }).map((_, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "w-20 h-24 bg-amber-500/20 border border-amber-500/30 rounded-lg flex items-center justify-center"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-xl font-bold text-amber-300"
+  }, problem.b)))), /*#__PURE__*/React.createElement("div", {
+    className: "text-white text-sm font-bold uppercase tracking-widest"
+  }, "Total is x"), status === "correct" && /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      opacity: 0,
+      y: 10
+    },
+    animate: {
+      opacity: 1,
+      y: 0
+    },
+    className: "text-3xl font-black text-amber-400"
+  }, "x = ", problem.x))), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-8 rounded-3xl flex flex-col items-center gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-slate-400 font-bold uppercase tracking-widest text-sm"
+  }, getText("find", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl font-black font-mono tracking-wider"
+  }, eqStr), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col gap-2 w-full max-w-sm"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: input,
+    onChange: e => setInput(e.target.value),
+    className: "flex-1 bg-slate-950/50 border-2 border-slate-700 rounded-xl px-4 text-center text-3xl font-bold focus:border-amber-500 outline-none transition-colors",
+    placeholder: "x = ?"
+  }), /*#__PURE__*/React.createElement("button", {
+    onClick: check,
+    className: "bg-amber-600 hover:bg-amber-500 text-white font-bold py-3 px-8 rounded-xl transition-all active:scale-95 shadow-lg shadow-amber-500/20"
+  }, getText("check", lang))), /*#__PURE__*/React.createElement(AnimatePresence, null, status && /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      opacity: 0,
+      y: 10
+    },
+    animate: {
+      opacity: 1,
+      y: 0
+    },
+    className: `p-4 rounded-xl text-center font-bold text-lg mt-2 ${status === "correct" ? "bg-green-500/20 text-green-300 border border-green-500/30" : "bg-red-500/20 text-red-300 border border-red-500/30"}`
+  }, getText(status, lang))), status === "correct" && /*#__PURE__*/React.createElement(motion.button, {
+    initial: {
+      opacity: 0
+    },
+    animate: {
+      opacity: 1
+    },
+    onClick: generate,
+    className: "w-full py-3 mt-2 rounded-xl border border-white/10 hover:bg-white/10 font-bold transition-all text-amber-200"
+  }, getText("next", lang), " ➔"))), status !== "correct" && /*#__PURE__*/React.createElement("div", {
+    className: "text-center text-slate-500 font-mono text-sm"
+  }, getText("hint", lang), " ", /*#__PURE__*/React.createElement("br", null), problem.type === "mult" ? `Divide by ${problem.a}` : `Multiply by ${problem.a}`)));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

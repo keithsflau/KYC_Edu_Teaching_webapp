@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Curve Sketching & Asymptotes | M2 Calculus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+      }
+      .glass {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .draggable {
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <div id="root" class="flex-grow flex flex-col"></div>
+    <script>
+const {
+  useState,
+  useRef
+} = React;
+const translations = {
+  en: {
+    unit: "Unit 2: Calculus",
+    title: "Asymptotes",
+    coeffs: "Coefficients",
+    analysis: "Analysis",
+    va: "Vertical Asymptote:",
+    ha: "Horiz. Asymptote:",
+    none: "None",
+    desc: "V.A. occurs where denominator is zero.\nH.A. occurs as x → ∞ (ratio of leading coeffs).",
+    langBtn: "中文"
+  },
+  zh: {
+    unit: "第二單元：微積分",
+    title: "漸近線",
+    coeffs: "係數",
+    analysis: "分析",
+    va: "垂直漸近線:",
+    ha: "水平漸近線:",
+    none: "無",
+    desc: "垂直漸近線出現在分母為零處。\n水平漸近線出現在 x → ∞ 時 (首項係數之比)。",
+    langBtn: "English"
+  }
+};
+const App = () => {
+  // y = (ax + b) / (cx + d)
+
+  const [lang, setLang] = useState("en");
+  const t = translations[lang];
+  const [a, setA] = useState(3);
+  const [b, setB] = useState(2);
+  const [c, setC] = useState(1);
+  const [d, setD] = useState(-4);
+
+  // Asymptotes
+  // Vertical: cx + d = 0 => x = -d/c
+  // Horizontal: y = a/c (for large x)
+  // Oblique? No, degree 1/1 so Horiz only.
+
+  const va = Math.abs(c) > 0.01 ? -d / c : null;
+  const ha = Math.abs(c) > 0.01 ? a / c : null;
+
+  // Visuals
+  const w = 600,
+    h = 500;
+  const range = 10;
+  const scale = w / (2 * range);
+  const originX = w / 2,
+    originY = h / 2;
+  const toScreen = (x, y) => ({
+    x: originX + x * scale,
+    y: originY - y * scale
+  });
+
+  // Generate Graph Parts
+  // Split at VA to avoid infinity line
+  const drawSection = (start, end) => {
+    const pts = [];
+    for (let x = start; x <= end; x += 0.1) {
+      const denom = c * x + d;
+      if (Math.abs(denom) < 0.05) continue;
+      const y = (a * x + b) / denom;
+      if (Math.abs(y) > range) continue; // clamp
+      pts.push({
+        x,
+        y
+      });
+    }
+    if (pts.length === 0) return "";
+    return `M ${pts.map(p => {
+      const s = toScreen(p.x, p.y);
+      return `${s.x},${s.y}`;
+    }).join(" L ")}`;
+  };
+  let path = "";
+  if (va !== null) {
+    path += drawSection(-range, va - 0.1);
+    path += " ";
+    path += drawSection(va + 0.1, range);
+  } else {
+    path = drawSection(-range, range);
+  }
+
+  // Asymptote Lines
+  const vaX = va !== null ? toScreen(va, 0).x : null;
+  const haY = ha !== null ? toScreen(0, ha).y : null;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "flex-grow flex flex-col items-center justify-center p-8 select-none"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 right-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLang(l => l === "en" ? "zh" : "en"),
+    className: "px-3 py-1 bg-slate-800 border border-slate-600 rounded-full text-xs font-bold text-emerald-400 hover:bg-slate-700 hover:text-white transition flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-language"
+  }), t.langBtn)), /*#__PURE__*/React.createElement("header", {
+    className: "mb-8 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-emerald-500 font-bold uppercase tracking-widest text-xs mb-2"
+  }, t.unit), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-white mb-2"
+  }, t.title), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-400 font-mono text-lg"
+  }, "y = (ax + b) / (cx + d)")), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col lg:flex-row gap-8 w-full max-w-6xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 glass p-6 rounded-3xl relative"
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: "100%",
+    height: "500",
+    viewBox: "0 0 600 500",
+    className: "bg-slate-900 rounded-xl overflow-hidden"
+  }, /*#__PURE__*/React.createElement("line", {
+    x1: originX,
+    y1: "0",
+    x2: originX,
+    y2: h,
+    stroke: "#334155",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "0",
+    y1: originY,
+    x2: w,
+    y2: originY,
+    stroke: "#334155",
+    strokeWidth: "2"
+  }), vaX !== null && /*#__PURE__*/React.createElement("line", {
+    x1: vaX,
+    y1: "0",
+    x2: vaX,
+    y2: h,
+    stroke: "#f43f5e",
+    strokeDasharray: "5,5",
+    strokeWidth: "2"
+  }), haY !== null && /*#__PURE__*/React.createElement("line", {
+    x1: "0",
+    y1: haY,
+    x2: w,
+    y2: haY,
+    stroke: "#f43f5e",
+    strokeDasharray: "5,5",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: path,
+    fill: "none",
+    stroke: "#2dd4bf",
+    strokeWidth: "3"
+  }), vaX !== null && /*#__PURE__*/React.createElement("text", {
+    x: vaX + 10,
+    y: "20",
+    fill: "#f43f5e",
+    fontWeight: "bold"
+  }, "x = ", va.toFixed(2)), haY !== null && /*#__PURE__*/React.createElement("text", {
+    x: "10",
+    y: haY - 10,
+    fill: "#f43f5e",
+    fontWeight: "bold"
+  }, "y = ", ha.toFixed(2)))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full lg:w-80 space-y-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass p-6 rounded-2xl"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-lg font-bold text-white mb-4"
+  }, t.coeffs), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "text-xs font-bold w-4 text-emerald-400"
+  }, "a"), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "-5",
+    max: "5",
+    step: "0.5",
+    value: a,
+    onChange: e => setA(Number(e.target.value)),
+    className: "flex-1 accent-emerald-500"
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "text-xs font-mono w-6 text-right"
+  }, a)), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "text-xs font-bold w-4 text-emerald-400"
+  }, "b"), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "-5",
+    max: "5",
+    step: "0.5",
+    value: b,
+    onChange: e => setB(Number(e.target.value)),
+    className: "flex-1 accent-emerald-500"
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "text-xs font-mono w-6 text-right"
+  }, b)), /*#__PURE__*/React.createElement("div", {
+    className: "border-t border-slate-700 my-2"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "text-xs font-bold w-4 text-sky-400"
+  }, "c"), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "-5",
+    max: "5",
+    step: "0.5",
+    value: c,
+    onChange: e => setC(Number(e.target.value)),
+    className: "flex-1 accent-sky-500"
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "text-xs font-mono w-6 text-right"
+  }, c)), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "text-xs font-bold w-4 text-sky-400"
+  }, "d"), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "-5",
+    max: "5",
+    step: "0.5",
+    value: d,
+    onChange: e => setD(Number(e.target.value)),
+    className: "flex-1 accent-sky-500"
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "text-xs font-mono w-6 text-right"
+  }, d)))), /*#__PURE__*/React.createElement("div", {
+    className: "glass p-6 rounded-2xl"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-xs font-bold text-slate-400 uppercase mb-4"
+  }, t.analysis), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-2 font-mono text-sm"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-rose-400"
+  }, t.va), /*#__PURE__*/React.createElement("span", null, "x = ", va ? va.toFixed(2) : t.none)), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-rose-400"
+  }, t.ha), /*#__PURE__*/React.createElement("span", null, "y = ", ha ? ha.toFixed(2) : t.none)), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs text-slate-500 mt-2 whitespace-pre-line"
+  }, t.desc))))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

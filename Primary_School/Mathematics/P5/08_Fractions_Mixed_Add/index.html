@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小五數學：帶分數加法 | Adding Mixed Numbers</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Adding Mixed Numbers",
+    zh: "帶分數加法",
+    ja: "帯分数の足し算",
+    ko: "대분수 덧셈",
+    es: "Sumar Números Mixtos",
+    de: "Gemischte Zahlen addieren",
+    fi: "Sekalukujen yhteenlasku",
+    fr: "Additionner des nombres mixtes",
+    ar: "جمع الأعداد الكسرية",
+    it: "Somma Numeri Misti"
+  },
+  step1: {
+    en: "To Improper",
+    zh: "化假分數",
+    ja: "仮分数へ",
+    ko: "가분수로",
+    es: "A Impropia",
+    de: "In unechten Bruch",
+    fi: "Murtoluvuksi",
+    fr: "En fraction impropre",
+    ar: "إلى كسر غير حقيقي",
+    it: "In Impropria"
+  },
+  step2: {
+    en: "Find LCD",
+    zh: "通 分",
+    ja: "通分",
+    ko: "통분",
+    es: "MCD",
+    de: "kgV",
+    fi: "LCD",
+    fr: "PPCM",
+    ar: "LCD",
+    it: "m.c.m."
+  },
+  step3: {
+    en: "Add",
+    zh: "相 加",
+    ja: "足す",
+    ko: "더하기",
+    es: "Sumar",
+    de: "Addieren",
+    fi: "Summaa",
+    fr: "Ajouter",
+    ar: "جمع",
+    it: "Somma"
+  },
+  result: {
+    en: "Result",
+    zh: "結 果",
+    ja: "結果",
+    ko: "결과",
+    es: "Resultado",
+    de: "Ergebnis",
+    fi: "Tulos",
+    fr: "Résultat",
+    ar: "النتيجة",
+    it: "Risultato"
+  },
+  simplify: {
+    en: "Simplify",
+    zh: "約 簡",
+    ja: "約分",
+    ko: "약분",
+    es: "Simplificar",
+    de: "Vereinfachen",
+    fi: "Supista",
+    fr: "Simplifier",
+    ar: "تبسيط",
+    it: "Semplifica"
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [w1, setW1] = useState(1);
+  const [n1, setN1] = useState(1);
+  const [d1, setD1] = useState(2);
+  const [w2, setW2] = useState(2);
+  const [n2, setN2] = useState(1);
+  const [d2, setD2] = useState(3);
+  const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
+  const lcm = (a, b) => a * b / gcd(a, b);
+
+  // Logic:
+  // 1. Convert to improper: (w * d + n) / d
+  // 2. LCD
+  // 3. Add
+  // 4. Convert back
+
+  const impN1 = w1 * d1 + n1;
+  const impN2 = w2 * d2 + n2;
+  const commonD = lcm(d1, d2);
+  const convN1 = impN1 * (commonD / d1);
+  const convN2 = impN2 * (commonD / d2);
+  const sumN = convN1 + convN2;
+  const resWhole = Math.floor(sumN / commonD);
+  const resRem = sumN % commonD;
+  const resGcd = gcd(resRem, commonD);
+  const simpN = resRem / resGcd;
+  const simpD = commonD / resGcd;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4 font-sans bg-slate-900 text-white"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-5xl flex justify-between items-center mb-10"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-black text-blue-400 drop-shadow-[0_0_15px_rgba(96,165,250,0.5)]"
+  }, "➕ ", getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "flex bg-slate-800/80 p-1.5 rounded-xl border border-white/10 flex-wrap justify-end gap-1 max-w-[50%]"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-blue-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white hover:bg-white/5"}`
+  }, l)))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-4xl flex flex-col gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-8 rounded-3xl flex justify-center items-center gap-8 md:gap-16 flex-wrap"
+  }, /*#__PURE__*/React.createElement(MixedInput, {
+    w: w1,
+    n: n1,
+    d: d1,
+    setW: setW1,
+    setN: setN1,
+    setD: setD1,
+    color: "text-indigo-400"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-5xl font-black text-slate-500"
+  }, "+"), /*#__PURE__*/React.createElement(MixedInput, {
+    w: w2,
+    n: n2,
+    d: d2,
+    setW: setW2,
+    setN: setN2,
+    setD: setD2,
+    color: "text-violet-400"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "grid md:grid-cols-3 gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 rounded-2xl flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold text-slate-500 uppercase tracking-widest mb-4"
+  }, getText("step1", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-6 items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-mono font-bold text-indigo-400"
+  }, impN1, "/", d1), /*#__PURE__*/React.createElement("div", {
+    className: "text-slate-600 font-bold"
+  }, "+"), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-mono font-bold text-violet-400"
+  }, impN2, "/", d2))), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 rounded-2xl flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold text-slate-500 uppercase tracking-widest mb-4"
+  }, getText("step2", lang), " (LCD: ", commonD, ")"), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-6 items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-mono font-bold text-indigo-300"
+  }, convN1, "/", commonD), /*#__PURE__*/React.createElement("div", {
+    className: "text-slate-600 font-bold"
+  }, "+"), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-mono font-bold text-violet-300"
+  }, convN2, "/", commonD))), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 rounded-2xl flex flex-col items-center bg-blue-500/10 border-blue-500/30"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold text-blue-400 uppercase tracking-widest mb-4"
+  }, getText("step3", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-black text-white px-4 py-2 bg-blue-500/20 rounded-xl"
+  }, sumN, "/", commonD))), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-8 rounded-3xl flex flex-col items-center bg-emerald-500/10 border-emerald-500/30"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-emerald-400 font-bold uppercase tracking-widest text-sm mb-6 border-b border-emerald-500/20 pb-2 w-full text-center"
+  }, getText("result", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl md:text-8xl font-black text-white"
+  }, resWhole > 0 ? resWhole : resRem === 0 ? "0" : ""), resRem > 0 && /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center text-4xl md:text-5xl font-bold text-emerald-200"
+  }, /*#__PURE__*/React.createElement("span", null, resRem), /*#__PURE__*/React.createElement("div", {
+    className: "w-full h-1 bg-white/30 my-2"
+  }), /*#__PURE__*/React.createElement("span", null, commonD))), simpN !== resRem && resRem !== 0 && /*#__PURE__*/React.createElement("div", {
+    className: "mt-8 pt-6 border-t border-emerald-500/20 w-full text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold text-emerald-500 uppercase mb-2"
+  }, getText("simplify", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-center gap-3"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black text-emerald-300"
+  }, resWhole > 0 ? resWhole : ""), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center text-2xl font-bold text-emerald-300"
+  }, /*#__PURE__*/React.createElement("span", null, simpN), /*#__PURE__*/React.createElement("div", {
+    className: "w-full h-0.5 bg-current my-1"
+  }), /*#__PURE__*/React.createElement("span", null, simpD)))))));
+}
+const MixedInput = ({
+  w,
+  n,
+  d,
+  setW,
+  setN,
+  setD,
+  color
+}) => /*#__PURE__*/React.createElement("div", {
+  className: `flex items-center gap-2 ${color}`
+}, /*#__PURE__*/React.createElement("input", {
+  type: "number",
+  min: "0",
+  value: w,
+  onChange: e => setW(Math.max(0, parseInt(e.target.value, 10) || 0)),
+  className: "w-16 bg-transparent text-center text-6xl font-black outline-none border border-slate-700/50 rounded-lg focus:border-white transition-colors py-2"
+}), /*#__PURE__*/React.createElement("div", {
+  className: "flex flex-col items-center gap-1"
+}, /*#__PURE__*/React.createElement("input", {
+  type: "number",
+  min: "0",
+  value: n,
+  onChange: e => setN(Math.max(0, parseInt(e.target.value, 10) || 0)),
+  className: "w-16 bg-transparent text-center text-4xl font-bold outline-none border-b-2 border-slate-500 focus:border-white transition-colors"
+}), /*#__PURE__*/React.createElement("input", {
+  type: "number",
+  min: "1",
+  value: d,
+  onChange: e => setD(Math.max(1, parseInt(e.target.value, 10) || 1)),
+  className: "w-16 bg-transparent text-center text-4xl font-bold outline-none"
+})));
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

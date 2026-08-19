@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Circuit Constructor | S2 Science</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #fff7ed;
+      }
+      .component-slot {
+        transition: all 0.2s;
+      }
+      .component-slot:hover {
+        border-color: #f97316;
+        background-color: #fffaf0;
+      }
+      .wire {
+        background: #334155;
+      }
+      .bulb-on {
+        box-shadow: 0 0 20px #facc15;
+        background: #fef08a;
+        border-color: #eab308;
+      }
+    </style>
+  </head>
+  <body class="bg-orange-50 text-slate-800 min-h-screen">
+    <div id="root"></div>
+
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const components = [{
+  id: "battery",
+  name: "Battery",
+  icon: "fa-car-battery",
+  type: "source"
+}, {
+  id: "bulb",
+  name: "Light Bulb",
+  icon: "fa-lightbulb",
+  type: "load"
+}, {
+  id: "switch",
+  name: "Switch",
+  icon: "fa-toggle-off",
+  type: "control"
+}, {
+  id: "wire",
+  name: "Wire",
+  icon: "fa-minus",
+  type: "connector"
+}];
+
+// 3x3 Grid
+const initialGrid = Array(9).fill(null);
+const App = () => {
+  const [grid, setGrid] = useState(initialGrid);
+  const [selectedComp, setSelectedComp] = useState(null);
+  const [isClosed, setIsClosed] = useState(false);
+  const [switchState, setSwitchState] = useState(false); // false = open (off), true = closed (on)
+
+  const handleDrop = index => {
+    if (selectedComp) {
+      const newGrid = [...grid];
+      newGrid[index] = {
+        ...selectedComp,
+        state: selectedComp.id === "switch" ? false : null
+      };
+      setGrid(newGrid);
+      setSelectedComp(null);
+    }
+  };
+  const toggleSwitch = index => {
+    const newGrid = [...grid];
+    if (newGrid[index] && newGrid[index].id === "switch") {
+      newGrid[index].state = !newGrid[index].state;
+      setGrid(newGrid);
+    }
+  };
+  const clearIndex = index => {
+    const newGrid = [...grid];
+    newGrid[index] = null;
+    setGrid(newGrid);
+  };
+
+  // Circuit: battery must connect to bulb through adjacent conducting cells (wires, closed switch, etc.)
+  useEffect(() => {
+    const conducts = c => {
+      if (!c) return false;
+      if (c.id === "switch") return c.state === true;
+      return true;
+    };
+    const neighbors = i => {
+      const row = Math.floor(i / 3);
+      const col = i % 3;
+      const out = [];
+      if (row > 0) out.push(i - 3);
+      if (row < 2) out.push(i + 3);
+      if (col > 0) out.push(i - 1);
+      if (col < 2) out.push(i + 1);
+      return out;
+    };
+    const start = grid.findIndex(c => c && c.id === "battery");
+    const goal = grid.findIndex(c => c && c.id === "bulb");
+    if (start === -1 || goal === -1) {
+      setIsClosed(false);
+      return;
+    }
+    const q = [start];
+    const seen = new Set([start]);
+    while (q.length) {
+      const i = q.shift();
+      if (i === goal) {
+        setIsClosed(true);
+        return;
+      }
+      for (const j of neighbors(i)) {
+        if (seen.has(j)) continue;
+        if (!conducts(grid[j])) continue;
+        seen.add(j);
+        q.push(j);
+      }
+    }
+    setIsClosed(false);
+  }, [grid]);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "p-8 max-w-5xl mx-auto min-h-screen flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("header", {
+    className: "text-center mb-10 w-full"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-orange-600 font-bold uppercase text-xs tracking-widest"
+  }, "Form 2 Science • Unit 8"), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-slate-800 mb-2"
+  }, "Circuit Constructor"), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-500"
+  }, "Build a simple circuit. Place components to light the bulb.")), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col md:flex-row gap-12 w-full"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-6 rounded-3xl shadow-xl border border-orange-100 w-full md:w-1/4 h-fit"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "font-bold text-slate-400 uppercase text-xs tracking-widest mb-4"
+  }, "Components"), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 gap-4"
+  }, components.map(comp => /*#__PURE__*/React.createElement("button", {
+    key: comp.id,
+    onClick: () => setSelectedComp(comp),
+    className: `p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all ${selectedComp?.id === comp.id ? "bg-orange-100 border-orange-500 text-orange-700" : "bg-slate-50 border-slate-100 text-slate-500 hover:bg-slate-100"}`
+  }, /*#__PURE__*/React.createElement("i", {
+    className: `fa-solid ${comp.icon} text-2xl`
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "text-xs font-bold"
+  }, comp.name)))), /*#__PURE__*/React.createElement("div", {
+    className: "mt-8 bg-blue-50 p-4 rounded-xl text-blue-800 text-xs border border-blue-200"
+  }, /*#__PURE__*/React.createElement("strong", null, "Tip:"), " Fill the grid corners or edges to simulate a closed loop. Place at least 1 Battery and 1 Bulb.")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-800 p-8 rounded-3xl shadow-2xl w-full md:w-3/4 flex items-center justify-center relative"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-3 gap-2 bg-slate-700 p-4 rounded-xl border-2 border-slate-600"
+  }, grid.map((cell, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    onClick: () => cell && cell.id === "switch" ? toggleSwitch(i) : cell ? clearIndex(i) : handleDrop(i),
+    className: `w-32 h-32 bg-slate-900 rounded-lg border-2 border-slate-600 flex items-center justify-center relative component-slot cursor-pointer ${selectedComp ? "hover:border-orange-400" : ""}`
+  }, !cell && /*#__PURE__*/React.createElement("div", {
+    className: "w-1 h-1 bg-slate-600 rounded-full"
+  }), cell && /*#__PURE__*/React.createElement("div", {
+    className: `flex flex-col items-center transition-all ${isClosed && cell.id === "bulb" ? "text-yellow-400 scale-110 drop-shadow-[0_0_10px_rgba(250,204,21,0.8)]" : "text-slate-300"}`
+  }, /*#__PURE__*/React.createElement("i", {
+    className: `fa-solid ${cell.id === "wire" ? "fa-minus rotate-90 scale-150" : cell.icon} text-4xl mb-2`
+  }), cell.id === "switch" && /*#__PURE__*/React.createElement("span", {
+    className: `text-xs font-bold uppercase px-2 py-0.5 rounded ${cell.state ? "bg-green-500 text-white" : "bg-red-500 text-white"}`
+  }, cell.state ? "CLOSED" : "OPEN"), cell.id === "bulb" && isClosed && /*#__PURE__*/React.createElement("span", {
+    className: "text-xs font-bold text-yellow-500 uppercase"
+  }, "ON"))))), /*#__PURE__*/React.createElement("div", {
+    className: `absolute top-4 right-4 px-4 py-2 rounded-full font-bold uppercase text-sm border-2 ${isClosed ? "bg-green-500 text-white border-green-600" : "bg-slate-700 text-slate-500 border-slate-600"}`
+  }, "Circuit: ", isClosed ? "Complete" : "Broken"))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

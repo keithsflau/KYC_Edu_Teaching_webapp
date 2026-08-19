@@ -1,0 +1,462 @@
+﻿<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>唐詩貪食蛇 (Tang Poetry Snake)</title>
+    
+    <!-- 1. Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 2. React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- 3. Babel for JSX -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600&display=swap');
+        body {
+            font-family: 'Noto Serif TC', serif; /* 使用襯線體更有詩意 */
+            overflow: hidden; /* 防止滾動 */
+        }
+        canvas {
+            image-rendering: pixelated; /* 保持復古感 */
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 h-screen flex flex-col items-center justify-center select-none">
+
+    <div id="root"></div>
+
+    <script>
+const {
+  useState,
+  useEffect,
+  useRef,
+  useCallback
+} = React;
+
+// --- 1. 遊戲數據 (Game Data) ---
+const POEMS = [{
+  title: "靜夜思 (李白)",
+  lines: ["床前明月光", "疑是地上霜", "舉頭望明月", "低頭思故鄉"]
+}, {
+  title: "春曉 (孟浩然)",
+  lines: ["春眠不覺曉", "處處聞啼鳥", "夜來風雨聲", "花落知多少"]
+}, {
+  title: "登鸛雀樓 (王之渙)",
+  lines: ["白日依山盡", "黃河入海流", "欲窮千里目", "更上一層樓"]
+}];
+const DISTRACTORS = ["紅豆生南國", "粒粒皆辛苦", "野火燒不盡", "夕陽無限好", "清明時節雨", "潤物細無聲", "江楓漁火對", "姑蘇城外寒"];
+
+// --- 2. 遊戲參數 (Config) ---
+const GRID_SIZE = 25; // 格子大小
+const SPEED = 150; // 移動速度 (ms)
+const CANVAS_WIDTH = 800;
+const CANVAS_HEIGHT = 600;
+const COLS = Math.floor(CANVAS_WIDTH / GRID_SIZE);
+const ROWS = Math.floor(CANVAS_HEIGHT / GRID_SIZE);
+
+// --- 3. 實用函數 (Utils) ---
+const getRandomPos = snakeBody => {
+  let pos;
+  while (!pos) {
+    const x = Math.floor(Math.random() * (COLS - 2)) + 1; // 留邊框
+    const y = Math.floor(Math.random() * (ROWS - 2)) + 1;
+    // 檢查是否與蛇重疊
+    const collision = snakeBody.some(segment => segment.x === x && segment.y === y);
+    if (!collision) pos = {
+      x,
+      y
+    };
+  }
+  return pos;
+};
+const App = () => {
+  // --- State ---
+  const canvasRef = useRef(null);
+  const [gameState, setGameState] = useState('START'); // START, PLAYING, GAME_OVER, VICTORY
+  const [score, setScore] = useState(0);
+  const [level, setLevel] = useState(0);
+  const [currentLineIndex, setCurrentLineIndex] = useState(0);
+
+  // 使用 Ref 存儲不觸發重渲染的遊戲狀態 (Game Loop 必需)
+  const gameRef = useRef({
+    snake: [{
+      x: 10,
+      y: 10
+    }],
+    direction: {
+      x: 1,
+      y: 0
+    },
+    nextDirection: {
+      x: 1,
+      y: 0
+    },
+    foods: [],
+    // { x, y, text, isCorrect }
+    lastTime: 0,
+    accumulator: 0
+  });
+
+  // --- 邏輯：生成食物 ---
+  const spawnFoods = useCallback(currentSnake => {
+    const currentPoem = POEMS[level];
+    const nextLineIndex = currentLineIndex + 1;
+
+    // 如果詩背完了
+    if (nextLineIndex >= currentPoem.lines.length) {
+      return [];
+    }
+    const newFoods = [];
+
+    // 1. 正確答案
+    const correctPos = getRandomPos(currentSnake);
+    newFoods.push({
+      x: correctPos.x,
+      y: correctPos.y,
+      text: currentPoem.lines[nextLineIndex],
+      isCorrect: true,
+      color: '#4ade80' // Tailwind Green-400
+    });
+
+    // 2. 干擾項 (生成 2 個)
+    for (let i = 0; i < 2; i++) {
+      const wrongPos = getRandomPos([...currentSnake, correctPos]); // 避免重疊
+      const randomDistractor = DISTRACTORS[Math.floor(Math.random() * DISTRACTORS.length)];
+      newFoods.push({
+        x: wrongPos.x,
+        y: wrongPos.y,
+        text: randomDistractor,
+        isCorrect: false,
+        color: '#f87171' // Tailwind Red-400
+      });
+    }
+    return newFoods;
+  }, [level, currentLineIndex]);
+
+  // --- 邏輯：初始化遊戲 ---
+  const startGame = () => {
+    setScore(0);
+    setLevel(0);
+    setCurrentLineIndex(0);
+    setGameState('PLAYING');
+    gameRef.current = {
+      snake: [{
+        x: 5,
+        y: 10
+      }, {
+        x: 4,
+        y: 10
+      }, {
+        x: 3,
+        y: 10
+      }],
+      direction: {
+        x: 1,
+        y: 0
+      },
+      nextDirection: {
+        x: 1,
+        y: 0
+      },
+      foods: [],
+      lastTime: performance.now(),
+      accumulator: 0
+    };
+
+    // 初始生成食物 (目標是第2句，因為蛇頭自帶第1句)
+    gameRef.current.foods = spawnFoods(gameRef.current.snake);
+  };
+  const nextLevel = () => {
+    if (level + 1 >= POEMS.length) {
+      setGameState('VICTORY');
+      return;
+    }
+    const nextLvl = level + 1;
+    setLevel(nextLvl);
+    setCurrentLineIndex(0);
+
+    // 重置蛇位置但保留分數
+    gameRef.current.snake = [{
+      x: 5,
+      y: 10
+    }, {
+      x: 4,
+      y: 10
+    }, {
+      x: 3,
+      y: 10
+    }];
+    gameRef.current.direction = {
+      x: 1,
+      y: 0
+    };
+    gameRef.current.nextDirection = {
+      x: 1,
+      y: 0
+    };
+
+    // 這裡需要手動觸發生成，因為 state update 是異步的，spawnFoods 依賴的 level 可能還沒變
+    // 所以我們這裡暫時用 nextLvl 變數邏輯
+    // 為了簡化，讓 useEffect [level] 去處理
+  };
+
+  // 當 Level 改變時重新生成食物
+  useEffect(() => {
+    if (gameState === 'PLAYING') {
+      gameRef.current.foods = spawnFoods(gameRef.current.snake);
+    }
+  }, [level, currentLineIndex]); // Re-run when progression happens
+
+  // --- 邏輯：鍵盤控制 ---
+  useEffect(() => {
+    const handleKeyDown = e => {
+      if (gameState !== 'PLAYING') return;
+      const {
+        x,
+        y
+      } = gameRef.current.direction;
+      switch (e.key) {
+        case 'ArrowUp':
+          if (y === 0) gameRef.current.nextDirection = {
+            x: 0,
+            y: -1
+          };
+          break;
+        case 'ArrowDown':
+          if (y === 0) gameRef.current.nextDirection = {
+            x: 0,
+            y: 1
+          };
+          break;
+        case 'ArrowLeft':
+          if (x === 0) gameRef.current.nextDirection = {
+            x: -1,
+            y: 0
+          };
+          break;
+        case 'ArrowRight':
+          if (x === 0) gameRef.current.nextDirection = {
+            x: 1,
+            y: 0
+          };
+          break;
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [gameState]);
+
+  // --- 核心：遊戲循環 (Game Loop) ---
+  useEffect(() => {
+    if (gameState !== 'PLAYING') return;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    let animationFrameId;
+
+    // 處理 Retina 屏幕模糊
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = CANVAS_WIDTH * dpr;
+    canvas.height = CANVAS_HEIGHT * dpr;
+    canvas.style.width = `${CANVAS_WIDTH}px`;
+    canvas.style.height = `${CANVAS_HEIGHT}px`;
+    ctx.scale(dpr, dpr);
+    const loop = time => {
+      const deltaTime = time - gameRef.current.lastTime;
+      gameRef.current.lastTime = time;
+      gameRef.current.accumulator += deltaTime;
+
+      // 固定時間步長更新邏輯 (Fixed Time Step Update)
+      if (gameRef.current.accumulator >= SPEED) {
+        gameRef.current.accumulator -= SPEED;
+        update();
+      }
+      draw(ctx);
+      if (gameState === 'PLAYING') {
+        animationFrameId = requestAnimationFrame(loop);
+      }
+    };
+    const update = () => {
+      const {
+        snake,
+        nextDirection,
+        foods
+      } = gameRef.current;
+
+      // 1. 更新方向
+      gameRef.current.direction = nextDirection;
+      const head = {
+        ...snake[0]
+      };
+      head.x += nextDirection.x;
+      head.y += nextDirection.y;
+
+      // 2. 碰撞檢測 (牆壁)
+      if (head.x < 0 || head.x >= COLS || head.y < 0 || head.y >= ROWS) {
+        setGameState('GAME_OVER');
+        return;
+      }
+
+      // 3. 碰撞檢測 (自體)
+      if (snake.some(segment => segment.x === head.x && segment.y === head.y)) {
+        setGameState('GAME_OVER');
+        return;
+      }
+
+      // 4. 移動蛇
+      snake.unshift(head); // 加頭
+
+      // 5. 吃食物檢測
+      const eatenFoodIndex = foods.findIndex(f => f.x === head.x && f.y === head.y);
+      if (eatenFoodIndex !== -1) {
+        const food = foods[eatenFoodIndex];
+        if (food.isCorrect) {
+          // 吃對了
+          setScore(s => s + 10);
+          const currentPoem = POEMS[level];
+
+          // 更新當前句
+          const nextIdx = currentLineIndex + 1;
+          setCurrentLineIndex(nextIdx);
+
+          // 檢查是否該首詩背完了
+          if (nextIdx >= currentPoem.lines.length - 1) {
+            // 詩背完了，進入下一關
+            setTimeout(nextLevel, 500); // 稍微停頓
+          } else {
+            // 沒背完，不切尾巴 (變長)，並重新生成食物
+            // 這裡利用 React state 改變觸發 useEffect 生成食物
+          }
+        } else {
+          // 吃錯了
+          setGameState('GAME_OVER');
+        }
+      } else {
+        snake.pop(); // 沒吃到，去尾
+      }
+    };
+    const draw = ctx => {
+      // 清空畫布
+      ctx.fillStyle = '#0f172a'; // slate-900
+      ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+      // 畫網格 (可選，除錯用)
+      ctx.strokeStyle = '#1e293b'; // slate-800
+      ctx.lineWidth = 1;
+      // for (let x = 0; x <= CANVAS_WIDTH; x += GRID_SIZE) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, CANVAS_HEIGHT); ctx.stroke(); }
+      // for (let y = 0; y <= CANVAS_HEIGHT; y += GRID_SIZE) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(CANVAS_WIDTH, y); ctx.stroke(); }
+
+      const {
+        snake,
+        foods
+      } = gameRef.current;
+
+      // 畫食物 (方塊 + 文字)
+      ctx.font = '16px "Noto Serif TC"';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      foods.forEach(food => {
+        // 食物發光效果
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = food.color;
+        ctx.fillStyle = food.color;
+
+        // 畫方塊
+        ctx.fillRect(food.x * GRID_SIZE, food.y * GRID_SIZE, GRID_SIZE, GRID_SIZE);
+
+        // 畫文字 (顯示在方塊上方)
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#fff';
+        ctx.fillText(food.text, food.x * GRID_SIZE + GRID_SIZE / 2, food.y * GRID_SIZE - 10);
+      });
+
+      // 畫蛇
+      snake.forEach((segment, index) => {
+        const isHead = index === 0;
+        ctx.shadowBlur = isHead ? 15 : 0;
+        ctx.shadowColor = '#4ade80';
+        ctx.fillStyle = isHead ? '#4ade80' : '#22c55e'; // Green-400 vs Green-500
+
+        ctx.fillRect(segment.x * GRID_SIZE, segment.y * GRID_SIZE, GRID_SIZE - 1, GRID_SIZE - 1);
+
+        // 畫蛇頭文字 (當前句)
+        if (isHead) {
+          ctx.shadowBlur = 0;
+          ctx.fillStyle = '#fff';
+          ctx.font = 'bold 18px "Noto Serif TC"';
+          // 獲取當前應該顯示的句子
+          const currentPoem = POEMS[level];
+          // 蛇頭顯示的是「上一句」或者「當前進度」
+          // 邏輯：蛇頭代表已讀部分。
+          const txt = currentPoem.lines[currentLineIndex];
+
+          // 為了不遮擋蛇頭，字顯示在蛇頭下方
+          ctx.fillText(txt, segment.x * GRID_SIZE + GRID_SIZE / 2, segment.y * GRID_SIZE + GRID_SIZE + 15);
+        }
+      });
+    };
+    animationFrameId = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [gameState, level, currentLineIndex]); // 依賴項
+
+  return /*#__PURE__*/React.createElement("div", {
+    className: "relative w-full max-w-4xl mx-auto p-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between items-center mb-4 bg-slate-800 p-4 rounded-lg shadow-lg border border-slate-700"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h1", {
+    className: "text-2xl font-bold text-green-400"
+  }, "唐詩貪食蛇"), /*#__PURE__*/React.createElement("p", {
+    className: "text-sm text-slate-400"
+  }, "請用方向鍵控制，吃掉下一句詩！")), /*#__PURE__*/React.createElement("div", {
+    className: "text-right"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xl font-mono text-yellow-400"
+  }, "得分: ", score), /*#__PURE__*/React.createElement("div", {
+    className: "text-sm text-slate-300"
+  }, "關卡: ", /*#__PURE__*/React.createElement("span", {
+    className: "text-white font-bold"
+  }, POEMS[level].title)), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs text-green-300 mt-1"
+  }, "當前: ", POEMS[level].lines[currentLineIndex]))), /*#__PURE__*/React.createElement("div", {
+    className: "relative rounded-xl overflow-hidden shadow-2xl border-4 border-slate-700 bg-black/50 backdrop-blur-sm"
+  }, /*#__PURE__*/React.createElement("canvas", {
+    ref: canvasRef,
+    className: "block mx-auto"
+  }), gameState === 'START' && /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 flex flex-col items-center justify-center bg-black/80 z-10"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "text-5xl font-bold text-white mb-6 tracking-widest"
+  }, "唐詩 · 貪食蛇"), /*#__PURE__*/React.createElement("button", {
+    onClick: startGame,
+    className: "px-8 py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-full text-xl transition transform hover:scale-105 shadow-lg shadow-green-500/50"
+  }, "開始遊戲")), gameState === 'GAME_OVER' && /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 flex flex-col items-center justify-center bg-red-900/90 z-10"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "text-5xl font-bold text-white mb-4"
+  }, "遊戲結束"), /*#__PURE__*/React.createElement("p", {
+    className: "text-xl text-red-200 mb-8"
+  }, "哎呀！選錯了或撞牆了。"), /*#__PURE__*/React.createElement("button", {
+    onClick: startGame,
+    className: "px-8 py-3 bg-white text-red-900 font-bold rounded-full text-xl hover:bg-gray-200 transition"
+  }, "再試一次")), gameState === 'VICTORY' && /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 flex flex-col items-center justify-center bg-yellow-600/90 z-10"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "text-5xl font-bold text-white mb-4"
+  }, "大詩人！"), /*#__PURE__*/React.createElement("p", {
+    className: "text-xl text-yellow-100 mb-8"
+  }, "你已經背熟了所有詩詞。"), /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-mono mb-8"
+  }, "最終得分: ", score), /*#__PURE__*/React.createElement("button", {
+    onClick: startGame,
+    className: "px-8 py-3 bg-white text-yellow-900 font-bold rounded-full text-xl hover:bg-gray-200 transition"
+  }, "重新挑戰"))));
+};
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+
+</body>
+</html>
+

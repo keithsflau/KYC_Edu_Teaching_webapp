@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Linear Transformations | M2 Matrix</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+      }
+      .glass {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .draggable {
+        cursor: grab;
+      }
+      .draggable:active {
+        cursor: grabbing;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <div id="root" class="flex-grow flex flex-col"></div>
+    <script>
+const {
+  useState,
+  useRef
+} = React;
+const translations = {
+  en: {
+    unit: "Unit 4: Matrices",
+    title: "Linear Transformations",
+    subtitle: "Visualizing Matrix Distortion",
+    matrixTitle: "Transformation Matrix M",
+    matrixDesc: "The columns of the matrix are the images of the basis vectors <strong class='text-rose-400'>i</strong> and <strong class='text-emerald-400'>j</strong>.",
+    dragHint: "Drag the red/green arrows to change M",
+    detTitle: "Determinant",
+    detDesc: "The area of the unit square scaling factor. If negative, orientation is flipped.",
+    presets: "Presets",
+    pIdentity: "Identity",
+    pScale: "Scale 2x",
+    pRot: "Rotate 90°",
+    pShear: "Shear X",
+    langBtn: "中文"
+  },
+  zh: {
+    unit: "第四單元：矩陣",
+    title: "線性變換",
+    subtitle: "矩陣變換視覺化",
+    matrixTitle: "變換矩陣 M",
+    matrixDesc: "矩陣的列向量分別是基底向量 <strong class='text-rose-400'>i</strong> 和 <strong class='text-emerald-400'>j</strong> 的像。",
+    dragHint: "拖動紅/綠箭頭以改變矩陣 M",
+    detTitle: "行列式",
+    detDesc: "單位正方形面積的縮放因子。若為負值，表示方向翻轉。",
+    presets: "預設值",
+    pIdentity: "單位矩陣",
+    pScale: "放大 2x",
+    pRot: "旋轉 90°",
+    pShear: "推移 X",
+    langBtn: "English"
+  }
+};
+const App = () => {
+  // Basis vectors i (1,0) and j (0,1)
+  // Transformed basis: i' and j'
+  // Matrix columns are i' and j'
+
+  const [lang, setLang] = useState("en");
+  const t = translations[lang];
+  const [iHat, setIHat] = useState({
+    x: 1,
+    y: 0
+  });
+  const [jHat, setJHat] = useState({
+    x: 0,
+    y: 1
+  });
+  const [dragging, setDragging] = useState(null); // 'i' or 'j'
+
+  // Coords
+  const w = 600,
+    h = 600;
+  const range = 4;
+  const scale = w / (2 * range); // 75px per unit
+  const originX = w / 2;
+  const originY = h / 2;
+  const toScreen = (x, y) => ({
+    x: originX + x * scale,
+    y: originY - y * scale
+  });
+  const fromScreen = (sx, sy) => ({
+    x: (sx - originX) / scale,
+    y: (originY - sy) / scale
+  });
+  const handleMouseMove = e => {
+    if (!dragging) return;
+    const svg = e.currentTarget;
+    const rect = svg.getBoundingClientRect();
+    const pt = fromScreen(e.clientX - rect.left, e.clientY - rect.top);
+
+    // Snap logic
+    let nx = pt.x,
+      ny = pt.y;
+    if (Math.abs(nx - Math.round(nx)) < 0.2) nx = Math.round(nx);
+    if (Math.abs(ny - Math.round(ny)) < 0.2) ny = Math.round(ny);
+    if (dragging === "i") setIHat({
+      x: nx,
+      y: ny
+    });
+    if (dragging === "j") setJHat({
+      x: nx,
+      y: ny
+    });
+  };
+
+  // Generate warped grid
+  // Grid lines x = -4..4, y = -4..4
+  // Point (x,y) -> x*i' + y*j'
+
+  const transform = (x, y) => {
+    return {
+      x: x * iHat.x + y * jHat.x,
+      y: x * iHat.y + y * jHat.y
+    };
+  };
+  const gridLines = [];
+  for (let k = -range; k <= range; k++) {
+    // Vertical line x=k: goes from (k, -range) to (k, range)
+    const p1 = transform(k, -range);
+    const p2 = transform(k, range);
+    gridLines.push({
+      p1,
+      p2,
+      color: "#1e293b"
+    }); // faint vert
+
+    // Horizontal line y=k: from (-range, k) to (range, k)
+    const p3 = transform(-range, k);
+    const p4 = transform(range, k);
+    gridLines.push({
+      p1: p3,
+      p2: p4,
+      color: "#1e293b"
+    });
+  }
+
+  // Determinant
+  const det = iHat.x * jHat.y - iHat.y * jHat.x;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "flex-grow flex flex-col items-center justify-center p-8 select-none",
+    onMouseUp: () => setDragging(null)
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 right-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLang(l => l === "en" ? "zh" : "en"),
+    className: "px-3 py-1 bg-slate-800 border border-slate-600 rounded-full text-xs font-bold text-emerald-400 hover:bg-slate-700 hover:text-white transition flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-language"
+  }), t.langBtn)), /*#__PURE__*/React.createElement("header", {
+    className: "mb-8 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-emerald-500 font-bold uppercase tracking-widest text-xs mb-2"
+  }, t.unit), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-white mb-2"
+  }, t.title), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-400 font-mono text-lg"
+  }, t.subtitle)), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col lg:flex-row gap-8 w-full max-w-6xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 glass p-6 rounded-3xl relative flex items-center justify-center aspect-square"
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: "100%",
+    height: "100%",
+    viewBox: "0 0 600 600",
+    className: "overflow-hidden bg-slate-900 rounded-xl cursor-crosshair",
+    onMouseMove: handleMouseMove
+  }, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("marker", {
+    id: "head-R",
+    markerWidth: "6",
+    markerHeight: "6",
+    refX: "5",
+    refY: "3",
+    orient: "auto"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M0,0 L6,3 L0,6",
+    fill: "#f43f5e"
+  })), /*#__PURE__*/React.createElement("marker", {
+    id: "head-G",
+    markerWidth: "6",
+    markerHeight: "6",
+    refX: "5",
+    refY: "3",
+    orient: "auto"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M0,0 L6,3 L0,6",
+    fill: "#10b981"
+  }))), gridLines.map((l, i) => {
+    const s1 = toScreen(l.p1.x, l.p1.y);
+    const s2 = toScreen(l.p2.x, l.p2.y);
+    return /*#__PURE__*/React.createElement("line", {
+      key: i,
+      x1: s1.x,
+      y1: s1.y,
+      x2: s2.x,
+      y2: s2.y,
+      stroke: l.color,
+      strokeWidth: "1"
+    });
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: toScreen(transform(-10, 0).x, transform(-10, 0).y).x,
+    y1: toScreen(transform(-10, 0).x, transform(-10, 0).y).y,
+    x2: toScreen(transform(10, 0).x, transform(10, 0).y).x,
+    y2: toScreen(transform(10, 0).x, transform(10, 0).y).y,
+    stroke: "white",
+    strokeOpacity: "0.1",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: toScreen(transform(0, -10).x, transform(0, -10).y).x,
+    y1: toScreen(transform(0, -10).x, transform(0, -10).y).y,
+    x2: toScreen(transform(0, 10).x, transform(0, 10).y).x,
+    y2: toScreen(transform(0, 10).x, transform(0, 10).y).y,
+    stroke: "white",
+    strokeOpacity: "0.1",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("g", {
+    onMouseDown: () => setDragging("i"),
+    className: "draggable hover:opacity-80"
+  }, /*#__PURE__*/React.createElement("line", {
+    x1: originX,
+    y1: originY,
+    x2: toScreen(iHat.x, iHat.y).x,
+    y2: toScreen(iHat.x, iHat.y).y,
+    stroke: "#f43f5e",
+    strokeWidth: "4",
+    markerEnd: "url(#head-R)"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: toScreen(iHat.x, iHat.y).x,
+    cy: toScreen(iHat.x, iHat.y).y,
+    r: "12",
+    fill: "transparent"
+  }), " "), /*#__PURE__*/React.createElement("g", {
+    onMouseDown: () => setDragging("j"),
+    className: "draggable hover:opacity-80"
+  }, /*#__PURE__*/React.createElement("line", {
+    x1: originX,
+    y1: originY,
+    x2: toScreen(jHat.x, jHat.y).x,
+    y2: toScreen(jHat.x, jHat.y).y,
+    stroke: "#10b981",
+    strokeWidth: "4",
+    markerEnd: "url(#head-G)"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: toScreen(jHat.x, jHat.y).x,
+    cy: toScreen(jHat.x, jHat.y).y,
+    r: "12",
+    fill: "transparent"
+  })), /*#__PURE__*/React.createElement("path", {
+    d: `M ${originX},${originY} L ${toScreen(iHat.x, iHat.y).x},${toScreen(iHat.x, iHat.y).y} L ${toScreen(iHat.x + jHat.x, iHat.y + jHat.y).x},${toScreen(iHat.x + jHat.x, iHat.y + jHat.y).y} L ${toScreen(jHat.x, jHat.y).x},${toScreen(jHat.x, jHat.y).y} Z`,
+    fill: "white",
+    opacity: "0.1"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full lg:w-96 space-y-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass p-6 rounded-2xl"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-lg font-bold text-white mb-4"
+  }, t.matrixTitle), /*#__PURE__*/React.createElement("p", {
+    className: "text-xs text-slate-400 mb-4",
+    dangerouslySetInnerHTML: {
+      __html: t.matrixDesc
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-4 text-3xl font-mono text-white bg-slate-800 p-6 rounded-xl justify-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col gap-4 border-r border-slate-600 pr-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-rose-400"
+  }, iHat.x.toFixed(1)), /*#__PURE__*/React.createElement("div", {
+    className: "text-rose-400"
+  }, iHat.y.toFixed(1))), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col gap-4 pl-0"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-emerald-400"
+  }, jHat.x.toFixed(1)), /*#__PURE__*/React.createElement("div", {
+    className: "text-emerald-400"
+  }, jHat.y.toFixed(1)))), /*#__PURE__*/React.createElement("div", {
+    className: "text-center mt-2 text-xs text-slate-500"
+  }, t.dragHint)), /*#__PURE__*/React.createElement("div", {
+    className: "glass p-6 rounded-2xl"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-xs font-bold text-slate-400 uppercase mb-2"
+  }, t.detTitle), /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-bold font-mono text-white mb-2"
+  }, det.toFixed(2)), /*#__PURE__*/React.createElement("p", {
+    className: "text-xs text-slate-400"
+  }, t.detDesc)), /*#__PURE__*/React.createElement("div", {
+    className: "glass p-6 rounded-2xl"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-xs font-bold text-slate-400 uppercase mb-2"
+  }, t.presets), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 gap-2"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      setIHat({
+        x: 1,
+        y: 0
+      });
+      setJHat({
+        x: 0,
+        y: 1
+      });
+    },
+    className: "px-3 py-2 bg-slate-700 rounded text-xs hover:bg-slate-600"
+  }, t.pIdentity), /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      setIHat({
+        x: 2,
+        y: 0
+      });
+      setJHat({
+        x: 0,
+        y: 2
+      });
+    },
+    className: "px-3 py-2 bg-slate-700 rounded text-xs hover:bg-slate-600"
+  }, t.pScale), /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      setIHat({
+        x: 0,
+        y: 1
+      });
+      setJHat({
+        x: -1,
+        y: 0
+      });
+    },
+    className: "px-3 py-2 bg-slate-700 rounded text-xs hover:bg-slate-600"
+  }, t.pRot), /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      setIHat({
+        x: 1,
+        y: 0
+      });
+      setJHat({
+        x: 1,
+        y: 1
+      });
+    },
+    className: "px-3 py-2 bg-slate-700 rounded text-xs hover:bg-slate-600"
+  }, t.pShear))))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

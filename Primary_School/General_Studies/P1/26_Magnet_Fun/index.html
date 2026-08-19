@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小一常識：磁鐵小遊戲 | Magnet Fun</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #e5e7eb 0%, #9ca3af 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Magnet Power",
+    zh: "磁鐵小遊戲",
+    ja: "マグネットパワー",
+    ko: "자석 파워",
+    es: "Poder magnético",
+    de: "Magnetkraft",
+    fi: "Magneettivoima",
+    fr: "Pouvoir magnétique",
+    ar: "قوة المغناطيس",
+    it: "Potere magnetico"
+  },
+  instruction: {
+    en: "Drag objects to the magnet. Will they stick?",
+    zh: "把物件拖向磁鐵，看看會不會被吸住？",
+    ja: "オブジェクトを磁石にドラッグします。くっつきますか？",
+    ko: "물체를 자석으로 드래그하세요. 붙을까요?",
+    es: "Arrastra objetos al imán. ¿Se pegarán?",
+    de: "Ziehe Objekte zum Magneten. Bleiben sie haften?",
+    fi: "Raahaa esineitä magneettiin. Tarttuvatko ne?",
+    fr: "Faites glisser les objets vers l'aimant. Vont-ils coller ?",
+    ar: "اسحب الأشياء إلى المغناطيس. هل ستلتصق؟",
+    it: "Trascina gli oggetti sul magnete. Si attaccheranno?"
+  },
+  yes: {
+    en: "Attracted!",
+    zh: "被吸住了！",
+    es: "¡Atraído!",
+    de: "Angezoegt!",
+    fi: "Tarttui!",
+    fr: "Attiré !",
+    ar: "ينجذب!",
+    it: "Attratto!"
+  },
+  no: {
+    en: "Not Attracted",
+    zh: "沒有反應",
+    es: "No atraído",
+    de: "Nicht angezogen",
+    fi: "Ei tartu",
+    fr: "Pas attiré",
+    ar: "لا ينجذب",
+    it: "Non attratto"
+  },
+  reset: {
+    en: "Reset",
+    zh: "重置",
+    es: "Reiniciar",
+    de: "Zurücksetzen",
+    fi: "Nollaa",
+    fr: "Réinitialiser",
+    ar: "إعادة تعيين",
+    it: "Reimposta"
+  },
+  clip: {
+    en: "Paper Clip",
+    zh: "萬字夾",
+    es: "Clip de papel",
+    de: "Büroklammer",
+    fi: "Paperiliitin",
+    fr: "Trombone",
+    ar: "مشبك ورق",
+    it: "Graffetta"
+  },
+  nail: {
+    en: "Iron Nail",
+    zh: "鐵釘",
+    es: "Clavo de hierro",
+    de: "Eisennagel",
+    fi: "Rautanaula",
+    fr: "Clou en fer",
+    ar: "مسمار حديدي",
+    it: "Chiodo di ferro"
+  },
+  scissor: {
+    en: "Scissors",
+    zh: "剪刀",
+    es: "Tijeras",
+    de: "Schere",
+    fi: "Sakset",
+    fr: "Ciseaux",
+    ar: "مقص",
+    it: "Forbici"
+  },
+  eraser: {
+    en: "Eraser",
+    zh: "擦膠",
+    es: "Borrador",
+    de: "Radiergummi",
+    fi: "Pyyhekumi",
+    fr: "Gomme",
+    ar: "ممحاة",
+    it: "Gomma da cancellare"
+  },
+  pencil: {
+    en: "Pencil",
+    zh: "鉛筆",
+    es: "Lápiz",
+    de: "Bleistift",
+    fi: "Lyijykynä",
+    fr: "Crayon",
+    ar: "قلم رصاص",
+    it: "Matita"
+  },
+  lego: {
+    en: "Plastic Toy",
+    zh: "塑膠玩具",
+    es: "Juguete de plástico",
+    de: "Plastikspielzeug",
+    fi: "Muovilelu",
+    fr: "Jouet en plastique",
+    ar: "لعبة بلاستيكية",
+    it: "Giocattolo di plastica"
+  }
+};
+const objects = [{
+  id: "clip",
+  icon: "📎",
+  magnetic: true
+}, {
+  id: "nail",
+  icon: "🔩",
+  magnetic: true
+},
+// Using screw/nut emoji closest
+{
+  id: "scissor",
+  icon: "✂️",
+  magnetic: true
+}, {
+  id: "eraser",
+  icon: "🧼",
+  magnetic: false
+},
+// Soap emoji looks like eraser somewhat
+{
+  id: "pencil",
+  icon: "✏️",
+  magnetic: false
+}, {
+  id: "lego",
+  icon: "🧱",
+  magnetic: false
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [items, setItems] = useState([]);
+  const [draggedItem, setDraggedItem] = useState(null);
+  const [feedback, setFeedback] = useState(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+  useEffect(() => {
+    reset();
+  }, []);
+  const reset = () => {
+    // Random positions at bottom
+    const newItems = objects.map(o => ({
+      ...o,
+      x: Math.random() * 60 + 20,
+      // 20-80%
+      y: Math.random() * 20 + 60,
+      // 60-80%
+      stuck: false,
+      uid: Math.random()
+    }));
+    setItems(newItems);
+  };
+  const handleDragEnd = (e, info, item) => {
+    // Check proximity to magnet (Top Center)
+    const magnetZone = {
+      x: window.innerWidth / 2,
+      y: 150
+    }; // Rough coords
+    const itemRect = e.target.getBoundingClientRect();
+    const itemCenter = {
+      x: itemRect.x + itemRect.width / 2,
+      y: itemRect.y + itemRect.height / 2
+    };
+    const dist = Math.sqrt(Math.pow(itemCenter.x - magnetZone.x, 2) + Math.pow(itemCenter.y - magnetZone.y, 2));
+    if (dist < 150) {
+      // Close enough
+      if (item.magnetic) {
+        // Stick
+        setItems(prev => prev.map(i => i.uid === item.uid ? {
+          ...i,
+          stuck: true
+        } : i));
+        setFeedback("yes");
+      } else {
+        // Bounce
+        setFeedback("no");
+      }
+    }
+    setTimeout(() => setFeedback(null), 1000);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 flex flex-col items-center overflow-hidden relative"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-slate-800 mb-4 mt-8 drop-shadow-sm z-10"
+  }, "🧲 ", getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-32 left-1/2 -ml-28 md:-ml-32 w-56 md:w-64 z-0"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full h-48 border-[32px] border-red-600 rounded-t-full rounded-b-lg border-b-0 flex justify-between relative"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-8 h-12 bg-slate-300 absolute -bottom-12 left-[-32px]"
+  }), " ", /*#__PURE__*/React.createElement("div", {
+    className: "w-8 h-12 bg-slate-300 absolute -bottom-12 right-[-32px]"
+  }), " ")), /*#__PURE__*/React.createElement("p", {
+    className: "font-bold text-slate-600 mb-4 z-10 bg-white/50 px-4 py-1 rounded"
+  }, getText("instruction")), feedback && /*#__PURE__*/React.createElement("div", {
+    className: `z-20 text-3xl font-black px-6 py-2 rounded-xl shadow-xl fixed top-60 ${feedback === "yes" ? "bg-green-500 text-white" : "bg-slate-500 text-white"}`
+  }, getText(feedback)), /*#__PURE__*/React.createElement("div", {
+    className: "w-full h-full absolute inset-0 pt-[300px]"
+  }, items.map(item => /*#__PURE__*/React.createElement(motion.div, {
+    key: item.uid,
+    drag: !item.stuck,
+    dragConstraints: {
+      left: -100,
+      right: 100,
+      top: -200,
+      bottom: 200
+    },
+    dragSnapToOrigin: !item.stuck && !item.magnetic // If not stuck, snap back? Or just stay.
+    // Actually "bounce" logic: dragSnapToOrigin=true if released near magnet but !magnetic
+    ,
+    onDragEnd: (e, info) => handleDragEnd(e, info, item),
+    animate: item.stuck ? {
+      x: 0,
+      y: -200 - Math.random() * 50,
+      rotate: Math.random() * 30 - 15
+    } : {} // Move to magnet center relative to initial render?
+    // This is tricky with framer motion absolute positioning.
+    // Let's use simple CSS class switch or just let user drag it to target.
+    // Actually, simpler: if stuck, animate to specific screen coord?
+    // Hard to mix drag and controlled anim easily without layout projection.
+    // Let's just update state to "stuck" and render it IN the magnet zone.
+    ,
+    className: `absolute flex flex-col items-center cursor-grab active:cursor-grabbing w-24 h-24 touch-none ${item.stuck ? "pointer-events-none" : ""}`,
+    style: item.stuck ? {
+      left: "50%",
+      marginLeft: Math.random() * 100 - 50 - 48,
+      top: "250px"
+    } : {
+      left: `${item.x}%`,
+      top: `${item.y}%`
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-6xl filter drop-shadow-md"
+  }, item.icon), /*#__PURE__*/React.createElement("span", {
+    className: "bg-white/80 px-2 rounded text-xs font-bold mt-1 shadow"
+  }, getText(item.id))))), /*#__PURE__*/React.createElement("button", {
+    onClick: reset,
+    className: "absolute bottom-8 right-8 bg-slate-700 text-white px-6 py-2 rounded-full font-bold shadow-lg z-30 hover:bg-slate-800"
+  }, getText("reset"), " 🔄"));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

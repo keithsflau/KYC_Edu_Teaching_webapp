@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小二常識：地鐵禮儀 | MTR Etiquette</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "MTR Etiquette",
+    zh: "地鐵禮儀",
+    ja: "電車のマナー",
+    ko: "지하철 예절",
+    es: "Etiqueta del MTR",
+    de: "U-Bahn-Etikette",
+    fi: "Metron etiketti",
+    fr: "Étiquette du MTR",
+    ar: "آداب المترو",
+    it: "Etichetta MTR"
+  },
+  instruction: {
+    en: "Who needs the Priority Seat?",
+    zh: "誰需要關愛座？",
+    ja: "優先席が必要なのは誰？",
+    ko: "누가 우선석이 필요할까요?",
+    es: "¿Quién necesita el Asiento Prioritario?",
+    de: "Wer braucht den Vorzugssitz?",
+    fi: "Kuka tarvitsee etusijaistuinta?",
+    fr: "Qui a besoin du siège prioritaire ?",
+    ar: "من يحتاج إلى مقعد الأولوية؟",
+    it: "Chi ha bisogno del Posto Prioritario?"
+  },
+  correct: {
+    en: "Very kind of you!",
+    zh: "你真有愛心！",
+    ja: "親切ですね！",
+    ko: "정말 친절하시네요!",
+    es: "¡Muy amable de tu parte!",
+    de: "Sehr nett von dir!",
+    fi: "Todella ystävällistä!",
+    fr: "C'est très gentil !",
+    ar: "لطيف جدا منك!",
+    it: "Molto gentile da parte tua!"
+  },
+  wrong: {
+    en: "Try again!",
+    zh: "再試一次！",
+    ja: "もう一度！",
+    ko: "다시 시도하세요!",
+    es: "¡Inténtalo de nuevo!",
+    de: "Versuch es nochmal!",
+    fi: "Yritä uudelleen!",
+    fr: "Réessayez !",
+    ar: "حاول مرة أخرى!",
+    it: "Riprova!"
+  },
+  pregnant: {
+    en: "Pregnant Lady",
+    zh: "孕婦",
+    ja: "妊婦",
+    ko: "임산부",
+    es: "Mujer Embarazada",
+    de: "Schwangere Frau",
+    fi: "Raskaana oleva nainen",
+    fr: "Femme enceinte",
+    ar: "سيدة حامل",
+    it: "Donna Incinta"
+  },
+  elder: {
+    en: "Elderly",
+    zh: "長者",
+    ja: "お年寄り",
+    ko: "노인",
+    es: "Anciano",
+    de: "Senior",
+    fi: "Vanhus",
+    fr: "Personne âgée",
+    ar: "مسن",
+    it: "Anziano"
+  },
+  injured: {
+    en: "Injured Person",
+    zh: "受傷的人",
+    ja: "怪我人",
+    ko: "부상자",
+    es: "Persona Lesionada",
+    de: "Verletzte Person",
+    fi: "Loukkaantunut henkilö",
+    fr: "Personne blessée",
+    ar: "شخص مصاب",
+    it: "Persona Ferita"
+  },
+  baby: {
+    en: "Parent with Baby",
+    zh: "抱著嬰兒的家長",
+    ja: "赤ちゃん連れ",
+    ko: "아기가 있는 부모",
+    es: "Padre con Bebé",
+    de: "Elternteil mit Baby",
+    fi: "Vanhempi vauvan kanssa",
+    fr: "Parent avec bébé",
+    ar: "الوالد مع الطفل",
+    it: "Genitore con Bambino"
+  },
+  student: {
+    en: "Student",
+    zh: "學生",
+    ja: "学生",
+    ko: "학생",
+    es: "Estudiante",
+    de: "Student",
+    fi: "Opiskelija",
+    fr: "Étudiant",
+    ar: "طالب",
+    it: "Studente"
+  },
+  man: {
+    en: "Young Man",
+    zh: "年輕男士",
+    ja: "青年",
+    ko: "청년",
+    es: "Hombre Joven",
+    de: "Junger Mann",
+    fi: "Nuori mies",
+    fr: "Jeune homme",
+    ar: "شاب",
+    it: "Giovane Uomo"
+  },
+  lady: {
+    en: "Lady on Phone",
+    zh: "講電話的女士",
+    ja: "電話中の女性",
+    ko: "통화 중인 여성",
+    es: "Señora al Teléfono",
+    de: "Frau am Telefon",
+    fi: "Nainen puhelimessa",
+    fr: "Dame au téléphone",
+    ar: "سيدة على الهاتف",
+    it: "Signora al Telefono"
+  },
+  gamer: {
+    en: "Gamer",
+    zh: "打機的人",
+    ja: "ゲーマー",
+    ko: "게이머",
+    es: "Jugador",
+    de: "Gamer",
+    fi: "Pelaaja",
+    fr: "Joueur",
+    ar: "اللاعب",
+    it: "Giocatore"
+  },
+  giveSeat: {
+    en: "Give Seat",
+    zh: "讓座",
+    ja: "席を譲る",
+    ko: "자리 양보",
+    es: "Ceder el Asiento",
+    de: "Platz anbieten",
+    fi: "Anna istuin",
+    fr: "Donner le siège",
+    ar: "إعطاء مقعد",
+    it: "Cedi il Posto"
+  },
+  next: {
+    en: "Next Stop",
+    zh: "下一站",
+    ja: "次の駅",
+    ko: "다음 역",
+    es: "Próxima Parada",
+    de: "Nächster Halt",
+    fi: "Seuraava pysäkki",
+    fr: "Prochain arrêt",
+    ar: "المحطة التالية",
+    it: "Prossima Fermata"
+  },
+  score: {
+    en: "Kindness Score",
+    zh: "愛心分數",
+    ja: "親切スコア",
+    ko: "친절 점수",
+    es: "Puntuación de Amabilidad",
+    de: "Freundlichkeits-Punktestand",
+    fi: "Ystävällisyyspisteet",
+    fr: "Score de Gentillesse",
+    ar: "درجة اللطف",
+    it: "Punteggio Gentilezza"
+  }
+};
+const scenarios = [{
+  id: 1,
+  passenger: {
+    id: "pregnant",
+    icon: "🤰",
+    type: "need"
+  },
+  others: [{
+    id: "student",
+    icon: "🎒"
+  }, {
+    id: "man",
+    icon: "👨‍💻"
+  }]
+}, {
+  id: 2,
+  passenger: {
+    id: "elder",
+    icon: "👴",
+    type: "need"
+  },
+  others: [{
+    id: "lady",
+    icon: "👱‍♀️"
+  }, {
+    id: "gamer",
+    icon: "🎮"
+  }]
+}, {
+  id: 3,
+  passenger: {
+    id: "injured",
+    icon: "🤕",
+    type: "need"
+  },
+  others: [{
+    id: "student",
+    icon: "👦"
+  }, {
+    id: "man",
+    icon: "🧔"
+  }]
+}, {
+  id: 4,
+  passenger: {
+    id: "baby",
+    icon: "👩‍🍼",
+    type: "need"
+  },
+  others: [{
+    id: "lady",
+    icon: "💄"
+  }, {
+    id: "gamer",
+    icon: "🎧"
+  }]
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [idx, setIdx] = useState(0);
+  const [score, setScore] = useState(0);
+  const [feedback, setFeedback] = useState(null);
+  const [isSeated, setIsSeated] = useState(true); // You are seated initially
+  const [displayPassengers, setDisplayPassengers] = useState([]);
+
+  const getText = key => t[key][lang] || t[key]["en"];
+  const currentScene = scenarios[idx];
+  useEffect(() => {
+    const list = [currentScene.passenger, ...currentScene.others];
+    for (let i = list.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const tmp = list[i];
+      list[i] = list[j];
+      list[j] = tmp;
+    }
+    setDisplayPassengers(list);
+  }, [idx]);
+  const handleGiveSeat = passenger => {
+    if (passenger.type === "need") {
+      setFeedback("correct");
+      setScore(s => s + 10);
+      setIsSeated(false);
+    } else {
+      setFeedback("wrong");
+      setTimeout(() => setFeedback(null), 1200);
+    }
+  };
+  const next = () => {
+    setFeedback(null);
+    setIsSeated(true);
+    if (idx < scenarios.length - 1) setIdx(idx + 1);else setIdx(0); // Loop
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-red-700 mb-4 mt-8 drop-shadow-sm bg-white/50 px-6 py-2 rounded-full"
+  }, "🚆 ", getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "font-bold text-red-600 bg-white px-4 py-1 rounded-full mb-4 shadow"
+  }, getText("score"), ": ", score), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-3xl bg-slate-200 rounded-3xl p-8 shadow-2xl relative overflow-hidden border-8 border-slate-300"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 left-0 w-full flex justify-between px-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-24 h-20 bg-black/80 rounded-lg animate-pulse"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "w-24 h-20 bg-black/80 rounded-lg animate-pulse delay-75"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "w-24 h-20 bg-black/80 rounded-lg animate-pulse delay-150"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "mt-24 flex justify-between items-end gap-2 px-2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full h-32 bg-slate-300 rounded-t-xl flex items-end justify-center pb-2 relative border-t-4 border-red-500"
+  }, " ", /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-2 w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white font-bold text-xs"
+  }, "➕"), isSeated ? /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl"
+  }, "🧒") // You
+  : /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl animate-bounce"
+  }, displayPassengers.find(p => p.type === "need")?.icon || "🙂")), /*#__PURE__*/React.createElement("div", {
+    className: "w-full h-32 bg-slate-300 rounded-t-xl flex items-end justify-center pb-2 border-t-4 border-slate-400"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl"
+  }, "😴")), /*#__PURE__*/React.createElement("div", {
+    className: "w-full h-32 bg-slate-300 rounded-t-xl flex items-end justify-center pb-2 border-t-4 border-slate-400"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl"
+  }, "📱"))), /*#__PURE__*/React.createElement("div", {
+    className: "mt-8"
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "text-center font-bold text-slate-500 mb-4 bg-white/50 rounded-lg py-2"
+  }, getText("instruction")),   feedback === "correct" ? /*#__PURE__*/React.createElement("div", {
+    className: "text-center py-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl text-green-600 font-black mb-4"
+  }, getText("correct")), /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl mb-4"
+  }, "🥰"), /*#__PURE__*/React.createElement("button", {
+    onClick: next,
+    className: "bg-red-500 text-white px-8 py-3 rounded-full font-bold shadow-lg hover:bg-red-600"
+  }, getText("next"), " ➡️")) : /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center gap-4"
+  }, feedback === "wrong" && /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl text-orange-600 font-black bg-orange-50 px-4 py-2 rounded-full"
+  }, getText("wrong")), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-center gap-4"
+  }, displayPassengers.map((p, i) => /*#__PURE__*/React.createElement("button", {
+    key: i,
+    onClick: () => handleGiveSeat(p),
+    className: "bg-white p-4 rounded-xl shadow-lg border-b-4 border-slate-300 hover:-translate-y-1 transition-transform flex flex-col items-center w-28"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl mb-2"
+  }, p.icon), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold text-slate-600 text-center leading-tight"
+  }, getText(p.id)), /*#__PURE__*/React.createElement("div", {
+    className: "mt-2 bg-red-100 text-red-600 px-2 py-1 rounded text-xs font-bold"
+  }, getText("giveSeat")))))))), /*#__PURE__*/React.createElement("div", {
+    className: "mt-4 text-center text-slate-400 text-sm"
+  }, "Next Station: Central"));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

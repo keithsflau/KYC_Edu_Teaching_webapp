@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - Lens Lab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: #000;
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Lens Laboratory",
+    zh: "透鏡實驗室",
+    ja: "レンズ研究所",
+    ko: "렌즈 실험실",
+    es: "Laboratorio de lentes",
+    de: "Linsenlabor",
+    fi: "Linssilaboratorio",
+    fr: "Laboratoire de lentilles",
+    ar: "مختبر العدسات",
+    it: "Laboratorio Lenti"
+  },
+  instruction: {
+    en: "Observe how light bends.",
+    zh: "觀察光線如何彎曲。",
+    ja: "光がどのように曲がるか観察してください。",
+    ko: "빛이 어떻게 굴절되는지 관찰하세요.",
+    es: "Observa cómo se dobla la luz.",
+    de: "Beobachte, wie sich das Licht brecht.",
+    fi: "Tarkkaile valon taittumista.",
+    fr: "Observez comment la lumière se courbe.",
+    ar: "راقب كيف ينحني الضوء.",
+    it: "Osserva come la luce si piega."
+  },
+  convex: {
+    en: "Convex Lens (Zoom In)",
+    zh: "凸透鏡 (放大)",
+    ja: "凸レンズ (拡大)",
+    ko: "볼록 렌즈 (확대)"
+  },
+  concave: {
+    en: "Concave Lens (Zoom Out)",
+    zh: "凹透鏡 (縮小)",
+    ja: "凹レンズ (縮小)",
+    ko: "오목 렌즈 (축소)"
+  },
+  focus: {
+    en: "Focal Point",
+    zh: "焦點",
+    ja: "焦点",
+    ko: "초점"
+  }
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [type, setType] = useState("convex"); // convex, concave
+
+  const getText = key => t[key][lang] || t[key]["en"];
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-bold mb-8 text-blue-400"
+  }, getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4 mb-8"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setType("convex"),
+    className: `px-6 py-2 rounded-full font-bold ${type === "convex" ? "bg-blue-600 text-white" : "bg-gray-800 text-gray-400"}`
+  }, getText("convex")), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setType("concave"),
+    className: `px-6 py-2 rounded-full font-bold ${type === "concave" ? "bg-blue-600 text-white" : "bg-gray-800 text-gray-400"}`
+  }, getText("concave"))), /*#__PURE__*/React.createElement("div", {
+    className: "relative w-[600px] h-[400px] bg-gray-900 border-4 border-gray-700 rounded-3xl overflow-hidden shadow-[0_0_20px_rgba(0,100,255,0.3)]"
+  }, [100, 150, 200, 250, 300].map((y, i) => /*#__PURE__*/React.createElement(motion.div, {
+    key: i,
+    className: "absolute left-0 h-[2px] bg-yellow-400 shadow-[0_0_5px_yellow] opacity-80",
+    initial: {
+      width: 0
+    },
+    animate: {
+      width: 600
+    },
+    style: {
+      top: y
+    }
+  })), [120, 160, 200, 240, 280].map((y, i) => /*#__PURE__*/React.createElement("div", {
+    key: `pre-${i}`,
+    className: "absolute left-0 w-[300px] h-[2px] bg-yellow-400",
+    style: {
+      top: y
+    }
+  })), [120, 160, 200, 240, 280].map((y, i) => {
+    let angle = 0;
+    if (type === "convex") {
+      // Converge to center (200)
+      if (y < 200) angle = 15;
+      if (y > 200) angle = -15;
+    } else {
+      // Diverge
+      if (y < 200) angle = -15;
+      if (y > 200) angle = 15;
+    }
+    return /*#__PURE__*/React.createElement("div", {
+      key: `post-${i}`,
+      className: "absolute left-[300px] w-[300px] h-[2px] bg-yellow-400 origin-left",
+      style: {
+        top: y,
+        transform: `rotate(${angle}deg)`
+      }
+    });
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute left-[290px] top-[100px] w-[20px] h-[200px] flex items-center justify-center"
+  }, type === "convex" ? /*#__PURE__*/React.createElement("div", {
+    className: "w-full h-full bg-blue-500/30 rounded-[100%] border border-blue-400 backdrop-blur-sm"
+  }) :
+  /*#__PURE__*/
+  // Concave shape is tricky with pure CSS divs, approximating with hourglass shape
+  React.createElement("div", {
+    className: "w-full h-full relative"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-0 w-full h-[90px] bg-blue-500/30 rounded-b-lg border border-blue-400"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-0 w-full h-[90px] bg-blue-500/30 rounded-t-lg border border-blue-400"
+  }))), type === "convex" && /*#__PURE__*/React.createElement("div", {
+    className: "absolute right-[50px] top-[190px] text-xs text-yellow-500 animate-pulse font-bold"
+  }, getText("focus"))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

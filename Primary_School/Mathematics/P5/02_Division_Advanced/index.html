@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小五數學：多位數除法 | Long Division</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Long Division",
+    zh: "多位數除法",
+    ja: "長除法",
+    ko: "긴 나눗셈",
+    es: "División Larga",
+    de: "Schriftliche Division",
+    fi: "Jakokulma",
+    fr: "Longue division",
+    ar: "القسمة المطولة",
+    it: "Divisione in Colonna"
+  },
+  quotient: {
+    en: "Quotient",
+    zh: "商",
+    ja: "商",
+    ko: "몫",
+    es: "Cociente",
+    de: "Quotient",
+    fi: "Osamäärä",
+    fr: "Quotient",
+    ar: "خارج القسمة",
+    it: "Quoziente"
+  },
+  remainder: {
+    en: "Remainder",
+    zh: "餘數",
+    ja: "余り",
+    ko: "나머지",
+    es: "Resto",
+    de: "Rest",
+    fi: "Jäännös",
+    fr: "Reste",
+    ar: "الباقي",
+    it: "Resto"
+  },
+  step: {
+    en: "Step",
+    zh: "步驟",
+    ja: "ステップ",
+    ko: "단계",
+    es: "Paso",
+    de: "Schritt",
+    fi: "Vaihe",
+    fr: "Étape",
+    ar: "خطوة",
+    it: "Passo"
+  },
+  check: {
+    en: "Check",
+    zh: "驗算",
+    ja: "確認",
+    ko: "검산",
+    es: "Verificación",
+    de: "Überprüfung",
+    fi: "Tarkistus",
+    fr: "Vérification",
+    ar: "التحقق",
+    it: "Verifica"
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [dividend, setDividend] = useState(845);
+  const [divisor, setDivisor] = useState(25);
+
+  // Division Logic
+  // We need to simulate the steps of long division
+  const calculateSteps = () => {
+    const steps = [];
+    const digits = dividend.toString().split("").map(Number);
+    let currentRemainder = 0;
+    let quotientStr = "";
+    let workingDigits = "";
+    for (let i = 0; i < digits.length; i++) {
+      // Bring down
+      const digit = digits[i];
+      const currentVal = currentRemainder * 10 + digit;
+
+      // Divide
+      const q = Math.floor(currentVal / divisor);
+      const product = q * divisor;
+      const newRemainder = currentVal - product;
+      quotientStr += q;
+      steps.push({
+        stepIdx: i,
+        bringDown: digit,
+        currentVal: currentVal,
+        q: q,
+        product: product,
+        rem: newRemainder
+      });
+      currentRemainder = newRemainder;
+    }
+
+    // Remove leading zeros from quotient unless it is 0
+    const finalQuotient = parseInt(quotientStr, 10);
+    const finalRemainder = currentRemainder;
+    return {
+      steps,
+      finalQuotient,
+      finalRemainder
+    };
+  };
+  const {
+    steps,
+    finalQuotient,
+    finalRemainder
+  } = calculateSteps();
+  const [visibleSteps, setVisibleSteps] = useState(0); // number of steps to show
+
+  const nextStep = () => setVisibleSteps(prev => Math.min(prev + 1, steps.length));
+  const reset = () => setVisibleSteps(0);
+
+  // Reset when inputs change
+  useEffect(() => {
+    reset();
+  }, [dividend, divisor]);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4 font-sans bg-slate-900 text-white"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-4xl flex justify-between items-center mb-10"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-black text-amber-400 drop-shadow-[0_0_15px_rgba(251,191,36,0.5)]"
+  }, "➗ ", getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "flex bg-slate-800/80 p-1.5 rounded-xl border border-white/10 flex-wrap justify-end gap-1 max-w-[50%]"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-amber-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white hover:bg-white/5"}`
+  }, l)))), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col md:flex-row gap-8 w-full max-w-5xl items-start"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full md:w-64 flex flex-col gap-6 order-2 md:order-1"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 rounded-2xl"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "text-xs font-bold text-slate-500 uppercase mb-1 block"
+  }, "Dividend"), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: dividend,
+    onChange: e => setDividend(Math.max(0, parseInt(e.target.value, 10) || 0)),
+    className: "bg-slate-800 text-white text-2xl font-bold p-3 rounded-lg w-full mb-4 outline-none focus:ring-2 ring-amber-500"
+  }), /*#__PURE__*/React.createElement("label", {
+    className: "text-xs font-bold text-slate-500 uppercase mb-1 block"
+  }, "Divisor"), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: divisor,
+    onChange: e => setDivisor(Math.max(1, parseInt(e.target.value, 10) || 1)),
+    className: "bg-slate-800 text-white text-2xl font-bold p-3 rounded-lg w-full mb-6 outline-none focus:ring-2 ring-amber-500"
+  }), /*#__PURE__*/React.createElement("button", {
+    onClick: nextStep,
+    disabled: visibleSteps >= steps.length,
+    className: `w-full py-3 rounded-xl font-bold uppercase transition-all shadow-lg mb-2 ${visibleSteps >= steps.length ? "bg-slate-700 text-slate-500" : "bg-amber-600 hover:bg-amber-500 text-white"}`
+  }, getText("step", lang), " ▶"), /*#__PURE__*/React.createElement("button", {
+    onClick: reset,
+    className: "w-full py-3 bg-slate-700 text-slate-300 hover:text-white rounded-xl font-bold"
+  }, getText("reset", lang), " ↺")), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 rounded-2xl border-l-4 border-emerald-500"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-emerald-400 font-bold mb-2 uppercase text-xs"
+  }, getText("check", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "font-mono text-sm text-slate-300"
+  }, finalQuotient, " × ", divisor, " + ", finalRemainder, " =", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("span", {
+    className: "text-white font-bold text-lg"
+  }, finalQuotient * divisor + finalRemainder)))), /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 glass-panel p-8 rounded-3xl min-h-[500px] flex justify-center items-start overflow-x-auto order-1 md:order-2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "font-mono text-4xl font-bold text-slate-200 relative"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-end mb-2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "mr-4 text-amber-500"
+  }, divisor), /*#__PURE__*/React.createElement("div", {
+    className: "border-l-4 border-t-4 border-slate-500 pl-4 py-1 pr-4 rounded-tl-xl"
+  }, dividend.toString().split("").map((d, i) => /*#__PURE__*/React.createElement("span", {
+    key: i,
+    className: `inline-block w-[1ch] text-center ${visibleSteps > i ? "text-white" : "text-slate-500"}`
+  }, d)))), /*#__PURE__*/React.createElement("div", {
+    className: "pl-[calc(2ch+1rem+4px)] relative"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-[-3.5rem] left-[calc(2ch+1rem+4px)] flex"
+  }, steps.map((s, i) => /*#__PURE__*/React.createElement(motion.span, {
+    key: i,
+    initial: {
+      opacity: 0,
+      y: 10
+    },
+    animate: {
+      opacity: visibleSteps > i ? 1 : 0,
+      y: visibleSteps > i ? 0 : 10
+    },
+    className: "inline-block w-[1ch] text-center text-emerald-400"
+  }, visibleSteps > i ? i === 0 && s.q === 0 && steps.length > 1 ? "" : s.q : ""))), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-start gap-1"
+  }, steps.map((s, i) => visibleSteps > i && /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "flex flex-col relative",
+    style: {
+      marginLeft: `${i}ch`
+    }
+  }, /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      opacity: 0,
+      height: 0
+    },
+    animate: {
+      opacity: 1,
+      height: "auto"
+    },
+    className: "flex flex-col"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-red-400 border-b-2 border-slate-600 mb-1 w-fit"
+  }, "-", s.product), /*#__PURE__*/React.createElement("div", {
+    className: "text-white w-fit flex"
+  }, /*#__PURE__*/React.createElement("span", null, s.rem), i < steps.length - 1 && /*#__PURE__*/React.createElement("span", {
+    className: "text-amber-200 animate-bounce decoration-slice"
+  }, steps[i + 1].bringDown)))))), visibleSteps >= steps.length && /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      opacity: 0
+    },
+    animate: {
+      opacity: 1
+    },
+    className: "mt-4 p-2 bg-slate-800 rounded text-base text-slate-400 inline-block font-sans"
+  }, getText("remainder", lang), " =", " ", /*#__PURE__*/React.createElement("span", {
+    className: "text-white font-bold"
+  }, finalRemainder)))))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

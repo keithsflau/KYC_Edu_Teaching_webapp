@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小二常識：成長的時間線 | Growth Timeline</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #fae8ff 0%, #f0abfc 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  Reorder
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Growth Timeline",
+    zh: "成長的時間線",
+    ja: "成長タイムライン",
+    ko: "성장 타임라인",
+    es: "Línea de Tiempo del Crecimiento",
+    de: "Wachstums-Zeitlinie",
+    fi: "Kasvun aikajana",
+    fr: "Chronologie de la Croissance",
+    ar: "الجدول الزمني للنمو",
+    it: "Linea Temporale della Crescita"
+  },
+  instruction: {
+    en: "Arrange life stages from Young to Old!",
+    zh: "由小到大排列成長階段！",
+    ja: "若い順に成長段階を並べてください！",
+    ko: "어린 시절부터 노년까지 인생 단계를 정렬하세요!",
+    es: "¡Organiza las etapas de la vida de joven a viejo!",
+    de: "Ordne die Lebensphasen von Jung nach Alt!",
+    fi: "Järjestä elämänvaiheet nuoresta vanhaan!",
+    fr: "Organisez les étapes de la vie du jeune au vieux !",
+    ar: "رتب مراحل الحياة من الصغير إلى الكبير!",
+    it: "Ordina le fasi della vita da Giovane a Vecchio!"
+  },
+  baby: {
+    en: "Baby",
+    zh: "嬰兒",
+    ja: "赤ちゃん",
+    ko: "아기",
+    es: "Bebé",
+    de: "Baby",
+    fi: "Vauva",
+    fr: "Bébé",
+    ar: "طفل",
+    it: "Bambino"
+  },
+  child: {
+    en: "Child (P2)",
+    zh: "兒童 (小二)",
+    ja: "子供 (小2)",
+    ko: "어린이 (2학년)",
+    es: "Niño (P2)",
+    de: "Kind (2. Kl.)",
+    fi: "Lapsi (2. lk)",
+    fr: "Enfant (CE1)",
+    ar: "طفل (P2)",
+    it: "Bambino (2ª Elementare)"
+  },
+  teen: {
+    en: "Teenager",
+    zh: "青少年",
+    ja: "ティーンエイジャー",
+    ko: "청소년",
+    es: "Adolescente",
+    de: "Jugendlicher",
+    fi: "Teini",
+    fr: "Adolescent",
+    ar: "مراهق",
+    it: "Adolescente"
+  },
+  adult: {
+    en: "Adult",
+    zh: "成年人",
+    ja: "大人",
+    ko: "성인",
+    es: "Adulto",
+    de: "Erwachsener",
+    fi: "Aikuinen",
+    fr: "Adulte",
+    ar: "بالغ",
+    it: "Adulto"
+  },
+  elder: {
+    en: "Elderly",
+    zh: "長者",
+    ja: "お年寄り",
+    ko: "노인",
+    es: "Anciano",
+    de: "Senior",
+    fi: "Vanhus",
+    fr: "Personne âgée",
+    ar: "مسن",
+    it: "Anziano"
+  },
+  check: {
+    en: "Check",
+    zh: "檢查",
+    ja: "確認",
+    ko: "확인",
+    es: "Comprobar",
+    de: "Prüfen",
+    fi: "Tarkista",
+    fr: "Vérifier",
+    ar: "تحقق",
+    it: "Controlla"
+  },
+  reset: {
+    en: "Reset",
+    zh: "重置",
+    ja: "リセット",
+    ko: "리셋",
+    es: "Reiniciar",
+    de: "Zurücksetzen",
+    fi: "Nollaa",
+    fr: "Réinitialiser",
+    ar: "إعادة تعيين",
+    it: "Resetta"
+  },
+  correct: {
+    en: "Correct! That is Life!",
+    zh: "答對了！這就是人生！",
+    ja: "正解！それが人生です！",
+    ko: "정답! 그것이 인생입니다!",
+    es: "¡Correcto! ¡Así es la vida!",
+    de: "Richtig! Das ist das Leben!",
+    fi: "Oikein! Se on elämää!",
+    fr: "Correct ! C'est la vie !",
+    ar: "صحيح! هذه هي الحياة!",
+    it: "Corretto! Questa è la Vita!"
+  },
+  wrong: {
+    en: "Order is incorrect.",
+    zh: "次序不正確。",
+    ja: "順序が間違っています。",
+    ko: "순서가 틀렸습니다.",
+    es: "El orden es incorrecto.",
+    de: "Reihenfolge ist falsch.",
+    fi: "Järjestys on väärä.",
+    fr: "L'ordre est incorrect.",
+    ar: "الترتيب غير صحيح.",
+    it: "L'ordine non è corretto."
+  }
+};
+const correctOrder = ["baby", "child", "teen", "adult", "elder"];
+const stagesData = [{
+  id: "baby",
+  label: "baby",
+  icon: "👶",
+  color: "bg-pink-200"
+}, {
+  id: "child",
+  label: "child",
+  icon: "👦",
+  color: "bg-orange-200"
+}, {
+  id: "teen",
+  label: "teen",
+  icon: "👱‍♂️",
+  color: "bg-yellow-200"
+}, {
+  id: "adult",
+  label: "adult",
+  icon: "👨",
+  color: "bg-green-200"
+}, {
+  id: "elder",
+  label: "elder",
+  icon: "👴",
+  color: "bg-slate-300"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [items, setItems] = useState([]);
+  const [status, setStatus] = useState(null);
+  // Mobile stacks vertically (flex-col) — Reorder axis must match layout
+  const [axis, setAxis] = useState("x");
+  const getText = key => t[key][lang] || t[key]["en"];
+  useEffect(() => {
+    shuffle();
+  }, []);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const sync = () => setAxis(mq.matches ? "x" : "y");
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+  const shuffle = () => {
+    const s = [...stagesData].sort(() => Math.random() - 0.5);
+    setItems(s);
+    setStatus(null);
+  };
+  const check = () => {
+    const current = items.map(i => i.id);
+    const isCorrect = current.every((val, index) => val === correctOrder[index]);
+    if (isCorrect) setStatus("correct");else setStatus("wrong");
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-purple-800 mb-4 mt-8 drop-shadow-sm bg-white/50 px-6 py-2 rounded-full"
+  }, "📈 ", getText("title")), /*#__PURE__*/React.createElement("p", {
+    className: "font-bold text-purple-700 mb-6"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-4xl relative"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "hidden lg:block absolute top-1/2 left-0 w-full h-4 bg-white/50 rounded-full -z-10 transform -translate-y-1/2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute right-0 top-1/2 -translate-y-1/2 text-2xl"
+  }, "➡️")), /*#__PURE__*/React.createElement(Reorder.Group, {
+    axis: axis,
+    values: items,
+    onReorder: setItems,
+    className: "flex flex-col lg:flex-row gap-4 justify-between items-center min-h-[300px]"
+  }, items.map(item => /*#__PURE__*/React.createElement(Reorder.Item, {
+    key: item.id,
+    value: item,
+    className: "cursor-grab active:cursor-grabbing"
+  }, /*#__PURE__*/React.createElement(motion.div, {
+    className: `${item.color} w-32 h-40 lg:w-40 lg:h-56 rounded-3xl shadow-lg border-4 border-white flex flex-col items-center justify-center gap-2 hover:scale-105 transition-transform`,
+    layout: true
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-5xl lg:text-7xl filter drop-shadow-md"
+  }, item.icon), /*#__PURE__*/React.createElement("span", {
+    className: "font-bold text-slate-700 bg-white/60 px-2 rounded-lg text-sm md:text-base"
+  }, getText(item.label))))))), status && /*#__PURE__*/React.createElement("div", {
+    className: `mt-6 p-4 rounded-2xl font-black text-center text-xl shadow w-full max-w-md ${status === "correct" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"}`
+  }, getText(status)), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4 w-full max-w-sm mt-8"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: check,
+    className: "flex-1 bg-purple-600 text-white py-4 rounded-xl font-bold shadow-lg hover:bg-purple-700 text-xl border-b-4 border-purple-800 active:border-b-0 active:translate-y-1"
+  }, getText("check")), /*#__PURE__*/React.createElement("button", {
+    onClick: shuffle,
+    className: "bg-slate-200 text-slate-600 px-6 py-4 rounded-xl font-bold shadow-lg hover:bg-slate-300 text-xl border-b-4 border-slate-400 active:border-b-0 active:translate-y-1"
+  }, getText("reset"))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

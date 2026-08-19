@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Volume of Revolution | M1 Calculus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+      }
+      .glass {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <div id="root" class="flex-grow flex flex-col"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const translations = {
+  en: {
+    unit: "Module 1: Calculus",
+    title: "Volume of Revolution",
+    desc: "Visualizing the solid formed by rotating a curve around the X-axis.",
+    rotate: "Rotate",
+    function: "y = √x",
+    volume: "Volume V",
+    formula: "V = π ∫ y² dx",
+    langBtn: "中文",
+    animate: "Animate Revolution",
+    view: "View: Side Perspective"
+  },
+  zh: {
+    unit: "單元一：微積分",
+    title: "旋轉體體積",
+    desc: "可視化曲線繞 X 軸旋轉形成的實體。",
+    rotate: "旋轉",
+    function: "y = √x",
+    volume: "體積 V",
+    formula: "V = π ∫ y² dx",
+    langBtn: "English",
+    animate: "動畫旋轉",
+    view: "視角：側面透視"
+  }
+};
+const App = () => {
+  const [lang, setLang] = useState("en");
+  const t = translations[lang];
+  const [angle, setAngle] = useState(0); // 0 to 360
+  const [isAnimating, setIsAnimating] = useState(false);
+  useEffect(() => {
+    let interval;
+    if (isAnimating) {
+      interval = setInterval(() => {
+        setAngle(prev => {
+          if (prev >= 360) {
+            setIsAnimating(false);
+            return 360;
+          }
+          return prev + 5;
+        });
+      }, 20);
+    }
+    return () => clearInterval(interval);
+  }, [isAnimating]);
+  const slices = 20;
+  const maxH = 4;
+  const step = maxH / slices;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "flex-grow flex flex-col items-center justify-center p-8 select-none"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 right-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLang(l => l === "en" ? "zh" : "en"),
+    className: "px-3 py-1 bg-slate-800 border border-slate-600 rounded-full text-xs font-bold text-emerald-400 hover:bg-slate-700 hover:text-white transition flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-language"
+  }), t.langBtn)), /*#__PURE__*/React.createElement("header", {
+    className: "mb-8 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-violet-500 font-bold uppercase tracking-widest text-xs mb-2"
+  }, t.unit), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-white mb-2"
+  }, t.title), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-400 font-mono text-lg"
+  }, t.desc)), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col md:flex-row gap-8 w-full max-w-5xl items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass p-4 rounded-3xl shadow-xl flex-1 flex justify-center overflow-hidden relative border border-slate-700"
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: "400",
+    height: "300",
+    className: "opacity-90"
+  }, /*#__PURE__*/React.createElement("line", {
+    x1: "50",
+    y1: "150",
+    x2: "350",
+    y2: "150",
+    stroke: "#475569",
+    strokeWidth: "1"
+  }), " ", Array.from({
+    length: slices
+  }).map((_, i) => {
+    const xVal = (i + 1) * step; // 0 to 4 range, scale up
+    // Screen X: 50 + xVal * 60
+    const sx = 50 + xVal * 60;
+    // Function y = sqrt(x), but let's fake it with a growing radius
+    // Actual y = sqrt(xVal)
+    const radius = Math.sqrt(xVal) * 40;
+    return /*#__PURE__*/React.createElement("g", {
+      key: i
+    }, /*#__PURE__*/React.createElement("ellipse", {
+      cx: sx,
+      cy: "150",
+      rx: "15" // Width of disk slice on screen (thickness)
+      ,
+      ry: radius * (angle / 360) // Height grows as we 'rotate'
+      ,
+      fill: `rgba(139, 92, 246, ${0.1 + i / slices * 0.3})`,
+      stroke: `rgba(167, 139, 250, ${0.3 + angle / 720})`,
+      strokeWidth: "1"
+    }));
+  }), /*#__PURE__*/React.createElement("path", {
+    d: `M 50 150 ` + Array.from({
+      length: slices + 1
+    }).map((_, i) => {
+      const xVal = i * step;
+      const sx = 50 + xVal * 60;
+      const sy = 150 - Math.sqrt(xVal) * 40;
+      return `L ${sx} ${sy}`;
+    }).join(" "),
+    fill: "none",
+    stroke: "#f43f5e",
+    strokeWidth: "3"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: `M 50 150 ` + Array.from({
+      length: slices + 1
+    }).map((_, i) => {
+      const xVal = i * step;
+      const sx = 50 + xVal * 60;
+      const sy = 150 + Math.sqrt(xVal) * 40 * (angle / 360);
+      return `L ${sx} ${sy}`;
+    }).join(" "),
+    fill: "none",
+    stroke: "#f43f5e",
+    strokeWidth: "1",
+    strokeDasharray: "2 2",
+    opacity: angle > 10 ? 1 : 0
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 right-4 text-xs font-mono text-slate-500 uppercase"
+  }, t.view)), /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 space-y-6 w-full"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass p-6 rounded-2xl shadow-sm border border-slate-700"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "font-bold text-slate-400 mb-4 uppercase text-xs"
+  }, t.function), /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-mono text-violet-400 font-bold mb-6"
+  }, "∫ π(√x)² dx"), /*#__PURE__*/React.createElement("label", {
+    className: "block text-sm font-bold text-slate-300 mb-2"
+  }, t.rotate, ": ", angle.toFixed(0), "°"), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "0",
+    max: "360",
+    value: angle,
+    onChange: e => setAngle(Number(e.target.value)),
+    className: "w-full accent-violet-500 mb-4 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+  }), /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      setAngle(0);
+      setIsAnimating(true);
+    },
+    className: "w-full py-3 bg-violet-600 text-white rounded-xl font-bold hover:bg-violet-700 transition shadow-lg shadow-violet-900/20"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-play mr-2"
+  }), " ", t.animate)), /*#__PURE__*/React.createElement("div", {
+    className: "glass p-6 rounded-2xl border-l-4 border-indigo-500"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold text-indigo-400 uppercase mb-2"
+  }, t.formula), /*#__PURE__*/React.createElement("div", {
+    className: "text-sm text-slate-400 font-mono leading-relaxed"
+  }, "= π ∫ x dx ", /*#__PURE__*/React.createElement("br", null), "= π [ x²/2 ] from 0 to 4 ", /*#__PURE__*/React.createElement("br", null), "= π (16/2 - 0) ", /*#__PURE__*/React.createElement("br", null), "= 8π"), /*#__PURE__*/React.createElement("div", {
+    className: "mt-4 text-3xl font-bold text-white font-mono"
+  }, "≈ ", (8 * Math.PI).toFixed(2), " units³")))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>成語跑酷 2.0 (Idiom Parkour)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Noto+Sans+TC:wght@900&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            font-family: 'Noto Sans TC', sans-serif;
+            user-select: none;
+        }
+
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .hud {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px;
+            text-shadow: 2px 2px 0 #000;
+        }
+
+        .score {
+            font-size: 3rem;
+            color: #facc15;
+            font-weight: 900;
+            font-style: italic;
+        }
+
+        .question-box {
+            position: absolute;
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            border: 3px solid #22d3ee;
+            padding: 10px 40px;
+            border-radius: 50px;
+            text-align: center;
+        }
+
+        .idiom-display {
+            font-size: 4rem;
+            color: #fff;
+            font-family: 'ZCOOL KuaiLe', cursive;
+            letter-spacing: 10px;
+        }
+
+        .missing-char {
+            color: #ef4444;
+            border-bottom: 4px solid #ef4444;
+            display: inline-block;
+            width: 60px;
+        }
+
+        .menu {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+            z-index: 50;
+        }
+
+        .title-text {
+            font-size: 5rem;
+            color: #22d3ee;
+            font-family: 'ZCOOL KuaiLe';
+            transform: skewX(-10deg);
+            text-shadow: 5px 5px 0 #3b82f6;
+        }
+
+        .btn {
+            background: #facc15;
+            padding: 15px 50px;
+            font-size: 2rem;
+            border-radius: 10px;
+            font-weight: 900;
+            transform: skewX(-10deg);
+            cursor: pointer;
+            border: none;
+            box-shadow: 5px 5px 0 #b45309;
+            transition: transform 0.1s;
+            color: #000;
+        }
+
+        .btn:active {
+            transform: skewX(-10deg) translate(2px, 2px);
+            box-shadow: 3px 3px 0 #b45309;
+        }
+
+        .speed-lines {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle, transparent 50%, rgba(255, 255, 255, 0.1) 100%);
+            opacity: 0;
+            transition: opacity 0.5s;
+            pointer-events: none;
+        }
+
+        .speed-lines.active {
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <div class="speed-lines" id="speedLines"></div>
+
+    <div id="ui-layer">
+        <div class="hud">
+            <div class="score">SCORE: <span id="score">0</span></div>
+            <div class="score text-red-500">SPD: <span id="speed">100</span>%</div>
+        </div>
+        <div class="question-box" id="q-box" style="display:none;">
+            <div class="idiom-display" id="idiom-text">一<span class="missing-char">?</span>驚人</div>
+        </div>
+    </div>
+
+    <div id="start-menu" class="menu">
+        <h1 class="title-text mb-4">成語跑酷 2.0</h1>
+        <p class="text-gray-400 text-xl mb-8">左右移動選擇正確文字 • 完成成語加速</p>
+        <button class="btn" onclick="startGame()">RUN!</button>
+    </div>
+
+    <div id="game-over-menu" class="menu" style="display:none;">
+        <h1 class="title-text text-red-500 mb-2">GAME OVER</h1>
+        <div class="text-4xl text-white font-bold mb-8">SCORE: <span id="final-score">0</span></div>
+        <button class="btn" onclick="startGame()">RUN AGAIN</button>
+    </div>
+
+    <script>
+        /**
+         * IDIOM PARKOUR 2.0 (Parallax Runner)
+         */
+
+        // --- Data ---
+        const IDIOMS = [
+            { text: "一鳴驚人", missing: 1, options: ["嗚", "鳴", "名"] }, // 中間是正解
+            { text: "不可思議", missing: 2, options: ["議", "思", "絲"] },
+            { text: "畫蛇添足", missing: 3, options: ["腳", "足", "角"] },
+            { text: "因小失大", missing: 3, options: ["大", "太", "犬"] },
+            { text: "自相矛盾", missing: 3, options: ["盾", "唇", "循"] },
+            { text: "半途而廢", missing: 3, options: ["廢", "發", "費"] },
+            { text: "井底之蛙", missing: 3, options: ["娃", "蛙", "哇"] },
+            { text: "對牛彈琴", missing: 2, options: ["談", "彈", "淡"] },
+            { text: "守株待兔", missing: 1, options: ["珠", "株", "朱"] }
+        ];
+
+        // --- Engine ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let W, H;
+
+        const STATE = {
+            playing: false,
+            score: 0,
+            speed: 10,
+            distance: 0,
+            lane: 1, // 0, 1, 2
+            lanesX: [],
+            playerY: 0,
+            obstacles: [], // Words to hit
+            currentIdiom: null,
+            nextSpawnZ: 2000,
+            particles: []
+        };
+
+        // --- Classes ---
+        class Particle {
+            constructor(x, y, z, color) {
+                this.x = x; this.y = y; this.z = z; this.color = color;
+                this.vx = (Math.random() - 0.5) * 10; this.vy = (Math.random() - 0.5) * 10; this.vz = -Math.random() * 10;
+                this.life = 1.0;
+            }
+            update() {
+                this.x += this.vx; this.y += this.vy; this.z += this.vz;
+                this.life -= 0.05;
+            }
+        }
+
+        // Custom 3D Projection (Fake 3D)
+        function project(x, y, z) {
+            const scale = 500 / (500 + z);
+            const x2d = (x * scale) + W / 2;
+            const y2d = (y * scale) + H / 2;
+            return { x: x2d, y: y2d, s: scale };
+        }
+
+        function init() {
+            window.addEventListener('resize', resize);
+            document.addEventListener('keydown', handleInput);
+
+            // Touch zones
+            window.addEventListener('touchstart', e => {
+                const t = e.touches[0];
+                if (t.clientX < W / 2) moveLane(-1); else moveLane(1);
+            });
+
+            resize();
+            requestAnimationFrame(loop);
+        }
+
+        function resize() {
+            W = canvas.width = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+            STATE.lanesX = [-200, 0, 200]; // World X coordinates for lanes
+            STATE.playerY = 150; // Camera height offset
+        }
+
+        function startGame() {
+            STATE.playing = true;
+            STATE.score = 0;
+            STATE.speed = 12; // World Z speed
+            STATE.distance = 0;
+            STATE.lane = 1;
+            STATE.obstacles = [];
+            STATE.particles = [];
+            STATE.currentIdiom = null;
+            STATE.nextSpawnZ = 1000;
+
+            document.getElementById('start-menu').style.display = 'none';
+            document.getElementById('game-over-menu').style.display = 'none';
+            document.getElementById('ui-layer').style.display = 'block';
+            document.getElementById('q-box').style.display = 'block';
+            document.getElementById('speedLines').classList.add('active');
+
+            pickNewIdiom();
+        }
+
+        function pickNewIdiom() {
+            const q = IDIOMS[Math.floor(Math.random() * IDIOMS.length)];
+            STATE.currentIdiom = q;
+
+            // HTML Update
+            let html = "";
+            for (let i = 0; i < q.text.length; i++) {
+                if (i === q.missing) html += `<span class="missing-char">?</span>`;
+                else html += q.text[i];
+            }
+            document.getElementById('idiom-text').innerHTML = html;
+
+            // Spawn 3 Words in 3 Lanes at distance
+            spawnObstacles(q);
+        }
+
+        function spawnObstacles(q) {
+            const startZ = 3000;
+            const correctLane = Math.floor(Math.random() * 3);
+
+            // Scramble options
+            let opts = [...q.options];
+            // Ensure correct answer is at correctLane index in logic, but options visual needs mapping
+            // Actually, simple way: Put correct answer in correctLane
+            // Q options: [Wrong, Correct, Wrong] ? No, usually [Correct, Wrong, Wrong] in data
+            // Let's assume options[1] is correct in data for now? No, data structure above needs fix.
+            // Data: options: ["嗚", "鳴", "名"] -> "鳴" is correct (#1).
+            // Let's refine data structure on fly or just hardcode correct logic.
+            // Enhanced Logic:
+            // Identify correct char from q.text
+            const correctChar = q.text[q.missing];
+
+            // Generate 3 render objects
+            const options = [0, 1, 2].map(laneIdx => {
+                if (laneIdx === correctLane) return { text: correctChar, isCorrect: true };
+                // Random wrong char
+                const wrong = q.options.find(c => c !== correctChar) || "錯";
+                // To make it distinct, pick random chinese char or from options list?
+                // Let's just shuffle the options provided in DATA to lanes.
+                // Wait, DATA options might not contain correct char if I typed it wrong.
+                // Re-read data: options: ["嗚", "鳴", "名"]. Text: "一鳴驚人". Correct: "鳴".
+                // It's in the list. Good.
+                return { text: q.options[laneIdx % q.options.length], isCorrect: q.options[laneIdx % q.options.length] === correctChar };
+            });
+
+            // Override one lane to be definitely correct if random shuffle missed it (unlikely with logic above)
+            // Let's just strictly assigning:
+            // 1. Create array of 3 words (1 correct, 2 wrong)
+            const renderWords = [];
+            renderWords.push({ text: correctChar, isCorrect: true });
+
+            // Add wrongs
+            q.options.forEach(opt => {
+                if (opt !== correctChar && renderWords.length < 3) renderWords.push({ text: opt, isCorrect: false });
+            });
+            while (renderWords.length < 3) renderWords.push({ text: "錯", isCorrect: false });
+
+            // Shuffle lanes
+            renderWords.sort(() => Math.random() - 0.5);
+
+            renderWords.forEach((obj, idx) => {
+                STATE.obstacles.push({
+                    lane: idx,
+                    z: startZ,
+                    text: obj.text,
+                    isCorrect: obj.isCorrect,
+                    hit: false
+                });
+            });
+        }
+
+        function handleInput(e) {
+            if (!STATE.playing) return;
+            if (e.key === 'ArrowLeft' || e.key === 'a') moveLane(-1);
+            if (e.key === 'ArrowRight' || e.key === 'd') moveLane(1);
+        }
+
+        function moveLane(dir) {
+            STATE.lane = Math.max(0, Math.min(2, STATE.lane + dir));
+        }
+
+        function loop() {
+            // Clear
+            ctx.fillStyle = "#111";
+            ctx.fillRect(0, 0, W, H);
+
+            if (STATE.playing) {
+                // Update Logic
+                STATE.distance += STATE.speed;
+                STATE.speed = Math.min(50, STATE.speed + 0.002); // Slowly accelerate
+
+                document.getElementById('score').textContent = Math.floor(STATE.distance);
+                document.getElementById('speed').textContent = Math.floor(STATE.speed * 3);
+
+                // Grid Floor Effect (Parallax)
+                drawFloor();
+
+                // Update Obstacles
+                for (let i = STATE.obstacles.length - 1; i >= 0; i--) {
+                    let o = STATE.obstacles[i];
+                    o.z -= STATE.speed;
+
+                    // Player Hit Detection
+                    // Player Z is 0 (camera relative). Words come towards 0.
+                    // Hit window: z < 10 && z > -50
+                    if (!o.hit && o.z < 50 && o.z > -50) {
+                        if (o.lane === STATE.lane) {
+                            o.hit = true;
+                            if (o.isCorrect) {
+                                // Correct!
+                                spawnExplosion(STATE.lanesX[o.lane], 0, o.z, '#22c55e');
+                                STATE.score += 1000;
+                                STATE.speed += 2; // Boost
+                                setTimeout(pickNewIdiom, 500); // Next question
+                            } else {
+                                // Wrong!
+                                spawnExplosion(STATE.lanesX[o.lane], 0, o.z, '#ef4444');
+                                gameOver();
+                            }
+                        }
+                    }
+
+                    if (o.z < -200) {
+                        STATE.obstacles.splice(i, 1);
+                    }
+                }
+
+                // Draw Obstacles (Back to Front)
+                STATE.obstacles.sort((a, b) => b.z - a.z);
+                STATE.obstacles.forEach(o => drawObstacle(o));
+
+                // Draw Player
+                drawPlayer();
+
+                // Draw Particles
+                updateParticles();
+            }
+
+            requestAnimationFrame(loop);
+        }
+
+        function drawFloor() {
+            ctx.strokeStyle = "#22d3ee"; // Neon Cyan
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+
+            // Longitudinal lines (Lanes)
+            [-300, -100, 100, 300].forEach(x => { // Lane dividers
+                const p1 = project(x, 200, 0); // Bottom
+                const p2 = project(x, 200, 5000); // Horizon
+                ctx.moveTo(p1.x, p1.y);
+                ctx.lineTo(p2.x, p2.y);
+            });
+
+            // Latitudinal lines (Moving)
+            const segmentSize = 500;
+            const offset = STATE.distance % segmentSize;
+            for (let z = 5000; z >= 0; z -= segmentSize) {
+                const renderZ = z - offset;
+                if (renderZ < 0) continue;
+                const p1 = project(-1000, 200, renderZ);
+                const p2 = project(1000, 200, renderZ);
+                ctx.moveTo(p1.x, p1.y);
+                ctx.lineTo(p2.x, p2.y);
+            }
+            ctx.stroke();
+
+            // Horizon glow
+            const h = project(0, 200, 5000);
+            const grad = ctx.createLinearGradient(0, h.y, 0, h.y + 200);
+            grad.addColorStop(0, '#22d3ee');
+            grad.addColorStop(1, 'transparent');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, h.y, W, 200);
+        }
+
+        function drawObstacle(o) {
+            if (o.hit) return; // Don't draw if hit
+            const p = project(STATE.lanesX[o.lane], 100, o.z);
+
+            // Draw Box
+            const size = 150 * p.s;
+            ctx.fillStyle = o.isCorrect ? "rgba(34, 211, 238, 0.2)" : "rgba(239, 68, 68, 0.2)";
+            ctx.strokeStyle = o.isCorrect ? "#22d3ee" : "#ef4444";
+            ctx.lineWidth = 3;
+
+            ctx.beginPath();
+            ctx.rect(p.x - size / 2, p.y - size, size, size);
+            ctx.fill();
+            ctx.stroke();
+
+            // Draw Text
+            ctx.fillStyle = "#fff";
+            ctx.font = `bold ${80 * p.s}px 'Noto Sans TC'`;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(o.text, p.x, p.y - size / 2);
+        }
+
+        function drawPlayer() {
+            // Player is at Z=0
+            // Lerp graphical X for smoothness
+            const targetX = STATE.lanesX[STATE.lane];
+            // Simple direct for now, could add lerp
+
+            const p = project(targetX, 150, 50); // Slightly forward for visual
+            const size = 80 * p.s;
+
+            // Cyber Runner Shape (Triangle)
+            ctx.fillStyle = "#facc15"; // Yellow
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = "#facc15";
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y - size);
+            ctx.lineTo(p.x - size / 2, p.y);
+            ctx.lineTo(p.x + size / 2, p.y);
+            ctx.closePath();
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+
+        function spawnExplosion(x, y, z, color) {
+            for (let i = 0; i < 20; i++) {
+                STATE.particles.push(new Particle(x, y, z, color));
+            }
+        }
+
+        function updateParticles() {
+            for (let i = STATE.particles.length - 1; i >= 0; i--) {
+                let p = STATE.particles[i];
+                p.update();
+                if (p.life <= 0) { STATE.particles.splice(i, 1); continue; }
+
+                // Draw
+                const proj = project(p.x, 150 + p.y, p.z);
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.life;
+                ctx.beginPath();
+                ctx.arc(proj.x, proj.y, 5 * proj.s, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        function gameOver() {
+            STATE.playing = false;
+            document.getElementById('ui-layer').style.display = 'none';
+            document.getElementById('q-box').style.display = 'none';
+            document.getElementById('game-over-menu').style.display = 'flex';
+            document.getElementById('final-score').textContent = Math.floor(STATE.distance);
+            document.getElementById('speedLines').classList.remove('active');
+        }
+
+        init();
+
+    </script>
+
+</body>
+
+</html>
+

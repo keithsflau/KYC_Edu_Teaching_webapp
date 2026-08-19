@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quadratic Inequalities | S4 Math</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <script
+      type="text/javascript"
+      id="MathJax-script"
+      async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+    ></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+      }
+    </style>
+  </head>
+  <body class="bg-orange-50 text-slate-800 min-h-screen">
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const App = () => {
+  const [roots, setRoots] = useState([-2, 3]); // alpha, beta
+  const [sign, setSign] = useState(">"); // > or <
+
+  // Ensure roots are sorted
+  const alpha = Math.min(...roots);
+  const beta = Math.max(...roots);
+
+  // SVG Graph Logic
+  const width = 500;
+  const height = 300;
+  const scaleX = 40; // pixels per unit
+  const scaleY = 10;
+  const originX = width / 2;
+  const originY = height / 2 + 50;
+
+  // Parabola y = (x-alpha)(x-beta)
+  // Vertex x = (a+b)/2
+  const vx = (alpha + beta) / 2;
+  const vy = (vx - alpha) * (vx - beta);
+
+  // Generate Path
+  const pathData = (() => {
+    let d = "";
+    for (let gx = -6; gx <= 6; gx += 0.1) {
+      const x = originX + gx * scaleX;
+      const yVal = (gx - alpha) * (gx - beta);
+      const y = originY - yVal * scaleY;
+      if (y < -100 || y > height + 100) continue; // Clip
+      d += (d ? "L" : "M") + `${x.toFixed(1)},${y.toFixed(1)} `;
+    }
+    return d;
+  })();
+  const solutionText = sign === ">" ? `x < ${alpha} \\text{ or } x > ${beta}` : `${alpha} < x < ${beta}`;
+  useEffect(() => {
+    if (window.MathJax) {
+      window.MathJax.typesetPromise();
+    }
+  }, [roots, sign]);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "p-8 max-w-4xl mx-auto min-h-screen flex flex-col items-center select-none"
+  }, /*#__PURE__*/React.createElement("header", {
+    className: "mb-8 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-orange-600 font-bold uppercase text-xs tracking-widest mb-2"
+  }, "Unit 2: Polynomials"), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-slate-900"
+  }, "Quadratic Inequalities")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-6 rounded-3xl shadow-xl border border-orange-200 w-full flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-mono bg-slate-100 px-6 py-3 rounded-xl mb-6"
+  }, "(x - ", /*#__PURE__*/React.createElement("span", {
+    className: "text-blue-600"
+  }, alpha), ")(x -", " ", /*#__PURE__*/React.createElement("span", {
+    className: "text-blue-600"
+  }, beta), ")", /*#__PURE__*/React.createElement("select", {
+    value: sign,
+    onChange: e => setSign(e.target.value),
+    className: "mx-2 bg-transparent font-bold outline-none cursor-pointer hover:text-orange-600"
+  }, /*#__PURE__*/React.createElement("option", {
+    value: ">"
+  }, ">"), /*#__PURE__*/React.createElement("option", {
+    value: "<"
+  }, "<")), "0"), /*#__PURE__*/React.createElement("svg", {
+    width: width,
+    height: height,
+    className: "border border-slate-100 rounded-xl bg-slate-50 mb-6 overflow-hidden"
+  }, /*#__PURE__*/React.createElement("line", {
+    x1: "0",
+    y1: originY,
+    x2: width,
+    y2: originY,
+    stroke: "#94a3b8",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: originX,
+    y1: "0",
+    x2: originX,
+    y2: height,
+    stroke: "#e2e8f0",
+    strokeWidth: "1"
+  }), sign === "<" ?
+  /*#__PURE__*/
+  // Between roots
+  React.createElement("rect", {
+    x: originX + alpha * scaleX,
+    y: "0",
+    width: (beta - alpha) * scaleX,
+    height: height,
+    fill: "rgba(249, 115, 22, 0.1)"
+  }) :
+  /*#__PURE__*/
+  // Outside roots
+  React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("rect", {
+    x: "0",
+    y: "0",
+    width: originX + alpha * scaleX,
+    height: height,
+    fill: "rgba(37, 99, 235, 0.1)"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: originX + beta * scaleX,
+    y: "0",
+    width: width - (originX + beta * scaleX),
+    height: height,
+    fill: "rgba(37, 99, 235, 0.1)"
+  })), /*#__PURE__*/React.createElement("path", {
+    d: pathData,
+    stroke: "#475569",
+    strokeWidth: "2",
+    fill: "none"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: originX + alpha * scaleX,
+    cy: originY,
+    r: "5",
+    fill: "white",
+    stroke: "#2563eb",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: originX + beta * scaleX,
+    cy: originY,
+    r: "5",
+    fill: "white",
+    stroke: "#2563eb",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: originX + alpha * scaleX,
+    y: originY + 20,
+    textAnchor: "middle",
+    className: "text-xs fill-slate-500 font-mono"
+  }, alpha), /*#__PURE__*/React.createElement("text", {
+    x: originX + beta * scaleX,
+    y: originY + 20,
+    textAnchor: "middle",
+    className: "text-xs fill-slate-500 font-mono"
+  }, beta)), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4 mb-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "text-xs font-bold text-slate-400 mb-1"
+  }, "Root 1"), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "-5",
+    max: "5",
+    step: "1",
+    value: roots[0],
+    onChange: e => setRoots([Number(e.target.value), roots[1]]),
+    className: "accent-orange-500"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "text-xs font-bold text-slate-400 mb-1"
+  }, "Root 2"), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "-5",
+    max: "5",
+    step: "1",
+    value: roots[1],
+    onChange: e => setRoots([roots[0], Number(e.target.value)]),
+    className: "accent-orange-500"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "text-center"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-lg font-bold text-slate-700 mb-2"
+  }, "Solution"), /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-bold text-orange-600 font-mono"
+  }, "\\[ ", solutionText, " \\]"))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

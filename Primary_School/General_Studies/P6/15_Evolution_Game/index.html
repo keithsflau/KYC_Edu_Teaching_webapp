@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - Evolution Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: #f0fdf4;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const { LanguageSelector,
+  get } = window.MathI18n || { LanguageSelector: () => null, get: (key) => key };
+const t = {
+  title: {
+    en: "Evolution: Survival",
+    zh: "進化論：適者生存",
+    ja: "進化：生存競争",
+    ko: "진화: 생존",
+    es: "Evolución: Supervivencia",
+    de: "Evolution: Überleben",
+    fi: "Evoluutio: Selviytyminen",
+    fr: "Évolution : Survie",
+    ar: "التطور: البقاء",
+    it: "Evoluzione: Sopravvivenza"
+  },
+  instruction: {
+    en: "Choose the bird beak that fits the food.",
+    zh: "選擇適合食物的鳥喙。",
+    ja: "食べ物に合った鳥のくちばしを選んでください。",
+    ko: "음식에 맞는 새의 부리를 선택하세요.",
+    es: "Elige el pico de pájaro que se adapte a la comida.",
+    de: "Wähle den Vogelschnabel, der zum Futter passt.",
+    fi: "Valitse ruoka-aineeseen sopiva linnun nokka.",
+    fr: "Choisissez le bec d'oiseau adapté à la nourriture.",
+    ar: "اختر منقار الطائر الذي يناسب الطعام.",
+    it: "Scegli il becco d'uccello adatto al cibo."
+  },
+  seeds: {
+    en: "Hard Seeds",
+    zh: "堅硬種子",
+    ja: "硬い種",
+    ko: "딱딱한 씨앗"
+  },
+  insects: {
+    en: "Insects in holes",
+    zh: "洞裡的昆蟲",
+    ja: "穴の中の昆虫",
+    ko: "구멍 속의 곤충"
+  },
+  nectar: {
+    en: "Flower Nectar",
+    zh: "花蜜",
+    ja: "花の蜜",
+    ko: "꽃의 꿀"
+  },
+  beak_big: {
+    en: "Big Strong Beak",
+    zh: "大而強壯的喙",
+    ja: "大きくて強いクチバシ",
+    ko: "크고 강한 부리"
+  },
+  beak_long: {
+    en: "Long Thin Beak",
+    zh: "長而細的喙",
+    ja: "長くて細いクチバシ",
+    ko: "길고 얇은 부리"
+  },
+  beak_thin: {
+    en: "Thin Probe Beak",
+    zh: "探針狀喙",
+    ja: "探り針のようなクチバシ",
+    ko: "가느다란 탐침 부리"
+  },
+  survived: {
+    en: "Survived!",
+    zh: "存活！",
+    ja: "生き残った！",
+    ko: "생존!"
+  },
+  starved: {
+    en: "Starved...",
+    zh: "餓死了...",
+    ja: "餓死した...",
+    ko: "굶어 죽음..."
+  }
+};
+const rules = [{
+  food: "seeds",
+  bestBeak: "beak_big",
+  foodIcon: "🌰"
+}, {
+  food: "insects",
+  bestBeak: "beak_long",
+  foodIcon: "🕳️🐛"
+}, {
+  food: "nectar",
+  bestBeak: "beak_thin",
+  foodIcon: "🌺"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [environment, setEnvironment] = useState(0); // Index of rules
+  const [feedback, setFeedback] = useState(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+  const currentEnv = rules[environment];
+  const handleChoice = beakType => {
+    if (feedback) return;
+    if (beakType === currentEnv.bestBeak) {
+      setFeedback("survived");
+      setTimeout(() => {
+        setFeedback(null);
+        setEnvironment((environment + 1) % rules.length);
+      }, 1500);
+    } else {
+      setFeedback("starved");
+      setTimeout(() => setFeedback(null), 1000);
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center justify-center p-4"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-bold mb-8 text-green-800"
+  }, getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-2xl bg-white p-8 rounded-3xl shadow-xl border-4 border-green-200 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "font-bold text-slate-500 mb-8"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-green-50 w-full p-8 rounded-2xl mb-8 text-center flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl mb-4"
+  }, currentEnv.foodIcon), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-bold text-slate-800"
+  }, getText(currentEnv.food))), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4 w-full"
+  }, /*#__PURE__*/React.createElement(BeakCard, {
+    id: "beak_big",
+    icon: "🦜",
+    visualClass: "scale-x-125 font-black" // Visual hack
+    ,
+    getText: getText,
+    onClick: () => handleChoice("beak_big")
+  }), /*#__PURE__*/React.createElement(BeakCard, {
+    id: "beak_long",
+    icon: "🐦",
+    visualClass: "scale-x-75 scale-y-125",
+    getText: getText,
+    onClick: () => handleChoice("beak_long")
+  }), /*#__PURE__*/React.createElement(BeakCard, {
+    id: "beak_thin",
+    icon: "🦅",
+    visualClass: "rotate-12",
+    getText: getText,
+    onClick: () => handleChoice("beak_thin")
+  })), feedback && /*#__PURE__*/React.createElement("div", {
+    className: `mt-8 text-4xl font-black ${feedback === "survived" ? "text-green-600" : "text-red-500"} animate-bounce`
+  }, getText(feedback))));
+}
+function BeakCard({
+  id,
+  icon,
+  visualClass,
+  getText,
+  onClick
+}) {
+  return /*#__PURE__*/React.createElement("button", {
+    onClick: onClick,
+    className: "flex-1 bg-slate-100 hover:bg-slate-200 border-2 border-slate-300 rounded-xl p-4 flex flex-col items-center gap-2 transition-transform active:scale-95"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: `text-5xl transform origin-center ${visualClass}`
+  }, icon), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold"
+  }, getText(id)));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小一數學：位置 | Basic Positions</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #fdf4ff 0%, #d946ef 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "📍 Basic Positions",
+    zh: "📍 位置",
+    ja: "📍 基本的な位置",
+    ko: "📍 기본 위치",
+    es: "📍 Posiciones básicas",
+    de: "📍 Grundpositionen",
+    fi: "📍 Perussijainnit",
+    fr: "📍 Positions de base",
+    ar: "📍 المواقع الأساسية",
+    it: "📍 Posizioni di base"
+  },
+  putCat: {
+    en: "Put cat on {pos}",
+    zh: "請將貓貓放在 {pos}",
+    ja: "猫を {pos} に置いてください",
+    ko: "고양이를 {pos}에 두세요",
+    es: "Pon el gato en {pos}",
+    de: "Setze die Katze auf {pos}",
+    fi: "Laita kissa kohtaan {pos}",
+    fr: "Mettez le chat sur {pos}",
+    ar: "ضع القطة في {pos}",
+    it: "Metti il gatto su {pos}"
+  },
+  pos: {
+    0: {
+      en: "Top Left",
+      zh: "左上",
+      ja: "左上",
+      ko: "왼쪽 위",
+      es: "Arriba Izquierda",
+      de: "Oben Links",
+      fi: "Ylhäällä vasemmalla",
+      fr: "Haut Gauche",
+      ar: "أعلى اليسار",
+      it: "In alto a sinistra"
+    },
+    1: {
+      en: "Top",
+      zh: "上方",
+      ja: "上",
+      ko: "위",
+      es: "Arriba",
+      de: "Oben",
+      fi: "Ylhäällä",
+      fr: "Haut",
+      ar: "أعلى",
+      it: "In alto"
+    },
+    2: {
+      en: "Top Right",
+      zh: "右上",
+      ja: "右上",
+      ko: "오른쪽 위",
+      es: "Arriba Derecha",
+      de: "Oben Rechts",
+      fi: "Ylhäällä oikealla",
+      fr: "Haut Droite",
+      ar: "أعلى اليمين",
+      it: "In alto a destra"
+    },
+    3: {
+      en: "Left",
+      zh: "左方",
+      ja: "左",
+      ko: "왼쪽",
+      es: "Izquierda",
+      de: "Links",
+      fi: "Vasemmalla",
+      fr: "Gauche",
+      ar: "يسار",
+      it: "Sinistra"
+    },
+    4: {
+      en: "Center",
+      zh: "中間",
+      ja: "真ん中",
+      ko: "중앙",
+      es: "Centro",
+      de: "Mitte",
+      fi: "Keskellä",
+      fr: "Centre",
+      ar: "مركز",
+      it: "Centro"
+    },
+    5: {
+      en: "Right",
+      zh: "右方",
+      ja: "右",
+      ko: "오른쪽",
+      es: "Derecha",
+      de: "Rechts",
+      fi: "Oikealla",
+      fr: "Droite",
+      ar: "يمين",
+      it: "Destra"
+    },
+    6: {
+      en: "Bottom Left",
+      zh: "左下",
+      ja: "左下",
+      ko: "왼쪽 아래",
+      es: "Abajo Izquierda",
+      de: "Unten Links",
+      fi: "Alhaalla vasemmalla",
+      fr: "Bas Gauche",
+      ar: "أسفل اليسار",
+      it: "In basso a sinistra"
+    },
+    7: {
+      en: "Bottom",
+      zh: "下方",
+      ja: "下",
+      ko: "아래",
+      es: "Abajo",
+      de: "Unten",
+      fi: "Alhaalla",
+      fr: "Bas",
+      ar: "أسفل",
+      it: "In basso"
+    },
+    8: {
+      en: "Bottom Right",
+      zh: "右下",
+      ja: "右下",
+      ko: "오른쪽 아래",
+      es: "Abajo Derecha",
+      de: "Unten Rechts",
+      fi: "Alhaalla oikealla",
+      fr: "Bas Droite",
+      ar: "أسفل اليمين",
+      it: "In basso a destra"
+    }
+  }
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [catPos, setCatPos] = useState(4);
+  const [goal, setGoal] = useState(4);
+  const [feedback, setFeedback] = useState("");
+  const grid = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+  const generateGoal = () => {
+    const g = Math.floor(Math.random() * 9);
+    setGoal(g);
+    setCatPos(-1);
+    setFeedback("");
+  };
+  useEffect(generateGoal, []);
+  const handleClick = i => {
+    setCatPos(i);
+    if (i === goal) {
+      setFeedback("CORRECT");
+      setTimeout(generateGoal, 1500);
+    } else {
+      setFeedback("WRONG");
+    }
+  };
+  const getGoalText = () => {
+    let txt = t.putCat[lang] || t.putCat["en"];
+    let p = t.pos[goal][lang] || t.pos[goal]["en"];
+    return txt.replace("{pos}", p);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-8 flex flex-col items-center justify-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-5xl font-black text-fuchsia-900 mb-8 max-w-2xl text-center"
+  }, t.title[lang] || t.title["en"]), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/90 rounded-3xl p-8 shadow-2xl w-full max-w-xl text-center border-4 border-fuchsia-200"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "text-2xl font-bold text-slate-700 mb-6 min-h-[4rem]"
+  }, getGoalText()), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-3 gap-4 aspect-square mb-8 p-4 bg-fuchsia-50 rounded-2xl border-2 border-fuchsia-100"
+  }, grid.map(id => /*#__PURE__*/React.createElement("div", {
+    key: id,
+    onClick: () => handleClick(id),
+    className: `rounded-xl border-4 flex items-center justify-center text-5xl cursor-pointer hover:bg-fuchsia-100 transition-colors ${catPos === id ? "bg-fuchsia-200 border-fuchsia-400" : "bg-white border-dashed border-fuchsia-200"}`
+  }, catPos === id ? "🐱" : ""))), /*#__PURE__*/React.createElement("div", {
+    className: "h-16"
+  }, feedback === "CORRECT" && /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black text-green-500 animate-bounce"
+  }, get("correct", lang)), feedback === "WRONG" && /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-black text-red-500 animate-shake"
+  }, get("wrong", lang)))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

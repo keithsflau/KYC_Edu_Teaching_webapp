@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文章過渡橋 3.0 - Transition Bridge</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Noto Sans TC', sans-serif;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        .sky-bg {
+            background: linear-gradient(180deg, #38bdf8 0%, #7dd3fc 40%, #bae6fd 70%, #e0f2fe 100%);
+            height: 50vh;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Decorations */
+        .sun {
+            position: absolute;
+            top: 30px;
+            right: 50px;
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle, #fbbf24 0%, #f59e0b 100%);
+            border-radius: 50%;
+            box-shadow: 0 0 40px rgba(251, 191, 36, 0.6);
+            animation: pulse 3s infinite ease-in-out;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        .cloud {
+            position: absolute;
+            font-size: 3rem;
+            opacity: 0.8;
+            animation: float 6s infinite ease-in-out;
+        }
+
+        .cloud:nth-child(1) {
+            top: 20px;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .cloud:nth-child(2) {
+            top: 60px;
+            right: 15%;
+            animation-delay: 1s;
+        }
+
+        .cloud:nth-child(3) {
+            top: 100px;
+            left: 40%;
+            animation-delay: 2s;
+            font-size: 2.5rem;
+        }
+
+        .cloud:nth-child(4) {
+            top: 40px;
+            right: 35%;
+            animation-delay: 3s;
+            font-size: 2rem;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-15px);
+            }
+        }
+
+        .bird {
+            position: absolute;
+            top: 80px;
+            left: 20%;
+            font-size: 2rem;
+            animation: fly 8s infinite linear;
+        }
+
+        @keyframes fly {
+            0% {
+                left: -10%;
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-20px);
+            }
+
+            100% {
+                left: 110%;
+                transform: translateY(0px);
+            }
+        }
+
+        .cliff {
+            position: absolute;
+            bottom: 0;
+            width: 22%;
+            height: 55%;
+            background: linear-gradient(45deg, #15803d 0%, #16a34a 50%, #22c55e 100%);
+            border-top: 8px solid #86efac;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .cliff.left {
+            left: 0;
+            border-radius: 0 30px 0 0;
+        }
+
+        .cliff.right {
+            right: 0;
+            border-radius: 30px 0 0 0;
+        }
+
+        .water {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 18%;
+            background: linear-gradient(180deg, rgba(6, 182, 212, 0.6) 0%, rgba(14, 165, 233, 0.8) 100%);
+            animation: tide 3s infinite ease-in-out;
+            z-index: 10;
+        }
+
+        @keyframes tide {
+
+            0%,
+            100% {
+                transform: scaleY(1);
+            }
+
+            50% {
+                transform: scaleY(1.15);
+            }
+        }
+
+        /* Bridge */
+        .bridge-plank {
+            position: absolute;
+            background: linear-gradient(90deg, #92400e 0%, #78350f 50%, #92400e 100%);
+            border: 3px solid #a16207;
+            border-radius: 4px;
+            height: 24px;
+            width: 56%;
+            left: 22%;
+            bottom: 55%;
+            transform: scaleX(0);
+            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform-origin: left;
+            box-shadow: 0 12px 15px rgba(0, 0, 0, 0.4);
+            z-index: 5;
+        }
+
+        .bridge-plank.built {
+            transform: scaleX(1);
+        }
+
+        .bridge-plank.collapse {
+            animation: collapse 0.6s ease-out forwards;
+        }
+
+        @keyframes collapse {
+            0% {
+                transform: scaleX(1) translateY(0) rotate(0deg);
+            }
+
+            100% {
+                transform: scaleX(0.3) translateY(200px) rotate(-15deg);
+                opacity: 0;
+            }
+        }
+
+        /* Character */
+        #hero {
+            position: absolute;
+            bottom: calc(55% + 8px);
+            left: 6%;
+            font-size: 3.5rem;
+            transition: left 2.5s linear;
+            z-index: 20;
+            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
+        }
+
+        #hero.walking {
+            animation: bounce 0.4s infinite;
+        }
+
+        #hero.celebrating {
+            animation: celebrate 0.5s ease-in-out 3;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-15px);
+            }
+        }
+
+        @keyframes celebrate {
+
+            0%,
+            100% {
+                transform: scale(1) rotate(0deg);
+            }
+
+            25% {
+                transform: scale(1.2) rotate(-10deg);
+            }
+
+            75% {
+                transform: scale(1.2) rotate(10deg);
+            }
+        }
+
+        /* Stats Bar */
+        .stats-bar {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            max-width: 1000px;
+            margin: -60px auto 20px;
+            position: relative;
+            z-index: 30;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+            border-radius: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        .stat-item {
+            text-align: center;
+            color: white;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 900;
+            color: #fef08a;
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            opacity: 0.9;
+            margin-top: 4px;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            max-width: 1000px;
+            margin: 0 auto 30px;
+            padding: 0 20px;
+        }
+
+        .progress-bar {
+            height: 30px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+            border-radius: 15px;
+            transition: width 0.5s ease-out;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 12px;
+            color: white;
+            font-weight: 700;
+            font-size: 0.85rem;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+        }
+
+        /* Game Area */
+        .game-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px 40px;
+        }
+
+        .para-boxes {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .para-box {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+            position: relative;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .para-box:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .para-badge {
+            position: absolute;
+            top: -12px;
+            font-weight: 700;
+            padding: 8px 20px;
+            border-radius: 20px;
+            color: white;
+            font-size: 0.95rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .para-badge.left {
+            left: 20px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .para-badge.right {
+            right: 20px;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .para-text {
+            font-size: 1.15rem;
+            color: #1e293b;
+            line-height: 1.8;
+            margin-top: 10px;
+        }
+
+        /* Control Panel */
+        .control-panel {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(12px);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 24px;
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.4);
+            text-align: center;
+        }
+
+        .panel-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #e2e8f0;
+            margin-bottom: 20px;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .option-btn {
+            padding: 16px 24px;
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.25rem;
+            font-weight: 700;
+            font-family: 'Noto Sans TC', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+        }
+
+        .option-btn:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.6);
+            background: linear-gradient(135deg, #818cf8 0%, #6366f1 100%);
+        }
+
+        .option-btn:active {
+            transform: translateY(-1px) scale(1.02);
+        }
+
+        .hint-btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            font-family: 'Noto Sans TC', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+            margin-bottom: 15px;
+        }
+
+        .hint-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(245, 158, 11, 0.6);
+        }
+
+        .hint-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .feedback {
+            min-height: 40px;
+            font-size: 1.4rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 15px;
+        }
+
+        .feedback.success {
+            color: #10b981;
+            animation: fadeInScale 0.5s ease-out;
+        }
+
+        .feedback.error {
+            color: #ef4444;
+            animation: shake 0.5s ease-out;
+        }
+
+        @keyframes fadeInScale {
+            0% {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-10px);
+            }
+
+            75% {
+                transform: translateX(10px);
+            }
+        }
+
+        /* Fireworks */
+        .firework {
+            position: fixed;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sky-bg {
+                height: 40vh;
+            }
+
+            .stats-bar {
+                flex-wrap: wrap;
+                gap: 15px;
+            }
+
+            .para-boxes {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .options-grid {
+                grid-template-columns: 1fr;
+            }
+
+            #hero {
+                font-size: 2.5rem;
+            }
+
+            .cliff {
+                width: 25%;
+            }
+
+            .bridge-plank {
+                width: 50%;
+                left: 25%;
+            }
+        }
+
+        /* Hint Box */
+        .hint-display {
+            background: rgba(251, 191, 36, 0.15);
+            border: 2px solid rgba(251, 191, 36, 0.4);
+            padding: 15px;
+            border-radius: 12px;
+            color: #fef08a;
+            font-size: 1rem;
+            margin-bottom: 15px;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Game Scene -->
+    <div class="sky-bg">
+        <div class="sun"></div>
+        <div class="cloud">☁️</div>
+        <div class="cloud">☁️</div>
+        <div class="cloud">☁️</div>
+        <div class="cloud">☁️</div>
+        <div class="bird">🦅</div>
+
+        <div class="cliff left"></div>
+        <div class="cliff right"></div>
+        <div class="water"></div>
+
+        <div id="bridge-plank" class="bridge-plank"></div>
+        <div id="hero">🏃</div>
+    </div>
+
+    <!-- Stats Bar -->
+    <div class="stats-bar">
+        <div class="stat-item">
+            <div class="stat-value" id="score">0</div>
+            <div class="stat-label">分數</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="level">1</div>
+            <div class="stat-label">關卡</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="combo">0</div>
+            <div class="stat-label">連續正確</div>
+        </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="progress-container">
+        <div class="progress-bar">
+            <div id="progress-fill" class="progress-fill">0%</div>
+        </div>
+    </div>
+
+    <!-- Game Container -->
+    <div class="game-container">
+        <div class="para-boxes">
+            <div class="para-box">
+                <div class="para-badge left">段落 A</div>
+                <p id="para1" class="para-text">準備中...</p>
+            </div>
+            <div class="para-box">
+                <div class="para-badge right">段落 B</div>
+                <p id="para2" class="para-text">準備中...</p>
+            </div>
+        </div>
+
+        <div class="control-panel">
+            <h3 class="panel-title">🌉 選擇正確的連接詞來建造橋樑</h3>
+
+            <button id="hint-btn" class="hint-btn" onclick="showHint()">💡 提示 (消耗 5 分)</button>
+
+            <div id="hint-display"></div>
+
+            <div id="options" class="options-grid"></div>
+
+            <div id="feedback" class="feedback"></div>
+        </div>
+    </div>
+
+    <script>
+        const SCENARIOS = [
+            {
+                p1: "閱讀能增長知識，擴闊視野。",
+                p2: "閱讀也能提升語文能力，令人出口成章。",
+                opts: ["因此", "其次", "然而"],
+                correct: "其次",
+                hint: "這兩句都在說閱讀的好處，是並列關係。"
+            },
+            {
+                p1: "智能手機為生活帶來很多便利。",
+                p2: "過度使用智能手機會損害健康。",
+                opts: ["而且", "可是", "所以"],
+                correct: "可是",
+                hint: "前句說好處，後句說壞處，是轉折關係。"
+            },
+            {
+                p1: "運動有益身心健康。",
+                p2: "我們應該養成定期運動的習慣。",
+                opts: ["因為", "因此", "雖然"],
+                correct: "因此",
+                hint: "後句是根據前句得出的結論，是因果關係。"
+            },
+            {
+                p1: "他雖然生病了。",
+                p2: "他仍然堅持上學。",
+                opts: ["但是", "因為", "所以"],
+                correct: "但是",
+                hint: "前句用了「雖然」，後句要用「但是」來呼應。"
+            },
+            {
+                p1: "這家餐廳的食物很美味。",
+                p2: "價錢卻非常昂貴。",
+                opts: ["而且", "然而", "或者"],
+                correct: "然而",
+                hint: "前句說優點，後句說缺點，是轉折關係。"
+            },
+            {
+                p1: "只要你肯努力。",
+                p2: "一定能夠取得成功。",
+                opts: ["就", "但", "或"],
+                correct: "就",
+                hint: "「只要...就...」是固定搭配，表示條件關係。"
+            },
+            {
+                p1: "他不但成績優異。",
+                p2: "而且品德高尚。",
+                opts: ["並且", "而且", "可是"],
+                correct: "而且",
+                hint: "「不但...而且...」是遞進關係的固定搭配。"
+            },
+            {
+                p1: "即使遇到困難。",
+                p2: "我們也不能輕易放棄。",
+                opts: ["也", "就", "還"],
+                correct: "也",
+                hint: "「即使...也...」表示讓步關係。"
+            },
+            {
+                p1: "環境保護人人有責。",
+                p2: "我們應該從日常生活做起。",
+                opts: ["但是", "因此", "儘管"],
+                correct: "因此",
+                hint: "後句是根據前句得出的結論。"
+            },
+            {
+                p1: "這次旅行既能放鬆心情。",
+                p2: "又能增廣見聞。",
+                opts: ["又", "但", "或"],
+                correct: "又",
+                hint: "「既...又...」表示兩個並列的好處。"
+            },
+            {
+                p1: "無論天氣多麼惡劣。",
+                p2: "郵差依然準時送信。",
+                opts: ["都", "也", "還"],
+                correct: "都",
+                hint: "「無論...都...」是表示條件的固定搭配。"
+            },
+            {
+                p1: "學習需要持之以恆。",
+                p2: "不能三天打魚，兩天曬網。",
+                opts: ["而", "所以", "或者"],
+                correct: "而",
+                hint: "後句進一步說明前句，用「而」連接。"
+            },
+            {
+                p1: "這種做法不僅浪費時間。",
+                p2: "還會影響效率。",
+                opts: ["還", "就", "才"],
+                correct: "還",
+                hint: "「不僅...還...」表示遞進關係。"
+            },
+            {
+                p1: "與其在家無所事事。",
+                p2: "不如出去做些有意義的事。",
+                opts: ["不如", "就", "也"],
+                correct: "不如",
+                hint: "「與其...不如...」表示選擇關係。"
+            },
+            {
+                p1: "他一邊聽音樂。",
+                p2: "一邊做功課。",
+                opts: ["一邊", "同時", "並"],
+                correct: "一邊",
+                hint: "「一邊...一邊...」表示同時進行的動作。"
+            }
+        ];
+
+        let state = {
+            idx: 0,
+            walking: false,
+            score: 0,
+            combo: 0,
+            hintShown: false
+        };
+
+        const hero = document.getElementById('hero');
+        const plank = document.getElementById('bridge-plank');
+        const scoreEl = document.getElementById('score');
+        const levelEl = document.getElementById('level');
+        const comboEl = document.getElementById('combo');
+        const progressFill = document.getElementById('progress-fill');
+
+        // Sound effects using Web Audio API
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSound(frequency, duration, type = 'sine') {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.value = frequency;
+            oscillator.type = type;
+
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + duration);
+        }
+
+        function playCorrectSound() {
+            playSound(523.25, 0.2); // C5
+            setTimeout(() => playSound(659.25, 0.2), 100); // E5
+            setTimeout(() => playSound(783.99, 0.3), 200); // G5
+        }
+
+        function playWrongSound() {
+            playSound(200, 0.3, 'sawtooth');
+        }
+
+        function createFirework(x, y) {
+            const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#f9ca24', '#6c5ce7', '#a29bfe'];
+            for (let i = 0; i < 12; i++) {
+                const firework = document.createElement('div');
+                firework.className = 'firework';
+                firework.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                firework.style.left = x + 'px';
+                firework.style.top = y + 'px';
+                document.body.appendChild(firework);
+
+                const angle = (Math.PI * 2 * i) / 12;
+                const velocity = 100 + Math.random() * 100;
+                const vx = Math.cos(angle) * velocity;
+                const vy = Math.sin(angle) * velocity;
+
+                let posX = x, posY = y;
+                let life = 1;
+
+                const animate = () => {
+                    life -= 0.02;
+                    if (life <= 0) {
+                        firework.remove();
+                        return;
+                    }
+
+                    posX += vx * 0.016;
+                    posY += vy * 0.016;
+
+                    firework.style.left = posX + 'px';
+                    firework.style.top = posY + 'px';
+                    firework.style.opacity = life;
+
+                    requestAnimationFrame(animate);
+                };
+
+                animate();
+            }
+        }
+
+        function updateProgress() {
+            const progress = ((state.idx) / SCENARIOS.length) * 100;
+            progressFill.style.width = progress + '%';
+            progressFill.textContent = Math.round(progress) + '%';
+        }
+
+        function init() {
+            loadLevel();
+            updateProgress();
+        }
+
+        function loadLevel() {
+            if (state.idx >= SCENARIOS.length) {
+                setTimeout(() => {
+                    alert(`🎉 恭喜完成所有關卡！\n\n最終分數：${state.score}\n最高連續：${state.combo}`);
+                    location.reload();
+                }, 500);
+                return;
+            }
+
+            // Reset visuals
+            hero.style.left = '6%';
+            hero.style.transition = 'none';
+            hero.classList.remove('walking', 'celebrating');
+            plank.style.transition = 'none';
+            plank.classList.remove('built', 'collapse');
+
+            setTimeout(() => {
+                plank.style.transition = 'transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)';
+            }, 50);
+
+            state.hintShown = false;
+            document.getElementById('hint-display').innerHTML = '';
+
+            const s = SCENARIOS[state.idx];
+            document.getElementById('para1').textContent = s.p1;
+            document.getElementById('para2').textContent = s.p2;
+            levelEl.textContent = state.idx + 1;
+
+            const optsDiv = document.getElementById('options');
+            optsDiv.innerHTML = '';
+
+            s.opts.forEach(word => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.textContent = word;
+                btn.onclick = () => attemptBuild(word, s.correct);
+                optsDiv.appendChild(btn);
+            });
+
+            updateProgress();
+        }
+
+        function showHint() {
+            if (state.hintShown) return;
+            if (state.score < 5) {
+                alert('分數不足！需要 5 分才能使用提示。');
+                return;
+            }
+
+            state.score -= 5;
+            scoreEl.textContent = state.score;
+            state.hintShown = true;
+
+            const s = SCENARIOS[state.idx];
+            const hintDiv = document.getElementById('hint-display');
+            hintDiv.className = 'hint-display';
+            hintDiv.textContent = '💡 ' + s.hint;
+
+            document.getElementById('hint-btn').disabled = true;
+        }
+
+        function attemptBuild(word, correct) {
+            if (state.walking) return;
+
+            const feedbackEl = document.getElementById('feedback');
+
+            if (word === correct) {
+                // Success!
+                state.score += 10;
+                state.combo++;
+                scoreEl.textContent = state.score;
+                comboEl.textContent = state.combo;
+
+                feedbackEl.textContent = '✅ 正確！+10 分';
+                feedbackEl.className = 'feedback success';
+
+                playCorrectSound();
+                createFirework(window.innerWidth / 2, window.innerHeight / 3);
+
+                // Animate Bridge
+                plank.classList.add('built');
+
+                // Animate Walk
+                setTimeout(() => {
+                    hero.classList.add('walking');
+                    hero.style.transition = 'left 2.5s linear';
+                    hero.style.left = '82%';
+                    state.walking = true;
+
+                    setTimeout(() => {
+                        hero.classList.remove('walking');
+                        hero.classList.add('celebrating');
+
+                        setTimeout(() => {
+                            state.idx++;
+                            state.walking = false;
+                            loadLevel();
+                            feedbackEl.textContent = '';
+                            feedbackEl.className = 'feedback';
+                            document.getElementById('hint-btn').disabled = false;
+                        }, 1000);
+                    }, 2500);
+                }, 600);
+
+            } else {
+                // Fail
+                state.combo = 0;
+                comboEl.textContent = state.combo;
+
+                feedbackEl.textContent = '❌ 錯誤！橋樑倒塌！';
+                feedbackEl.className = 'feedback error';
+
+                playWrongSound();
+
+                plank.classList.add('built');
+                setTimeout(() => {
+                    plank.classList.remove('built');
+                    plank.classList.add('collapse');
+                }, 100);
+
+                setTimeout(() => {
+                    plank.classList.remove('collapse');
+                    feedbackEl.textContent = '';
+                    feedbackEl.className = 'feedback';
+                }, 1500);
+            }
+        }
+
+        init();
+    </script>
+
+</body>
+
+</html>
+

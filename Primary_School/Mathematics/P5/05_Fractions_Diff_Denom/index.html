@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小五數學：異分母分數概念 | Unlike Denominators</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Compared Fractions",
+    zh: "異分母分數比較",
+    ja: "異分母分数の比較",
+    ko: "이분모 분수 비교",
+    es: "Comparación de Fracciones",
+    de: "Brüche vergleichen",
+    fi: "Murtolukujen vertailu",
+    fr: "Comparaison de fractions",
+    ar: "مقارنة الكسور",
+    it: "Confronto frazioni"
+  },
+  commonDenom: {
+    en: "Common Denominator",
+    zh: "公分母",
+    ja: "共通分母",
+    ko: "공통 분모",
+    es: "Denominador Común",
+    de: "Gemeinsamer Nenner",
+    fi: "Yhteinen nimittäjä",
+    fr: "Dénominateur commun",
+    ar: "المقام المشترك",
+    it: "Denominatore Comune"
+  },
+  convert: {
+    en: "Convert",
+    zh: "通分",
+    ja: "通分",
+    ko: "통분",
+    es: "Convertir",
+    de: "Erweitern",
+    fi: "Muunna",
+    fr: "Convertir",
+    ar: "تحويل",
+    it: "Converti"
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+const FractionBar = ({
+  n,
+  d,
+  color,
+  label
+}) => {
+  return /*#__PURE__*/React.createElement("div", {
+    className: "w-full flex items-center gap-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-16 font-mono font-bold text-center text-xl flex flex-col justify-center items-center"
+  }, /*#__PURE__*/React.createElement("div", null, n), /*#__PURE__*/React.createElement("div", {
+    className: "w-full h-0.5 bg-white/50 my-1"
+  }), /*#__PURE__*/React.createElement("div", null, d)), /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 h-12 bg-slate-800 rounded-lg overflow-hidden border border-slate-600 flex relative"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 flex w-full h-full"
+  }, [...Array(d)].map((_, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "flex-1 border-r border-slate-700/50 last:border-0"
+  }))), /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      width: 0
+    },
+    animate: {
+      width: `${n / d * 100}%`
+    },
+    className: `h-full ${color} opacity-80`
+  })));
+};
+const LCM = (a, b) => {
+  const gcd = (x, y) => !y ? x : gcd(y, x % y);
+  return a * b / gcd(a, b);
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const clampDenom = v => Math.max(1, Math.min(24, Number(v) || 1));
+  const clampNum = (v, d) => Math.max(0, Math.min(d, Number(v) || 0));
+  const [n1, setN1] = useState(1);
+  const [d1, setD1] = useState(2);
+  const [n2, setN2] = useState(1);
+  const [d2, setD2] = useState(3);
+  const [converted, setConverted] = useState(false);
+  const commonD = LCM(d1, d2);
+  const newN1 = n1 * (commonD / d1);
+  const newN2 = n2 * (commonD / d2);
+
+  // Reset conversion when inputs change
+  useEffect(() => {
+    setConverted(false);
+  }, [n1, d1, n2, d2]);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4 font-sans bg-slate-900 text-white"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-4xl flex justify-between items-center mb-10"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-black text-amber-300 drop-shadow-[0_0_15px_rgba(252,211,77,0.5)]"
+  }, "🍕 ", getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "flex bg-slate-800/80 p-1.5 rounded-xl border border-white/10 flex-wrap justify-end gap-1 max-w-[50%]"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-amber-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white hover:bg-white/5"}`
+  }, l)))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-4xl flex flex-col gap-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-8 rounded-3xl flex justify-center gap-8 md:gap-16 items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    min: "0",
+    value: n1,
+    onChange: e => setN1(clampNum(e.target.value, d1)),
+    className: "w-16 bg-transparent text-center text-4xl font-black border-b-4 border-amber-500 outline-none pb-1"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "w-20 h-1 bg-slate-500 my-2"
+  }), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    min: "1",
+    value: d1,
+    onChange: e => {
+      const nd = clampDenom(e.target.value);
+      setD1(nd);
+      if (n1 > nd) setN1(nd);
+    },
+    className: "w-16 bg-transparent text-center text-4xl font-black outline-none"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-bold text-slate-500"
+  }, "VS"), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    min: "0",
+    value: n2,
+    onChange: e => setN2(clampNum(e.target.value, d2)),
+    className: "w-16 bg-transparent text-center text-4xl font-black border-b-4 border-cyan-500 outline-none pb-1"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "w-20 h-1 bg-slate-500 my-2"
+  }), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    min: "1",
+    value: d2,
+    onChange: e => {
+      const nd = clampDenom(e.target.value);
+      setD2(nd);
+      if (n2 > nd) setN2(nd);
+    },
+    className: "w-16 bg-transparent text-center text-4xl font-black outline-none"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-8 rounded-3xl min-h-[300px] flex flex-col gap-6 relative overflow-hidden"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "space-y-6 z-10"
+  }, /*#__PURE__*/React.createElement(FractionBar, {
+    n: n1,
+    d: d1,
+    color: "bg-amber-500"
+  }), /*#__PURE__*/React.createElement(FractionBar, {
+    n: n2,
+    d: d2,
+    color: "bg-cyan-500"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center mt-8"
+  }, !converted ? /*#__PURE__*/React.createElement("button", {
+    onClick: () => setConverted(true),
+    className: "px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-lg transition-transform active:scale-95"
+  }, getText("convert", lang), " ⬇") : /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      opacity: 0,
+      scale: 0.9
+    },
+    animate: {
+      opacity: 1,
+      scale: 1
+    },
+    className: "w-full bg-slate-800/50 p-6 rounded-2xl border border-white/10"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-center text-indigo-300 font-bold mb-4 uppercase tracking-widest text-sm"
+  }, getText("commonDenom", lang), " = ", commonD), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-6"
+  }, /*#__PURE__*/React.createElement(FractionBar, {
+    n: newN1,
+    d: commonD,
+    color: "bg-amber-500"
+  }), /*#__PURE__*/React.createElement(FractionBar, {
+    n: newN2,
+    d: commonD,
+    color: "bg-cyan-500"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "mt-6 text-center text-2xl font-black"
+  }, newN1 === newN2 ? "=" : newN1 > newN2 ? ">" : "<"))))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

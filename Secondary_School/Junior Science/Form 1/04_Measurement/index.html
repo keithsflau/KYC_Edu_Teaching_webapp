@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Measurement Lab | Junior Science</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Roboto+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #f8fafc;
+      }
+      .ruler-tick {
+        position: absolute;
+        background: black;
+        width: 1px;
+      }
+      .vernier-scale {
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid #ccc;
+      }
+
+      .metal-texture {
+        background: linear-gradient(0deg, #d1d5db, #f3f4f6, #d1d5db);
+        box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.8),
+          inset 0 -1px 2px rgba(0, 0, 0, 0.2);
+      }
+    </style>
+  </head>
+  <body class="bg-slate-50 text-slate-900 min-h-screen">
+    <div id="root"></div>
+
+    <script>
+const {
+  useState,
+  useEffect,
+  useRef
+} = React;
+const VernierCaliper = () => {
+  // Main scale in mm (0 to 100mm visually)
+  // Vernier scale 0.1mm precision (10 divisions = 9mm)
+  const [position, setPosition] = useState(12.4); // Current reading in mm
+  const [showReading, setShowReading] = useState(false);
+  const [zoom, setZoom] = useState(false);
+
+  // Constraint: 0 to 80mm
+  const handleSlide = e => {
+    const newVal = parseFloat(e.target.value);
+    setPosition(newVal);
+  };
+
+  // Generate main scale ticks
+  const renderMainTicks = () => {
+    const ticks = [];
+    for (let i = 0; i <= 100; i++) {
+      const height = i % 10 === 0 ? 25 : i % 5 === 0 ? 18 : 10;
+      ticks.push(/*#__PURE__*/React.createElement("div", {
+        key: i,
+        className: "absolute bottom-0 bg-slate-800 w-[1px]",
+        style: {
+          left: `${i * 10}px`,
+          height: `${height}px`
+        }
+      }, i % 10 === 0 && /*#__PURE__*/React.createElement("span", {
+        className: "absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-bold"
+      }, i / 10)));
+    }
+    return ticks;
+  };
+
+  // Generate Vernier scale ticks (0 to 10, total span 90px visually if 1mm=10px, so 9mm=90px)
+  // 0.1mm precision means 10 vernier divisions take up 9 main scale divisions (9mm).
+  // So width of vernier scale is 90px.
+  const renderVernierTicks = () => {
+    const ticks = [];
+    for (let i = 0; i <= 10; i++) {
+      const height = i % 5 === 0 ? 15 : 8;
+      ticks.push(/*#__PURE__*/React.createElement("div", {
+        key: i,
+        className: "absolute top-0 bg-slate-800 w-[1px]",
+        style: {
+          left: `${i * 9}px`,
+          height: `${height}px`
+        }
+      }, " ", /*#__PURE__*/React.createElement("span", {
+        className: "absolute top-4 left-1/2 -translate-x-1/2 text-[8px] font-bold"
+      }, i)));
+    }
+    return ticks;
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-4xl mx-auto p-4 md:p-8"
+  }, /*#__PURE__*/React.createElement("header", {
+    className: "mb-10 text-center"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-3xl font-extrabold text-slate-800 mb-2"
+  }, "Vernier Caliper Simulator"), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-500"
+  }, "Learn to read measurement tools with 0.1mm precision.")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-8 rounded-3xl shadow-xl border border-slate-200 mb-8 overflow-hidden select-none relative"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-[120px] left-[50px] h-[60px] bg-amber-400 opacity-80 border-2 border-amber-600 rounded-sm z-0 flex items-center justify-center text-xs font-bold text-amber-900",
+    style: {
+      width: `${position * 10}px`
+    }
+  }, " ", "Object"), /*#__PURE__*/React.createElement("div", {
+    className: "relative h-[250px] flex items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute left-0 top-[50px] w-12 h-[200px] metal-texture rounded-l-md border-r border-slate-400 z-10 clip-jaw-fixed"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute left-10 top-[50px] w-[900px] h-[60px] metal-texture border-y border-slate-300"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-0 left-0 w-full h-[30px] border-t border-slate-400 overflow-hidden"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "relative h-full ml-[2px]"
+  }, " ", renderMainTicks())), /*#__PURE__*/React.createElement("span", {
+    className: "absolute right-4 top-2 text-xs font-bold text-slate-500"
+  }, "cm")), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-[55px] h-[190px] w-[180px] z-20 transition-transform duration-75 ease-out",
+    style: {
+      transform: `translateX(${position * 10}px)`
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute left-0 top-0 w-[40px] h-[190px] metal-texture border border-slate-400 rounded-bl-3xl shadow-lg"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute left-[40px] top-[95px] w-[110px] h-[40px] metal-texture border border-slate-400 shadow-inner flex items-center justify-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "relative w-[90px] h-full"
+  }, renderVernierTicks())), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-[5px] left-[50px] w-6 h-4 bg-slate-300 border border-slate-400 rounded-full"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 right-4 flex gap-2"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setShowReading(!showReading),
+    className: "bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md transition"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: `fa-solid ${showReading ? "fa-eye-slash" : "fa-eye"} mr-2`
+  }), showReading ? "Hide Answer" : "Check Reading"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setZoom(!zoom),
+    className: "bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2 rounded-lg text-sm font-bold shadow-md transition"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-magnifying-glass mr-2"
+  }), " Zoom"))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-8"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "block text-sm font-bold text-slate-500 mb-2 uppercase tracking-wider"
+  }, "Adjust Jaw Opening"), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "0",
+    max: "80",
+    step: "0.1",
+    value: position,
+    onChange: handleSlide,
+    className: "w-full h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between text-xs text-slate-400 mt-2 font-mono"
+  }, /*#__PURE__*/React.createElement("span", null, "0.0mm"), /*#__PURE__*/React.createElement("span", null, "80.0mm"))), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-800 text-green-400 font-mono text-4xl px-8 py-4 rounded-xl border-4 border-slate-600 shadow-2xl relative min-w-[200px] text-center"
+  }, showReading ? position.toFixed(1) : "---.-", " ", /*#__PURE__*/React.createElement("span", {
+    className: "text-sm text-slate-500 ml-1"
+  }, "mm"), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-1 right-2 text-[10px] text-slate-500"
+  }, "DIGITAL"))), zoom && /*#__PURE__*/React.createElement("div", {
+    className: "fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-2 rounded-2xl max-w-2xl w-full"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between p-4 border-b"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "font-bold"
+  }, "Magnified View"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setZoom(false)
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-times"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "h-[200px] relative overflow-hidden flex items-center justify-center bg-gray-100"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-center text-slate-500"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl font-mono text-slate-800 mb-4"
+  }, parseInt(position, 10), ".", Math.round(position % 1 * 10)), /*#__PURE__*/React.createElement("p", null, "Main Scale: ", parseInt(position, 10), "mm"), /*#__PURE__*/React.createElement("p", null, "Vernier Scale: ", Math.round(position % 1 * 10)))))));
+};
+const App = () => /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(VernierCaliper, null), /*#__PURE__*/React.createElement("div", {
+  className: "text-center mt-12 mb-6"
+}, /*#__PURE__*/React.createElement("a", {
+  href: "../index.html",
+  className: "text-slate-400 hover:text-blue-600 transition font-bold"
+}, /*#__PURE__*/React.createElement("i", {
+  className: "fa-solid fa-arrow-left mr-2"
+}), " Back to Dashboard")));
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

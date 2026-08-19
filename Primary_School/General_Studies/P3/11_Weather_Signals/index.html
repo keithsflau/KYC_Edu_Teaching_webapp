@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小三常識：天氣警告訊號 | Weather Signals</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: radial-gradient(circle at center, #cbd5e1 0%, #64748b 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Weather Signals",
+    zh: "天氣警告訊號",
+    ja: "気象警報",
+    ko: "날씨 경보",
+    es: "Señales Meteorológicas",
+    de: "Wettersignale",
+    fi: "Säämerkit",
+    fr: "Signaux météorologiques",
+    ar: "إشارات الطقس",
+    it: "Segnali Meteorologici"
+  },
+  instruction: {
+    en: "Match the signal!",
+    zh: "配對正確的訊號！",
+    ja: "正しい信号を合わせてください！",
+    ko: "신호를 맞추세요!",
+    es: "¡Empareja la señal!",
+    de: "Ordne das Signal zu!",
+    fi: "Yhdistä merkki!",
+    fr: "Associez le signal !",
+    ar: "طابق الإشارة!",
+    it: "Abbina il segnale!"
+  },
+  t1: {
+    en: "T1 Standby",
+    zh: "一號戒備訊號",
+    ja: "T1 警戒",
+    ko: "T1 대기",
+    es: "T1 Espera",
+    de: "T1 Bereitschaft",
+    fi: "T1 Valmiustila",
+    fr: "T1 Veille",
+    ar: "T1 استعداد",
+    it: "T1 Standby"
+  },
+  t3: {
+    en: "T3 Strong Wind",
+    zh: "三號強風訊號",
+    ja: "T3 強風",
+    ko: "T3 강풍",
+    es: "T3 Viento Fuerte",
+    de: "T3 Starker Wind",
+    fi: "T3 Kova tuuli",
+    fr: "T3 Vent fort",
+    ar: "T3 رياح قوية",
+    it: "T3 Vento Forte"
+  },
+  t8: {
+    en: "T8 Gale or Storm",
+    zh: "八號烈風或暴風訊號",
+    ja: "T8 暴風",
+    ko: "T8 강풍 또는 폭풍",
+    es: "T8 Vendaval o Tormenta",
+    de: "T8 Sturm",
+    fi: "T8 Myrsky",
+    fr: "T8 coup de vent ou tempête",
+    ar: "T8 عاصفة",
+    it: "T8 Burrasca o Tempesta"
+  },
+  amber: {
+    en: "Amber Rain",
+    zh: "黃色暴雨",
+    ja: "黄色豪雨",
+    ko: "황색 호우",
+    es: "Lluvia Ámbar",
+    de: "Gelber Regen",
+    fi: "Keltainen sade",
+    fr: "Pluie ambrée",
+    ar: "مطر كهرماني",
+    it: "Pioggia Ambra"
+  },
+  red: {
+    en: "Red Rain",
+    zh: "紅色暴雨",
+    ja: "赤色豪雨",
+    ko: "적색 호우",
+    es: "Lluvia Roja",
+    de: "Roter Regen",
+    fi: "Punainen sade",
+    fr: "Pluie rouge",
+    ar: "مطر أحمر",
+    it: "Pioggia Rossa"
+  },
+  black: {
+    en: "Black Rain",
+    zh: "黑色暴雨",
+    ja: "黒色豪雨",
+    ko: "흑색 호우",
+    es: "Lluvia Negra",
+    de: "Schwarzer Regen",
+    fi: "Musta sade",
+    fr: "Pluie noire",
+    ar: "مطر أسود",
+    it: "Pioggia Nera"
+  },
+  hot: {
+    en: "Very Hot",
+    zh: "酷熱天氣",
+    ja: "猛暑",
+    ko: "매우 더움",
+    es: "Muy Caliente",
+    de: "Sehr heiß",
+    fi: "Todella kuuma",
+    fr: "Très chaud",
+    ar: "حار جدا",
+    it: "Molto Caldo"
+  },
+  cold: {
+    en: "Cold",
+    zh: "寒冷天氣",
+    ja: "寒冷",
+    ko: "추움",
+    es: "Frío",
+    de: "Kalt",
+    fi: "Kylmä",
+    fr: "Froid",
+    ar: "بارد",
+    it: "Freddo"
+  },
+  thunder: {
+    en: "Thunderstorm",
+    zh: "雷暴",
+    ja: "雷雨",
+    ko: "뇌우",
+    es: "Tormenta eléctrica",
+    de: "Gewitter",
+    fi: "Ukkosmyrsky",
+    fr: "Orage",
+    ar: "عاصفة رعدية",
+    it: "Temporale"
+  },
+  desc_t1: {
+    en: "Typhoon is near",
+    zh: "颱風接近",
+    ja: "台風が近づいています",
+    ko: "태풍이 접근 중입니다",
+    es: "El tifón está cerca",
+    de: "Taifun ist nah",
+    fi: "Taifuuni on lähellä",
+    fr: "Le typhon est proche",
+    ar: "الإعصار قريب",
+    it: "Il tifone è vicino"
+  },
+  desc_t3: {
+    en: "Wind is strong",
+    zh: "風勢增強",
+    ja: "風が強い",
+    ko: "바람이 강합니다",
+    es: "El viento es fuerte",
+    de: "Wind ist stark",
+    fi: "Tuuli on voimakas",
+    fr: "Le vent est fort",
+    ar: "الرياح قوية",
+    it: "Il vento è forte"
+  },
+  desc_t8: {
+    en: "No school/work",
+    zh: "停課停工",
+    ja: "学校・仕事休み",
+    ko: "휴교/휴무",
+    es: "Sin escuela/trabajo",
+    de: "Keine Schule/Arbeit",
+    fi: "Ei koulua/töitä",
+    fr: "Pas d'école/travail",
+    ar: "لا مدرسة/عمل",
+    it: "Niente scuola/lavoro"
+  },
+  desc_amber: {
+    en: "Heavy rain",
+    zh: "大雨",
+    ja: "大雨",
+    ko: "폭우",
+    es: "Lluvia fuerte",
+    de: "Starker Regen",
+    fi: "Rankkasade",
+    fr: "Forte pluie",
+    ar: "مطر غزير",
+    it: "Pioggia forte"
+  },
+  desc_red: {
+    en: "Very heavy rain",
+    zh: "很大雨",
+    ja: "激しい雨",
+    ko: "매우 많은 비",
+    es: "Lluvia muy fuerte",
+    de: "Sehr starker Regen",
+    fi: "Erittäin rankkasade",
+    fr: "Pluie très forte",
+    ar: "مطر غزير جدا",
+    it: "Pioggia molto forte"
+  },
+  desc_black: {
+    en: "Dangerous rain",
+    zh: "極大雨",
+    ja: "危険な雨",
+    ko: "위험한 비",
+    es: "Lluvia peligrosa",
+    de: "Gefährlicher Regen",
+    fi: "Vaarallinen sade",
+    fr: "Pluie dangereuse",
+    ar: "مطر خطير",
+    it: "Pioggia pericolosa"
+  },
+  desc_hot: {
+    en: "Drink water",
+    zh: "多喝水",
+    ja: "水を飲む",
+    ko: "물을 마시세요",
+    es: "Bebe agua",
+    de: "Trink Wasser",
+    fi: "Juo vettä",
+    fr: "Buvez de l'eau",
+    ar: "اشرب الماء",
+    it: "Bevi acqua"
+  },
+  desc_cold: {
+    en: "Wear warm clothes",
+    zh: "多穿衣服",
+    ja: "暖かい服を着る",
+    ko: "따뜻하게 입으세요",
+    es: "Usa ropa abrigada",
+    de: "Zieh warme Kleidung an",
+    fi: "Pukeudu lämpimästi",
+    fr: "Portez des vêtements chauds",
+    ar: "ارتد ملابس دافئة",
+    it: "Indossa vestiti caldi"
+  },
+  desc_thunder: {
+    en: "Stay indoors",
+    zh: "留在室內",
+    ja: "屋内に留まる",
+    ko: "실내에 머무세요",
+    es: "Quédate adentro",
+    de: "Bleib drinnen",
+    fi: "Pysy sisällä",
+    fr: "Restez à l'intérieur",
+    ar: "ابق في الداخل",
+    it: "Rimani al chiuso"
+  },
+  correct: {
+    en: "Correct!",
+    zh: "正確！",
+    ja: "正解！",
+    ko: "정답입니다!",
+    es: "¡Correcto!",
+    de: "Richtig!",
+    fi: "Oikein!",
+    fr: "Correct !",
+    ar: "صحيح!",
+    it: "Corretto!"
+  },
+  wrong: {
+    en: "Wrong Signal!",
+    zh: "錯誤訊號！",
+    ja: "間違った信号！",
+    ko: "잘못된 신호!",
+    es: "¡Señal incorrecta!",
+    de: "Falsches Signal!",
+    fi: "Väärä merkki!",
+    fr: "Mauvais signal !",
+    ar: "إشارة خاطئة!",
+    it: "Segnale errato!"
+  },
+  completed: {
+    en: "Weather Expert!",
+    zh: "天氣小專家！",
+    ja: "お天気エキスパート！",
+    ko: "날씨 전문가!",
+    es: "¡Experto en Clima!",
+    de: "Wetterexperte!",
+    fi: "Sääasiantuntija!",
+    fr: "Expert météo !",
+    ar: "خبير الطقس!",
+    it: "Esperto Meteo!"
+  },
+  reset: {
+    en: "Play Again",
+    zh: "再玩一次",
+    ja: "もう一度プレイ",
+    ko: "다시 하기",
+    es: "Jugar de Nuevo",
+    de: "Nochmal spielen",
+    fi: "Pelaa uudelleen",
+    fr: "Rejouer",
+    ar: "العب مرة أخرى",
+    it: "Gioca di Nuovo"
+  }
+};
+
+// Simplified visuals for signals using text/emoji/color blocks to simulate HK Observatory icons
+const signals = [{
+  id: "t1",
+  type: "typhoon",
+  color: "bg-white text-black",
+  label: "1",
+  shape: "T"
+}, {
+  id: "t3",
+  type: "typhoon",
+  color: "bg-white text-black",
+  label: "3",
+  shape: "T"
+}, {
+  id: "t8",
+  type: "typhoon",
+  color: "bg-white text-black",
+  label: "8",
+  shape: "T"
+}, {
+  id: "amber",
+  type: "rain",
+  color: "bg-yellow-400 text-black",
+  label: "🌧️",
+  shape: "Box"
+}, {
+  id: "red",
+  type: "rain",
+  color: "bg-red-500 text-white",
+  label: "🌧️",
+  shape: "Box"
+}, {
+  id: "black",
+  type: "rain",
+  color: "bg-black text-white border-2 border-white",
+  label: "🌧️",
+  shape: "Box"
+}, {
+  id: "hot",
+  type: "temp",
+  color: "bg-red-600 text-yellow-300",
+  label: "H",
+  shape: "Circle"
+},
+// H for Hot (Simulated)
+{
+  id: "cold",
+  type: "temp",
+  color: "bg-blue-600 text-white",
+  label: "C",
+  shape: "Circle"
+},
+// C for Cold
+{
+  id: "thunder",
+  type: "other",
+  color: "bg-yellow-500 text-black",
+  label: "⚡",
+  shape: "Triangle"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [queue, setQueue] = useState([]);
+  const [current, setCurrent] = useState(null);
+  const [feedback, setFeedback] = useState(null);
+  const [options, setOptions] = useState([]);
+  const getText = key => t[key][lang] || t[key]["en"];
+  useEffect(() => {
+    initGame();
+  }, []);
+  const initGame = () => {
+    const q = [...signals].sort(() => Math.random() - 0.5);
+    setQueue(q);
+    nextRound(q[0]);
+  };
+  const nextRound = target => {
+    if (!target) {
+      setCurrent(null);
+      return;
+    }
+    setCurrent(target);
+    setFeedback(null);
+
+    // Generate options: target + 3 random distractors
+    const distractors = signals.filter(s => s.id !== target.id).sort(() => Math.random() - 0.5).slice(0, 3);
+    const opts = [target, ...distractors].sort(() => Math.random() - 0.5);
+    setOptions(opts);
+  };
+  const handleChoice = opt => {
+    if (feedback) return;
+    if (opt.id === current.id) {
+      setFeedback("correct");
+      setTimeout(() => {
+        const nextIdx = queue.indexOf(current) + 1;
+        if (nextIdx < queue.length) nextRound(queue[nextIdx]);else setCurrent(null);
+      }, 1000);
+    } else {
+      setFeedback("wrong");
+      setTimeout(() => setFeedback(null), 800);
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 flex flex-col items-center select-none font-sans overflow-hidden"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-yellow-300 mb-4 mt-8 drop-shadow-md"
+  }, "⚠️ ", getText("title")), current ? /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-2xl flex flex-col items-center flex-1 justify-center relatives"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-8 rounded-3xl shadow-2xl border-b-8 border-slate-300 w-full text-center mb-8 relative z-10"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "text-4xl font-black text-slate-800 mb-2"
+  }, getText(current.id)), /*#__PURE__*/React.createElement("p", {
+    className: "text-xl text-slate-500 font-bold bg-slate-100 py-2 px-4 rounded-full inline-block"
+  }, getText(`desc_${current.id}`)), feedback && /*#__PURE__*/React.createElement("div", {
+    className: `absolute inset-0 bg-white/95 flex items-center justify-center text-4xl font-black rounded-3xl ${feedback === "correct" ? "text-green-600" : "text-red-500"}`
+  }, getText(feedback))), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 gap-6 w-full"
+  }, options.map(opt => /*#__PURE__*/React.createElement("button", {
+    key: opt.id,
+    onClick: () => handleChoice(opt),
+    className: "bg-white/10 backdrop-blur-sm p-4 rounded-xl border-4 border-white/20 hover:bg-white/20 hover:scale-105 active:scale-95 transition-all flex flex-col items-center justify-center shadow-lg group"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: `w-28 h-28 flex items-center justify-center font-black text-6xl shadow-xl 
+                                    ${opt.shape === "T" ? "border-4 border-black" : opt.shape === "Circle" ? "rounded-full" : "rounded-lg"}
+                                    ${opt.color}
+                                `
+  }, opt.label))))) : /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/90 p-12 rounded-3xl shadow-xl text-center mt-20"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-8xl mb-4"
+  }, "🌪️"), /*#__PURE__*/React.createElement("h2", {
+    className: "text-3xl font-black text-slate-800 mb-6"
+  }, getText("completed")), /*#__PURE__*/React.createElement("button", {
+    onClick: initGame,
+    className: "bg-blue-600 text-white px-10 py-4 rounded-full font-black text-xl hover:bg-blue-700 shadow-xl"
+  }, getText("reset"), " 🔄")), /*#__PURE__*/React.createElement("p", {
+    className: "font-bold text-white/80 mt-8 mb-4"
+  }, getText("instruction")));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小五數學：多位數乘法 | Multi-Digit Multiplication</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Multi-Digit Multiplication",
+    zh: "多位數乘法",
+    ja: "多桁の掛け算",
+    ko: "다자리 곱셈",
+    es: "Multiplicación de Varios Dígitos",
+    de: "Mehrstellige Multiplikation",
+    fi: "Moninumeroinen Kertolasku",
+    fr: "Multiplication à Plusieurs Chiffres",
+    ar: "الضرب متعدد الأرقام",
+    it: "Moltiplicazione a Più Cifre"
+  },
+  nextStep: {
+    en: "Next Step",
+    zh: "下一步",
+    ja: "次へ",
+    ko: "다음 단계",
+    es: "Siguiente Paso",
+    de: "Nächster Schritt",
+    fi: "Seuraava vaihe",
+    fr: "Étape Suivante",
+    ar: "الخطوة التالية",
+    it: "Passo Successivo"
+  },
+  reset: {
+    en: "Reset",
+    zh: "重置",
+    ja: "リセット",
+    ko: "초기화",
+    es: "Reiniciar",
+    de: "Zurücksetzen",
+    fi: "Nollaa",
+    fr: "Réinitialiser",
+    ar: "إعادة ضبط",
+    it: "Reimposta"
+  },
+  calculate: {
+    en: "Calculate",
+    zh: "計算",
+    ja: "計算",
+    ko: "계산",
+    es: "Calcular",
+    de: "Berechnen",
+    fi: "Laske",
+    fr: "Calculer",
+    ar: "حساب",
+    it: "Calcola"
+  },
+  tip1: {
+    en: "Break down into partial products",
+    zh: "拆解為部分積",
+    ja: "部分積に分解",
+    ko: "부분 곱으로 분해",
+    es: "Desglosar en productos parciales",
+    de: "In Teilprodukte zerlegen",
+    fi: "Jaa osatuloihin",
+    fr: "Décomposer en produits partiels",
+    ar: "تقسيم إلى نواتج جزئية",
+    it: "Scomponi in prodotti parziali"
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [n1, setN1] = useState(234);
+  const [n2, setN2] = useState(56);
+  const [step, setStep] = useState(0);
+  const s2 = n2.toString();
+
+  // Calculate partial products: from last digit to first
+  const partials = s2.split("").reverse().map((d, i) => {
+    const digit = parseInt(d, 10);
+    const val = digit * n1;
+    const shift = i;
+    const realVal = val * Math.pow(10, shift);
+    return {
+      digit,
+      shift,
+      val,
+      realVal,
+      display: val + "0".repeat(shift)
+    };
+  });
+  const total = n1 * n2;
+  const nextStep = () => setStep(prev => Math.min(prev + 1, partials.length + 1));
+  const reset = () => setStep(0);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4 font-sans bg-slate-900 text-white"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-4xl flex justify-between items-center mb-10"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-black text-sky-400 drop-shadow-[0_0_15px_rgba(56,189,248,0.5)]"
+  }, "✖️ ", getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "flex bg-slate-800/80 p-1.5 rounded-xl border border-white/10 flex-wrap justify-end gap-1 max-w-[50%]"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-sky-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white hover:bg-white/5"}`
+  }, l)))), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col md:flex-row gap-8 w-full max-w-5xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 glass-panel p-8 rounded-3xl min-h-[400px] flex flex-col items-center justify-center relative"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "font-mono text-5xl md:text-7xl font-bold tracking-widest text-right leading-tight"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-slate-300 mb-2"
+  }, n1), /*#__PURE__*/React.createElement("div", {
+    className: "text-slate-300 border-b-4 border-slate-500 pb-2 mb-4 relative"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "absolute left-[-40px] text-sky-500"
+  }, "×"), n2), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-1"
+  }, partials.map((p, i) => /*#__PURE__*/React.createElement(motion.div, {
+    key: i,
+    initial: {
+      opacity: 0,
+      x: -20
+    },
+    animate: {
+      opacity: step > i ? 1 : 0,
+      x: step > i ? 0 : -20
+    },
+    className: "text-sky-300/80 text-right pr-0 relative"
+  }, p.val, /*#__PURE__*/React.createElement("span", {
+    className: "text-slate-700"
+  }, "0".repeat(p.shift)), /*#__PURE__*/React.createElement("span", {
+    className: "absolute right-[120%] top-1/2 -translate-y-1/2 text-xs md:text-sm text-slate-500 whitespace-nowrap hidden md:block opacity-50 font-sans"
+  }, n1, " × ", p.digit, p.shift > 0 ? " × " + Math.pow(10, p.shift) : "")))), /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      opacity: 0,
+      scaleX: 0
+    },
+    animate: {
+      opacity: step > partials.length ? 1 : 0,
+      scaleX: step > partials.length ? 1 : 0
+    },
+    className: "border-t-4 border-slate-500 pt-2 mt-2 text-emerald-400 text-right"
+  }, total))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full md:w-80 flex flex-col gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 rounded-2xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-between mb-4"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: n1,
+    onChange: e => {
+      setN1(Number(e.target.value));
+      reset();
+    },
+    className: "bg-slate-800 text-white text-2xl font-bold p-3 rounded-lg w-full mr-2 text-center outline-none focus:ring-2 ring-sky-500"
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "text-2xl text-slate-500"
+  }, "×"), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: n2,
+    onChange: e => {
+      setN2(Number(e.target.value));
+      reset();
+    },
+    className: "bg-slate-800 text-white text-2xl font-bold p-3 rounded-lg w-full ml-2 text-center outline-none focus:ring-2 ring-sky-500"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-2"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: nextStep,
+    disabled: step > partials.length,
+    className: `flex-1 py-3 rounded-xl font-bold uppercase tracking-wider transition-all shadow-lg ${step > partials.length ? "bg-slate-700 text-slate-500" : "bg-sky-600 hover:bg-sky-500 text-white"}`
+  }, step === 0 ? getText("calculate", lang) : getText("nextStep", lang)), /*#__PURE__*/React.createElement("button", {
+    onClick: reset,
+    className: "px-4 py-3 bg-slate-700 text-slate-300 hover:text-white rounded-xl font-bold"
+  }, "↺"))), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 rounded-2xl border-l-4 border-amber-500"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-amber-400 font-bold mb-2"
+  }, "💡 Tips"), /*#__PURE__*/React.createElement("p", {
+    className: "text-sm text-slate-300 leading-relaxed"
+  }, getText("tip1", lang))))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

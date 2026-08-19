@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - Greenhouse Effect</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: #fdf4ff;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Greenhouse Effect",
+    zh: "溫室效應",
+    ja: "温室効果",
+    ko: "온실 효과",
+    es: "Efecto invernadero",
+    de: "Treibhauseffekt",
+    fi: "Kasvihuoneilmiö",
+    fr: "Effet de serre",
+    ar: "تأثير الاحتباس الحراري",
+    it: "Effetto Serra"
+  },
+  instruction: {
+    en: "Add Greenhouse Gases (CO2) and see what happens to the heat.",
+    zh: "加入溫室氣體 (CO2) 並觀察熱量的變化。",
+    ja: "温室効果ガス（CO2）を追加して、熱に何が起こるか見てみよう。",
+    ko: "온실 가스(CO2)를 추가하고 열에 어떤 일이 일어나는지 확인하세요.",
+    es: "Añade gases de efecto invernadero (CO2) y mira qué pasa con el calor.",
+    de: "Füge Treibhausgase (CO2) hinzu und sieh, was mit der Wärme passiert.",
+    fi: "Lisää kasvihuonekaasuja (CO2) ja katso mitä lämmölle tapahtuu.",
+    fr: "Ajoutez des gaz à effet de serre (CO2) et voyez ce qui arrive à la chaleur.",
+    ar: "أضف غازات الدفيئة (CO2) وشاهد ما يحدث للحرارة.",
+    it: "Aggiungi gas serra (CO2) e vedi cosa succede al calore."
+  },
+  add_gas: {
+    en: "Add Gas",
+    zh: "增加氣體",
+    ja: "ガス追加",
+    ko: "가스 추가"
+  },
+  remove_gas: {
+    en: "Remove Gas",
+    zh: "減少氣體",
+    ja: "ガス除去",
+    ko: "가스 제거"
+  },
+  temp: {
+    en: "Temperature",
+    zh: "溫度",
+    ja: "温度",
+    ko: "온도"
+  }
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [gasCount, setGasCount] = useState(2); // 0 to 10
+  const [heatParticles, setHeatParticles] = useState([]);
+  const getText = key => t[key][lang] || t[key]["en"];
+
+  // Simulation Loop
+  useEffect(() => {
+    // Spawn sun rays continuously
+    const interval = setInterval(() => {
+      const newRay = {
+        id: Date.now(),
+        x: Math.random() * 80 + 10,
+        // 10-90% width
+        y: 0,
+        dir: 1,
+        // 1 = down, -1 = up
+        trapped: false
+      };
+      setHeatParticles(prev => [...prev, newRay].slice(-20)); // Keep strictly limited count for performance
+    }, 1000); // reduced spawn rate
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Move Particles
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setHeatParticles(prev => prev.map(p => {
+        let nextY = p.y + p.dir * 5;
+        let nextDir = p.dir;
+        let trapped = p.trapped;
+
+        // Hit Ground
+        if (nextY >= 90) {
+          nextDir = -1; // Bounce up
+        }
+
+        // Hit Atmosphere (Sky)
+        if (nextY <= 10 && nextDir === -1) {
+          // Chance to escape vs bounce back based on gasCount
+          const trapChance = gasCount * 0.1; // 0.0 to 1.0
+          if (Math.random() < trapChance) {
+            nextDir = 1; // Trapped! Bounce back down
+            trapped = true;
+          } else {
+            // Escaped into space
+            return null;
+          }
+        }
+        return {
+          ...p,
+          y: nextY,
+          dir: nextDir,
+          trapped
+        };
+      }).filter(Boolean)); // Remove escaped rays
+    }, 100);
+    return () => clearInterval(interval);
+  }, [gasCount]);
+  const temp = 15 + heatParticles.filter(p => p.trapped).length * 2;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-bold mb-4 text-purple-700"
+  }, getText("title")), /*#__PURE__*/React.createElement("p", {
+    className: "mb-4 text-slate-500 font-bold max-w-2xl text-center"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "relative w-full max-w-4xl aspect-[16/9] bg-gradient-to-b from-black to-blue-300 rounded-3xl overflow-hidden border-4 border-slate-700 shadow-2xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-0 w-full h-1/4"
+  }), " ", /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-[10%] w-full h-[2px] bg-white/20 border-t border-dashed border-white/50"
+  }), " ", /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-0 w-full h-1/4 bg-green-700"
+  }), " ", /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 left-4 w-16 h-16 bg-yellow-400 rounded-full shadow-[0_0_50px_yellow]"
+  }), Array.from({
+    length: gasCount
+  }).map((_, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "absolute text-4xl opacity-50 transition-all duration-1000",
+    style: {
+      top: "15%",
+      left: `${10 + i * 8}%`
+    }
+  }, "☁️")), heatParticles.map(p => /*#__PURE__*/React.createElement("div", {
+    key: p.id,
+    className: "absolute w-4 h-4 rounded-full transition-all duration-100 ease-linear",
+    style: {
+      left: `${p.x}%`,
+      top: `${p.y}%`,
+      backgroundColor: p.trapped ? "red" : "yellow",
+      boxShadow: p.trapped ? "0 0 10px red" : "0 0 5px yellow"
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-4 right-4 bg-white/80 p-4 rounded-xl font-bold"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl"
+  }, getText("temp"), ":", " ", /*#__PURE__*/React.createElement("span", {
+    className: temp > 25 ? "text-red-600" : "text-green-600"
+  }, Math.round(temp), "°C")))), /*#__PURE__*/React.createElement("div", {
+    className: "mt-8 flex gap-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setGasCount(Math.max(0, gasCount - 1)),
+    className: "px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl font-bold shadow-lg disabled:opacity-50",
+    disabled: gasCount <= 0
+  }, getText("remove_gas")), /*#__PURE__*/React.createElement("div", {
+    className: "px-6 py-3 bg-white rounded-xl font-bold text-xl border-2 border-slate-200"
+  }, "CO2: ", gasCount), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setGasCount(Math.min(10, gasCount + 1)),
+    className: "px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold shadow-lg disabled:opacity-50",
+    disabled: gasCount >= 10
+  }, getText("add_gas"))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

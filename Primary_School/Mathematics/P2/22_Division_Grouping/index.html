@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小二數學：除法 (分組) | Division (Grouping)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #ecfdf5 0%, #059669 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "➗ Division: Grouping",
+    zh: "➗ 除法概念：分組",
+    ja: "➗ 割り算：グループ化",
+    ko: "➗ 나눗셈: 묶기",
+    es: "➗ División: Agrupación",
+    de: "➗ Division: Gruppieren",
+    fi: "➗ Jakolasku: Ryhmittely",
+    fr: "➗ Division : Groupement",
+    ar: "➗ القسمة: التجميع",
+    it: "➗ Divisione: Raggruppamento"
+  },
+  desc: {
+    zh: "有 {total} 個 🍪，每 {perGroup} 個一碟。",
+    en: "Total {total} cookies. Put {perGroup} on each plate.",
+    ja: "{total} 個のクッキーがあります。各皿に {perGroup} 個置きます。",
+    ko: "쿠키가 {total}개 있습니다. 접시마다 {perGroup}개씩 담으세요.",
+    es: "Total {total} galletas. Pon {perGroup} en cada plato.",
+    fr: "Total {total} biscuits. Mettez {perGroup} par assiette.",
+    de: "Insgesamt {total} Kekse. Lege {perGroup} auf jeden Teller."
+  },
+  circle: {
+    en: "Circle",
+    zh: "圈起來",
+    ja: "丸で囲む",
+    ko: "동그라미",
+    es: "Encerrar",
+    de: "Einkreisen",
+    fi: "Ympyröi",
+    fr: "Entourer",
+    ar: "طوق",
+    it: "Cerchia"
+  },
+  howMany: {
+    en: "How many plates?",
+    zh: "共有幾碟？",
+    ja: "何枚の皿？",
+    ko: "접시는 몇 개인가요?",
+    es: "¿Cuántos platos?",
+    de: "Wie viele Teller?",
+    fi: "Montako lautasta?",
+    fr: "Combien d'assiettes ?",
+    ar: "كم عدد الصحون؟",
+    it: "Quanti piatti?"
+  },
+  check: {
+    en: "Check",
+    zh: "檢查",
+    ja: "確認",
+    ko: "확인",
+    es: "Comprobar",
+    de: "Prüfen",
+    fi: "Tarkista",
+    fr: "Vérifier",
+    ar: "تحقق",
+    it: "Controlla"
+  }
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [total, setTotal] = useState(12);
+  const [perGroup, setPerGroup] = useState(3);
+  const [currentSet, setCurrentSet] = useState(0); // How many items grouped so far
+  const [groupsFormed, setGroupsFormed] = useState(0);
+  const [input, setInput] = useState("");
+  const [feedback, setFeedback] = useState("");
+  const newProb = () => {
+    setCurrentSet(0);
+    setGroupsFormed(0);
+    setInput("");
+    setFeedback("");
+    const g = Math.floor(Math.random() * 4) + 2; // 2-5 groups
+    const p = Math.floor(Math.random() * 3) + 2; // 2-4 items per group
+    setTotal(g * p);
+    setPerGroup(p);
+  };
+  useEffect(newProb, []);
+  const circleGroup = () => {
+    if (currentSet < total) {
+      setCurrentSet(prev => Math.min(prev + perGroup, total));
+      setGroupsFormed(prev => prev + 1);
+    }
+  };
+  const check = () => {
+    if (parseInt(input, 10) === groupsFormed && currentSet === total) {
+      setFeedback("CORRECT");
+      setTimeout(newProb, 2000);
+    } else {
+      setFeedback("WRONG");
+    }
+  };
+  const getDesc = () => {
+    const tmpl = t.desc[lang] || t.desc["en"];
+    return tmpl.replace("{total}", total).replace("{perGroup}", perGroup);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-8 flex flex-col items-center justify-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-emerald-900 mb-8 max-w-2xl text-center"
+  }, t.title[lang] || t.title["en"]), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/90 rounded-3xl p-8 shadow-2xl w-full max-w-4xl text-center border-4 border-emerald-300"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-bold text-slate-600 mb-8"
+  }, getDesc()), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-wrap justify-center gap-4 mb-8 max-w-2xl mx-auto"
+  }, [...Array(Math.ceil(total / perGroup))].map((_, groupIdx) => {
+    // Determine if this group is formed
+    const isFormed = groupIdx < groupsFormed;
+    return /*#__PURE__*/React.createElement("div", {
+      key: groupIdx,
+      className: `relative border-4 rounded-full p-2 flex flex-wrap justify-center items-center w-32 h-32 transition-all duration-500
+                              ${isFormed ? "border-emerald-500 bg-emerald-50 scale-100 opacity-100" : "border-dashed border-slate-300 opacity-50 scale-90"}`
+    }, [...Array(perGroup)].map((_, i) => /*#__PURE__*/React.createElement("div", {
+      key: i,
+      className: `text-4xl transition-all duration-500 delay-100 ${isFormed ? "scale-100" : "scale-0"}`
+    }, "🍪")), !isFormed && groupIdx === groupsFormed && currentSet < total && /*#__PURE__*/React.createElement("button", {
+      onClick: circleGroup,
+      className: "absolute inset-0 flex items-center justify-center bg-black/5 rounded-full hover:bg-black/10 text-slate-400 font-bold"
+    }, t.circle[lang] || t.circle["en"]));
+  })), currentSet === total && /*#__PURE__*/React.createElement("div", {
+    className: "animate-fade-in"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-bold text-slate-700 mb-4 flex items-center justify-center gap-4 flex-wrap"
+  }, t.howMany[lang] || t.howMany["en"], /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2"
+  }, total, " ÷ ", perGroup, " =", /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: input,
+    onChange: e => setInput(e.target.value),
+    className: "w-24 text-center border-b-4 border-emerald-500 bg-emerald-50 text-4xl font-black focus:outline-none",
+    autoFocus: true
+  }))), /*#__PURE__*/React.createElement("button", {
+    onClick: check,
+    className: "px-10 py-3 bg-emerald-500 text-white rounded-full font-black text-2xl shadow-xl hover:bg-emerald-600 active:scale-95 transition-transform"
+  }, t.check[lang] || t.check["en"])), /*#__PURE__*/React.createElement("div", {
+    className: "h-16 mt-8"
+  }, feedback === "CORRECT" && /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black text-green-500 animate-bounce"
+  }, get("correct", lang)), feedback === "WRONG" && /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black text-red-500 animate-shake"
+  }, get("wrong", lang)))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

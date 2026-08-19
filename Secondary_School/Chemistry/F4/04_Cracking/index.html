@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cracking Simulator | 裂解作用模擬</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+        background: #1a1a1a;
+        color: white;
+      }
+      .setup-container {
+        background-image: url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wNSkiLz48L3N2Zz4=");
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <header
+      class="bg-amber-900/50 backdrop-blur border-b border-amber-800 p-4 flex justify-between items-center"
+    >
+      <div class="flex items-center gap-3">
+        <a href="../../index.html" class="text-amber-400 hover:text-white"
+          ><svg
+            class="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M10 19l-7-7m0 0l7-7m-7 7h18"
+            /></svg
+        ></a>
+        <h1 class="text-2xl font-bold text-amber-500">
+          Cracking Simulator
+          <span class="text-sm font-normal text-gray-400">裂解作用</span>
+        </h1>
+      </div>
+      <div
+        class="text-xs font-mono bg-black/30 px-3 py-1 rounded text-amber-200"
+      >
+        Mechanism: Thermal/Catalytic Breakdown
+      </div>
+    </header>
+
+    <main
+      class="flex-grow flex flex-col md:flex-row max-w-7xl mx-auto w-full p-6 gap-6"
+    >
+      <!-- Interactive Setup -->
+      <div
+        class="w-full md:w-2/3 bg-gray-900 rounded-2xl border border-gray-800 relative overflow-hidden flex flex-col items-center justify-center p-8 setup-container"
+      >
+        <!-- Apparatus Visualization (CSS/SVG Art) -->
+        <div
+          class="relative w-full max-w-2xl h-96 bg-gray-800/50 rounded-xl border border-gray-700 flex items-center justify-center relative"
+        >
+          <!-- Test Tube Horizontal -->
+          <div
+            class="w-96 h-24 border-4 border-gray-400 rounded-full flex items-center relative bg-white/5 overflow-hidden transform -rotate-2"
+          >
+            <!-- Mineral Wool soaked in Oil -->
+            <div
+              class="absolute left-2 w-16 h-16 rounded-full bg-yellow-900/80 blur-sm flex items-center justify-center"
+            >
+              <span class="text-[10px] text-white font-bold rotate-90"
+                >Oil</span
+              >
+            </div>
+
+            <!-- Broken Pot Chips (Catalyst) -->
+            <div
+              class="absolute left-32 w-24 h-16 flex flex-wrap gap-1 justify-center items-center opacity-80"
+            >
+              <div class="w-4 h-4 bg-orange-700 rounded-sm rotate-45"></div>
+              <div class="w-5 h-3 bg-orange-800 rounded-sm -rotate-12"></div>
+              <div class="w-3 h-5 bg-orange-600 rounded-sm rotate-12"></div>
+              <div class="w-4 h-4 bg-orange-700 rounded-sm rotate-90"></div>
+            </div>
+
+            <!-- Flow Animation -->
+            <div
+              id="gas-particles"
+              class="absolute left-20 right-0 h-full pointer-events-none"
+            >
+              <!-- JS will inject particles -->
+            </div>
+          </div>
+
+          <!-- Heat Source -->
+          <div
+            class="absolute bottom-16 left-[180px] flex flex-col items-center"
+          >
+            <div
+              id="flame"
+              class="w-8 h-12 bg-orange-500 rounded-full blur-md animate-pulse opacity-50 transition-all duration-300"
+            ></div>
+            <div class="w-16 h-4 bg-gray-600 rounded-t mt-1"></div>
+            <div class="w-4 h-16 bg-gray-600"></div>
+          </div>
+
+          <!-- Delivery Tube & Collection -->
+          <div
+            class="absolute right-10 top-1/2 w-48 h-32 border-t-4 border-r-4 border-gray-500 rounded-tr-3xl pointer-events-none"
+            style="transform: translateY(-50%) translate(50%, 50%)"
+          ></div>
+
+          <!-- Product Test Tube (in water trough simulation abstract) -->
+          <div class="absolute bottom-4 right-4 text-center">
+            <div
+              class="w-12 h-24 border-2 border-white/30 bg-blue-500/10 rounded-b-xl relative overflow-hidden"
+            >
+              <div
+                id="product-liquid"
+                class="absolute bottom-0 w-full h-0 bg-transparent transition-all duration-1000"
+              ></div>
+              <div
+                id="bromine-water"
+                class="absolute inset-0 bg-orange-500/0 transition-colors duration-1000"
+              ></div>
+            </div>
+            <div class="text-xs text-gray-400 mt-2">Collection</div>
+          </div>
+        </div>
+
+        <!-- Controls -->
+        <div
+          class="mt-8 flex gap-4 w-full max-w-2xl bg-gray-800 p-4 rounded-xl items-center"
+        >
+          <div class="flex-grow">
+            <label class="block text-xs font-bold text-gray-400 mb-1"
+              >Temperature (Heat)</label
+            >
+            <input
+              type="range"
+              id="temp-slider"
+              min="0"
+              max="100"
+              value="0"
+              class="w-full accent-orange-500"
+            />
+          </div>
+          <!-- Catalyst Toggle -->
+          <div class="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="cat-toggle"
+              class="w-5 h-5 accent-orange-500"
+            />
+            <label class="text-sm">Use Catalyst</label>
+          </div>
+          <button
+            onclick="testBromine()"
+            class="px-4 py-2 bg-orange-700 hover:bg-orange-600 rounded-lg text-sm font-bold transition-colors"
+          >
+            Test Bromine Water
+          </button>
+        </div>
+      </div>
+
+      <!-- Info Panel -->
+      <div class="w-full md:w-1/3 flex flex-col gap-6">
+        <div class="bg-gray-800 p-6 rounded-2xl border border-gray-700">
+          <h2 class="text-xl font-bold text-orange-400 mb-4">Reaction Board</h2>
+
+          <div class="mb-6">
+            <div class="text-xs text-gray-500 uppercase mb-1">
+              Input (Heavy Oil)
+            </div>
+            <div class="font-mono text-lg text-white">
+              Paraffin Oil (C<sub>12</sub>H<sub>26</sub>)
+            </div>
+          </div>
+
+          <div class="mb-6">
+            <div class="text-xs text-gray-500 uppercase mb-1">
+              Output (Cracked)
+            </div>
+            <div id="output-text" class="font-mono text-lg text-gray-500">
+              Waiting for heat...
+            </div>
+            <div
+              id="equation"
+              class="text-sm text-green-400 mt-2 font-mono hidden"
+            >
+              C<sub>12</sub>H<sub>26</sub> &rarr; C<sub>8</sub>H<sub>18</sub> +
+              2C<sub>2</sub>H<sub>4</sub>
+            </div>
+          </div>
+
+          <div
+            class="p-4 bg-gray-900 rounded-xl text-sm leading-relaxed text-gray-300"
+          >
+            <strong class="text-white">Cracking</strong> breaks down large,
+            heavier hydrocarbon molecules into smaller, more useful ones (e.g.,
+            petrol and alkenes for plastics).
+            <ul class="list-disc ml-4 mt-2 space-y-1 text-xs">
+              <li>Needs High Temp or Catalyst</li>
+              <li>Produces Alkanes + Alkenes</li>
+              <li>Alkenes decolorize Bromine Water</li>
+            </ul>
+          </div>
+        </div>
+
+        <div
+          id="alert-box"
+          class="bg-red-900/50 border border-red-500 text-red-200 p-4 rounded-xl opacity-0 transition-opacity"
+        >
+          <strong>Suck-back Warning!</strong><br />
+          Remove the delivery tube before stopping heating to prevent
+          cold water suck-back!
+        </div>
+      </div>
+    </main>
+
+    <script>
+      const tempSlider = document.getElementById("temp-slider");
+      const flame = document.getElementById("flame");
+      const gasContainer = document.getElementById("gas-particles");
+      const catToggle = document.getElementById("cat-toggle");
+      const outputText = document.getElementById("output-text");
+      const eqn = document.getElementById("equation");
+
+      let temperature = 0;
+      let reactionRate = 0;
+      let isCracking = false;
+      let particles = [];
+      let bromineTested = false;
+
+      tempSlider.addEventListener("input", (e) => {
+        temperature = parseInt(e.target.value, 10);
+        // Flame visualization
+        if (temperature > 0) {
+          flame.style.opacity = 0.5 + temperature / 200;
+          flame.style.transform = `scale(${0.5 + temperature / 100})`;
+          if (temperature > 80)
+            flame.classList.add("bg-blue-500"); // Roaring flame
+          else flame.classList.remove("bg-blue-500");
+        } else {
+          flame.style.opacity = 0;
+        }
+        updateSim();
+      });
+
+      catToggle.addEventListener("change", updateSim);
+
+      function updateSim() {
+        const hasCat = catToggle.checked;
+        const threshold = hasCat ? 40 : 80; // Catalyst lowers activation energy visualizing
+
+        if (temperature > threshold) {
+          isCracking = true;
+          reactionRate = (temperature - threshold) / 20; // 0 to 3 roughly
+          outputText.innerText = "Mixture of Alkanes & Alkenes";
+          outputText.className = "font-mono text-lg text-white";
+          eqn.classList.remove("hidden");
+        } else {
+          isCracking = false;
+          reactionRate = 0;
+          outputText.innerText = hasCat ? "Heating..." : "Needs more heat!";
+          outputText.className = "font-mono text-lg text-gray-500";
+          eqn.classList.add("hidden");
+        }
+      }
+
+      // Particle System
+      function createParticle() {
+        if (!isCracking) return;
+
+        const p = document.createElement("div");
+        // Randomly alkene or alkane visual
+        const isAlkene = Math.random() > 0.4;
+        p.className = `absolute w-2 h-2 rounded-full ${
+          isAlkene ? "bg-green-400" : "bg-blue-400"
+        } opacity-80`;
+        p.style.left = "160px"; // Start at chips
+        p.style.top = 20 + Math.random() * 40 + "px";
+
+        gasContainer.appendChild(p);
+
+        // Animation
+        let x = 160;
+        let y = parseFloat(p.style.top);
+
+        const anim = setInterval(() => {
+          x += 2 + reactionRate;
+          y += (Math.random() - 0.5) * 2;
+          p.style.left = x + "px";
+          p.style.top = y + "px";
+
+          if (x > 380) {
+            // End of tube
+            clearInterval(anim);
+            p.remove();
+            // Accumulate product visual?
+          }
+        }, 16);
+      }
+
+      setInterval(() => {
+        if (isCracking && Math.random() < reactionRate * 0.5) {
+          createParticle();
+        }
+      }, 100);
+
+      window.testBromine = () => {
+        if (!isCracking) {
+          alert("Produce some gas first!");
+          return;
+        }
+        const b = document.getElementById("bromine-water");
+        // Reset
+        b.classList.remove("bg-orange-500/0");
+        b.classList.add("bg-orange-500"); // Add bromine
+
+        setTimeout(() => {
+          // Decolorize
+          b.style.backgroundColor = "rgba(255,255,255,0.8)"; // Colorless
+          b.classList.remove("bg-orange-500");
+
+          // Show result text
+          const note = document.createElement("div");
+          note.className =
+            "fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black/80 text-white p-4 rounded-xl";
+          note.innerHTML = `<h3 class='text-xl text-green-400 font-bold'>Decolorized!</h3><p>The product contains Alkenes (C=C bonds).</p>`;
+          document.body.appendChild(note);
+          setTimeout(() => note.remove(), 2000);
+        }, 1500);
+      };
+    </script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

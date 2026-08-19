@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - Anti-Drug Quiz</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: #18181b;
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Say NO to Drugs",
+    zh: "向毒品說不",
+    ja: "麻薬にNOと言おう",
+    ko: "마약에 NO라고 말하세요",
+    es: "Di NO a las drogas",
+    de: "Sag NEIN zu Drogen",
+    fi: "Sano EI huumeille",
+    fr: "Dites NON à la drogue",
+    ar: "قل لا للمخدرات",
+    it: "Dì NO alla Droga"
+  },
+  instruction: {
+    en: "Identify if the statement is True or False.",
+    zh: "判斷句子是正確還是錯誤。",
+    ja: "文が正しいか間違っているかを識別してください。",
+    ko: "문장이 참인지 거짓인지 확인하세요.",
+    es: "Identificar si la declaración es Verdadera o Falsa.",
+    de: "Identifizieren Sie, ob die Aussage wahr oder falsch ist.",
+    fi: "Tunnista, onko väite totta vai tarua.",
+    fr: "Identifiez si l'affirmation est vraie ou fausse.",
+    ar: "حدد ما إذا كانت العبارة صحيحة أم خاطئة.",
+    it: "Identifica se l'impostazione è Vera o Falsa."
+  },
+  true: {
+    en: "TRUE",
+    zh: "正確",
+    ja: "正しい",
+    ko: "참",
+    es: "VERDADERO",
+    de: "WAHR",
+    fi: "TOTTA",
+    fr: "VRAI",
+    ar: "صحيح",
+    it: "VERO"
+  },
+  false: {
+    en: "FALSE",
+    zh: "錯誤",
+    ja: "間違い",
+    ko: "거짓",
+    es: "FALSO",
+    de: "FALSCH",
+    fi: "TARUA",
+    fr: "FAUX",
+    ar: "خطأ",
+    it: "FALSO"
+  },
+  correct: {
+    en: "Correct!",
+    zh: "答對了！",
+    ja: "正解！",
+    ko: "정답!",
+    es: "¡Correcto!",
+    de: "Richtig!",
+    fi: "Oikein!",
+    fr: "Correct !",
+    ar: "صحيح!",
+    it: "Corretto!"
+  },
+  wrong: {
+    en: "Wrong!",
+    zh: "答錯了！",
+    ja: "不正解！",
+    ko: "틀렸습니다!",
+    es: "¡Incorrecto!",
+    de: "Falsch!",
+    fi: "Väärin!",
+    fr: "Faux !",
+    ar: "خطأ!",
+    it: "Sbagliato!"
+  },
+  q1: {
+    en: "Drugs can damage your brain permanently.",
+    zh: "毒品會永久損害你的大腦。",
+    ja: "麻薬は脳に恒久的な損傷を与える可能性があります。",
+    ko: "마약은 뇌를 영구적으로 손상시킬 수 있습니다.",
+    es: "Las drogas pueden dañar tu cerebro permanentemente.",
+    de: "Drogen können dein Gehirn dauerhaft schädigen.",
+    fi: "Huumeet voivat vahingoittaa aivojasi pysyvästi.",
+    fr: "Les drogues peuvent endommager votre cerveau de façon permanente.",
+    ar: "المخدرات يمكن أن تدمر دماغك بشكل دائم.",
+    it: "La droga può danneggiare il cervello in modo permanente."
+  },
+  q2: {
+    en: "It is cool to smoke cigarettes.",
+    zh: "吸煙是很酷的行為。",
+    ja: "タバコを吸うのはかっこいいことです。",
+    ko: "담배를 피우는 것은 멋진 일입니다.",
+    es: "Es genial fumar cigarrillos.",
+    de: "Es ist cool zu rauchen.",
+    fi: "Tupakointi on siistiä.",
+    fr: "C'est cool de fumer des cigarettes.",
+    ar: "من الرائع تدخين السجائر.",
+    it: "Fumare sigarette è figo."
+  },
+  q3: {
+    en: "Alcohol affects your ability to make decisions.",
+    zh: "酒精會影響你的判斷能力。",
+    ja: "アルコールは意思決定能力に影響を与えます。",
+    ko: "알코올은 의사 결정 능력에 영향을 미칩니다.",
+    es: "El alcohol afecta tu capacidad para tomar decisiones.",
+    de: "Alkohol beeinträchtigt deine Entscheidungsfähigkeit.",
+    fi: "Alkoholi vaikuttaa päätöksentekokykyysi.",
+    fr: "L'alcool affecte votre capacité à prendre des décisions.",
+    ar: "الكحول يؤثر على قدرتك على اتخاذ القرارات.",
+    it: "L'alcol influenza la tua capacità di prendere decisioni."
+  },
+  q4: {
+    en: "Prescription medicine is safe even if not prescribed to you.",
+    zh: "只要是醫生處方藥，即使不是開給你的也可以安全服用。",
+    ja: "処方薬は自分に処方されていなくても安全です。",
+    ko: "처방약은 처방받지 않았더라도 안전합니다.",
+    es: "Los medicamentos recetados son seguros incluso si no se le recetan a usted.",
+    de: "Verschreibungspflichtige Medikamente sind sicher, auch wenn sie dir nicht verschrieben wurden.",
+    fi: "Reseptilääkkeet ovat turvallisia, vaikka niitä ei olisi määrätty sinulle.",
+    fr: "Les médicaments sur ordonnance sont sûrs même s'ils ne vous sont pas prescrits.",
+    ar: "الأدوية الموصوفة آمنة حتى لو لم يتم وصفها لك.",
+    it: "I farmaci da prescrizione sono sicuri anche se non prescritti a te."
+  },
+  q5: {
+    en: "Saying 'No' to drugs makes you strong.",
+    zh: "向毒品說「不」顯示你很堅強。",
+    ja: "薬物に「ノー」と言うことはあなたを強くします。",
+    ko: "마약에 '아니오'라고 말하는 것은 당신을 강하게 만듭니다.",
+    es: "Decir 'No' a las drogas te hace fuerte.",
+    de: "Nein zu Drogen zu sagen macht dich stark.",
+    fi: "Huumeille 'Ei' sanominen tekee sinusta vahvan.",
+    fr: "Dire 'Non' à la drogue vous rend fort.",
+    ar: "قول 'لا' للمخدرات يجعلك قوياً.",
+    it: "Dire 'No' alla droga ti rende forte."
+  }
+};
+const quizData = [{
+  id: "q1",
+  answer: true
+}, {
+  id: "q2",
+  answer: false
+}, {
+  id: "q3",
+  answer: true
+}, {
+  id: "q4",
+  answer: false
+}, {
+  id: "q5",
+  answer: true
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [currentQ, setCurrentQ] = useState(0);
+  const [score, setScore] = useState(0);
+  const [showResult, setShowResult] = useState(false);
+  const [feedback, setFeedback] = useState(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+  const handleAnswer = bool => {
+    const correct = quizData[currentQ].answer === bool;
+    if (correct) setScore(score + 1);
+    setFeedback(correct ? "correct" : "wrong");
+    setTimeout(() => {
+      setFeedback(null);
+      if (currentQ < quizData.length - 1) {
+        setCurrentQ(currentQ + 1);
+      } else {
+        setShowResult(true);
+      }
+    }, 1000);
+  };
+  const restart = () => {
+    setScore(0);
+    setCurrentQ(0);
+    setShowResult(false);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center justify-center p-4 bg-zinc-900 bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')]"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), !showResult ? /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-2xl"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-black mb-8 text-center text-red-500 tracking-wider uppercase"
+  }, getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-zinc-800 p-10 rounded-3xl shadow-2xl border-2 border-zinc-700 relative min-h-[300px] flex flex-col justify-center text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-sm text-zinc-500 font-bold uppercase mb-4 tracking-widest"
+  }, "Question ", currentQ + 1, " / ", quizData.length), /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-bold mb-10 leading-relaxed"
+  }, getText(quizData[currentQ].id)), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-6"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => handleAnswer(true),
+    className: "flex-1 bg-green-600 hover:bg-green-500 py-6 rounded-xl font-black text-2xl shadow-lg transition-transform active:scale-95 border-b-8 border-green-800 active:border-b-0 active:translate-y-2"
+  }, getText("true")), /*#__PURE__*/React.createElement("button", {
+    onClick: () => handleAnswer(false),
+    className: "flex-1 bg-red-600 hover:bg-red-500 py-6 rounded-xl font-black text-2xl shadow-lg transition-transform active:scale-95 border-b-8 border-red-800 active:border-b-0 active:translate-y-2"
+  }, getText("false"))), feedback && /*#__PURE__*/React.createElement("div", {
+    className: `absolute inset-0 bg-black/90 flex items-center justify-center z-10 rounded-3xl`
+  }, /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      scale: 0
+    },
+    animate: {
+      scale: 1
+    },
+    className: `text-5xl font-black ${feedback === "correct" ? "text-green-500" : "text-red-500"}`
+  }, getText(feedback))))) : /*#__PURE__*/React.createElement("div", {
+    className: "text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl mb-6"
+  }, "🏆"), /*#__PURE__*/React.createElement("h2", {
+    className: "text-4xl font-bold mb-4"
+  }, "Score: ", score, " / ", quizData.length), /*#__PURE__*/React.createElement("button", {
+    onClick: restart,
+    className: "bg-yellow-500 text-black px-10 py-4 rounded-full font-bold text-xl hover:bg-yellow-400"
+  }, "Play Again")));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

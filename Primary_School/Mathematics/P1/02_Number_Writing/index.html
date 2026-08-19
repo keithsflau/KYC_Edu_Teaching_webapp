@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小一數學：數字寫法 | Writing Numbers</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useRef,
+  useEffect
+} = React;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const numData = {
+  0: {
+    path: "M 120 50 C 60 50 60 250 120 250 C 180 250 180 50 120 50",
+    checks: [{
+      x: 120,
+      y: 50
+    }, {
+      x: 70,
+      y: 150
+    }, {
+      x: 120,
+      y: 250
+    }, {
+      x: 170,
+      y: 150
+    }, {
+      x: 120,
+      y: 50
+    }]
+  },
+  1: {
+    path: "M 120 60 L 120 240",
+    checks: [{
+      x: 120,
+      y: 60
+    }, {
+      x: 120,
+      y: 150
+    }, {
+      x: 120,
+      y: 240
+    }]
+  },
+  2: {
+    path: "M 70 80 C 70 40 170 40 170 90 C 170 140 70 240 70 240 L 180 240",
+    checks: [{
+      x: 70,
+      y: 80
+    }, {
+      x: 120,
+      y: 50
+    }, {
+      x: 170,
+      y: 90
+    }, {
+      x: 120,
+      y: 160
+    }, {
+      x: 70,
+      y: 240
+    }, {
+      x: 180,
+      y: 240
+    }]
+  },
+  3: {
+    path: "M 70 70 C 170 50 170 140 110 150 C 170 160 170 250 70 230",
+    checks: [{
+      x: 70,
+      y: 70
+    }, {
+      x: 150,
+      y: 90
+    }, {
+      x: 110,
+      y: 150
+    }, {
+      x: 150,
+      y: 200
+    }, {
+      x: 70,
+      y: 230
+    }]
+  },
+  4: {
+    path: "M 150 50 L 60 180 L 180 180 M 150 40 L 150 240",
+    checks: [{
+      x: 150,
+      y: 50
+    }, {
+      x: 60,
+      y: 180
+    }, {
+      x: 180,
+      y: 180
+    }, {
+      x: 150,
+      y: 40
+    }, {
+      x: 150,
+      y: 240
+    }]
+  },
+  5: {
+    path: "M 160 60 L 90 60 L 80 140 C 90 120 170 120 170 200 C 170 260 80 240 70 210",
+    checks: [{
+      x: 160,
+      y: 60
+    }, {
+      x: 90,
+      y: 60
+    }, {
+      x: 80,
+      y: 140
+    }, {
+      x: 160,
+      y: 160
+    }, {
+      x: 70,
+      y: 210
+    }]
+  },
+  6: {
+    path: "M 160 50 C 60 100 60 240 120 240 C 170 240 170 160 120 160 C 80 160 80 200 120 240",
+    checks: [{
+      x: 160,
+      y: 50
+    }, {
+      x: 70,
+      y: 150
+    }, {
+      x: 120,
+      y: 240
+    }, {
+      x: 160,
+      y: 200
+    }, {
+      x: 120,
+      y: 160
+    }]
+  },
+  7: {
+    path: "M 60 60 L 180 60 L 90 240",
+    checks: [{
+      x: 60,
+      y: 60
+    }, {
+      x: 180,
+      y: 60
+    }, {
+      x: 90,
+      y: 240
+    }]
+  },
+  8: {
+    path: "M 120 140 C 60 140 60 50 120 50 C 180 50 180 140 120 140 C 60 140 60 250 120 250 C 180 250 180 140 120 140",
+    checks: [{
+      x: 120,
+      y: 140
+    }, {
+      x: 70,
+      y: 100
+    }, {
+      x: 120,
+      y: 50
+    }, {
+      x: 170,
+      y: 100
+    }, {
+      x: 120,
+      y: 140
+    }, {
+      x: 70,
+      y: 200
+    }, {
+      x: 120,
+      y: 250
+    }, {
+      x: 170,
+      y: 200
+    }]
+  },
+  9: {
+    path: "M 160 100 C 160 40 80 40 80 100 C 80 160 160 160 160 100 L 160 240",
+    checks: [{
+      x: 160,
+      y: 100
+    }, {
+      x: 120,
+      y: 45
+    }, {
+      x: 80,
+      y: 100
+    }, {
+      x: 120,
+      y: 155
+    }, {
+      x: 160,
+      y: 100
+    }, {
+      x: 160,
+      y: 240
+    }]
+  }
+};
+const t = {
+  title: {
+    en: "✏️ Number Writing",
+    zh: "✏️ 數字寫法",
+    ja: "✏️ 数字の書き方",
+    ko: "✏️ 숫자 쓰기",
+    es: "✏️ Escribir números",
+    de: "✏️ Zahlen schreiben",
+    fi: "✏️ Numeroiden kirjoitus",
+    fr: "✏️ Écriture des nombres",
+    ar: "✏️ كتابة الأرقام",
+    it: "✏️ Scrittura dei numeri"
+  },
+  instruction: {
+    en: "Trace the lines",
+    zh: "跟著虛線寫",
+    ja: "線をなぞってください",
+    ko: "점선을 따라 쓰세요",
+    es: "Sigue las líneas",
+    de: "Spure die Linien nach",
+    fi: "Seuraa viivoja",
+    fr: "Tracez les lignes",
+    ar: "تتبع الخطوط",
+    it: "Traccia le linee"
+  },
+  great: {
+    en: "🌟 Great!",
+    zh: "🌟 太棒了!",
+    ja: "🌟 すごい!",
+    ko: "🌟 훌륭해요!",
+    es: "🌟 ¡Excelente!",
+    de: "🌟 Großartig!",
+    fi: "🌟 Hienoa!",
+    fr: "🌟 Génial!",
+    ar: "🌟 رائع!",
+    it: "🌟 Fantastico!"
+  }
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [num, setNum] = useState(1);
+  const [isCorrect, setIsCorrect] = useState(false);
+  const canvasRef = useRef(null);
+  const [nextPoint, setNextPoint] = useState(0);
+  const [isDrawing, setIsDrawing] = useState(false);
+  useEffect(() => {
+    clearCanvas();
+    setNextPoint(0);
+    setIsCorrect(false);
+  }, [num]);
+  const clearCanvas = () => {
+    const cvs = canvasRef.current;
+    if (cvs) {
+      const ctx = cvs.getContext("2d");
+      ctx.clearRect(0, 0, cvs.width, cvs.height);
+    }
+  };
+  const getPos = e => {
+    const rect = canvasRef.current.getBoundingClientRect();
+    const clientX = e.clientX || e.touches[0].clientX;
+    const clientY = e.clientY || e.touches[0].clientY;
+    return {
+      x: (clientX - rect.left) * (canvasRef.current.width / rect.width),
+      y: (clientY - rect.top) * (canvasRef.current.height / rect.height)
+    };
+  };
+  const startDraw = e => {
+    if (isCorrect) return;
+    setIsDrawing(true);
+    const {
+      x,
+      y
+    } = getPos(e);
+    const cvs = canvasRef.current;
+    const ctx = cvs.getContext("2d");
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.strokeStyle = "#f97316";
+    ctx.lineWidth = 12;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    checkPoint(x, y);
+  };
+  const moveDraw = e => {
+    if (!isDrawing || isCorrect) return;
+    e.preventDefault();
+    const {
+      x,
+      y
+    } = getPos(e);
+    const ctx = canvasRef.current.getContext("2d");
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    checkPoint(x, y);
+  };
+  const endDraw = () => setIsDrawing(false);
+  const checkPoint = (x, y) => {
+    const checks = numData[num].checks;
+    if (nextPoint >= checks.length) return;
+    const target = checks[nextPoint];
+    const dist = Math.sqrt(Math.pow(x - target.x, 2) + Math.pow(y - target.y, 2));
+    if (dist < 35) {
+      if (nextPoint === checks.length - 1) {
+        setIsCorrect(true);
+        setNextPoint(prev => prev + 1);
+      } else {
+        setNextPoint(prev => prev + 1);
+      }
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-8 flex flex-col items-center justify-center overscroll-none touch-none"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-orange-500 mb-8"
+  }, t.title[lang] || t.title["en"]), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white rounded-3xl p-8 shadow-xl w-full max-w-lg text-center border-4 border-orange-200"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-center gap-2 mb-8 flex-wrap"
+  }, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => /*#__PURE__*/React.createElement("button", {
+    key: n,
+    onClick: () => setNum(n),
+    className: `w-12 h-12 rounded-xl font-black text-xl transition-all ${num === n ? "bg-orange-500 text-white scale-110 shadow-lg" : "bg-orange-100 text-orange-400"}`
+  }, n))), /*#__PURE__*/React.createElement("div", {
+    className: "relative mx-auto w-64 h-80 bg-orange-50 rounded-2xl border-2 border-orange-100 flex items-center justify-center mb-6 overflow-hidden touch-none"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 grid grid-rows-2 -z-0 pointer-events-none"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "border-b border-orange-200 w-full h-full"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 grid grid-cols-2 -z-0 pointer-events-none"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "border-r border-orange-200 w-full h-full"
+  })), /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 240 300",
+    className: "absolute inset-0 w-full h-full pointer-events-none z-0"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: numData[num].path,
+    fill: "none",
+    stroke: "#e5e7eb",
+    strokeWidth: "25",
+    strokeLinecap: "round",
+    strokeLinejoin: "round"
+  }), !isCorrect && /*#__PURE__*/React.createElement("path", {
+    d: numData[num].path,
+    fill: "none",
+    stroke: "#fb923c",
+    strokeWidth: "4",
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+    strokeDasharray: "12 12",
+    className: "animate-pulse opacity-50"
+  })), /*#__PURE__*/React.createElement("canvas", {
+    ref: canvasRef,
+    width: 240,
+    height: 300,
+    className: "absolute inset-0 w-full h-full z-10 cursor-crosshair touch-none",
+    onMouseDown: startDraw,
+    onMouseMove: moveDraw,
+    onMouseUp: endDraw,
+    onMouseLeave: endDraw,
+    onTouchStart: startDraw,
+    onTouchMove: moveDraw,
+    onTouchEnd: endDraw
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "h-16 flex items-center justify-center"
+  }, isCorrect ? /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black text-green-500 animate-bounce"
+  }, t.great[lang] || t.great["en"]) : /*#__PURE__*/React.createElement("p", {
+    className: "text-xl text-orange-400 font-bold uppercase animate-pulse"
+  }, t.instruction[lang] || t.instruction["en"])), /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      clearCanvas();
+      setNextPoint(0);
+      setIsCorrect(false);
+    },
+    className: "mt-4 px-6 py-2 bg-orange-100 text-orange-600 rounded-full font-bold hover:bg-orange-200 transition-colors"
+  }, get("clear", lang))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

@@ -1,0 +1,1253 @@
+﻿<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>修辭防衛戰 | 中一中文學習遊戲</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Microsoft JhengHei', 'PingFang TC', 'Heiti TC', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overflow: hidden;
+        }
+
+        #root {
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .app {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Chinese Ink Wash Painting Background */
+        .ink-wash-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                135deg,
+                #1a1a2e 0%,
+                #16213e 25%,
+                #0f3460 50%,
+                #16213e 75%,
+                #1a1a2e 100%
+            );
+            overflow: hidden;
+        }
+
+        .ink-wash-layer {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.15;
+            filter: blur(60px);
+            animation: float 20s infinite ease-in-out;
+        }
+
+        .layer-1 {
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(139, 69, 19, 0.4) 0%, transparent 70%);
+            top: -200px;
+            left: -200px;
+            animation-delay: 0s;
+        }
+
+        .layer-2 {
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, rgba(65, 105, 225, 0.3) 0%, transparent 70%);
+            bottom: -300px;
+            right: -300px;
+            animation-delay: 5s;
+        }
+
+        .layer-3 {
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(34, 139, 34, 0.25) 0%, transparent 70%);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation-delay: 10s;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translate(0, 0) scale(1);
+            }
+            33% {
+                transform: translate(30px, -30px) scale(1.1);
+            }
+            66% {
+                transform: translate(-20px, 20px) scale(0.9);
+            }
+        }
+
+        .game-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+        }
+
+        /* Header */
+        .game-header {
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 40px;
+            z-index: 100;
+        }
+
+        .game-title {
+            font-size: 36px;
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
+            letter-spacing: 3px;
+        }
+
+        .header-info {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .level-display {
+            font-size: 24px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .level-label {
+            font-weight: 500;
+        }
+
+        .level-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #00CED1;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            padding: 5px 15px;
+            background: rgba(0, 206, 209, 0.2);
+            border-radius: 8px;
+            border: 2px solid rgba(0, 206, 209, 0.5);
+        }
+
+        .score-display {
+            font-size: 24px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .score-label {
+            font-weight: 500;
+        }
+
+        .score-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #FFD700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Health Display */
+        .health-display {
+            font-size: 24px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .health-label {
+            font-weight: 500;
+        }
+
+        .health-hearts {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .heart {
+            font-size: 32px;
+            transition: transform 0.2s ease;
+        }
+
+        .heart.lost {
+            opacity: 0.3;
+            transform: scale(0.8);
+        }
+
+        .heart.shake {
+            animation: shakeHeart 0.5s ease;
+        }
+
+        @keyframes shakeHeart {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        /* Level Up Message */
+        .level-up-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 300;
+            pointer-events: none;
+        }
+
+        .level-up-content {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 20px 40px;
+            background: linear-gradient(135deg, rgba(0, 206, 209, 0.95) 0%, rgba(0, 191, 255, 0.95) 100%);
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 206, 209, 0.6);
+            border: 3px solid rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(10px);
+        }
+
+        .level-up-icon {
+            font-size: 48px;
+            animation: bounce 0.6s ease-in-out infinite;
+        }
+
+        .level-up-text {
+            font-size: 36px;
+            font-weight: 700;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            letter-spacing: 2px;
+        }
+
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .level-up-enter {
+            animation: levelUpEnter 0.5s ease-out;
+        }
+
+        @keyframes levelUpEnter {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.5);
+            }
+            100% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        /* Base Line */
+        .base-line {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(
+                to bottom,
+                transparent 0%,
+                rgba(255, 0, 0, 0.8) 20%,
+                rgba(255, 0, 0, 0.8) 80%,
+                transparent 100%
+            );
+            z-index: 50;
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.6);
+        }
+
+        .base-line::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            background: rgba(255, 0, 0, 0.8);
+            border-radius: 50%;
+            box-shadow: 0 0 30px rgba(255, 0, 0, 1);
+        }
+
+        /* Game Area */
+        .game-area {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 120px;
+            overflow: hidden;
+        }
+
+        /* Start Screen */
+        .start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            z-index: 200;
+        }
+
+        .start-content {
+            text-align: center;
+            padding: 40px 60px;
+            background: linear-gradient(135deg, rgba(26, 26, 46, 0.95) 0%, rgba(15, 52, 96, 0.95) 100%);
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            max-width: 900px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .start-title {
+            font-size: 48px;
+            color: #fff;
+            margin-bottom: 30px;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
+            font-weight: 700;
+        }
+
+        .start-description {
+            font-size: 20px;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 30px;
+            line-height: 1.8;
+        }
+
+        .start-button {
+            padding: 15px 50px;
+            font-size: 24px;
+            font-weight: 600;
+            color: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+            font-family: 'Microsoft JhengHei', 'PingFang TC', 'Heiti TC', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        .start-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+        }
+
+        .start-button:active {
+            transform: scale(0.95);
+        }
+
+        /* Defense Buttons */
+        .defense-buttons-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            padding: 20px;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+        }
+
+        .defense-button {
+            min-width: 120px;
+            padding: 20px 30px;
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+            transition: all 0.3s ease;
+            font-family: 'Microsoft JhengHei', 'PingFang TC', 'Heiti TC', sans-serif;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .defense-button:hover:not(:disabled) {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+        }
+
+        .defense-button:active:not(:disabled) {
+            transform: translateY(0) scale(0.95);
+        }
+
+        .defense-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .button-text {
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            letter-spacing: 2px;
+        }
+
+        /* Enemy */
+        .enemy {
+            position: absolute;
+            transform: translateY(-50%);
+            min-width: 200px;
+            padding: 15px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease;
+            border: 3px solid rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(10px);
+            animation: pulse-border 2s ease-in-out infinite;
+            z-index: 10;
+            background-color: rgba(70, 70, 90, 0.95);
+        }
+
+        .enemy:hover {
+            transform: translateY(-50%) scale(1.08);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+            border-color: rgba(255, 255, 255, 0.8);
+        }
+
+        @keyframes pulse-border {
+            0%, 100% {
+                border-color: rgba(255, 255, 255, 0.5);
+            }
+            50% {
+                border-color: rgba(255, 255, 255, 0.8);
+            }
+        }
+
+        .enemy-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 60px;
+        }
+
+        .enemy-sentence {
+            font-size: 20px;
+            font-weight: 600;
+            color: #fff;
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+            line-height: 1.5;
+            padding: 5px 0;
+        }
+
+        .enemy-enter {
+            animation: enemyEnter 0.3s ease-out;
+        }
+
+        .enemy-exit {
+            animation: enemyExit 0.3s ease-out;
+        }
+
+        @keyframes enemyEnter {
+            0% {
+                opacity: 0;
+                transform: translateY(-50%) scale(0.8);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(-50%) scale(1);
+            }
+        }
+
+        @keyframes enemyExit {
+            0% {
+                opacity: 1;
+                transform: translateY(-50%) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-50%) scale(1.5);
+                filter: blur(10px);
+            }
+        }
+
+        /* Game Over Modal */
+        .game-over-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .game-over-modal {
+            background: linear-gradient(135deg, rgba(26, 26, 46, 0.95) 0%, rgba(15, 52, 96, 0.95) 100%);
+            padding: 40px 60px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            animation: modalEnter 0.5s ease-out;
+        }
+
+        @keyframes modalEnter {
+            0% {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .game-over-title {
+            font-size: 48px;
+            color: #fff;
+            margin-bottom: 30px;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
+            font-weight: 700;
+        }
+
+        .final-stats {
+            margin-bottom: 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .final-score {
+            font-size: 32px;
+            color: #fff;
+        }
+
+        .final-score .score-label {
+            margin-right: 15px;
+        }
+
+        .final-score .score-value {
+            font-size: 48px;
+            font-weight: 700;
+            color: #FFD700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .final-level {
+            font-size: 28px;
+            color: #fff;
+        }
+
+        .final-level .level-label {
+            margin-right: 15px;
+        }
+
+        .final-level .level-value {
+            font-size: 40px;
+            font-weight: 700;
+            color: #00CED1;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            padding: 5px 15px;
+            background: rgba(0, 206, 209, 0.2);
+            border-radius: 8px;
+            border: 2px solid rgba(0, 206, 209, 0.5);
+        }
+
+        .restart-button {
+            padding: 15px 40px;
+            font-size: 24px;
+            font-weight: 600;
+            color: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+            font-family: 'Microsoft JhengHei', 'PingFang TC', 'Heiti TC', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        .restart-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+        }
+
+        .restart-button:active {
+            transform: scale(0.95);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .game-title {
+                font-size: 24px;
+            }
+
+            .header-info {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-end;
+            }
+
+            .health-display {
+                font-size: 18px;
+            }
+
+            .heart {
+                font-size: 24px;
+            }
+
+            .level-display {
+                font-size: 18px;
+            }
+
+            .level-value {
+                font-size: 24px;
+                padding: 3px 10px;
+            }
+
+            .score-display {
+                font-size: 18px;
+            }
+
+            .score-value {
+                font-size: 24px;
+            }
+
+            .defense-button {
+                min-width: 80px;
+                padding: 15px 20px;
+                font-size: 18px;
+            }
+
+            .start-title {
+                font-size: 36px;
+            }
+
+            .start-description {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script>
+const {
+  useState,
+  useEffect,
+  useCallback,
+  useRef
+} = React;
+
+// 修辭手法資料庫
+const rhetoricalDevices = [
+// 擬人 (Personification)
+{
+  sentence: "太陽對我微笑",
+  type: "Personification",
+  chinese: "擬人"
+}, {
+  sentence: "風兒輕輕地撫摸著我的臉",
+  type: "Personification",
+  chinese: "擬人"
+}, {
+  sentence: "月亮害羞地躲在雲後",
+  type: "Personification",
+  chinese: "擬人"
+}, {
+  sentence: "花朵在風中跳舞",
+  type: "Personification",
+  chinese: "擬人"
+}, {
+  sentence: "海浪憤怒地拍打著海岸",
+  type: "Personification",
+  chinese: "擬人"
+}, {
+  sentence: "樹葉在秋風中低語",
+  type: "Personification",
+  chinese: "擬人"
+}, {
+  sentence: "星星眨著眼睛",
+  type: "Personification",
+  chinese: "擬人"
+}, {
+  sentence: "時間悄悄地溜走了",
+  type: "Personification",
+  chinese: "擬人"
+},
+// 比喻 (Metaphor)
+{
+  sentence: "時間是金錢",
+  type: "Metaphor",
+  chinese: "比喻"
+}, {
+  sentence: "書本是知識的鑰匙",
+  type: "Metaphor",
+  chinese: "比喻"
+}, {
+  sentence: "老師是園丁",
+  type: "Metaphor",
+  chinese: "比喻"
+}, {
+  sentence: "知識是海洋",
+  type: "Metaphor",
+  chinese: "比喻"
+}, {
+  sentence: "友誼是一座橋樑",
+  type: "Metaphor",
+  chinese: "比喻"
+}, {
+  sentence: "生活是一場旅程",
+  type: "Metaphor",
+  chinese: "比喻"
+}, {
+  sentence: "記憶是時光的寶盒",
+  type: "Metaphor",
+  chinese: "比喻"
+}, {
+  sentence: "夢想是翅膀",
+  type: "Metaphor",
+  chinese: "比喻"
+},
+// 誇張 (Exaggeration)
+{
+  sentence: "我餓得可以吃下一頭牛",
+  type: "Exaggeration",
+  chinese: "誇張"
+}, {
+  sentence: "他跑得比風還快",
+  type: "Exaggeration",
+  chinese: "誇張"
+}, {
+  sentence: "這本書重得像座山",
+  type: "Exaggeration",
+  chinese: "誇張"
+}, {
+  sentence: "我等了一萬年",
+  type: "Exaggeration",
+  chinese: "誇張"
+}, {
+  sentence: "他的聲音響徹雲霄",
+  type: "Exaggeration",
+  chinese: "誇張"
+}, {
+  sentence: "我累得骨頭都要散架了",
+  type: "Exaggeration",
+  chinese: "誇張"
+}, {
+  sentence: "這間房間小得像螞蟻窩",
+  type: "Exaggeration",
+  chinese: "誇張"
+}, {
+  sentence: "他高興得飛上了天",
+  type: "Exaggeration",
+  chinese: "誇張"
+},
+// 排比 (Parallelism)
+{
+  sentence: "春天來了，花開了，鳥兒叫了，大地醒了",
+  type: "Parallelism",
+  chinese: "排比"
+}, {
+  sentence: "讀書要專心，寫字要認真，思考要深入",
+  type: "Parallelism",
+  chinese: "排比"
+}, {
+  sentence: "我愛藍天，我愛白雲，我愛綠草",
+  type: "Parallelism",
+  chinese: "排比"
+}, {
+  sentence: "時間是金錢，時間是生命，時間是機會",
+  type: "Parallelism",
+  chinese: "排比"
+}, {
+  sentence: "我們要勇敢，我們要堅強，我們要堅持",
+  type: "Parallelism",
+  chinese: "排比"
+}, {
+  sentence: "山高，水長，路遠",
+  type: "Parallelism",
+  chinese: "排比"
+}, {
+  sentence: "學習要勤奮，工作要努力，生活要快樂",
+  type: "Parallelism",
+  chinese: "排比"
+}, {
+  sentence: "昨天已過去，今天要珍惜，明天要努力",
+  type: "Parallelism",
+  chinese: "排比"
+}];
+
+// 修辭類型配置
+const deviceTypes = [{
+  type: "Personification",
+  chinese: "擬人",
+  color: "#8B4513"
+}, {
+  type: "Metaphor",
+  chinese: "比喻",
+  color: "#4169E1"
+}, {
+  type: "Exaggeration",
+  chinese: "誇張",
+  color: "#DC143C"
+}, {
+  type: "Parallelism",
+  chinese: "排比",
+  color: "#228B22"
+}];
+
+// 獲取隨機修辭例句
+const getRandomDevice = () => {
+  const randomIndex = Math.floor(Math.random() * rhetoricalDevices.length);
+  return rhetoricalDevices[randomIndex];
+};
+
+// Enemy Component
+const Enemy = ({
+  enemy,
+  onDestroy,
+  position,
+  top
+}) => {
+  const [isDestroyed, setIsDestroyed] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
+  const handleClick = () => {
+    setIsExiting(true);
+    setTimeout(() => {
+      setIsDestroyed(true);
+      onDestroy(enemy.id);
+    }, 300);
+  };
+  if (isDestroyed) return null;
+  return /*#__PURE__*/React.createElement("div", {
+    className: `enemy ${isExiting ? 'enemy-exit' : 'enemy-enter'}`,
+    onClick: handleClick,
+    style: {
+      left: `${position}px`,
+      top: `${top}px`
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "enemy-content"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "enemy-sentence"
+  }, enemy.sentence)));
+};
+
+// DefenseButtons Component
+const DefenseButtons = ({
+  deviceTypes,
+  onButtonClick,
+  disabled
+}) => {
+  return /*#__PURE__*/React.createElement("div", {
+    className: "defense-buttons-container"
+  }, deviceTypes.map((device, index) => /*#__PURE__*/React.createElement("button", {
+    key: device.type,
+    className: "defense-button",
+    onClick: () => onButtonClick(device.type),
+    disabled: disabled,
+    style: {
+      backgroundColor: device.color
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "button-text"
+  }, device.chinese))));
+};
+
+// GameOverModal Component
+const GameOverModal = ({
+  score,
+  level,
+  health,
+  onRestart
+}) => {
+  return /*#__PURE__*/React.createElement("div", {
+    className: "game-over-overlay"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "game-over-modal"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "game-over-title"
+  }, "遊戲結束"), /*#__PURE__*/React.createElement("div", {
+    className: "final-stats"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "final-score"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "score-label"
+  }, "最終分數："), /*#__PURE__*/React.createElement("span", {
+    className: "score-value"
+  }, score)), /*#__PURE__*/React.createElement("div", {
+    className: "final-level"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "level-label"
+  }, "達到等級："), /*#__PURE__*/React.createElement("span", {
+    className: "level-value"
+  }, level)), /*#__PURE__*/React.createElement("div", {
+    className: "final-level"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "level-label"
+  }, "剩餘生命："), /*#__PURE__*/React.createElement("span", {
+    className: "level-value"
+  }, health))), /*#__PURE__*/React.createElement("button", {
+    className: "restart-button",
+    onClick: onRestart
+  }, "重新開始")));
+};
+
+// Main App Component
+function App() {
+  const [enemies, setEnemies] = useState([]);
+  const [score, setScore] = useState(0);
+  const [level, setLevel] = useState(1);
+  const [health, setHealth] = useState(5);
+  const [healthChanged, setHealthChanged] = useState(false);
+  const [showLevelUp, setShowLevelUp] = useState(false);
+  const [gameOver, setGameOver] = useState(false);
+  const [gameStarted, setGameStarted] = useState(false);
+  const enemyIdRef = useRef(0);
+  const baseX = 50;
+  const levelUpScoreRef = useRef(0);
+
+  // Calculate enemy speed based on level
+  const getEnemySpeed = useCallback(() => {
+    const baseSpeed = 0.5;
+    const speedPerLevel = 0.3;
+    return baseSpeed + (level - 1) * speedPerLevel;
+  }, [level]);
+
+  // Check for level up
+  useEffect(() => {
+    if (!gameStarted || gameOver) return;
+    const pointsNeededForNextLevel = 50;
+    const currentLevelScore = levelUpScoreRef.current;
+    const nextLevelThreshold = currentLevelScore + pointsNeededForNextLevel;
+    if (score >= nextLevelThreshold) {
+      setLevel(prev => prev + 1);
+      levelUpScoreRef.current = score;
+      setShowLevelUp(true);
+      setTimeout(() => setShowLevelUp(false), 2000);
+    }
+  }, [score, level, gameStarted, gameOver]);
+
+  // Spawn new enemy
+  const spawnEnemy = useCallback(() => {
+    const device = getRandomDevice();
+    const deviceType = deviceTypes.find(dt => dt.type === device.type);
+    const speed = getEnemySpeed();
+    const gameAreaHeight = window.innerHeight - 120;
+    const enemyHeight = 80;
+    const enemyBuffer = 60; // 增加緩衝區，確保不重疊
+    const totalEnemySpace = enemyHeight + enemyBuffer * 2;
+    const minTop = 100;
+    const maxTop = gameAreaHeight - totalEnemySpace - 20;
+    const availableHeight = maxTop - minTop;
+    const numLanes = Math.max(3, Math.floor(availableHeight / totalEnemySpace));
+    const laneSpacing = availableHeight / numLanes;
+    setEnemies(prev => {
+      // 檢查所有未銷毀的敵人
+      const activeEnemies = prev.filter(e => !e.destroyed);
+
+      // 檢查每個車道是否有重疊
+      const availableLanes = [];
+      for (let i = 0; i < numLanes; i++) {
+        const laneCenter = minTop + i * laneSpacing + laneSpacing / 2;
+        const laneTop = laneCenter - totalEnemySpace / 2;
+        const laneBottom = laneCenter + totalEnemySpace / 2;
+
+        // 檢查與所有現有敵人的重疊（包括水平和垂直）
+        const hasOverlap = activeEnemies.some(enemy => {
+          // 垂直重疊檢查：檢查敵人的垂直範圍是否與車道重疊
+          const enemyTop = enemy.top - totalEnemySpace / 2;
+          const enemyBottom = enemy.top + totalEnemySpace / 2;
+          const verticalOverlap = !(laneBottom <= enemyTop || laneTop >= enemyBottom);
+
+          // 水平重疊檢查：檢查敵人是否在右側區域（新敵人會出現的位置）
+          // 新敵人從右側出現，所以檢查右側是否有敵人
+          const horizontalOverlap = enemy.position > window.innerWidth - 300;
+          return verticalOverlap && horizontalOverlap;
+        });
+        if (!hasOverlap) {
+          availableLanes.push(i);
+        }
+      }
+      let chosenLane;
+      if (availableLanes.length > 0) {
+        // 隨機選擇一個可用車道
+        chosenLane = availableLanes[Math.floor(Math.random() * availableLanes.length)];
+      } else {
+        // 如果所有車道都有敵人，延遲生成或選擇敵人最少的車道
+        // 這裡選擇敵人最少的車道
+        const laneEnemyCounts = Array(numLanes).fill(0).map((_, i) => {
+          const laneCenter = minTop + i * laneSpacing + laneSpacing / 2;
+          return activeEnemies.filter(e => {
+            const verticalDist = Math.abs(e.top - laneCenter);
+            const horizontalDist = e.position > window.innerWidth - 300;
+            return verticalDist < totalEnemySpace / 2 && horizontalDist;
+          }).length;
+        });
+        const minCount = Math.min(...laneEnemyCounts);
+        const leastOccupiedLanes = laneEnemyCounts.map((count, i) => count === minCount ? i : -1).filter(i => i !== -1);
+        chosenLane = leastOccupiedLanes.length > 0 ? leastOccupiedLanes[Math.floor(Math.random() * leastOccupiedLanes.length)] : Math.floor(Math.random() * numLanes);
+      }
+      const laneCenter = minTop + chosenLane * laneSpacing + laneSpacing / 2;
+      const verticalPosition = laneCenter;
+      const newEnemy = {
+        id: enemyIdRef.current++,
+        sentence: device.sentence,
+        type: device.type,
+        chinese: device.chinese,
+        color: deviceType.color,
+        speed: speed,
+        position: window.innerWidth + 100,
+        top: Math.max(minTop + totalEnemySpace / 2, Math.min(verticalPosition, maxTop + totalEnemySpace / 2)),
+        destroyed: false
+      };
+      return [...prev, newEnemy];
+    });
+  }, [getEnemySpeed]);
+
+  // Update enemy positions
+  useEffect(() => {
+    if (!gameStarted || gameOver) return;
+    const interval = setInterval(() => {
+      setEnemies(prev => {
+        let hitCount = 0;
+        const next = prev.map(enemy => {
+          const newPosition = enemy.position - enemy.speed;
+          if (newPosition <= baseX && !enemy.destroyed) {
+            hitCount += 1;
+            return {
+              ...enemy,
+              destroyed: true
+            };
+          }
+          return {
+            ...enemy,
+            position: newPosition
+          };
+        }).filter(enemy => enemy.position > -200 && !enemy.destroyed);
+        if (hitCount > 0) {
+          const n = hitCount;
+          // Schedule outside updater so health isn't lost to async batching races
+          queueMicrotask(() => {
+            setHealth(prevH => {
+              const newHealth = Math.max(0, prevH - n);
+              if (newHealth === 0) setGameOver(true);
+              return newHealth;
+            });
+            setHealthChanged(true);
+            setTimeout(() => setHealthChanged(false), 500);
+          });
+        }
+        return next;
+      });
+    }, 16);
+    return () => clearInterval(interval);
+  }, [gameStarted, gameOver, baseX]);
+
+  // Spawn enemies periodically
+  useEffect(() => {
+    if (!gameStarted || gameOver) return;
+    const baseInterval = 2000;
+    const intervalDecrease = Math.min((level - 1) * 150, 1200);
+    const spawnInterval = baseInterval - intervalDecrease;
+    const timer = setInterval(() => {
+      spawnEnemy();
+    }, spawnInterval);
+    return () => clearInterval(timer);
+  }, [gameStarted, gameOver, level, spawnEnemy]);
+
+  // Handle button click
+  const handleButtonClick = useCallback(clickedType => {
+    if (gameOver) return;
+    const matchingEnemy = enemies.filter(e => e.type === clickedType && !e.destroyed).sort((a, b) => a.position - b.position)[0];
+    if (matchingEnemy) {
+      setEnemies(prev => prev.map(e => e.id === matchingEnemy.id ? {
+        ...e,
+        destroyed: true
+      } : e));
+      setScore(prev => prev + 10);
+    } else {
+      // 按錯扣血
+      setHealth(prev => {
+        const newHealth = Math.max(0, prev - 1);
+        if (newHealth === 0) {
+          setGameOver(true);
+        }
+        return newHealth;
+      });
+      setHealthChanged(true);
+      setTimeout(() => setHealthChanged(false), 500);
+    }
+  }, [enemies, gameOver]);
+
+  // Handle enemy destroy animation
+  const handleEnemyDestroy = useCallback(id => {
+    setEnemies(prev => prev.map(e => e.id === id ? {
+      ...e,
+      destroyed: true
+    } : e));
+  }, []);
+
+  // Start game
+  const startGame = () => {
+    setGameStarted(true);
+    setGameOver(false);
+    setScore(0);
+    setLevel(1);
+    setHealth(5);
+    setHealthChanged(false);
+    setShowLevelUp(false);
+    setEnemies([]);
+    enemyIdRef.current = 0;
+    levelUpScoreRef.current = 0;
+    spawnEnemy();
+  };
+
+  // Restart game
+  const restartGame = () => {
+    startGame();
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "app"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "ink-wash-background"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "ink-wash-layer layer-1"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "ink-wash-layer layer-2"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "ink-wash-layer layer-3"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "game-container"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "game-header"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "game-title"
+  }, "修辭防衛戰"), /*#__PURE__*/React.createElement("div", {
+    className: "header-info"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "health-display"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "health-label"
+  }, "生命："), /*#__PURE__*/React.createElement("div", {
+    className: "health-hearts"
+  }, [1, 2, 3, 4, 5].map(heartNum => /*#__PURE__*/React.createElement("span", {
+    key: heartNum,
+    className: `heart ${heartNum > health ? 'lost' : ''} ${heartNum === health && healthChanged ? 'shake' : ''}`
+  }, "❤️")))), /*#__PURE__*/React.createElement("div", {
+    className: "level-display"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "level-label"
+  }, "等級："), /*#__PURE__*/React.createElement("span", {
+    className: "level-value"
+  }, level)), /*#__PURE__*/React.createElement("div", {
+    className: "score-display"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "score-label"
+  }, "分數："), /*#__PURE__*/React.createElement("span", {
+    className: "score-value"
+  }, score)))), showLevelUp && /*#__PURE__*/React.createElement("div", {
+    className: "level-up-message level-up-enter"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "level-up-content"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "level-up-icon"
+  }, "🎉"), /*#__PURE__*/React.createElement("span", {
+    className: "level-up-text"
+  }, "進級！等級 ", level))), /*#__PURE__*/React.createElement("div", {
+    className: "base-line",
+    style: {
+      left: `${baseX}px`
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "game-area"
+  }, enemies.map(enemy => !enemy.destroyed && /*#__PURE__*/React.createElement(Enemy, {
+    key: enemy.id,
+    enemy: enemy,
+    position: enemy.position,
+    top: enemy.top,
+    onDestroy: handleEnemyDestroy
+  }))), /*#__PURE__*/React.createElement(DefenseButtons, {
+    deviceTypes: deviceTypes,
+    onButtonClick: handleButtonClick,
+    disabled: gameOver || !gameStarted
+  }), !gameStarted && /*#__PURE__*/React.createElement("div", {
+    className: "start-screen"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "start-content"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "start-title"
+  }, "修辭防衛戰"), /*#__PURE__*/React.createElement("p", {
+    className: "start-description"
+  }, "點擊正確的修辭手法按鈕來擊敗敵人！", /*#__PURE__*/React.createElement("br", null), "按錯按鈕或敵人到達左側基地會扣血。", /*#__PURE__*/React.createElement("br", null), "你有5格生命值，生命值歸零遊戲結束。"), /*#__PURE__*/React.createElement("button", {
+    className: "start-button",
+    onClick: startGame
+  }, "開始遊戲"))), gameOver && /*#__PURE__*/React.createElement(GameOverModal, {
+    score: score,
+    level: level,
+    health: health,
+    onRestart: restartGame
+  })));
+}
+
+// Render App
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+
+</body>
+</html>
+

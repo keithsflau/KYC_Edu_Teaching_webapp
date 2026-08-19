@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Apparatus Master | Junior Science</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #f0f9ff;
+      }
+      .draggable-item {
+        cursor: grab;
+        transition: all 0.2s;
+      }
+      .draggable-item:active {
+        cursor: grabbing;
+        transform: scale(1.05);
+      }
+      .drop-zone {
+        transition: all 0.3s;
+      }
+      .drop-zone.hovered {
+        border-color: #3b82f6;
+        background-color: #eff6ff;
+      }
+    </style>
+  </head>
+  <body class="bg-slate-50 text-slate-900">
+    <div id="root"></div>
+
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const apparatusData = [{
+  id: 1,
+  name: "Beaker",
+  icon: "fa-glass-water",
+  type: "container",
+  description: "Used for holding, mixing, and heating liquids."
+}, {
+  id: 2,
+  name: "Test Tube",
+  icon: "fa-vial",
+  type: "container",
+  description: "Used for holding small amounts of substances."
+}, {
+  id: 3,
+  name: "Bunsen Burner",
+  icon: "fa-fire",
+  type: "heating",
+  description: "Used for heating substances in the laboratory."
+}, {
+  id: 4,
+  name: "Tripod",
+  icon: "fa-table",
+  type: "support",
+  description: "Used to support apparatus during heating."
+}, {
+  id: 5,
+  name: "Thermometer",
+  icon: "fa-temperature-high",
+  type: "measurement",
+  description: "Used for measuring temperature."
+}, {
+  id: 6,
+  name: "Measuring Cylinder",
+  icon: "fa-ruler-vertical",
+  type: "measurement",
+  description: "Used for measuring the volume of liquids accurately."
+}];
+const ApparatusCard = ({
+  item,
+  onDragStart
+}) => /*#__PURE__*/React.createElement("div", {
+  draggable: true,
+  onDragStart: e => onDragStart(e, item.id),
+  className: "draggable-item bg-white p-4 rounded-xl shadow-md border border-slate-200 flex flex-col items-center gap-3 hover:shadow-lg hover:border-blue-300"
+}, /*#__PURE__*/React.createElement("div", {
+  className: "w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center text-3xl"
+}, /*#__PURE__*/React.createElement("i", {
+  className: `fa-solid ${item.icon}`
+})), /*#__PURE__*/React.createElement("span", {
+  className: "font-bold text-slate-700"
+}, item.name));
+const DropZone = ({
+  type,
+  onDrop,
+  onDragOver,
+  matchedItems
+}) => /*#__PURE__*/React.createElement("div", {
+  onDrop: e => onDrop(e, type),
+  onDragOver: onDragOver,
+  className: "drop-zone bg-slate-100 border-2 border-dashed border-slate-300 rounded-2xl p-6 min-h-[200px] flex flex-col shadow-inner"
+}, /*#__PURE__*/React.createElement("div", {
+  className: "flex items-center gap-2 mb-4 text-slate-500 font-bold uppercase text-xs tracking-wider"
+}, type === "container" && /*#__PURE__*/React.createElement("i", {
+  className: "fa-solid fa-box-open"
+}), type === "heating" && /*#__PURE__*/React.createElement("i", {
+  className: "fa-solid fa-fire-burner"
+}), type === "measurement" && /*#__PURE__*/React.createElement("i", {
+  className: "fa-solid fa-ruler"
+}), type.charAt(0).toUpperCase() + type.slice(1), " Area"), /*#__PURE__*/React.createElement("div", {
+  className: "flex flex-wrap gap-3"
+}, matchedItems.map(item => /*#__PURE__*/React.createElement("div", {
+  key: item.id,
+  className: "bg-emerald-100 text-emerald-800 px-3 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 animate-bounce-short"
+}, /*#__PURE__*/React.createElement("i", {
+  className: "fa-solid fa-check-circle"
+}), " ", item.name)), matchedItems.length === 0 && /*#__PURE__*/React.createElement("div", {
+  className: "text-slate-400 text-sm italic w-full text-center py-8"
+}, "Drag ", type, " items here")));
+const App = () => {
+  const [items, setItems] = useState(apparatusData);
+  const [matched, setMatched] = useState({
+    container: [],
+    heating: [],
+    measurement: []
+  });
+  const [score, setScore] = useState(0);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const handleDragStart = (e, id) => {
+    e.dataTransfer.setData("id", id);
+  };
+  const handleDragOver = e => {
+    e.preventDefault();
+  };
+  const handleDrop = (e, zoneType) => {
+    const id = parseInt(e.dataTransfer.getData("id"), 10);
+    const item = items.find(i => i.id === id);
+    if (item && item.type === zoneType || zoneType === "heating" && item.type === "support") {
+      // Simplified logic: support goes with heating for now or separate
+      // Actually let's just make 'support' go to heating zone for this simple game or add support zone
+      // Let's add a support logic fix: if type is support, let's just put it in heating for simplicity or map types.
+
+      let valid = false;
+      if (item.type === zoneType) valid = true;
+      if (zoneType === "heating" && item.type === "support") valid = true; // Allow tripod in heating
+
+      if (valid) {
+        setMatched(prev => ({
+          ...prev,
+          [zoneType]: [...prev[zoneType], item]
+        }));
+        setItems(prev => prev.filter(i => i.id !== id));
+        setScore(prev => prev + 10);
+
+        // Play sound effect (optional)
+      }
+    }
+  };
+  useEffect(() => {
+    if (items.length === 0) {
+      setShowConfetti(true);
+    }
+  }, [items]);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-6 md:p-10 max-w-6xl mx-auto"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between items-center mb-10 bg-white p-6 rounded-2xl shadow-sm border border-slate-100"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2 text-blue-600 font-bold uppercase text-xs tracking-wider mb-1"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-flask"
+  }), " Form 1 Science - Lab Skills"), /*#__PURE__*/React.createElement("h1", {
+    className: "text-3xl font-extrabold text-slate-800"
+  }, "Apparatus Master"), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-500"
+  }, "Drag the apparatus to the correct category station.")), /*#__PURE__*/React.createElement("div", {
+    className: "text-right"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-sm text-slate-400 uppercase font-bold"
+  }, "Score"), /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black text-emerald-500"
+  }, score))), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-1 md:grid-cols-3 gap-8 mb-12"
+  }, /*#__PURE__*/React.createElement(DropZone, {
+    type: "container",
+    onDrop: handleDrop,
+    onDragOver: handleDragOver,
+    matchedItems: matched.container
+  }), /*#__PURE__*/React.createElement(DropZone, {
+    type: "heating",
+    onDrop: handleDrop,
+    onDragOver: handleDragOver,
+    matchedItems: matched.heating
+  }), /*#__PURE__*/React.createElement(DropZone, {
+    type: "measurement",
+    onDrop: handleDrop,
+    onDragOver: handleDragOver,
+    matchedItems: matched.measurement
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/50 backdrop-blur-sm p-8 rounded-3xl border border-white shadow-xl"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "text-xl font-bold text-slate-700 mb-6 flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-hand-pointer text-blue-500"
+  }), " Lab Bench"), items.length > 0 ? /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4"
+  }, items.map(item => /*#__PURE__*/React.createElement(ApparatusCard, {
+    key: item.id,
+    item: item,
+    onDragStart: handleDragStart
+  }))) : /*#__PURE__*/React.createElement("div", {
+    className: "text-center py-10"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl mb-4 animate-bounce"
+  }, "🎉"), /*#__PURE__*/React.createElement("h3", {
+    className: "text-2xl font-bold text-slate-800 mb-2"
+  }, "Excellent Work!"), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-500 mb-6"
+  }, "You've mastered the basic laboratory apparatus."), /*#__PURE__*/React.createElement("button", {
+    onClick: () => window.location.reload(),
+    className: "bg-blue-600 text-white px-6 py-3 rounded-full font-bold hover:bg-blue-700 transition"
+  }, "Play Again"))), /*#__PURE__*/React.createElement("div", {
+    className: "mt-12 text-center text-slate-400 text-sm"
+  }, /*#__PURE__*/React.createElement("a", {
+    href: "../index.html",
+    className: "hover:text-blue-500 transition-colors"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-arrow-left"
+  }), " Back to Dashboard")));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

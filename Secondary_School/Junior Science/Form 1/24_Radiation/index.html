@@ -1,0 +1,290 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Radiation Lab | Junior Science</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet" />
+  <style>
+    body { font-family: "Outfit", sans-serif; }
+    .ray {
+      background: linear-gradient(90deg, rgba(251,191,36,0.9), rgba(251,191,36,0));
+      animation: pulse 1.2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.45; }
+      50% { opacity: 0.95; }
+    }
+  </style>
+</head>
+<body class="bg-amber-50 text-slate-900 min-h-screen">
+  <div id="root"></div>
+  <script>
+const { useState, useEffect } = React;
+
+const App = () => {
+  const [running, setRunning] = useState(false);
+  const [time, setTime] = useState(0);
+  const [temps, setTemps] = useState({ black: 25, white: 25, shiny: 25 });
+  const [quiz, setQuiz] = useState(null);
+
+  useEffect(() => {
+    if (!running || time >= 12) {
+      if (time >= 12) setRunning(false);
+      return;
+    }
+    const id = setInterval(() => {
+      setTime((t) => t + 1);
+      setTemps((prev) => ({
+        // Under same IR lamp: dull black absorbs most, white less, shiny least
+        black: Math.min(78, prev.black + 4.2),
+        white: Math.min(52, prev.white + 2.0),
+        shiny: Math.min(38, prev.shiny + 0.9),
+      }));
+    }, 700);
+    return () => clearInterval(id);
+  }, [running, time]);
+
+  const reset = () => {
+    setRunning(false);
+    setTime(0);
+    setTemps({ black: 25, white: 25, shiny: 25 });
+    setQuiz(null);
+  };
+
+  const checkQuiz = (choice) => {
+    setQuiz(choice === "black" ? "correct" : "wrong");
+  };
+
+  const Can = ({ label, color, temp, ring }) =>
+    React.createElement(
+      "div",
+      { className: "flex flex-col items-center gap-3" },
+      React.createElement(
+        "div",
+        {
+          className: `w-24 h-40 rounded-2xl border-4 shadow-lg relative overflow-hidden ${ring}`,
+          style: { background: color },
+        },
+        React.createElement("div", {
+          className: "absolute inset-x-3 top-3 h-2 rounded bg-white/30",
+        }),
+        React.createElement(
+          "div",
+          {
+            className:
+              "absolute -top-8 left-1/2 -translate-x-1/2 w-2 h-10 bg-rose-500 rounded-full origin-bottom",
+            style: {
+              height: `${18 + (temp - 25) * 1.1}px`,
+              background: temp > 50 ? "#ef4444" : "#f43f5e",
+            },
+          }
+        )
+      ),
+      React.createElement(
+        "div",
+        { className: "text-center" },
+        React.createElement("div", { className: "font-bold" }, label),
+        React.createElement(
+          "div",
+          { className: "font-mono text-xl text-amber-700" },
+          temp.toFixed(1),
+          "°C"
+        )
+      )
+    );
+
+  return React.createElement(
+    "div",
+    { className: "max-w-5xl mx-auto p-6 md:p-10" },
+    React.createElement(
+      "header",
+      { className: "mb-8" },
+      React.createElement(
+        "a",
+        {
+          href: "../index.html",
+          className: "text-sm text-slate-500 hover:text-amber-700",
+        },
+        "← Back to Form 1"
+      ),
+      React.createElement(
+        "div",
+        {
+          className:
+            "text-amber-700 font-bold uppercase text-xs tracking-widest mt-4",
+        },
+        "Form 1 Science • Energy"
+      ),
+      React.createElement(
+        "h1",
+        { className: "text-4xl font-extrabold mt-2" },
+        "Heat Radiation Lab"
+      ),
+      React.createElement(
+        "p",
+        { className: "text-slate-600 mt-2 max-w-2xl" },
+        "Compare how black, white, and shiny surfaces absorb infrared radiation from a lamp. (This is heat radiation — not nuclear radiation.)"
+      )
+    ),
+    React.createElement(
+      "section",
+      {
+        className:
+          "bg-white rounded-3xl border border-amber-100 shadow-xl p-6 md:p-8 mb-8",
+      },
+      React.createElement(
+        "div",
+        { className: "flex flex-wrap gap-3 mb-8" },
+        React.createElement(
+          "button",
+          {
+            onClick: () => setRunning(true),
+            disabled: running || time >= 12,
+            className:
+              "bg-amber-600 hover:bg-amber-500 disabled:opacity-40 text-white font-bold px-6 py-3 rounded-full",
+          },
+          React.createElement("i", {
+            className: "fa-solid fa-sun mr-2",
+          }),
+          "Turn On IR Lamp"
+        ),
+        React.createElement(
+          "button",
+          {
+            onClick: reset,
+            className:
+              "bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-6 py-3 rounded-full",
+          },
+          "Reset"
+        ),
+        React.createElement(
+          "div",
+          { className: "ml-auto font-mono text-slate-500 self-center" },
+          "t = ",
+          time,
+          " min (sim)"
+        )
+      ),
+      React.createElement(
+        "div",
+        { className: "relative" },
+        running &&
+          React.createElement("div", {
+            className: "ray absolute left-0 right-0 top-0 h-3 rounded-full",
+          }),
+        React.createElement(
+          "div",
+          {
+            className:
+              "flex flex-col md:flex-row items-center justify-around gap-8 pt-8",
+          },
+          React.createElement(Can, {
+            label: "Dull Black",
+            color: "#111827",
+            temp: temps.black,
+            ring: "border-slate-800",
+          }),
+          React.createElement(Can, {
+            label: "Matte White",
+            color: "#f8fafc",
+            temp: temps.white,
+            ring: "border-slate-300",
+          }),
+          React.createElement(Can, {
+            label: "Shiny Silver",
+            color: "#cbd5e1",
+            temp: temps.shiny,
+            ring: "border-slate-400",
+          })
+        )
+      ),
+      React.createElement(
+        "div",
+        {
+          className:
+            "mt-8 grid md:grid-cols-3 gap-4 text-sm text-slate-600",
+        },
+        React.createElement(
+          "div",
+          { className: "bg-amber-50 rounded-xl p-4 border border-amber-100" },
+          React.createElement("strong", null, "Absorb: "),
+          "Dull black surfaces are the best absorbers of radiation."
+        ),
+        React.createElement(
+          "div",
+          { className: "bg-amber-50 rounded-xl p-4 border border-amber-100" },
+          React.createElement("strong", null, "Reflect: "),
+          "Shiny / silver surfaces reflect most infrared radiation."
+        ),
+        React.createElement(
+          "div",
+          { className: "bg-amber-50 rounded-xl p-4 border border-amber-100" },
+          React.createElement("strong", null, "Emit: "),
+          "Good absorbers are also good emitters (Leslie’s cube idea)."
+        )
+      )
+    ),
+    React.createElement(
+      "section",
+      {
+        className:
+          "bg-white rounded-3xl border border-slate-200 shadow-lg p-6 md:p-8",
+      },
+      React.createElement(
+        "h2",
+        { className: "text-xl font-bold mb-4" },
+        "Quick Check"
+      ),
+      React.createElement(
+        "p",
+        { className: "mb-4 text-slate-700" },
+        "Which can heats up fastest under the same infrared lamp?"
+      ),
+      React.createElement(
+        "div",
+        { className: "flex flex-wrap gap-3" },
+        ["black", "white", "shiny"].map((id) =>
+          React.createElement(
+            "button",
+            {
+              key: id,
+              onClick: () => checkQuiz(id),
+              className:
+                "px-4 py-2 rounded-lg border border-slate-300 hover:bg-amber-50 font-semibold capitalize",
+            },
+            id === "black" ? "Dull Black" : id === "white" ? "Matte White" : "Shiny Silver"
+          )
+        )
+      ),
+      quiz === "correct" &&
+        React.createElement(
+          "p",
+          { className: "mt-4 text-green-700 font-bold" },
+          "Correct — dull black absorbs radiation best, so its temperature rises fastest."
+        ),
+      quiz === "wrong" &&
+        React.createElement(
+          "p",
+          { className: "mt-4 text-red-600 font-bold" },
+          "Not quite — compare the three temperature graphs above after running the lamp."
+        )
+    )
+  );
+};
+
+ReactDOM.createRoot(document.getElementById("root")).render(
+  React.createElement(App)
+);
+  </script>
+  <footer class="text-center py-4 text-slate-500 text-sm">
+    <p class="italic mb-1">But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his understanding. Jeremiah 10:12</p>
+    <p class="text-xs mb-1 mt-2">「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12</p>
+    <p class="text-xs mt-2 pt-2 border-t border-slate-300">@ 2025 Education Engineering Portfolio | Prepared by SF Lau</p>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cumulative Frequency | S2 Math</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+      }
+    </style>
+  </head>
+  <body class="bg-rose-50 text-slate-800 min-h-screen">
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useMemo
+} = React;
+const App = () => {
+  const [data, setData] = useState([{
+    upper: 10,
+    freq: 5
+  }, {
+    upper: 20,
+    freq: 11
+  }, {
+    upper: 30,
+    freq: 13
+  }, {
+    upper: 40,
+    freq: 9
+  }, {
+    upper: 50,
+    freq: 4
+  }]);
+
+  // Calculate cumulative frequencies
+  const cumData = useMemo(() => {
+    let cumSum = 0;
+    return data.map(d => {
+      cumSum += d.freq;
+      return {
+        ...d,
+        cumFreq: cumSum
+      };
+    });
+  }, [data]);
+  const totalFreq = cumData.length > 0 ? cumData[cumData.length - 1].cumFreq : 0;
+  const maxUpper = Math.max(...data.map(d => d.upper));
+  const chartWidth = 450;
+  const chartHeight = 280;
+  const padX = 50;
+  const padY = 40;
+  const scaleX = val => padX + val / (maxUpper + 5) * (chartWidth - padX - 20);
+  const scaleY = val => chartHeight - padY - val / (totalFreq + 5) * (chartHeight - padY - 20);
+
+  // Points for the S-curve (start from 0,0)
+  const points = [{
+    x: scaleX(0),
+    y: scaleY(0)
+  }, ...cumData.map(d => ({
+    x: scaleX(d.upper),
+    y: scaleY(d.cumFreq)
+  }))];
+  const pointsStr = points.map(p => `${p.x},${p.y}`).join(" ");
+
+  // Median, Q1, Q3 calculations (reading from the curve)
+  const medianY = totalFreq / 2;
+  const q1Y = totalFreq / 4;
+  const q3Y = 3 * totalFreq / 4;
+
+  // Interpolate X for given cumFreq (simplified linear interpolation)
+  const interpolateX = targetCum => {
+    const allPoints = [{
+      upper: 0,
+      cumFreq: 0
+    }, ...cumData];
+    for (let i = 1; i < allPoints.length; i++) {
+      if (allPoints[i].cumFreq >= targetCum) {
+        const prev = allPoints[i - 1];
+        const curr = allPoints[i];
+        const ratio = (targetCum - prev.cumFreq) / (curr.cumFreq - prev.cumFreq);
+        return prev.upper + ratio * (curr.upper - prev.upper);
+      }
+    }
+    return maxUpper;
+  };
+  const median = interpolateX(medianY).toFixed(1);
+  const q1 = interpolateX(q1Y).toFixed(1);
+  const q3 = interpolateX(q3Y).toFixed(1);
+  const iqr = (q3 - q1).toFixed(1);
+  const updateFreq = (index, newVal) => {
+    const updated = [...data];
+    updated[index].freq = Math.max(0, Number(newVal) || 0);
+    setData(updated);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "p-8 max-w-5xl mx-auto min-h-screen flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("header", {
+    className: "mb-8 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-rose-600 font-bold uppercase text-xs tracking-widest mb-2"
+  }, "Unit 6: Data Handling"), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-slate-900"
+  }, "Cumulative Frequency"), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-500"
+  }, "Ogive curve and finding Quartiles.")), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col lg:flex-row gap-8 w-full items-start"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-6 rounded-3xl shadow-xl border border-rose-100 flex-1"
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: chartWidth,
+    height: chartHeight,
+    className: "overflow-visible"
+  }, [0, totalFreq / 4, totalFreq / 2, 3 * totalFreq / 4, totalFreq].map((v, i) => /*#__PURE__*/React.createElement("line", {
+    key: i,
+    x1: padX,
+    y1: scaleY(v),
+    x2: chartWidth - 20,
+    y2: scaleY(v),
+    stroke: "#fce7f3",
+    strokeWidth: "1"
+  })), /*#__PURE__*/React.createElement("line", {
+    x1: padX,
+    y1: chartHeight - padY,
+    x2: chartWidth - 20,
+    y2: chartHeight - padY,
+    stroke: "#64748b",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: padX,
+    y1: 20,
+    x2: padX,
+    y2: chartHeight - padY,
+    stroke: "#64748b",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("polyline", {
+    points: pointsStr,
+    fill: "none",
+    stroke: "#f43f5e",
+    strokeWidth: "3"
+  }), cumData.map((d, i) => /*#__PURE__*/React.createElement("circle", {
+    key: i,
+    cx: scaleX(d.upper),
+    cy: scaleY(d.cumFreq),
+    r: "5",
+    fill: "#f43f5e",
+    stroke: "white",
+    strokeWidth: "2"
+  })), /*#__PURE__*/React.createElement("line", {
+    x1: padX,
+    y1: scaleY(medianY),
+    x2: scaleX(median),
+    y2: scaleY(medianY),
+    stroke: "#3b82f6",
+    strokeWidth: "1.5",
+    strokeDasharray: "4"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: scaleX(median),
+    y1: scaleY(medianY),
+    x2: scaleX(median),
+    y2: chartHeight - padY,
+    stroke: "#3b82f6",
+    strokeWidth: "1.5",
+    strokeDasharray: "4"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: scaleX(median),
+    y: chartHeight - padY + 15,
+    textAnchor: "middle",
+    className: "text-xs fill-blue-600 font-bold"
+  }, "Med"), cumData.map((d, i) => /*#__PURE__*/React.createElement("text", {
+    key: i,
+    x: scaleX(d.upper),
+    y: chartHeight - padY + 15,
+    textAnchor: "middle",
+    className: "text-xs fill-slate-500 font-mono"
+  }, d.upper)), /*#__PURE__*/React.createElement("text", {
+    x: padX - 10,
+    y: scaleY(0) + 4,
+    textAnchor: "end",
+    className: "text-xs fill-slate-400 font-mono"
+  }, "0"), /*#__PURE__*/React.createElement("text", {
+    x: padX - 10,
+    y: scaleY(totalFreq) + 4,
+    textAnchor: "end",
+    className: "text-xs fill-slate-400 font-mono"
+  }, totalFreq))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full lg:w-72 flex flex-col gap-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 gap-3"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-blue-500 text-white p-3 rounded-xl text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs opacity-80"
+  }, "Median (Q2)"), /*#__PURE__*/React.createElement("div", {
+    className: "text-xl font-bold"
+  }, median)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-700 text-white p-3 rounded-xl text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs opacity-80"
+  }, "IQR"), /*#__PURE__*/React.createElement("div", {
+    className: "text-xl font-bold"
+  }, iqr)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-rose-400 text-white p-3 rounded-xl text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs opacity-80"
+  }, "Q1"), /*#__PURE__*/React.createElement("div", {
+    className: "text-xl font-bold"
+  }, q1)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-rose-400 text-white p-3 rounded-xl text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs opacity-80"
+  }, "Q3"), /*#__PURE__*/React.createElement("div", {
+    className: "text-xl font-bold"
+  }, q3))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden text-sm"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-3 bg-slate-50 border-b text-xs font-bold text-slate-500 uppercase"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "p-2"
+  }, "Upper"), /*#__PURE__*/React.createElement("div", {
+    className: "p-2 text-center"
+  }, "Freq"), /*#__PURE__*/React.createElement("div", {
+    className: "p-2 text-right"
+  }, "Cum")), cumData.map((d, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "grid grid-cols-3 border-b last:border-b-0 items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "p-2 font-mono text-slate-600"
+  }, d.upper), /*#__PURE__*/React.createElement("div", {
+    className: "p-1"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    min: "0",
+    value: d.freq,
+    onChange: e => updateFreq(i, e.target.value),
+    className: "w-full text-center font-mono font-bold text-rose-700 bg-rose-50 border border-rose-200 rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-rose-400"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "p-2 text-right font-mono font-bold text-slate-800"
+  }, d.cumFreq)))))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

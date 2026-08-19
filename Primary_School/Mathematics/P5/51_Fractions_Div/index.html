@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小五數學：分數除法 | Fraction Division</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(168, 85, 247, 0.15); /* Purple 500 alpha */
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(192, 132, 252, 0.2);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+      .pie-sector {
+        transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        transform-origin: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Fraction Division",
+    zh: "分數除法",
+    ja: "分数の割り算",
+    ko: "분수 나눗셈",
+    es: "División de Fracciones",
+    de: "Bruchdivision",
+    fi: "Murtolukujen jakolasku",
+    fr: "Division de fractions",
+    ar: "قسمة الكسور",
+    it: "Divisione di frazioni"
+  },
+  originalAmount: {
+    en: "Fraction Amount",
+    zh: "原本有多少",
+    ja: "分数の量",
+    ko: "분수 양",
+    es: "Cantidad de Fracción",
+    de: "Bruchmenge",
+    fi: "Murtoluvun määrä",
+    fr: "Quantité de fraction",
+    ar: "كمية الكسر",
+    it: "Quantità frazionaria"
+  },
+  divideBy: {
+    en: "Divide by",
+    zh: "分給幾人",
+    ja: "割る数",
+    ko: "나눌 수",
+    es: "Dividir por",
+    de: "Teilen durch",
+    fi: "Jaa luvulla",
+    fr: "Diviser par",
+    ar: "القسمة على",
+    it: "Dividi per"
+  },
+  insight: {
+    en: "Dividing by {n} is the same as multiplying by 1/{n}",
+    zh: "除以 {n} 等於乘以 1/{n}",
+    ja: "{n}で割ることは 1/{n} を掛けることと同じです",
+    ko: "{n}로 나누는 것은 1/{n}을 곱하는 것과 같습니다",
+    es: "Dividir por {n} es lo mismo que multiplicar por 1/{n}",
+    de: "Durch {n} teilen ist das Gleiche wie mit 1/{n} multiplizieren",
+    fi: "Jakaminen luvulla {n} on sama kuin kertominen luvulla 1/{n}",
+    fr: "Diviser par {n} revient à multiplier par 1/{n}",
+    ar: "القسمة على {n} هي نفسها الضرب في 1/{n}",
+    it: "Dividere per {n} è lo stesso che moltiplicare per 1/{n}"
+  },
+  result: {
+    en: "One Share",
+    zh: "每人份額",
+    ja: "1人のシェア",
+    ko: "한 사람 몫",
+    es: "Una Parte",
+    de: "Ein Anteil",
+    fi: "Yksi osuus",
+    fr: "Une part",
+    ar: "حصة واحدة",
+    it: "Una quota"
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [num, setNum] = useState(1);
+  const [den, setDen] = useState(2);
+  const [div, setDiv] = useState(2);
+
+  // Ensure num < den
+  useEffect(() => {
+    if (num >= den) setNum(den - 1);
+  }, [den]);
+  const resDen = den * div;
+  const renderPie = () => {
+    const center = 150;
+    const radius = 120;
+    const sectors = [];
+    const sectorPath = (start, end) => {
+      const x1 = center + radius * Math.cos(Math.PI * start / 180);
+      const y1 = center + radius * Math.sin(Math.PI * start / 180);
+      const x2 = center + radius * Math.cos(Math.PI * end / 180);
+      const y2 = center + radius * Math.sin(Math.PI * end / 180);
+      return `M${center},${center} L${x1},${y1} A${radius},${radius} 0 0,1 ${x2},${y2} Z`;
+    };
+    const anglePerDen = 360 / den;
+    for (let i = 0; i < den; i++) {
+      const start = i * anglePerDen - 90;
+      const end = (i + 1) * anglePerDen - 90;
+      const isActive = i < num;
+
+      // Base Slices
+      sectors.push(/*#__PURE__*/React.createElement(motion.path, {
+        key: `base-${i}`,
+        d: sectorPath(start, end),
+        initial: {
+          scale: 0
+        },
+        animate: {
+          scale: 1
+        },
+        transition: {
+          delay: i * 0.05
+        },
+        fill: isActive ? "rgba(168, 85, 247, 0.4)" : "rgba(255,255,255,0.05)",
+        stroke: "rgba(255,255,255,0.2)",
+        strokeWidth: "2"
+      }));
+
+      // Subdivisions in Active Slices
+      if (isActive) {
+        const subAngle = anglePerDen / div;
+        for (let j = 0; j < div; j++) {
+          const sStart = start + j * subAngle;
+          const sEnd = start + (j + 1) * subAngle;
+
+          // Cut Lines
+          if (j > 0) {
+            const cutX = center + radius * Math.cos(Math.PI * sStart / 180);
+            const cutY = center + radius * Math.sin(Math.PI * sStart / 180);
+            sectors.push(/*#__PURE__*/React.createElement(motion.line, {
+              key: `cut-${i}-${j}`,
+              x1: center,
+              y1: center,
+              x2: cutX,
+              y2: cutY,
+              stroke: "rgba(244, 114, 182, 0.8)",
+              strokeWidth: "2",
+              strokeDasharray: "4 2",
+              initial: {
+                pathLength: 0
+              },
+              animate: {
+                pathLength: 1
+              },
+              transition: {
+                delay: 0.5 + j * 0.1
+              }
+            }));
+          }
+
+          // Highlight Result (First sub-slice of first slice only?)
+          // Question asks for result of division.
+          // num/den / div = num / (den*div)
+          // So we should highlight `num` amount of small slices?
+          // e.g. 1/2 / 2 = 1/4. We highlight 1 small slice.
+          // 3/4 / 2 = 3/8. We highlight 3 small slices?
+          // Yes, logically "sharing 3/4 among 2 people" means each gets half of the 3/4.
+          // So we should highlight HALF of EACH active slice.
+
+          // Determine if this sub-slice is part of the result share
+          // Usually "share" implies we take 1 of the `div` parts from EACH active numerator block.
+          // So for each `i` < `num`, we take the first `j=0` sub-slice.
+
+          if (j === 0) {
+            // Taking the first subdivision of each active slice
+            sectors.push(/*#__PURE__*/React.createElement(motion.path, {
+              key: `res-${i}`,
+              d: sectorPath(sStart, sEnd),
+              fill: "rgba(34, 197, 94, 0.8)" // Green result
+              ,
+              initial: {
+                opacity: 0
+              },
+              animate: {
+                opacity: 1
+              },
+              transition: {
+                delay: 1
+              }
+            }));
+          }
+        }
+      }
+    }
+    return sectors;
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-5xl flex justify-between items-center mb-10"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-3xl md:text-5xl font-black text-purple-400 drop-shadow-[0_0_15px_rgba(168,85,247,0.5)]"
+  }, "🍰 ", getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-800/80 p-1.5 rounded-xl border border-white/10 flex flex-wrap justify-end gap-1 max-w-[50%]"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-purple-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white hover:bg-white/5"}`
+  }, l)))), /*#__PURE__*/React.createElement("main", {
+    className: "w-full max-w-5xl grid lg:grid-cols-2 gap-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-8 rounded-3xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "mb-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between text-purple-300 font-bold mb-2"
+  }, /*#__PURE__*/React.createElement("span", null, getText("originalAmount", lang)), /*#__PURE__*/React.createElement("span", {
+    className: "text-white text-xl"
+  }, num, "/", den)), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4 items-center mb-4"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "1",
+    max: den - 1,
+    value: num,
+    onChange: e => setNum(parseInt(e.target.value, 10)),
+    className: "flex-1 accent-purple-500"
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "font-mono font-bold w-4 text-center"
+  }, num)), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4 items-center"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "2",
+    max: "8",
+    value: den,
+    onChange: e => setDen(parseInt(e.target.value, 10)),
+    className: "flex-1 accent-purple-500"
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "font-mono font-bold w-4 text-center"
+  }, den))), /*#__PURE__*/React.createElement("div", {
+    className: "border-t border-white/10 pt-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between text-pink-300 font-bold mb-2"
+  }, /*#__PURE__*/React.createElement("span", null, getText("divideBy", lang)), /*#__PURE__*/React.createElement("span", {
+    className: "text-white text-xl"
+  }, div)), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4 items-center"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "2",
+    max: "4",
+    value: div,
+    onChange: e => setDiv(parseInt(e.target.value, 10)),
+    className: "flex-1 accent-pink-500"
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "font-mono font-bold w-4 text-center"
+  }, div)))), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 rounded-3xl flex items-center gap-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "p-3 bg-indigo-500/20 rounded-full text-indigo-300 text-2xl"
+  }, "💡"), /*#__PURE__*/React.createElement("div", {
+    className: "text-sm font-bold text-slate-300"
+  }, getText("insight", lang).replace(/{n}/g, div))), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 rounded-3xl flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-4 text-4xl md:text-5xl font-black text-white font-mono"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-purple-400"
+  }, num), /*#__PURE__*/React.createElement("div", {
+    className: "w-full h-1 bg-slate-500 rounded-full my-2"
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "text-slate-400"
+  }, den)), /*#__PURE__*/React.createElement("span", {
+    className: "text-pink-400 text-3xl"
+  }, "÷"), /*#__PURE__*/React.createElement("span", {
+    className: "text-pink-400"
+  }, div), /*#__PURE__*/React.createElement("span", {
+    className: "text-slate-500"
+  }, "="), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-green-400"
+  }, num), /*#__PURE__*/React.createElement("div", {
+    className: "w-full h-1 bg-white rounded-full my-2"
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "text-green-400"
+  }, resDen))))), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-8 rounded-3xl flex flex-col items-center justify-center min-h-[400px] relative"
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: "300",
+    height: "300",
+    viewBox: "0 0 300 300",
+    className: "drop-shadow-2xl"
+  }, renderPie()), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-6 right-6 flex flex-col gap-2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2 text-xs font-bold text-purple-300"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-3 h-3 bg-purple-500/40 border border-purple-400 rounded-full"
+  }), getText("originalAmount", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2 text-xs font-bold text-green-400"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-3 h-3 bg-green-500 border border-green-400 rounded-full"
+  }), getText("result", lang))))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

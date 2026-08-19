@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>常識科：簡單機械 (槓桿) | Simple Machines: Lever</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow: hidden;
+      }
+      .glass-panel {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect,
+  useRef
+} = React;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Lever Lab",
+    zh: "槓桿實驗室"
+  },
+  instruction: {
+    en: "Drag the fulcrum (triangle) to balance the beam!",
+    zh: "拖動支點（三角形）以平衡橫樑！"
+  },
+  reset: {
+    en: "Reset",
+    zh: "重置"
+  },
+  addWeight: {
+    en: "Add Weight",
+    zh: "增加重量"
+  },
+  clear: {
+    en: "Clear Weights",
+    zh: "清除重量"
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+function App() {
+  const [lang, setLang] = useState("zh");
+  const sceneRef = useRef(null);
+  const engineRef = useRef(null);
+  const fulcrumRef = useRef(null); // Reference to the fulcrum body
+
+  useEffect(() => {
+    const Engine = Matter.Engine,
+      Render = Matter.Render,
+      Runner = Matter.Runner,
+      Bodies = Matter.Bodies,
+      Composite = Matter.Composite,
+      Constraint = Matter.Constraint,
+      Mouse = Matter.Mouse,
+      MouseConstraint = Matter.MouseConstraint;
+    const engine = Engine.create();
+    engineRef.current = engine;
+    const w = sceneRef.current.clientWidth;
+    const h = sceneRef.current.clientHeight;
+    const render = Render.create({
+      element: sceneRef.current,
+      engine: engine,
+      options: {
+        width: w,
+        height: h,
+        background: "#1e293b",
+        wireframes: false,
+        showAngleIndicator: false
+      }
+    });
+
+    // Ground
+    const ground = Bodies.rectangle(w / 2, h - 20, w * 2, 40, {
+      isStatic: true,
+      render: {
+        fillStyle: "#334155"
+      }
+    });
+
+    // Fulcrum (Triangle Polygon)
+    const fulcrum = Bodies.polygon(w / 2, h - 80, 3, 40, {
+      isStatic: true,
+      // We will manually move it using Mouse or Slider, but physics-wise easier if static?
+      // Actually dynamic fulcrum is tricky. Better static and we change its position.
+      render: {
+        fillStyle: "#eab308"
+      },
+      angle: Math.PI / 6 // Rotate to flat top? No, flat base. Polygon 3 starts pointing right usually.
+    });
+    // Rotate triangle to point UP.
+    Matter.Body.setAngle(fulcrum, -Math.PI / 2); // Point up?
+    // Actually let's just use a chamfered box or better triangle vertices logic if needed.
+    // Standard polygon 3:
+    Matter.Body.setAngle(fulcrum, Math.PI / 6); // Correct flat base?
+    // Trial and error for orientation or define vertices manually.
+    /* Manual Triangle */
+    const tri = Bodies.fromVertices(w / 2, h - 60, [[{
+      x: 0,
+      y: -40
+    }, {
+      x: 40,
+      y: 40
+    }, {
+      x: -40,
+      y: 40
+    }]], {
+      isStatic: true,
+      render: {
+        fillStyle: "#eab308"
+      }
+    }, true);
+    fulcrumRef.current = tri;
+
+    // Lever Beam
+    const beam = Bodies.rectangle(w / 2, h - 120, 600, 20, {
+      render: {
+        fillStyle: "#f59e0b"
+      },
+      chamfer: {
+        radius: 5
+      },
+      density: 0.005
+    });
+
+    // Constraint? No, just rest it on top?
+    // It might slide off.
+    // Better: Constraint attached to Fulcrum? No, fulcrum moves.
+    // Real physics: Beam sits on fulcrum. Friction keeps it.
+    // BUT to prevent falling off, we can add a loose constraint or just high friction.
+    beam.friction = 1;
+    tri.friction = 1;
+
+    // Let's create a Constraint Pivot that moves with Fulcrum?
+    // No, real lever just sits.
+    // Let's try just sitting first. If unstable, we add a "Pivot Constraint" that we manually update.
+    // Ideally, the beam is pinned to the fulcrum but can rotate.
+    // If we just rest it, it's a balance board.
+    // Let's do a Balance Board (Seesaw).
+
+    // Initial Weights
+    const weightLeft = Bodies.rectangle(w / 2 - 200, h - 200, 50, 50, {
+      render: {
+        fillStyle: "#ef4444"
+      },
+      density: 0.01
+    });
+    Composite.add(engine.world, [ground, tri, beam, weightLeft]);
+
+    // Interaction
+    const mouse = Mouse.create(render.canvas);
+    const mouseConstraint = MouseConstraint.create(engine, {
+      mouse: mouse,
+      constraint: {
+        stiffness: 0.2,
+        render: {
+          visible: false
+        }
+      }
+    });
+    Composite.add(engine.world, mouseConstraint);
+    render.mouse = mouse;
+    Render.run(render);
+    const runner = Runner.create();
+    Runner.run(runner, engine);
+    const handleResize = () => {
+      const nw = sceneRef.current.clientWidth;
+      const nh = sceneRef.current.clientHeight;
+      render.canvas.width = nw;
+      render.canvas.height = nh;
+      Matter.Body.setPosition(ground, {
+        x: nw / 2,
+        y: nh - 20
+      });
+      // Reposition Fulcrum if we want it centered?
+      // Matter.Body.setPosition(tri, { x: nw/2, y: nh-60 });
+    };
+    window.addEventListener("resize", handleResize);
+    return () => {
+      Render.stop(render);
+      Runner.stop(runner);
+      Composite.clear(engine.world);
+      Engine.clear(engine);
+      render.canvas.remove();
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+  const updateFulcrum = val => {
+    if (fulcrumRef.current && sceneRef.current) {
+      const w = sceneRef.current.clientWidth;
+      const h = sceneRef.current.clientHeight;
+      // Map 0-100 to position
+      const x = val / 100 * (w - 200) + 100; // clamp margins
+      Matter.Body.setPosition(fulcrumRef.current, {
+        x: x,
+        y: h - 60
+      });
+    }
+  };
+  const addWeight = () => {
+    if (!engineRef.current) return;
+    const w = sceneRef.current.clientWidth;
+    const size = 30 + Math.random() * 30;
+    const box = Matter.Bodies.rectangle(Math.random() > 0.5 ? w / 2 + 200 : w / 2 - 200, 50, size, size, {
+      render: {
+        fillStyle: "#3b82f6"
+      },
+      density: 0.01
+    });
+    Matter.Composite.add(engineRef.current.world, box);
+  };
+  const clear = () => {
+    // Remove dynamic bodies except beam
+    const bodies = Matter.Composite.allBodies(engineRef.current.world);
+    const removables = bodies.filter(b => !b.isStatic && b.render.fillStyle !== "#f59e0b"); // not beam
+    Matter.Composite.remove(engineRef.current.world, removables);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-5xl flex justify-between items-center mb-6"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-3xl font-black text-amber-500"
+  }, getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-2"
+  }, ["zh", "en"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-4 py-2 rounded-lg font-bold text-sm ${lang === l ? "bg-slate-700 text-white" : "text-slate-500"}`
+  }, l === "zh" ? "中文" : "ENG")))), /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 w-full max-w-5xl relative bg-slate-800 rounded-3xl overflow-hidden shadow-2xl border-4 border-slate-700",
+    ref: sceneRef
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-5xl mt-6 flex flex-col md:flex-row gap-6 items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 rounded-2xl flex-1 w-full"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "block text-slate-400 font-bold mb-2 uppercase tracking-widest text-xs"
+  }, "Fulcrum Position"), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "20",
+    max: "80",
+    defaultValue: "50",
+    step: "1",
+    className: "w-full accent-amber-500 h-4 bg-slate-700 rounded-lg appearance-none cursor-grab",
+    onChange: e => updateFulcrum(e.target.value)
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between text-xs text-slate-500 mt-2 font-mono"
+  }, /*#__PURE__*/React.createElement("span", null, "Left"), /*#__PURE__*/React.createElement("span", null, "Center"), /*#__PURE__*/React.createElement("span", null, "Right"))), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: addWeight,
+    className: "bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 px-8 rounded-xl shadow-lg active:scale-95 transition-all"
+  }, "+ ", getText("addWeight", lang)), /*#__PURE__*/React.createElement("button", {
+    onClick: clear,
+    className: "bg-slate-700 hover:bg-slate-600 text-white font-bold py-4 px-6 rounded-xl transition-all"
+  }, getText("clear", lang)))), /*#__PURE__*/React.createElement("div", {
+    className: "mt-4 text-slate-500 text-sm"
+  }, getText("instruction", lang)));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - Premium Light Lab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap");
+
+      body {
+        font-family: "Inter", sans-serif;
+        background: #000;
+        color: white;
+        overflow: hidden;
+      }
+
+      .glass-panel {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+          0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      }
+
+      .glow-text {
+        text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+      }
+
+      .slider-thumb::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        height: 16px;
+        width: 16px;
+        border-radius: 50%;
+        background: #38bdf8;
+        cursor: pointer;
+        box-shadow: 0 0 10px #38bdf8;
+        margin-top: -6px;
+      }
+
+      .slider-track::-webkit-slider-runnable-track {
+        width: 100%;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 2px;
+      }
+
+      /* CRT Scanline Effect (subtle) */
+      .scanlines {
+        background: linear-gradient(
+          to bottom,
+          rgba(255, 255, 255, 0),
+          rgba(255, 255, 255, 0) 50%,
+          rgba(0, 0, 0, 0.1) 50%,
+          rgba(0, 0, 0, 0.1)
+        );
+        background-size: 100% 4px;
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect,
+  useRef,
+  useCallback
+} = React;
+// Simple icon shims (avoid brittle lucide-react UMD / forwardRef issues)
+const Icon = ({
+  children,
+  size = 20,
+  className = ""
+}) => /*#__PURE__*/React.createElement("span", {
+  className: className,
+  style: {
+    fontSize: size,
+    lineHeight: 1,
+    display: "inline-flex"
+  }
+}, children);
+const Settings = props => /*#__PURE__*/React.createElement(Icon, props, "⚙️");
+const Sun = props => /*#__PURE__*/React.createElement(Icon, props, "☀️");
+const RotateCcw = props => /*#__PURE__*/React.createElement(Icon, props, "↺");
+const Move = props => /*#__PURE__*/React.createElement(Icon, props, "✥");
+const Info = props => /*#__PURE__*/React.createElement(Icon, props, "ℹ️");
+const X = props => /*#__PURE__*/React.createElement(Icon, props, "✕");
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+
+// Vector Math Helpers
+const V = {
+  add: (a, b) => ({
+    x: a.x + b.x,
+    y: a.y + b.y
+  }),
+  sub: (a, b) => ({
+    x: a.x - b.x,
+    y: a.y - b.y
+  }),
+  mul: (a, s) => ({
+    x: a.x * s,
+    y: a.y * s
+  }),
+  dot: (a, b) => a.x * b.x + a.y * b.y,
+  mag: a => Math.sqrt(a.x * a.x + a.y * a.y),
+  norm: a => {
+    const m = Math.sqrt(a.x * a.x + a.y * a.y);
+    return m === 0 ? {
+      x: 0,
+      y: 0
+    } : {
+      x: a.x / m,
+      y: a.y / m
+    };
+  },
+  rot: (v, deg) => {
+    const rad = deg * Math.PI / 180;
+    return {
+      x: v.x * Math.cos(rad) - v.y * Math.sin(rad),
+      y: v.x * Math.sin(rad) + v.y * Math.cos(rad)
+    };
+  },
+  angle: v => Math.atan2(v.y, v.x) * (180 / Math.PI)
+};
+const t = {
+  title: {
+    en: "Optical Physics Lab",
+    zh: "光學物理實驗室"
+  },
+  light: {
+    en: "Light Source",
+    zh: "光源"
+  },
+  prism: {
+    en: "Prism",
+    zh: "棱鏡"
+  },
+  ior: {
+    en: "Refractive Index (n)",
+    zh: "折射率 (n)"
+  },
+  reset: {
+    en: "Reset Scene",
+    zh: "重置場景"
+  },
+  drag_hint: {
+    en: "Drag objects to move, handles to rotate",
+    zh: "拖動以移動物件，拖動手柄以旋轉"
+  },
+  materials: {
+    water: {
+      en: "Water",
+      zh: "水 (1.33)"
+    },
+    glass: {
+      en: "Glass",
+      zh: "玻璃 (1.50)"
+    },
+    diamond: {
+      en: "Diamond",
+      zh: "鑽石 (2.42)"
+    }
+  }
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const svgRef = useRef(null);
+
+  // State
+  const [light, setLight] = useState({
+    pos: {
+      x: 100,
+      y: 300
+    },
+    angle: 0
+  });
+  const [prism, setPrism] = useState({
+    pos: {
+      x: 600,
+      y: 300
+    },
+    angle: 0
+  }); // Equilateral triangle center
+  const [ior, setIor] = useState(1.5);
+  const [showNormals, setShowNormals] = useState(false);
+  const [dragging, setDragging] = useState(null); // 'light', 'lightRot', 'prism', 'prismRot'
+
+  const prismSize = 250;
+  const prismHeight = prismSize * Math.sqrt(3) / 2;
+
+  // Interaction Handlers
+  const handlePointerDown = (type, e) => {
+    e.stopPropagation();
+    e.target.setPointerCapture(e.pointerId);
+    setDragging(type);
+  };
+  const handlePointerUp = e => {
+    setDragging(null);
+    e.target.releasePointerCapture(e.pointerId);
+  };
+  const handlePointerMove = e => {
+    if (!dragging || !svgRef.current) return;
+    const rect = svgRef.current.getBoundingClientRect();
+    const mousePos = {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    };
+    if (dragging === "light") {
+      setLight(prev => ({
+        ...prev,
+        pos: mousePos
+      }));
+    } else if (dragging === "lightRot") {
+      const dir = V.sub(mousePos, light.pos);
+      setLight(prev => ({
+        ...prev,
+        angle: V.angle(dir)
+      }));
+    } else if (dragging === "prism") {
+      setPrism(prev => ({
+        ...prev,
+        pos: mousePos
+      }));
+    } else if (dragging === "prismRot") {
+      const dir = V.sub(mousePos, prism.pos);
+      // Base offset for handle is usually at top (270 deg).
+      // So if mouse is at 270, angle should be 0.
+      // V.angle returns -90 for 270.
+      // desired = current - (-90) = current + 90
+      setPrism(prev => ({
+        ...prev,
+        angle: V.angle(dir) + 90
+      }));
+    }
+  };
+
+  // --- Physics Calculation ---
+
+  // Get Prism Vertices based on current pos/angle
+  const getPrismPoly = useCallback(() => {
+    // 3 points of equilateral triangle
+    // Top point at angle -90 (270) relative to center when rot=0
+    const r = prismHeight * (2 / 3); // circumradius
+    const angles = [270, 30, 150]; // Top, BR, BL
+    return angles.map(a => {
+      const offset = V.rot({
+        x: r,
+        y: 0
+      }, a + prism.angle); // rot takes degrees
+      return V.add(prism.pos, {
+        x: offset.x,
+        y: offset.y
+      }); // SVG Y is down, basic trig works if considered correctly
+      // wait, V.rot uses standard math (CCW, Y-up?).
+      // V.rot: x cos - y sin.
+      // In SVG: Y is down.
+      // 0 deg = Right. 90 deg = Down.
+      // We want Top (Up). SVG Up is Y-. That is 270 deg (or -90).
+      // V.rot(0,-90) -> x=0, y=-1. Correct.
+    });
+  }, [prism]);
+
+  // Intersection Math
+  const intersectLine = (p1, p2, p3, p4) => {
+    const det = (p2.x - p1.x) * (p4.y - p3.y) - (p2.y - p1.y) * (p4.x - p3.x);
+    if (det === 0) return null;
+    const lambda = ((p4.y - p3.y) * (p4.x - p1.x) + (p3.x - p4.x) * (p4.y - p1.y)) / det;
+    const gamma = ((p1.y - p2.y) * (p4.x - p1.x) + (p2.x - p1.x) * (p4.y - p1.y)) / det;
+    if (0 <= lambda && lambda <= 1 && 0 <= gamma && gamma <= 1) return lambda; // return dist fraction
+    return null;
+  };
+
+  // Ray Tracing
+  const traceRay = (start, angle, n_prism) => {
+    const maxBounces = 6;
+    let ray = {
+      start,
+      dir: V.rot({
+        x: 1,
+        y: 0
+      }, angle)
+    };
+    let segments = [];
+    let currentN = 1.0; // Air
+    let energy = 1.0;
+    const poly = getPrismPoly();
+    // Create edges
+    const edges = [{
+      p1: poly[0],
+      p2: poly[1]
+    }, {
+      p1: poly[1],
+      p2: poly[2]
+    }, {
+      p1: poly[2],
+      p2: poly[0]
+    }];
+    for (let b = 0; b < maxBounces; b++) {
+      if (energy < 0.01) break;
+
+      // Find closest intersection
+      let bestHit = null;
+      // Extend ray far away
+      const far = V.add(ray.start, V.mul(ray.dir, 3000));
+      edges.forEach((edge, i) => {
+        // Check intersection
+        const distFactor = intersectLine(ray.start, far, edge.p1, edge.p2);
+        if (distFactor !== null && distFactor > 0.0001) {
+          // epsilon
+          const dist = distFactor * 3000;
+          if (!bestHit || dist < bestHit.dist) {
+            // Calculate Normal
+            const edgeVec = V.sub(edge.p2, edge.p1);
+            // Normal should point OUT.
+            // For CCW triangle (Top->BR->BL?? No angles were 270, 30, 150.)
+            // 270(Top), 30(BR), 150(BL).
+            // Order: Top->BR->BL->Top.
+            // This is Clockwise visually on screen (Top to Right to Left).
+            // If Polygon is CW, Normal (dy, -dx) points IN. (-dy, dx) points OUT.
+            // Let's use Centroid check to be sure.
+            let norm = {
+              x: edgeVec.y,
+              y: -edgeVec.x
+            }; // Candidate
+            norm = V.norm(norm);
+            const hitPos = V.add(ray.start, V.mul(ray.dir, dist));
+            const toCenter = V.sub(prism.pos, hitPos);
+            if (V.dot(norm, toCenter) > 0) {
+              // Normal points IN. Flip it.
+              norm = V.mul(norm, -1);
+            }
+            bestHit = {
+              dist,
+              pos: hitPos,
+              normal: norm
+            };
+          }
+        }
+      });
+      if (bestHit) {
+        segments.push({
+          p1: ray.start,
+          p2: bestHit.pos,
+          normal: bestHit.normal,
+          hit: true
+        });
+
+        // Snell's Law
+        const normal = bestHit.normal;
+        const incident = ray.dir;
+
+        // Determine entering or exiting
+        // dot(I, N) < 0 => Entering (Normal opposes Ray)
+        const dot = V.dot(incident, normal);
+        let n1, n2, effectiveNormal;
+        if (dot < 0) {
+          // Entering
+          n1 = 1.0;
+          n2 = n_prism;
+          effectiveNormal = normal;
+        } else {
+          // Exiting
+          n1 = n_prism;
+          n2 = 1.0;
+          effectiveNormal = V.mul(normal, -1); // Flip normal to oppose ray for calc
+        }
+        const eta = n1 / n2;
+        const cosTheta1 = -V.dot(incident, effectiveNormal);
+        const sinTheta2Sq = eta * eta * (1 - cosTheta1 * cosTheta1);
+        if (sinTheta2Sq > 1) {
+          // TIR (Total Internal Reflection)
+          // R = I - 2(I.N)N
+          // Here N is effectiveNormal
+          // Reflection is always valid with effectiveNormal
+          // I - 2 * (I . N) * N
+          ray = {
+            start: bestHit.pos,
+            dir: V.sub(incident, V.mul(effectiveNormal, 2 * V.dot(incident, effectiveNormal)))
+          };
+        } else {
+          // Refraction
+          const cosTheta2 = Math.sqrt(1 - sinTheta2Sq);
+          // T = eta * I + (eta * cos1 - cos2) * N
+          const term2 = eta * cosTheta1 - cosTheta2;
+          const refractDir = V.add(V.mul(incident, eta), V.mul(effectiveNormal, term2));
+          ray = {
+            start: bestHit.pos,
+            dir: V.norm(refractDir)
+          };
+          currentN = n2;
+        }
+      } else {
+        segments.push({
+          p1: ray.start,
+          p2: far,
+          hit: false
+        });
+        break; // To Infinity
+      }
+    }
+    return segments;
+  };
+
+  // Render Params
+  // N varies by wavelength.
+  // Red (700nm): n - 0.02
+  // Green (550nm): n
+  // Blue (450nm): n + 0.02
+  const rays = [{
+    c: "#ff4444",
+    n: ior - 0.04,
+    width: 4,
+    blur: 4
+  },
+  // Red
+  {
+    c: "#44ff44",
+    n: ior,
+    width: 4,
+    blur: 4
+  },
+  // Green
+  {
+    c: "#4444ff",
+    n: ior + 0.04,
+    width: 4,
+    blur: 4
+  },
+  // Blue
+  // Core white beam (visual only, fades out)
+  {
+    c: "#ffffff",
+    n: ior,
+    width: 2,
+    blur: 1,
+    opacity: 0.8,
+    short: true
+  }];
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen bg-slate-950 text-white flex flex-col items-center relative select-none"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 scanlines opacity-30 z-0"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-7xl p-6 flex justify-between items-center z-10"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-3"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-3 h-12 bg-blue-500 rounded-full shadow-[0_0_15px_rgba(59,130,246,0.8)]"
+  }), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h1", {
+    className: "text-3xl font-black tracking-tight text-white glow-text"
+  }, "PHYSI-LAB ", /*#__PURE__*/React.createElement("span", {
+    className: "text-blue-400"
+  }, "OPTICS")), /*#__PURE__*/React.createElement("p", {
+    className: "text-xs text-blue-200/50 uppercase tracking-widest font-bold"
+  }, "Premium Simulation v2.0"))), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("button", {
+    className: "p-2 bg-slate-800 rounded-full hover:bg-slate-700 transition",
+    title: "Show Normals",
+    onClick: () => setShowNormals(!showNormals)
+  }, /*#__PURE__*/React.createElement(Settings, {
+    className: `w-5 h-5 ${showNormals ? "text-blue-400" : "text-slate-400"}`
+  })))), /*#__PURE__*/React.createElement("div", {
+    className: "relative flex-1 w-full max-w-7xl bg-slate-900/50 m-4 rounded-3xl border border-slate-800/50 shadow-2xl backdrop-blur-sm overflow-hidden group"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 opacity-10",
+    style: {
+      backgroundImage: "linear-gradient(#334155 1px, transparent 1px), linear-gradient(90deg, #334155 1px, transparent 1px)",
+      backgroundSize: "40px 40px"
+    }
+  }), /*#__PURE__*/React.createElement("svg", {
+    ref: svgRef,
+    className: "absolute inset-0 w-full h-full cursor-crosshair touch-none",
+    onPointerMove: handlePointerMove,
+    onPointerUp: handlePointerUp,
+    onPointerLeave: handlePointerUp
+  }, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("filter", {
+    id: "glow"
+  }, /*#__PURE__*/React.createElement("feGaussianBlur", {
+    stdDeviation: "4",
+    result: "coloredBlur"
+  }), /*#__PURE__*/React.createElement("feMerge", null, /*#__PURE__*/React.createElement("feMergeNode", {
+    in: "coloredBlur"
+  }), /*#__PURE__*/React.createElement("feMergeNode", {
+    in: "SourceGraphic"
+  }))), /*#__PURE__*/React.createElement("marker", {
+    id: "arrow",
+    viewBox: "0 0 10 10",
+    refX: "5",
+    refY: "5",
+    markerWidth: "4",
+    markerHeight: "4",
+    orient: "auto-start-reverse"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M 0 0 L 10 5 L 0 10 z",
+    fill: "#64748b"
+  }))), /*#__PURE__*/React.createElement("g", {
+    filter: "url(#glow)"
+  }, rays.map((r, i) => {
+    const segments = traceRay(light.pos, light.angle, r.n);
+    return segments.map((seg, j) => /*#__PURE__*/React.createElement("g", {
+      key: `${i}-${j}`
+    }, /*#__PURE__*/React.createElement("line", {
+      x1: seg.p1.x,
+      y1: seg.p1.y,
+      x2: r.short && j > 0 ? seg.p1.x : seg.p2.x // White beam stops at surface usually for visual clarity, but let's just let it be fully traced for 'green' equivalent
+      ,
+      y2: r.short && j > 0 ? seg.p1.y : seg.p2.y,
+      stroke: r.c,
+      strokeWidth: j === 0 && r.short ? 6 : r.width,
+      strokeOpacity: r.opacity || (j === 0 ? 0.9 : 0.6),
+      strokeLinecap: "round",
+      style: {
+        mixBlendMode: "screen"
+      }
+    }), showNormals && i === 1 && seg.hit && seg.normal && /*#__PURE__*/React.createElement("line", {
+      x1: seg.p2.x - seg.normal.x * 30,
+      y1: seg.p2.y - seg.normal.y * 30,
+      x2: seg.p2.x + seg.normal.x * 30,
+      y2: seg.p2.y + seg.normal.y * 30,
+      stroke: "rgba(255,255,255,0.3)",
+      strokeDasharray: "4 4",
+      strokeWidth: "1"
+    })));
+  })), /*#__PURE__*/React.createElement("g", {
+    transform: `translate(${prism.pos.x}, ${prism.pos.y}) rotate(${prism.angle})`,
+    onPointerDown: e => handlePointerDown("prism", e),
+    className: "cursor-move outline-none"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: `M 0 ${-prismHeight * (2 / 3)} L ${prismSize / 2} ${prismHeight / 3} L ${-prismSize / 2} ${prismHeight / 3} Z`,
+    fill: "rgba(255,255,255,0.05)",
+    stroke: "rgba(255,255,255,0.4)",
+    strokeWidth: "2",
+    filter: "url(#glow)"
+  }), /*#__PURE__*/React.createElement("circle", {
+    r: "60",
+    fill: "transparent"
+  }), /*#__PURE__*/React.createElement("g", {
+    transform: `translate(0, ${-prismHeight * (2 / 3) - 30})`
+  }, /*#__PURE__*/React.createElement("line", {
+    y2: "20",
+    stroke: "rgba(255,255,255,0.3)",
+    strokeDasharray: "4 4"
+  }), /*#__PURE__*/React.createElement("circle", {
+    r: "12",
+    fill: "rgba(56, 189, 248, 0.8)",
+    className: "cursor-grab hover:scale-110 transition-transform",
+    onPointerDown: e => handlePointerDown("prismRot", e)
+  }), /*#__PURE__*/React.createElement(RotateCcw, {
+    className: "w-4 h-4 text-black absolute",
+    x: "-8",
+    y: "-8",
+    pointerEvents: "none"
+  }))), /*#__PURE__*/React.createElement("g", {
+    transform: `translate(${light.pos.x}, ${light.pos.y}) rotate(${light.angle})`,
+    className: "cursor-move"
+  }, /*#__PURE__*/React.createElement("rect", {
+    x: "-40",
+    y: "-15",
+    width: "60",
+    height: "30",
+    rx: "4",
+    fill: "#1e293b",
+    stroke: "#475569",
+    strokeWidth: "2",
+    onPointerDown: e => handlePointerDown("light", e)
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M 20 -12 L 25 0 L 20 12 Z",
+    fill: "#cbd5e1",
+    opacity: "0.8"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "50",
+    cy: "0",
+    r: "10",
+    fill: "#fbbf24",
+    stroke: "white",
+    strokeWidth: "2",
+    className: "cursor-grab hover:scale-110 transition-transform",
+    onPointerDown: e => handlePointerDown("lightRot", e)
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-6 left-6 flex flex-col gap-4 w-72"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-5 rounded-2xl border-t border-white/20"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between items-center mb-4"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "text-sm font-bold text-blue-200 uppercase tracking-wider"
+  }, t.ior[lang] || t.ior.en), /*#__PURE__*/React.createElement("span", {
+    className: "font-mono text-xl font-bold text-blue-400"
+  }, ior.toFixed(2))), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "1.0",
+    max: "2.6",
+    step: "0.01",
+    value: ior,
+    onChange: e => setIor(parseFloat(e.target.value)),
+    className: "slider-track slider-thumb w-full appearance-none bg-transparent h-8 cursor-pointer"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-3 gap-2 mt-4"
+  }, ["water", "glass", "diamond"].map(m => /*#__PURE__*/React.createElement("button", {
+    key: m,
+    onClick: () => setIor(m === "water" ? 1.33 : m === "glass" ? 1.5 : 2.42),
+    className: `text-xs py-2 rounded-lg font-bold transition-all ${m === "water" && ior === 1.33 || m === "glass" && ior === 1.5 || m === "diamond" && ior === 2.42 ? "bg-blue-500 text-white shadow-lg shadow-blue-500/30" : "bg-slate-800 text-slate-400 hover:bg-slate-700"}`
+  }, t.materials[m][lang] || t.materials[m].en)))), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-4 rounded-xl flex items-start gap-3"
+  }, /*#__PURE__*/React.createElement(Info, {
+    className: "w-5 h-5 text-blue-400 shrink-0 mt-0.5"
+  }), /*#__PURE__*/React.createElement("p", {
+    className: "text-xs text-slate-300 leading-relaxed"
+  }, t.drag_hint[lang] || t.drag_hint.en)))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

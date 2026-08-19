@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mean Value Theorem | M1 Calculus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+      }
+      .glass {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <div id="root" class="flex-grow flex flex-col"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const translations = {
+  en: {
+    unit: "Module 1: Calculus",
+    title: "Mean Value Theorem",
+    desc: "At least one point c exists where f'(c) equals the average slope.",
+    secant: "Secant Slope (Average)",
+    tangent: "Tangent Slope (Instant)",
+    pointC: "Found Point c",
+    formula: "f'(c) = [f(b)-f(a)] / [b-a]",
+    langBtn: "中文"
+  },
+  zh: {
+    unit: "單元一：微積分",
+    title: "中值定理",
+    desc: "存在至少一點 c，使得 f'(c) 等於平均斜率。",
+    secant: "割線斜率 (平均)",
+    tangent: "切線斜率 (瞬時)",
+    pointC: "找到的點 c",
+    formula: "f'(c) = [f(b)-f(a)] / [b-a]",
+    langBtn: "English"
+  }
+};
+const App = () => {
+  const [lang, setLang] = useState("en");
+  const t = translations[lang];
+  const [a, setA] = useState(0);
+  const [b, setB] = useState(3);
+
+  // Function: f(x) = -(x-2.5)^2 + 5
+  const f = x => -Math.pow(x - 2.5, 2) + 5;
+  // Derivative f'(x) = -2(x-2.5)
+  const df = x => -2 * (x - 2.5);
+
+  // Calculate Mean Slope
+  const secantSlope = (f(b) - f(a)) / (b - a);
+
+  // Find c where f'(c) = secantSlope
+  // -2(c-2.5) = secantSlope
+  // c - 2.5 = secantSlope / -2
+  // c = 2.5 - secantSlope/2
+  const cVal = 2.5 - secantSlope / 2;
+
+  // Scaling
+  const scaleX = 60;
+  const scaleY = 30; // Y axis scaled down a bit
+  const cx = 50;
+  const cy = 300; // y=0 line
+
+  const toScreen = (x, y) => ({
+    x: cx + x * scaleX,
+    y: cy - y * scaleY
+  });
+
+  // Curve Path
+  const pts = [];
+  for (let i = 0.5; i <= 4.5; i += 0.1) {
+    const pt = toScreen(i, f(i));
+    pts.push(`${pt.x},${pt.y}`);
+  }
+  const pathD = `M ${pts.join(" L ")}`;
+
+  // Points
+  const pA = toScreen(a, f(a));
+  const pB = toScreen(b, f(b));
+  const pC = toScreen(cVal, f(cVal));
+
+  // Tangent Line at C
+  // y - yc = m(x - xc) => y = m(x - xc) + yc
+  const tangentStart = toScreen(cVal - 1, f(cVal) - secantSlope * 1);
+  const tangentEnd = toScreen(cVal + 1, f(cVal) + secantSlope * 1);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "flex-grow flex flex-col items-center justify-center p-8 select-none"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 right-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLang(l => l === "en" ? "zh" : "en"),
+    className: "px-3 py-1 bg-slate-800 border border-slate-600 rounded-full text-xs font-bold text-emerald-400 hover:bg-slate-700 hover:text-white transition flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-language"
+  }), t.langBtn)), /*#__PURE__*/React.createElement("header", {
+    className: "mb-8 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-violet-500 font-bold uppercase tracking-widest text-xs mb-2"
+  }, t.unit), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-white mb-2"
+  }, t.title), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-400 font-mono text-lg"
+  }, t.desc)), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col lg:flex-row gap-8 w-full max-w-5xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass p-4 rounded-3xl shadow-lg border border-violet-500/30 flex-1 flex justify-center"
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: "400",
+    height: "350",
+    className: "bg-slate-900 rounded-xl border border-slate-700"
+  }, /*#__PURE__*/React.createElement("line", {
+    x1: "0",
+    y1: cy,
+    x2: "400",
+    y2: cy,
+    stroke: "#475569",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: cx,
+    y1: "0",
+    x2: cx,
+    y2: "350",
+    stroke: "#475569",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: pathD,
+    fill: "none",
+    stroke: "#8b5cf6",
+    strokeWidth: "3"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: pA.x,
+    y1: pA.y,
+    x2: pB.x,
+    y2: pB.y,
+    stroke: "#64748b",
+    strokeWidth: "2",
+    strokeDasharray: "5 5"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: pA.x,
+    cy: pA.y,
+    r: "5",
+    fill: "#f43f5e",
+    stroke: "white",
+    strokeWidth: "1"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: pB.x,
+    cy: pB.y,
+    r: "5",
+    fill: "#f43f5e",
+    stroke: "white",
+    strokeWidth: "1"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: pA.x,
+    y: pA.y + 20,
+    textAnchor: "middle",
+    className: "text-xs font-bold",
+    fill: "#f43f5e"
+  }, "a"), /*#__PURE__*/React.createElement("text", {
+    x: pB.x,
+    y: pB.y + 20,
+    textAnchor: "middle",
+    className: "text-xs font-bold",
+    fill: "#f43f5e"
+  }, "b"), /*#__PURE__*/React.createElement("line", {
+    x1: tangentStart.x,
+    y1: tangentStart.y,
+    x2: tangentEnd.x,
+    y2: tangentEnd.y,
+    stroke: "#10b981",
+    strokeWidth: "3"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: pC.x,
+    cy: pC.y,
+    r: "6",
+    fill: "#10b981",
+    stroke: "white",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: pC.x,
+    y: pC.y - 15,
+    textAnchor: "middle",
+    className: "text-sm font-bold",
+    fill: "#10b981"
+  }, "c"))), /*#__PURE__*/React.createElement("div", {
+    className: "glass p-6 rounded-3xl flex-1 space-y-6 flex flex-col justify-center border border-violet-500/30"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-800 p-6 rounded-2xl border border-slate-700 space-y-6"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between mb-2 font-bold text-slate-400 text-sm"
+  }, /*#__PURE__*/React.createElement("span", null, "a: ", a), /*#__PURE__*/React.createElement("span", null, "b: ", b)), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "0.5",
+    max: "2",
+    step: "0.1",
+    value: a,
+    onChange: e => setA(Number(e.target.value)),
+    className: "w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer mb-4 accent-rose-500"
+  }), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "3",
+    max: "4.5",
+    step: "0.1",
+    value: b,
+    onChange: e => setB(Number(e.target.value)),
+    className: "w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-rose-500"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "p-4 bg-slate-900 rounded-xl space-y-2 border border-slate-800"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between items-center text-slate-400"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-xs uppercase font-bold"
+  }, t.secant), /*#__PURE__*/React.createElement("span", {
+    className: "font-mono"
+  }, secantSlope.toFixed(3))), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between items-center text-emerald-400 font-bold"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-xs uppercase"
+  }, t.tangent, " @ c"), /*#__PURE__*/React.createElement("span", {
+    className: "font-mono"
+  }, df(cVal).toFixed(3)))), /*#__PURE__*/React.createElement("div", {
+    className: "text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-sm text-slate-500 mb-1"
+  }, t.pointC, " is at x ="), /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-extrabold text-emerald-500 font-mono"
+  }, cVal.toFixed(2)))))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

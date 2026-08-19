@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小一常識：升旗禮 | Flag Raising Ceremony</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(180deg, #87ceeb 0%, #e0f7fa 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect,
+  useRef
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Flag Raising Ceremony",
+    zh: "升旗禮",
+    ja: "国旗掲揚",
+    ko: "국기 게양식",
+    es: "Ceremonia de izamiento de bandera",
+    de: "Fahnenhissung",
+    fi: "Lipunnostotilaisuus",
+    fr: "Cérémonie de levée du drapeau",
+    ar: "مراسم رفع العلم",
+    it: "Cerimonia dell'alzabandiera"
+  },
+  instruction: {
+    en: "Hold the button to raise the flag slowly!",
+    zh: "長按按鈕，慢慢升起國旗！",
+    ja: "ボタンを長押しして、ゆっくり国旗を揚げましょう！",
+    ko: "버튼을 길게 눌러 깃발을 천천히 올리세요!",
+    es: "¡Mantén presionado el botón para izar la bandera lentamente!",
+    de: "Halte den Knopf gedrückt, um die Flagge langsam zu hissen!",
+    fi: "Pidä painiketta painettuna nostaaksesi lipun hitaasti!",
+    fr: "Maintenez le bouton enfoncé pour lever le drapeau lentement !",
+    ar: "اضغط مع الاستمرار على الزر لرفع العلم ببطء!",
+    it: "Tieni premuto il pulsante per alzare la bandiera lentamente!"
+  },
+  stand: {
+    en: "Stand still and show respect.",
+    zh: "肅立，保持莊重。",
+    ja: "起立して敬意を表しましょう。",
+    ko: "가만히 서서 존경을 표하십시오.",
+    es: "Quédate quieto y muestra respeto.",
+    de: "Steh still und zeige Respekt.",
+    fi: "Seiso paikallasi ja osoita kunnioitusta.",
+    fr: "Restez immobile et montrez du respect.",
+    ar: "قف ثابتًا وأظهر الاحترام.",
+    it: "Stai fermo e mostra rispetto."
+  },
+  anthem: {
+    en: "National Anthem Playing...",
+    zh: "正在奏唱國歌...",
+    ja: "国歌斉唱中...",
+    ko: "국가 연주 중...",
+    es: "Himno nacional sonando...",
+    de: "Nationalhymne spielt...",
+    fi: "Kansallislaulu soi...",
+    fr: "Hymne national en cours...",
+    ar: "النشيد الوطني يعزف...",
+    it: "Inno nazionale in riproduzione..."
+  },
+  completed: {
+    en: "Ceremony Completed!",
+    zh: "升旗儀式完成！",
+    ja: "儀式完了！",
+    ko: "의식 완료!",
+    es: "¡Ceremonia completada!",
+    de: "Zeremonie abgeschlossen!",
+    fi: "Seremonia suoritettu!",
+    fr: "Cérémonie terminée !",
+    ar: "اكتملت المراسم!",
+    it: "Cerimonia completata!"
+  },
+  restart: {
+    en: "Again",
+    zh: "再一次",
+    ja: "もう一度",
+    ko: "다시",
+    es: "Otra vez",
+    de: "Nochmal",
+    fi: "Uudestaan",
+    fr: "Encore",
+    ar: "مرة أخرى",
+    it: "Ancora"
+  }
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [progress, setProgress] = useState(0); // 0 to 100
+  const [isHolding, setIsHolding] = useState(false);
+  const [completed, setCompleted] = useState(false);
+  const intervalRef = useRef(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+  const startRaising = () => {
+    if (completed) return;
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    setIsHolding(true);
+    intervalRef.current = setInterval(() => {
+      setProgress(p => {
+        if (p >= 100) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+          setCompleted(true);
+          setIsHolding(false);
+          return 100;
+        }
+        return p + 0.5; // Slow rise
+      });
+    }, 50);
+  };
+  const stopRaising = () => {
+    if (completed) return;
+    setIsHolding(false);
+    clearInterval(intervalRef.current);
+    intervalRef.current = null;
+  };
+  const restart = () => {
+    clearInterval(intervalRef.current);
+    intervalRef.current = null;
+    setProgress(0);
+    setCompleted(false);
+    setIsHolding(false);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-slate-800 mb-2 mt-8 drop-shadow-sm"
+  }, "🇨🇳 ", getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 w-full max-w-lg relative flex justify-center items-end pb-20 mt-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-4 h-[400px] bg-slate-400 rounded-t-full relative"
+  }, /*#__PURE__*/React.createElement(motion.div, {
+    className: "absolute left-4",
+    style: {
+      bottom: `${progress}%`
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-32 h-20 bg-red-600 relative shadow-lg origin-left flex items-center justify-center overflow-hidden"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-yellow-400 text-4xl absolute left-2 top-2"
+  }, "★"), /*#__PURE__*/React.createElement("div", {
+    className: "text-yellow-400 text-xs absolute left-8 top-1"
+  }, "★"), /*#__PURE__*/React.createElement("div", {
+    className: "text-yellow-400 text-xs absolute left-10 top-3"
+  }, "★"), /*#__PURE__*/React.createElement("div", {
+    className: "text-yellow-400 text-xs absolute left-10 top-6"
+  }, "★"), /*#__PURE__*/React.createElement("div", {
+    className: "text-yellow-400 text-xs absolute left-8 top-8"
+  }, "★"), /*#__PURE__*/React.createElement(motion.div, {
+    className: "absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent",
+    animate: {
+      x: ["-100%", "100%"]
+    },
+    transition: {
+      repeat: Infinity,
+      duration: 2,
+      ease: "linear"
+    }
+  })))), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-0 min-w-[200px] w-full max-w-md h-8 bg-slate-600 rounded-t-lg"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-0 left-[-50px] text-6xl"
+  }, "🧍"), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-0 right-[-50px] text-6xl",
+    style: {
+      transform: "scaleX(-1)"
+    }
+  }, "🧍"), /*#__PURE__*/React.createElement(AnimatePresence, null, isHolding && !completed && /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      opacity: 0,
+      y: 20
+    },
+    animate: {
+      opacity: 1,
+      y: 0
+    },
+    exit: {
+      opacity: 0
+    },
+    className: "absolute to-0 left-0 right-0 mx-auto text-center",
+    style: {
+      top: "20%"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl mb-2"
+  }, "🎵"), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/80 px-4 py-2 rounded-full font-bold text-slate-700 shadow"
+  }, getText("anthem"))))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-md text-center pb-12 z-10"
+  }, !completed ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("p", {
+    className: "font-bold text-slate-600 mb-4 bg-white/50 inline-block px-4 py-1 rounded"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("p", {
+    className: "font-bold text-slate-500 mb-6 text-sm"
+  }, "\"", getText("stand"), "\""), /*#__PURE__*/React.createElement("button", {
+    onMouseDown: startRaising,
+    onMouseUp: stopRaising,
+    onMouseLeave: stopRaising,
+    onTouchStart: startRaising,
+    onTouchEnd: stopRaising,
+    className: `w-24 h-24 rounded-full shadow-xl border-4 border-red-200 transition-transform active:scale-95 flex items-center justify-center select-none ${isHolding ? "bg-red-600 scale-95" : "bg-red-500 hover:bg-red-600"}`
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-4xl"
+  }, "👆"))) : /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/90 p-8 rounded-3xl shadow-xl"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "text-3xl font-black text-red-600 mb-4"
+  }, getText("completed")), /*#__PURE__*/React.createElement("button", {
+    onClick: restart,
+    className: "bg-slate-500 text-white px-8 py-3 rounded-full font-bold hover:bg-slate-600"
+  }, getText("restart")))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

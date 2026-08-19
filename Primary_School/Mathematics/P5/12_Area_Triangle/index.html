@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小五數學：三角形面積 | Area of Triangle</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Area of Triangle",
+    zh: "三角形面積",
+    ja: "三角形の面積",
+    ko: "삼각형의 넓이",
+    es: "Área del Triángulo",
+    de: "Fläche des Dreiecks",
+    fi: "Kolmion pinta-ala",
+    fr: "Aire du triangle",
+    ar: "مساحة المثلث",
+    it: "Area del Triangolo"
+  },
+  base: {
+    en: "Base",
+    zh: "底",
+    ja: "底辺",
+    ko: "밑변",
+    es: "Base",
+    de: "Basis",
+    fi: "Kanta",
+    fr: "Base",
+    ar: "القاعدة",
+    it: "Base"
+  },
+  height: {
+    en: "Height",
+    zh: "高",
+    ja: "高さ",
+    ko: "높이",
+    es: "Altura",
+    de: "Höhe",
+    fi: "Korkeus",
+    fr: "Hauteur",
+    ar: "الارتفاع",
+    it: "Altezza"
+  },
+  skew: {
+    en: "Skew",
+    zh: "傾斜",
+    ja: "スキュー",
+    ko: "기울기",
+    es: "Inclinación",
+    de: "Neigung",
+    fi: "Vino",
+    fr: "Inclinaison",
+    ar: "انحراف",
+    it: "Inclinazione"
+  },
+  area: {
+    en: "Area",
+    zh: "面積",
+    ja: "面積",
+    ko: "넓이",
+    es: "Área",
+    de: "Fläche",
+    fi: "Pinta-ala",
+    fr: "Aire",
+    ar: "المساحة",
+    it: "Area"
+  },
+  proof: {
+    en: "Proof: Form Parallelogram",
+    zh: "證明：形成平行四邊形",
+    ja: "証明：平行四辺形を作る",
+    ko: "증명: 평행사변형 형성",
+    es: "Prueba: Formar Paralelogramo",
+    de: "Beweis: Parallelogramm bilden",
+    fi: "Todistus: Muodosta suunnikas",
+    fr: "Preuve : Former un parallélogramme",
+    ar: "برهان: تكوين متوازي أضلاع",
+    it: "Prova: Forma Parallelogramma"
+  },
+  formula: {
+    en: "Area = (Base × Height) ÷ 2",
+    zh: "面積 = (底 × 高) ÷ 2",
+    ja: "面積 = (底辺 × 高さ) ÷ 2",
+    ko: "넓이 = (밑변 × 높이) ÷ 2",
+    es: "Área = (Base × Altura) ÷ 2",
+    de: "Fläche = (Basis × Höhe) ÷ 2",
+    fi: "Pinta-ala = (Kanta × Korkeus) ÷ 2",
+    fr: "Aire = (Base × Hauteur) ÷ 2",
+    ar: "المساحة = (القاعدة × الارتفاع) ÷ 2",
+    it: "Area = (Base × Altezza) ÷ 2"
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [base, setBase] = useState(6);
+  const [height, setHeight] = useState(5);
+  const [skew, setSkew] = useState(2);
+  const [showProof, setShowProof] = useState(false);
+  const area = base * height / 2;
+  const U = 40;
+  const CX = 400;
+  const CY = 300;
+
+  // Triangle Coordinates
+  // Bottom-Left (local to shape center base)
+  const p1 = {
+    x: 0,
+    y: height * U
+  };
+  const p2 = {
+    x: base * U,
+    y: height * U
+  };
+  const p3 = {
+    x: skew * U,
+    y: 0
+  };
+  const pointsStr = `${p1.x},${p1.y} ${p2.x},${p2.y} ${p3.x},${p3.y}`;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4 font-sans bg-slate-900 text-white"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-5xl flex justify-between items-center mb-10"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-black text-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.5)]"
+  }, "img ", getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "flex bg-slate-800/80 p-1.5 rounded-xl border border-white/10 flex-wrap justify-end gap-1 max-w-[50%]"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-cyan-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white hover:bg-white/5"}`
+  }, l)))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-6xl flex flex-col lg:flex-row gap-8 items-start"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 w-full glass-panel rounded-3xl overflow-hidden relative min-h-[400px] flex items-center justify-center border-4 border-slate-700/50"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 opacity-20 pointer-events-none",
+    style: {
+      backgroundImage: "linear-gradient(#475569 1px, transparent 1px), linear-gradient(90deg, #475569 1px, transparent 1px)",
+      backgroundSize: `${U}px ${U}px`
+    }
+  }), /*#__PURE__*/React.createElement("svg", {
+    width: "100%",
+    height: "500",
+    viewBox: "0 0 800 600",
+    className: "overflow-visible"
+  }, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("linearGradient", {
+    id: "triGrad",
+    x1: "0",
+    y1: "0",
+    x2: "0",
+    y2: "1"
+  }, /*#__PURE__*/React.createElement("stop", {
+    offset: "0%",
+    stopColor: "#22d3ee",
+    stopOpacity: "0.6"
+  }), /*#__PURE__*/React.createElement("stop", {
+    offset: "100%",
+    stopColor: "#0891b2",
+    stopOpacity: "0.8"
+  })), /*#__PURE__*/React.createElement("filter", {
+    id: "glow"
+  }, /*#__PURE__*/React.createElement("feGaussianBlur", {
+    stdDeviation: "4",
+    result: "coloredBlur"
+  }), /*#__PURE__*/React.createElement("feMerge", null, /*#__PURE__*/React.createElement("feMergeNode", {
+    in: "coloredBlur"
+  }), /*#__PURE__*/React.createElement("feMergeNode", {
+    in: "SourceGraphic"
+  })))), /*#__PURE__*/React.createElement("g", {
+    transform: `translate(${CX - base * U / 2}, ${CY - height * U / 2})`
+  }, /*#__PURE__*/React.createElement(motion.polygon, {
+    points: pointsStr,
+    fill: "url(#triGrad)",
+    stroke: "#cffafe",
+    strokeWidth: "3",
+    filter: "url(#glow)"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: p3.x,
+    y1: p3.y,
+    x2: p3.x,
+    y2: p1.y,
+    stroke: "#fb7185",
+    strokeWidth: "2",
+    strokeDasharray: "5,5"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: p3.x + 10,
+    y: p3.y + height * U / 2,
+    fill: "#fb7185",
+    fontWeight: "bold",
+    fontSize: "16"
+  }, height), /*#__PURE__*/React.createElement("line", {
+    x1: p1.x,
+    y1: p1.y + 15,
+    x2: p2.x,
+    y2: p2.y + 15,
+    stroke: "white",
+    strokeWidth: "2",
+    markerStart: "url(#tick)",
+    markerEnd: "url(#tick)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: (p1.x + p2.x) / 2,
+    y: p1.y + 40,
+    textAnchor: "middle",
+    fill: "white",
+    fontWeight: "bold",
+    fontSize: "16"
+  }, base), /*#__PURE__*/React.createElement(AnimatePresence, null, showProof && /*#__PURE__*/React.createElement(motion.polygon, {
+    initial: {
+      opacity: 0,
+      rotate: 0,
+      originX: 0.5,
+      originY: 0.5
+    } // Simplified animation
+    ,
+    animate: {
+      opacity: 1,
+      rotate: 180
+      // Manual Offset calculation for perfect alignment
+      // Rotated 180 around midpoint of p2-p3?
+      // Midpoint of right side edge: M = ((p2.x+p3.x)/2, (p2.y+p3.y)/2)
+      // SVG rotate(180, Mx, My)
+    },
+    exit: {
+      opacity: 0,
+      rotate: 0
+    },
+    transition: {
+      duration: 1.5,
+      type: "spring"
+    },
+    points: pointsStr,
+    fill: "transparent",
+    stroke: "#fbbf24",
+    strokeWidth: "2",
+    strokeDasharray: "5,5",
+    style: {
+      transformOrigin: `${(p2.x + p3.x) / 2}px ${(p2.y + p3.y) / 2}px`
+    }
+  }))), showProof && /*#__PURE__*/React.createElement(motion.text, {
+    initial: {
+      opacity: 0
+    },
+    animate: {
+      opacity: 1
+    },
+    transition: {
+      delay: 1
+    },
+    x: "400",
+    y: "550",
+    textAnchor: "middle",
+    fill: "#fbbf24",
+    fontSize: "18",
+    fontWeight: "bold"
+  }, getText("base", lang), " × ", getText("height", lang), " =", " ", base * height, " (Parallelogram)"))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full lg:w-80 flex flex-col gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 rounded-3xl flex flex-col gap-6"
+  }, /*#__PURE__*/React.createElement(ControlSlider, {
+    label: getText("base", lang),
+    val: base,
+    set: setBase,
+    min: 2,
+    max: 12,
+    color: "accent-cyan-400",
+    text: "text-cyan-300"
+  }), /*#__PURE__*/React.createElement(ControlSlider, {
+    label: getText("height", lang),
+    val: height,
+    set: setHeight,
+    min: 2,
+    max: 8,
+    color: "accent-pink-400",
+    text: "text-pink-300"
+  }), /*#__PURE__*/React.createElement(ControlSlider, {
+    label: getText("skew", lang),
+    val: skew,
+    set: setSkew,
+    min: -4,
+    max: 12,
+    color: "accent-amber-400",
+    text: "text-amber-300"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "h-px bg-white/10 my-2"
+  }), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setShowProof(!showProof),
+    className: `py-3 rounded-xl font-bold text-lg transition-all border border-white/10 ${showProof ? "bg-amber-500/80 text-white shadow-[0_0_20px_rgba(245,158,11,0.3)]" : "bg-slate-700/50 text-slate-300 hover:bg-slate-600/50"}`
+  }, getText("proof", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-950/50 p-4 rounded-xl border border-white/5 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-slate-400 text-xs font-bold uppercase tracking-widest mb-2"
+  }, getText("formula", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black text-white"
+  }, area), showProof && /*#__PURE__*/React.createElement("div", {
+    className: "text-xs text-amber-400 mt-1 font-mono"
+  }, "1/2 of ", base * height))))));
+}
+const ControlSlider = ({
+  label,
+  val,
+  set,
+  min,
+  max,
+  color,
+  text
+}) => /*#__PURE__*/React.createElement("div", {
+  className: "flex flex-col gap-2"
+}, /*#__PURE__*/React.createElement("div", {
+  className: `flex justify-between font-bold ${text}`
+}, /*#__PURE__*/React.createElement("label", null, label), /*#__PURE__*/React.createElement("span", null, val)), /*#__PURE__*/React.createElement("input", {
+  type: "range",
+  min: min,
+  max: max,
+  value: val,
+  onChange: e => set(Number(e.target.value)),
+  className: `w-full ${color}`
+}));
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

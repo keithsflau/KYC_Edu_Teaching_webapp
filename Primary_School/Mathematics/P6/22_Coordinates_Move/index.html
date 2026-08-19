@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小六數學：坐標平移 | Coordinate Translation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Translate Coordinates",
+    zh: "坐標平移",
+    ja: "座標移動",
+    ko: "좌표 이동",
+    es: "Trasladar Coordenadas",
+    de: "Koordinaten verschieben",
+    fi: "Siirrä koordinaatteja",
+    fr: "Translater les coordonnées",
+    ar: "نقل الإحداثيات",
+    it: "Trasla Coordinate"
+  },
+  startPoint: {
+    en: "Start Point (A)",
+    zh: "起點 (A)",
+    ja: "始点 (A)",
+    ko: "시작점 (A)",
+    es: "Punto de Inicio (A)",
+    de: "Startpunkt (A)",
+    fi: "Aloituspiste (A)",
+    fr: "Point de départ (A)",
+    ar: "نقطة البداية (A)",
+    it: "Punto di Inizio (A)"
+  },
+  endPoint: {
+    en: "End Point (B)",
+    zh: "終點 (B)",
+    ja: "終点 (B)",
+    ko: "끝점 (B)",
+    es: "Punto Final (B)",
+    de: "Endpunkt (B)",
+    fi: "Päätepiste (B)",
+    fr: "Point d'arrivée (B)",
+    ar: "نقطة النهاية (B)",
+    it: "Punto Finale (B)"
+  },
+  movement: {
+    en: "Movement",
+    zh: "移動",
+    ja: "移動",
+    ko: "이동",
+    es: "Movimiento",
+    de: "Bewegung",
+    fi: "Liike",
+    fr: "Mouvement",
+    ar: "حركة",
+    it: "Movimento"
+  },
+  horizontal: {
+    en: "Horizontal (x)",
+    zh: "水平 (x)",
+    ja: "水平 (x)",
+    ko: "수평 (x)",
+    es: "Horizontal (x)",
+    de: "Horizontal (x)",
+    fi: "Vaaka (x)",
+    fr: "Horizontal (x)",
+    ar: "أفقي (x)",
+    it: "Orizzontale (x)"
+  },
+  vertical: {
+    en: "Vertical (y)",
+    zh: "垂直 (y)",
+    ja: "垂直 (y)",
+    ko: "수직 (y)",
+    es: "Vertical (y)",
+    de: "Vertikal (y)",
+    fi: "Pysty (y)",
+    fr: "Vertical (y)",
+    ar: "عمودي (y)",
+    it: "Verticale (y)"
+  },
+  right: {
+    en: "Right",
+    zh: "向右",
+    ja: "右",
+    ko: "오른쪽",
+    es: "Derecha",
+    de: "Rechts",
+    fi: "Oikealle",
+    fr: "Droite",
+    ar: "يمين",
+    it: "Destra"
+  },
+  left: {
+    en: "Left",
+    zh: "向左",
+    ja: "左",
+    ko: "왼쪽",
+    es: "Izquierda",
+    de: "Links",
+    fi: "Vasemmalle",
+    fr: "Gauche",
+    ar: "يسار",
+    it: "Sinistra"
+  },
+  up: {
+    en: "Up",
+    zh: "向上",
+    ja: "上",
+    ko: "위",
+    es: "Arriba",
+    de: "Oben",
+    fi: "Ylös",
+    fr: "Haut",
+    ar: "أعلى",
+    it: "Su"
+  },
+  down: {
+    en: "Down",
+    zh: "向下",
+    ja: "下",
+    ko: "아래",
+    es: "Abajo",
+    de: "Unten",
+    fi: "Alas",
+    fr: "Bas",
+    ar: "أسفل",
+    it: "Giù"
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [start, setStart] = useState({
+    x: 2,
+    y: 3
+  });
+  const [move, setMove] = useState({
+    dx: 4,
+    dy: 2
+  });
+  const end = {
+    x: start.x + move.dx,
+    y: start.y + move.dy
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4 font-sans bg-slate-900 text-white"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-6xl flex justify-between items-center mb-8"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-black text-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.5)]"
+  }, "↔️ ", getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "flex bg-slate-800/80 p-1.5 rounded-xl border border-white/10 flex-wrap justify-end gap-1 max-w-[50%]"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-cyan-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white hover:bg-white/5"}`
+  }, l)))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-4 rounded-3xl aspect-square relative flex items-center justify-center"
+  }, /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 400 400",
+    className: "w-full h-full bg-slate-800/50 rounded-2xl"
+  }, Array.from({
+    length: 21
+  }).map((_, i) => /*#__PURE__*/React.createElement("g", {
+    key: i
+  }, /*#__PURE__*/React.createElement("line", {
+    x1: i * 20,
+    y1: "0",
+    x2: i * 20,
+    y2: "400",
+    stroke: "rgba(255,255,255,0.1)",
+    strokeWidth: i === 10 ? 0 : 1
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "0",
+    y1: i * 20,
+    x2: "400",
+    y2: i * 20,
+    stroke: "rgba(255,255,255,0.1)",
+    strokeWidth: i === 10 ? 0 : 1
+  }))), /*#__PURE__*/React.createElement("line", {
+    x1: "200",
+    y1: "0",
+    x2: "200",
+    y2: "400",
+    stroke: "white",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "0",
+    y1: "200",
+    x2: "400",
+    y2: "200",
+    stroke: "white",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("marker", {
+    id: "arrow",
+    markerWidth: "10",
+    markerHeight: "10",
+    refX: "9",
+    refY: "3",
+    orient: "auto",
+    markerUnits: "strokeWidth"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M0,0 L0,6 L9,3 z",
+    fill: "#facc15"
+  }))), /*#__PURE__*/React.createElement(motion.path, {
+    d: `M ${200 + start.x * 20} ${200 - start.y * 20} L ${200 + end.x * 20} ${200 - end.y * 20}`,
+    stroke: "#facc15",
+    strokeWidth: "3",
+    strokeDasharray: "6 4",
+    initial: {
+      pathLength: 0
+    },
+    animate: {
+      pathLength: 1
+    },
+    transition: {
+      duration: 1
+    },
+    markerEnd: "url(#arrow)"
+  }), /*#__PURE__*/React.createElement(motion.circle, {
+    animate: {
+      cx: 200 + start.x * 20,
+      cy: 200 - start.y * 20
+    },
+    r: "6",
+    fill: "#22d3ee",
+    stroke: "white",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: 200 + start.x * 20,
+    y: 200 - start.y * 20 - 15,
+    textAnchor: "middle",
+    fill: "#22d3ee",
+    fontWeight: "bold",
+    fontSize: "14"
+  }, "A"), /*#__PURE__*/React.createElement(motion.circle, {
+    animate: {
+      cx: 200 + end.x * 20,
+      cy: 200 - end.y * 20
+    },
+    r: "6",
+    fill: "#f472b6",
+    stroke: "white",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: 200 + end.x * 20,
+    y: 200 - end.y * 20 - 15,
+    textAnchor: "middle",
+    fill: "#f472b6",
+    fontWeight: "bold",
+    fontSize: "14"
+  }, "B")), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 left-4 font-mono text-xs text-slate-500 bg-slate-900/80 px-2 rounded border border-white/5"
+  }, "Grid: -10 to 10")), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 rounded-3xl border-l-4 border-cyan-500"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-cyan-400 font-bold uppercase mb-4"
+  }, getText("startPoint", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "flex-1"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "block text-xs font-bold text-slate-500 mb-1"
+  }, "X"), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: start.x,
+    onChange: e => setStart({
+      ...start,
+      x: parseInt(e.target.value, 10) || 0
+    }),
+    className: "w-full bg-slate-800 border-2 border-slate-600 rounded-xl py-2 text-center text-xl font-bold"
+  })), /*#__PURE__*/React.createElement("label", {
+    className: "flex-1"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "block text-xs font-bold text-slate-500 mb-1"
+  }, "Y"), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: start.y,
+    onChange: e => setStart({
+      ...start,
+      y: parseInt(e.target.value, 10) || 0
+    }),
+    className: "w-full bg-slate-800 border-2 border-slate-600 rounded-xl py-2 text-center text-xl font-bold"
+  })))), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 rounded-3xl border-l-4 border-yellow-500"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-yellow-400 font-bold uppercase mb-4"
+  }, getText("movement", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "mb-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between text-sm font-bold mb-1"
+  }, /*#__PURE__*/React.createElement("span", null, getText("horizontal", lang)), /*#__PURE__*/React.createElement("span", {
+    className: "text-yellow-400"
+  }, move.dx > 0 ? getText("right", lang) + " " + move.dx : move.dx < 0 ? getText("left", lang) + " " + Math.abs(move.dx) : "0")), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "-8",
+    max: "8",
+    value: move.dx,
+    onChange: e => setMove({
+      ...move,
+      dx: parseInt(e.target.value, 10)
+    }),
+    className: "w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-yellow-400"
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between text-sm font-bold mb-1"
+  }, /*#__PURE__*/React.createElement("span", null, getText("vertical", lang)), /*#__PURE__*/React.createElement("span", {
+    className: "text-yellow-400"
+  }, move.dy > 0 ? getText("up", lang) + " " + move.dy : move.dy < 0 ? getText("down", lang) + " " + Math.abs(move.dy) : "0")), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "-8",
+    max: "8",
+    value: move.dy,
+    onChange: e => setMove({
+      ...move,
+      dy: parseInt(e.target.value, 10)
+    }),
+    className: "w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-yellow-400"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 rounded-3xl border-l-4 border-pink-500 bg-pink-500/10"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-pink-400 font-bold uppercase mb-2"
+  }, getText("endPoint", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-center gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs text-pink-300 font-bold"
+  }, "X"), /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-black font-mono"
+  }, start.x, " ", /*#__PURE__*/React.createElement("span", {
+    className: "text-yellow-400"
+  }, move.dx >= 0 ? "+" : "-", " ", Math.abs(move.dx)), " ", "= ", end.x)), /*#__PURE__*/React.createElement("div", {
+    className: "w-px h-12 bg-pink-500/30"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs text-pink-300 font-bold"
+  }, "Y"), /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-black font-mono"
+  }, start.y, " ", /*#__PURE__*/React.createElement("span", {
+    className: "text-yellow-400"
+  }, move.dy >= 0 ? "+" : "-", " ", Math.abs(move.dy)), " ", "= ", end.y)))))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

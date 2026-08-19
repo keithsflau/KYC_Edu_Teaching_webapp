@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小二常識：公園守規則 | Park Rules</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #a7f3d0 0%, #6ee7b7 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Park Rules",
+    zh: "公園守規則",
+    ja: "公園のルール",
+    ko: "공원 규칙",
+    es: "Reglas del Parque",
+    de: "Parkregeln",
+    fi: "Puiston säännöt",
+    fr: "Règles du Parc",
+    ar: "قواعد الحديقة",
+    it: "Regole del Parco"
+  },
+  instruction: {
+    en: "Tap BAD behaviors to stop them!",
+    zh: "點擊錯誤行為來糾正！",
+    ja: "悪い行動をタップして止めよう！",
+    ko: "나쁜 행동을 탭하여 멈추세요!",
+    es: "¡Toca los malos comportamientos para detenerlos!",
+    de: "Tippe auf SCHLECHTES Verhalten, um es zu stoppen!",
+    fi: "Napauta HUONOA käytöstä lopettaaksesi sen!",
+    fr: "Appuyez sur les MAUVAIS comportements pour les arrêter !",
+    ar: "اضغط على السلوكيات السيئة لوقفها!",
+    it: "Tocca i CATTIVI comportamenti per fermarli!"
+  },
+  found: {
+    en: "Stopped!",
+    zh: "已糾正！",
+    ja: "止めた！",
+    ko: "멈췄습니다!",
+    es: "¡Detenido!",
+    de: "Gestoppt!",
+    fi: "Pysäytetty!",
+    fr: "Arrêté !",
+    ar: "توقف!",
+    it: "Fermato!"
+  },
+  clean: {
+    en: "Everyone is behaving well!",
+    zh: "大家都守規則了！",
+    ja: "みんな良い子ですね！",
+    ko: "모두가 잘 행동하고 있어요!",
+    es: "¡Todos se comportan bien!",
+    de: "Alle benehmen sich gut!",
+    fi: "Kaikki käyttäytyvät hyvin!",
+    fr: "Tout le monde se comporte bien !",
+    ar: "الجميع يتصرف بشكل جيد!",
+    it: "Tutti si comportano bene!"
+  },
+  reset: {
+    en: "Play Again",
+    zh: "再玩一次",
+    ja: "もう一度プレイ",
+    ko: "다시 하기",
+    es: "Jugar de Nuevo",
+    de: "Nochmal spielen",
+    fi: "Pelaa uudelleen",
+    fr: "Rejouer",
+    ar: "العب مرة أخرى",
+    it: "Gioca di Nuovo"
+  },
+  climb: {
+    en: "No Climbing!",
+    zh: "不可攀爬！",
+    ja: "登らないで！",
+    ko: "등반 금지!",
+    es: "¡No escalar!",
+    de: "Nicht klettern!",
+    fi: "Ei kiipeilyä!",
+    fr: "Défense de grimper !",
+    ar: "لا تسلق!",
+    it: "Vietato Arrampicarsi!"
+  },
+  pick: {
+    en: "No Picking Flowers!",
+    zh: "不可採摘花朵！",
+    ja: "花を摘まないで！",
+    ko: "꽃을 꺾지 마세요!",
+    es: "¡No recoger flores!",
+    de: "Keine Blumen pflücken!",
+    fi: "Ei kukkien poimimista!",
+    fr: "Défense de cueillir des fleurs !",
+    ar: "لا قطف الزهور!",
+    it: "Vietato Cogliere Fiori!"
+  },
+  litter: {
+    en: "No Littering!",
+    zh: "不可亂拋垃圾！",
+    ja: "ポイ捨て禁止！",
+    ko: "쓰레기 투기 금지!",
+    es: "¡No tirar basura!",
+    de: "Nicht wegwerfen!",
+    fi: "Ei roskia!",
+    fr: "Défense de jeter des ordures !",
+    ar: "ممنوع رمي القمامة!",
+    it: "Vietato gettare rifiuti!"
+  },
+  bike: {
+    en: "No Cycling Here!",
+    zh: "此處禁止踏單車！",
+    ja: "ここでは自転車禁止！",
+    ko: "여기서는 자전거 금지!",
+    es: "¡No andar en bicicleta aquí!",
+    de: "Hier kein Radfahren!",
+    fi: "Ei pyöräilyä täällä!",
+    fr: "Cyclisme interdit ici !",
+    ar: "لا ركوب الدراجات هنا!",
+    it: "Vietato andare in bicicletta qui!"
+  },
+  // Assuming pedestrian zone
+  dog: {
+    en: "Leash your dog!",
+    zh: "請牽好狗隻！",
+    ja: "犬をリードにつないで！",
+    ko: "개를 목줄에 매세요!",
+    es: "¡Ata a tu perro!",
+    de: "Leine deinen Hund an!",
+    fi: "Pidä koira kytkettynä!",
+    fr: "Tenez votre chien en laisse !",
+    ar: "أربط كلبك!",
+    it: "Tieni il cane al guinzaglio!"
+  }
+};
+const itemsDef = [{
+  id: "climb",
+  icon: "🧗",
+  x: 20,
+  y: 30,
+  type: "bad",
+  msg: "climb"
+},
+// On statue/tree
+{
+  id: "pick",
+  icon: "🥀",
+  x: 80,
+  y: 70,
+  type: "bad",
+  msg: "pick"
+},
+// Flower bed
+{
+  id: "litter",
+  icon: "🚯",
+  x: 40,
+  y: 80,
+  type: "bad",
+  msg: "litter"
+}, {
+  id: "bike",
+  icon: "🚴",
+  x: 60,
+  y: 40,
+  type: "bad",
+  msg: "bike",
+  move: true
+}, {
+  id: "dog",
+  icon: "🐕",
+  x: 10,
+  y: 80,
+  type: "bad",
+  msg: "dog",
+  move: true
+},
+// Good behaviors (distractors)
+{
+  id: "good1",
+  icon: "🏃",
+  x: 30,
+  y: 60,
+  type: "good"
+}, {
+  id: "good2",
+  icon: "🚶",
+  x: 70,
+  y: 20,
+  type: "good"
+}, {
+  id: "good3",
+  icon: "📖",
+  x: 50,
+  y: 50,
+  type: "good"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [items, setItems] = useState([]);
+  const [msg, setMsg] = useState(null);
+  const [foundCount, setFoundCount] = useState(0);
+  const getText = key => t[key][lang] || t[key]["en"];
+  useEffect(() => {
+    reset();
+  }, []);
+  const reset = () => {
+    setItems(itemsDef.map(i => ({
+      ...i,
+      visible: true
+    })));
+    setFoundCount(0);
+    setMsg(null);
+  };
+  const handleClick = item => {
+    if (item.type === "bad") {
+      setItems(prev => prev.map(i => i.id === item.id ? {
+        ...i,
+        visible: false
+      } : i));
+      setMsg(getText(item.msg));
+      setFoundCount(c => c + 1);
+      setTimeout(() => setMsg(null), 1500);
+    } else {
+      // Good behavior, shake or handle misclick?
+      // No op for simplicity or gentle nudge
+    }
+  };
+  const badRemaining = items.filter(i => i.type === "bad" && i.visible).length;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-emerald-800 mb-4 mt-8 drop-shadow-sm bg-white/50 px-6 py-2 rounded-full"
+  }, "⛲ ", getText("title")), /*#__PURE__*/React.createElement("p", {
+    className: "font-bold text-emerald-900 mb-6"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "relative w-full max-w-3xl aspect-[16/10] bg-emerald-100 rounded-3xl shadow-2xl border-8 border-emerald-300 overflow-hidden"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 bg-gradient-to-b from-sky-200 to-emerald-100"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-0 w-full h-1/2 bg-emerald-300 rounded-t-[50%] scale-x-150"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-[20%] left-[10%] text-9xl transform -translate-x-1/2 opacity-80"
+  }, "🌳"), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-[20%] right-[10%] text-9xl transform translate-x-1/2 opacity-80"
+  }, "🌳"), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-[40%] left-[20%] w-24 h-32 bg-slate-400 rounded-t-full shadow-lg border-b-8 border-slate-500"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-[20%] right-[10%] w-32 h-12 bg-amber-800 rounded-full flex justify-center -mt-6 gap-2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl -mt-4"
+  }, "🌻"), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl -mt-2"
+  }, "🌷"), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl -mt-4"
+  }, "🌻")), /*#__PURE__*/React.createElement(AnimatePresence, null, items.map(item => item.visible && /*#__PURE__*/React.createElement(motion.button, {
+    key: item.id,
+    className: `absolute text-6xl focus:outline-none filter drop-shadow-lg ${item.type === "bad" ? "cursor-pointer hover:scale-110" : "cursor-default opacity-80"}`,
+    style: {
+      left: `${item.x}%`,
+      top: `${item.y}%`
+    },
+    animate: item.move ? {
+      x: [0, 20, 0]
+    } : {},
+    transition: {
+      repeat: Infinity,
+      duration: 2
+    },
+    onClick: () => handleClick(item),
+    whileTap: {
+      scale: 0.8
+    }
+  }, item.icon, item.type === "bad" && /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-0 right-0 w-4 h-4 bg-red-500 rounded-full animate-ping"
+  })))), /*#__PURE__*/React.createElement(AnimatePresence, null, msg && /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      scale: 0,
+      opacity: 0
+    },
+    animate: {
+      scale: 1,
+      opacity: 1
+    },
+    exit: {
+      scale: 0,
+      opacity: 0
+    },
+    className: "absolute inset-0 flex items-center justify-center pointer-events-none z-20"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-red-500 text-white text-3xl font-black px-8 py-4 rounded-full shadow-2xl border-4 border-white transform -rotate-6"
+  }, "✋ ", msg))), badRemaining === 0 && /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center z-30"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-8xl mb-4"
+  }, "🕊️"), /*#__PURE__*/React.createElement("h2", {
+    className: "text-4xl font-black text-emerald-600 mb-6"
+  }, getText("clean")), /*#__PURE__*/React.createElement("button", {
+    onClick: reset,
+    className: "bg-emerald-500 text-white px-10 py-4 rounded-full font-black text-xl hover:bg-emerald-600 shadow-xl"
+  }, getText("reset"), " 🔄"))), /*#__PURE__*/React.createElement("div", {
+    className: "mt-8 bg-white px-6 py-2 rounded-full shadow-xl text-emerald-800 font-bold text-xl"
+  }, "Issues Fixed: ", foundCount, " /", " ", itemsDef.filter(i => i.type === "bad").length));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

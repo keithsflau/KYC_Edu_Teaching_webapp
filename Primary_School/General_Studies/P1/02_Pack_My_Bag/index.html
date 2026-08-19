@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小一常識：我的書包有什麼？ | Pack My Bag</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #fff1f2 0%, #fecdd3 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Pack My Bag",
+    zh: "我的書包有什麼？",
+    ja: "かばんの準備",
+    ko: "책가방 챙기기",
+    es: "Empacar mi mochila",
+    de: "Meine Tasche packen",
+    fi: "Pakkaa laukkuni",
+    fr: "Faire mon cartable",
+    ar: "حزم حقيبتي",
+    it: "Prepara la mia borsa"
+  },
+  instruction: {
+    en: "Pack correct items for school!",
+    zh: "把上學需要的物品放入書包！",
+    ja: "学校に必要なものをかばんに入れよう！",
+    ko: "학교에 필요한 물건을 가방에 넣으세요!",
+    es: "¡Empaca los artículos correctos para la escuela!",
+    de: "Packe die richtigen Sachen für die Schule!",
+    fi: "Pakkaa oikeat tavarat kouluun!",
+    fr: "Prépare les bons objets pour l'école !",
+    ar: "احزم الأشياء الصحيحة للمدرسة!",
+    it: "Prepara gli oggetti giusti per la scuola!"
+  },
+  desk: {
+    en: "Desk",
+    zh: "書桌",
+    es: "Escritorio",
+    de: "Schreibtisch",
+    fi: "Työpöytä",
+    fr: "Bureau",
+    ar: "مكتب",
+    it: "Scrivania"
+  },
+  bag: {
+    en: "School Bag",
+    zh: "書包",
+    es: "Mochila escolar",
+    de: "Schultasche",
+    fi: "Koululaukku",
+    fr: "Cartable",
+    ar: "حقيبة مدرسية",
+    it: "Cartella scolastica"
+  },
+  check: {
+    en: "Check",
+    zh: "檢查",
+    es: "Comprobar",
+    de: "Prüfen",
+    fi: "Tarkista",
+    fr: "Vérifier",
+    ar: "تحقق",
+    it: "Controlla"
+  },
+  reset: {
+    en: "Reset",
+    zh: "重置",
+    es: "Reiniciar",
+    de: "Zurücksetzen",
+    fi: "Nollaa",
+    fr: "Réinitialiser",
+    ar: "إعادة تعيين",
+    it: "Reimposta"
+  },
+  correct: {
+    en: "Great job! Ready for school!",
+    zh: "做得好！準備好上學了！",
+    es: "¡Buen trabajo! ¡Listo para la escuela!",
+    de: "Gut gemacht! Bereit für die Schule!",
+    fi: "Hyvää työtä! Valmis kouluun!",
+    fr: "Bien joué ! Prêt pour l'école !",
+    ar: "عمل رائع! جاهز للمدرسة!",
+    it: "Ottimo lavoro! Pronto per la scuola!"
+  },
+  wrong: {
+    en: "Something is missing or wrong...",
+    zh: "有東西遺漏或帶錯了...",
+    es: "Algo falta o está mal...",
+    de: "Etwas fehlt oder ist falsch...",
+    fi: "Jotain puuttuu tai on väärin...",
+    fr: "Il manque quelque chose ou c'est faux...",
+    ar: "هناك شيء مفقود أو خطأ...",
+    it: "Manca qualcosa o è sbagliato..."
+  },
+  item_chi: {
+    en: "Chinese Book",
+    zh: "中文書",
+    es: "Libro de chino",
+    de: "Chinesischbuch",
+    fi: "Kiinan kirja",
+    fr: "Livre de chinois",
+    ar: "كتاب صيني",
+    it: "Libro di cinese"
+  },
+  item_eng: {
+    en: "English Book",
+    zh: "英文書",
+    es: "Libro de inglés",
+    de: "Englischbuch",
+    fi: "Englannin kirja",
+    fr: "Livre d'anglais",
+    ar: "كتاب إنجليزي",
+    it: "Libro di inglese"
+  },
+  item_math: {
+    en: "Math Book",
+    zh: "數學書",
+    es: "Libro de matemáticas",
+    de: "Mathebuch",
+    fi: "Matematiikan kirja",
+    fr: "Livre de mathématiques",
+    ar: "كتاب رياضيات",
+    it: "Libro di matematica"
+  },
+  item_pencil: {
+    en: "Pencil Case",
+    zh: "筆袋",
+    es: "Estuche",
+    de: "Federmäppchen",
+    fi: "Penaali",
+    fr: "Trousse",
+    ar: "مقلمة",
+    it: "Astuccio"
+  },
+  item_handbook: {
+    en: "Handbook",
+    zh: "手冊",
+    es: "Manual",
+    de: "Handbuch",
+    fi: "Käsikirja",
+    fr: "Manuel",
+    ar: "كتيب",
+    it: "Manuale"
+  },
+  item_water: {
+    en: "Water Bottle",
+    zh: "水壺",
+    es: "Botella de agua",
+    de: "Wasserflasche",
+    fi: "Vesipullo",
+    fr: "Bouteille d'eau",
+    ar: "زجاجة ماء",
+    it: "Bottiglia d'acqua"
+  },
+  item_toy: {
+    en: "Toy Car",
+    zh: "玩具車",
+    es: "Coche de juguete",
+    de: "Spielzeugauto",
+    fi: "Leluauto",
+    fr: "Voiture jouet",
+    ar: "سيارة لعبة",
+    it: "Macchinina"
+  },
+  item_game: {
+    en: "Game Console",
+    zh: "遊戲機",
+    es: "Consola de juegos",
+    de: "Spielkonsole",
+    fi: "Pelikonsoli",
+    fr: "Console de jeux",
+    ar: "وحدة تحكم الألعاب",
+    it: "Console di gioco"
+  },
+  item_chips: {
+    en: "Chips",
+    zh: "薯片",
+    es: "Papas fritas",
+    de: "Chips",
+    fi: "Sipsit",
+    fr: "Croustilles",
+    ar: "رقائق",
+    it: "Patatine"
+  }
+};
+const initialItems = [{
+  id: "chi",
+  type: "good",
+  icon: "📕",
+  label: "item_chi"
+}, {
+  id: "eng",
+  type: "good",
+  icon: "📘",
+  label: "item_eng"
+}, {
+  id: "toy",
+  type: "bad",
+  icon: "🏎️",
+  label: "item_toy"
+},
+// Intentionally mixed
+{
+  id: "math",
+  type: "good",
+  icon: "📗",
+  label: "item_math"
+}, {
+  id: "game",
+  type: "bad",
+  icon: "🎮",
+  label: "item_game"
+}, {
+  id: "pencil",
+  type: "good",
+  icon: "✏️",
+  label: "item_pencil"
+}, {
+  id: "chips",
+  type: "bad",
+  icon: "🥔",
+  label: "item_chips"
+}, {
+  id: "handbook",
+  type: "good",
+  icon: "📓",
+  label: "item_handbook"
+}, {
+  id: "water",
+  type: "good",
+  icon: "🫗",
+  label: "item_water"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [deskItems, setDeskItems] = useState(initialItems);
+  const [bagItems, setBagItems] = useState([]);
+  const [status, setStatus] = useState(null); // null, 'correct', 'wrong'
+
+  const getText = key => t[key][lang] || t[key]["en"];
+  const toggleItem = (item, from) => {
+    setStatus(null);
+    if (from === "desk") {
+      setDeskItems(deskItems.filter(i => i.id !== item.id));
+      setBagItems([...bagItems, item]);
+    } else {
+      setBagItems(bagItems.filter(i => i.id !== item.id));
+      setDeskItems([...deskItems, item]);
+    }
+  };
+  const checkAnswers = () => {
+    const hasAllGood = initialItems.filter(i => i.type === "good").every(i => bagItems.find(b => b.id === i.id));
+    const hasNoBad = !bagItems.some(i => i.type === "bad");
+    if (hasAllGood && hasNoBad) {
+      setStatus("correct");
+    } else {
+      setStatus("wrong");
+    }
+  };
+  const reset = () => {
+    setDeskItems(initialItems);
+    setBagItems([]);
+    setStatus(null);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-rose-600 mb-4 mt-8 drop-shadow-sm"
+  }, "🎒 ", getText("title")), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-600 font-bold mb-6 text-lg"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-amber-100 rounded-3xl p-6 border-4 border-amber-200 min-h-[400px]"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "text-2xl font-black text-amber-800 mb-4 text-center"
+  }, getText("desk")), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-wrap gap-4 justify-center"
+  }, /*#__PURE__*/React.createElement(AnimatePresence, null, deskItems.map(item => /*#__PURE__*/React.createElement(motion.button, {
+    key: item.id,
+    layoutId: item.id,
+    onClick: () => toggleItem(item, "desk"),
+    whileHover: {
+      scale: 1.1
+    },
+    whileTap: {
+      scale: 0.9
+    },
+    className: "bg-white p-3 rounded-xl shadow-md flex flex-col items-center w-24 h-24 justify-center border-2 border-white hover:border-rose-300"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-4xl mb-1"
+  }, item.icon), /*#__PURE__*/React.createElement("span", {
+    className: "text-xs font-bold text-slate-600 leading-tight"
+  }, getText(item.label))))))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-rose-100 rounded-3xl p-6 border-4 border-rose-200 min-h-[400px] relative"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "text-2xl font-black text-rose-800 mb-4 text-center"
+  }, getText("bag")), status === "correct" && /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      scale: 0
+    },
+    animate: {
+      scale: 1
+    },
+    className: "absolute top-2 right-2 text-4xl"
+  }, "🌟"), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-wrap gap-4 justify-center"
+  }, /*#__PURE__*/React.createElement(AnimatePresence, null, bagItems.map(item => /*#__PURE__*/React.createElement(motion.button, {
+    key: item.id,
+    layoutId: item.id,
+    onClick: () => toggleItem(item, "bag"),
+    whileHover: {
+      scale: 1.1
+    },
+    whileTap: {
+      scale: 0.9
+    },
+    className: "bg-white p-3 rounded-xl shadow-md flex flex-col items-center w-24 h-24 justify-center border-2 border-rose-300 ring-2 ring-rose-100"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-4xl mb-1"
+  }, item.icon), /*#__PURE__*/React.createElement("span", {
+    className: "text-xs font-bold text-slate-600 leading-tight"
+  }, getText(item.label)))))), bagItems.length === 0 && /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 flex items-center justify-center opacity-20 pointer-events-none"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-9xl"
+  }, "🎒")))), /*#__PURE__*/React.createElement("div", {
+    className: "mt-8 flex gap-4 items-center"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: checkAnswers,
+    className: "bg-rose-500 text-white px-10 py-4 rounded-full font-black text-2xl hover:bg-rose-600 shadow-xl transition-transform hover:scale-105"
+  }, getText("check"), " ✅"), /*#__PURE__*/React.createElement("button", {
+    onClick: reset,
+    className: "bg-slate-200 text-slate-600 px-6 py-4 rounded-full font-bold text-xl hover:bg-slate-300"
+  }, getText("reset"), " 🔄")), status && /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      opacity: 0,
+      y: 20
+    },
+    animate: {
+      opacity: 1,
+      y: 0
+    },
+    className: `mt-6 p-4 rounded-2xl font-black text-xl text-center ${status === "correct" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`
+  }, getText(status)));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

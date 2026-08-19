@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - Cyber Defense</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: #0f172a;
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Cyber Defense: Phishing",
+    zh: "網絡防禦：釣魚郵件",
+    ja: "サイバー防衛：フィッシング",
+    ko: "사이버 방어: 피싱",
+    es: "Ciberdefensa: Phishing",
+    de: "Cyber-Abwehr: Phishing",
+    fi: "Kyberpuolustus: Tietojenkalastelu",
+    fr: "Cyberdéfense : Hameçonnage",
+    ar: "الدفاع السيبراني: التصيد",
+    it: "Difesa Informatica: Phishing"
+  },
+  instruction: {
+    en: "Is this email SAFE to open or a SCAM?",
+    zh: "這封郵件是安全的還是詐騙？",
+    ja: "このメールは安全ですか、それとも詐欺ですか？",
+    ko: "이 이메일은 안전한가요, 아니면 사기인가요?",
+    es: "¿Es este correo electrónico SEGURO o una ESTAFA?",
+    de: "Ist diese E-Mail SICHER oder ein BETRUG?",
+    fi: "Onko tämä sähköposti TURVALLINEN vai HUIJAUS?",
+    fr: "Cet e-mail est-il SANS DANGER ou une ARNAQUE ?",
+    ar: "هل هذا البريد الإلكتروني آمن للفتح أم احتيال؟",
+    it: "Questa email è SICURA o una TRUFFA?"
+  },
+  safe: {
+    en: "Safe (Reply)",
+    zh: "安全 (回覆)",
+    ja: "安全 (返信)",
+    ko: "안전 (답장)",
+    es: "Seguro (Responder)",
+    de: "Sicher (Antworten)",
+    fi: "Turvallinen (Vastaa)",
+    fr: "Sûr (Répondre)",
+    ar: "آمن (رد)",
+    it: "Sicuro (Rispondi)"
+  },
+  scam: {
+    en: "Scam (Report)",
+    zh: "詐騙 (舉報)",
+    ja: "詐欺 (報告)",
+    ko: "사기 (신고)",
+    es: "Estafa (Reportar)",
+    de: "Betrug (Melden)",
+    fi: "Huijaus (Raportoi)",
+    fr: "Arnaque (Signaler)",
+    ar: "احتيال (إبلاغ)",
+    it: "Truffa (Segnala)"
+  },
+  correct: {
+    en: "Correct! Well spotted.",
+    zh: "答對了！觀察敏銳。",
+    ja: "正解！よく気づきました。",
+    ko: "정답! 잘 발견했습니다.",
+    es: "¡Correcto! Bien visto.",
+    de: "Richtig! Gut erkannt.",
+    fi: "Oikein! Hyvin huomattu.",
+    fr: "Correct ! Bien vu.",
+    ar: "صحيح! ملاحظة جيدة.",
+    it: "Corretto! Ben individuato."
+  },
+  wrong: {
+    en: "Watch out! Check the sender.",
+    zh: "小心！檢查發件人。",
+    ja: "気をつけて！送信者を確認して。",
+    ko: "조심하세요! 보낸 사람을 확인하세요.",
+    es: "¡Cuidado! Revisa el remitente.",
+    de: "Vorsicht! Überprüfen Sie den Absender.",
+    fi: "Varo! Tarkista lähettäjä.",
+    fr: "Attention ! Vérifiez l'expéditeur.",
+    ar: "احترس! تحقق من المرسل.",
+    it: "Attenzione! Controlla il mittente."
+  },
+  next: {
+    en: "Next Email",
+    zh: "下一封",
+    ja: "次のメール",
+    ko: "다음 이메일",
+    es: "Siguiente correo",
+    de: "Nächste E-Mail",
+    fi: "Seuraava sähköposti",
+    fr: "E-mail suivant",
+    ar: "البريد الإلكتروني التالي",
+    it: "Email successiva"
+  }
+};
+const emails = [{
+  id: 1,
+  type: "scam",
+  sender: "winner@prize-giveaway-xyz.com",
+  subject: "YOU WON A IPHONE! CLICK NOW!",
+  body: "Click the link below to claim your prize instantly!!! Don't wait!!"
+}, {
+  id: 2,
+  type: "safe",
+  sender: "teacher@school.edu.hk",
+  subject: "Homework Submission Reminder",
+  body: "Dear Student, please remember to submit your science project by Friday. Best, Mr. Lee."
+}, {
+  id: 3,
+  type: "scam",
+  sender: "security@bank-verify-account.net",
+  subject: "URGENT: Verify your password",
+  body: "We detected suspicious activity. Please login here to verify your Account: http://fake-link.com"
+}, {
+  id: 4,
+  type: "safe",
+  sender: "grandma@gmail.com",
+  subject: "Happy Birthday!",
+  body: "Hi dear, wishing you a great birthday! See you on Sunday. Love, Grandma."
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [index, setIndex] = useState(0);
+  const [feedback, setFeedback] = useState(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+  const currentEmail = emails[index];
+  const handleChoice = choice => {
+    if (feedback) return;
+    if (choice === currentEmail.type) {
+      setFeedback("correct");
+    } else {
+      setFeedback("wrong");
+    }
+  };
+  const next = () => {
+    setFeedback(null);
+    setIndex((index + 1) % emails.length);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center justify-center p-4 bg-slate-900"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-3xl font-bold mb-6 text-cyan-400"
+  }, "🛡️ ", getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-2xl bg-white rounded-xl overflow-hidden shadow-2xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-200 p-2 flex gap-2 border-b border-slate-300"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-3 h-3 rounded-full bg-red-400"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "w-3 h-3 rounded-full bg-yellow-400"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "w-3 h-3 rounded-full bg-green-400"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 text-center text-xs text-slate-500 font-mono"
+  }, "Mail App v1.0")), /*#__PURE__*/React.createElement("div", {
+    className: "p-8 text-black min-h-[300px] flex flex-col gap-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "border-b pb-2"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-slate-500 font-bold text-sm"
+  }, "FROM:"), /*#__PURE__*/React.createElement("span", {
+    className: `ml-2 font-mono ${feedback === "wrong" && currentEmail.type === "scam" ? "text-red-600" : "text-slate-800"}`
+  }, currentEmail.sender)), /*#__PURE__*/React.createElement("div", {
+    className: "border-b pb-2"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-slate-500 font-bold text-sm"
+  }, "SUBJECT:"), /*#__PURE__*/React.createElement("span", {
+    className: "ml-2 font-bold"
+  }, currentEmail.subject)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-50 p-6 rounded-lg font-serif"
+  }, currentEmail.body)), !feedback ? /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-100 p-6 flex gap-4 justify-center"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => handleChoice("safe"),
+    className: "flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-4 rounded-xl shadow transition-colors"
+  }, "✅ ", getText("safe")), /*#__PURE__*/React.createElement("button", {
+    onClick: () => handleChoice("scam"),
+    className: "flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-4 rounded-xl shadow transition-colors"
+  }, "🚨 ", getText("scam"))) : /*#__PURE__*/React.createElement("div", {
+    className: `p-6 text-center text-white ${feedback === "correct" ? "bg-green-500" : "bg-red-500"}`
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-bold mb-4"
+  }, getText(feedback)), /*#__PURE__*/React.createElement("button", {
+    onClick: next,
+    className: "bg-white/20 hover:bg-white/40 text-white font-bold py-2 px-8 rounded-full border-2 border-white"
+  }, getText("next"), " ➡️"))), /*#__PURE__*/React.createElement("div", {
+    className: "mt-8 text-slate-500 text-sm italic"
+  }, getText("instruction")));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

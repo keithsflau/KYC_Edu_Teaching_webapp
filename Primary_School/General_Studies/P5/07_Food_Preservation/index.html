@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - Food Preservation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: #ecfccb;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Food Preservation",
+    zh: "食物保存方法",
+    ja: "食品保存",
+    ko: "식품 보존",
+    es: "Conservación de alimentos",
+    de: "Lebensmittelkonservierung",
+    fi: "Ruoan säilöntä",
+    fr: "Conservation des aliments",
+    ar: "حفظ الأغذية",
+    it: "Conservazione del Cibo"
+  },
+  instruction: {
+    en: "Match the food to the best preservation method.",
+    zh: "將食物與最佳保存方法配對。",
+    ja: "食品を最適な保存方法に合わせてください。",
+    ko: "음식을 가장 좋은 보존 방법과 연결하세요.",
+    es: "Relaciona la comida con el mejor método de conservación.",
+    de: "Ordne das Lebensmittel der besten Konservierungsmethode zu.",
+    fi: "Yhdistä ruoka parhaaseen säilöntämenetelmään.",
+    fr: "Associez l'aliment à la meilleure méthode de conservation.",
+    ar: "طابق الطعام بأفضل طريقة لحفظه.",
+    it: "Abbina il cibo al miglior metodo di conservazione."
+  },
+  canning: {
+    en: "Canning",
+    zh: "製成罐頭",
+    ja: "缶詰",
+    ko: "통조림",
+    es: "Enlatado",
+    de: "Konservierung",
+    fi: "Säilöntä",
+    fr: "Mise en conserve",
+    ar: "التعليب",
+    it: "Inscatolamento"
+  },
+  freezing: {
+    en: "Freezing",
+    zh: "冷凍",
+    ja: "冷凍",
+    ko: "냉동",
+    es: "Congelación",
+    de: "Einfrieren",
+    fi: "Pakastaminen",
+    fr: "Congélation",
+    ar: "تجميد",
+    it: "Congelamento"
+  },
+  drying: {
+    en: "Drying",
+    zh: "乾燥/脫水",
+    ja: "乾燥",
+    ko: "건조",
+    es: "Secado",
+    de: "Trocknen",
+    fi: "Kuivaus",
+    fr: "Séchage",
+    ar: "تجفيف",
+    it: "Essiccazione"
+  },
+  salting: {
+    en: "Salting / Pickling",
+    zh: "醃製",
+    ja: "塩漬け",
+    ko: "염장",
+    es: "Salazón",
+    de: "Pökeln",
+    fi: "Suolaus",
+    fr: "Salaison",
+    ar: "التمليح",
+    it: "Salagione"
+  },
+  fish: {
+    en: "Fish (Salted)",
+    zh: "鹹魚",
+    ja: "塩漬け魚",
+    ko: "절인 생선"
+  },
+  // Specifically salted fish
+  soup: {
+    en: "Soup",
+    zh: "湯",
+    ja: "スープ",
+    ko: "수프"
+  },
+  meat: {
+    en: "Meat",
+    zh: "肉類",
+    ja: "肉",
+    ko: "고기"
+  },
+  grapes: {
+    en: "Grapes (Raisins)",
+    zh: "葡萄 (葡萄乾)",
+    ja: "ブドウ (レーズン)",
+    ko: "포도 (건포도)"
+  },
+  correct: {
+    en: "Correct!",
+    zh: "正確！",
+    ja: "正解！",
+    ko: "정답!",
+    es: "Correcto!",
+    de: "Richtig!",
+    fi: "Oikein!",
+    fr: "Correct !",
+    ar: "Correct!",
+    it: "Corretto!"
+  },
+  wrong: {
+    en: "Try Again!",
+    zh: "再試一次！",
+    ja: "もう一度！",
+    ko: "다시 시도하세요!",
+    es: "Try Again!",
+    de: "Versuch es nochmal!",
+    fi: "Yrita uudelleen!",
+    fr: "Reessayez !",
+    ar: "Try Again!",
+    it: "Riprova!"
+  }
+};
+const foods = [{
+  id: "meat",
+  method: "freezing",
+  icon: "🥩"
+}, {
+  id: "soup",
+  method: "canning",
+  icon: "🥫"
+},
+// Canned soup
+{
+  id: "grapes",
+  method: "drying",
+  icon: "🍇"
+},
+// Raisins
+{
+  id: "fish",
+  method: "salting",
+  icon: "🐟"
+} // Salted fish
+];
+const methods = ["canning", "freezing", "drying", "salting"];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [index, setIndex] = useState(0);
+  const [feedback, setFeedback] = useState(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+  const currentFood = foods[index];
+  const handleAnswer = m => {
+    if (feedback) return;
+    if (m === currentFood.method) {
+      setFeedback("correct");
+      setTimeout(() => {
+        setFeedback(null);
+        setIndex((i) => (i + 1) % foods.length);
+      }, 1000);
+    } else {
+      setFeedback("wrong");
+      setTimeout(() => setFeedback(null), 500);
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center justify-center p-4"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-bold mb-8 text-lime-800"
+  }, getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-8 rounded-3xl shadow-xl w-full max-w-lg text-center border-4 border-lime-200"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-slate-500 font-bold mb-6"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-lime-50 p-10 rounded-full w-48 h-48 mx-auto mb-8 flex items-center justify-center border-4 border-dashed border-lime-300"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-8xl animate-bounce-slow"
+  }, currentFood.icon)), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-black text-lime-800 mb-8"
+  }, getText(currentFood.id)), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 gap-4"
+  }, methods.map(m => /*#__PURE__*/React.createElement("button", {
+    key: m,
+    onClick: () => handleAnswer(m),
+    className: "bg-lime-100 hover:bg-lime-200 text-lime-900 py-4 rounded-xl font-bold transition-colors border-b-4 border-lime-300 active:translate-y-1 active:border-b-0"
+  }, getText(m)))), feedback && /*#__PURE__*/React.createElement("div", {
+    className: `mt-6 text-3xl font-black ${feedback === "correct" ? "text-green-600" : "text-red-500"}`
+  }, feedback === "correct" ? getText("correct") : getText("wrong"))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

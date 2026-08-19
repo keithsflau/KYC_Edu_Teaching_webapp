@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小六數學：終極挑戰 | Final Challenge</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "P6 Final Challenge",
+    zh: "小六終極挑戰",
+    ja: "小6 最終試験",
+    ko: "초6 최종 도전",
+    es: "Desafío Final P6",
+    de: "Abschlusstest P6",
+    fi: "P6 Loppukoe",
+    fr: "Défi Final P6",
+    ar: "تحدي الصف السادس",
+    it: "Sfida Finale P6"
+  },
+  start: {
+    en: "START GAME",
+    zh: "開始遊戲",
+    ja: "ゲーム開始",
+    ko: "게임 시작",
+    es: "INICIAR JUEGO",
+    de: "SPIEL STARTEN",
+    fi: "ALOITA PELI",
+    fr: "LANCER LE JEU",
+    ar: "ابدأ اللعبة",
+    it: "INIZIA GIOCO"
+  },
+  score: {
+    en: "Score",
+    zh: "分數",
+    ja: "スコア",
+    ko: "점수",
+    es: "Puntuación",
+    de: "Punktzahl",
+    fi: "Pisteet",
+    fr: "Score",
+    ar: "النقاط",
+    it: "Punteggio"
+  },
+  q: {
+    en: "Q",
+    zh: "題目",
+    ja: "問",
+    ko: "문제",
+    es: "P",
+    de: "F",
+    fi: "K",
+    fr: "Q",
+    ar: "س",
+    it: "D"
+  },
+  correct: {
+    en: "CORRECT!",
+    zh: "答對了！",
+    ja: "正解！",
+    ko: "정답!",
+    es: "¡CORRECTO!",
+    de: "RICHTIG!",
+    fi: "OIKEIN!",
+    fr: "CORRECT !",
+    ar: "صحيح!",
+    it: "CORRETTO!"
+  },
+  wrong: {
+    en: "WRONG!",
+    zh: "答錯了！",
+    ja: "不正解！",
+    ko: "오답!",
+    es: "¡INCORRECTO!",
+    de: "FALSCH!",
+    fi: "VÄÄRIN!",
+    fr: "FAUX !",
+    ar: "خطأ!",
+    it: "SBAGLIATO!"
+  },
+  complete: {
+    en: "MISSION COMPLETE",
+    zh: "任務完成",
+    ja: "ミッション完了",
+    ko: "임무 완료",
+    es: "MISIÓN COMPLETADA",
+    de: "MISSION ERFÜLLT",
+    fi: "TEHTÄVÄ SUORITETTU",
+    fr: "MISSION ACCOMPLIE",
+    ar: "المهمة اكتملت",
+    it: "MISSIONE COMPIUTA"
+  },
+  retry: {
+    en: "PLAY AGAIN",
+    zh: "再玩一次",
+    ja: "もう一度プレイ",
+    ko: "다시 플레이",
+    es: "JUGAR DE NUEVO",
+    de: "NOCHMAL SPIELEN",
+    fi: "PELAA UUDELLEEN",
+    fr: "REJOUER",
+    ar: "العب مرة أخرى",
+    it: "GIOCA DI NUOVO"
+  }
+};
+const questionsPool = [{
+  q: {
+    en: "25% of 80 is...?",
+    zh: "80 的 25% 是...？"
+  },
+  a: "20",
+  opts: ["20", "25", "40", "15"],
+  cat: "PCT"
+}, {
+  q: {
+    en: "Circumference formula?",
+    zh: "圓周公式？"
+  },
+  a: "2πr",
+  opts: ["πr²", "2πr", "2πd", "πr"],
+  cat: "GEO"
+}, {
+  q: {
+    en: "Solve: 2x + 4 = 14",
+    zh: "解方程: 2x + 4 = 14"
+  },
+  a: "5",
+  opts: ["5", "7", "10", "2"],
+  cat: "ALG"
+}, {
+  q: {
+    en: "Speed = 60km/h, Time = 2h. Distance?",
+    zh: "速率 60km/h，時間 2h。距離？"
+  },
+  a: "120km",
+  opts: ["30km", "60km", "120km", "100km"],
+  cat: "SPD"
+}, {
+  q: {
+    en: "Sum of hexagon interior angles?",
+    zh: "六邊形內角和？"
+  },
+  a: "720°",
+  opts: ["720°", "180°", "360°", "540°"],
+  cat: "ANG"
+}, {
+  q: {
+    en: "-5 + 8 = ?",
+    zh: "-5 + 8 = ?"
+  },
+  a: "3",
+  opts: ["-13", "3", "-3", "13"],
+  cat: "NUM"
+}, {
+  q: {
+    en: "Scale 1:100. 5cm on map = ?",
+    zh: "比例 1:100。地圖 5cm = ？"
+  },
+  a: "5m",
+  opts: ["50m", "5m", "500m", "0.5m"],
+  cat: "SCL"
+}, {
+  q: {
+    en: "Principal $1000, 10% p.a., 1 yr interest?",
+    zh: "本金$1000，年利率10%，1年利息？"
+  },
+  a: "$100",
+  opts: ["$10", "$100", "$1100", "$500"],
+  cat: "MON"
+}];
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+const getQText = (qItem, lang) => qItem.q[lang === "zh" ? "zh" : "en"] || qItem.q["en"];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [gameState, setGameState] = useState("start"); // start, play, end
+  const [qIdx, setQIdx] = useState(0);
+  const [score, setScore] = useState(0);
+  const [streak, setStreak] = useState(0);
+  const [feedback, setFeedback] = useState(null); // 'correct', 'wrong'
+
+  const currentQ = questionsPool[qIdx];
+  const handleAnswer = val => {
+    if (feedback) return;
+    if (val === currentQ.a) {
+      setScore(s => s + 100 + streak * 10);
+      setStreak(s => s + 1);
+      setFeedback("correct");
+    } else {
+      setStreak(0);
+      setFeedback("wrong");
+    }
+    setTimeout(() => {
+      setFeedback(null);
+      setQIdx(i => {
+        if (i < questionsPool.length - 1) return i + 1;
+        setGameState("end");
+        return i;
+      });
+    }, 1000);
+  };
+  const resetGame = () => {
+    setQIdx(0);
+    setScore(0);
+    setStreak(0);
+    setGameState("play");
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4 font-sans bg-slate-900 text-white relative overflow-hidden"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-5xl flex justify-between items-center mb-10 z-10 relative"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 drop-shadow-lg"
+  }, "🏆 ", getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "flex bg-slate-800/80 p-1.5 rounded-xl border border-white/10 flex-wrap justify-end gap-1 max-w-[50%]"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-purple-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white hover:bg-white/5"}`
+  }, l)))), /*#__PURE__*/React.createElement(AnimatePresence, {
+    mode: "wait"
+  }, gameState === "start" && /*#__PURE__*/React.createElement(motion.div, {
+    key: "start",
+    initial: {
+      opacity: 0,
+      scale: 0.8
+    },
+    animate: {
+      opacity: 1,
+      scale: 1
+    },
+    exit: {
+      opacity: 0,
+      scale: 1.2
+    },
+    className: "flex flex-col items-center justify-center min-h-[400px] z-10"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-9xl mb-8 animate-bounce"
+  }, "🚀"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setGameState("play"),
+    className: "group relative px-12 py-6 bg-blue-600 rounded-2xl font-black text-3xl uppercase tracking-widest overflow-hidden shadow-[0_0_50px_rgba(37,99,235,0.6)] hover:shadow-[0_0_80px_rgba(37,99,235,0.8)] transition-all"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "relative z-10 text-white"
+  }, getText("start", lang)))), gameState === "play" && /*#__PURE__*/React.createElement(motion.div, {
+    key: "play",
+    initial: {
+      opacity: 0
+    },
+    animate: {
+      opacity: 1
+    },
+    exit: {
+      opacity: 0
+    },
+    className: "w-full max-w-3xl z-10"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between items-end mb-8 bg-slate-800/50 p-6 rounded-2xl border border-white/10"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "text-slate-400 font-bold uppercase text-xs mb-1"
+  }, getText("q", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-black text-white"
+  }, qIdx + 1, " ", /*#__PURE__*/React.createElement("span", {
+    className: "text-slate-500 text-lg"
+  }, "/ ", questionsPool.length))), /*#__PURE__*/React.createElement("div", {
+    className: "text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-slate-400 font-bold uppercase text-xs mb-1"
+  }, "Streak"), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-black text-orange-400"
+  }, "🔥 ", streak)), /*#__PURE__*/React.createElement("div", {
+    className: "text-right"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-slate-400 font-bold uppercase text-xs mb-1"
+  }, getText("score", lang)), /*#__PURE__*/React.createElement(motion.div, {
+    key: score,
+    initial: {
+      scale: 1.5,
+      color: "#fbbf24"
+    },
+    animate: {
+      scale: 1,
+      color: "#fff"
+    },
+    className: "text-4xl font-black"
+  }, score))), /*#__PURE__*/React.createElement(motion.div, {
+    key: qIdx,
+    initial: {
+      x: 50,
+      opacity: 0
+    },
+    animate: {
+      x: 0,
+      opacity: 1
+    },
+    exit: {
+      x: -50,
+      opacity: 0
+    },
+    transition: {
+      duration: 0.3
+    },
+    className: "glass-panel p-10 rounded-3xl min-h-[300px] flex flex-col justify-center relative overflow-hidden"
+  }, /*#__PURE__*/React.createElement(AnimatePresence, null, feedback && /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      opacity: 0
+    },
+    animate: {
+      opacity: 1
+    },
+    exit: {
+      opacity: 0
+    },
+    className: `absolute inset-0 z-20 flex items-center justify-center backdrop-blur-sm ${feedback === "correct" ? "bg-green-500/20" : "bg-red-500/20"}`
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: `text-6xl font-black uppercase drop-shadow-xl ${feedback === "correct" ? "text-green-400" : "text-red-400"}`
+  }, feedback === "correct" ? getText("correct", lang) : getText("wrong", lang)))), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 right-4 text-xs font-bold bg-white/10 px-2 py-1 rounded text-slate-300"
+  }, currentQ.cat), /*#__PURE__*/React.createElement("h2", {
+    className: "text-3xl md:text-4xl font-bold text-center mb-10 leading-relaxed"
+  }, getQText(currentQ, lang)), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 gap-4"
+  }, currentQ.opts.map((opt, i) => /*#__PURE__*/React.createElement("button", {
+    key: i,
+    onClick: () => !feedback && handleAnswer(opt),
+    className: "bg-white/5 hover:bg-white/10 border-2 border-white/10 hover:border-blue-400 rounded-xl p-4 text-xl font-bold transition-all active:scale-95 text-slate-200 hover:text-white"
+  }, opt))))), gameState === "end" && /*#__PURE__*/React.createElement(motion.div, {
+    key: "end",
+    initial: {
+      opacity: 0,
+      scale: 0.8
+    },
+    animate: {
+      opacity: 1,
+      scale: 1
+    },
+    className: "flex flex-col items-center justify-center z-10 max-w-2xl w-full"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-12 rounded-3xl text-center w-full border border-purple-500/30 shadow-[0_0_50px_rgba(168,85,247,0.3)]"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 mb-2"
+  }, getText("complete", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "text-slate-400 font-bold tracking-widest mb-8"
+  }, "FINAL SCORE"), /*#__PURE__*/React.createElement("div", {
+    className: "text-8xl font-black text-yellow-400 mb-8 drop-shadow-2xl"
+  }, score), /*#__PURE__*/React.createElement("button", {
+    onClick: resetGame,
+    className: "bg-purple-600 hover:bg-purple-500 text-white px-10 py-4 rounded-full font-bold text-xl transition-all shadow-lg active:scale-95"
+  }, getText("retry", lang))))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Box Plot & Quartiles | S4 Math 箱形圖與四分位數</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+      }
+    </style>
+  </head>
+  <body class="bg-violet-50 text-slate-800 min-h-screen">
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect,
+  useMemo
+} = React;
+const translations = {
+  en: {
+    unit: "Unit 5: Statistics",
+    title: "Box Plot & Quartiles",
+    desc: "Visualize the 5-number summary of a data set.",
+    data: "Data Set (comma separated)",
+    min: "Minimum",
+    q1: "Q1 (25th percentile)",
+    median: "Median (Q2)",
+    q3: "Q3 (75th percentile)",
+    max: "Maximum",
+    iqr: "Interquartile Range (IQR)",
+    range: "Range"
+  },
+  zh: {
+    unit: "單元五：統計學",
+    title: "箱形圖與四分位數",
+    desc: "視像化數據集的五數概括。",
+    data: "數據集（以逗號分隔）",
+    min: "最小值",
+    q1: "Q1（第25百分位數）",
+    median: "中位數（Q2）",
+    q3: "Q3（第75百分位數）",
+    max: "最大值",
+    iqr: "四分位距 (IQR)",
+    range: "全距"
+  }
+};
+const App = () => {
+  const [lang, setLang] = useState("en");
+  const t = translations[lang];
+  const [input, setInput] = useState("8, 11, 14, 17, 19, 23, 26, 31, 34, 38, 42, 47");
+  const stats = useMemo(() => {
+    const nums = input.split(/[,\s]+/).map(Number).filter(n => !isNaN(n)).sort((a, b) => a - b);
+    if (nums.length < 5) return null;
+    const n = nums.length;
+    const min = nums[0];
+    const max = nums[n - 1];
+    const median = n % 2 === 1 ? nums[Math.floor(n / 2)] : (nums[n / 2 - 1] + nums[n / 2]) / 2;
+
+    // Q1 and Q3 using method of halves
+    const lowerHalf = nums.slice(0, Math.floor(n / 2));
+    const upperHalf = nums.slice(Math.ceil(n / 2));
+    const q1 = lowerHalf.length % 2 === 1 ? lowerHalf[Math.floor(lowerHalf.length / 2)] : (lowerHalf[lowerHalf.length / 2 - 1] + lowerHalf[lowerHalf.length / 2]) / 2;
+    const q3 = upperHalf.length % 2 === 1 ? upperHalf[Math.floor(upperHalf.length / 2)] : (upperHalf[upperHalf.length / 2 - 1] + upperHalf[upperHalf.length / 2]) / 2;
+    return {
+      nums,
+      min,
+      max,
+      median,
+      q1,
+      q3,
+      iqr: q3 - q1,
+      range: max - min
+    };
+  }, [input]);
+
+  // Box Plot SVG
+  const w = 600,
+    h = 200;
+  const padding = 50;
+  const plotW = w - 2 * padding;
+  const toX = val => {
+    if (!stats) return 0;
+    const span = stats.max - stats.min || 1;
+    return padding + (val - stats.min) / span * plotW;
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "p-8 max-w-4xl mx-auto min-h-screen flex flex-col items-center select-none"
+  }, /*#__PURE__*/React.createElement("header", {
+    className: "mb-8 text-center w-full relative"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLang(lang === "en" ? "zh" : "en"),
+    className: "absolute right-0 top-0 px-4 py-2 bg-white rounded-full shadow border border-violet-200 text-sm font-bold text-violet-600 hover:bg-violet-50 transition"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-globe mr-2"
+  }), lang === "en" ? "中文" : "ENG"), /*#__PURE__*/React.createElement("div", {
+    className: "text-violet-600 font-bold uppercase text-xs tracking-widest mb-2"
+  }, t.unit), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-slate-900 mb-2"
+  }, t.title), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-500"
+  }, t.desc)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-6 rounded-3xl shadow-xl border border-violet-100 w-full mb-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "mb-6"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "text-sm font-bold text-slate-500 block mb-2"
+  }, t.data), /*#__PURE__*/React.createElement("textarea", {
+    value: input,
+    onChange: e => setInput(e.target.value),
+    className: "w-full p-4 bg-slate-50 rounded-xl border border-slate-200 font-mono focus:ring-2 focus:ring-violet-400 outline-none h-20"
+  })), stats ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("svg", {
+    width: w,
+    height: h,
+    className: "bg-slate-50 rounded-xl mb-6 overflow-visible"
+  }, /*#__PURE__*/React.createElement("line", {
+    x1: padding,
+    y1: h - 30,
+    x2: w - padding,
+    y2: h - 30,
+    stroke: "#94a3b8",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: toX(stats.min),
+    y1: h / 2,
+    x2: toX(stats.q1),
+    y2: h / 2,
+    stroke: "#7c3aed",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: toX(stats.q3),
+    y1: h / 2,
+    x2: toX(stats.max),
+    y2: h / 2,
+    stroke: "#7c3aed",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: toX(stats.min),
+    y1: h / 2 - 20,
+    x2: toX(stats.min),
+    y2: h / 2 + 20,
+    stroke: "#7c3aed",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: toX(stats.max),
+    y1: h / 2 - 20,
+    x2: toX(stats.max),
+    y2: h / 2 + 20,
+    stroke: "#7c3aed",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: toX(stats.q1),
+    y: h / 2 - 30,
+    width: toX(stats.q3) - toX(stats.q1),
+    height: "60",
+    fill: "rgba(139, 92, 246, 0.2)",
+    stroke: "#7c3aed",
+    strokeWidth: "3",
+    rx: "4"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: toX(stats.median),
+    y1: h / 2 - 30,
+    x2: toX(stats.median),
+    y2: h / 2 + 30,
+    stroke: "#dc2626",
+    strokeWidth: "3"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: toX(stats.min),
+    y: h - 10,
+    textAnchor: "middle",
+    className: "text-xs fill-slate-500 font-mono"
+  }, stats.min), /*#__PURE__*/React.createElement("text", {
+    x: toX(stats.q1),
+    y: h - 10,
+    textAnchor: "middle",
+    className: "text-xs fill-slate-500 font-mono"
+  }, stats.q1), /*#__PURE__*/React.createElement("text", {
+    x: toX(stats.median),
+    y: h - 10,
+    textAnchor: "middle",
+    className: "text-xs fill-red-500 font-bold font-mono"
+  }, stats.median), /*#__PURE__*/React.createElement("text", {
+    x: toX(stats.q3),
+    y: h - 10,
+    textAnchor: "middle",
+    className: "text-xs fill-slate-500 font-mono"
+  }, stats.q3), /*#__PURE__*/React.createElement("text", {
+    x: toX(stats.max),
+    y: h - 10,
+    textAnchor: "middle",
+    className: "text-xs fill-slate-500 font-mono"
+  }, stats.max), stats.nums.map((v, i) => /*#__PURE__*/React.createElement("circle", {
+    key: i,
+    cx: toX(v),
+    cy: h / 2,
+    r: "4",
+    fill: "#a78bfa",
+    opacity: "0.6"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 md:grid-cols-4 gap-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-violet-50 p-4 rounded-xl text-center border border-violet-100"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold text-violet-400 uppercase"
+  }, t.min), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-bold text-violet-700 font-mono"
+  }, stats.min)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-violet-50 p-4 rounded-xl text-center border border-violet-100"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold text-violet-400 uppercase"
+  }, t.q1), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-bold text-violet-700 font-mono"
+  }, stats.q1)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-red-50 p-4 rounded-xl text-center border border-red-100"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold text-red-400 uppercase"
+  }, t.median), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-bold text-red-600 font-mono"
+  }, stats.median)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-violet-50 p-4 rounded-xl text-center border border-violet-100"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold text-violet-400 uppercase"
+  }, t.q3), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-bold text-violet-700 font-mono"
+  }, stats.q3)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-violet-50 p-4 rounded-xl text-center border border-violet-100"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold text-violet-400 uppercase"
+  }, t.max), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-bold text-violet-700 font-mono"
+  }, stats.max)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-emerald-50 p-4 rounded-xl text-center border border-emerald-100"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold text-emerald-400 uppercase"
+  }, t.iqr), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-bold text-emerald-600 font-mono"
+  }, stats.iqr)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-blue-50 p-4 rounded-xl text-center border border-blue-100 col-span-2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold text-blue-400 uppercase"
+  }, t.range), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-bold text-blue-600 font-mono"
+  }, stats.range)))) : /*#__PURE__*/React.createElement("div", {
+    className: "text-center text-slate-400 py-12"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-chart-simple text-4xl mb-2"
+  }), /*#__PURE__*/React.createElement("p", null, "Enter at least 5 data points"))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

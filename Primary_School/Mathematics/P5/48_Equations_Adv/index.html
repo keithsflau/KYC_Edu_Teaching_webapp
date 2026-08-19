@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小五數學：簡易方程 (二) | Simple Equations (2)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(236, 72, 153, 0.15); /* Pink 500 alpha */
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(244, 114, 182, 0.2);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const LucideIcon = (emoji) => (props) => /*#__PURE__*/React.createElement("span", {
+  className: props.className,
+  style: {
+    fontSize: props.size || 20,
+    lineHeight: 1,
+    display: "inline-block"
+  },
+  "aria-hidden": true
+}, emoji);
+const X = LucideIcon("✖");
+const Divide = LucideIcon("÷");
+const RefreshCw = LucideIcon("🔄");
+const Calculator = LucideIcon("🧮");
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Simple Equations (2)",
+    zh: "簡易方程 (二)",
+    ja: "一次方程式 (2)",
+    ko: "일차방정식 (2)",
+    es: "Ecuaciones Simples (2)",
+    de: "Einfache Gleichungen (2)",
+    fi: "Yksinkertaiset yhtälöt (2)",
+    fr: "Équations simples (2)",
+    ar: "معادلات بسيطة (2)",
+    it: "Equazioni semplici (2)"
+  },
+  topic: {
+    en: "Equations (Mult/Div)",
+    zh: "方程 (乘除)",
+    ja: "方程式 (乗除)",
+    ko: "방정식 (곱셈/나눗셈)",
+    es: "Ecuaciones (Mult/Div)",
+    de: "Gleichungen (Mult/Div)",
+    fi: "Yhtälöt (Kerto/Jako)",
+    fr: "Équations (Mult/Div)",
+    ar: "معادلات (ضرب/قسمة)",
+    it: "Equazioni (Molt/Div)"
+  },
+  divideBoth: {
+    en: "Divide both sides by",
+    zh: "兩邊同時除以",
+    ja: "両辺を割る",
+    ko: "양변을 나누기",
+    es: "Dividir ambos lados por",
+    de: "Teile beide Seiten durch",
+    fi: "Jaa molemmat puolet luvulla",
+    fr: "Diviser les deux côtés par",
+    ar: "اقسم كلا الجانبين على",
+    it: "Dividi entrambi i lati per"
+  },
+  multiplyBoth: {
+    en: "Multiply both sides by",
+    zh: "兩邊同時乘以",
+    ja: "両辺に掛ける",
+    ko: "양변에 곱하기",
+    es: "Multiplicar ambos lados por",
+    de: "Multipliziere beide Seiten mit",
+    fi: "Kerro molemmat puolet luvulla",
+    fr: "Multiplier les deux côtés par",
+    ar: "اضرب كلا الجانبين في",
+    it: "Moltiplica entrambi i lati per"
+  },
+  next: {
+    en: "Next Question",
+    zh: "下一題",
+    ja: "次の問題",
+    ko: "다음 문제",
+    es: "Siguiente Pregunta",
+    de: "Nächste Frage",
+    fi: "Seuraava kysymys",
+    fr: "Question suivante",
+    ar: "السؤال التالي",
+    it: "Prossima domanda"
+  },
+  steps: {
+    en: "Step-by-step",
+    zh: "步驟解說",
+    ja: "ステップバイステップ",
+    ko: "단계별 설명",
+    es: "Paso a paso",
+    de: "Schritt für Schritt",
+    fi: "Vaihe vaiheelta",
+    fr: "Pas à pas",
+    ar: "خطوة بخطوة",
+    it: "Passo dopo passo"
+  },
+  equation: {
+    en: "Equation",
+    zh: "方程",
+    ja: "方程式",
+    ko: "방정식",
+    es: "Ecuación",
+    de: "Gleichung",
+    fi: "Yhtälö",
+    fr: "Équation",
+    ar: "معادلة",
+    it: "Equazione"
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [type, setType] = useState("mul"); // 'mul' (Ay=B) or 'div' (y/A=B)
+  const [yVal, setYVal] = useState(4); // unknown y
+  const [coeff, setCoeff] = useState(3); // A
+  const [step, setStep] = useState(0); // 0: init, 1: showing solution
+
+  const generate = () => {
+    const nextType = Math.random() > 0.5 ? "mul" : "div";
+    const nextCoeff = Math.floor(Math.random() * 3) + 2; // 2-4
+    if (nextType === "mul") {
+      // Ay = B → y = 2..9, B = A*y
+      setYVal(Math.floor(Math.random() * 8) + 2);
+    } else {
+      // y/A = B → B = 2..6, y = B*A (always integer)
+      const rhs = Math.floor(Math.random() * 5) + 2;
+      setYVal(rhs * nextCoeff);
+    }
+    setType(nextType);
+    setCoeff(nextCoeff);
+    setStep(0);
+  };
+  useEffect(() => {
+    generate();
+  }, []);
+  // Mul: Ay = B with B = y*A. Div: y/A = B with B = y/A (integer by construction).
+  const B = type === "mul" ? yVal * coeff : yVal / coeff;
+
+  // Visualization Data
+  // Mul: Show 'coeff' groups of 'y'. Total items visible = B.
+  // Div: Show 'y' items, split into 'coeff' groups. Each group has B items.
+
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-5xl flex justify-between items-center mb-10"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-3xl md:text-5xl font-black text-pink-400 drop-shadow-[0_0_15px_rgba(244,114,182,0.5)]"
+  }, "🧮 ", getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-800/80 p-1.5 rounded-xl border border-white/10 flex flex-wrap justify-end gap-1 max-w-[50%]"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-pink-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white hover:bg-white/5"}`
+  }, l)))), /*#__PURE__*/React.createElement("main", {
+    className: "w-full max-w-5xl grid lg:grid-cols-2 gap-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-8 rounded-3xl flex flex-col items-center justify-center min-h-[400px] relative"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-6 left-0 right-0 flex justify-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-900/60 backdrop-blur border border-pink-500/30 px-8 py-4 rounded-2xl text-4xl font-mono font-black text-white flex items-center gap-4 shadow-xl"
+  }, type === "mul" ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", null, coeff, /*#__PURE__*/React.createElement("span", {
+    className: "text-pink-400"
+  }, "y")), /*#__PURE__*/React.createElement("span", null, "="), /*#__PURE__*/React.createElement("span", {
+    className: "text-blue-400"
+  }, B)) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center leading-none"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-pink-400 border-b-2 border-white/20 w-full text-center pb-1"
+  }, "y"), /*#__PURE__*/React.createElement("span", {
+    className: "text-sm pt-1"
+  }, coeff)), /*#__PURE__*/React.createElement("span", null, "="), /*#__PURE__*/React.createElement("span", {
+    className: "text-blue-400"
+  }, B)))), /*#__PURE__*/React.createElement("div", {
+    className: "mt-20 w-full flex justify-center items-center"
+  }, type === "mul" ? /*#__PURE__*/React.createElement("div", {
+    className: "grid gap-4",
+    style: {
+      gridTemplateColumns: `repeat(${Math.min(coeff, 3)}, 1fr)`
+    }
+  }, Array.from({
+    length: coeff
+  }).map((_, i) => /*#__PURE__*/React.createElement(motion.div, {
+    key: i,
+    initial: {
+      scale: 0.8,
+      opacity: 0
+    },
+    animate: {
+      scale: 1,
+      opacity: 1
+    },
+    transition: {
+      delay: i * 0.1
+    },
+    className: `w-24 h-32 border-4 rounded-2xl flex flex-col items-center justify-center gap-2 relative transition-colors duration-500 ${step === 1 ? "border-green-400 bg-green-500/10" : "border-pink-500 bg-pink-500/10"}`
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "absolute top-2 left-2 text-xs font-bold text-pink-300"
+  }, "y"), step === 1 ?
+  /*#__PURE__*/
+  /* Show dots */
+  React.createElement("div", {
+    className: "grid grid-cols-3 gap-1"
+  }, Array.from({
+    length: yVal
+  }).map((_, d) => /*#__PURE__*/React.createElement(motion.div, {
+    key: d,
+    initial: {
+      scale: 0
+    },
+    animate: {
+      scale: 1
+    },
+    className: "w-3 h-3 bg-green-400 rounded-full"
+  }))) : /*#__PURE__*/React.createElement("span", {
+    className: "text-4xl font-black text-pink-300"
+  }, "?")))) :
+  /*#__PURE__*/
+  // Division Visual: A big bar split into Coeff parts. One part is B. Total length is y.
+  React.createElement("div", {
+    className: "w-full max-w-sm flex flex-col gap-2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex w-full h-24 rounded-2xl overflow-hidden border-4 border-pink-500/50"
+  }, Array.from({
+    length: coeff
+  }).map((_, i) => /*#__PURE__*/React.createElement(motion.div, {
+    key: i,
+    className: `flex-1 border-r border-pink-500/30 flex items-center justify-center relative ${step === 1 ? "bg-green-500/20" : "bg-pink-500/10"}`
+  }, i === 0 && /*#__PURE__*/React.createElement("span", {
+    className: "absolute inset-0 flex items-center justify-center text-2xl font-black text-blue-400"
+  }, !step ? B : ""), step === 1 && /*#__PURE__*/React.createElement("span", {
+    className: "text-xl font-bold text-green-400"
+  }, B)))), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between text-xs font-bold text-pink-300 px-1"
+  }, /*#__PURE__*/React.createElement("span", null, "0"), /*#__PURE__*/React.createElement("span", null, "y"))))), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-8 rounded-3xl flex-1 flex flex-col justify-center"
+  }, step === 0 ? /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col gap-6"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-xl font-bold text-center text-white"
+  }, getText("steps", lang), "?"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setStep(1),
+    className: "w-full py-4 bg-pink-600 hover:bg-pink-500 rounded-xl text-white font-bold text-lg shadow-lg flex items-center justify-center gap-3 transition-all transform hover:scale-105"
+  }, type === "mul" ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", null, getText("divideBoth", lang), " ", coeff), /*#__PURE__*/React.createElement(Divide, {
+    size: 24
+  })) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", null, getText("multiplyBoth", lang), " ", coeff), /*#__PURE__*/React.createElement(X, {
+    size: 24
+  })))) : /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      opacity: 0,
+      y: 20
+    },
+    animate: {
+      opacity: 1,
+      y: 0
+    },
+    className: "flex flex-col items-center text-center gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-mono text-slate-300 bg-slate-900/50 p-6 rounded-2xl border border-white/10 w-full"
+  }, type === "mul" ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    className: "mb-2 opacity-50"
+  }, coeff, "y ÷ ", coeff, " = ", B, " ÷ ", coeff), /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black text-green-400"
+  }, "y = ", yVal)) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    className: "mb-2 opacity-50 flex items-center justify-center gap-2"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "flex flex-col leading-none text-sm"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "border-b border-white"
+  }, "y"), /*#__PURE__*/React.createElement("span", null, coeff)), /*#__PURE__*/React.createElement("span", null, "× ", coeff, " = ", B, " × ", coeff)), /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black text-green-400"
+  }, "y = ", yVal))), /*#__PURE__*/React.createElement("button", {
+    onClick: generate,
+    className: "w-full py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-white font-bold flex items-center justify-center gap-2 transition-all"
+  }, /*#__PURE__*/React.createElement(RefreshCw, {
+    size: 20
+  }), " ", getText("next", lang)))), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 rounded-2xl flex items-start gap-4"
+  }, /*#__PURE__*/React.createElement(Calculator, {
+    className: "text-pink-400 shrink-0 mt-1"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-sm text-slate-300"
+  }, type === "mul" ? getText("divideBoth", lang) + ` ${coeff}` : getText("multiplyBoth", lang) + ` ${coeff}`, /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("span", {
+    className: "opacity-50"
+  }, "Inverse operations help isolate the variable 'y'."))))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

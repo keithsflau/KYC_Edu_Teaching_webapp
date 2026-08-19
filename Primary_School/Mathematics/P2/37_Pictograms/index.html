@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小二數學：象形圖 (一格代表多個) | Pictograms Scaling</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #fefce8 0%, #ca8a04 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "📊 Pictograms",
+    zh: "📊 象形圖",
+    ja: "📊 ピクトグラム",
+    ko: "📊 그림 그래프",
+    es: "📊 Pictogramas",
+    de: "📊 Piktogramme",
+    fi: "📊 Piktogrammit",
+    fr: "📊 Pictogrammes",
+    ar: "📊 الرسوم التوضيحية",
+    it: "📊 Pittogrammi"
+  },
+  eachRepresents: {
+    en: "Each icon =",
+    zh: "每個圖形代表",
+    ja: "各アイコン =",
+    ko: "각 아이콘 =",
+    es: "Cada icono =",
+    de: "Jedes Symbol =",
+    fi: "Jokainen kuvake =",
+    fr: "Chaque icône =",
+    ar: "كل أيقونة =",
+    it: "Ogni icona ="
+  },
+  fruits: {
+    en: "fruits",
+    zh: "個水果",
+    ja: "個の果物",
+    ko: "개의 과일",
+    es: "frutas",
+    de: "Früchte",
+    fi: "hedelmää",
+    fr: "fruits",
+    ar: "فواكه",
+    it: "frutti"
+  },
+  howMany: {
+    en: "How many",
+    zh: "共有多少個",
+    ja: "いくつありますか",
+    ko: "얼마나 많은",
+    es: "Cuántos",
+    de: "Wie viele",
+    fi: "Kuinka monta",
+    fr: "Combien de",
+    ar: "كم عدد",
+    it: "Quanti"
+  },
+  check: {
+    en: "Check",
+    zh: "檢查",
+    ja: "確認",
+    ko: "확인",
+    es: "Comprobar",
+    de: "Prüfen",
+    fi: "Tarkista",
+    fr: "Vérifier",
+    ar: "تحقق",
+    it: "Controlla"
+  }
+};
+const itemsData = [{
+  name: {
+    zh: "蘋果",
+    en: "Apple",
+    ja: "リンゴ"
+  },
+  icon: "🍎"
+}, {
+  name: {
+    zh: "橙",
+    en: "Orange",
+    ja: "オレンジ"
+  },
+  icon: "🍊"
+}, {
+  name: {
+    zh: "梨",
+    en: "Pear",
+    ja: "梨"
+  },
+  icon: "🍐"
+}, {
+  name: {
+    zh: "香蕉",
+    en: "Banana",
+    ja: "バナナ"
+  },
+  icon: "🍌"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [scale, setScale] = useState(2); // 2, 5, or 10
+  const [counts, setCounts] = useState([4, 6, 8, 2]); // Actual counts (must be divisible by scale)
+  const [targetIdx, setTargetIdx] = useState(0);
+  const [input, setInput] = useState("");
+  const [feedback, setFeedback] = useState("");
+  const newProb = () => {
+    setFeedback("");
+    setInput("");
+    const s = [2, 5, 10][Math.floor(Math.random() * 3)];
+    setScale(s);
+    const newCounts = itemsData.map(() => (Math.floor(Math.random() * 5) + 1) * s);
+    setCounts(newCounts);
+    setTargetIdx(Math.floor(Math.random() * itemsData.length));
+  };
+  useEffect(newProb, []);
+  const check = () => {
+    if (parseInt(input, 10) === counts[targetIdx]) {
+      setFeedback("CORRECT");
+      setTimeout(newProb, 2000);
+    } else {
+      setFeedback("WRONG");
+    }
+  };
+  const getItemName = item => item.name[lang] || item.name["en"];
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-8 flex flex-col items-center justify-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-yellow-900 mb-8 max-w-2xl text-center"
+  }, t.title[lang] || t.title["en"]), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/90 rounded-3xl p-8 shadow-2xl w-full max-w-3xl text-center border-4 border-yellow-300"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-yellow-50 rounded-xl p-6 border-2 border-yellow-200 mb-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-right text-sm font-bold text-yellow-700 mb-4 bg-yellow-200 inline-block px-3 py-1 rounded-full"
+  }, t.eachRepresents[lang] || t.eachRepresents["en"], " ", scale, " ", t.fruits[lang] || t.fruits["en"]), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-around items-end h-64 border-b-4 border-yellow-600 pb-2 gap-4"
+  }, itemsData.map((item, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "flex flex-col items-center w-full justify-end h-full"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col-reverse items-center w-full gap-1 transition-all duration-500",
+    style: {
+      height: "100%"
+    }
+  }, [...Array(counts[i] / scale)].map((_, j) => /*#__PURE__*/React.createElement("div", {
+    key: j,
+    className: "text-2xl md:text-3xl animate-bounce-short",
+    style: {
+      animationDelay: `${j * 100}ms`
+    }
+  }, itemsData[i].icon) // Use generic block or icon
+  )), /*#__PURE__*/React.createElement("div", {
+    className: "mt-4 font-bold text-slate-600 text-sm md:text-base whitespace-nowrap"
+  }, getItemName(item)))))), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-bold text-slate-700 mb-6 flex flex-col items-center"
+  }, lang === "zh" ? /*#__PURE__*/React.createElement(React.Fragment, null, t.howMany[lang], " ", getItemName(itemsData[targetIdx]), "？") : /*#__PURE__*/React.createElement(React.Fragment, null, t.howMany[lang] || t.howMany["en"], " ", getItemName(itemsData[targetIdx]), "s?")), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-center gap-4 text-4xl mb-8 font-black text-yellow-900"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: input,
+    onChange: e => setInput(e.target.value),
+    className: "w-32 text-center border-b-4 border-yellow-500 bg-yellow-50 focus:outline-none rounded-t-lg",
+    autoFocus: true
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "text-center"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: check,
+    className: "px-10 py-3 bg-yellow-500 text-white rounded-full font-black text-2xl shadow-xl hover:bg-yellow-600 active:scale-95 transition-transform"
+  }, t.check[lang] || t.check["en"])), /*#__PURE__*/React.createElement("div", {
+    className: "h-16 mt-8"
+  }, feedback === "CORRECT" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "text-center text-4xl font-black text-green-500 animate-bounce"
+  }, get("correct", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "text-slate-400 font-bold mt-2"
+  }, counts[targetIdx] / scale, " × ", scale, " =", " ", counts[targetIdx])), feedback === "WRONG" && /*#__PURE__*/React.createElement("div", {
+    className: "text-center text-4xl font-black text-red-500 animate-shake"
+  }, get("wrong", lang)))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+    <style>
+      @keyframes bounce-short {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-3px);
+        }
+      }
+      .animate-bounce-short {
+        animation: bounce-short 1s infinite;
+      }
+    </style>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

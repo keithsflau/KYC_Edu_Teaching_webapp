@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小二常識：參觀博物館 | Museum Manners</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #f5f5f5 0%, #e5e5e5 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const { LanguageSelector,
+  get } = window.MathI18n || { LanguageSelector: () => null, get: (key) => key };
+const t = {
+  title: {
+    en: "Museum Manners",
+    zh: "參觀博物館",
+    ja: "博物館のマナー",
+    ko: "박물관 예절",
+    es: "Modales en el Museo",
+    de: "Museums-Etikette",
+    fi: "Museoetiketti",
+    fr: "Manières au Musée",
+    ar: "آداب المتحف",
+    it: "Buone Maniere al Museo"
+  },
+  instruction: {
+    en: "Is this behavior allowed?",
+    zh: "這種行為允許嗎？",
+    ja: "この行動は許可されていますか？",
+    ko: "이 행동은 허용되나요?",
+    es: "¿Está permitido este comportamiento?",
+    de: "Ist dieses Verhalten erlaubt?",
+    fi: "Onko tämä käytös sallittua?",
+    fr: "Ce comportement est-il autorisé ?",
+    ar: "هل هذا السلوك مسموح؟",
+    it: "È permesso questo comportamento?"
+  },
+  yes: {
+    en: "Yes",
+    zh: "允許",
+    ja: "はい",
+    ko: "예",
+    es: "Sí",
+    de: "Ja",
+    fi: "Kyllä",
+    fr: "Oui",
+    ar: "نعم",
+    it: "Sì"
+  },
+  no: {
+    en: "No",
+    zh: "禁止",
+    ja: "いいえ",
+    ko: "아니요",
+    es: "No",
+    de: "Nein",
+    fi: "Ei",
+    fr: "Non",
+    ar: "لا",
+    it: "No"
+  },
+  photo: {
+    en: "Flash Photography",
+    zh: "使用閃光燈拍照",
+    ja: "フラッシュ撮影",
+    ko: "플래시 사진 촬영",
+    es: "Fotografía con Flash",
+    de: "Blitzfotografie",
+    fi: "Salamakuvaus",
+    fr: "Photographie au flash",
+    ar: "التصوير بالفلاش",
+    it: "Fotografia con Flash"
+  },
+  touch: {
+    en: "Touch Exhibits",
+    zh: "觸摸展品",
+    ja: "展示品に触れる",
+    ko: "전시품 만지기",
+    es: "Tocar Exhibiciones",
+    de: "Exponate berühren",
+    fi: "Koske näyttelyesineisiin",
+    fr: "Toucher les expositions",
+    ar: "لمس المعروضات",
+    it: "Toccare le Esposizioni"
+  },
+  run: {
+    en: "Running",
+    zh: "奔跑",
+    ja: "走る",
+    ko: "달리기",
+    es: "Correr",
+    de: "Rennen",
+    fi: "Juokseminen",
+    fr: "Courir",
+    ar: "الركض",
+    it: "Correre"
+  },
+  eat: {
+    en: "Eating / Drinking",
+    zh: "飲食",
+    ja: "飲食",
+    ko: "음식물 섭취",
+    es: "Comer / Beber",
+    de: "Essen / Trinken",
+    fi: "Syöminen / Juominen",
+    fr: "Manger / Boire",
+    ar: "الأكل / الشرب",
+    it: "Mangiare / Bere"
+  },
+  quiet: {
+    en: "Quiet Viewing",
+    zh: "安靜參觀",
+    ja: "静かに鑑賞",
+    ko: "조용히 관람",
+    es: "Visualización Silenciosa",
+    de: "Ruhiges Betrachten",
+    fi: "Hiljainen katselu",
+    fr: "Observation silencieuse",
+    ar: "مشاهدة هادئة",
+    it: "Visione Silenziosa"
+  },
+  photos_no_flash: {
+    en: "No-Flash Photo",
+    zh: "不開閃光燈拍照",
+    ja: "フラッシュなし撮影",
+    ko: "플래시 없이 촬영",
+    es: "Foto sin Flash",
+    de: "Foto ohne Blitz",
+    fi: "Ei salamakuvausta",
+    fr: "Photo sans flash",
+    ar: "صور بدون فلاش",
+    it: "Foto senza Flash"
+  },
+  listen: {
+    en: "Listen to Guide",
+    zh: "聆聽講解",
+    ja: "ガイドを聞く",
+    ko: "가이드 듣기",
+    es: "Escuchar al Guía",
+    de: "Dem Führer zuhören",
+    fi: "Kuuntele opasta",
+    fr: "Écouter le guide",
+    ar: "الاستماع إلى الدليل",
+    it: "Ascolta la Guida"
+  },
+  correct: {
+    en: "Correct!",
+    zh: "答對了！",
+    ja: "正解！",
+    ko: "정답입니다!",
+    es: "¡Correcto!",
+    de: "Richtig!",
+    fi: "Oikein!",
+    fr: "Correct !",
+    ar: "صحيح!",
+    it: "Corretto!"
+  },
+  wrong: {
+    en: "Think again!",
+    zh: "想一想！",
+    ja: "もう一度考えて！",
+    ko: "다시 생각해보세요!",
+    es: "¡Piénsalo de nuevo!",
+    de: "Denk nochmal nach!",
+    fi: "Mieti uudelleen!",
+    fr: "Réfléchissez encore !",
+    ar: "فكر مرة أخرى!",
+    it: "Pensaci ancora!"
+  },
+  score: {
+    en: "Score",
+    zh: "分數",
+    ja: "スコア",
+    ko: "점수",
+    es: "Puntuación",
+    de: "Punktzahl",
+    fi: "Pisteet",
+    fr: "Score",
+    ar: "نتيجة",
+    it: "Punteggio"
+  },
+  completed: {
+    en: "Great Visitor!",
+    zh: "乖巧的參觀者！",
+    ja: "素晴らしい訪問者！",
+    ko: "훌륭한 관람객!",
+    es: "¡Gran Visitante!",
+    de: "Toller Besucher!",
+    fi: "Hieno vierailija!",
+    fr: "Grand visiteur !",
+    ar: "زائر عظيم!",
+    it: "Grande Visitatore!"
+  },
+  restart: {
+    en: "Start Over",
+    zh: "重新開始",
+    ja: "やり直す",
+    ko: "다시 시작",
+    es: "Empezar de Nuevo",
+    de: "Neustart",
+    fi: "Aloita alusta",
+    fr: "Recommencer",
+    ar: "ابدأ من جديد",
+    it: "Ricomincia"
+  }
+};
+const tasks = [{
+  id: "photo",
+  type: "bad",
+  icon: "📸⚡"
+}, {
+  id: "touch",
+  type: "bad",
+  icon: "✋🏺"
+}, {
+  id: "run",
+  type: "bad",
+  icon: "🏃‍♂️"
+}, {
+  id: "eat",
+  type: "bad",
+  icon: "🍔🥤"
+}, {
+  id: "quiet",
+  type: "good",
+  icon: "👀🤫"
+}, {
+  id: "photos_no_flash",
+  type: "good",
+  icon: "📷👌"
+}, {
+  id: "listen",
+  type: "good",
+  icon: "👂🤵"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [queue, setQueue] = useState([]);
+  const [current, setCurrent] = useState(null);
+  const [score, setScore] = useState(0);
+  const [feedback, setFeedback] = useState(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+  useEffect(() => {
+    restart();
+  }, []);
+  const restart = () => {
+    const q = [...tasks].sort(() => Math.random() - 0.5);
+    setQueue(q);
+    setCurrent(q[0]);
+    setScore(0);
+    setFeedback(null);
+  };
+  const handleAnswer = ans => {
+    // 'yes' or 'no'
+    if (feedback) return;
+    const isGood = current.type === "good";
+    const isCorrect = isGood && ans === "yes" || !isGood && ans === "no";
+    if (isCorrect) {
+      setFeedback("correct");
+      setScore(s => s + 10);
+    } else {
+      setFeedback("wrong");
+    }
+    setTimeout(() => {
+      setFeedback(null);
+      const nextIdx = queue.indexOf(current) + 1;
+      if (nextIdx < queue.length) setCurrent(queue[nextIdx]);else setCurrent(null);
+    }, 1000);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 flex flex-col items-center select-none"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-slate-800 mb-4 mt-8 drop-shadow-sm bg-white/50 px-6 py-2 rounded-full"
+  }, "🏛️ ", getText("title")), current ? /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-md flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "font-bold text-slate-600 mb-4 bg-white px-4 py-1 rounded-full shadow"
+  }, getText("score"), ": ", score), /*#__PURE__*/React.createElement(motion.div, {
+    key: current.id,
+    initial: {
+      scale: 0.8,
+      opacity: 0
+    },
+    animate: {
+      scale: 1,
+      opacity: 1
+    },
+    className: "bg-white p-8 rounded-3xl shadow-2xl border-b-8 border-slate-200 w-full aspect-square flex flex-col items-center justify-center relative"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-9xl mb-6"
+  }, current.icon), /*#__PURE__*/React.createElement("h2", {
+    className: "text-2xl font-black text-slate-700 text-center"
+  }, getText(current.id)), feedback && /*#__PURE__*/React.createElement("div", {
+    className: `absolute inset-0 bg-white/90 flex items-center justify-center text-4xl font-black rounded-3xl ${feedback === "correct" ? "text-green-600" : "text-red-500"}`
+  }, getText(feedback))), /*#__PURE__*/React.createElement("p", {
+    className: "font-bold text-slate-500 my-6 text-center text-xl"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-6 w-full"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => handleAnswer("yes"),
+    className: "flex-1 bg-green-500 hover:bg-green-600 text-white text-2xl font-black py-6 rounded-2xl shadow-xl border-b-8 border-green-700 active:border-b-0 active:translate-y-2 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("span", null, "⭕"), /*#__PURE__*/React.createElement("span", {
+    className: "text-sm mt-1"
+  }, getText("yes"))), /*#__PURE__*/React.createElement("button", {
+    onClick: () => handleAnswer("no"),
+    className: "flex-1 bg-red-500 hover:bg-red-600 text-white text-2xl font-black py-6 rounded-2xl shadow-xl border-b-8 border-red-700 active:border-b-0 active:translate-y-2 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("span", null, "❌"), /*#__PURE__*/React.createElement("span", {
+    className: "text-sm mt-1"
+  }, getText("no"))))) : /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/90 p-12 rounded-3xl shadow-xl text-center mt-12"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-8xl mb-4"
+  }, "🏆"), /*#__PURE__*/React.createElement("h2", {
+    className: "text-3xl font-black text-slate-800 mb-6"
+  }, getText("completed")), /*#__PURE__*/React.createElement("p", {
+    className: "text-xl mb-8 font-bold text-slate-600"
+  }, getText("score"), ": ", score), /*#__PURE__*/React.createElement("button", {
+    onClick: restart,
+    className: "bg-slate-700 text-white px-10 py-4 rounded-full font-black text-xl hover:bg-slate-800 shadow-xl"
+  }, getText("restart"), " 🔄")));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

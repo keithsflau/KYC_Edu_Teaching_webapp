@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小二常識：我的時間表 | My Timetable</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "My Timetable",
+    zh: "我的時間表",
+    ja: "時間割",
+    ko: "시간표",
+    es: "Mi Horario",
+    de: "Mein Stundenplan",
+    fi: "Lukujärjestykseni",
+    fr: "Mon Emploi du Temps",
+    ar: "جدولي الزمني",
+    it: "Il Mio Orario"
+  },
+  instruction: {
+    en: "Drag the subjects to the correct time slots!",
+    zh: "把科目拖到正確的時間格內！",
+    ja: "科目を正しい時間枠にドラッグしてください！",
+    ko: "과목을 올바른 시간 슬롯으로 드래그하세요!",
+    es: "¡Arrastra las asignaturas a las franjas horarias correctas!",
+    de: "Zieh die Fächer in die richtigen Zeitfenster!",
+    fi: "Raahaa aineet oikeisiin aikaväleihin!",
+    fr: "Faites glisser les matières vers les bons créneaux horaires !",
+    ar: "اسحب المواد إلى الفترات الزمنية الصحيحة!",
+    it: "Trascina le materie nelle fasce orarie corrette!"
+  },
+  check: {
+    en: "Check",
+    zh: "檢查",
+    ja: "確認",
+    ko: "확인",
+    es: "Comprobar",
+    de: "Prüfen",
+    fi: "Tarkista",
+    fr: "Vérifier",
+    ar: "تحقق",
+    it: "Controlla"
+  },
+  reset: {
+    en: "Reset",
+    zh: "重置",
+    ja: "リセット",
+    ko: "리셋",
+    es: "Reiniciar",
+    de: "Zurücksetzen",
+    fi: "Nollaa",
+    fr: "Réinitialiser",
+    ar: "إعادة تعيين",
+    it: "Resetta"
+  },
+  correct: {
+    en: "Timetable Complete!",
+    zh: "時間表完成了！",
+    ja: "時間割完成！",
+    ko: "시간표 완성!",
+    es: "¡Horario Completo!",
+    de: "Stundenplan vollständig!",
+    fi: "Lukujärjestys valmis!",
+    fr: "Emploi du temps complet !",
+    ar: "اكتمل الجدول الزمني!",
+    it: "Orario Completato!"
+  },
+  wrong: {
+    en: "Check the order again.",
+    zh: "再檢查次序是否正確。",
+    ja: "順番をもう一度確認してください。",
+    ko: "순서를 다시 확인하세요.",
+    es: "Comprueba el orden de nuevo.",
+    de: "Überprüfe die Reihenfolge nochmal.",
+    fi: "Tarkista järjestys uudelleen.",
+    fr: "Vérifiez à nouveau l'ordre.",
+    ar: "تحقق من الترتيب مرة أخرى.",
+    it: "Controlla di nuovo l'ordine."
+  },
+  chi: {
+    en: "Chinese",
+    zh: "中文",
+    ja: "中国語",
+    ko: "중국어",
+    es: "Chino",
+    de: "Chinesisch",
+    fi: "Kiina",
+    fr: "Chinois",
+    ar: "صينى",
+    it: "Cinese"
+  },
+  eng: {
+    en: "English",
+    zh: "英文",
+    ja: "英語",
+    ko: "영어",
+    es: "Inglés",
+    de: "Englisch",
+    fi: "Englanti",
+    fr: "Anglais",
+    ar: "إنجليزي",
+    it: "Inglese"
+  },
+  math: {
+    en: "Math",
+    zh: "數學",
+    ja: "数学",
+    ko: "수학",
+    es: "Matemáticas",
+    de: "Mathe",
+    fi: "Matematiikka",
+    fr: "Maths",
+    ar: "رياضيات",
+    it: "Matematica"
+  },
+  gs: {
+    en: "General Studies",
+    zh: "常識",
+    ja: "生活科",
+    ko: "슬기로운 생활",
+    es: "Conocimiento del Medio",
+    de: "Sachunterricht",
+    fi: "Ympäristöoppi",
+    fr: "Découverte du Monde",
+    ar: "دراسات عامة",
+    it: "Studi Generali"
+  },
+  music: {
+    en: "Music",
+    zh: "音樂",
+    ja: "音楽",
+    ko: "음악",
+    es: "Música",
+    de: "Musik",
+    fi: "Musiikki",
+    fr: "Musique",
+    ar: "موسيقى",
+    it: "Musica"
+  },
+  pe: {
+    en: "P. E.",
+    zh: "體育",
+    ja: "体育",
+    ko: "체육",
+    es: "Educación Física",
+    de: "Sport",
+    fi: "Liikunta",
+    fr: "E.P.S.",
+    ar: "تربية رياضية",
+    it: "Educazione Fisica"
+  },
+  slot1: {
+    en: "08:30 - 09:15",
+    zh: "08:30 - 09:15",
+    ja: "08:30 - 09:15",
+    ko: "08:30 - 09:15",
+    es: "08:30 - 09:15",
+    de: "08:30 - 09:15",
+    fi: "08:30 - 09:15",
+    fr: "08:30 - 09:15",
+    ar: "08:30 - 09:15",
+    it: "08:30 - 09:15"
+  },
+  slot2: {
+    en: "09:15 - 10:00",
+    zh: "09:15 - 10:00",
+    ja: "09:15 - 10:00",
+    ko: "09:15 - 10:00",
+    es: "09:15 - 10:00",
+    de: "09:15 - 10:00",
+    fi: "09:15 - 10:00",
+    fr: "09:15 - 10:00",
+    ar: "09:15 - 10:00",
+    it: "09:15 - 10:00"
+  },
+  slot3: {
+    en: "10:30 - 11:15",
+    zh: "10:30 - 11:15",
+    ja: "10:30 - 11:15",
+    ko: "10:30 - 11:15",
+    es: "10:30 - 11:15",
+    de: "10:30 - 11:15",
+    fi: "10:30 - 11:15",
+    fr: "10:30 - 11:15",
+    ar: "10:30 - 11:15",
+    it: "10:30 - 11:15"
+  },
+  slot4: {
+    en: "11:15 - 12:00",
+    zh: "11:15 - 12:00",
+    ja: "11:15 - 12:00",
+    ko: "11:15 - 12:00",
+    es: "11:15 - 12:00",
+    de: "11:15 - 12:00",
+    fi: "11:15 - 12:00",
+    fr: "11:15 - 12:00",
+    ar: "11:15 - 12:00",
+    it: "11:15 - 12:00"
+  },
+  slot5: {
+    en: "13:30 - 14:15",
+    zh: "13:30 - 14:15",
+    ja: "13:30 - 14:15",
+    ko: "13:30 - 14:15",
+    es: "13:30 - 14:15",
+    de: "13:30 - 14:15",
+    fi: "13:30 - 14:15",
+    fr: "13:30 - 14:15",
+    ar: "13:30 - 14:15",
+    it: "13:30 - 14:15"
+  },
+  slot6: {
+    en: "14:15 - 15:00",
+    zh: "14:15 - 15:00",
+    ja: "14:15 - 15:00",
+    ko: "14:15 - 15:00",
+    es: "14:15 - 15:00",
+    de: "14:15 - 15:00",
+    fi: "14:15 - 15:00",
+    fr: "14:15 - 15:00",
+    ar: "14:15 - 15:00",
+    it: "14:15 - 15:00"
+  },
+  recess: {
+    en: "Recess",
+    zh: "小息",
+    ja: "休み時間",
+    ko: "쉬는 시간",
+    es: "Recreo",
+    de: "Pause",
+    fi: "Välitunti",
+    fr: "Récréation",
+    ar: "إستراحة",
+    it: "Ricreazione"
+  },
+  lunch: {
+    en: "Lunch",
+    zh: "午膳",
+    ja: "昼休み",
+    ko: "점심 시간",
+    es: "Almuerzo",
+    de: "Mittagspause",
+    fi: "Lounas",
+    fr: "Déjeuner",
+    ar: "غداء",
+    it: "Pranzo"
+  }
+};
+
+// Correct order for the game (arbitrary fixed for puzzle simple logic)
+const targetSchedule = [{
+  id: "s1",
+  timeKey: "slot1",
+  target: "chi"
+}, {
+  id: "s2",
+  timeKey: "slot2",
+  target: "eng"
+}, {
+  id: "s3",
+  timeKey: "slot3",
+  target: "math"
+}, {
+  id: "s4",
+  timeKey: "slot4",
+  target: "gs"
+}, {
+  id: "s5",
+  timeKey: "slot5",
+  target: "music"
+}, {
+  id: "s6",
+  timeKey: "slot6",
+  target: "pe"
+}];
+const subjects = [{
+  id: "chi",
+  color: "bg-red-200 border-red-400 text-red-800",
+  icon: "📖"
+}, {
+  id: "eng",
+  color: "bg-blue-200 border-blue-400 text-blue-800",
+  icon: "🅰️"
+}, {
+  id: "math",
+  color: "bg-green-200 border-green-400 text-green-800",
+  icon: "🔢"
+}, {
+  id: "gs",
+  color: "bg-purple-200 border-purple-400 text-purple-800",
+  icon: "🌍"
+}, {
+  id: "music",
+  color: "bg-pink-200 border-pink-400 text-pink-800",
+  icon: "🎵"
+}, {
+  id: "pe",
+  color: "bg-orange-200 border-orange-400 text-orange-800",
+  icon: "🏃"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  // placements: slotId -> subjectId
+  const [placements, setPlacements] = useState({});
+  const [status, setStatus] = useState(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+  const handleDrop = (subjId, slotId) => {
+    setPlacements(prev => {
+      const next = {
+        ...prev
+      };
+      // One subject can only occupy one slot
+      for (const key of Object.keys(next)) {
+        if (next[key] === subjId) delete next[key];
+      }
+      next[slotId] = subjId;
+      return next;
+    });
+    setStatus(null);
+  };
+  const checkAnswers = () => {
+    const allFilled = targetSchedule.every(s => placements[s.id]);
+    if (!allFilled) {
+      setStatus("wrong");
+      return;
+    }
+    const correct = targetSchedule.every(s => placements[s.id] === s.target);
+    if (correct) setStatus("correct");else setStatus("wrong");
+  };
+  const reset = () => {
+    setPlacements({});
+    setStatus(null);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-amber-800 mb-4 mt-8 drop-shadow-sm bg-white/50 px-6 py-2 rounded-full"
+  }, "📅 ", getText("title")), /*#__PURE__*/React.createElement("p", {
+    className: "font-bold text-amber-700 mb-6"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col lg:flex-row gap-8 w-full max-w-5xl items-start"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 w-full bg-white rounded-3xl shadow-xl p-6 border-8 border-amber-200"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-center font-black text-2xl text-amber-900 mb-4 border-b-4 border-amber-100 pb-2"
+  }, "Monday (一)"), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-2"
+  }, /*#__PURE__*/React.createElement(SlotRow, {
+    row: targetSchedule[0],
+    placement: placements["s1"],
+    onDrop: handleDrop,
+    getText: getText,
+    subjects: subjects
+  }), /*#__PURE__*/React.createElement(SlotRow, {
+    row: targetSchedule[1],
+    placement: placements["s2"],
+    onDrop: handleDrop,
+    getText: getText,
+    subjects: subjects
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "bg-amber-100 rounded-xl p-2 text-center text-amber-700 font-bold text-sm tracking-widest"
+  }, getText("recess")), /*#__PURE__*/React.createElement(SlotRow, {
+    row: targetSchedule[2],
+    placement: placements["s3"],
+    onDrop: handleDrop,
+    getText: getText,
+    subjects: subjects
+  }), /*#__PURE__*/React.createElement(SlotRow, {
+    row: targetSchedule[3],
+    placement: placements["s4"],
+    onDrop: handleDrop,
+    getText: getText,
+    subjects: subjects
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "bg-amber-100 rounded-xl p-2 text-center text-amber-700 font-bold text-sm tracking-widest"
+  }, getText("lunch")), /*#__PURE__*/React.createElement(SlotRow, {
+    row: targetSchedule[4],
+    placement: placements["s5"],
+    onDrop: handleDrop,
+    getText: getText,
+    subjects: subjects
+  }), /*#__PURE__*/React.createElement(SlotRow, {
+    row: targetSchedule[5],
+    placement: placements["s6"],
+    onDrop: handleDrop,
+    getText: getText,
+    subjects: subjects
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "lg:w-1/3 w-full flex flex-col gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/80 p-6 rounded-3xl shadow-lg"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "font-bold text-slate-500 mb-4"
+  }, "Subjects"), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 gap-3"
+  }, subjects.filter(sub => !Object.values(placements).includes(sub.id)).map(sub => /*#__PURE__*/React.createElement("div", {
+    key: sub.id,
+    draggable: true,
+    onDragStart: e => e.dataTransfer.setData("subjId", sub.id),
+    className: `${sub.color} p-3 rounded-xl border-b-4 font-bold flex items-center gap-2 cursor-grab active:cursor-grabbing hover:scale-105 transition-transform shadow-sm select-none`
+  }, /*#__PURE__*/React.createElement("span", null, sub.icon), /*#__PURE__*/React.createElement("span", {
+    className: "text-sm"
+  }, getText(sub.id)))))), status && /*#__PURE__*/React.createElement("div", {
+    className: `p-4 rounded-2xl font-black text-center text-xl shadow ${status === "correct" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"}`
+  }, getText(status)), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: checkAnswers,
+    className: "flex-1 bg-amber-500 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-amber-600 border-b-4 border-amber-700 active:border-b-0 active:translate-y-1"
+  }, getText("check")), /*#__PURE__*/React.createElement("button", {
+    onClick: reset,
+    className: "flex-1 bg-slate-200 text-slate-600 py-3 rounded-xl font-bold shadow-lg hover:bg-slate-300 border-b-4 border-slate-400 active:border-b-0 active:translate-y-1"
+  }, getText("reset"))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-yellow-100 p-4 rounded-xl text-yellow-800 text-sm"
+  }, "💡 Hint: Chi, Eng, Math, GS, Music, PE"))));
+}
+function SlotRow({
+  row,
+  placement,
+  onDrop,
+  getText,
+  subjects
+}) {
+  const placedSub = subjects.find(s => s.id === placement);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4 items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-32 text-right font-mono text-slate-500 font-bold text-xs md:text-sm"
+  }, getText(row.timeKey)), /*#__PURE__*/React.createElement("div", {
+    onDragOver: e => e.preventDefault(),
+    onDrop: e => {
+      e.preventDefault();
+      const id = e.dataTransfer.getData("subjId");
+      if (id) onDrop(id, row.id);
+    },
+    className: "flex-1 h-14 bg-slate-50 rounded-xl border-2 border-dashed border-slate-300 flex items-center justify-center p-1 transition-colors hover:bg-slate-100"
+  }, placedSub ? /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      scale: 0
+    },
+    animate: {
+      scale: 1
+    },
+    className: `${placedSub.color} w-full h-full rounded-lg flex items-center justify-center gap-2 font-bold shadow-sm`
+  }, /*#__PURE__*/React.createElement("span", null, placedSub.icon), /*#__PURE__*/React.createElement("span", null, getText(placedSub.id))) : /*#__PURE__*/React.createElement("div", {
+    className: "text-slate-200 font-bold"
+  }, "Drop Here")));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

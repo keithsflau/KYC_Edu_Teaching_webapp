@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>02 板塊構造 | 動態地球</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../shared/earth.css">
+</head>
+<body>
+  <nav class="lesson-nav">
+    <a href="../../index.html" class="lesson-nav__back">← 動態地球</a>
+    <span class="lesson-nav__title">02 · 板塊構造</span>
+    <span style="width:4rem"></span>
+  </nav>
+  <div class="layout layout--wide">
+    <div class="viz-panel">
+      <div class="boot" id="boot">載入 3D 地球儀…</div>
+      <div class="viz-toolbar">
+        <button class="btn is-active" id="btn-all" type="button">全球</button>
+        <button class="btn" id="btn-hk" type="button">聚焦香港</button>
+        <button class="btn" id="filter-all" type="button">全部邊界</button>
+        <button class="btn" data-bf="divergent" type="button">張裂</button>
+        <button class="btn" data-bf="convergent" type="button">消亡</button>
+        <button class="btn" data-bf="conservative" type="button">保守</button>
+      </div>
+      <div class="viz-canvas" id="viz"></div>
+    </div>
+    <aside class="side-panel side-panel--wide" id="lesson-panel"></aside>
+  </div>
+  <div class="lesson-pager" id="lesson-pager" style="max-width:56rem;margin:0 auto;padding:1rem 1.25rem 2rem"></div>
+
+  <script src="../../../../History/3D_War/dse-wars/lib/three.min.js"></script>
+  <script src="../../../../History/3D_War/dse-wars/lib/OrbitControls.js"></script>
+  <script src="../../shared/earth-engine.js"></script>
+  <script src="../../shared/lesson-content.js"></script>
+  <script src="../../shared/lesson-exercises.js"></script>
+  <script src="../../shared/lesson-ui.js"></script>
+  <script>
+    const boot = document.getElementById('boot');
+    const globe = EarthEngine.createGlobe(document.getElementById('viz'));
+    boot.classList.add('gone');
+
+    const boundaryLines = [];
+    globe.earthGroup.children.forEach((c) => {
+      if (c.userData && c.userData.boundaryType) boundaryLines.push(c);
+    });
+
+    function filterBoundaries(type) {
+      boundaryLines.forEach((line) => {
+        line.visible = !type || line.userData.boundaryType === type;
+      });
+      document.querySelectorAll('[data-bf]').forEach((b) => b.classList.remove('is-active'));
+      if (type) document.querySelector(`[data-bf="${type}"]`)?.classList.add('is-active');
+      else document.getElementById('filter-all')?.classList.add('is-active');
+    }
+
+    document.getElementById('btn-hk').onclick = () => globe.focusHK();
+    document.getElementById('btn-all').onclick = () => {
+      globe.earthGroup.rotation.set(0, 0, 0);
+      globe.controls.target.set(0, 0, 0);
+    };
+    document.getElementById('filter-all').onclick = () => filterBoundaries(null);
+    document.querySelectorAll('[data-bf]').forEach((btn) => {
+      btn.onclick = () => filterBoundaries(btn.dataset.bf);
+    });
+
+    LessonUI.initLesson('plate_tectonics', {
+      title: '板塊構造',
+      lead: '3D 地球儀以彩色區塊顯示主要板塊，並標示板塊邊界（教學示意）。可篩選邊界類型、點擊右側板塊名稱高亮、聚焦香港。內容對照必修 C1。',
+      pager: {
+        prev: '../01_earth_system/index.html',
+        prevLabel: '地球系統',
+        next: '../03_rock_cycle/index.html',
+        nextLabel: '岩石循環',
+      },
+    });
+
+    const plateCard = LessonUI.el('div', 'card');
+    plateCard.innerHTML = '<h3>主要板塊</h3><p style="font-size:0.8rem;color:rgba(255,255,255,0.5);margin:0 0 0.5rem">點擊板塊名稱可在地球儀上高亮</p><ul id="plate-list">' +
+      EarthEngine.PLATES.map((p) =>
+        `<li data-plate="${p.id}" style="cursor:pointer"><strong style="color:${p.color}">${p.name}</strong> ${p.nameEn}${p.hk ? ' · <span style="color:#fbbf24">香港所在</span>' : ''}</li>`
+      ).join('') + '</ul><div class="legend" style="margin-top:0.75rem">' +
+      '<span><i style="background:#4ade80;width:10px;height:10px;border-radius:50%;display:inline-block"></i>張裂</span>' +
+      '<span><i style="background:#f97316;width:10px;height:10px;border-radius:50%;display:inline-block"></i>消亡</span>' +
+      '<span><i style="background:#38bdf8;width:10px;height:10px;border-radius:50%;display:inline-block"></i>保守</span></div>';
+    document.querySelectorAll('.lesson-pane')[0].appendChild(plateCard);
+
+    let selectedPlate = null;
+    document.getElementById('plate-list').addEventListener('click', (e) => {
+      const li = e.target.closest('[data-plate]');
+      if (!li) return;
+      const id = li.dataset.plate;
+      selectedPlate = selectedPlate === id ? null : id;
+      globe.highlightPlate(selectedPlate);
+      document.querySelectorAll('#plate-list [data-plate]').forEach((el) => {
+        el.style.background = el.dataset.plate === selectedPlate ? 'rgba(255,255,255,0.08)' : '';
+      });
+    });
+  </script>
+</body>
+</html>

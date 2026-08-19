@@ -1,0 +1,257 @@
+﻿<!DOCTYPE html>
+<html lang="zh-HK">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grammar Coaster V3 (Stable HTML Text)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            margin: 0;
+            background: #000;
+            overflow: hidden;
+        }
+
+        .hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        /* 為 3D 場景中的 HTML 文字添加發光效果 */
+        .neon-text {
+            text-shadow: 0 0 10px currentColor;
+            font-family: "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+            white-space: nowrap;
+            user-select: none;
+        }
+    </style>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "react": "https://esm.sh/react@18.2.0",
+                "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+                "three": "https://esm.sh/three@0.149.0",
+                "@react-three/fiber": "https://esm.sh/@react-three/fiber@8.13.0",
+                "@react-three/drei": "https://esm.sh/@react-three/drei@9.88.0"
+            }
+        }
+    </script>
+</head>
+
+<body>
+    <div id="root"></div>
+
+    <script type="module">
+import React, { useState, useRef, useEffect } from 'react';
+import { createRoot } from 'react-dom/client';
+import * as THREE from 'three';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
+// 注意這裡引入了 Html，這是解決問題的關鍵
+import { Html, Grid, Sparkles, Torus } from '@react-three/drei';
+
+// --- 遊戲數據 ---
+const QUESTIONS = [{
+  text: "_______ 下雨，所以比賽取消。",
+  left: "因為",
+  right: "雖然",
+  correct: "left"
+}, {
+  text: "他 _______ 聰明，而且很努力。",
+  left: "與其",
+  right: "不但",
+  correct: "right"
+}, {
+  text: "_______ 肯付出，就一定有收穫。",
+  left: "只有",
+  right: "只要",
+  correct: "right"
+}, {
+  text: "這件事 _______ 他做的，而是我做的。",
+  left: "不是",
+  right: "就是",
+  correct: "left"
+}, {
+  text: "_______ 失敗，也不要氣餒。",
+  left: "即使",
+  right: "既然",
+  correct: "left"
+}];
+
+// --- 組件: 閘門 (使用 Html 顯示文字) ---
+const Gate = ({
+  position,
+  text,
+  color
+}) => /*#__PURE__*/React.createElement("group", {
+  position: position
+}, /*#__PURE__*/React.createElement(Torus, {
+  args: [1.5, 0.1, 16, 32],
+  position: [0, 1.5, 0]
+}, /*#__PURE__*/React.createElement("meshStandardMaterial", {
+  color: color,
+  emissive: color,
+  emissiveIntensity: 2
+})), /*#__PURE__*/React.createElement(Html, {
+  transform: true,
+  position: [0, 1.5, 0],
+  center: true
+}, /*#__PURE__*/React.createElement("div", {
+  className: "neon-text text-4xl font-bold",
+  style: {
+    color: 'white'
+  }
+}, text)));
+
+// --- 組件: 玩家控制器 ---
+const Player = ({
+  setScore,
+  setFeedback,
+  activeQ,
+  setActiveQ
+}) => {
+  const {
+    camera
+  } = useThree();
+  const playerPos = useRef(new THREE.Vector3(0, 0, 0));
+  const lane = useRef(0); // -1, 0, 1
+  const speed = useRef(15);
+  useEffect(() => {
+    const onKey = e => {
+      if (e.key === 'ArrowLeft') lane.current = -1;
+      if (e.key === 'ArrowRight') lane.current = 1;
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+  useFrame((state, delta) => {
+    // 移動邏輯
+    playerPos.current.z -= speed.current * delta;
+    const targetX = lane.current === -1 ? -3.5 : lane.current === 1 ? 3.5 : 0;
+    playerPos.current.x = THREE.MathUtils.lerp(playerPos.current.x, targetX, delta * 5);
+
+    // 相機跟隨
+    state.camera.position.copy(playerPos.current);
+    state.camera.position.y = 3;
+    state.camera.position.z += 8;
+    state.camera.lookAt(playerPos.current.x, 1, playerPos.current.z - 10);
+
+    // 碰撞檢測
+    const gateZ = -(activeQ + 1) * 40;
+    const dist = playerPos.current.z - gateZ;
+    if (Math.abs(dist) < 1) {
+      const currentQuestion = QUESTIONS[activeQ % QUESTIONS.length];
+      const chosenSide = playerPos.current.x < -1 ? 'left' : playerPos.current.x > 1 ? 'right' : null;
+      if (chosenSide) {
+        if (chosenSide === currentQuestion.correct) {
+          setFeedback("CORRECT");
+          setScore(s => s + 100);
+          speed.current = 40; // 答對加速
+        } else {
+          setFeedback("WRONG");
+          speed.current = 5; // 答錯減速
+        }
+        setTimeout(() => {
+          speed.current = 15;
+          setFeedback("");
+        }, 500);
+        if (Math.abs(dist) < 0.5) setActiveQ(q => q + 1);
+      }
+    }
+  });
+  return /*#__PURE__*/React.createElement("mesh", {
+    position: [playerPos.current.x, 1, playerPos.current.z],
+    rotation: [0, Math.PI, 0]
+  }, /*#__PURE__*/React.createElement("coneGeometry", {
+    args: [0.5, 1.5, 3]
+  }), /*#__PURE__*/React.createElement("meshStandardMaterial", {
+    color: "orange",
+    emissive: "#ffaa00",
+    emissiveIntensity: 0.5
+  }));
+};
+
+// --- 主程式 ---
+const App = () => {
+  const [score, setScore] = useState(0);
+  const [feedback, setFeedback] = useState("");
+  const [activeQ, setActiveQ] = useState(0);
+  const questionData = QUESTIONS[activeQ % QUESTIONS.length];
+  const gateZ = -(activeQ + 1) * 40;
+  return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Canvas, null, /*#__PURE__*/React.createElement("color", {
+    attach: "background",
+    args: ['#050505']
+  }), /*#__PURE__*/React.createElement("fog", {
+    attach: "fog",
+    args: ['#050505', 10, 60]
+  }), /*#__PURE__*/React.createElement("ambientLight", {
+    intensity: 0.5
+  }), /*#__PURE__*/React.createElement("pointLight", {
+    position: [10, 10, 10]
+  }), /*#__PURE__*/React.createElement(Grid, {
+    position: [0, -1, 0],
+    args: [100, 100],
+    infiniteGrid: true,
+    cellSize: 2,
+    sectionColor: "#00f3ff",
+    fadeDistance: 50
+  }), /*#__PURE__*/React.createElement(Sparkles, {
+    count: 150,
+    scale: [20, 20, 50],
+    size: 4,
+    speed: 0.4
+  }), /*#__PURE__*/React.createElement(Gate, {
+    position: [-3.5, 0, gateZ],
+    text: questionData.left,
+    color: "#00f3ff"
+  }), /*#__PURE__*/React.createElement(Gate, {
+    position: [3.5, 0, gateZ],
+    text: questionData.right,
+    color: "#ff00aa"
+  }), /*#__PURE__*/React.createElement(Player, {
+    setScore: setScore,
+    setFeedback: setFeedback,
+    activeQ: activeQ,
+    setActiveQ: setActiveQ
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "hud flex flex-col justify-between p-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between text-white"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-xl font-bold text-cyan-400 border-l-4 border-cyan-400 pl-3"
+  }, "GRAMMAR", /*#__PURE__*/React.createElement("br", null), "COASTER"), /*#__PURE__*/React.createElement("div", {
+    className: "text-right"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs text-gray-400"
+  }, "SCORE"), /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-mono"
+  }, score))), feedback && /*#__PURE__*/React.createElement("div", {
+    className: `absolute inset-0 flex items-center justify-center pointer-events-none ${feedback === 'WRONG' ? 'bg-red-500/20' : 'bg-green-500/20'}`
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: `text-6xl font-black italic tracking-tighter ${feedback === 'WRONG' ? 'text-red-500' : 'text-green-400'}`
+  }, feedback, "!")), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-center mb-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-black/80 backdrop-blur border border-cyan-500/50 p-6 rounded-xl max-w-lg w-full text-center shadow-[0_0_30px_rgba(0,243,255,0.2)]"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-white text-2xl font-bold mb-4"
+  }, questionData.text), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between px-8 text-sm font-bold"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-cyan-400"
+  }, "← ", questionData.left), /*#__PURE__*/React.createElement("span", {
+    className: "text-pink-500"
+  }, questionData.right, " →"))))));
+};
+const root = createRoot(document.getElementById('root'));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+
+</body>
+
+</html>

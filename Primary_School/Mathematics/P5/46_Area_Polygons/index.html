@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小五數學：多邊形面積 | Area of Polygons</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(21, 128, 61, 0.2); /* Green 700 alpha */
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(74, 222, 128, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+      .shape-path {
+        transition: d 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+// Inline icons (lucide-react UMD crashes / blocked)
+const iconSvg = (children) => ({ size = 24, className = "" }) => React.createElement("svg", {
+  width: size, height: size, viewBox: "0 0 24 24", fill: "none",
+  stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", className
+}, ...children);
+const Ruler = iconSvg([
+  React.createElement("path", { key: "1", d: "M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z" }),
+  React.createElement("path", { key: "2", d: "m14.5 12.5 2-2" }),
+  React.createElement("path", { key: "3", d: "m11.5 9.5 2-2" }),
+  React.createElement("path", { key: "4", d: "m8.5 6.5 2-2" }),
+  React.createElement("path", { key: "5", d: "m17.5 15.5 2-2" })
+]);
+const Triangle = iconSvg([
+  React.createElement("path", { key: "1", d: "M13.73 4a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" })
+]);
+const Square = iconSvg([
+  React.createElement("rect", { key: "1", width: "18", height: "18", x: "3", y: "3", rx: "2" })
+]);
+const Layers = iconSvg([
+  React.createElement("path", { key: "1", d: "m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z" }),
+  React.createElement("path", { key: "2", d: "m22 12.5-8.58 3.91a2 2 0 0 1-1.66 0L2 12.5" }),
+  React.createElement("path", { key: "3", d: "m22 17.5-8.58 3.91a2 2 0 0 1-1.66 0L2 17.5" })
+]);
+const Calculator = iconSvg([
+  React.createElement("rect", { key: "1", width: "16", height: "20", x: "4", y: "2", rx: "2" }),
+  React.createElement("line", { key: "2", x1: "8", x2: "16", y1: "6", y2: "6" }),
+  React.createElement("line", { key: "3", x1: "16", x2: "16", y1: "14", y2: "18" }),
+  React.createElement("path", { key: "4", d: "M16 10h.01" }),
+  React.createElement("path", { key: "5", d: "M12 10h.01" }),
+  React.createElement("path", { key: "6", d: "M8 10h.01" }),
+  React.createElement("path", { key: "7", d: "M12 14h.01" }),
+  React.createElement("path", { key: "8", d: "M8 14h.01" }),
+  React.createElement("path", { key: "9", d: "M12 18h.01" }),
+  React.createElement("path", { key: "10", d: "M8 18h.01" })
+]);
+const t = {
+  title: {
+    en: "Area of Polygons",
+    zh: "多邊形面積",
+    ja: "多角形の面積",
+    ko: "다각형의 넓이",
+    es: "Área de Polígonos",
+    de: "Flächeninhalt",
+    fi: "Pinta-ala",
+    fr: "Aire des polygones",
+    ar: "مساحة المضلعات",
+    it: "Area dei poligoni"
+  },
+  triangle: {
+    en: "Triangle",
+    zh: "三角形",
+    ja: "三角形",
+    ko: "삼각형",
+    es: "Triángulo",
+    de: "Dreieck",
+    fi: "Kolmio",
+    fr: "Triangle",
+    ar: "مثلث",
+    it: "Triangolo"
+  },
+  parallelogram: {
+    en: "Parallelogram",
+    zh: "平行四邊形",
+    ja: "平行四辺形",
+    ko: "평행사변형",
+    es: "Paralelogramo",
+    de: "Parallelogramm",
+    fi: "Suunnikas",
+    fr: "Parallélogramme",
+    ar: "متوازي الأضلاع",
+    it: "Parallelogramma"
+  },
+  trapezium: {
+    en: "Trapezium",
+    zh: "梯形",
+    ja: "台形",
+    ko: "사다리꼴",
+    es: "Trapecio",
+    de: "Trapez",
+    fi: "Puolisuunnikas",
+    fr: "Trapèze",
+    ar: "شبه منحرف",
+    it: "Trapezio"
+  },
+  base: {
+    en: "Base",
+    zh: "底",
+    ja: "底辺",
+    ko: "밑변",
+    es: "Base",
+    de: "Basis",
+    fi: "Kanta",
+    fr: "Base",
+    ar: "القاعدة",
+    it: "Base"
+  },
+  topBase: {
+    en: "Top Base",
+    zh: "上底",
+    ja: "上底",
+    ko: "윗변",
+    es: "Base Sup.",
+    de: "Obere Basis",
+    fi: "Yläkanta",
+    fr: "Petite base",
+    ar: "القاعدة العليا",
+    it: "Base Superiore"
+  },
+  bottomBase: {
+    en: "Bottom Base",
+    zh: "下底",
+    ja: "下底",
+    ko: "아랫변",
+    es: "Base Inf.",
+    de: "Untere Basis",
+    fi: "Alakanta",
+    fr: "Grande base",
+    ar: "القاعدة السفلى",
+    it: "Base Inferiore"
+  },
+  height: {
+    en: "Height",
+    zh: "高",
+    ja: "高さ",
+    ko: "높이",
+    es: "Altura",
+    de: "Höhe",
+    fi: "Korkeus",
+    fr: "Hauteur",
+    ar: "الارتفاع",
+    it: "Altezza"
+  },
+  formula: {
+    en: "Formula",
+    zh: "公式",
+    ja: "公式",
+    ko: "공식",
+    es: "Fórmula",
+    de: "Formel",
+    fi: "Kaava",
+    fr: "Formule",
+    ar: "الصيغة",
+    it: "Formula"
+  },
+  calc: {
+    en: "Calculation",
+    zh: "計算",
+    ja: "計算",
+    ko: "계산",
+    es: "Cálculo",
+    de: "Rechnung",
+    fi: "Lasku",
+    fr: "Calcul",
+    ar: "حساب",
+    it: "Calcolo"
+  },
+  area: {
+    en: "Area",
+    zh: "面積",
+    ja: "面積",
+    ko: "넓이",
+    es: "Área",
+    de: "Fläche",
+    fi: "Pinta-ala",
+    fr: "Aire",
+    ar: "مساحة",
+    it: "Area"
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [shape, setShape] = useState("triangle");
+  const [base, setBase] = useState(10);
+  const [height, setHeight] = useState(8);
+  const [topBase, setTopBase] = useState(6);
+  const getArea = () => {
+    if (shape === "triangle") return base * height / 2;
+    if (shape === "parallelogram") return base * height;
+    if (shape === "trapezium") return (base + topBase) * height / 2;
+    return 0;
+  };
+  const getFormulaDisplay = () => {
+    if (shape === "triangle") return `(${getText("base", lang)} × ${getText("height", lang)}) ÷ 2`;
+    if (shape === "parallelogram") return `${getText("base", lang)} × ${getText("height", lang)}`;
+    if (shape === "trapezium") return `(${getText("topBase", lang)} + ${getText("bottomBase", lang)}) × ${getText("height", lang)} ÷ 2`;
+  };
+  const getCalcDisplay = () => {
+    if (shape === "triangle") return `(${base} × ${height}) ÷ 2`;
+    if (shape === "parallelogram") return `${base} × ${height}`;
+    if (shape === "trapezium") return `(${topBase} + ${base}) × ${height} ÷ 2`;
+  };
+  const getPath = () => {
+    const scale = 15;
+    const cx = 200;
+    const by = 300; // Bottom Y
+
+    const bPx = base * scale;
+    const hPx = height * scale;
+    const tPx = topBase * scale;
+    if (shape === "triangle") {
+      return `M${cx},${by - hPx} L${cx + bPx / 2},${by} L${cx - bPx / 2},${by} Z`;
+    } else if (shape === "parallelogram") {
+      const slant = hPx * 0.4;
+      const sx = cx - bPx / 2 - slant / 2;
+      return `M${sx + slant},${by - hPx} L${sx + slant + bPx},${by - hPx} L${sx + bPx},${by} L${sx},${by} Z`;
+    } else {
+      // Trapezium
+      return `M${cx - tPx / 2},${by - hPx} L${cx + tPx / 2},${by - hPx} L${cx + bPx / 2},${by} L${cx - bPx / 2},${by} Z`;
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-6xl flex justify-between items-center mb-6"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-3xl md:text-5xl font-black text-green-400 drop-shadow-[0_0_15px_rgba(74,222,128,0.5)]"
+  }, "📐 ", getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-800/80 p-1.5 rounded-xl border border-white/10 flex flex-wrap justify-end gap-1"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-green-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white hover:bg-white/5"}`
+  }, l)))), /*#__PURE__*/React.createElement("main", {
+    className: "w-full max-w-6xl grid lg:grid-cols-12 gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "lg:col-span-8 flex flex-col gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-2 rounded-2xl flex justify-center gap-2"
+  }, [{
+    id: "triangle",
+    icon: /*#__PURE__*/React.createElement(Triangle, {
+      size: 20
+    }),
+    label: "triangle"
+  }, {
+    id: "parallelogram",
+    icon: /*#__PURE__*/React.createElement(Square, {
+      size: 20,
+      className: "skew-x-6"
+    }),
+    label: "parallelogram"
+  }, {
+    id: "trapezium",
+    icon: /*#__PURE__*/React.createElement(Layers, {
+      size: 20
+    }),
+    label: "trapezium"
+  }].map(s => /*#__PURE__*/React.createElement("button", {
+    key: s.id,
+    onClick: () => setShape(s.id),
+    className: `flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all ${shape === s.id ? "bg-green-600 text-white shadow-lg shadow-green-900/50" : "text-green-300 hover:bg-white/5"}`
+  }, s.icon, " ", /*#__PURE__*/React.createElement("span", null, getText(s.label, lang))))), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-8 rounded-3xl flex items-center justify-center min-h-[400px] overflow-hidden relative"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 grid-bg opacity-20 pointer-events-none",
+    style: {
+      backgroundImage: "linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)",
+      backgroundSize: "20px 20px"
+    }
+  }), /*#__PURE__*/React.createElement("svg", {
+    width: "600",
+    height: "400",
+    viewBox: "0 0 400 350",
+    className: "drop-shadow-[0_0_20px_rgba(34,197,94,0.3)] max-w-full"
+  }, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("linearGradient", {
+    id: "gradShape",
+    x1: "0%",
+    y1: "0%",
+    x2: "0%",
+    y2: "100%"
+  }, /*#__PURE__*/React.createElement("stop", {
+    offset: "0%",
+    stopColor: "#4ade80",
+    stopOpacity: "0.4"
+  }), /*#__PURE__*/React.createElement("stop", {
+    offset: "100%",
+    stopColor: "#16a34a",
+    stopOpacity: "0.6"
+  }))), /*#__PURE__*/React.createElement("path", {
+    d: getPath(),
+    fill: "url(#gradShape)",
+    stroke: "#86efac",
+    strokeWidth: "3",
+    className: "shape-path"
+  }), (() => {
+    const scale = 15;
+    const cx = 200;
+    const by = 300;
+    const hPx = height * scale;
+    return /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("line", {
+      x1: cx,
+      y1: by,
+      x2: cx,
+      y2: by - hPx,
+      stroke: "#fcd34d",
+      strokeWidth: "2",
+      strokeDasharray: "6,4"
+    }), /*#__PURE__*/React.createElement("text", {
+      x: cx + 8,
+      y: by - hPx / 2,
+      fill: "#fcd34d",
+      fontSize: "16",
+      fontWeight: "bold",
+      fontFamily: "monospace"
+    }, "h=", height));
+  })(), /*#__PURE__*/React.createElement("text", {
+    x: "200",
+    y: "330",
+    textAnchor: "middle",
+    fill: "#86efac",
+    fontSize: "16",
+    fontWeight: "bold",
+    fontFamily: "monospace"
+  }, shape === "trapezium" ? `Bottom Base = ${base}` : `Base = ${base}`), shape === "trapezium" && /*#__PURE__*/React.createElement("text", {
+    x: "200",
+    y: 300 - height * 15 - 15,
+    textAnchor: "middle",
+    fill: "#86efac",
+    fontSize: "16",
+    fontWeight: "bold",
+    fontFamily: "monospace"
+  }, "Top Base = ", topBase)))), /*#__PURE__*/React.createElement("div", {
+    className: "lg:col-span-4 flex flex-col gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 rounded-3xl flex flex-col gap-6"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-xl font-bold text-green-300 flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement(Ruler, {
+    size: 20
+  }), " ", getText("calc", lang)), [{
+    label: shape === "trapezium" ? "bottomBase" : "base",
+    val: base,
+    set: setBase,
+    max: 20
+  }, {
+    label: "height",
+    val: height,
+    set: setHeight,
+    max: 15
+  }, ...(shape === "trapezium" ? [{
+    label: "topBase",
+    val: topBase,
+    set: setTopBase,
+    max: 15
+  }] : [])].map(s => /*#__PURE__*/React.createElement("div", {
+    key: s.label
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between text-sm text-slate-300 mb-2 font-bold"
+  }, /*#__PURE__*/React.createElement("span", null, getText(s.label, lang)), /*#__PURE__*/React.createElement("span", {
+    className: "text-white bg-slate-700 px-2 py-0.5 rounded shadow"
+  }, s.val)), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "2",
+    max: s.max,
+    value: s.val,
+    onChange: e => s.set(Number(e.target.value)),
+    className: "w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-green-500"
+  })))), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 rounded-3xl flex-1 flex flex-col relative overflow-hidden"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "relative z-10 flex flex-col h-full justify-between"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h3", {
+    className: "text-green-300 text-sm font-bold uppercase tracking-widest mb-4 flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement(Calculator, {
+    size: 16
+  }), " ", getText("formula", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "text-white font-mono text-sm md:text-base bg-slate-900/50 p-3 rounded-lg border border-white/5 mb-4"
+  }, getFormulaDisplay()), /*#__PURE__*/React.createElement("h3", {
+    className: "text-green-300 text-sm font-bold uppercase tracking-widest mb-2"
+  }, getText("calc", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "text-yellow-400 font-mono text-lg md:text-xl"
+  }, "= ", getCalcDisplay())), /*#__PURE__*/React.createElement(motion.div, {
+    className: "mt-8 pt-8 border-t border-white/10",
+    layout: true
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between items-end"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-slate-400 font-bold uppercase tracking-widest text-sm"
+  }, getText("area", lang)), /*#__PURE__*/React.createElement("span", {
+    className: "text-5xl font-black text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]"
+  }, getArea()))))))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

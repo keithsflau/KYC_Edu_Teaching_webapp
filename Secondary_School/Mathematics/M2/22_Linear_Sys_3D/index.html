@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3D Linear Systems | M2 Matrix</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+        overflow: hidden;
+      }
+      .glass {
+        background: rgba(15, 23, 42, 0.8);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      /* Custom Range Slider */
+      input[type="range"] {
+        -webkit-appearance: none;
+        background: transparent;
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        height: 12px;
+        width: 12px;
+        border-radius: 50%;
+        background: white;
+        margin-top: -4px;
+        cursor: pointer;
+      }
+      input[type="range"]::-webkit-slider-runnable-track {
+        width: 100%;
+        height: 4px;
+        cursor: pointer;
+        background: #334155;
+        border-radius: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- HUD -->
+    <div
+      class="absolute top-4 left-4 z-10 glass p-6 rounded-2xl max-w-sm max-h-[90vh] overflow-y-auto"
+    >
+      <div class="flex justify-between items-start mb-2">
+        <h1
+          id="app_title"
+          class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400"
+        >
+          3D Linear Systems Lab
+        </h1>
+        <button
+          onclick="toggleLang()"
+          class="ml-2 px-2 py-1 bg-slate-700 hover:bg-slate-600 rounded text-[10px] font-bold text-white border border-slate-500 transition flex items-center gap-1"
+        >
+          <i class="fa-solid fa-language"></i>
+          <span id="lang_btn">中文</span>
+        </button>
+      </div>
+
+      <p class="text-xs text-slate-300 mb-4" id="app_desc">
+        Manipulate the linear equations defining the planes.
+        <br />
+        <span class="font-mono text-emerald-400">ax + by + cz = d</span>
+      </p>
+
+      <div id="controls" class="space-y-6">
+        <!-- Plane 1 -->
+        <div class="border-l-4 border-rose-500 pl-4 py-1">
+          <h3
+            class="text-xs font-bold text-rose-400 uppercase mb-2"
+            id="label_p1"
+          >
+            Plane 1 (Red)
+          </h3>
+          <div class="space-y-2">
+            <div class="flex items-center gap-2">
+              <label class="text-[10px] w-4 font-mono">a</label>
+              <input
+                type="range"
+                class="flex-1 accent-rose-500"
+                min="-2"
+                max="2"
+                step="0.1"
+                id="p1_a"
+                value="0.8"
+              />
+              <span class="text-[10px] w-6 text-right font-mono" id="val_p1_a"
+                >0.8</span
+              >
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-[10px] w-4 font-mono">b</label>
+              <input
+                type="range"
+                class="flex-1 accent-rose-500"
+                min="-2"
+                max="2"
+                step="0.1"
+                id="p1_b"
+                value="0"
+              />
+              <span class="text-[10px] w-6 text-right font-mono" id="val_p1_b"
+                >0.0</span
+              >
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-[10px] w-4 font-mono">c</label>
+              <input
+                type="range"
+                class="flex-1 accent-rose-500"
+                min="-2"
+                max="2"
+                step="0.1"
+                id="p1_c"
+                value="0"
+              />
+              <span class="text-[10px] w-6 text-right font-mono" id="val_p1_c"
+                >0.0</span
+              >
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-[10px] w-4 font-mono">d</label>
+              <input
+                type="range"
+                class="flex-1 accent-rose-500"
+                min="-5"
+                max="5"
+                step="0.1"
+                id="p1_d"
+                value="1.2"
+              />
+              <span class="text-[10px] w-6 text-right font-mono" id="val_p1_d"
+                >1.2</span
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- Plane 2 -->
+        <div class="border-l-4 border-emerald-500 pl-4 py-1">
+          <h3
+            class="text-xs font-bold text-emerald-400 uppercase mb-2"
+            id="label_p2"
+          >
+            Plane 2 (Green)
+          </h3>
+          <div class="space-y-2">
+            <div class="flex items-center gap-2">
+              <label class="text-[10px] w-4 font-mono">a</label>
+              <input
+                type="range"
+                class="flex-1 accent-emerald-500"
+                min="-2"
+                max="2"
+                step="0.1"
+                id="p2_a"
+                value="0"
+              />
+              <span class="text-[10px] w-6 text-right font-mono" id="val_p2_a"
+                >0.0</span
+              >
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-[10px] w-4 font-mono">b</label>
+              <input
+                type="range"
+                class="flex-1 accent-emerald-500"
+                min="-2"
+                max="2"
+                step="0.1"
+                id="p2_b"
+                value="0.7"
+              />
+              <span class="text-[10px] w-6 text-right font-mono" id="val_p2_b"
+                >0.7</span
+              >
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-[10px] w-4 font-mono">c</label>
+              <input
+                type="range"
+                class="flex-1 accent-emerald-500"
+                min="-2"
+                max="2"
+                step="0.1"
+                id="p2_c"
+                value="0"
+              />
+              <span class="text-[10px] w-6 text-right font-mono" id="val_p2_c"
+                >0.0</span
+              >
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-[10px] w-4 font-mono">d</label>
+              <input
+                type="range"
+                class="flex-1 accent-emerald-500"
+                min="-5"
+                max="5"
+                step="0.1"
+                id="p2_d"
+                value="0.5"
+              />
+              <span class="text-[10px] w-6 text-right font-mono" id="val_p2_d"
+                >0.5</span
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- Plane 3 -->
+        <div class="border-l-4 border-sky-500 pl-4 py-1">
+          <h3
+            class="text-xs font-bold text-sky-400 uppercase mb-2"
+            id="label_p3"
+          >
+            Plane 3 (Blue)
+          </h3>
+          <div class="space-y-2">
+            <div class="flex items-center gap-2">
+              <label class="text-[10px] w-4 font-mono">a</label>
+              <input
+                type="range"
+                class="flex-1 accent-sky-500"
+                min="-2"
+                max="2"
+                step="0.1"
+                id="p3_a"
+                value="0"
+              />
+              <span class="text-[10px] w-6 text-right font-mono" id="val_p3_a"
+                >0.0</span
+              >
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-[10px] w-4 font-mono">b</label>
+              <input
+                type="range"
+                class="flex-1 accent-sky-500"
+                min="-2"
+                max="2"
+                step="0.1"
+                id="p3_b"
+                value="0"
+              />
+              <span class="text-[10px] w-6 text-right font-mono" id="val_p3_b"
+                >0.0</span
+              >
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-[10px] w-4 font-mono">c</label>
+              <input
+                type="range"
+                class="flex-1 accent-sky-500"
+                min="-2"
+                max="2"
+                step="0.1"
+                id="p3_c"
+                value="0.9"
+              />
+              <span class="text-[10px] w-6 text-right font-mono" id="val_p3_c"
+                >0.9</span
+              >
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-[10px] w-4 font-mono">d</label>
+              <input
+                type="range"
+                class="flex-1 accent-sky-500"
+                min="-5"
+                max="5"
+                step="0.1"
+                id="p3_d"
+                value="-0.4"
+              />
+              <span class="text-[10px] w-6 text-right font-mono" id="val_p3_d"
+                >-0.4</span
+              >
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-4 border-t border-slate-700">
+          <div
+            class="text-[10px] uppercase font-bold text-slate-500 mb-2"
+            id="label_presets"
+          >
+            Presets
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <button
+              id="btn_unique"
+              onclick="setPreset('unique')"
+              class="bg-slate-700 hover:bg-slate-600 rounded px-2 py-2 text-[10px] font-bold text-white transition"
+            >
+              Unique Solution
+            </button>
+            <button
+              id="btn_line"
+              onclick="setPreset('line')"
+              class="bg-slate-700 hover:bg-slate-600 rounded px-2 py-2 text-[10px] font-bold text-white transition"
+            >
+              Line Solution
+            </button>
+            <button
+              id="btn_prism"
+              onclick="setPreset('prism')"
+              class="bg-slate-700 hover:bg-slate-600 rounded px-2 py-2 text-[10px] font-bold text-white transition"
+            >
+              Prism (No Sol)
+            </button>
+            <button
+              id="btn_parallel"
+              onclick="setPreset('parallel')"
+              class="bg-slate-700 hover:bg-slate-600 rounded px-2 py-2 text-[10px] font-bold text-white transition"
+            >
+              Parallel Planes
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="canvas-container" class="w-screen h-screen"></div>
+
+    <script>
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0f172a);
+
+      const camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        100
+      );
+      camera.position.set(6, 4, 8);
+
+      const renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        alpha: true,
+      });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document
+        .getElementById("canvas-container")
+        .appendChild(renderer.domElement);
+
+      const controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+
+      // Lights & Helpers
+      scene.add(new THREE.GridHelper(20, 20, 0x334155, 0x1e293b));
+      scene.add(new THREE.AxesHelper(3));
+      scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+      const pl = new THREE.PointLight(0xffffff, 0.8);
+      pl.position.set(10, 10, 10);
+      scene.add(pl);
+
+      // Managers
+      const planes = [];
+      const colors = [0xf43f5e, 0x10b981, 0x38bdf8]; // Red, Green, Blue
+
+      // Init 3 Planes
+      for (let i = 0; i < 3; i++) {
+        const geo = new THREE.PlaneGeometry(30, 30);
+        const mat = new THREE.MeshPhysicalMaterial({
+          color: colors[i],
+          side: THREE.DoubleSide,
+          transparent: true,
+          opacity: 0.3,
+          metalness: 0,
+          roughness: 0,
+          depthWrite: false,
+        });
+        const mesh = new THREE.Mesh(geo, mat);
+        scene.add(mesh);
+        planes.push(mesh);
+
+        // Normal Arrow
+        const arrow = new THREE.ArrowHelper(
+          new THREE.Vector3(0, 1, 0),
+          new THREE.Vector3(0, 0, 0),
+          2,
+          colors[i]
+        );
+        mesh.ud_arrow = arrow;
+        scene.add(arrow);
+      }
+
+      function limit(val) {
+        return parseFloat(val) || 0;
+      }
+
+      function updatePlane(idx) {
+        const idStr = `p${idx + 1}`;
+        const a = limit(document.getElementById(`${idStr}_a`).value);
+        const b = limit(document.getElementById(`${idStr}_b`).value);
+        const c = limit(document.getElementById(`${idStr}_c`).value);
+        const d = limit(document.getElementById(`${idStr}_d`).value);
+
+        // Update Display Vals
+        document.getElementById(`val_${idStr}_a`).innerText = a.toFixed(1);
+        document.getElementById(`val_${idStr}_b`).innerText = b.toFixed(1);
+        document.getElementById(`val_${idStr}_c`).innerText = c.toFixed(1);
+        document.getElementById(`val_${idStr}_d`).innerText = d.toFixed(1);
+
+        const mesh = planes[idx];
+        let n = new THREE.Vector3(a, b, c);
+
+        // If normal is zero, hide plane or default
+        if (n.lengthSq() < 0.001) {
+          mesh.visible = false;
+          mesh.ud_arrow.visible = false;
+          return;
+        }
+        mesh.visible = true;
+        mesh.ud_arrow.visible = true;
+
+        // Orientation
+        mesh.lookAt(n);
+
+        // Position: d / len(n) along n
+        const len = n.length();
+        const dist = d / len;
+
+        const pos = n.normalize().multiplyScalar(dist);
+        mesh.position.copy(pos);
+
+        // Arrow
+        mesh.ud_arrow.position.copy(pos);
+        mesh.ud_arrow.setDirection(new THREE.Vector3(a, b, c).normalize());
+      }
+
+      function update() {
+        updatePlane(0);
+        updatePlane(1);
+        updatePlane(2);
+      }
+
+      // Listeners
+      document
+        .querySelectorAll("input")
+        .forEach((i) => i.addEventListener("input", update));
+
+      window.setPreset = (type) => {
+        if (type === "unique") {
+          setVals("p1", 1, 0, 0, 1);
+          setVals("p2", 0, 1, 0, 1);
+          setVals("p3", 0, 0, 1, 1);
+        } else if (type === "line") {
+          // Sheaf
+          setVals("p1", 1, 1, 0, 0);
+          setVals("p2", 1, -1, 0, 0);
+          setVals("p3", 1, 0, 0, 0);
+        } else if (type === "prism") {
+          setVals("p1", 1, 1, 0, 2);
+          setVals("p2", 1, 1, 0, -2); // parallel to p1
+          setVals("p3", 0, 1, 1, 0);
+        } else if (type === "parallel") {
+          setVals("p1", 1, 0, 0, 2);
+          setVals("p2", 1, 0, 0, 0);
+          setVals("p3", 1, 0, 0, -2);
+        }
+        update();
+      };
+
+      function setVals(id, a, b, c, d) {
+        const el = (s) => document.getElementById(`${id}_${s}`);
+        if (el("a")) el("a").value = a;
+        if (el("b")) el("b").value = b;
+        if (el("c")) el("c").value = c;
+        if (el("d")) el("d").value = d;
+      }
+
+      // Bilingual Logic
+      const translations = {
+        en: {
+          title: "3D Linear Systems Lab",
+          desc: "Manipulate the linear equations defining the planes.",
+          btn: "中文",
+          p1: "Plane 1 (Red)",
+          p2: "Plane 2 (Green)",
+          p3: "Plane 3 (Blue)",
+          presets: "Presets",
+          unique: "Unique Solution",
+          line: "Line Solution",
+          prism: "Prism (No Sol)",
+          parallel: "Parallel Planes",
+        },
+        zh: {
+          title: "三維線性方程組",
+          desc: "調整定義平面的線性方程係數。",
+          btn: "English",
+          p1: "平面 1 (紅)",
+          p2: "平面 2 (綠)",
+          p3: "平面 3 (藍)",
+          presets: "預設情境",
+          unique: "唯一解 (點)",
+          line: "無限解 (線)",
+          prism: "無解 (棱柱)",
+          parallel: "平行平面",
+        },
+      };
+
+      let currentLang = "en";
+
+      window.toggleLang = () => {
+        currentLang = currentLang === "en" ? "zh" : "en";
+        const t = translations[currentLang];
+        document.getElementById("app_title").innerText = t.title;
+        // Desc contains span, careful
+        document.getElementById("app_desc").innerHTML =
+          t.desc +
+          '<br /><span class="font-mono text-emerald-400">ax + by + cz = d</span>';
+        document.getElementById("lang_btn").innerText = t.btn;
+
+        document.getElementById("label_p1").innerText = t.p1;
+        document.getElementById("label_p2").innerText = t.p2;
+        document.getElementById("label_p3").innerText = t.p3;
+
+        document.getElementById("label_presets").innerText = t.presets;
+        document.getElementById("btn_unique").innerText = t.unique;
+        document.getElementById("btn_line").innerText = t.line;
+        document.getElementById("btn_prism").innerText = t.prism;
+        document.getElementById("btn_parallel").innerText = t.parallel;
+      };
+
+      update(); // Init
+
+      function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+      }
+      animate();
+
+      window.addEventListener("resize", () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+    </script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

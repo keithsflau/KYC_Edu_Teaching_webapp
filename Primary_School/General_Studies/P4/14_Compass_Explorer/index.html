@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - Compass Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: skyblue;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  animate
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Compass Explorer",
+    zh: "指南針探險家",
+    ja: "コンパスエクスプローラー",
+    ko: "나침반 탐험가",
+    es: "Explorador de Brújula",
+    de: "Kompass-Entdecker",
+    fi: "Kompassitutkija",
+    fr: "Explorateur de boussole",
+    ar: "مستكشف البوصلة",
+    it: "Esploratore di Bussola"
+  },
+  instruction: {
+    en: "Point the compass to the destination!",
+    zh: "將指南針指向目的地！",
+    ja: "コンパスを目的地に向けてください！",
+    ko: "나침반을 목적지로 향하게 하세요!",
+    es: "¡Apunta la brújula al destino!",
+    de: "Richte den Kompass auf das Ziel!",
+    fi: "Osoita kompassilla määränpäähän!",
+    fr: "Pointez la boussole vers la destination !",
+    ar: "وجه البوصلة إلى الوجهة!",
+    it: "Punta la bussola verso la destinazione!"
+  },
+  N: {
+    en: "North",
+    zh: "北",
+    ja: "北",
+    ko: "북",
+    es: "Norte",
+    de: "Nord",
+    fi: "Pohjoinen",
+    fr: "Nord",
+    ar: "شمال",
+    it: "Nord"
+  },
+  E: {
+    en: "East",
+    zh: "東",
+    ja: "東",
+    ko: "동",
+    es: "Este",
+    de: "Ost",
+    fi: "Itä",
+    fr: "Est",
+    ar: "شرق",
+    it: "Est"
+  },
+  S: {
+    en: "South",
+    zh: "南",
+    ja: "南",
+    ko: "남",
+    es: "Sur",
+    de: "Süd",
+    fi: "Etelä",
+    fr: "Sud",
+    ar: "جنوب",
+    it: "Sud"
+  },
+  W: {
+    en: "West",
+    zh: "西",
+    ja: "西",
+    ko: "서",
+    es: "Oeste",
+    de: "West",
+    fi: "Länsi",
+    fr: "Ouest",
+    ar: "غرب",
+    it: "Ovest"
+  },
+  NE: {
+    en: "North-East",
+    zh: "東北",
+    ja: "北東",
+    ko: "북동",
+    es: "Noreste",
+    de: "Nordost",
+    fi: "Koillinen",
+    fr: "Nord-Est",
+    ar: "شمال شرق",
+    it: "Nord-Est"
+  },
+  SE: {
+    en: "South-East",
+    zh: "東南",
+    ja: "南東",
+    ko: "남동",
+    es: "Sureste",
+    de: "Südost",
+    fi: "Kaakko",
+    fr: "Sud-Est",
+    ar: "جنوب شرق",
+    it: "Sud-Est"
+  },
+  SW: {
+    en: "South-West",
+    zh: "西南",
+    ja: "南西",
+    ko: "남서",
+    es: "Suroeste",
+    de: "Südwest",
+    fi: "Lounas",
+    fr: "Sud-Ouest",
+    ar: "جنوب غرب",
+    it: "Sud-Ovest"
+  },
+  NW: {
+    en: "North-West",
+    zh: "西北",
+    ja: "北西",
+    ko: "북서",
+    es: "Noroeste",
+    de: "Nordwest",
+    fi: "Luode",
+    fr: "Nord-Ouest",
+    ar: "شمال غرب",
+    it: "Nord-Ovest"
+  },
+  match: {
+    en: "Match!",
+    zh: "匹配！",
+    ja: "マッチ！",
+    ko: "일치!",
+    es: "¡Coincidencia!",
+    de: "Passt!",
+    fi: "Osuma!",
+    fr: "Match !",
+    ar: "طابق!",
+    it: "Corrispondenza!"
+  }
+};
+const directions = [{
+  id: "N",
+  angle: 0
+}, {
+  id: "NE",
+  angle: 45
+}, {
+  id: "E",
+  angle: 90
+}, {
+  id: "SE",
+  angle: 135
+}, {
+  id: "S",
+  angle: 180
+}, {
+  id: "SW",
+  angle: 225
+}, {
+  id: "W",
+  angle: 270
+}, {
+  id: "NW",
+  angle: 315
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [targetDir, setTargetDir] = useState(directions[1]);
+  const [rotation, setRotation] = useState(0); // Current compass rotation
+  const [score, setScore] = useState(0);
+  const [feedback, setFeedback] = useState(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+  useEffect(() => {
+    newTarget();
+  }, []);
+  const newTarget = () => {
+    const rand = directions[Math.floor(Math.random() * directions.length)];
+    setTargetDir(rand);
+    setFeedback(null);
+  };
+  const checkAngle = () => {
+    // Normalize rotation to 0-360
+    let r = ((rotation % 360) + 360) % 360;
+
+    // Arrow points to target direction on the fixed compass rose
+    const diff = Math.min(Math.abs(r - targetDir.angle), 360 - Math.abs(r - targetDir.angle));
+    const isCorrect = diff < 12;
+    if (isCorrect) {
+      setScore(score + 1);
+      setFeedback("ok");
+      setTimeout(() => {
+        setFeedback(null);
+        newTarget();
+      }, 700);
+    } else {
+      setFeedback("bad");
+      setTimeout(() => setFeedback(null), 700);
+    }
+  };
+  const handleRotate = val => {
+    setRotation(val);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4 bg-sky-200"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-bold mb-4 text-sky-800 drop-shadow-md"
+  }, "🧭 ", getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/80 p-6 rounded-2xl shadow-xl text-center mb-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xl text-slate-600 mb-2"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black text-slate-800 animate-pulse"
+  }, getText(targetDir.id))), /*#__PURE__*/React.createElement("div", {
+    className: "relative w-80 h-80"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 bg-white rounded-full border-8 border-slate-300 shadow-2xl flex items-center justify-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-2 font-bold text-slate-400"
+  }, "N"), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-2 font-bold text-slate-400"
+  }, "S"), /*#__PURE__*/React.createElement("div", {
+    className: "absolute right-2 font-bold text-slate-400"
+  }, "E"), /*#__PURE__*/React.createElement("div", {
+    className: "absolute left-2 font-bold text-slate-400"
+  }, "W"), [0, 45, 90, 135, 180, 225, 270, 315].map(deg => /*#__PURE__*/React.createElement("div", {
+    key: deg,
+    className: "absolute w-full h-1 bg-slate-200",
+    style: {
+      transform: `rotate(${deg}deg)`
+    }
+  }))), /*#__PURE__*/React.createElement(motion.div, {
+    className: "absolute inset-0 flex items-center justify-center cursor-grab active:cursor-grabbing",
+    style: {
+      rotate: rotation
+    },
+    drag: true,
+    dragConstraints: {
+      left: 0,
+      right: 0,
+      top: 0,
+      bottom: 0
+    },
+    dragElastic: 0,
+    onDrag: (event, info) => {
+      // Calculate angle from center
+      // Simplified: just use X movement for rotation speed
+      setRotation(r => r + info.delta.x);
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-4 h-60 relative filter drop-shadow-lg"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-0 w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-b-[120px] border-b-red-600"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-0 w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[120px] border-t-slate-600"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-yellow-400 rounded-full border-2 border-white"
+  })))), /*#__PURE__*/React.createElement("button", {
+    onClick: checkAngle,
+    className: "mt-12 bg-blue-600 text-white px-10 py-4 rounded-full font-black text-2xl shadow-xl hover:bg-blue-700 transition-transform active:scale-95"
+  }, getText("match")), /*#__PURE__*/React.createElement("div", {
+    className: "mt-4 h-8 font-black text-xl"
+  }, feedback === "ok" && /*#__PURE__*/React.createElement("span", {
+    className: "text-green-600"
+  }, getText("match")), feedback === "bad" && /*#__PURE__*/React.createElement("span", {
+    className: "text-red-600"
+  }, lang === "zh" ? "再試一次！" : "Try again!")), /*#__PURE__*/React.createElement("div", {
+    className: "mt-4 font-bold text-slate-500"
+  }, "Score: ", score));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

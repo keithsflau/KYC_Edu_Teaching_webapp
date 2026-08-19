@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - Consumer Rights</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: #fffbea;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Smart Consumer",
+    zh: "精明消費者",
+    ja: "賢い消費者",
+    ko: "똑똑한 소비자",
+    es: "Consumidor inteligente",
+    de: "Kluger Verbraucher",
+    fi: "Fiksu kuluttaja",
+    fr: "Consommateur intelligent",
+    ar: "مستهلك ذكي",
+    it: "Consumatore Intelligente"
+  },
+  instruction: {
+    en: "Choose the Best Action for the scenario.",
+    zh: "為情境選擇最佳行動。",
+    ja: "シナリオに最適な行動を選択してください。",
+    ko: "상황에 가장 적합한 행동을 선택하세요.",
+    es: "Elige la mejor acción para el escenario.",
+    de: "Wähle die beste Aktion für das Szenario.",
+    fi: "Valitse paras toiminta tilanteeseen.",
+    fr: "Choisissez la meilleure action pour le scénario.",
+    ar: "اختر أفضل إجراء للسيناريو.",
+    it: "Scegli la Migliore Azione per lo scenario."
+  },
+  s1: {
+    en: "You bought food that is expired.",
+    zh: "你買了過期的食物。",
+    ja: "賞味期限切れの食品を買いました。",
+    ko: "유통기한이 지난 음식을 샀습니다."
+  },
+  a1_correct: {
+    en: "Ask for refund / exchange with receipt.",
+    zh: "憑收據要求退款或換貨。",
+    ja: "レシートを持って返金/交換を求める。",
+    ko: "영수증으로 환불/교환 요청."
+  },
+  a1_wrong: {
+    en: "Throw it away silently.",
+    zh: "默默丟掉。",
+    ja: "黙って捨てる。",
+    ko: "그냥 버림."
+  },
+  s2: {
+    en: "Shopkeeper forces you to buy something.",
+    zh: "店主強迫你購買東西。",
+    ja: "店主が無理やり買わせようとする。",
+    ko: "상점이 강매를 함."
+  },
+  a2_correct: {
+    en: "Refuse firmly and leave.",
+    zh: "堅決拒絕並離開。",
+    ja: "きっぱりと断って立ち去る。",
+    ko: "단호하게 거절하고 떠남."
+  },
+  a2_wrong: {
+    en: "Buy it because you are scared.",
+    zh: "因為害怕而購買。",
+    ja: "怖いので買う。",
+    ko: "무서워서 구매함."
+  },
+  s3: {
+    en: "The toy broke immediately after buying.",
+    zh: "玩具買回家立刻壞了。",
+    ja: "おもちゃが買ってすぐに壊れた。",
+    ko: "장난감이 사자마자 부서짐."
+  },
+  a3_correct: {
+    en: "Contact shop for replacement.",
+    zh: "聯絡商店要求更換。",
+    ja: "店に連絡して交換を求める。",
+    ko: "상점에 연락하여 교체 요청."
+  },
+  a3_wrong: {
+    en: "Buy glue to fix it.",
+    zh: "買膠水修理。",
+    ja: "接着剤を買って直す。",
+    ko: "접착제를 사서 고침."
+  },
+  correct: {
+    en: "Correct! Smart Choice.",
+    zh: "正確！明智的選擇。",
+    ja: "正解！賢い選択。",
+    ko: "정답! 현명한 선택."
+  },
+  wrong: {
+    en: "Not the best choice.",
+    zh: "不是最好的選擇。",
+    ja: "最良の選択ではありません。",
+    ko: "최선의 선택이 아닙니다."
+  }
+};
+const scenarios = [{
+  id: "s1",
+  correctIdx: 0,
+  opts: ["a1_correct", "a1_wrong"]
+}, {
+  id: "s2",
+  correctIdx: 0,
+  opts: ["a2_correct", "a2_wrong"]
+},
+// Randomized display logic needed
+{
+  id: "s3",
+  correctIdx: 0,
+  opts: ["a3_correct", "a3_wrong"]
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [index, setIndex] = useState(0);
+  const [feedback, setFeedback] = useState(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+  const current = scenarios[index];
+  // randomize options order for display only
+  const [displayOpts, setDisplayOpts] = useState([]);
+  useEffect(() => {
+    const opts = current.opts.map((key, idx) => ({
+      key,
+      isCorrect: idx === current.correctIdx
+    }));
+    setDisplayOpts(opts.sort(() => Math.random() - 0.5));
+  }, [index]);
+  const handleAnswer = isCorrect => {
+    if (feedback) return;
+    if (isCorrect) {
+      setFeedback("correct");
+      setTimeout(() => {
+        setFeedback(null);
+        setIndex(prev => (prev + 1) % scenarios.length);
+      }, 1500);
+    } else {
+      setFeedback("wrong");
+      setTimeout(() => setFeedback(null), 1000);
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center justify-center p-4"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-bold mb-8 text-amber-600"
+  }, getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-lg bg-white p-8 rounded-3xl shadow-xl border-4 border-amber-200"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-center font-bold text-slate-400 mb-6"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-amber-50 rounded-2xl p-8 mb-8 text-center min-h-[150px] flex items-center justify-center text-2xl font-bold text-slate-800 shadow-inner"
+  }, getText(current.id)), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col gap-4"
+  }, displayOpts.map((opt, i) => /*#__PURE__*/React.createElement("button", {
+    key: i,
+    onClick: () => handleAnswer(opt.isCorrect),
+    className: "bg-slate-100 hover:bg-slate-200 p-6 rounded-xl text-left font-bold text-lg transition-all active:scale-95 border-l-8 border-amber-400"
+  }, getText(opt.key)))), feedback && /*#__PURE__*/React.createElement("div", {
+    className: `mt-6 text-2xl font-black text-center ${feedback === "correct" ? "text-green-600" : "text-red-500"}`
+  }, getText(feedback))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

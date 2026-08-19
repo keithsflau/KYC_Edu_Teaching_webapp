@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小二常識：光與影 | Light and Shadow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: radial-gradient(circle at center, #374151 0%, #111827 100%);
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Light & Shadow",
+    zh: "光與影",
+    ja: "光と影",
+    ko: "빛과 그림자",
+    es: "Luz y Sombra",
+    de: "Licht und Schatten",
+    fi: "Valo ja varjo",
+    fr: "Lumière et Ombre",
+    ar: "الضوء والظل",
+    it: "Luce e Ombra"
+  },
+  instruction: {
+    en: "Match the object to its shadow!",
+    zh: "將物件配對正確的影子！",
+    ja: "物体をその影に合わせてください！",
+    ko: "물체를 그림자에 맞춰보세요!",
+    es: "¡Empareja el objeto con su sombra!",
+    de: "Ordne das Objekt seinem Schatten zu!",
+    fi: "Yhdistä esine varjoonsa!",
+    fr: "Associez l'objet à son ombre !",
+    ar: "طابق الشيء بظله!",
+    it: "Abbina l'oggetto alla sua ombra!"
+  },
+  correct: {
+    en: "Correct Match!",
+    zh: "配對正確！",
+    ja: "正解！",
+    ko: "정답입니다!",
+    es: "¡Emparejamiento Correcto!",
+    de: "Richtig zugeordnet!",
+    fi: "Oikea pari!",
+    fr: "Bonne correspondance !",
+    ar: "تطابق صحيح!",
+    it: "Abbinamento Corretto!"
+  },
+  wrong: {
+    en: "Try Again",
+    zh: "再試一次",
+    ja: "もう一度",
+    ko: "다시 시도하세요",
+    es: "Inténtalo de Nuevo",
+    de: "Versuch es nochmal",
+    fi: "Yritä uudelleen",
+    fr: "Réessayez",
+    ar: "حاول مرة أخرى",
+    it: "Riprova"
+  },
+  next: {
+    en: "Next Level",
+    zh: "下一關",
+    ja: "次のレベル",
+    ko: "다음 레벨",
+    es: "Siguiente Nivel",
+    de: "Nächstes Level",
+    fi: "Seuraava taso",
+    fr: "Niveau suivant",
+    ar: "المستوى التالي",
+    it: "Prossimo Livello"
+  },
+  score: {
+    en: "Score",
+    zh: "分數",
+    ja: "スコア",
+    ko: "점수",
+    es: "Puntuación",
+    de: "Punktzahl",
+    fi: "Pisteet",
+    fr: "Score",
+    ar: "نتيجة",
+    it: "Punteggio"
+  },
+  cat: {
+    en: "Cat",
+    zh: "貓",
+    ja: "猫",
+    ko: "고양이",
+    es: "Gato",
+    de: "Katze",
+    fi: "Kissa",
+    fr: "Chat",
+    ar: "قطة",
+    it: "Gatto"
+  },
+  tree: {
+    en: "Tree",
+    zh: "樹",
+    ja: "木",
+    ko: "나무",
+    es: "Árbol",
+    de: "Baum",
+    fi: "Puu",
+    fr: "Arbre",
+    ar: "شجرة",
+    it: "Albero"
+  },
+  car: {
+    en: "Car",
+    zh: "汽車",
+    ja: "車",
+    ko: "자동차",
+    es: "Coche",
+    de: "Auto",
+    fi: "Auto",
+    fr: "Voiture",
+    ar: "سيارة",
+    it: "Auto"
+  },
+  robot: {
+    en: "Robot",
+    zh: "機械人",
+    ja: "ロボット",
+    ko: "로봇",
+    es: "Robot",
+    de: "Roboter",
+    fi: "Robotti",
+    fr: "Robot",
+    ar: "روبوت",
+    it: "Robot"
+  },
+  star: {
+    en: "Star",
+    zh: "星星",
+    ja: "星",
+    ko: "별",
+    es: "Estrella",
+    de: "Stern",
+    fi: "Tähti",
+    fr: "Étoile",
+    ar: "نجمة",
+    it: "Stella"
+  },
+  hand: {
+    en: "Hand",
+    zh: "手",
+    ja: "手",
+    ko: "손",
+    es: "Mano",
+    de: "Hand",
+    fi: "Käsi",
+    fr: "Main",
+    ar: "يد",
+    it: "Mano"
+  }
+};
+
+// Simple SVG Shapes for shadows
+const shapes = {
+  cat: color => /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 100 100",
+    className: `w-24 h-24 ${color}`
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M20 80 Q10 20 40 40 Q50 10 60 40 Q90 20 80 80 Z",
+    fill: "currentColor"
+  })),
+  tree: color => /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 100 100",
+    className: `w-24 h-24 ${color}`
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M45 90 L55 90 L55 70 Q90 60 50 10 Q10 60 45 70 Z",
+    fill: "currentColor"
+  })),
+  star: color => /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 100 100",
+    className: `w-24 h-24 ${color}`
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M50 10 L60 40 L90 40 L65 60 L75 90 L50 70 L25 90 L35 60 L10 40 L40 40 Z",
+    fill: "currentColor"
+  }))
+  // Simplified or use emoji silhouettes via CSS filter contrast/brightness
+};
+const items = [{
+  id: "cat",
+  icon: "🐱",
+  shadowScale: "scale-y-[0.5] skew-x-[40deg]",
+  manualRender: false
+}, {
+  id: "tree",
+  icon: "🌲",
+  shadowScale: "scale-y-[1.5] -skew-x-[20deg]",
+  manualRender: false
+}, {
+  id: "car",
+  icon: "🚗",
+  shadowScale: "scale-y-[0.3] skew-x-[60deg]",
+  manualRender: false
+}, {
+  id: "robot",
+  icon: "🤖",
+  shadowScale: "scale-y-[1.2] -skew-x-[10deg]",
+  manualRender: false
+}, {
+  id: "star",
+  icon: "⭐",
+  shadowScale: "scale-y-[1.0] rotate-45",
+  manualRender: false
+}, {
+  id: "hand",
+  icon: "✋",
+  shadowScale: "scale-[1.5]",
+  manualRender: false
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [level, setLevel] = useState(0);
+  const [score, setScore] = useState(0);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [feedback, setFeedback] = useState(null);
+  const [matchedIds, setMatchedIds] = useState([]);
+
+  // Pick 3 random items for current level
+  const [currentRound, setCurrentRound] = useState([]);
+  const getText = key => t[key][lang] || t[key]["en"];
+  useEffect(() => {
+    initLevel();
+  }, [level]);
+  const initLevel = () => {
+    const shuffled = [...items].sort(() => Math.random() - 0.5).slice(0, 3);
+    setCurrentRound(shuffled);
+    setSelectedItem(null);
+    setFeedback(null);
+    setMatchedIds([]);
+  };
+  const handleMatch = (obj, shadowObj) => {
+    if (matchedIds.includes(obj.id) || matchedIds.includes(shadowObj.id)) return;
+    if (feedback?.status === "wrong") return;
+    if (obj.id === shadowObj.id) {
+      setMatchedIds(prev => {
+        if (prev.includes(obj.id)) return prev;
+        const nextMatched = [...prev, obj.id];
+        if (nextMatched.length >= currentRound.length) {
+          setTimeout(() => {
+            if (level < 5) setLevel(l => l + 1);else {
+              setLevel(0);
+              setScore(0);
+            }
+          }, 1200);
+        }
+        return nextMatched;
+      });
+      setFeedback({
+        status: "correct",
+        id: obj.id
+      });
+      setScore(s => s + 10);
+      setTimeout(() => setFeedback(null), 800);
+    } else {
+      setFeedback({
+        status: "wrong"
+      });
+      setTimeout(() => setFeedback(null), 1000);
+    }
+  };
+
+  // For drag and drop, let's keep it simple: Click object then click shadow
+  const handleClickObject = obj => {
+    if (matchedIds.includes(obj.id)) return;
+    setSelectedItem(obj);
+  };
+  const handleClickShadow = shadowObj => {
+    if (matchedIds.includes(shadowObj.id)) return;
+    if (selectedItem) {
+      handleMatch(selectedItem, shadowObj);
+      setSelectedItem(null);
+    }
+  };
+
+  // Randomize shadow order
+  const [shadowOrder, setShadowOrder] = useState([]);
+  useEffect(() => {
+    setShadowOrder([...currentRound].sort(() => Math.random() - 0.5));
+  }, [currentRound]);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-yellow-300 mb-4 mt-8 drop-shadow-[0_0_10px_rgba(253,224,71,0.5)]"
+  }, "🔦 ", getText("title")), /*#__PURE__*/React.createElement("p", {
+    className: "font-bold text-slate-300 mb-8"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "font-bold text-yellow-500 mb-4 border border-yellow-500 px-4 py-1 rounded-full"
+  }, getText("score"), ": ", score, " · ", matchedIds.length, "/", currentRound.length || 3), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col md:flex-row gap-12 w-full max-w-4xl justify-center items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-row md:flex-col gap-6"
+  }, currentRound.map(item => {
+    const solved = matchedIds.includes(item.id);
+    return /*#__PURE__*/React.createElement("button", {
+      key: item.id,
+      onClick: () => handleClickObject(item),
+      disabled: solved,
+      className: `w-32 h-32 bg-white/10 rounded-2xl flex items-center justify-center text-6xl border-4 transition-all ${selectedItem?.id === item.id ? "border-yellow-400 shadow-[0_0_20px_yellow]" : "border-white/20 hover:bg-white/20"} ${solved ? "opacity-0 pointer-events-none" : "opacity-100"}`
+    }, item.icon);
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "hidden md:flex flex-col items-center justify-center opacity-50"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl mb-2"
+  }, "🔦"), /*#__PURE__*/React.createElement("div", {
+    className: "w-40 h-1 bg-yellow-200/50 shadow-[0_0_20px_white]"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-row md:flex-col gap-6"
+  }, shadowOrder.map(item => {
+    const solved = matchedIds.includes(item.id);
+    return /*#__PURE__*/React.createElement("button", {
+      key: item.id,
+      onClick: () => handleClickShadow(item),
+      disabled: solved,
+      className: `w-32 h-32 bg-black/40 rounded-2xl flex items-center justify-center border-4 border-dashed transition-all ${solved ? "border-green-500 bg-green-900/50" : "border-slate-600 hover:border-slate-400"}`
+    }, solved ? /*#__PURE__*/React.createElement(motion.div, {
+      initial: {
+        scale: 0
+      },
+      animate: {
+        scale: 1
+      },
+      className: "text-6xl"
+    }, item.icon) : /*#__PURE__*/React.createElement("div", {
+      className: `text-6xl text-black transform filter blur-[1px] opacity-70 ${item.shadowScale}`
+    }, item.icon));
+  }))), feedback && /*#__PURE__*/React.createElement("div", {
+    className: `mt-8 p-4 rounded-xl font-black text-2xl animate-bounce ${feedback.status === "correct" ? "text-green-400" : "text-red-400"}`
+  }, getText(feedback.status === "correct" ? "correct" : "wrong")), /*#__PURE__*/React.createElement("div", {
+    className: "mt-8 text-xs text-slate-500 font-mono"
+  }, "Level ", level + 1));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

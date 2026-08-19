@@ -1,0 +1,1951 @@
+﻿<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>神筆馬良 - 邏輯橋樑遊戲</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body { 
+            background-color: #0f172a; 
+            font-family: 'Noto Sans TC', sans-serif; 
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        .floating { animation: float 2s ease-in-out infinite; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script>
+const {
+  useState,
+  useRef,
+  useEffect
+} = React;
+
+// ==========================================
+// 📚 關卡數據庫 (50關)
+// ==========================================
+const LEVELS = [
+// 第1-10關：基礎邏輯 (因為/所以)
+{
+  id: 1,
+  question: "____ 下雨，____ 我們不用上體育課。",
+  options: [{
+    id: 'A',
+    text: '雖然...但是',
+    correct: false
+  }, {
+    id: 'B',
+    text: '因為...所以',
+    correct: true
+  }, {
+    id: 'C',
+    text: '但是...所以',
+    correct: false
+  }],
+  obstacles: []
+}, {
+  id: 2,
+  question: "____ 她努力學習，____ 她考試及格了。",
+  options: [{
+    id: 'A',
+    text: '因為...所以',
+    correct: true
+  }, {
+    id: 'B',
+    text: '雖然...但是',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...因為',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'moving',
+    x: 400,
+    y: 200,
+    width: 40,
+    height: 40,
+    speed: 1,
+    direction: 'vertical'
+  }]
+}, {
+  id: 3,
+  question: "____ 他很累，____ 他早早上床睡覺。",
+  options: [{
+    id: 'A',
+    text: '雖然...但是',
+    correct: false
+  }, {
+    id: 'B',
+    text: '因為...所以',
+    correct: true
+  }, {
+    id: 'C',
+    text: '但是...因為',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'static',
+    x: 350,
+    y: 180,
+    width: 50,
+    height: 50
+  }]
+}, {
+  id: 4,
+  question: "____ 天氣很好，____ 我們去公園了。",
+  options: [{
+    id: 'A',
+    text: '因為...所以',
+    correct: true
+  }, {
+    id: 'B',
+    text: '雖然...但是',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...所以',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'moving',
+    x: 300,
+    y: 150,
+    width: 30,
+    height: 30,
+    speed: 1.5,
+    direction: 'vertical'
+  }, {
+    type: 'moving',
+    x: 500,
+    y: 200,
+    width: 30,
+    height: 30,
+    speed: 1.2,
+    direction: 'vertical'
+  }]
+}, {
+  id: 5,
+  question: "____ 我忘記帶功課，____ 老師生氣了。",
+  options: [{
+    id: 'A',
+    text: '因為...所以',
+    correct: true
+  }, {
+    id: 'B',
+    text: '雖然...但是',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...因為',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'static',
+    x: 400,
+    y: 160,
+    width: 60,
+    height: 60
+  }]
+}, {
+  id: 6,
+  question: "____ 她喜歡音樂，____ 她每天練習鋼琴。",
+  options: [{
+    id: 'A',
+    text: '因為...所以',
+    correct: true
+  }, {
+    id: 'B',
+    text: '雖然...但是',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...所以',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'moving',
+    x: 350,
+    y: 180,
+    width: 40,
+    height: 40,
+    speed: 2,
+    direction: 'vertical'
+  }, {
+    type: 'static',
+    x: 450,
+    y: 170,
+    width: 40,
+    height: 40
+  }]
+}, {
+  id: 7,
+  question: "____ 巴士遲到了，____ 我們錯過了電影。",
+  options: [{
+    id: 'A',
+    text: '因為...所以',
+    correct: true
+  }, {
+    id: 'B',
+    text: '雖然...但是',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...因為',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'moving',
+    x: 400,
+    y: 150,
+    width: 50,
+    height: 50,
+    speed: 1.8,
+    direction: 'vertical'
+  }]
+}, {
+  id: 8,
+  question: "____ 他餓了，____ 他吃了三明治。",
+  options: [{
+    id: 'A',
+    text: '因為...所以',
+    correct: true
+  }, {
+    id: 'B',
+    text: '雖然...但是',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...所以',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'static',
+    x: 320,
+    y: 190,
+    width: 45,
+    height: 45
+  }, {
+    type: 'static',
+    x: 480,
+    y: 175,
+    width: 45,
+    height: 45
+  }]
+}, {
+  id: 9,
+  question: "____ 這本書很有趣，____ 我很快讀完了。",
+  options: [{
+    id: 'A',
+    text: '因為...所以',
+    correct: true
+  }, {
+    id: 'B',
+    text: '雖然...但是',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...因為',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'moving',
+    x: 380,
+    y: 160,
+    width: 35,
+    height: 35,
+    speed: 2.2,
+    direction: 'vertical'
+  }, {
+    type: 'moving',
+    x: 420,
+    y: 200,
+    width: 35,
+    height: 35,
+    speed: 1.5,
+    direction: 'vertical'
+  }]
+}, {
+  id: 10,
+  question: "____ 今天是他的生日，____ 我們開派對了。",
+  options: [{
+    id: 'A',
+    text: '因為...所以',
+    correct: true
+  }, {
+    id: 'B',
+    text: '雖然...但是',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...所以',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'static',
+    x: 350,
+    y: 180,
+    width: 50,
+    height: 50
+  }, {
+    type: 'moving',
+    x: 450,
+    y: 170,
+    width: 40,
+    height: 40,
+    speed: 1.8,
+    direction: 'vertical'
+  }]
+},
+// 第11-20關：雖然/但是邏輯
+{
+  id: 11,
+  question: "____ 天氣很冷，____ 我們還是出去了。",
+  options: [{
+    id: 'A',
+    text: '因為...所以',
+    correct: false
+  }, {
+    id: 'B',
+    text: '雖然...但是',
+    correct: true
+  }, {
+    id: 'C',
+    text: '但是...因為',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'moving',
+    x: 400,
+    y: 200,
+    width: 45,
+    height: 45,
+    speed: 1.5,
+    direction: 'vertical'
+  }]
+}, {
+  id: 12,
+  question: "____ 她很害怕，____ 她還是嘗試了。",
+  options: [{
+    id: 'A',
+    text: '雖然...但是',
+    correct: true
+  }, {
+    id: 'B',
+    text: '因為...所以',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...所以',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'static',
+    x: 380,
+    y: 175,
+    width: 50,
+    height: 50
+  }, {
+    type: 'moving',
+    x: 420,
+    y: 190,
+    width: 35,
+    height: 35,
+    speed: 2,
+    direction: 'vertical'
+  }]
+}, {
+  id: 13,
+  question: "____ 他很忙，____ 他還是幫助了朋友。",
+  options: [{
+    id: 'A',
+    text: '雖然...但是',
+    correct: true
+  }, {
+    id: 'B',
+    text: '因為...所以',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...因為',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'moving',
+    x: 400,
+    y: 160,
+    width: 55,
+    height: 55,
+    speed: 1.3,
+    direction: 'vertical'
+  }]
+}, {
+  id: 14,
+  question: "____ 考試很難，____ 她還是取得好成績。",
+  options: [{
+    id: 'A',
+    text: '雖然...但是',
+    correct: true
+  }, {
+    id: 'B',
+    text: '因為...所以',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...所以',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'static',
+    x: 350,
+    y: 185,
+    width: 45,
+    height: 45
+  }, {
+    type: 'static',
+    x: 450,
+    y: 170,
+    width: 45,
+    height: 45
+  }, {
+    type: 'moving',
+    x: 400,
+    y: 200,
+    width: 30,
+    height: 30,
+    speed: 2.5,
+    direction: 'vertical'
+  }]
+}, {
+  id: 15,
+  question: "____ 它很貴，____ 我們還是買了。",
+  options: [{
+    id: 'A',
+    text: '雖然...但是',
+    correct: true
+  }, {
+    id: 'B',
+    text: '因為...所以',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...因為',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'moving',
+    x: 400,
+    y: 150,
+    width: 60,
+    height: 60,
+    speed: 1.2,
+    direction: 'vertical'
+  }]
+}, {
+  id: 16,
+  question: "____ 他很累，____ 他繼續工作。",
+  options: [{
+    id: 'A',
+    text: '雖然...但是',
+    correct: true
+  }, {
+    id: 'B',
+    text: '因為...所以',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...所以',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'moving',
+    x: 370,
+    y: 180,
+    width: 40,
+    height: 40,
+    speed: 1.8,
+    direction: 'vertical'
+  }, {
+    type: 'moving',
+    x: 430,
+    y: 190,
+    width: 40,
+    height: 40,
+    speed: 1.6,
+    direction: 'vertical'
+  }]
+}, {
+  id: 17,
+  question: "____ 食物很辣，____ 我還是喜歡。",
+  options: [{
+    id: 'A',
+    text: '雖然...但是',
+    correct: true
+  }, {
+    id: 'B',
+    text: '因為...所以',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...因為',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'static',
+    x: 400,
+    y: 175,
+    width: 55,
+    height: 55
+  }]
+}, {
+  id: 18,
+  question: "____ 她很緊張，____ 她表現得很好。",
+  options: [{
+    id: 'A',
+    text: '雖然...但是',
+    correct: true
+  }, {
+    id: 'B',
+    text: '因為...所以',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...所以',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'moving',
+    x: 350,
+    y: 160,
+    width: 45,
+    height: 45,
+    speed: 2.2,
+    direction: 'vertical'
+  }, {
+    type: 'static',
+    x: 450,
+    y: 195,
+    width: 45,
+    height: 45
+  }]
+}, {
+  id: 19,
+  question: "____ 路很長，____ 我們還是走路。",
+  options: [{
+    id: 'A',
+    text: '雖然...但是',
+    correct: true
+  }, {
+    id: 'B',
+    text: '因為...所以',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...因為',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'moving',
+    x: 400,
+    y: 200,
+    width: 50,
+    height: 50,
+    speed: 1.4,
+    direction: 'vertical'
+  }, {
+    type: 'moving',
+    x: 380,
+    y: 170,
+    width: 35,
+    height: 35,
+    speed: 2.3,
+    direction: 'vertical'
+  }]
+}, {
+  id: 20,
+  question: "____ 時間很晚，____ 我們還是熬夜了。",
+  options: [{
+    id: 'A',
+    text: '雖然...但是',
+    correct: true
+  }, {
+    id: 'B',
+    text: '因為...所以',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...所以',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'static',
+    x: 360,
+    y: 180,
+    width: 50,
+    height: 50
+  }, {
+    type: 'moving',
+    x: 440,
+    y: 165,
+    width: 40,
+    height: 40,
+    speed: 1.9,
+    direction: 'vertical'
+  }]
+},
+// 第21-30關：混合邏輯
+{
+  id: 21,
+  question: "____ 陽光普照，____ 我們去游泳了。",
+  options: [{
+    id: 'A',
+    text: '因為...所以',
+    correct: true
+  }, {
+    id: 'B',
+    text: '雖然...但是',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...因為',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'moving',
+    x: 400,
+    y: 190,
+    width: 45,
+    height: 45,
+    speed: 2,
+    direction: 'vertical'
+  }, {
+    type: 'static',
+    x: 350,
+    y: 175,
+    width: 40,
+    height: 40
+  }]
+}, {
+  id: 22,
+  question: "____ 遊戲很難，____ 我們還是很享受。",
+  options: [{
+    id: 'A',
+    text: '雖然...但是',
+    correct: true
+  }, {
+    id: 'B',
+    text: '因為...所以',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...所以',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'static',
+    x: 380,
+    y: 185,
+    width: 50,
+    height: 50
+  }, {
+    type: 'moving',
+    x: 420,
+    y: 170,
+    width: 35,
+    height: 35,
+    speed: 2.1,
+    direction: 'vertical'
+  }]
+}, {
+  id: 23,
+  question: "____ 電話響了，____ 我接聽了。",
+  options: [{
+    id: 'A',
+    text: '因為...所以',
+    correct: true
+  }, {
+    id: 'B',
+    text: '雖然...但是',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...因為',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'moving',
+    x: 370,
+    y: 180,
+    width: 40,
+    height: 40,
+    speed: 1.7,
+    direction: 'vertical'
+  }, {
+    type: 'moving',
+    x: 430,
+    y: 195,
+    width: 40,
+    height: 40,
+    speed: 1.9,
+    direction: 'vertical'
+  }]
+}, {
+  id: 24,
+  question: "____ 電影很長，____ 它很精彩。",
+  options: [{
+    id: 'A',
+    text: '雖然...但是',
+    correct: true
+  }, {
+    id: 'B',
+    text: '因為...所以',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...所以',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'static',
+    x: 400,
+    y: 170,
+    width: 55,
+    height: 55
+  }]
+}, {
+  id: 25,
+  question: "____ 門鎖了，____ 我們進不去。",
+  options: [{
+    id: 'A',
+    text: '因為...所以',
+    correct: true
+  }, {
+    id: 'B',
+    text: '雖然...但是',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...因為',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'moving',
+    x: 400,
+    y: 200,
+    width: 50,
+    height: 50,
+    speed: 1.5,
+    direction: 'vertical'
+  }, {
+    type: 'static',
+    x: 360,
+    y: 175,
+    width: 45,
+    height: 45
+  }, {
+    type: 'static',
+    x: 440,
+    y: 180,
+    width: 45,
+    height: 45
+  }]
+}, {
+  id: 26,
+  question: "____ 蛋糕很甜，____ 我吃太多了。",
+  options: [{
+    id: 'A',
+    text: '因為...所以',
+    correct: true
+  }, {
+    id: 'B',
+    text: '雖然...但是',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...所以',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'moving',
+    x: 380,
+    y: 160,
+    width: 45,
+    height: 45,
+    speed: 2.2,
+    direction: 'vertical'
+  }, {
+    type: 'moving',
+    x: 420,
+    y: 200,
+    width: 45,
+    height: 45,
+    speed: 1.8,
+    direction: 'vertical'
+  }]
+}, {
+  id: 27,
+  question: "____ 音樂很大聲，____ 我們跳舞了。",
+  options: [{
+    id: 'A',
+    text: '因為...所以',
+    correct: true
+  }, {
+    id: 'B',
+    text: '雖然...但是',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...因為',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'static',
+    x: 350,
+    y: 190,
+    width: 50,
+    height: 50
+  }, {
+    type: 'moving',
+    x: 450,
+    y: 175,
+    width: 40,
+    height: 40,
+    speed: 2,
+    direction: 'vertical'
+  }]
+}, {
+  id: 28,
+  question: "____ 故事很悲傷，____ 它很美。",
+  options: [{
+    id: 'A',
+    text: '雖然...但是',
+    correct: true
+  }, {
+    id: 'B',
+    text: '因為...所以',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...所以',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'moving',
+    x: 400,
+    y: 185,
+    width: 50,
+    height: 50,
+    speed: 1.6,
+    direction: 'vertical'
+  }]
+}, {
+  id: 29,
+  question: "____ 狗叫了，____ 我醒了。",
+  options: [{
+    id: 'A',
+    text: '因為...所以',
+    correct: true
+  }, {
+    id: 'B',
+    text: '雖然...但是',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...因為',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'static',
+    x: 380,
+    y: 180,
+    width: 45,
+    height: 45
+  }, {
+    type: 'moving',
+    x: 420,
+    y: 165,
+    width: 35,
+    height: 35,
+    speed: 2.4,
+    direction: 'vertical'
+  }]
+}, {
+  id: 30,
+  question: "____ 價格很高，____ 我們還是省錢了。",
+  options: [{
+    id: 'A',
+    text: '雖然...但是',
+    correct: true
+  }, {
+    id: 'B',
+    text: '因為...所以',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...所以',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'moving',
+    x: 370,
+    y: 190,
+    width: 40,
+    height: 40,
+    speed: 1.9,
+    direction: 'vertical'
+  }, {
+    type: 'moving',
+    x: 430,
+    y: 180,
+    width: 40,
+    height: 40,
+    speed: 2.1,
+    direction: 'vertical'
+  }, {
+    type: 'static',
+    x: 400,
+    y: 170,
+    width: 40,
+    height: 40
+  }]
+},
+// 第31-40關：進階邏輯
+{
+  id: 31,
+  question: "____ 電腦當機了，____ 我們失去了工作成果。",
+  options: [{
+    id: 'A',
+    text: '因為...所以',
+    correct: true
+  }, {
+    id: 'B',
+    text: '雖然...但是',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...因為',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'moving',
+    x: 400,
+    y: 200,
+    width: 55,
+    height: 55,
+    speed: 1.3,
+    direction: 'vertical'
+  }, {
+    type: 'static',
+    x: 360,
+    y: 175,
+    width: 50,
+    height: 50
+  }]
+}, {
+  id: 32,
+  question: "____ 雨停了，____ 我們繼續野餐。",
+  options: [{
+    id: 'A',
+    text: '因為...所以',
+    correct: true
+  }, {
+    id: 'B',
+    text: '雖然...但是',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...所以',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'moving',
+    x: 380,
+    y: 165,
+    width: 45,
+    height: 45,
+    speed: 2.3,
+    direction: 'vertical'
+  }, {
+    type: 'moving',
+    x: 420,
+    y: 195,
+    width: 45,
+    height: 45,
+    speed: 1.7,
+    direction: 'vertical'
+  }]
+}, {
+  id: 33,
+  question: "____ 拼圖很複雜，____ 我們還是解開了。",
+  options: [{
+    id: 'A',
+    text: '雖然...但是',
+    correct: true
+  }, {
+    id: 'B',
+    text: '因為...所以',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...因為',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'static',
+    x: 400,
+    y: 180,
+    width: 60,
+    height: 60
+  }]
+}, {
+  id: 34,
+  question: "____ 鬧鐘響了，____ 我起床了。",
+  options: [{
+    id: 'A',
+    text: '因為...所以',
+    correct: true
+  }, {
+    id: 'B',
+    text: '雖然...但是',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...所以',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'moving',
+    x: 350,
+    y: 190,
+    width: 40,
+    height: 40,
+    speed: 2,
+    direction: 'vertical'
+  }, {
+    type: 'static',
+    x: 450,
+    y: 170,
+    width: 40,
+    height: 40
+  }, {
+    type: 'moving',
+    x: 400,
+    y: 200,
+    width: 35,
+    height: 35,
+    speed: 2.5,
+    direction: 'vertical'
+  }]
+}, {
+  id: 35,
+  question: "____ 隊伍落後了，____ 他們沒有放棄。",
+  options: [{
+    id: 'A',
+    text: '雖然...但是',
+    correct: true
+  }, {
+    id: 'B',
+    text: '因為...所以',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...因為',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'moving',
+    x: 400,
+    y: 185,
+    width: 50,
+    height: 50,
+    speed: 1.4,
+    direction: 'vertical'
+  }]
+}, {
+  id: 36,
+  question: "____ 光線很亮，____ 我閉上了眼睛。",
+  options: [{
+    id: 'A',
+    text: '因為...所以',
+    correct: true
+  }, {
+    id: 'B',
+    text: '雖然...但是',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...所以',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'static',
+    x: 380,
+    y: 175,
+    width: 45,
+    height: 45
+  }, {
+    type: 'moving',
+    x: 420,
+    y: 190,
+    width: 40,
+    height: 40,
+    speed: 2.2,
+    direction: 'vertical'
+  }]
+}, {
+  id: 37,
+  question: "____ 山很陡峭，____ 我們還是爬了。",
+  options: [{
+    id: 'A',
+    text: '雖然...但是',
+    correct: true
+  }, {
+    id: 'B',
+    text: '因為...所以',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...因為',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'moving',
+    x: 370,
+    y: 180,
+    width: 45,
+    height: 45,
+    speed: 1.8,
+    direction: 'vertical'
+  }, {
+    type: 'moving',
+    x: 430,
+    y: 195,
+    width: 45,
+    height: 45,
+    speed: 2,
+    direction: 'vertical'
+  }]
+}, {
+  id: 38,
+  question: "____ 水很冷，____ 我們還是跳進去了。",
+  options: [{
+    id: 'A',
+    text: '雖然...但是',
+    correct: true
+  }, {
+    id: 'B',
+    text: '因為...所以',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...所以',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'static',
+    x: 400,
+    y: 170,
+    width: 55,
+    height: 55
+  }]
+}, {
+  id: 39,
+  question: "____ 鈴聲響了，____ 下課了。",
+  options: [{
+    id: 'A',
+    text: '因為...所以',
+    correct: true
+  }, {
+    id: 'B',
+    text: '雖然...但是',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...因為',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'moving',
+    x: 400,
+    y: 200,
+    width: 50,
+    height: 50,
+    speed: 1.5,
+    direction: 'vertical'
+  }, {
+    type: 'static',
+    x: 360,
+    y: 185,
+    width: 45,
+    height: 45
+  }, {
+    type: 'static',
+    x: 440,
+    y: 175,
+    width: 45,
+    height: 45
+  }]
+}, {
+  id: 40,
+  question: "____ 笑話很老，____ 我們還是笑了。",
+  options: [{
+    id: 'A',
+    text: '雖然...但是',
+    correct: true
+  }, {
+    id: 'B',
+    text: '因為...所以',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...所以',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'moving',
+    x: 380,
+    y: 160,
+    width: 40,
+    height: 40,
+    speed: 2.4,
+    direction: 'vertical'
+  }, {
+    type: 'moving',
+    x: 420,
+    y: 200,
+    width: 40,
+    height: 40,
+    speed: 1.9,
+    direction: 'vertical'
+  }]
+},
+// 第41-50關：專家級
+{
+  id: 41,
+  question: "____ 風很大，____ 風箏飛得很高。",
+  options: [{
+    id: 'A',
+    text: '因為...所以',
+    correct: true
+  }, {
+    id: 'B',
+    text: '雖然...但是',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...因為',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'moving',
+    x: 400,
+    y: 190,
+    width: 55,
+    height: 55,
+    speed: 1.2,
+    direction: 'vertical'
+  }, {
+    type: 'static',
+    x: 350,
+    y: 180,
+    width: 50,
+    height: 50
+  }, {
+    type: 'moving',
+    x: 450,
+    y: 195,
+    width: 40,
+    height: 40,
+    speed: 2.1,
+    direction: 'vertical'
+  }]
+}, {
+  id: 42,
+  question: "____ 任務很無聊，____ 我們還是完成了。",
+  options: [{
+    id: 'A',
+    text: '雖然...但是',
+    correct: true
+  }, {
+    id: 'B',
+    text: '因為...所以',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...所以',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'static',
+    x: 400,
+    y: 175,
+    width: 60,
+    height: 60
+  }]
+}, {
+  id: 43,
+  question: "____ 火警響了，____ 所有人都疏散了。",
+  options: [{
+    id: 'A',
+    text: '因為...所以',
+    correct: true
+  }, {
+    id: 'B',
+    text: '雖然...但是',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...因為',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'moving',
+    x: 370,
+    y: 185,
+    width: 45,
+    height: 45,
+    speed: 1.7,
+    direction: 'vertical'
+  }, {
+    type: 'moving',
+    x: 430,
+    y: 170,
+    width: 45,
+    height: 45,
+    speed: 2.3,
+    direction: 'vertical'
+  }]
+}, {
+  id: 44,
+  question: "____ 路很暗，____ 我們小心地走。",
+  options: [{
+    id: 'A',
+    text: '因為...所以',
+    correct: true
+  }, {
+    id: 'B',
+    text: '雖然...但是',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...所以',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'static',
+    x: 380,
+    y: 190,
+    width: 50,
+    height: 50
+  }, {
+    type: 'moving',
+    x: 420,
+    y: 165,
+    width: 40,
+    height: 40,
+    speed: 2.2,
+    direction: 'vertical'
+  }]
+}, {
+  id: 45,
+  question: "____ 歌曲很慢，____ 它很美。",
+  options: [{
+    id: 'A',
+    text: '雖然...但是',
+    correct: true
+  }, {
+    id: 'B',
+    text: '因為...所以',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...因為',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'moving',
+    x: 400,
+    y: 200,
+    width: 50,
+    height: 50,
+    speed: 1.4,
+    direction: 'vertical'
+  }, {
+    type: 'static',
+    x: 360,
+    y: 175,
+    width: 45,
+    height: 45
+  }, {
+    type: 'static',
+    x: 440,
+    y: 180,
+    width: 45,
+    height: 45
+  }]
+}, {
+  id: 46,
+  question: "____ 時鐘敲了十二下，____ 已經是午夜了。",
+  options: [{
+    id: 'A',
+    text: '因為...所以',
+    correct: true
+  }, {
+    id: 'B',
+    text: '雖然...但是',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...所以',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'moving',
+    x: 380,
+    y: 160,
+    width: 45,
+    height: 45,
+    speed: 2.5,
+    direction: 'vertical'
+  }, {
+    type: 'moving',
+    x: 420,
+    y: 200,
+    width: 45,
+    height: 45,
+    speed: 1.8,
+    direction: 'vertical'
+  }]
+}, {
+  id: 47,
+  question: "____ 橋很舊，____ 它還是安全的。",
+  options: [{
+    id: 'A',
+    text: '雖然...但是',
+    correct: true
+  }, {
+    id: 'B',
+    text: '因為...所以',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...因為',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'static',
+    x: 400,
+    y: 180,
+    width: 55,
+    height: 55
+  }]
+}, {
+  id: 48,
+  question: "____ 信號很弱，____ 通話斷了。",
+  options: [{
+    id: 'A',
+    text: '因為...所以',
+    correct: true
+  }, {
+    id: 'B',
+    text: '雖然...但是',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...所以',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'moving',
+    x: 350,
+    y: 190,
+    width: 40,
+    height: 40,
+    speed: 2,
+    direction: 'vertical'
+  }, {
+    type: 'static',
+    x: 450,
+    y: 170,
+    width: 40,
+    height: 40
+  }, {
+    type: 'moving',
+    x: 400,
+    y: 195,
+    width: 35,
+    height: 35,
+    speed: 2.4,
+    direction: 'vertical'
+  }]
+}, {
+  id: 49,
+  question: "____ 挑戰很大，____ 我們還是接受了。",
+  options: [{
+    id: 'A',
+    text: '雖然...但是',
+    correct: true
+  }, {
+    id: 'B',
+    text: '因為...所以',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...因為',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'moving',
+    x: 400,
+    y: 185,
+    width: 50,
+    height: 50,
+    speed: 1.3,
+    direction: 'vertical'
+  }, {
+    type: 'moving',
+    x: 370,
+    y: 170,
+    width: 40,
+    height: 40,
+    speed: 2.1,
+    direction: 'vertical'
+  }, {
+    type: 'moving',
+    x: 430,
+    y: 200,
+    width: 40,
+    height: 40,
+    speed: 1.9,
+    direction: 'vertical'
+  }]
+}, {
+  id: 50,
+  question: "____ 星星閃爍，____ 我們去觀星了。",
+  options: [{
+    id: 'A',
+    text: '因為...所以',
+    correct: true
+  }, {
+    id: 'B',
+    text: '雖然...但是',
+    correct: false
+  }, {
+    id: 'C',
+    text: '但是...所以',
+    correct: false
+  }],
+  obstacles: [{
+    type: 'static',
+    x: 380,
+    y: 175,
+    width: 50,
+    height: 50
+  }, {
+    type: 'moving',
+    x: 420,
+    y: 190,
+    width: 45,
+    height: 45,
+    speed: 2,
+    direction: 'vertical'
+  }, {
+    type: 'static',
+    x: 360,
+    y: 185,
+    width: 45,
+    height: 45
+  }, {
+    type: 'moving',
+    x: 440,
+    y: 165,
+    width: 40,
+    height: 40,
+    speed: 2.3,
+    direction: 'vertical'
+  }]
+}];
+const ParticleBridgeGame = () => {
+  // --- Game Configuration ---
+  const CANVAS_WIDTH = 800;
+  const CANVAS_HEIGHT = 400;
+  const CLIFF_WIDTH = 150;
+  const GAP_Y_LIMIT = 400;
+  const CHAR_SIZE = 30;
+  const START_POS = {
+    x: 50,
+    y: 250
+  };
+
+  // --- State Management ---
+  const [currentLevel, setCurrentLevel] = useState(1);
+  const [gameState, setGameState] = useState('QUIZ');
+  const [quizSelection, setQuizSelection] = useState(null);
+  const [drawnPath, setDrawnPath] = useState([]);
+  const [characterPos, setCharacterPos] = useState(START_POS);
+  const [obstacles, setObstacles] = useState([]);
+
+  // --- Refs for Canvas & Animation ---
+  const canvasRef = useRef(null);
+  const requestRef = useRef(null);
+  const isDrawing = useRef(false);
+  const obstaclePositions = useRef([]);
+
+  // Get current level data
+  const currentLevelData = LEVELS.find(l => l.id === currentLevel) || LEVELS[0];
+
+  // Initialize obstacles when level changes
+  useEffect(() => {
+    if (currentLevelData.obstacles) {
+      const initialObstacles = currentLevelData.obstacles.map(obs => ({
+        ...obs,
+        currentY: obs.y,
+        minY: obs.y - 50,
+        maxY: obs.y + 50,
+        speedDirection: obs.speed || 1
+      }));
+      obstaclePositions.current = initialObstacles;
+      setObstacles(initialObstacles);
+    } else {
+      obstaclePositions.current = [];
+      setObstacles([]);
+    }
+  }, [currentLevel]);
+
+  // Update obstacle positions
+  useEffect(() => {
+    if (gameState === 'WALKING' || gameState === 'DRAWING') {
+      const interval = setInterval(() => {
+        obstaclePositions.current = obstaclePositions.current.map(obs => {
+          if (obs.type === 'moving' && obs.direction === 'vertical') {
+            let newY = obs.currentY + obs.speedDirection;
+            if (newY >= obs.maxY) {
+              obs.speedDirection = -Math.abs(obs.speed);
+              newY = obs.maxY;
+            } else if (newY <= obs.minY) {
+              obs.speedDirection = Math.abs(obs.speed);
+              newY = obs.minY;
+            }
+            return {
+              ...obs,
+              currentY: newY
+            };
+          }
+          return obs;
+        });
+        setObstacles([...obstaclePositions.current]);
+      }, 16);
+      return () => clearInterval(interval);
+    }
+  }, [gameState, currentLevel]);
+
+  // --- Game Loop (The Physics Engine) ---
+  const updateGame = () => {
+    const ctx = canvasRef.current?.getContext('2d');
+    if (!ctx) return;
+
+    // 1. Clear Canvas
+    ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+    // 2. Draw Environment (Cliffs)
+    ctx.fillStyle = '#475569';
+    ctx.fillRect(0, 280, CLIFF_WIDTH, CANVAS_HEIGHT - 280);
+    ctx.fillRect(CANVAS_WIDTH - CLIFF_WIDTH, 280, CLIFF_WIDTH, CANVAS_HEIGHT - 280);
+
+    // 3. Draw Obstacles
+    obstaclePositions.current.forEach(obs => {
+      ctx.fillStyle = obs.type === 'moving' ? '#EF4444' : '#DC2626';
+      const y = obs.type === 'moving' ? obs.currentY : obs.y;
+      ctx.fillRect(obs.x, y, obs.width, obs.height);
+
+      // Add danger indicator for moving obstacles
+      if (obs.type === 'moving') {
+        ctx.strokeStyle = '#FEF3C7';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(obs.x - 2, y - 2, obs.width + 4, obs.height + 4);
+      }
+    });
+
+    // 4. Draw The "Magic Bridge" (User's Path)
+    if (drawnPath.length > 1) {
+      ctx.beginPath();
+      ctx.moveTo(drawnPath[0].x, drawnPath[0].y);
+      for (let i = 1; i < drawnPath.length; i++) {
+        ctx.lineTo(drawnPath[i].x, drawnPath[i].y);
+      }
+      ctx.strokeStyle = '#FBBF24';
+      ctx.lineWidth = 5;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = '#FBBF24';
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    }
+
+    // 5. Draw Goal Flag
+    ctx.fillStyle = '#10B981';
+    ctx.fillRect(CANVAS_WIDTH - 80, 240, 5, 40);
+    ctx.beginPath();
+    ctx.moveTo(CANVAS_WIDTH - 80, 240);
+    ctx.lineTo(CANVAS_WIDTH - 50, 255);
+    ctx.lineTo(CANVAS_WIDTH - 80, 270);
+    ctx.fill();
+
+    // 6. Character Logic
+    if (gameState === 'WALKING') {
+      let newX = characterPos.x + 2.5;
+      let newY = characterPos.y;
+      let onGround = false;
+
+      // Check Left Cliff Ground
+      if (newX < CLIFF_WIDTH && newY >= 250) {
+        newY = 250;
+        onGround = true;
+      }
+      // Check Right Cliff Ground
+      else if (newX > CANVAS_WIDTH - CLIFF_WIDTH && newY >= 250) {
+        newY = 250;
+        onGround = true;
+      }
+      // Check Bridge Collision
+      else {
+        const ptA = drawnPath.find((p, i) => p.x <= newX && drawnPath[i + 1]?.x > newX);
+        const ptB = ptA ? drawnPath[drawnPath.indexOf(ptA) + 1] : null;
+        if (ptA && ptB) {
+          const ratio = (newX - ptA.x) / (ptB.x - ptA.x);
+          const bridgeY = ptA.y + (ptB.y - ptA.y) * ratio;
+          if (Math.abs(newY + CHAR_SIZE - bridgeY) < 20 || newY + CHAR_SIZE < bridgeY) {
+            newY = bridgeY - CHAR_SIZE;
+            onGround = true;
+          }
+        }
+      }
+
+      // Check Obstacle Collision
+      const charRect = {
+        x: newX,
+        y: newY,
+        width: CHAR_SIZE,
+        height: CHAR_SIZE
+      };
+      const hitObstacle = obstaclePositions.current.some(obs => {
+        const y = obs.type === 'moving' ? obs.currentY : obs.y;
+        const obsRect = {
+          x: obs.x,
+          y: y,
+          width: obs.width,
+          height: obs.height
+        };
+        return !(charRect.x + charRect.width < obsRect.x || charRect.x > obsRect.x + obsRect.width || charRect.y + charRect.height < obsRect.y || charRect.y > obsRect.y + obsRect.height);
+      });
+      if (hitObstacle) {
+        setGameState('LOST');
+      }
+
+      // Gravity logic if not on ground
+      if (!onGround) {
+        newY += 6;
+      }
+      setCharacterPos({
+        x: newX,
+        y: newY
+      });
+
+      // Win Condition
+      if (newX > CANVAS_WIDTH - 60) {
+        setGameState('WON');
+      }
+
+      // Lose Condition
+      if (newY > GAP_Y_LIMIT) {
+        setGameState('LOST');
+      }
+    }
+
+    // 7. Draw Character
+    ctx.fillStyle = gameState === 'WON' ? '#10B981' : '#3B82F6';
+    ctx.fillRect(characterPos.x, characterPos.y, CHAR_SIZE, CHAR_SIZE);
+    ctx.fillStyle = 'white';
+    ctx.fillRect(characterPos.x + 18, characterPos.y + 5, 8, 8);
+    ctx.fillStyle = 'black';
+    ctx.fillRect(characterPos.x + 22, characterPos.y + 7, 4, 4);
+    requestRef.current = requestAnimationFrame(updateGame);
+  };
+
+  // --- Effects ---
+  useEffect(() => {
+    requestRef.current = requestAnimationFrame(updateGame);
+    return () => cancelAnimationFrame(requestRef.current);
+  }, [gameState, characterPos, drawnPath, obstacles]);
+
+  // --- Handlers ---
+  const handleOptionClick = option => {
+    setQuizSelection(option.id);
+    if (option.correct) {
+      setGameState('DRAWING');
+    } else {
+      alert("再試一次！邏輯上說不通。");
+      setQuizSelection(null);
+    }
+  };
+  const startDrawing = e => {
+    if (gameState !== 'DRAWING') return;
+    const rect = canvasRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    isDrawing.current = true;
+    setDrawnPath([{
+      x,
+      y
+    }]);
+  };
+  const draw = e => {
+    if (!isDrawing.current || gameState !== 'DRAWING') return;
+    const rect = canvasRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    setDrawnPath(prev => {
+      const lastPoint = prev[prev.length - 1];
+      if (x > lastPoint.x) {
+        return [...prev, {
+          x,
+          y
+        }];
+      }
+      return prev;
+    });
+  };
+  const stopDrawing = () => {
+    if (isDrawing.current) {
+      isDrawing.current = false;
+      setGameState('WALKING');
+    }
+  };
+  const resetGame = () => {
+    setGameState('QUIZ');
+    setQuizSelection(null);
+    setDrawnPath([]);
+    setCharacterPos(START_POS);
+    // Reset obstacles will be handled by useEffect when currentLevel changes
+  };
+  const nextLevel = () => {
+    if (currentLevel < 50) {
+      setCurrentLevel(currentLevel + 1);
+      resetGame();
+    }
+  };
+  const winHandled = useRef(false);
+  useEffect(() => {
+    if (gameState === 'WON' && !winHandled.current) {
+      winHandled.current = true;
+      setTimeout(() => {
+        if (currentLevel < 50) {
+          if (window.confirm(`第 ${currentLevel} 關完成！繼續第 ${currentLevel + 1} 關？`)) {
+            nextLevel();
+          } else {
+            resetGame();
+          }
+        } else {
+          alert('恭喜！你完成了所有 50 關！');
+          resetGame();
+          setCurrentLevel(1);
+        }
+        winHandled.current = false;
+      }, 1000);
+    } else if (gameState !== 'WON') {
+      winHandled.current = false;
+    }
+  }, [gameState, currentLevel]);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center justify-center min-h-screen bg-slate-900 text-white font-sans p-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "max-w-3xl w-full mb-6 text-center space-y-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-between mb-2"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-3xl font-bold text-amber-400"
+  }, "神筆馬良 - 邏輯橋樑"), /*#__PURE__*/React.createElement("div", {
+    className: "text-lg font-semibold text-slate-300"
+  }, "第 ", currentLevel, " 關 / 50")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg"
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "text-xl mb-6 leading-relaxed"
+  }, (() => {
+    const parts = currentLevelData.question.split("____");
+    const selected = quizSelection ? currentLevelData.options.find(o => o.id === quizSelection) : null;
+    const pair = selected && selected.text.includes("...") ? selected.text.split("...") : null;
+    const blank = (text, key) => /*#__PURE__*/React.createElement("span", {
+      key: key,
+      className: "inline-block border-b-2 border-amber-400 min-w-[4rem] mx-1 px-1 text-center text-amber-400 font-bold"
+    }, text || "?");
+    if (pair) {
+      return /*#__PURE__*/React.createElement(React.Fragment, null, blank(pair[0], "a"), parts[1] || "", blank(pair[1], "b"), parts[2] || "");
+    }
+    if (selected) {
+      return /*#__PURE__*/React.createElement(React.Fragment, null, blank(selected.text, "a"), parts.slice(1).join(""));
+    }
+    return /*#__PURE__*/React.createElement(React.Fragment, null, blank("?", "a"), parts[1] || "", blank("?", "b"), parts[2] || "");
+  })()), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-center gap-4 flex-wrap"
+  }, currentLevelData.options.map(opt => /*#__PURE__*/React.createElement("button", {
+    key: opt.id,
+    onClick: () => handleOptionClick(opt),
+    disabled: gameState !== 'QUIZ',
+    className: `px-6 py-2 rounded-full font-bold transition-all ${gameState !== 'QUIZ' && !opt.correct ? 'opacity-20' : 'opacity-100'} ${quizSelection === opt.id ? opt.correct ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500' : 'bg-slate-600 hover:bg-slate-500'}`
+  }, opt.text))))), /*#__PURE__*/React.createElement("div", {
+    className: "relative group"
+  }, /*#__PURE__*/React.createElement("canvas", {
+    ref: canvasRef,
+    width: CANVAS_WIDTH,
+    height: CANVAS_HEIGHT,
+    onMouseDown: startDrawing,
+    onMouseMove: draw,
+    onMouseUp: stopDrawing,
+    onMouseLeave: stopDrawing,
+    className: `bg-slate-800 rounded-lg shadow-2xl border-2 cursor-crosshair
+                                ${gameState === 'DRAWING' ? 'border-amber-400 cursor-cell' : 'border-slate-700 cursor-default'}
+                                ${gameState === 'WON' ? 'border-green-500' : ''}
+                                ${gameState === 'LOST' ? 'border-red-500' : ''}
+                            `
+  }), gameState === 'DRAWING' && /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 left-1/2 transform -translate-x-1/2 bg-black/50 px-4 py-2 rounded-full text-amber-300 animate-pulse pointer-events-none"
+  }, "✨ 神筆啟動！繪製橋樑避開障礙物！✨"), (gameState === 'WON' || gameState === 'LOST') && /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 flex items-center justify-center bg-black/60 rounded-lg"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-center"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: `text-4xl font-bold mb-2 ${gameState === 'WON' ? 'text-green-400' : 'text-red-400'}`
+  }, gameState === 'WON' ? '關卡完成！' : '橋樑倒塌！'), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4 justify-center mt-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: resetGame,
+    className: "bg-white text-slate-900 px-6 py-2 rounded-full font-bold hover:bg-gray-200"
+  }, "重試關卡"), gameState === 'WON' && currentLevel < 50 && /*#__PURE__*/React.createElement("button", {
+    onClick: nextLevel,
+    className: "bg-green-500 text-white px-6 py-2 rounded-full font-bold hover:bg-green-600"
+  }, "下一關"))))), /*#__PURE__*/React.createElement("p", {
+    className: "mt-4 text-slate-500 text-sm"
+  }, "第 ", Math.ceil(currentLevel / 10), " 階段：邏輯粒子挑戰"));
+};
+
+// Render the app
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(/*#__PURE__*/React.createElement(ParticleBridgeGame, null));
+</script>
+
+</body>
+</html>
+
+

@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小五數學：異分母分數加減 | Fraction Add/Sub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(20, 184, 166, 0.15); /* Teal 500 alpha */
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(45, 212, 191, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+      .fraction-bar {
+        transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const Icon = ({
+  children,
+  size = 20,
+  className = ""
+}) => /*#__PURE__*/React.createElement("span", {
+  className: `inline-flex items-center justify-center font-black leading-none ${className}`,
+  style: {
+    fontSize: size,
+    width: size,
+    height: size
+  }
+}, children);
+const ArrowDown = props => /*#__PURE__*/React.createElement(Icon, props, "↓");
+const Plus = props => /*#__PURE__*/React.createElement(Icon, props, "+");
+const Minus = props => /*#__PURE__*/React.createElement(Icon, props, "−");
+const Equal = props => /*#__PURE__*/React.createElement(Icon, props, "=");
+const ArrowRight = props => /*#__PURE__*/React.createElement(Icon, props, "→");
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  titleAdd: {
+    en: "Fraction Addition",
+    zh: "異分母分數加法",
+    ja: "異分母の足し算",
+    ko: "이분모 덧셈",
+    es: "Suma de Fracciones",
+    de: "Bruchaddition",
+    fi: "Murtolukujen yhteenlasku",
+    fr: "Addition de fractions",
+    ar: "جمع الكسور",
+    it: "Addizione di frazioni"
+  },
+  titleSub: {
+    en: "Fraction Subtraction",
+    zh: "異分母分數減法",
+    ja: "異分母の引き算",
+    ko: "이분모 뺄셈",
+    es: "Resta de Fracciones",
+    de: "Bruchsubtraktion",
+    fi: "Murtolukujen vähennyslasku",
+    fr: "Soustraction de fractions",
+    ar: "طرح الكسور",
+    it: "Sottrazione di frazioni"
+  },
+  lcmStep: {
+    en: "Find Common Denominator (LCM)",
+    zh: "通分母 (找最小公倍數)",
+    ja: "共通分母を見つける (最小公倍数)",
+    ko: "공통 분모 찾기 (최소공배수)",
+    es: "Encontrar Común Denominador",
+    de: "Hauptnenner finden",
+    fi: "Etsi yhteinen nimittäjä",
+    fr: "Trouver le dénominateur commun",
+    ar: "إيجاد القاسم المشترك",
+    it: "Trova denominatore comune"
+  },
+  result: {
+    en: "Result",
+    zh: "結果",
+    ja: "結果",
+    ko: "결과",
+    es: "Resultado",
+    de: "Ergebnis",
+    fi: "Tulos",
+    fr: "Résultat",
+    ar: "النتيجة",
+    it: "Risultato"
+  },
+  simplify: {
+    en: "Simplify",
+    zh: "約簡",
+    ja: "約分",
+    ko: "약분",
+    es: "Simplificar",
+    de: "Vereinfachen",
+    fi: "Supista",
+    fr: "Simplifier",
+    ar: "تبسيط",
+    it: "Semplifica"
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+const FractionInput = ({
+  num,
+  setNum,
+  commonD,
+  setCommonD,
+  color,
+  label
+}) => /*#__PURE__*/React.createElement("div", {
+  className: "flex flex-col items-center gap-2"
+}, /*#__PURE__*/React.createElement("input", {
+  type: "number",
+  value: num,
+  onChange: e => setNum(Math.max(1, parseInt(e.target.value, 10) || 1)),
+  className: `w-16 h-16 bg-slate-900/50 border-2 ${color === "blue" ? "border-blue-400 focus:border-blue-300" : "border-emerald-400 focus:border-emerald-300"} rounded-xl text-3xl font-black text-white text-center outline-none transition-all`
+}), /*#__PURE__*/React.createElement("div", {
+  className: "w-16 h-1 bg-slate-600 rounded-full"
+}), /*#__PURE__*/React.createElement("input", {
+  type: "number",
+  value: commonD,
+  onChange: e => setCommonD(Math.max(1, parseInt(e.target.value, 10) || 1)),
+  className: `w-16 h-16 bg-slate-900/50 border-2 ${color === "blue" ? "border-blue-400 focus:border-blue-300" : "border-emerald-400 focus:border-emerald-300"} rounded-xl text-3xl font-black text-white text-center outline-none transition-all`
+}));
+const BarVis = ({
+  n,
+  d,
+  color,
+  subDivs = 1
+}) => {
+  return /*#__PURE__*/React.createElement("div", {
+    className: "w-full h-12 bg-slate-800 rounded-lg overflow-hidden flex border border-white/10 relative"
+  }, Array.from({
+    length: d
+  }).map((_, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "flex-1 h-full border-r border-slate-600/50 relative"
+  }, /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      height: 0
+    },
+    animate: {
+      height: i < n ? "100%" : "0%"
+    },
+    className: `w-full absolute bottom-0 left-0 ${color}`
+  }), subDivs > 1 && /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 flex"
+  }, Array.from({
+    length: subDivs
+  }).map((_, j) => /*#__PURE__*/React.createElement("div", {
+    key: j,
+    className: "flex-1 border-r border-white/20 h-full"
+  }))))));
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [n1, setN1] = useState(1);
+  const [d1, setD1] = useState(2);
+  const [n2, setN2] = useState(1);
+  const [d2, setD2] = useState(3);
+  const [op, setOp] = useState("add"); // add, sub
+
+  const gcd = (a, b) => !b ? a : gcd(b, a % b);
+  const lcm = (a, b) => a * b / gcd(a, b);
+  const commonD = lcm(d1, d2);
+  const factor1 = commonD / d1;
+  const factor2 = commonD / d2;
+  const newN1 = n1 * factor1;
+  const newN2 = n2 * factor2;
+  const resFast = op === "add" ? newN1 + newN2 : newN1 - newN2;
+  const resGcd = gcd(Math.abs(resFast), commonD);
+  const finalN = resFast / resGcd;
+  const finalD = commonD / resGcd;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-4xl flex justify-between items-center mb-10"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-3xl md:text-5xl font-black text-teal-400 drop-shadow-[0_0_15px_rgba(45,212,191,0.5)]"
+  }, "🍰", " ", op === "add" ? getText("titleAdd", lang) : getText("titleSub", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-800/80 p-1.5 rounded-xl border border-white/10 flex flex-wrap justify-end gap-1 max-w-[50%]"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-teal-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white hover:bg-white/5"}`
+  }, l)))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-4xl flex flex-col gap-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-8 rounded-3xl flex justify-center items-center gap-4 md:gap-12"
+  }, /*#__PURE__*/React.createElement(FractionInput, {
+    num: n1,
+    setNum: setN1,
+    commonD: d1,
+    setCommonD: setD1,
+    color: "blue"
+  }), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setOp(op === "add" ? "sub" : "add"),
+    className: "w-12 h-12 md:w-16 md:h-16 rounded-full bg-slate-700 hover:bg-slate-600 flex items-center justify-center text-white transition-all shadow-lg border border-white/10"
+  }, op === "add" ? /*#__PURE__*/React.createElement(Plus, {
+    size: 32
+  }) : /*#__PURE__*/React.createElement(Minus, {
+    size: 32
+  })), /*#__PURE__*/React.createElement(FractionInput, {
+    num: n2,
+    setNum: setN2,
+    commonD: d2,
+    setCommonD: setD2,
+    color: "emerald"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-1 md:grid-cols-2 gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 rounded-2xl flex flex-col gap-2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between text-blue-300 font-bold mb-1"
+  }, /*#__PURE__*/React.createElement("span", null, "Fraction 1"), /*#__PURE__*/React.createElement("span", null, n1, "/", d1)), /*#__PURE__*/React.createElement(BarVis, {
+    n: n1,
+    d: d1,
+    color: "bg-blue-500"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 rounded-2xl flex flex-col gap-2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between text-emerald-300 font-bold mb-1"
+  }, /*#__PURE__*/React.createElement("span", null, "Fraction 2"), /*#__PURE__*/React.createElement("span", null, n2, "/", d2)), /*#__PURE__*/React.createElement(BarVis, {
+    n: n2,
+    d: d2,
+    color: "bg-emerald-500"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-8 rounded-3xl relative overflow-hidden"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-teal-500 to-emerald-500"
+  }), /*#__PURE__*/React.createElement("h3", {
+    className: "text-center font-bold text-teal-200 mb-6 flex items-center justify-center gap-2"
+  }, /*#__PURE__*/React.createElement(ArrowDown, {
+    size: 20
+  }), " ", getText("lcmStep", lang), ": ", commonD), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-1 md:grid-cols-2 gap-8 mb-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col gap-2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-center font-mono text-slate-300 mb-2"
+  }, n1, "/", d1, " ×", " ", /*#__PURE__*/React.createElement("span", {
+    className: "text-yellow-400"
+  }, factor1), " =", " ", /*#__PURE__*/React.createElement("span", {
+    className: "text-blue-400 font-bold"
+  }, newN1, "/", commonD)), /*#__PURE__*/React.createElement(BarVis, {
+    n: n1,
+    d: d1,
+    subDivs: factor1,
+    color: "bg-blue-500"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col gap-2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-center font-mono text-slate-300 mb-2"
+  }, n2, "/", d2, " ×", " ", /*#__PURE__*/React.createElement("span", {
+    className: "text-yellow-400"
+  }, factor2), " =", " ", /*#__PURE__*/React.createElement("span", {
+    className: "text-emerald-400 font-bold"
+  }, newN2, "/", commonD)), /*#__PURE__*/React.createElement(BarVis, {
+    n: n2,
+    d: d2,
+    subDivs: factor2,
+    color: "bg-emerald-500"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-900/40 p-6 rounded-xl border border-white/5 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-4 text-3xl md:text-5xl font-black text-white font-mono"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-blue-400"
+  }, newN1), /*#__PURE__*/React.createElement("div", {
+    className: "w-full h-1 bg-slate-500 rounded-full my-2"
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "text-slate-400 text-2xl"
+  }, commonD)), /*#__PURE__*/React.createElement("div", {
+    className: "text-slate-500"
+  }, op === "add" ? "+" : "-"), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-emerald-400"
+  }, newN2), /*#__PURE__*/React.createElement("div", {
+    className: "w-full h-1 bg-slate-500 rounded-full my-2"
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "text-slate-400 text-2xl"
+  }, commonD)), /*#__PURE__*/React.createElement("div", {
+    className: "text-slate-500"
+  }, "="), /*#__PURE__*/React.createElement(motion.div, {
+    key: resFast,
+    initial: {
+      scale: 0.8,
+      opacity: 0
+    },
+    animate: {
+      scale: 1,
+      opacity: 1
+    },
+    className: "flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: resFast < 0 ? "text-red-400" : "text-yellow-400"
+  }, resFast), /*#__PURE__*/React.createElement("div", {
+    className: "w-full h-1 bg-white rounded-full my-2"
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "text-white text-2xl"
+  }, commonD))), resGcd > 1 && /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      opacity: 0,
+      y: 10
+    },
+    animate: {
+      opacity: 1,
+      y: 0
+    },
+    className: "mt-8 flex items-center gap-4 bg-teal-500/10 px-6 py-4 rounded-xl border border-teal-500/30"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-teal-300 font-bold uppercase text-sm tracking-widest"
+  }, getText("simplify", lang)), /*#__PURE__*/React.createElement(ArrowRight, {
+    size: 20,
+    className: "text-teal-500"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center text-3xl font-black text-white font-mono"
+  }, /*#__PURE__*/React.createElement("span", null, finalN), /*#__PURE__*/React.createElement("div", {
+    className: "w-8 h-1 bg-teal-500 rounded-full my-1"
+  }), /*#__PURE__*/React.createElement("span", null, finalD)))))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tug of War | S2 Science</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #f8fafc;
+      }
+      .rope {
+        background: repeating-linear-gradient(
+          45deg,
+          #d4d4d8,
+          #d4d4d8 10px,
+          #a1a1aa 10px,
+          #a1a1aa 20px
+        );
+        height: 10px;
+        border-radius: 5px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      }
+      .team-member {
+        transition: all 0.2s;
+      }
+      .team-member:hover {
+        transform: scale(1.1);
+      }
+    </style>
+  </head>
+  <body class="bg-slate-50 text-slate-800 min-h-screen">
+    <div id="root"></div>
+
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const members = [{
+  id: "s",
+  name: "Small",
+  force: 50,
+  icon: "fa-child",
+  size: "text-2xl"
+}, {
+  id: "m",
+  name: "Medium",
+  force: 100,
+  icon: "fa-person",
+  size: "text-4xl"
+}, {
+  id: "l",
+  name: "Large",
+  force: 150,
+  icon: "fa-person-running",
+  size: "text-6xl"
+}];
+const App = () => {
+  const [leftTeam, setLeftTeam] = useState([]);
+  const [rightTeam, setRightTeam] = useState([]);
+  const [position, setPosition] = useState(0); // 0 = Center. -ve = Left wins.
+  const [running, setRunning] = useState(false);
+  const [winner, setWinner] = useState(null);
+  const calculateForce = team => team.reduce((acc, m) => acc + m.force, 0);
+  const leftForce = calculateForce(leftTeam);
+  const rightForce = calculateForce(rightTeam);
+  const resultant = leftForce - rightForce; // +ve means Left wins (Force direction left <---), actually wait convention.
+  // Let's standardise:
+  // Left pulls Left (-ve x direction visually?) No, result visually.
+  // Resultant Force calculation:
+  // Net Force = Abs(Left - Right). Direction = Bigger side.
+
+  useEffect(() => {
+    let interval;
+    if (running && !winner) {
+      interval = setInterval(() => {
+        setPosition(prev => {
+          // Movement speed proportional to Net Force
+          const move = (leftForce - rightForce) * 0.1;
+          const newPos = prev - move; // If Left (bigger) -> move becomes +ve. We want to move visual Left (negative X). So subtract move.
+          // e.g. Left=100, Right=0. Move=10. NewPos = 0 - 10 = -10. Correct (Left).
+
+          if (newPos < -250) {
+            setWinner("Blue (Left)");
+            setRunning(false);
+          }
+          if (newPos > 250) {
+            setWinner("Red (Right)");
+            setRunning(false);
+          }
+          return newPos;
+        });
+      }, 50);
+    }
+    return () => clearInterval(interval);
+  }, [running, leftForce, rightForce, winner]);
+  const addToTeam = (teamSetter, member) => {
+    if (running) return;
+    teamSetter(prev => [...prev, {
+      ...member,
+      uid: Date.now() + Math.random()
+    }]);
+  };
+  const reset = () => {
+    setLeftTeam([]);
+    setRightTeam([]);
+    setPosition(0);
+    setRunning(false);
+    setWinner(null);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "p-8 max-w-6xl mx-auto min-h-screen flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("header", {
+    className: "text-center mb-10 w-full"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-slate-500 font-bold uppercase text-xs tracking-widest"
+  }, "Form 2 Science • Unit 11"), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-slate-800 mb-2"
+  }, "Resultant Force Challenge"), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-500"
+  }, "Physics Tug of War: Calculate the Net Force.")), /*#__PURE__*/React.createElement("div", {
+    className: "w-full bg-white rounded-3xl shadow-xl overflow-hidden relative h-[400px] border-4 border-slate-200 mb-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 bg-sky-100 flex items-end"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full h-1/4 bg-green-200 border-t-4 border-green-300"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-10 left-1/2 -ml-1 w-2 h-full bg-black/10 z-0"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-10 left-1/2 -translate-x-1/2 text-slate-400 font-bold text-xs"
+  }, "CENTER"), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-1/2 left-1/2 w-[1000px] h-20 -mt-10 -ml-[500px]",
+    style: {
+      transform: `translateX(${position}px)`
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-1/2 left-0 w-full rope -mt-1"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-8 bg-red-600 rounded"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute right-1/2 pr-20 flex flex-row-reverse items-end gap-2 bottom-4"
+  }, leftTeam.map(m => /*#__PURE__*/React.createElement("div", {
+    key: m.uid,
+    className: `text-blue-600 ${m.size} drop-shadow-lg`
+  }, /*#__PURE__*/React.createElement("i", {
+    className: `fa-solid ${m.icon} fa-flip-horizontal`
+  })))), /*#__PURE__*/React.createElement("div", {
+    className: "absolute left-1/2 pl-20 flex items-end gap-2 bottom-4"
+  }, rightTeam.map(m => /*#__PURE__*/React.createElement("div", {
+    key: m.uid,
+    className: `text-red-500 ${m.size} drop-shadow-lg`
+  }, /*#__PURE__*/React.createElement("i", {
+    className: `fa-solid ${m.icon}`
+  })))), winner && /*#__PURE__*/React.createElement("div", {
+    className: "absolute -top-20 left-1/2 -translate-x-1/2 bg-yellow-400 text-yellow-900 px-6 py-2 rounded-full font-black text-xl shadow-lg animate-bounce whitespace-nowrap z-50"
+  }, winner, " WINS!"))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full grid grid-cols-1 lg:grid-cols-3 gap-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-blue-50 p-6 rounded-3xl border border-blue-200 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "font-bold text-blue-800 text-xl mb-4"
+  }, "Blue Team (Left)"), /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black text-blue-600 mb-6"
+  }, leftForce, " N"), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-2"
+  }, members.map(m => /*#__PURE__*/React.createElement("button", {
+    key: m.id,
+    onClick: () => addToTeam(setLeftTeam, m),
+    className: "w-16 h-16 bg-white rounded-xl shadow-sm border border-blue-100 hover:border-blue-400 flex flex-col items-center justify-center text-blue-500 hover:scale-105 transition"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: `fa-solid ${m.icon}`
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "text-[10px] font-bold mt-1"
+  }, m.force, "N"))))), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col gap-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-800 text-white p-6 rounded-3xl shadow-lg text-center"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-xs font-bold uppercase tracking-widest text-slate-400 mb-2"
+  }, "Resultant Force"), /*#__PURE__*/React.createElement("div", {
+    className: "text-5xl font-black mb-2"
+  }, Math.abs(leftForce - rightForce), " N"), /*#__PURE__*/React.createElement("div", {
+    className: "text-sm font-bold text-slate-300"
+  }, "Direction:", " ", leftForce > rightForce ? /*#__PURE__*/React.createElement("span", {
+    className: "text-blue-400"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-arrow-left"
+  }), " Left") : rightForce > leftForce ? /*#__PURE__*/React.createElement("span", {
+    className: "text-red-400"
+  }, "Right ", /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-arrow-right"
+  })) : "Balanced (0 N)")), !running && !winner && /*#__PURE__*/React.createElement("button", {
+    onClick: () => setRunning(true),
+    className: "w-full py-4 bg-green-500 hover:bg-green-600 text-white font-black rounded-2xl shadow-lg text-xl transition-transform active:scale-95"
+  }, "GO!"), (running || winner) && /*#__PURE__*/React.createElement("button", {
+    onClick: reset,
+    className: "w-full py-4 bg-slate-200 hover:bg-slate-300 text-slate-600 font-black rounded-2xl shadow-lg text-xl"
+  }, "RESET")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-red-50 p-6 rounded-3xl border border-red-200 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "font-bold text-red-800 text-xl mb-4"
+  }, "Red Team (Right)"), /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black text-red-600 mb-6"
+  }, rightForce, " N"), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-2"
+  }, members.map(m => /*#__PURE__*/React.createElement("button", {
+    key: m.id,
+    onClick: () => addToTeam(setRightTeam, m),
+    className: "w-16 h-16 bg-white rounded-xl shadow-sm border border-red-100 hover:border-red-400 flex flex-col items-center justify-center text-red-500 hover:scale-105 transition"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: `fa-solid ${m.icon}`
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "text-[10px] font-bold mt-1"
+  }, m.force, "N")))))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

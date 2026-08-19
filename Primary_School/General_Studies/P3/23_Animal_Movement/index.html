@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小三常識：動物運動會 | Animal Movement</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #bef264 0%, #a3e635 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n || {
+  LanguageSelector: () => null,
+  get: (o, lang) => (o && (o[lang] || o.en)) || ""
+};
+const t = {
+  title: {
+    en: "Animal Movement",
+    zh: "動物運動會",
+    ja: "動物の動き",
+    ko: "동물의 움직임",
+    es: "Movimiento Animal",
+    de: "Tierbewegung",
+    fi: "Eläinten liikkuminen",
+    fr: "Mouvement des animaux",
+    ar: "حركة الحيوانات",
+    it: "Movimento degli Animali"
+  },
+  instruction: {
+    en: "How does it move?",
+    zh: "它是怎樣移動的？",
+    ja: "どうやって動くの？",
+    ko: "어떻게 움직일까요?",
+    es: "¿Cómo se mueve?",
+    de: "Wie bewegt es sich?",
+    fi: "Miten se liikkuu?",
+    fr: "Comment bouge-t-il ?",
+    ar: "كيف يتحرك؟",
+    it: "Come si muove?"
+  },
+  fly: {
+    en: "Fly",
+    zh: "飛行",
+    ja: "飛ぶ",
+    ko: "날기",
+    es: "Volar",
+    de: "Fliegen",
+    fi: "Lentää",
+    fr: "Voler",
+    ar: "يطير",
+    it: "Volare"
+  },
+  swim: {
+    en: "Swim",
+    zh: "游泳",
+    ja: "泳ぐ",
+    ko: "헤엄치기",
+    es: "Nadar",
+    de: "Schwimmen",
+    fi: "Uida",
+    fr: "Nager",
+    ar: "يسبح",
+    it: "Nuotare"
+  },
+  hop: {
+    en: "Hop",
+    zh: "跳躍",
+    ja: "跳ねる",
+    ko: "뛰기",
+    es: "Saltar",
+    de: "Hüpfen",
+    fi: "Hyppiä",
+    fr: "Sautiller",
+    ar: "يقفز",
+    it: "Saltellare"
+  },
+  run: {
+    en: "Run/Walk",
+    zh: "奔跑/行走",
+    ja: "走る/歩く",
+    ko: "달리기/걷기",
+    es: "Correr/Caminar",
+    de: "Laufen/Gehen",
+    fi: "Juosta/Kävellä",
+    fr: "Courir/Marcher",
+    ar: "ركض/مشي",
+    it: "Correre/Camminare"
+  },
+  crawl: {
+    en: "Crawl",
+    zh: "爬行",
+    ja: "這う",
+    ko: "기어가기",
+    es: "Arrastrarse",
+    de: "Kriechen",
+    fi: "Ryömiä",
+    fr: "Ramper",
+    ar: "زحف",
+    it: "Strisciare"
+  },
+  eagle: {
+    en: "Eagle",
+    zh: "老鷹",
+    ja: "鷲",
+    ko: "독수리",
+    es: "Águila",
+    de: "Adler",
+    fi: "Kotka",
+    fr: "Aigle",
+    ar: "نسر",
+    it: "Aquila"
+  },
+  dolphin: {
+    en: "Dolphin",
+    zh: "海豚",
+    ja: "イルカ",
+    ko: "돌고래",
+    es: "Delfín",
+    de: "Delfin",
+    fi: "Delfiini",
+    fr: "Dauphin",
+    ar: "دلفين",
+    it: "Delfino"
+  },
+  kangaroo: {
+    en: "Kangaroo",
+    zh: "袋鼠",
+    ja: "カンガルー",
+    ko: "캥거루",
+    es: "Canguro",
+    de: "Känguru",
+    fi: "Kenguru",
+    fr: "Kangourou",
+    ar: "كنغر",
+    it: "Canguro"
+  },
+  cheetah: {
+    en: "Cheetah",
+    zh: "獵豹",
+    ja: "チーター",
+    ko: "치타",
+    es: "Guepardo",
+    de: "Gepard",
+    fi: "Gepardi",
+    fr: "Guépard",
+    ar: "فهد",
+    it: "Ghepardo"
+  },
+  snake: {
+    en: "Snake",
+    zh: "蛇",
+    ja: "蛇",
+    ko: "뱀",
+    es: "Serpiente",
+    de: "Schlange",
+    fi: "Käärme",
+    fr: "Serpent",
+    ar: "ثعبان",
+    it: "Serpente"
+  },
+  frog: {
+    en: "Frog",
+    zh: "青蛙",
+    ja: "カエル",
+    ko: "개구리",
+    es: "Rana",
+    de: "Frosch",
+    fi: "Sammakko",
+    fr: "Grenouille",
+    ar: "ضفدع",
+    it: "Rana"
+  },
+  horse: {
+    en: "Horse",
+    zh: "馬",
+    ja: "馬",
+    ko: "말",
+    es: "Caballo",
+    de: "Pferd",
+    fi: "Hevonen",
+    fr: "Cheval",
+    ar: "حصان",
+    it: "Cavallo"
+  },
+  butterfly: {
+    en: "Butterfly",
+    zh: "蝴蝶",
+    ja: "蝶",
+    ko: "나비",
+    es: "Mariposa",
+    de: "Schmetterling",
+    fi: "Perhonen",
+    fr: "Papillon",
+    ar: "فراشة",
+    it: "Farfalla"
+  },
+  fish: {
+    en: "Fish",
+    zh: "魚",
+    ja: "魚",
+    ko: "물고기",
+    es: "Pez",
+    de: "Fisch",
+    fi: "Kala",
+    fr: "Poisson",
+    ar: "سمكة",
+    it: "Pesce"
+  },
+  worm: {
+    en: "Earthworm",
+    zh: "蚯蚓",
+    ja: "ミミズ",
+    ko: "지렁이",
+    es: "Lombriz",
+    de: "Regenwurm",
+    fi: "Liero",
+    fr: "Ver de terre",
+    ar: "دودة الأرض",
+    it: "Lombrico"
+  },
+  correct: {
+    en: "Correct!",
+    zh: "答對了！",
+    ja: "正解！",
+    ko: "정답입니다!",
+    es: "¡Correcto!",
+    de: "Richtig!",
+    fi: "Oikein!",
+    fr: "Correct !",
+    ar: "صحيح!",
+    it: "Corretto!"
+  },
+  wrong: {
+    en: "Try Again",
+    zh: "再試一次",
+    ja: "もう一度",
+    ko: "다시 시도하세요",
+    es: "Inténtalo de nuevo",
+    de: "Versuch es nochmal",
+    fi: "Yritä uudelleen",
+    fr: "Réessayez",
+    ar: "حاول مرة أخرى",
+    it: "Riprova"
+  },
+  completed: {
+    en: "Movement Master!",
+    zh: "運動專家！",
+    ja: "動きの達人！",
+    ko: "움직임 마스터!",
+    es: "¡Maestro del Movimiento!",
+    de: "Bewegungsmeister!",
+    fi: "Liikemestari!",
+    fr: "Maître du mouvement !",
+    ar: "خبير الحركة!",
+    it: "Maestro del Movimento!"
+  },
+  reset: {
+    en: "Play Again",
+    zh: "再玩一次",
+    ja: "もう一度プレイ",
+    ko: "다시 하기",
+    es: "Jugar de Nuevo",
+    de: "Nochmal spielen",
+    fi: "Pelaa uudelleen",
+    fr: "Rejouer",
+    ar: "العب مرة أخرى",
+    it: "Gioca di Nuovo"
+  }
+};
+const moves = [{
+  id: "fly",
+  icon: "🕊️",
+  color: "bg-sky-400"
+}, {
+  id: "swim",
+  icon: "🏊",
+  color: "bg-blue-500"
+}, {
+  id: "hop",
+  icon: "🦘",
+  color: "bg-green-500"
+}, {
+  id: "run",
+  icon: "🐆",
+  color: "bg-orange-500"
+}, {
+  id: "crawl",
+  icon: "🐛",
+  color: "bg-amber-600"
+}];
+const animals = [{
+  id: "eagle",
+  type: "fly",
+  icon: "🦅"
+}, {
+  id: "butterfly",
+  type: "fly",
+  icon: "🦋"
+}, {
+  id: "dolphin",
+  type: "swim",
+  icon: "🐬"
+}, {
+  id: "fish",
+  type: "swim",
+  icon: "🐟"
+}, {
+  id: "kangaroo",
+  type: "hop",
+  icon: "🦘"
+}, {
+  id: "frog",
+  type: "hop",
+  icon: "🐸"
+}, {
+  id: "cheetah",
+  type: "run",
+  icon: "🐆"
+}, {
+  id: "horse",
+  type: "run",
+  icon: "🐎"
+}, {
+  id: "snake",
+  type: "crawl",
+  icon: "🐍"
+}, {
+  id: "worm",
+  type: "crawl",
+  icon: "🪱"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [queue, setQueue] = useState([]);
+  const [current, setCurrent] = useState(null);
+  const [feedback, setFeedback] = useState(null);
+  const [score, setScore] = useState(0);
+  const getText = key => t[key][lang] || t[key]["en"];
+  useEffect(() => {
+    initGame();
+  }, []);
+  const initGame = () => {
+    const q = [...animals].sort(() => Math.random() - 0.5);
+    setQueue(q);
+    setCurrent(q[0]);
+    setScore(0);
+    setFeedback(null);
+  };
+  const handleMatch = moveId => {
+    if (feedback) return;
+    if (current.type === moveId) {
+      setFeedback("correct");
+      setScore(s => s + 10);
+      setTimeout(() => {
+        setFeedback(null);
+        const nextIdx = queue.indexOf(current) + 1;
+        if (nextIdx < queue.length) setCurrent(queue[nextIdx]);else setCurrent(null);
+      }, 800);
+    } else {
+      setFeedback("wrong");
+      setScore(s => Math.max(0, s - 5));
+      setTimeout(() => setFeedback(null), 800);
+    }
+  };
+
+  // Animation variant based on movement type
+  const variants = {
+    fly: {
+      y: [0, -20, 0],
+      x: [0, 5, -5, 0],
+      transition: {
+        repeat: Infinity,
+        duration: 2
+      }
+    },
+    swim: {
+      x: [0, 20, 0, -20, 0],
+      rotate: [0, 5, 0, -5, 0],
+      transition: {
+        repeat: Infinity,
+        duration: 3
+      }
+    },
+    hop: {
+      y: [0, -30, 0],
+      scale: [1, 1.1, 0.9, 1],
+      transition: {
+        repeat: Infinity,
+        duration: 1
+      }
+    },
+    run: {
+      x: [-5, 5],
+      transition: {
+        repeat: Infinity,
+        duration: 0.2
+      }
+    },
+    crawl: {
+      scaleX: [1, 1.2, 1],
+      transition: {
+        repeat: Infinity,
+        duration: 2
+      }
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 flex flex-col items-center select-none font-sans overflow-hidden"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-lime-900 mb-2 mt-8 drop-shadow-sm bg-white/50 px-6 py-2 rounded-full"
+  }, "🏃 ", getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "font-bold text-lime-800 text-xl mb-4 bg-white/40 px-4 py-1 rounded-full"
+  }, "Score: ", score), current ? /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-4xl flex flex-col items-center flex-1 justify-center relative"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "relative mb-12 z-20 h-64 flex items-center justify-center w-full"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/90 p-12 rounded-full shadow-2xl border-8 border-lime-500 w-64 h-64 flex flex-col items-center justify-center"
+  }, /*#__PURE__*/React.createElement(motion.div, {
+    className: "text-8xl mb-2",
+    animate: variants[current.type] // Animate based on ACTUAL type to hint? Or maybe static?
+    // Let's animate it to give a HINT!
+  }, current.icon), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-black text-slate-700 leading-tight bg-white px-2 rounded mt-2"
+  }, getText(current.id))), feedback && /*#__PURE__*/React.createElement("div", {
+    className: `absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 px-6 py-4 rounded-3xl font-black text-4xl shadow-2xl whitespace-nowrap ${feedback === "correct" ? "bg-green-600 text-white" : "bg-red-500 text-white"}`
+  }, getText(feedback))), /*#__PURE__*/React.createElement("p", {
+    className: "font-bold text-lime-900 mb-8 bg-white/60 px-8 py-2 rounded-full text-2xl"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-wrap gap-4 w-full justify-center"
+  }, moves.map(m => /*#__PURE__*/React.createElement("button", {
+    key: m.id,
+    onClick: () => handleMatch(m.id),
+    className: `${m.color} text-white rounded-2xl p-4 flex flex-col items-center shadow-lg active:scale-95 transition-transform hover:scale-105 border-b-8 border-black/20 min-w-[120px]`
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl mb-2"
+  }, m.icon), /*#__PURE__*/React.createElement("div", {
+    className: "font-black text-xl"
+  }, getText(m.id)))))) : /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/90 p-12 rounded-3xl shadow-xl text-center mt-20"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-8xl mb-4"
+  }, "🏅"), /*#__PURE__*/React.createElement("h2", {
+    className: "text-4xl font-black text-lime-800 mb-6"
+  }, getText("completed")), /*#__PURE__*/React.createElement("button", {
+    onClick: initGame,
+    className: "bg-lime-600 text-white px-10 py-4 rounded-full font-black text-2xl hover:bg-lime-700 shadow-xl"
+  }, getText("reset"), " 🔄")));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

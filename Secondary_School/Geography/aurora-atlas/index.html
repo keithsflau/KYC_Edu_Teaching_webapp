@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aurora Atlas · 極光地圖 | HKDSE Geography</title>
+  <meta name="description" content="Cinematic HKDSE Geography scroll experience — aurora, cryosphere, and interstellar visuals">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Serif+TC:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --void: #04060f;
+      --frost: #e0f2fe;
+      --aurora: #4ade80;
+      --ice: #38bdf8;
+      --violet: #a78bfa;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html.lenis, html.lenis body { height: auto; }
+    .lenis.lenis-smooth { scroll-behavior: auto !important; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--void);
+      color: var(--frost);
+      overflow-x: hidden;
+    }
+    .serif { font-family: 'Noto Serif TC', serif; }
+
+    /* ── Preloader ── */
+    .preloader {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #020408;
+      transition: opacity 0.9s ease, visibility 0.9s ease;
+    }
+    .preloader.is-done {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .preloader__title {
+      font-size: clamp(0.65rem, 2vw, 0.75rem);
+      letter-spacing: 0.45em;
+      text-transform: uppercase;
+      color: rgba(125, 211, 252, 0.6);
+      margin-bottom: 1.5rem;
+    }
+    .preloader__brand {
+      font-size: clamp(2rem, 8vw, 3.5rem);
+      font-weight: 300;
+      letter-spacing: 0.12em;
+      background: linear-gradient(135deg, #4ade80, #22d3ee, #c4b5fd);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin-bottom: 2.5rem;
+    }
+    .preloader__bar-wrap {
+      width: min(240px, 60vw);
+      height: 1px;
+      background: rgba(255,255,255,0.08);
+      position: relative;
+      overflow: hidden;
+    }
+    .preloader__bar {
+      position: absolute;
+      left: 0; top: 0; height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #4ade80, #22d3ee);
+      transition: width 0.15s ease;
+    }
+    .preloader__pct {
+      margin-top: 1rem;
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      color: rgba(255,255,255,0.35);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ── Nav ── */
+    .nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 1.5rem;
+      background: linear-gradient(to bottom, rgba(4,6,15,0.85), transparent);
+      pointer-events: none;
+    }
+    .nav a, .nav button { pointer-events: auto; }
+    .nav__back {
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.5);
+      text-decoration: none;
+      letter-spacing: 0.05em;
+      transition: color 0.3s;
+    }
+    .nav__back:hover { color: #7dd3fc; }
+    .nav__logo {
+      font-size: 0.65rem;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: rgba(74, 222, 128, 0.7);
+    }
+
+    /* ── Scroll sequence ── */
+    .scroll-sequence {
+      position: relative;
+      height: 700vh;
+    }
+    .scroll-sequence__sticky {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      width: 100%;
+      overflow: hidden;
+    }
+    #webgl-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+    .aurora-sky {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+      background: radial-gradient(ellipse 120% 80% at 50% 110%, #0c2840 0%, #04060f 55%, #020408 100%);
+    }
+    .aurora-sky__band {
+      position: absolute;
+      left: -20%;
+      width: 140%;
+      height: 45%;
+      filter: blur(48px);
+      opacity: 0.55;
+      animation: aurora-drift 14s ease-in-out infinite alternate;
+    }
+    .aurora-sky__band--1 {
+      top: 5%;
+      background: linear-gradient(105deg, transparent 10%, rgba(74, 222, 128, 0.45) 40%, rgba(34, 211, 238, 0.35) 60%, transparent 90%);
+      animation-duration: 16s;
+    }
+    .aurora-sky__band--2 {
+      top: 18%;
+      background: linear-gradient(75deg, transparent 5%, rgba(167, 139, 250, 0.4) 35%, rgba(56, 189, 248, 0.3) 65%, transparent 95%);
+      animation-duration: 20s;
+      animation-delay: -4s;
+    }
+    .aurora-sky__band--3 {
+      top: 32%;
+      background: linear-gradient(95deg, transparent 15%, rgba(45, 212, 191, 0.35) 45%, rgba(74, 222, 128, 0.25) 70%, transparent 90%);
+      animation-duration: 18s;
+      animation-delay: -8s;
+    }
+    @keyframes aurora-drift {
+      0% { transform: translateX(-3%) skewX(-3deg); opacity: 0.45; }
+      100% { transform: translateX(4%) skewX(2deg); opacity: 0.7; }
+    }
+    #scroll-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+      opacity: 0.88;
+      mix-blend-mode: normal;
+    }
+    #scroll-canvas.is-blend {
+      mix-blend-mode: soft-light;
+      opacity: 0.72;
+    }
+    .hero-video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 1;
+      opacity: 0;
+      transition: opacity 1.2s ease;
+      mix-blend-mode: screen;
+    }
+    .hero-video.is-visible { opacity: 0.55; }
+    .hero-vignette {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      background:
+        radial-gradient(ellipse 85% 65% at 50% 42%, transparent 28%, rgba(4,6,15,0.18) 72%, rgba(4,6,15,0.45) 100%),
+        linear-gradient(to top, rgba(4,6,15,0.35) 0%, transparent 22%),
+        linear-gradient(to right, transparent 0%, transparent 55%, rgba(4,6,15,0.2) 100%);
+      pointer-events: none;
+    }
+    .ice-crystal-hint {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 2;
+      width: 140px;
+      height: 140px;
+      border: 1px solid rgba(125, 211, 252, 0.15);
+      border-radius: 50%;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.6s;
+    }
+    .ice-crystal-hint::before {
+      content: '';
+      position: absolute;
+      inset: 20%;
+      border: 1px solid rgba(74, 222, 128, 0.2);
+      transform: rotate(45deg);
+    }
+
+    /* ── Chapters ── */
+    .scroll-chapter {
+      position: absolute;
+      inset: 0;
+      z-index: 4;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: flex-end;
+      padding: 5rem 1.25rem 4.5rem;
+      opacity: 0;
+      pointer-events: none;
+    }
+    @media (min-width: 640px) {
+      .scroll-chapter { padding: 6rem 2.5rem 5rem 1.5rem; }
+    }
+    @media (min-width: 1024px) {
+      .scroll-chapter { padding: 7rem 3.5rem 5.5rem 2rem; }
+    }
+    .scroll-chapter--intro {
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 5rem 1.5rem;
+    }
+    .chapter-card {
+      max-width: min(20rem, 100%);
+      width: 100%;
+      padding: 1.35rem 1.5rem;
+      border-radius: 1rem;
+      background: rgba(8, 14, 30, 0.55);
+      border: 1px solid rgba(125, 211, 252, 0.14);
+      backdrop-filter: blur(16px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.28);
+    }
+    .scroll-chapter--intro .chapter-card {
+      max-width: 38rem;
+      padding: 1.75rem 2rem;
+      background: rgba(8, 14, 30, 0.5);
+      border-color: rgba(74, 222, 128, 0.2);
+    }
+    .chapter-tag {
+      font-size: 0.6rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: rgba(74, 222, 128, 0.75);
+      margin-bottom: 0.75rem;
+    }
+    .chapter-title {
+      font-size: clamp(1.25rem, 3.5vw, 1.75rem);
+      font-weight: 600;
+      line-height: 1.2;
+      margin-bottom: 0.6rem;
+      color: #f0f9ff;
+    }
+    .chapter-body {
+      font-size: 0.82rem;
+      line-height: 1.65;
+      color: rgba(226, 232, 240, 0.78);
+    }
+    .chapter-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin-top: 1.25rem;
+      padding: 0.6rem 1.1rem;
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #0f172a;
+      background: linear-gradient(135deg, #4ade80, #22d3ee);
+      border-radius: 999px;
+      text-decoration: none;
+      font-weight: 600;
+      pointer-events: auto;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .chapter-cta:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(34, 211, 238, 0.35);
+    }
+    .intro-verse {
+      font-size: clamp(1rem, 2.5vw, 1.15rem);
+      line-height: 1.9;
+      color: rgba(224, 242, 254, 0.85);
+      max-width: 32rem;
+      margin: 0 auto 1.5rem;
+    }
+    .intro-sub {
+      font-size: 0.7rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: rgba(125, 211, 252, 0.5);
+    }
+
+    /* ── UI chrome ── */
+    .frame-dots {
+      position: absolute;
+      left: 1.25rem;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 5;
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+    }
+    .frame-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.15);
+      transition: background 0.3s, transform 0.3s, box-shadow 0.3s;
+    }
+    .frame-dot.is-active {
+      background: #4ade80;
+      transform: scale(1.4);
+      box-shadow: 0 0 12px rgba(74, 222, 128, 0.6);
+    }
+    .scroll-progress {
+      position: absolute;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 5;
+      width: min(280px, 70vw);
+      height: 1px;
+      background: rgba(255,255,255,0.08);
+    }
+    .scroll-progress__bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #4ade80, #22d3ee, #a78bfa);
+    }
+    .scroll-hint {
+      position: absolute;
+      bottom: 3.25rem;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 5;
+      font-size: 0.6rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.3);
+      animation: pulse-hint 2.5s ease-in-out infinite;
+    }
+    @keyframes pulse-hint {
+      0%, 100% { opacity: 0.3; transform: translateX(-50%) translateY(0); }
+      50% { opacity: 0.7; transform: translateX(-50%) translateY(4px); }
+    }
+
+    /* ── Footer section ── */
+    .outro {
+      position: relative;
+      z-index: 10;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 4rem 1.5rem;
+      text-align: center;
+      background: linear-gradient(to bottom, transparent, #04060f 20%);
+    }
+    .outro h2 {
+      font-size: clamp(1.5rem, 4vw, 2rem);
+      font-weight: 300;
+      letter-spacing: 0.08em;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #e0f2fe, #4ade80);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .outro p {
+      max-width: 28rem;
+      color: rgba(255,255,255,0.45);
+      font-size: 0.9rem;
+      line-height: 1.7;
+      margin-bottom: 2rem;
+    }
+    .outro-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      justify-content: center;
+    }
+    .outro-links a {
+      padding: 0.65rem 1.25rem;
+      border: 1px solid rgba(125, 211, 252, 0.2);
+      border-radius: 999px;
+      font-size: 0.75rem;
+      color: rgba(224, 242, 254, 0.7);
+      text-decoration: none;
+      transition: all 0.3s;
+    }
+    .outro-links a:hover {
+      border-color: #4ade80;
+      color: #4ade80;
+      background: rgba(74, 222, 128, 0.08);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Preloader -->
+  <div class="preloader" id="preloader">
+    <p class="preloader__title">HKDSE Geography</p>
+    <h1 class="preloader__brand">AURORA ATLAS</h1>
+    <div class="preloader__bar-wrap">
+      <div class="preloader__bar" id="preloader-bar"></div>
+    </div>
+    <p class="preloader__pct" id="preloader-pct">0%</p>
+  </div>
+
+  <nav class="nav">
+    <a href="../index.html" class="nav__back">← 地理科</a>
+    <span class="nav__logo">極光地圖</span>
+    <span style="width:4rem"></span>
+  </nav>
+
+  <main>
+    <section class="scroll-sequence" id="scroll-sequence">
+      <div class="scroll-sequence__sticky">
+        <div class="aurora-sky" aria-hidden="true">
+          <div class="aurora-sky__band aurora-sky__band--1"></div>
+          <div class="aurora-sky__band aurora-sky__band--2"></div>
+          <div class="aurora-sky__band aurora-sky__band--3"></div>
+        </div>
+        <canvas id="webgl-canvas"></canvas>
+        <video class="hero-video" id="hero-video" muted loop playsinline preload="none"
+          poster="assets/frame-intro.jpg">
+        </video>
+        <canvas id="scroll-canvas"></canvas>
+        <div class="hero-vignette"></div>
+        <div class="ice-crystal-hint" id="crystal-hint"></div>
+
+        <!-- Chapters -->
+        <div class="scroll-chapter scroll-chapter--intro" data-chapter="0">
+          <div class="chapter-card">
+            <p class="intro-sub">Elective Part · 選修部分</p>
+            <p class="intro-verse serif">
+              大地四方在於我們的造物主手中；<br>
+              他使天下萬國堅立於地。<br>
+              <span style="font-size:0.85em;opacity:0.65;display:block;margin-top:0.75rem">耶利米書 10:12</span>
+            </p>
+            <h2 class="chapter-title">極光地圖 · Aurora Atlas</h2>
+            <p class="chapter-body">捲動探索 HKDSE 地理四大選修單元。冰晶在星野中旋轉，每一章節對應一個地理世界。</p>
+          </div>
+        </div>
+
+        <div class="scroll-chapter" data-chapter="1">
+          <div class="chapter-card">
+            <p class="chapter-tag">Unit 1 · C1</p>
+            <h2 class="chapter-title">動態地球</h2>
+            <p class="chapter-body">板塊構造、邊界類型與地貌營力。從冰島火山到環太平洋地震帶 — 理解地球內部的能量如何塑造地表。</p>
+            <a href="../01_Dynamic_Earth/index.html" class="chapter-cta">進入模組 →</a>
+          </div>
+        </div>
+
+        <div class="scroll-chapter" data-chapter="2">
+          <div class="chapter-card">
+            <p class="chapter-tag">Unit 2 · C2</p>
+            <h2 class="chapter-title">天氣與氣候</h2>
+            <p class="chapter-body">大氣環流、季風與熱帶氣旋。香港八號風球背後的氣壓系統 — 從衛星雲圖讀懂天氣故事。</p>
+            <a href="../02_Weather_Climate/index.html" class="chapter-cta">進入模組 →</a>
+          </div>
+        </div>
+
+        <div class="scroll-chapter" data-chapter="3">
+          <div class="chapter-card">
+            <p class="chapter-tag">Unit 3 · C3</p>
+            <h2 class="chapter-title">氣候變化</h2>
+            <p class="chapter-body">溫室效應、冰圈消融與極地反照率反饋。格陵蘭冰蓋上的融水，是未來海平面的預告。</p>
+            <a href="../03_Climate_Change/index.html" class="chapter-cta">進入模組 →</a>
+          </div>
+        </div>
+
+        <div class="scroll-chapter" data-chapter="4">
+          <div class="chapter-card">
+            <p class="chapter-tag">Unit 4 · C4</p>
+            <h2 class="chapter-title">工業區位</h2>
+            <p class="chapter-body">區位因素、工業轉型與全球化。從製造業樞紐到國際金融中心 — 香港的區位優勢如何演變。</p>
+            <a href="../04_Industrial_Location/index.html" class="chapter-cta">進入模組 →</a>
+          </div>
+        </div>
+
+        <div class="frame-dots" id="frame-dots"></div>
+        <div class="scroll-progress"><div class="scroll-progress__bar" id="scroll-bar"></div></div>
+        <p class="scroll-hint" id="scroll-hint">Scroll</p>
+      </div>
+    </section>
+
+    <section class="outro">
+      <h2>探索完畢</h2>
+      <p>選擇一個單元深入學習，或返回地理科主頁瀏覽更多互動資源。</p>
+      <div class="outro-links">
+        <a href="../01_Dynamic_Earth/index.html">動態地球</a>
+        <a href="../02_Weather_Climate/index.html">天氣氣候</a>
+        <a href="../03_Climate_Change/index.html">氣候變化</a>
+        <a href="../04_Industrial_Location/index.html">工業區位</a>
+        <a href="../index.html">返回主頁</a>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+  <script>
+  (function () {
+    'use strict';
+
+    const SCRUB_HOLD = 0.72;
+
+    function segmentLocal(p, index, total) {
+      const seg = 1 / total;
+      const start = index * seg;
+      const end = (index + 1) * seg;
+      if (p < start || p >= end) return null;
+      return (p - start) / seg;
+    }
+
+    function getScrubFrame(p) {
+      const n = FRAME_COUNT;
+      const seg = 1 / n;
+      const idx = Math.min(n - 1, Math.floor(p / seg));
+      const local = segmentLocal(p, idx, n);
+      if (local === null) return { idx: n - 1, blend: 0, next: n - 1 };
+      if (idx >= n - 1) return { idx: n - 1, blend: 0, next: n - 1 };
+      const blend = local > SCRUB_HOLD ? (local - SCRUB_HOLD) / (1 - SCRUB_HOLD) : 0;
+      return { idx, blend: Math.min(1, blend), next: Math.min(idx + 1, n - 1) };
+    }
+
+    function chapterOpacity(p, index, total) {
+      const local = segmentLocal(p, index, total);
+      if (local === null) return 0;
+      const trans = 1 - SCRUB_HOLD;
+      if (local < trans) return local / trans;
+      if (local <= SCRUB_HOLD) return 1;
+      return Math.max(0, 1 - (local - SCRUB_HOLD) / trans);
+    }
+
+    const FRAME_COUNT = 5;
+
+    const FRAME_SOURCES = [
+      { local: 'assets/frame-intro.jpg', remote: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Aurora_borealis_over_Eielson_Air_Force_Base%2C_Alaska.jpg/1280px-Aurora_borealis_over_Eielson_Air_Force_Base%2C_Alaska.jpg', colors: ['#0a1628', '#1a4d3a', '#2d1b4e'] },
+      { local: 'assets/frame-tectonics.jpg', remote: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Eyjafjallaj%C3%B6kull_eruption_2010.jpg/1280px-Eyjafjallaj%C3%B6kull_eruption_2010.jpg', colors: ['#1a0a08', '#4a1a08', '#2a1810'] },
+      { local: 'assets/frame-weather.jpg', remote: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Hurricane_Isabel_from_ISS.jpg/1280px-Hurricane_Isabel_from_ISS.jpg', colors: ['#080c18', '#0a2040', '#1a2850'] },
+      { local: 'assets/frame-climate.jpg', remote: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Meltwater_on_the_Greenland_ice_sheet.jpg/1280px-Meltwater_on_the_Greenland_ice_sheet.jpg', colors: ['#0a1420', '#1a3040', '#0a2830'] },
+      { local: 'assets/frame-industry.jpg', remote: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ed/Hong_Kong_skyline_at_night_2019.jpg/1280px-Hong_Kong_skyline_at_night_2019.jpg', colors: ['#080810', '#1a1030', '#0a1840'] },
+    ];
+
+    /* ── Procedural scene art (fallback when photos unavailable) ── */
+    function drawMountainSilhouette(ctx, w, h, color) {
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(0, h);
+      for (let x = 0; x <= w; x += 12) {
+        const y = h * 0.72 + Math.sin(x * 0.008) * 40 + Math.sin(x * 0.02 + 1) * 25;
+        ctx.lineTo(x, y);
+      }
+      ctx.lineTo(w, h);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function makeSceneCanvas(index) {
+      const w = 1920, h = 1080;
+      const c = document.createElement('canvas');
+      c.width = w;
+      c.height = h;
+      const ctx = c.getContext('2d');
+
+      const skySets = [
+        ['#020818', '#0a2848', '#061018'],
+        ['#120408', '#3a1208', '#0a0608'],
+        ['#040a18', '#0a2048', '#060818'],
+        ['#061420', '#0e3048', '#081820'],
+        ['#08061a', '#1a0a30', '#060818'],
+      ];
+      const sky = skySets[index] || skySets[0];
+      const bg = ctx.createLinearGradient(0, 0, 0, h);
+      bg.addColorStop(0, sky[0]);
+      bg.addColorStop(0.55, sky[1]);
+      bg.addColorStop(1, sky[2]);
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, w, h);
+
+      for (let i = 0; i < 500; i++) {
+        const x = Math.random() * w;
+        const y = Math.random() * h * 0.75;
+        const r = Math.random() * 1.6 + 0.2;
+        ctx.fillStyle = `rgba(255,255,255,${0.15 + Math.random() * 0.75})`;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      const auroraSets = [
+        [['74,222,128', '34,211,238', '167,139,250']],
+        [['249,115,22', '239,68,68', '251,191,36']],
+        [['56,189,248', '99,102,241', '34,211,238']],
+        [['45,212,191', '56,189,248', '74,222,128']],
+        [['251,191,36', '244,63,94', '167,139,250']],
+      ];
+      const cols = auroraSets[index][0];
+      for (let b = 0; b < 6; b++) {
+        ctx.beginPath();
+        ctx.moveTo(0, h * 0.1);
+        for (let x = 0; x <= w; x += 6) {
+          const y = h * (0.1 + b * 0.045) + Math.sin(x * 0.003 + b * 1.2) * 70 + Math.sin(x * 0.009 + b) * 30;
+          ctx.lineTo(x, y);
+        }
+        ctx.lineTo(w, h * 0.52);
+        ctx.lineTo(0, h * 0.52);
+        ctx.closePath();
+        const ag = ctx.createLinearGradient(0, 0, w, h * 0.5);
+        ag.addColorStop(0, `rgba(${cols[b % 3]},0.5)`);
+        ag.addColorStop(0.5, `rgba(${cols[(b + 1) % 3]},0.25)`);
+        ag.addColorStop(1, `rgba(${cols[(b + 2) % 3]},0.02)`);
+        ctx.fillStyle = ag;
+        ctx.fill();
+      }
+
+      if (index === 0) {
+        drawMountainSilhouette(ctx, w, h, '#030810');
+        ctx.fillStyle = 'rgba(200,230,255,0.08)';
+        ctx.fillRect(0, h * 0.78, w, h * 0.22);
+      } else if (index === 1) {
+        const vg = ctx.createRadialGradient(w * 0.55, h * 0.55, 20, w * 0.55, h * 0.5, 280);
+        vg.addColorStop(0, 'rgba(255,120,40,0.9)');
+        vg.addColorStop(0.4, 'rgba(200,60,20,0.45)');
+        vg.addColorStop(1, 'transparent');
+        ctx.fillStyle = vg;
+        ctx.fillRect(0, 0, w, h);
+        drawMountainSilhouette(ctx, w, h, '#0a0404');
+      } else if (index === 2) {
+        const cx = w * 0.62, cy = h * 0.42;
+        for (let r = 280; r > 20; r -= 18) {
+          ctx.strokeStyle = `rgba(120,180,255,${0.04 + (280 - r) / 600})`;
+          ctx.lineWidth = 8;
+          ctx.beginPath();
+          ctx.arc(cx, cy, r, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+        const cg = ctx.createRadialGradient(cx, cy, 10, cx, cy, 120);
+        cg.addColorStop(0, 'rgba(255,255,255,0.85)');
+        cg.addColorStop(0.5, 'rgba(100,160,255,0.4)');
+        cg.addColorStop(1, 'transparent');
+        ctx.fillStyle = cg;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 120, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (index === 3) {
+        ctx.fillStyle = '#0c1828';
+        ctx.fillRect(0, h * 0.55, w, h * 0.45);
+        for (let i = 0; i < 12; i++) {
+          ctx.strokeStyle = `rgba(120,200,255,${0.2 + Math.random() * 0.3})`;
+          ctx.lineWidth = 2 + Math.random() * 3;
+          ctx.beginPath();
+          ctx.moveTo(w * (0.1 + i * 0.07), h * 0.55);
+          ctx.bezierCurveTo(w * (0.15 + i * 0.06), h * 0.62, w * (0.2 + i * 0.05), h * 0.7, w * (0.25 + i * 0.07), h * 0.78);
+          ctx.stroke();
+        }
+      } else if (index === 4) {
+        const buildings = [0.08, 0.14, 0.2, 0.26, 0.32, 0.38, 0.44, 0.5, 0.56, 0.62, 0.68, 0.74, 0.8, 0.86, 0.92];
+        buildings.forEach((bx, i) => {
+          const bw = w * 0.045;
+          const bh = h * (0.12 + (i % 5) * 0.06 + (i % 3) * 0.04);
+          const x = w * bx;
+          ctx.fillStyle = `rgba(${8 + i * 3},${12 + i * 2},${28 + i * 4},0.95)`;
+          ctx.fillRect(x, h - bh, bw, bh);
+          for (let win = 0; win < 5; win++) {
+            if (Math.random() > 0.35) {
+              ctx.fillStyle = `rgba(251,191,36,${0.35 + Math.random() * 0.45})`;
+              ctx.fillRect(x + 4, h - bh + 10 + win * (bh / 6), bw - 8, 6);
+            }
+          }
+        });
+        const rg = ctx.createLinearGradient(0, h * 0.5, 0, h);
+        rg.addColorStop(0, 'transparent');
+        rg.addColorStop(1, 'rgba(244,63,94,0.15)');
+        ctx.fillStyle = rg;
+        ctx.fillRect(0, 0, w, h);
+      }
+
+      c.isProcedural = true;
+      return c;
+    }
+
+    /* ── Load frames ── */
+    const frames = [];
+    let loadProgress = 0;
+    const preloader = document.getElementById('preloader');
+    const preloaderBar = document.getElementById('preloader-bar');
+    const preloaderPct = document.getElementById('preloader-pct');
+
+    function setLoadProgress(v) {
+      loadProgress = Math.min(100, v);
+      preloaderBar.style.width = loadProgress + '%';
+      preloaderPct.textContent = Math.round(loadProgress) + '%';
+    }
+
+    function loadImage(src, useCors) {
+      return new Promise((resolve) => {
+        let settled = false;
+        const finish = (result) => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timer);
+          resolve(result);
+        };
+        const timer = setTimeout(() => finish(null), 8000);
+        const img = new Image();
+        if (useCors) img.crossOrigin = 'anonymous';
+        img.onload = () => finish(img);
+        img.onerror = () => finish(null);
+        img.src = src;
+      });
+    }
+
+    const frameMeta = [];
+
+    async function loadAllFrames() {
+      for (let i = 0; i < FRAME_SOURCES.length; i++) {
+        const spec = FRAME_SOURCES[i];
+        let img = await loadImage(spec.local, false);
+        if (!img) img = await loadImage(spec.remote, true);
+        if (!img) {
+          img = makeSceneCanvas(i);
+        } else {
+          img.isProcedural = false;
+        }
+        frames.push(img);
+        frameMeta.push({ isProcedural: !!img.isProcedural });
+        setLoadProgress(10 + ((i + 1) / FRAME_SOURCES.length) * 60);
+      }
+      setLoadProgress(85);
+    }
+
+    /* ── Canvas scrub ── */
+    const scrollCanvas = document.getElementById('scroll-canvas');
+    const sctx = scrollCanvas.getContext('2d');
+
+    function resizeCanvas() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      scrollCanvas.width = window.innerWidth * dpr;
+      scrollCanvas.height = window.innerHeight * dpr;
+      sctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function drawFrame(img, alpha) {
+      if (!img) return;
+      const cw = window.innerWidth, ch = window.innerHeight;
+      const iw = img.width || img.naturalWidth, ih = img.height || img.naturalHeight;
+      const scale = Math.max(cw / iw, ch / ih);
+      const sw = iw * scale, sh = ih * scale;
+      const sx = (cw - sw) / 2, sy = (ch - sh) / 2;
+      sctx.globalAlpha = alpha;
+      sctx.drawImage(img, sx, sy, sw, sh);
+      sctx.globalAlpha = 1;
+    }
+
+    function renderScrub(progress) {
+      const { idx, blend, next } = getScrubFrame(progress);
+      const cw = window.innerWidth, ch = window.innerHeight;
+      sctx.clearRect(0, 0, cw, ch);
+      const useBlend = frameMeta[idx]?.isProcedural || frameMeta[next]?.isProcedural;
+      scrollCanvas.classList.toggle('is-blend', !!useBlend);
+      if (frames[idx]) drawFrame(frames[idx], 1);
+      if (blend > 0 && frames[next] && next !== idx) drawFrame(frames[next], blend);
+      return idx;
+    }
+
+    /* ── WebGL: stars + aurora + ice crystal ── */
+    let renderer, scene, camera, crystal, auroraMesh, stars;
+    const webglCanvas = document.getElementById('webgl-canvas');
+
+    function initWebGL() {
+      if (typeof THREE === 'undefined') return false;
+      renderer = new THREE.WebGLRenderer({ canvas: webglCanvas, alpha: true, antialias: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 200);
+      camera.position.z = 8;
+
+      scene.add(new THREE.AmbientLight(0x446688, 0.85));
+      const keyLight = new THREE.PointLight(0x4ade80, 2.5, 60);
+      keyLight.position.set(4, 3, 6);
+      scene.add(keyLight);
+      const fillLight = new THREE.PointLight(0x6366f1, 1.8, 50);
+      fillLight.position.set(-5, -2, 4);
+      scene.add(fillLight);
+
+      // Star field
+      const starGeo = new THREE.BufferGeometry();
+      const starCount = 4000;
+      const positions = new Float32Array(starCount * 3);
+      for (let i = 0; i < starCount * 3; i++) {
+        positions[i] = (Math.random() - 0.5) * 90;
+      }
+      starGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.07, transparent: true, opacity: 0.9 });
+      stars = new THREE.Points(starGeo, starMat);
+      scene.add(stars);
+
+      // Ice crystal (icosahedron)
+      const crystalGeo = new THREE.IcosahedronGeometry(1.35, 1);
+      const crystalMat = new THREE.MeshStandardMaterial({
+        color: 0x99ddff,
+        emissive: 0x2288cc,
+        emissiveIntensity: 0.55,
+        metalness: 0.85,
+        roughness: 0.12,
+        transparent: true,
+        opacity: 0.92,
+      });
+      crystal = new THREE.Mesh(crystalGeo, crystalMat);
+      crystal.position.set(0, 0.2, -1.5);
+      scene.add(crystal);
+
+      const wire = new THREE.LineSegments(
+        new THREE.WireframeGeometry(crystalGeo),
+        new THREE.LineBasicMaterial({ color: 0x4ade80, transparent: true, opacity: 0.45 })
+      );
+      crystal.add(wire);
+
+      // Aurora plane shader
+      const auroraUniforms = {
+        uTime: { value: 0 },
+        uOpacity: { value: 0.62 },
+      };
+      const auroraMat = new THREE.ShaderMaterial({
+        transparent: true,
+        depthWrite: false,
+        uniforms: auroraUniforms,
+        vertexShader: `
+          varying vec2 vUv;
+          void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: `
+          uniform float uTime;
+          uniform float uOpacity;
+          varying vec2 vUv;
+          void main() {
+            float wave = sin(vUv.x * 8.0 + uTime * 0.4) * 0.5 + 0.5;
+            float wave2 = sin(vUv.x * 12.0 - uTime * 0.3 + vUv.y * 4.0) * 0.5 + 0.5;
+            float band = smoothstep(0.2, 0.8, vUv.y + wave * 0.15) * smoothstep(1.0, 0.5, vUv.y);
+            vec3 col = mix(vec3(0.1, 0.8, 0.5), vec3(0.2, 0.6, 1.0), wave2);
+            col = mix(col, vec3(0.6, 0.4, 1.0), wave * 0.3);
+            gl_FragColor = vec4(col, band * uOpacity * (0.6 + wave * 0.4));
+          }
+        `,
+      });
+      auroraMesh = new THREE.Mesh(new THREE.PlaneGeometry(30, 12), auroraMat);
+      auroraMesh.position.set(0, 3, -8);
+      auroraMesh.rotation.x = -0.3;
+      scene.add(auroraMesh);
+
+      auroraMesh.userData.uniforms = auroraUniforms;
+      return true;
+    }
+
+    let scrollProgress = 0;
+    function animateWebGL(t) {
+      requestAnimationFrame(animateWebGL);
+      if (!renderer) return;
+      const time = t * 0.001;
+      if (auroraMesh) auroraMesh.userData.uniforms.uTime.value = time;
+      if (stars) stars.rotation.y = time * 0.015;
+      if (crystal) {
+        crystal.rotation.x = time * 0.2 + scrollProgress * Math.PI * 2;
+        crystal.rotation.y = time * 0.35 + scrollProgress * Math.PI;
+        crystal.position.y = 0.2 + Math.sin(time * 0.5) * 0.25;
+        crystal.position.x = Math.sin(time * 0.25) * 0.4;
+      }
+      renderer.render(scene, camera);
+    }
+
+    /* ── UI setup ── */
+    const chapters = document.querySelectorAll('.scroll-chapter');
+    const dotsContainer = document.getElementById('frame-dots');
+    const scrollBar = document.getElementById('scroll-bar');
+    const scrollHint = document.getElementById('scroll-hint');
+    const heroVideo = document.getElementById('hero-video');
+    const crystalHint = document.getElementById('crystal-hint');
+
+    for (let i = 0; i < FRAME_COUNT; i++) {
+      const dot = document.createElement('span');
+      dot.className = 'frame-dot' + (i === 0 ? ' is-active' : '');
+      dotsContainer.appendChild(dot);
+    }
+    const dots = dotsContainer.querySelectorAll('.frame-dot');
+
+    function updateUI(progress) {
+      scrollProgress = progress;
+      const activeIdx = renderScrub(progress);
+      dots.forEach((d, i) => d.classList.toggle('is-active', i === activeIdx));
+      scrollBar.style.width = (progress * 100) + '%';
+      chapters.forEach((ch, i) => {
+        const opacity = chapterOpacity(progress, i, FRAME_COUNT);
+        ch.style.opacity = opacity;
+        ch.style.visibility = opacity > 0.02 ? 'visible' : 'hidden';
+        ch.style.transform = `translateY(${(1 - opacity) * 20}px)`;
+        ch.style.pointerEvents = opacity > 0.5 ? 'auto' : 'none';
+      });
+      scrollHint.style.opacity = progress > 0.05 ? '0' : '1';
+      heroVideo.classList.toggle('is-visible', activeIdx === 0);
+      crystalHint.style.opacity = activeIdx <= 1 ? '0.55' : '0.2';
+    }
+
+    function dismissPreloader() {
+      preloader.classList.add('is-done');
+      heroVideo.play().catch(() => {});
+    }
+
+    /* ── Init sequence ── */
+    async function init() {
+      setLoadProgress(5);
+      resizeCanvas();
+
+      try {
+        if (initWebGL()) {
+          animateWebGL(0);
+          setLoadProgress(12);
+        }
+      } catch (err) {
+        console.warn('WebGL unavailable:', err);
+      }
+
+      try {
+        await loadAllFrames();
+        setLoadProgress(95);
+
+        if (typeof Lenis !== 'undefined' && typeof gsap !== 'undefined') {
+          gsap.registerPlugin(ScrollTrigger);
+          const lenis = new Lenis({ duration: 1.4, smoothWheel: true });
+          lenis.on('scroll', ScrollTrigger.update);
+          gsap.ticker.add((t) => lenis.raf(t * 1000));
+          gsap.ticker.lagSmoothing(0);
+
+          ScrollTrigger.create({
+            trigger: '#scroll-sequence',
+            start: 'top top',
+            end: 'bottom bottom',
+            scrub: 0.5,
+            onUpdate: (self) => updateUI(self.progress),
+          });
+        } else {
+          window.addEventListener('scroll', () => {
+            const el = document.getElementById('scroll-sequence');
+            if (!el) return;
+            const rect = el.getBoundingClientRect();
+            const p = Math.max(0, Math.min(1, -rect.top / (rect.height - window.innerHeight)));
+            updateUI(p);
+          }, { passive: true });
+        }
+
+        updateUI(0);
+        setLoadProgress(100);
+        setTimeout(dismissPreloader, 500);
+      } catch (err) {
+        console.error('Aurora Atlas init failed:', err);
+        setLoadProgress(100);
+        dismissPreloader();
+      }
+    }
+
+    window.addEventListener('resize', () => {
+      resizeCanvas();
+      if (renderer && camera) {
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+      }
+      updateUI(scrollProgress);
+    });
+
+    init();
+  })();
+  </script>
+</body>
+</html>

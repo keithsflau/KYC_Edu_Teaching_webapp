@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Optimization | M2 Calculus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+        overflow: hidden;
+      }
+      .glass {
+        background: rgba(15, 23, 42, 0.8);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      input[type="range"] {
+        -webkit-appearance: none;
+        background: transparent;
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        height: 16px;
+        width: 16px;
+        border-radius: 50%;
+        background: #34d399;
+        margin-top: -6px;
+        cursor: pointer;
+        border: 2px solid white;
+      }
+      input[type="range"]::-webkit-slider-runnable-track {
+        width: 100%;
+        height: 4px;
+        background: #334155;
+        border-radius: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Overlay UI -->
+    <div
+      id="ui-overlay"
+      class="absolute top-4 left-4 z-10 w-80 flex flex-col gap-4"
+    >
+      <div class="glass p-6 rounded-2xl relative">
+        <!-- Language Toggle -->
+        <div class="absolute top-4 right-4">
+          <button
+            id="lang-btn"
+            class="px-2 py-1 bg-slate-800 border border-slate-600 rounded-full text-[10px] font-bold text-emerald-400 hover:bg-slate-700 hover:text-white transition flex items-center gap-1"
+          >
+            <i class="fa-solid fa-language"></i>
+            <span id="lang-text">中文</span>
+          </button>
+        </div>
+
+        <h1
+          id="app-title"
+          class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400 mb-1"
+        >
+          Box Folding
+        </h1>
+        <p id="app-subtitle" class="text-xs text-slate-300 mb-4">
+          Maximizing Volume
+        </p>
+
+        <div id="desc-text" class="text-xs text-slate-400 mb-2">
+          A square sheet of side <span class="text-white font-bold">10</span>.
+          Cut corners of size <span class="text-emerald-400 font-bold">x</span>.
+          Fold up to make an open box.
+        </div>
+
+        <div class="mt-4">
+          <div class="flex justify-between text-xs font-bold uppercase mb-1">
+            <span id="label-x" class="text-slate-400">Cut Size x</span>
+            <span class="text-emerald-400" id="val_x">1.0</span>
+          </div>
+          <input
+            type="range"
+            min="0"
+            max="5"
+            step="0.05"
+            id="slider_x"
+            value="1.0"
+            class="w-full"
+          />
+        </div>
+
+        <div
+          class="mt-6 space-y-2 font-mono text-sm bg-slate-900/50 p-4 rounded-xl border border-slate-700"
+        >
+          <div class="flex justify-between">
+            <span id="label-l">Length:</span>
+            <span id="val_l" class="text-white">8.0</span>
+          </div>
+          <div class="flex justify-between">
+            <span id="label-h">Height:</span>
+            <span id="val_h" class="text-emerald-400">1.0</span>
+          </div>
+          <div class="border-t border-slate-600 my-1"></div>
+          <div class="flex justify-between font-bold">
+            <span id="label-v">Volume:</span>
+            <span id="val_v" class="text-xl text-teal-300">64.00</span>
+          </div>
+        </div>
+        <p id="max-hint" class="text-[10px] text-slate-500 mt-2 text-center">
+          Max Volume occurs at x = 5/3 ≈ 1.67
+        </p>
+      </div>
+
+      <!-- Live Graph Overlay -->
+      <div class="glass p-4 rounded-2xl h-40 relative">
+        <canvas id="graphCanvas" class="w-full h-full"></canvas>
+      </div>
+    </div>
+
+    <div id="canvas-container" class="w-screen h-screen"></div>
+
+    <script>
+      // Bilingual Data
+      const translations = {
+        en: {
+          title: "Box Folding",
+          subtitle: "Maximizing Volume",
+          descPart1: "A square sheet of side ",
+          descPart2: ". Cut corners of size ",
+          descPart3: ". Fold up to make an open box.",
+          labelX: "Cut Size x",
+          labelL: "Length:",
+          labelH: "Height:",
+          labelV: "Volume:",
+          maxHint: "Max Volume occurs at x = 5/3 ≈ 1.67",
+          langBtn: "中文",
+        },
+        zh: {
+          title: "摺紙盒優化",
+          subtitle: "體積最大化",
+          descPart1: "邊長為 ",
+          descPart2: " 的正方形紙板。切掉邊長為 ",
+          descPart3: " 的四角，摺疊成開口紙盒。",
+          labelX: "切剪尺寸 x",
+          labelL: "長度:",
+          labelH: "高度:",
+          labelV: "體積:",
+          maxHint: "最大體積發生在 x = 5/3 ≈ 1.67",
+          langBtn: "English",
+        },
+      };
+
+      let currentLang = "en";
+
+      function updateLanguage() {
+        const t = translations[currentLang];
+        document.getElementById("lang-text").textContent = t.langBtn;
+        document.getElementById("app-title").textContent = t.title;
+        document.getElementById("app-subtitle").textContent = t.subtitle;
+
+        const descHTML = `${t.descPart1}<span class="text-white font-bold">10</span>${t.descPart2}<span class="text-emerald-400 font-bold">x</span>${t.descPart3}`;
+        document.getElementById("desc-text").innerHTML = descHTML;
+
+        document.getElementById("label-x").textContent = t.labelX;
+        document.getElementById("label-l").textContent = t.labelL;
+        document.getElementById("label-h").textContent = t.labelH;
+        document.getElementById("label-v").textContent = t.labelV;
+        document.getElementById("max-hint").textContent = t.maxHint;
+      }
+
+      document.getElementById("lang-btn").addEventListener("click", () => {
+        currentLang = currentLang === "en" ? "zh" : "en";
+        updateLanguage();
+      });
+
+      // --- 3D SCENE ---
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0f172a);
+      const camera = new THREE.PerspectiveCamera(
+        50,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        100
+      );
+      camera.position.set(8, 8, 10);
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document
+        .getElementById("canvas-container")
+        .appendChild(renderer.domElement);
+
+      const controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+
+      scene.add(new THREE.GridHelper(20, 20, 0x1e293b, 0x0f172a));
+      scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+      const dl = new THREE.DirectionalLight(0xffffff, 0.8);
+      dl.position.set(5, 10, 5);
+      scene.add(dl);
+
+      const MAX_S = 10;
+      const boxGroup = new THREE.Group();
+      scene.add(boxGroup);
+
+      function updateBox(x) {
+        while (boxGroup.children.length > 0)
+          boxGroup.remove(boxGroup.children[0]);
+
+        const baseS = Math.max(0, MAX_S - 2 * x);
+        const h = x;
+
+        // Base Plane
+        const baseGeo = new THREE.BoxGeometry(baseS, 0.1, baseS);
+        const mat = new THREE.MeshPhysicalMaterial({
+          color: 0x34d399,
+          metalness: 0,
+          roughness: 0.2,
+        });
+        const base = new THREE.Mesh(baseGeo, mat);
+        base.position.y = 0.05;
+        boxGroup.add(base);
+
+        // 4 Sides
+        const sideGeo1 = new THREE.BoxGeometry(baseS, h, 0.1);
+        const side1 = new THREE.Mesh(sideGeo1, mat);
+        side1.position.set(0, h / 2, -baseS / 2 - 0.05);
+        boxGroup.add(side1);
+
+        const side2 = new THREE.Mesh(sideGeo1, mat);
+        side2.position.set(0, h / 2, baseS / 2 + 0.05);
+        boxGroup.add(side2);
+
+        const sideGeo2 = new THREE.BoxGeometry(0.1, h, baseS); // rotated
+        const side3 = new THREE.Mesh(sideGeo2, mat);
+        side3.position.set(-baseS / 2 - 0.05, h / 2, 0);
+        boxGroup.add(side3);
+
+        const side4 = new THREE.Mesh(sideGeo2, mat);
+        side4.position.set(baseS / 2 + 0.05, h / 2, 0);
+        boxGroup.add(side4);
+      }
+
+      // --- 2D GRAPH ---
+      const c = document.getElementById("graphCanvas");
+      const ctx = c.getContext("2d");
+      function drawGraph(currX) {
+        c.width = c.clientWidth * 2;
+        c.height = c.clientHeight * 2;
+        ctx.scale(2, 2);
+        const w = c.clientWidth;
+        const h = c.clientHeight;
+
+        ctx.clearRect(0, 0, w, h);
+
+        ctx.strokeStyle = "#334155";
+        ctx.beginPath();
+        ctx.moveTo(0, h);
+        ctx.lineTo(w, h); // x
+        ctx.moveTo(0, 0);
+        ctx.lineTo(0, h); // y
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.strokeStyle = "#34d399";
+        ctx.lineWidth = 2;
+
+        for (let px = 0; px <= w; px++) {
+          const xVal = (px / w) * 5; // 0 to 5
+          const vol = xVal * Math.pow(10 - 2 * xVal, 2);
+          const yVal = h - (vol / 80) * h;
+
+          if (px === 0) ctx.moveTo(px, yVal);
+          else ctx.lineTo(px, yVal);
+        }
+        ctx.stroke();
+
+        const cx = (currX / 5) * w;
+        const cVol = currX * Math.pow(10 - 2 * currX, 2);
+        const cy = h - (cVol / 80) * h;
+
+        ctx.fillStyle = "white";
+        ctx.beginPath();
+        ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // --- UPDATE LOOP ---
+      const slider = document.getElementById("slider_x");
+
+      function update() {
+        const x = parseFloat(slider.value);
+
+        document.getElementById("val_x").innerText = x.toFixed(2);
+        document.getElementById("val_l").innerText = (MAX_S - 2 * x).toFixed(2);
+        document.getElementById("val_h").innerText = x.toFixed(2);
+        const v = x * Math.pow(MAX_S - 2 * x, 2);
+        document.getElementById("val_v").innerText = v.toFixed(2);
+
+        updateBox(x);
+        drawGraph(x);
+      }
+
+      slider.addEventListener("input", update);
+      // Init
+      updateLanguage();
+      update();
+
+      // Loop
+      function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+      }
+      animate();
+
+      window.addEventListener("resize", () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+    </script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

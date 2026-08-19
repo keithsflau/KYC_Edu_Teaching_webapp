@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>古文翻譯拼圖</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .word-box {
+            cursor: grab;
+            transition: all 0.2s;
+        }
+
+        .word-box:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+
+<body class="bg-gradient-to-br from-amber-900 to-yellow-900 text-white p-8">
+    <div class="max-w-5xl mx-auto">
+        <h1 class="text-5xl font-bold text-center mb-8">📜 古文翻譯拼圖</h1>
+        <div class="grid md:grid-cols-2 gap-6">
+            <div class="bg-slate-800/50 backdrop-blur rounded-2xl p-6">
+                <h2 class="text-2xl font-bold mb-4 text-amber-300">文言文</h2>
+                <p class="text-2xl leading-relaxed font-serif" id="classical"></p>
+            </div>
+            <div class="bg-slate-800/50 backdrop-blur rounded-2xl p-6">
+                <h2 class="text-2xl font-bold mb-4 text-green-300">白話文 (請排序)</h2>
+                <div id="translation-area"
+                    class="min-h-[200px] border-2 border-dashed border-green-400 rounded-xl p-4 flex flex-wrap gap-2 content-start">
+                </div>
+            </div>
+        </div>
+        <div class="bg-slate-700/50 backdrop-blur rounded-2xl p-6 mt-6">
+            <h3 class="text-xl font-bold mb-4">詞彙庫</h3>
+            <div id="word-bank" class="flex flex-wrap gap-3"></div>
+        </div><button onclick="check()"
+            class="w-full max-w-md mx-auto block bg-gradient-to-r from-green-600 to-emerald-600 py-4 rounded-xl font-bold text-xl mt-6">檢查翻譯</button>
+        <div id="feedback" class="text-center text-2xl font-bold mt-4"></div>
+    </div>
+    <script>
+        const PUZZLES = [
+            { classical: "學而時習之，不亦說乎？", words: ["學習", "後", "，", "經常", "複習", "它", "，", "不", "也", "是", "快樂", "的", "嗎", "？"], correct: "學習後，經常複習它，不也是快樂的嗎？" },
+            { classical: "有朋自遠方來，不亦樂乎？", words: ["有", "朋友", "從", "遠方", "來", "，", "不", "也", "是", "快樂", "的", "嗎", "？"], correct: "有朋友從遠方來，不也是快樂的嗎？" },
+            { classical: "溫故而知新，可以為師矣。", words: ["溫習", "舊", "知識", "而", "獲得", "新", "領悟", "，", "可以", "做", "老師", "了", "。"], correct: "溫習舊知識而獲得新領悟，可以做老師了。" }
+        ];
+        let currentPuzzle = 0;
+        let userTranslation = [];
+        let tokenSeq = 0;
+
+        function loadPuzzle() {
+            const puzzle = PUZZLES[currentPuzzle];
+            document.getElementById('classical').textContent = puzzle.classical;
+            const bank = document.getElementById('word-bank');
+            bank.innerHTML = '';
+            puzzle.words.sort(() => Math.random() - 0.5).forEach((word, i) => {
+                const btn = document.createElement('button');
+                btn.className = 'word-box bg-gradient-to-br from-purple-600 to-pink-600 px-4 py-2 rounded-lg font-bold';
+                btn.textContent = word;
+                btn.draggable = true;
+                btn.id = 'word-' + i;
+                btn.onclick = () => addWord(word, btn);
+                bank.appendChild(btn);
+            });
+            document.getElementById('translation-area').innerHTML = '';
+            userTranslation = [];
+            tokenSeq = 0;
+        }
+
+        function addWord(word, btn) {
+            const token = { id: tokenSeq++, word };
+            userTranslation.push(token);
+            const area = document.getElementById('translation-area');
+            const wordEl = document.createElement('div');
+            wordEl.className = 'bg-green-700 px-3 py-1 rounded';
+            wordEl.textContent = word;
+            wordEl.onclick = () => {
+                userTranslation = userTranslation.filter(t => t.id !== token.id);
+                wordEl.remove();
+                btn.style.opacity = '1';
+            };
+            area.appendChild(wordEl);
+            btn.style.opacity = '0.3';
+        }
+
+        function check() {
+            const puzzle = PUZZLES[currentPuzzle];
+            const userAnswer = userTranslation.map(t => t.word).join('');
+            if (userAnswer === puzzle.correct) {
+                document.getElementById('feedback').innerHTML = '✅ <span class="text-green-400">正確！</span>';
+                setTimeout(() => { currentPuzzle++; if (currentPuzzle < PUZZLES.length) loadPuzzle(); else alert('全部完成！'); }, 2000);
+            } else {
+                document.getElementById('feedback').innerHTML = '❌ <span class="text-red-400">錯誤，再試試！</span>';
+            }
+        }
+
+        loadPuzzle();
+    </script>
+
+</body>
+
+</html>
+

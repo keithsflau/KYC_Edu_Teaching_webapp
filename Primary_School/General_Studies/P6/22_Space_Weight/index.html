@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - Space Weight</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: #0f172a;
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Weight in Space",
+    zh: "太空中的重量",
+    ja: "宇宙での体重",
+    ko: "우주의 무게",
+    es: "Peso en el espacio",
+    de: "Gewicht im Weltraum",
+    fi: "Paino avaruudessa",
+    fr: "Poids dans l'espace",
+    ar: "الوزن في الفضاء",
+    it: "Peso nello Spazio"
+  },
+  instruction: {
+    en: "Enter your mass (kg) and travel to different planets!",
+    zh: "輸入你的質量 (kg) 並前往不同的星球！",
+    ja: "質量 (kg) を入力して、さまざまな惑星に移動しましょう！",
+    ko: "질량(kg)을 입력하고 다른 행성으로 여행하세요!",
+    es: "¡Ingresa tu masa (kg) y viaja a diferentes planetas!",
+    de: "Gib deine Masse (kg) ein und reise zu verschiedenen Planeten!",
+    fi: "Syötä massasi (kg) ja matkusta eri planeetoille!",
+    fr: "Entrez votre masse (kg) et voyagez vers différentes planètes !",
+    ar: "أدخل كتلتك (كجم) وسافر إلى كواكب مختلفة!",
+    it: "Inserisci la tua massa (kg) e viaggia su pianeti diversi!"
+  },
+  earth: {
+    en: "Earth",
+    zh: "地球",
+    ja: "地球",
+    ko: "지구"
+  },
+  moon: {
+    en: "Moon",
+    zh: "月球",
+    ja: "月",
+    ko: "달"
+  },
+  mars: {
+    en: "Mars",
+    zh: "火星",
+    ja: "火星",
+    ko: "화성"
+  },
+  jupiter: {
+    en: "Jupiter",
+    zh: "木星",
+    ja: "木星",
+    ko: "목성"
+  },
+  mass: {
+    en: "Mass",
+    zh: "質量",
+    ja: "質量",
+    ko: "질량"
+  },
+  weight: {
+    en: "Relative Weight",
+    zh: "相對重量",
+    ja: "相対重量",
+    ko: "상대 무게"
+  },
+  weightUnit: {
+    en: "units",
+    zh: "相對單位",
+    ja: "相対単位",
+    ko: "상대 단위"
+  },
+  weightHint: {
+    en: "Mass stays the same; weight changes with gravity (Earth = 1).",
+    zh: "質量不變；重量隨重力改變（地球 = 1）。",
+    ja: "質量は変わらず、重力で重量が変わります（地球 = 1）。",
+    ko: "질량은 같고, 중력에 따라 무게가 달라집니다（지구 = 1）."
+  },
+  gravity: {
+    en: "Gravity",
+    zh: "重力",
+    ja: "重力",
+    ko: "중력"
+  }
+};
+const planets = [{
+  id: "earth",
+  gravity: 1,
+  color: "bg-blue-500",
+  icon: "🌍"
+}, {
+  id: "moon",
+  gravity: 0.165,
+  color: "bg-gray-400",
+  icon: "🌑"
+}, {
+  id: "mars",
+  gravity: 0.38,
+  color: "bg-red-500",
+  icon: "🔴"
+}, {
+  id: "jupiter",
+  gravity: 2.53,
+  color: "bg-orange-400",
+  icon: "🪐"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [mass, setMass] = useState(40); // kg
+  const [selectedPlanet, setSelectedPlanet] = useState(planets[0]);
+  const getText = key => t[key][lang] || t[key]["en"];
+  const safeMass = Number.isFinite(mass) && mass > 0 ? mass : 1;
+
+  // Relative weight = Mass * Gravity (Earth gravity = 1). Not in kg.
+  const weight = (safeMass * selectedPlanet.gravity).toFixed(1);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-bold mb-8 text-sky-400"
+  }, getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "mb-8 w-full max-w-md bg-slate-800 p-6 rounded-2xl flex flex-col items-center gap-4"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "text-slate-400 font-bold"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-4"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: mass,
+    onChange: e => {
+      const v = Number(e.target.value);
+      setMass(Number.isFinite(v) && v > 0 ? v : 1);
+    },
+    className: "w-24 text-center text-2xl font-black text-black rounded-lg p-2"
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "text-2xl font-bold"
+  }, "kg"))), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 lg:grid-cols-4 gap-6 w-full max-w-5xl"
+  }, planets.map(p => /*#__PURE__*/React.createElement("button", {
+    key: p.id,
+    onClick: () => setSelectedPlanet(p),
+    className: `p-6 rounded-3xl transition-all shadow-xl flex flex-col items-center gap-4 border-4
+                         ${selectedPlanet.id === p.id ? "border-white scale-105 bg-slate-700" : "border-transparent bg-slate-800 hover:bg-slate-700 opacity-80"}
+                      `
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl animate-pulse"
+  }, p.icon), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-bold"
+  }, getText(p.id))))), /*#__PURE__*/React.createElement("div", {
+    className: "mt-12 w-full max-w-lg bg-white text-slate-900 p-8 rounded-3xl shadow-[0_0_50px_rgba(255,255,255,0.2)] text-center relative overflow-hidden"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: `absolute top-0 left-0 w-full h-4 ${selectedPlanet.color}`
+  }), /*#__PURE__*/React.createElement("h2", {
+    className: "text-3xl font-black mb-2"
+  }, getText(selectedPlanet.id)), /*#__PURE__*/React.createElement("div", {
+    className: "text-sm text-slate-500 font-bold mb-6"
+  }, getText("gravity"), ": ", selectedPlanet.gravity, "x Earth"), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-around items-end"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "text-sm font-bold text-slate-400 uppercase"
+  }, getText("mass")), /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-black text-slate-700"
+  }, safeMass, " kg"), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs text-slate-400"
+  }, "(Constant)")), /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl"
+  }, "➔"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "text-sm font-bold text-slate-400 uppercase"
+  }, getText("weight")), /*#__PURE__*/React.createElement("div", {
+    className: "text-5xl font-black text-sky-600"
+  }, weight), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs text-slate-400"
+  }, getText("weightUnit")))), /*#__PURE__*/React.createElement("p", {
+    className: "mt-4 text-sm text-slate-500 font-medium"
+  }, getText("weightHint")), /*#__PURE__*/React.createElement("div", {
+    className: "mt-6 flex justify-center"
+  }, /*#__PURE__*/React.createElement(motion.div, {
+    key: selectedPlanet.id,
+    initial: {
+      scale: 1,
+      y: 0
+    },
+    animate: {
+      // Higher gravity = squashed, Lower gravity = floaty/stretched
+      scaleY: selectedPlanet.gravity > 1 ? 0.8 : 1.1,
+      y: selectedPlanet.gravity < 1 ? -20 : 0
+    },
+    transition: {
+      type: "spring",
+      bounce: 0.5
+    },
+    className: "text-6xl"
+  }, "🧑‍🚀"))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

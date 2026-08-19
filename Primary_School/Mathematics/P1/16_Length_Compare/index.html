@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小一數學：長短比較 | Comparing Length</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #fce7f3 0%, #ec4899 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "📏 Comparing Length",
+    zh: "📏 長短比較",
+    ja: "📏 長さの比較",
+    ko: "📏 길이 비교",
+    es: "📏 Comparar longitud",
+    de: "📏 Längenvergleich",
+    fi: "📏 Pituuden vertailu",
+    fr: "📏 Comparaison de longueur",
+    ar: "📏 مقارنة الطول",
+    it: "📏 Confronto di lunghezza"
+  },
+  question: {
+    en: "Which pencil is {q}?",
+    zh: "哪一條筆較{q}?",
+    ja: "どの鉛筆が{q}ですか？",
+    ko: "어느 연필이 더 {q}?",
+    es: "¿Qué lápiz es más {q}?",
+    de: "Welcher Bleistift ist {q}?",
+    fi: "Kumpi kynä on {q}?",
+    fr: "Quel crayon est plus {q} ?",
+    ar: "أي قلم رصاص {q}؟",
+    it: "Quale matita è più {q}?"
+  },
+  Longer: {
+    en: "longer",
+    zh: "長",
+    ja: "長い",
+    ko: "긴가요",
+    es: "largo",
+    de: "länger",
+    fi: "pidempi",
+    fr: "long",
+    ar: "أطول",
+    it: "lungo"
+  },
+  Shorter: {
+    en: "shorter",
+    zh: "短",
+    ja: "短い",
+    ko: "짧은가요",
+    es: "corto",
+    de: "kürzer",
+    fi: "lyhyempi",
+    fr: "court",
+    ar: "أقصر",
+    it: "corto"
+  }
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [lenA, setLenA] = useState(50);
+  const [lenB, setLenB] = useState(80);
+  const [question, setQuestion] = useState("Longer"); // Longer or Shorter
+  const [feedback, setFeedback] = useState("");
+  const newRound = () => {
+    let a = Math.floor(Math.random() * 50) + 20;
+    let b = Math.floor(Math.random() * 50) + 20;
+    // Ensure a clear visual difference (avoid stale state from setLen*)
+    if (Math.abs(a - b) < 10) {
+      b = a + 20;
+      if (b > 70) b = a - 20;
+    }
+    setLenA(a);
+    setLenB(b);
+    setQuestion(Math.random() > 0.5 ? "Longer" : "Shorter");
+    setFeedback("");
+  };
+  useEffect(newRound, []);
+  const check = choice => {
+    // 'A' or 'B'
+    const isALonger = lenA > lenB;
+    let correct = false;
+    if (question === "Longer") {
+      if (choice === "A" && isALonger || choice === "B" && !isALonger) correct = true;
+    } else {
+      if (choice === "A" && !isALonger || choice === "B" && isALonger) correct = true;
+    }
+    if (correct) {
+      setFeedback("CORRECT");
+      setTimeout(newRound, 1500);
+    } else {
+      setFeedback("WRONG");
+    }
+  };
+  const getQ = () => {
+    let txt = t.question[lang] || t.question["en"];
+    let qWord = t[question][lang] || t[question]["en"];
+    return txt.replace("{q}", qWord);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-8 flex flex-col items-center justify-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-5xl font-black text-pink-900 mb-8 max-w-2xl text-center"
+  }, t.title[lang] || t.title["en"]), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/90 rounded-3xl p-8 shadow-2xl w-full max-w-3xl text-center border-4 border-pink-200"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "text-3xl font-bold text-slate-700 mb-12"
+  }, getQ()), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col gap-8 mb-12"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => check("A"),
+    className: "relative group w-full bg-pink-50 p-6 rounded-2xl hover:bg-pink-100 transition-colors border-2 border-pink-100"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "absolute left-4 top-1/2 -translate-y-1/2 font-black text-2xl text-pink-400"
+  }, "A"), /*#__PURE__*/React.createElement("div", {
+    className: "h-4 bg-pink-500 rounded-full shadow-lg group-hover:scale-105 transition-transform origin-left",
+    style: {
+      width: `${lenA}%`
+    }
+  })), /*#__PURE__*/React.createElement("button", {
+    onClick: () => check("B"),
+    className: "relative group w-full bg-pink-50 p-6 rounded-2xl hover:bg-pink-100 transition-colors border-2 border-pink-100"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "absolute left-4 top-1/2 -translate-y-1/2 font-black text-2xl text-pink-400"
+  }, "B"), /*#__PURE__*/React.createElement("div", {
+    className: "h-4 bg-emerald-500 rounded-full shadow-lg group-hover:scale-105 transition-transform origin-left",
+    style: {
+      width: `${lenB}%`
+    }
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "h-16"
+  }, feedback === "CORRECT" && /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black text-green-500 animate-bounce"
+  }, get("correct", lang)), feedback === "WRONG" && /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black text-red-500 animate-shake"
+  }, get("wrong", lang)))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

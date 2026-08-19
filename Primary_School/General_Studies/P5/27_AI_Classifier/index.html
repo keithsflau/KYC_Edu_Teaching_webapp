@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - AI Classifier</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: #fdf4ff;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Teach the AI",
+    zh: "訓練人工智能",
+    ja: "AIを教える",
+    ko: "AI 훈련시키기",
+    es: "Entrena a la IA",
+    de: "Trainiere die KI",
+    fi: "Opeta tekoälyä",
+    fr: "Entraîner l'IA",
+    ar: "تعليم الذكاء الاصطناعي",
+    it: "Addestra l'IA"
+  },
+  instruction: {
+    en: "Does this look like a Cat or Dog?",
+    zh: "這看起來像貓還是狗？",
+    ja: "これは猫に見えますか？それとも犬？",
+    ko: "이것은 고양이입니까 개입니까?",
+    es: "¿Parece un gato o un perro?",
+    de: "Sieht das wie eine Katze oder ein Hund aus?",
+    fi: "Näyttääkö tämä kissalta vai koiralta?",
+    fr: "Cela ressemble-t-il à un chat ou un chien ?",
+    ar: "هل يبدو هذا قطة أم كلبا؟",
+    it: "Sembra un gatto o un cane?"
+  },
+  cat: {
+    en: "Cat",
+    zh: "貓",
+    ja: "猫",
+    ko: "고양이"
+  },
+  dog: {
+    en: "Dog",
+    zh: "狗",
+    ja: "犬",
+    ko: "개"
+  },
+  correct: {
+    en: "AI Learned!",
+    zh: "AI 學會了！",
+    ja: "AIが学習しました！",
+    ko: "AI가 학습했습니다!"
+  },
+  wrong: {
+    en: "Correction needed!",
+    zh: "需要糾正！",
+    ja: "修正が必要です！",
+    ko: "수정이 필요합니다!"
+  }
+};
+const data = [{
+  id: 1,
+  icon: "🐱",
+  type: "cat"
+}, {
+  id: 2,
+  icon: "🐶",
+  type: "dog"
+}, {
+  id: 3,
+  icon: "🐕",
+  type: "dog"
+}, {
+  id: 4,
+  icon: "🐈",
+  type: "cat"
+}, {
+  id: 5,
+  icon: "🐩",
+  type: "dog"
+}, {
+  id: 6,
+  icon: "🐆",
+  type: "cat"
+} // Looks like cat family
+];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [idx, setIdx] = useState(0);
+  const [feedback, setFeedback] = useState("");
+  const getText = key => t[key][lang] || t[key]["en"];
+  const current = data[idx];
+  const handleTrain = type => {
+    if (feedback) return;
+    if (type === current.type) {
+      setFeedback("correct");
+      setTimeout(() => {
+        setFeedback("");
+        setIdx((i) => (i + 1) % data.length);
+      }, 1000);
+    } else {
+      setFeedback("wrong");
+      setTimeout(() => setFeedback(""), 800);
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-bold mb-8 text-fuchsia-700"
+  }, getText("title")), /*#__PURE__*/React.createElement("p", {
+    className: "mb-8 font-bold text-slate-500"
+  }, getText("instruction")), /*#__PURE__*/React.createElement(motion.div, {
+    key: current.id,
+    initial: {
+      scale: 0.5,
+      opacity: 0
+    },
+    animate: {
+      scale: 1,
+      opacity: 1
+    },
+    className: "w-64 h-64 bg-white rounded-3xl shadow-xl border-4 border-fuchsia-200 flex items-center justify-center text-9xl mb-8"
+  }, current.icon), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-8 w-full max-w-md"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => handleTrain("cat"),
+    className: "flex-1 py-4 bg-pink-100 text-pink-900 rounded-xl font-bold text-xl hover:bg-pink-200 shadow border-b-4 border-pink-300 active:scale-95"
+  }, "🐱 ", getText("cat")), /*#__PURE__*/React.createElement("button", {
+    onClick: () => handleTrain("dog"),
+    className: "flex-1 py-4 bg-sky-100 text-sky-900 rounded-xl font-bold text-xl hover:bg-sky-200 shadow border-b-4 border-sky-300 active:scale-95"
+  }, "🐶 ", getText("dog"))), feedback && /*#__PURE__*/React.createElement("div", {
+    className: `mt-8 text-2xl font-black ${feedback === "correct" ? "text-green-500" : "text-red-500"} animate-bounce`
+  }, getText(feedback)));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

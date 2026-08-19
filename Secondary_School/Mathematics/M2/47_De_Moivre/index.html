@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>De Moivre's Theorem | M2 Algebra</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+      }
+      .glass {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .draggable {
+        cursor: grab;
+      }
+      .draggable:active {
+        cursor: grabbing;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <div id="root" class="flex-grow flex flex-col"></div>
+    <script>
+const {
+  useState,
+  useRef,
+  useEffect
+} = React;
+const translations = {
+  en: {
+    header: "Unit 1: Algebra",
+    title: "De Moivre's Theorem",
+    subtitle: "Interactive (z, z², z³...)",
+    base_z: "Base Complex Number z",
+    max_power: "Max Power n = ",
+    instructions: {
+      part1: "Drag the ",
+      strong: "Red Dot (z)",
+      part2: " to see how powers behave."
+    },
+    obs: {
+      title: "Observations",
+      rot_title: "Rotation",
+      rot_desc: "Multiplication by z adds the angle θ. zⁿ has angle nθ.",
+      scale_title: "Scaling",
+      scale_desc: /*#__PURE__*/React.createElement(React.Fragment, null, "If r > 1, powers spiral out. ", /*#__PURE__*/React.createElement("br", null), "If r < 1, powers spiral in. ", /*#__PURE__*/React.createElement("br", null), "If r = 1, they stay on the circle (Roots of Unity logic).")
+    },
+    langBtn: "中文"
+  },
+  zh: {
+    header: "第一單元：代數",
+    title: "棣莫弗定理",
+    subtitle: "互動實驗 (z, z², z³...)",
+    base_z: "基礎複數 z",
+    max_power: "最高指數 n = ",
+    instructions: {
+      part1: "拖動",
+      strong: "紅點 (z)",
+      part2: " 來觀察其冪次的變化。"
+    },
+    obs: {
+      title: "觀察重點",
+      rot_title: "旋轉 (Rotation)",
+      rot_desc: "乘以 z 會增加角度 θ。zⁿ 的幅角為 nθ。",
+      scale_title: "縮放 (Scaling)",
+      scale_desc: /*#__PURE__*/React.createElement(React.Fragment, null, "若 r > 1，軌跡向外螺旋。", /*#__PURE__*/React.createElement("br", null), "若 r < 1，軌跡向內螺旋。", /*#__PURE__*/React.createElement("br", null), "若 r = 1，點皆在圓周上 (單位根原理)。")
+    },
+    langBtn: "English"
+  }
+};
+const App = () => {
+  // State
+  const [z, setZ] = useState({
+    r: 1,
+    theta: Math.PI / 4
+  });
+  const [n, setN] = useState(4);
+  const [dragging, setDragging] = useState(false);
+  const [lang, setLang] = useState("en");
+  const t = translations[lang];
+
+  // Constants
+  const w = 600,
+    h = 600;
+  const scale = 200;
+  const originX = w / 2,
+    originY = h / 2;
+
+  // Helpers
+  const toScreen = (pt_r, pt_theta) => {
+    const x = pt_r * Math.cos(pt_theta);
+    const y = pt_r * Math.sin(pt_theta);
+    return {
+      x: originX + x * scale,
+      y: originY - y * scale
+    };
+  };
+  const fromScreen = (sx, sy) => {
+    const x = (sx - originX) / scale;
+    const y = (originY - sy) / scale;
+    const r = Math.sqrt(x * x + y * y);
+    let theta = Math.atan2(y, x);
+    return {
+      r,
+      theta
+    };
+  };
+
+  // Mouse Handlers
+  const handleMouseDown = () => setDragging(true);
+  const handleMouseUp = () => setDragging(false);
+  const handleMouseMove = e => {
+    if (!dragging) return;
+    const svg = e.currentTarget;
+    const rect = svg.getBoundingClientRect();
+    const pt = fromScreen(e.clientX - rect.left, e.clientY - rect.top);
+    // Limit r to visible area somewhat
+    if (pt.r > 1.4) pt.r = 1.4;
+    setZ(pt);
+  };
+  const svgRef = useRef(null);
+
+  // Generate Powers
+  const powers = [];
+  for (let k = 1; k <= n; k++) {
+    // z^k = r^k (cos k*theta + i sin k*theta)
+    const p_r = Math.pow(z.r, k);
+    const p_theta = z.theta * k;
+    powers.push({
+      r: p_r,
+      theta: p_theta,
+      k
+    });
+  }
+  return /*#__PURE__*/React.createElement("div", {
+    className: "flex-grow flex flex-col items-center justify-center p-8 select-none",
+    onMouseUp: handleMouseUp
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 right-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLang(l => l === "en" ? "zh" : "en"),
+    className: "px-3 py-1 bg-slate-800 border border-slate-600 rounded-full text-xs font-bold text-sky-400 hover:bg-slate-700 hover:text-white transition flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-language"
+  }), t.langBtn)), /*#__PURE__*/React.createElement("header", {
+    className: "mb-8 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-emerald-500 font-bold uppercase tracking-widest text-xs mb-2"
+  }, t.header), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-white mb-2"
+  }, t.title), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-400 font-mono text-lg"
+  }, t.subtitle)), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col lg:flex-row gap-8 w-full max-w-6xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 glass p-6 rounded-3xl relative flex items-center justify-center aspect-square"
+  }, /*#__PURE__*/React.createElement("svg", {
+    ref: svgRef,
+    width: "100%",
+    height: "100%",
+    viewBox: "0 0 600 600",
+    className: "overflow-hidden bg-slate-900 rounded-xl cursor-crosshair",
+    onMouseMove: handleMouseMove,
+    onMouseDown: e => {
+      if (e.target.tagName === "svg") return;
+    } // Only drag point?
+  }, /*#__PURE__*/React.createElement("circle", {
+    cx: originX,
+    cy: originY,
+    r: scale,
+    fill: "none",
+    stroke: "#334155",
+    strokeDasharray: "5,5"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: originX,
+    y1: "0",
+    x2: originX,
+    y2: h,
+    stroke: "#475569"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "0",
+    y1: originY,
+    x2: w,
+    y2: originY,
+    stroke: "#475569"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: `M ${toScreen(1, 0).x},${toScreen(1, 0).y} ` + powers.map(p => {
+      const sp = toScreen(p.r, p.theta);
+      return `L ${sp.x},${sp.y}`;
+    }).join(" "),
+    fill: "none",
+    stroke: "#334155",
+    strokeWidth: "1"
+  }), powers.map((p, idx) => {
+    const sp = toScreen(p.r, p.theta);
+    const isBase = idx === 0;
+    const color = isBase ? "#f43f5e" : "#38bdf8"; // Red for z, Blue for powers
+
+    return /*#__PURE__*/React.createElement("g", {
+      key: idx
+    }, /*#__PURE__*/React.createElement("line", {
+      x1: originX,
+      y1: originY,
+      x2: sp.x,
+      y2: sp.y,
+      stroke: color,
+      strokeWidth: isBase ? 3 : 1,
+      opacity: 0.6
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: sp.x,
+      cy: sp.y,
+      r: isBase ? 10 : 6,
+      fill: color,
+      className: isBase ? "draggable" : "",
+      onMouseDown: isBase ? handleMouseDown : undefined,
+      stroke: "white",
+      strokeWidth: "2"
+    }), /*#__PURE__*/React.createElement("text", {
+      x: sp.x + 12,
+      y: sp.y - 5,
+      fill: color,
+      fontWeight: "bold",
+      fontSize: "12",
+      style: {
+        pointerEvents: "none"
+      }
+    }, "z", idx > 0 ? /*#__PURE__*/React.createElement("sup", null, idx + 1) : ""));
+  }), /*#__PURE__*/React.createElement("path", {
+    d: `M ${powers.map(p => {
+      const sp = toScreen(p.r, p.theta);
+      return `${sp.x},${sp.y}`;
+    }).join(" L ")}`,
+    fill: "none",
+    stroke: "#10b981",
+    strokeWidth: "2",
+    strokeDasharray: "5,5",
+    opacity: "0.5"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-8 left-8 pointer-events-none"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-900/80 p-3 rounded-lg backdrop-blur"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs text-rose-400 font-bold uppercase mb-1"
+  }, t.base_z), /*#__PURE__*/React.createElement("div", {
+    className: "font-mono text-white text-sm"
+  }, "r = ", z.r.toFixed(2)), /*#__PURE__*/React.createElement("div", {
+    className: "font-mono text-white text-sm"
+  }, "θ = ", (z.theta * 180 / Math.PI).toFixed(1), "°")))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full lg:w-80 space-y-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass p-6 rounded-2xl"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "text-xs text-slate-500 uppercase font-bold mb-4 block"
+  }, t.max_power, n), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "2",
+    max: "10",
+    step: "1",
+    value: n,
+    onChange: e => setN(Number(e.target.value)),
+    className: "w-full accent-emerald-500"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "mt-4 text-xs text-slate-400"
+  }, t.instructions.part1, /*#__PURE__*/React.createElement("strong", {
+    className: "text-rose-400"
+  }, t.instructions.strong), t.instructions.part2)), /*#__PURE__*/React.createElement("div", {
+    className: "glass p-6 rounded-2xl space-y-4"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-sm font-bold text-white"
+  }, t.obs.title), /*#__PURE__*/React.createElement("div", {
+    className: "p-3 bg-slate-800 rounded-lg border-l-4 border-emerald-500"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs text-emerald-400 font-bold mb-1"
+  }, t.obs.rot_title), /*#__PURE__*/React.createElement("p", {
+    className: "text-xs text-slate-300"
+  }, t.obs.rot_desc)), /*#__PURE__*/React.createElement("div", {
+    className: "p-3 bg-slate-800 rounded-lg border-l-4 border-sky-500"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs text-sky-400 font-bold mb-1"
+  }, t.obs.scale_title), /*#__PURE__*/React.createElement("p", {
+    className: "text-xs text-slate-300"
+  }, t.obs.scale_desc))))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

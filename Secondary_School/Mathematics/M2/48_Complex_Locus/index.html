@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Complex Locus | M2 Algebra</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+      }
+      .glass {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .draggable {
+        cursor: grab;
+      }
+      .draggable:active {
+        cursor: grabbing;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <div id="root" class="flex-grow flex flex-col"></div>
+    <script>
+const {
+  useState,
+  useRef
+} = React;
+const translations = {
+  en: {
+    header: "Unit 1: Algebra",
+    title: "Locus Builder",
+    subtitle: "Interactive Configuration",
+    locusType: "Locus Type",
+    circle: "Circle",
+    bisector: "Bisector",
+    mathDef: "Mathematical Definition",
+    eq: "Equation",
+    circDesc: {
+      part1: "The locus of points at a fixed distance ",
+      r: "r",
+      part2: " from center ",
+      c: "c",
+      part3: "."
+    },
+    biDesc: {
+      part1: "The perpendicular bisector of the segment connecting ",
+      A: "A",
+      part2: " and ",
+      B: "B",
+      part3: "."
+    },
+    dragHint: "Drag the points on the graph to adjust.",
+    center: "Center",
+    langBtn: "中文"
+  },
+  zh: {
+    header: "第一單元：代數",
+    title: "軌跡生成器",
+    subtitle: "互動配置",
+    locusType: "軌跡類型",
+    circle: "圓形",
+    bisector: "垂直平分線",
+    mathDef: "數學定義",
+    eq: "方程",
+    circDesc: {
+      part1: "與中心 ",
+      c: "c",
+      part2: " 保持固定距離 ",
+      r: "r",
+      part3: " 的點之軌跡。"
+    },
+    biDesc: {
+      part1: "連接 ",
+      A: "A",
+      part2: " 與 ",
+      B: "B",
+      part3: " 之線段的垂直平分線。"
+    },
+    dragHint: "拖動圖表上的點進行調整。",
+    center: "圓心",
+    langBtn: "English"
+  }
+};
+const App = () => {
+  // Mode: 'circle' |z-c| = r
+  // Mode: 'bisector' |z-a| = |z-b|
+  const [mode, setMode] = useState("circle");
+  const [lang, setLang] = useState("en");
+  const t = translations[lang];
+
+  // Points
+  const [c, setC] = useState({
+    x: 1,
+    y: 1
+  }); // Center
+  const [r, setR] = useState(3);
+  const [a, setA] = useState({
+    x: -2,
+    y: -1
+  });
+  const [b, setB] = useState({
+    x: 2,
+    y: 1
+  });
+  const [dragging, setDragging] = useState(null); // 'c', 'r_handle', 'a', 'b'
+
+  // Screen mapping
+  const w = 600,
+    h = 600;
+  const range = 5; // -5 to 5
+  const scale = w / (2 * range);
+  const originX = w / 2,
+    originY = h / 2;
+  const toScreen = (x, y) => ({
+    x: originX + x * scale,
+    y: originY - y * scale
+  });
+  const fromScreen = (sx, sy) => ({
+    x: (sx - originX) / scale,
+    y: (originY - sy) / scale
+  });
+  const handleMouseMove = e => {
+    if (!dragging) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const pt = fromScreen(e.clientX - rect.left, e.clientY - rect.top);
+    if (dragging === "c") setC(pt);
+    if (dragging === "a") setA(pt);
+    if (dragging === "b") setB(pt);
+    if (dragging === "r_handle") {
+      // Dist from c to pt
+      const dx = pt.x - c.x;
+      const dy = pt.y - c.y;
+      setR(Math.sqrt(dx * dx + dy * dy));
+    }
+  };
+
+  // Bisector Line Calc
+  // Midpoint
+  const mid = {
+    x: (a.x + b.x) / 2,
+    y: (a.y + b.y) / 2
+  };
+  // Slope AB
+  const mAB = (b.y - a.y) / (b.x - a.x);
+  // Perp Slope
+  const mPerp = -1 / mAB;
+
+  // Draw Bisector (Large line)
+  // y - mid.y = mPerp(x - mid.x)
+  // x= -range => y = ...
+  const bLineStart = {
+    x: -range,
+    y: mid.y + mPerp * (-range - mid.x)
+  };
+  const bLineEnd = {
+    x: range,
+    y: mid.y + mPerp * (range - mid.x)
+  };
+  // Handle vertical AB (horizontal bisector) or horizontal AB (vertical bisector)
+  let drawBisector = true;
+  let p1 = bLineStart,
+    p2 = bLineEnd;
+  if (Math.abs(b.x - a.x) < 0.01) {
+    // AB Vertical. Bisector Horizontal.
+    // y = mid.y
+    p1 = {
+      x: -range,
+      y: mid.y
+    };
+    p2 = {
+      x: range,
+      y: mid.y
+    };
+  } else if (Math.abs(b.y - a.y) < 0.01) {
+    // AB Horizontal. Bisector Vertical.
+    // x = mid.x
+    p1 = {
+      x: mid.x,
+      y: -range
+    };
+    p2 = {
+      x: mid.x,
+      y: range
+    };
+  }
+  return /*#__PURE__*/React.createElement("div", {
+    className: "flex-grow flex flex-col items-center justify-center p-8 select-none",
+    onMouseUp: () => setDragging(null)
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 right-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLang(l => l === "en" ? "zh" : "en"),
+    className: "px-3 py-1 bg-slate-800 border border-slate-600 rounded-full text-xs font-bold text-emerald-400 hover:bg-slate-700 hover:text-white transition flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-language"
+  }), t.langBtn)), /*#__PURE__*/React.createElement("header", {
+    className: "mb-8 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-emerald-500 font-bold uppercase tracking-widest text-xs mb-2"
+  }, t.header), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-white mb-2"
+  }, t.title), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-400 font-mono text-lg"
+  }, t.subtitle)), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col lg:flex-row gap-8 w-full max-w-6xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 glass p-6 rounded-3xl relative flex items-center justify-center aspect-square"
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: "100%",
+    height: "100%",
+    viewBox: "0 0 600 600",
+    className: "overflow-hidden bg-slate-900 rounded-xl cursor-crosshair",
+    onMouseMove: handleMouseMove
+  }, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("pattern", {
+    id: "grid",
+    width: scale,
+    height: scale,
+    patternUnits: "userSpaceOnUse"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: `M ${scale} 0 L 0 0 0 ${scale}`,
+    fill: "none",
+    stroke: "#334155",
+    strokeWidth: "0.5"
+  }))), /*#__PURE__*/React.createElement("rect", {
+    width: "100%",
+    height: "100%",
+    fill: "url(#grid)"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: originX,
+    y1: "0",
+    x2: originX,
+    y2: h,
+    stroke: "#64748b",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "0",
+    y1: originY,
+    x2: w,
+    y2: originY,
+    stroke: "#64748b",
+    strokeWidth: "2"
+  }), mode === "circle" && /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("circle", {
+    cx: toScreen(c.x, c.y).x,
+    cy: toScreen(c.x, c.y).y,
+    r: r * scale,
+    fill: "rgba(16, 185, 129, 0.2)",
+    stroke: "#10b981",
+    strokeWidth: "3"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: toScreen(c.x, c.y).x,
+    cy: toScreen(c.x, c.y).y,
+    r: "8",
+    fill: "#10b981",
+    className: "draggable hover:scale-125 transition-transform",
+    onMouseDown: () => setDragging("c")
+  }), /*#__PURE__*/React.createElement("text", {
+    x: toScreen(c.x, c.y).x + 10,
+    y: toScreen(c.x, c.y).y - 10,
+    fill: "#10b981",
+    fontWeight: "bold"
+  }, t.center), /*#__PURE__*/React.createElement("line", {
+    x1: toScreen(c.x, c.y).x,
+    y1: toScreen(c.x, c.y).y,
+    x2: toScreen(c.x + r, c.y).x,
+    y2: toScreen(c.x + r, c.y).y,
+    stroke: "#10b981",
+    strokeDasharray: "5,5"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: toScreen(c.x + r, c.y).x,
+    cy: toScreen(c.x + r, c.y).y,
+    r: "6",
+    fill: "white",
+    stroke: "#10b981",
+    strokeWidth: "2",
+    className: "draggable hover:scale-125 transition-transform",
+    onMouseDown: () => setDragging("r_handle")
+  })), mode === "bisector" && /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("line", {
+    x1: toScreen(p1.x, p1.y).x,
+    y1: toScreen(p1.x, p1.y).y,
+    x2: toScreen(p2.x, p2.y).x,
+    y2: toScreen(p2.x, p2.y).y,
+    stroke: "#f43f5e",
+    strokeWidth: "3"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: toScreen(mid.x, mid.y).x,
+    cy: toScreen(mid.x, mid.y).y,
+    r: "4",
+    fill: "#64748b"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: toScreen(a.x, a.y).x,
+    cy: toScreen(a.x, a.y).y,
+    r: "8",
+    fill: "#38bdf8",
+    className: "draggable hover:scale-125 transition-transform",
+    onMouseDown: () => setDragging("a")
+  }), /*#__PURE__*/React.createElement("text", {
+    x: toScreen(a.x, a.y).x,
+    y: toScreen(a.x, a.y).y - 15,
+    fill: "#38bdf8",
+    textAnchor: "middle",
+    fontWeight: "bold"
+  }, "A"), /*#__PURE__*/React.createElement("circle", {
+    cx: toScreen(b.x, b.y).x,
+    cy: toScreen(b.x, b.y).y,
+    r: "8",
+    fill: "#38bdf8",
+    className: "draggable hover:scale-125 transition-transform",
+    onMouseDown: () => setDragging("b")
+  }), /*#__PURE__*/React.createElement("text", {
+    x: toScreen(b.x, b.y).x,
+    y: toScreen(b.x, b.y).y - 15,
+    fill: "#38bdf8",
+    textAnchor: "middle",
+    fontWeight: "bold"
+  }, "B"), /*#__PURE__*/React.createElement("line", {
+    x1: toScreen(a.x, a.y).x,
+    y1: toScreen(a.x, a.y).y,
+    x2: toScreen(b.x, b.y).x,
+    y2: toScreen(b.x, b.y).y,
+    stroke: "#38bdf8",
+    strokeDasharray: "5,5",
+    opacity: "0.5"
+  })))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full lg:w-96 space-y-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass p-6 rounded-2xl"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-lg font-bold text-white mb-4"
+  }, t.locusType), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 gap-2"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setMode("circle"),
+    className: `py-4 rounded-xl font-bold border ${mode === "circle" ? "bg-emerald-600 border-emerald-500 text-white" : "bg-slate-800 border-slate-700 text-slate-400"}`
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xl mb-1"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-regular fa-circle"
+  })), /*#__PURE__*/React.createElement("div", null, t.circle)), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setMode("bisector"),
+    className: `py-4 rounded-xl font-bold border ${mode === "bisector" ? "bg-rose-600 border-rose-500 text-white" : "bg-slate-800 border-slate-700 text-slate-400"}`
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xl mb-1"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-slash"
+  })), /*#__PURE__*/React.createElement("div", null, t.bisector)))), /*#__PURE__*/React.createElement("div", {
+    className: "glass p-6 rounded-2xl"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-xs font-bold text-slate-400 uppercase mb-4"
+  }, t.mathDef), mode === "circle" ? /*#__PURE__*/React.createElement("div", {
+    className: "space-y-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "p-4 bg-slate-800 rounded-xl text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-sm text-slate-400 mb-1"
+  }, t.eq), /*#__PURE__*/React.createElement("div", {
+    className: "font-mono text-xl text-emerald-400"
+  }, "|z - (", c.x.toFixed(1), c.y >= 0 ? "+" : "", c.y.toFixed(1), "i)| = ", r.toFixed(2))), /*#__PURE__*/React.createElement("p", {
+    className: "text-sm text-slate-300"
+  }, t.circDesc.part1, /*#__PURE__*/React.createElement("strong", null, t.circDesc.r), t.circDesc.part2, /*#__PURE__*/React.createElement("strong", null, t.circDesc.c), t.circDesc.part3)) : /*#__PURE__*/React.createElement("div", {
+    className: "space-y-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "p-4 bg-slate-800 rounded-xl text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-sm text-slate-400 mb-1"
+  }, t.eq), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-mono text-rose-400 break-all"
+  }, "|z - (", a.x.toFixed(1), a.y >= 0 ? "+" : "", a.y.toFixed(1), "i)| = ", /*#__PURE__*/React.createElement("br", null), "|z - (", b.x.toFixed(1), b.y >= 0 ? "+" : "", b.y.toFixed(1), "i)|")), /*#__PURE__*/React.createElement("p", {
+    className: "text-sm text-slate-300"
+  }, t.biDesc.part1, /*#__PURE__*/React.createElement("strong", null, t.biDesc.A), t.biDesc.part2, /*#__PURE__*/React.createElement("strong", null, t.biDesc.B), t.biDesc.part3))), /*#__PURE__*/React.createElement("div", {
+    className: "text-center text-xs text-slate-500"
+  }, t.dragHint))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

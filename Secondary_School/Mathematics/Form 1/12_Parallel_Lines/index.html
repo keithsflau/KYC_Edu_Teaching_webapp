@@ -1,0 +1,388 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Parallel Lines & Transversal | S1 Math</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+      }
+    </style>
+  </head>
+  <body class="bg-blue-50 text-slate-800 min-h-screen">
+    <div id="root"></div>
+    <script>
+const {
+  useState
+} = React;
+const App = () => {
+  const [angle, setAngle] = useState(55);
+  const [mode, setMode] = useState("none"); // corresponding, alternate, interior, vertically_opposite
+
+  // Geometry Calc
+  // Transversal passes through (200, 100) and (200 + dx, 250) ? No, let's say center (250, 200).
+  // Lines at y=150 and y=350.
+  // Transversal angle theta relative to X axis.
+  const width = 600;
+  const height = 500;
+  const cx = width / 2;
+  const cy = height / 2;
+  const lineY1 = 150;
+  const lineY2 = 350;
+  const slope = Math.tan(angle * Math.PI / 180);
+  // y - cy = m (x - cx) => x = (y - cy)/m + cx
+
+  // Points on lines
+  const x1 = (lineY1 - cy) / Math.tan(-angle * Math.PI / 180) + cx; // -angle to flip Y axis logic visually or just assume math coords
+  // Let's stick to easy coords.
+  // visual angle: 60 deg from horizontal.
+  // dx = dy / tan(theta).
+  // Line 1 intersection: (x1, 150).
+  // Line 2 intersection: (x2, 350).
+  const run = 100 / Math.tan(angle * Math.PI / 180);
+  const int1 = {
+    x: cx + run,
+    y: lineY1
+  };
+  const int2 = {
+    x: cx - run,
+    y: lineY2
+  };
+
+  // Transversal line start/end (long enough)
+  const tStart = {
+    x: cx + run * 2.5,
+    y: lineY1 - 150
+  };
+  const tEnd = {
+    x: cx - run * 2.5,
+    y: lineY2 + 150
+  };
+  const AngleArc = ({
+    cx,
+    cy,
+    startA,
+    endA,
+    label,
+    highlight
+  }) => {
+    const r = 30;
+    // Simple arc rendering is complex without full paths.
+    // We use small circles or just text for simplicity, or sectors.
+    // Let's use sectors.
+    // startA, endA in degrees.
+    // convert to radians.
+    const toRad = d => d * Math.PI / 180;
+    const x1 = cx + r * Math.cos(toRad(startA));
+    const y1 = cy + r * Math.sin(toRad(startA)); // SVG Y is down
+    const x2 = cx + r * Math.cos(toRad(endA));
+    const y2 = cy + r * Math.sin(toRad(endA));
+    const large = Math.abs(endA - startA) > 180 ? 1 : 0;
+    const sweep = endA > startA ? 1 : 0; // Clockwise for SVG coordinates
+
+    const d = `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${large} ${sweep} ${x2} ${y2} Z`;
+    return /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("path", {
+      d: d,
+      fill: highlight ? "#facc15" : "rgba(200,200,200,0.2)",
+      stroke: highlight ? "#eab308" : "transparent",
+      opacity: "0.8"
+    }), /*#__PURE__*/React.createElement("text", {
+      x: cx + 45 * Math.cos(toRad((startA + endA) / 2)),
+      y: cy + 45 * Math.sin(toRad((startA + endA) / 2)),
+      textAnchor: "middle",
+      dominantBaseline: "middle",
+      className: "text-sm font-bold fill-slate-500"
+    }, label));
+  };
+
+  // Angles
+  // Top Intersection:
+  // a: Top Right (Acute if angle < 90). In SVG (Y down), 0 is Right.
+  // Transversal goes Top-Right to Bottom-Left for acute angle?
+  // If angle=60 (math), SVG line goes Down-Left.
+  // Slope is negative in SVG coords for "Positive Slope" visual.
+  // start is Top-Right.
+  // Let's visualize:
+  //      /
+  // ----/----
+  //    /
+  //   /
+  // --/------
+  //  /
+
+  // Angles at Top (int1):
+  // a: Top Right ( 0 to -angle? ) -> In SVG: -angle is up-right.
+  // Wait, keep it simple.
+  // b: Top Left ( -angle to -180 )
+  // c: Bottom Left ( -180 to -angle + 180 )
+  // d: Bottom Right ( -angle + 180 to 0 )
+
+  // Let's use simpler logic. A is scalar angle.
+  // Acute angle = angle. Obtuse = 180 - angle.
+
+  const highlights = {
+    corresponding: ["a", "e"],
+    // Top Right and Top Right
+    alternate: ["d", "f"],
+    // Bottom Right and Top Left
+    interior: ["d", "e"] // Bottom Right and Top Right (Interior on same side? No. e is Top Right.)
+    // Standard naming:
+    // a b
+    // c d
+    // -----
+    // e f
+    // g h
+    // where a=TopLeft, b=TopRight, c=BotLeft, d=BotRight.
+    // e=TopLeft, f=TopRight...
+
+    // Let's define specific sectors based on the visual.
+  };
+
+  // Let's map physically:
+  // Int1 (Top):
+  // 1: Top Right. 2: Top Left. 3: Bot Left. 4: Bot Right.
+  // Int2 (Bot):
+  // 5: Top Right. 6: Top Left. 7: Bot Left. 8: Bot Right.
+
+  // Modes:
+  // Corr: 1 & 5. (Also 2&6, 3&7, 4&8).
+  // Alt (Interior): 4 & 6. (Also 3 & 5).
+  // Interior (Consecutive): 4 & 5. (Sum 180).
+  // Vertically Opp: 1 & 3.
+
+  /*
+           2 | 1
+          -------
+           3 | 4
+      
+           6 | 5
+          -------
+           7 | 8
+      */
+
+  const activeSet = [];
+  if (mode === "corresponding") activeSet.push(1, 5, 2, 6, 3, 7, 4, 8); // Just show main pair 1 & 5
+  if (mode === "alternate") activeSet.push(4, 6);
+  if (mode === "interior") activeSet.push(4, 5);
+  if (mode === "vertically_opposite") activeSet.push(1, 3);
+  if (mode === "none") activeSet.push();
+  const isHigh = id => {
+    if (mode === "corresponding") return id === 1 || id === 5; // Simplification: highlight just one pair
+    if (mode === "vertically_opposite") return id === 1 || id === 3;
+    return activeSet.includes(id);
+  };
+
+  // SVG Angles
+  // Transversal Angle is 'angle' (e.g. 60).
+  // Line angle is 0.
+  // 1: Top Right. Between Line (0) and Transversal (Upper part).
+  // Transversal goes from (x + run, y - h) to (x, y). Slope -1/tan.
+  // Angle of Transversal Up Vector: -90 - (90-angle) = -180 + angle?
+  // Easiest:
+  // 1: From -angle to 0. (Size: angle)
+  // 2: From -180 to -angle. (Size: 180-angle)
+  // 3: From 180-angle to 180. (Size: angle, Vert Opp to 1)
+  // 4: From 0 to 180-angle. (Size: 180-angle, Vert Opp to 2)
+
+  // Let's try:
+  // 1 (TR): Start: -angle, End: 0.
+  // 2 (TL): Start: -180, End: -angle.
+  // 3 (BL): Start: 180-angle, End: 180.
+  // 4 (BR): Start: 0, End: 180-angle. Or 0 to positive.
+
+  // Wait, SVG Y is down.
+  // 0 is Right.
+  // Transversal (angle 60): Goes Down-Left / Up-Right.
+  // So Up-Right vector is at -60 deg.
+  // Down-Left vector is at 120 deg.
+
+  // 1 (TR): Between -60 and 0. (Size 60).
+  // 2 (TL): Between -180 and -60. (Size 120).
+  // 3 (BL): Between 120 and 180. (Size 60).
+  // 4 (BR): Between 0 and 120. (Size 120).
+
+  const tA = -angle;
+  const tB = 180 - angle;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "p-8 max-w-4xl mx-auto min-h-screen flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("header", {
+    className: "mb-4 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-blue-600 font-bold uppercase text-xs tracking-widest mb-2"
+  }, "Unit 2: Geometry"), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-slate-900"
+  }, "Parallel Lines & Transversal"), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-500"
+  }, "Explore angle relationships.")), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4 mb-8"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setMode("corresponding"),
+    className: `px-4 py-2 rounded-lg font-bold transition ${mode === "corresponding" ? "bg-blue-600 text-white" : "bg-white text-slate-500"}`
+  }, "Corresponding (F)"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setMode("alternate"),
+    className: `px-4 py-2 rounded-lg font-bold transition ${mode === "alternate" ? "bg-blue-600 text-white" : "bg-white text-slate-500"}`
+  }, "Alternate (Z)"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setMode("interior"),
+    className: `px-4 py-2 rounded-lg font-bold transition ${mode === "interior" ? "bg-blue-600 text-white" : "bg-white text-slate-500"}`
+  }, "Interior (C)"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setMode("vertically_opposite"),
+    className: `px-4 py-2 rounded-lg font-bold transition ${mode === "vertically_opposite" ? "bg-blue-600 text-white" : "bg-white text-slate-500"}`
+  }, "Vert. Opp (X)")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white rounded-3xl shadow-xl border border-blue-100 overflow-hidden relative"
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: width,
+    height: height,
+    className: "block"
+  }, /*#__PURE__*/React.createElement("line", {
+    x1: "0",
+    y1: lineY1,
+    x2: width,
+    y2: lineY1,
+    stroke: "#1e293b",
+    strokeWidth: "4"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "0",
+    y1: lineY2,
+    x2: width,
+    y2: lineY2,
+    stroke: "#1e293b",
+    strokeWidth: "4"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: `M ${width / 2} ${lineY1} l -10 -10 m 10 10 l -10 10`,
+    stroke: "#1e293b",
+    strokeWidth: "3",
+    fill: "none"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: `M ${width / 2 + 5} ${lineY1} l -10 -10 m 10 10 l -10 10`,
+    stroke: "#1e293b",
+    strokeWidth: "3",
+    fill: "none"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: `M ${width / 2} ${lineY2} l -10 -10 m 10 10 l -10 10`,
+    stroke: "#1e293b",
+    strokeWidth: "3",
+    fill: "none"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: `M ${width / 2 + 5} ${lineY2} l -10 -10 m 10 10 l -10 10`,
+    stroke: "#1e293b",
+    strokeWidth: "3",
+    fill: "none"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: tStart.x,
+    y1: tStart.y,
+    x2: tEnd.x,
+    y2: tEnd.y,
+    stroke: "#ef4444",
+    strokeWidth: "4"
+  }), /*#__PURE__*/React.createElement("g", {
+    transform: `translate(${int1.x}, ${int1.y})`
+  }, /*#__PURE__*/React.createElement(AngleArc, {
+    cx: 0,
+    cy: 0,
+    startA: tA,
+    endA: 0,
+    label: "1",
+    highlight: isHigh(1)
+  }), /*#__PURE__*/React.createElement(AngleArc, {
+    cx: 0,
+    cy: 0,
+    startA: -180,
+    endA: tA,
+    label: "2",
+    highlight: isHigh(2)
+  }), /*#__PURE__*/React.createElement(AngleArc, {
+    cx: 0,
+    cy: 0,
+    startA: tB,
+    endA: 180,
+    label: "3",
+    highlight: isHigh(3)
+  }), /*#__PURE__*/React.createElement(AngleArc, {
+    cx: 0,
+    cy: 0,
+    startA: 0,
+    endA: tB,
+    label: "4",
+    highlight: isHigh(4)
+  })), /*#__PURE__*/React.createElement("g", {
+    transform: `translate(${int2.x}, ${int2.y})`
+  }, /*#__PURE__*/React.createElement(AngleArc, {
+    cx: 0,
+    cy: 0,
+    startA: tA,
+    endA: 0,
+    label: "5",
+    highlight: isHigh(5)
+  }), /*#__PURE__*/React.createElement(AngleArc, {
+    cx: 0,
+    cy: 0,
+    startA: -180,
+    endA: tA,
+    label: "6",
+    highlight: isHigh(6)
+  }), /*#__PURE__*/React.createElement(AngleArc, {
+    cx: 0,
+    cy: 0,
+    startA: tB,
+    endA: 180,
+    label: "7",
+    highlight: isHigh(7)
+  }), /*#__PURE__*/React.createElement(AngleArc, {
+    cx: 0,
+    cy: 0,
+    startA: 0,
+    endA: tB,
+    label: "8",
+    highlight: isHigh(8)
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-4 left-4 right-4 flex justify-between items-center bg-white/90 p-4 rounded-xl border border-slate-200"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-sm font-bold text-slate-500"
+  }, "Drag Angle slider"), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "30",
+    max: "150",
+    value: angle,
+    onChange: e => setAngle(Number(e.target.value)),
+    className: "w-1/2"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-xl font-bold text-blue-600"
+  }, angle, "° / ", 180 - angle, "°"))), /*#__PURE__*/React.createElement("div", {
+    className: "mt-8 text-center max-w-lg text-slate-500"
+  }, mode === "corresponding" && "Corresponding Angles are EQUAL (F-Shape).", mode === "alternate" && "Alternate Angles are EQUAL (Z-Shape).", mode === "interior" && "Interior Angles sum to 180° (C-Shape).", mode === "vertically_opposite" && "Vertically Opposite Angles are EQUAL (X-Shape)."));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      小五數學：四則運算 (有括號) | Order of Operations with Brackets
+    </title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Order of Ops (Brackets)",
+    zh: "四則運算 (有括號)",
+    ja: "混合演算 (括弧あり)",
+    ko: "혼합 연산 (괄호)",
+    es: "Operaciones (Paréntesis)",
+    de: "Rechenregeln (Klammern)",
+    fi: "Laskujärjestys (Sulkeet)",
+    fr: "Opérations (Parenthèses)",
+    ar: "العمليات (أقواس)",
+    it: "Operazioni (Parentesi)"
+  },
+  next: {
+    en: "Next",
+    zh: "下一步",
+    ja: "次へ",
+    ko: "다음",
+    es: "Siguiente",
+    de: "Weiter",
+    fi: "Seuraava",
+    fr: "Suivant",
+    ar: "التالي",
+    it: "Avanti"
+  },
+  newProblem: {
+    en: "New Problem",
+    zh: "新題目",
+    ja: "新しい問題",
+    ko: "새 문제",
+    es: "Nuevo Problema",
+    de: "Neue Aufgabe",
+    fi: "Uusi tehtävä",
+    fr: "Nouveau problème",
+    ar: "مسألة جديدة",
+    it: "Nuovo Problema"
+  },
+  rule: {
+    en: "Rule: Brackets () First!",
+    zh: "口訣：括號 () 優先做！",
+    ja: "ルール: 括弧 () が最優先!",
+    ko: "규칙: 괄호 () 먼저!",
+    es: "Regla: ¡Paréntesis () Primero!",
+    de: "Regel: Klammern () zuerst!",
+    fi: "Sääntö: Sulkeet () ensin!",
+    fr: "Règle : Parenthèses () d'abord !",
+    ar: "القاعدة: الأقواس () أولاً!",
+    it: "Regola: Parentesi () Prima!"
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [problemIdx, setProblemIdx] = useState(0);
+  const [step, setStep] = useState(0);
+  const problems = [{
+    id: 1,
+    expr: "(3 + 4) × 5",
+    steps: ["7 × 5", "35"]
+  }, {
+    id: 2,
+    expr: "18 ÷ (9 - 3)",
+    steps: ["18 ÷ 6", "3"]
+  }, {
+    id: 3,
+    expr: "2 + (3 × 4) - 5",
+    steps: ["2 + 12 - 5", "14 - 5", "9"]
+  },
+  // Brackets usually imply priority even if just multiplication. Let's do a meaningful bracket.
+  {
+    id: 4,
+    expr: "(10 + 2) ÷ (4 - 1)",
+    steps: ["12 ÷ 3", "4"]
+  }, {
+    id: 5,
+    expr: "5 × (3 + 1) - 8",
+    steps: ["5 × 4 - 8", "20 - 8", "12"]
+  }];
+  const p = problems[problemIdx];
+  const nextStep = () => setStep(prev => Math.min(prev + 1, p.steps.length));
+  const newProblem = () => {
+    setProblemIdx(prev => (prev + 1) % problems.length);
+    setStep(0);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4 font-sans bg-slate-900 text-white"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-4xl flex justify-between items-center mb-10"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-black text-fuchsia-400 drop-shadow-[0_0_15px_rgba(232,121,249,0.5)]"
+  }, "🏗️ ", getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "flex bg-slate-800/80 p-1.5 rounded-xl border border-white/10 flex-wrap justify-end gap-1 max-w-[50%]"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-fuchsia-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white hover:bg-white/5"}`
+  }, l)))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-3xl glass-panel p-8 md:p-12 rounded-3xl flex flex-col items-center gap-8 relative overflow-hidden ring-1 ring-fuchsia-500/20 shadow-[0_0_50px_rgba(232,121,249,0.1)]"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-0 left-0 w-full h-2 bg-fuchsia-500/30"
+  }, /*#__PURE__*/React.createElement(motion.div, {
+    className: "h-full bg-fuchsia-500",
+    initial: {
+      width: 0
+    },
+    animate: {
+      width: `${step / p.steps.length * 100}%`
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "text-center space-y-4 w-full"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between w-full px-4 mb-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-slate-500 font-bold uppercase tracking-widest text-xs"
+  }, "Problem ", problemIdx + 1), /*#__PURE__*/React.createElement("div", {
+    className: "text-fuchsia-400 font-bold uppercase tracking-widest text-xs animate-pulse"
+  }, getText("rule", lang))), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: `text-5xl md:text-7xl font-black font-mono transition-all duration-500 ${step > 0 ? "opacity-40 scale-90 blur-[1px]" : "text-white scale-100"}`
+  }, p.expr), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center gap-4"
+  }, /*#__PURE__*/React.createElement(AnimatePresence, null, p.steps.map((s, i) => step > i && /*#__PURE__*/React.createElement(motion.div, {
+    key: i,
+    initial: {
+      opacity: 0,
+      scale: 0.8,
+      y: -30
+    },
+    animate: {
+      opacity: 1,
+      scale: 1,
+      y: 0
+    },
+    className: `font-mono font-bold flex items-center gap-4 ${i === p.steps.length - 1 ? "text-6xl md:text-8xl text-fuchsia-400 mt-8 drop-shadow-[0_0_20px_rgba(232,121,249,0.6)]" : "text-3xl md:text-5xl text-slate-300"}`
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-slate-600 text-2xl"
+  }, "="), s)))))), /*#__PURE__*/React.createElement("div", {
+    className: "mt-12 flex gap-4 w-full max-w-md"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: nextStep,
+    disabled: step >= p.steps.length,
+    className: `flex-1 py-4 rounded-2xl font-black text-xl shadow-lg transition-transform active:scale-95 border-b-4 border-fuchsia-800 ${step >= p.steps.length ? "bg-slate-800 text-slate-600 border-slate-900" : "bg-fuchsia-500 hover:bg-fuchsia-400 text-white"}`
+  }, getText("next", lang)), /*#__PURE__*/React.createElement("button", {
+    onClick: newProblem,
+    className: "flex-1 py-4 bg-slate-700 hover:bg-slate-600 text-white rounded-2xl font-bold transition-colors border-b-4 border-slate-900 active:scale-95"
+  }, getText("newProblem", lang), " ↺"))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

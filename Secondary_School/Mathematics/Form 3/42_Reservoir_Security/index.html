@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reservoir Security Model | S3 Math 水塘資源安全建模</title>
+  <!--
+    Curriculum Alignment
+    - Audience: Form 3
+    - Curriculum: HK junior secondary rates / linear graphs / percentages; NSE Resource Security (water) — original fictional Mm³ lab
+    - Objectives: K — model reservoir balance; S — simulate inflow/outflow; A — value resource stewardship
+    - NS field: Resource Security (水資源) — maths-first modelling
+  -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet" />
+  <style>body{font-family:"Outfit","Noto Sans TC",sans-serif}</style>
+</head>
+<body class="bg-sky-50 min-h-screen text-slate-800">
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useMemo } = React;
+
+    const copy = {
+      en: {
+        back: "← Form 3", lang: "中文", badge: "Modelling + Resource Security",
+        title: "Reservoir Security Model",
+        sub: "Linear balance model for Hong Kong freshwater reserves",
+        k: "K: Storage changes by net rate × time",
+        s: "S: Tune rainfall, demand & supply to keep storage ≥ buffer",
+        a: "A: Treat water as a strategic resource — conserve thoughtfully",
+        ns: "NSE (Resource Security): Explore how maths supports planning for drought — not political messaging.",
+        capacity: "Capacity (10⁶ m³)",
+        storage: "Starting storage %",
+        rain: "Rainfall inflow (10⁶ m³ / week)",
+        demand: "City demand (10⁶ m³ / week)",
+        import: "Imported water (10⁶ m³ / week)",
+        weeks: "Weeks to simulate",
+        buffer: "Safety buffer %",
+        chart: "Storage over time",
+        statusOk: "Above safety buffer — reserves look resilient under these assumptions.",
+        statusLow: "Below buffer — refine model: cut demand, raise import, or hope for rain (uncertain!).",
+        formula: "Sₙ₊₁ = min(C, max(0, Sₙ + rain + import − demand))",
+        challenge: "Challenge",
+        challengeText: "Keep storage ≥ buffer for all 12 weeks with demand ≥ 16. Adjust rain/import.",
+        pass: "Challenge passed!",
+        fail: "Not yet — try higher import or slightly lower demand.",
+        coach: "AI coach (offline heuristic)",
+        tips: [
+          "Assumption check: rain is highly variable — try a dry scenario (low rain).",
+          "Sensitivity: if demand rises 10%, how many weeks until buffer breach?",
+          "Interpret: import reduces risk but has cost — model trade-offs with percentages."
+        ]
+      },
+      zh: {
+        back: "← 中三", lang: "ENG", badge: "建模 + 資源安全",
+        title: "水塘資源安全模型",
+        sub: "香港淡水存量的線性平衡模型",
+        k: "知：存量以淨速率×時間改變",
+        s: "技：調校雨量、需求與供水，保持存量≥緩衝",
+        a: "態：視水為戰略資源，審慎節約",
+        ns: "國家安全教育（資源安全）：以數學探索抗旱規劃——非政治口號。",
+        capacity: "容量（10⁶ m³）",
+        storage: "起始存量 %",
+        rain: "降雨入流（10⁶ m³／週）",
+        demand: "城市需求（10⁶ m³／週）",
+        import: "輸入食水（10⁶ m³／週）",
+        weeks: "模擬週數",
+        buffer: "安全緩衝 %",
+        chart: "存量隨時間變化",
+        statusOk: "高於安全緩衝——在此假設下儲備較穩健。",
+        statusLow: "低於緩衝——修正：減需求、增輸入，或依賴不確定雨量。",
+        formula: "Sₙ₊₁ = min(C, max(0, Sₙ + 雨量 + 輸入 − 需求))",
+        challenge: "挑戰",
+        challengeText: "12 週全程存量 ≥ 緩衝，且需求 ≥ 16。請調校雨量／輸入。",
+        pass: "挑戰成功！",
+        fail: "尚未達標——試提高輸入或略降需求。",
+        coach: "AI 教練（離線啟發式）",
+        tips: [
+          "假設檢查：雨量變數大——試試乾旱情景（低雨量）。",
+          "敏感度：需求升 10%，幾週後跌破緩衝？",
+          "詮釋：輸入可降風險但有成本——用百分率比較取捨。"
+        ]
+      }
+    };
+
+    function App() {
+      const [lang, setLang] = useState("en");
+      const t = copy[lang];
+      const [cap, setCap] = useState(473); // fictional educational capacity (10⁶ m³)
+      const [startPct, setStartPct] = useState(58);
+      const [rain, setRain] = useState(5);
+      const [demand, setDemand] = useState(17);
+      const [imp, setImp] = useState(11);
+      const [weeks, setWeeks] = useState(12);
+      const [buffer, setBuffer] = useState(35);
+      const [tipIdx, setTipIdx] = useState(0);
+
+      const series = useMemo(() => {
+        const pts = [];
+        let s = Math.max(0, Math.min(cap, (startPct / 100) * cap));
+        for (let w = 0; w <= weeks; w++) {
+          pts.push({ w, s, pct: cap > 0 ? (s / cap) * 100 : 0 });
+          if (w < weeks) s = Math.max(0, Math.min(cap, s + rain + imp - demand));
+        }
+        return pts;
+      }, [cap, startPct, rain, demand, imp, weeks]);
+
+      const final = series[series.length - 1];
+      const minPct = Math.min(...series.map(p => p.pct));
+      // Stay at/above buffer for the whole horizon (not only the final week).
+      const ok = minPct >= buffer;
+      const challengeOk = weeks >= 12 && demand >= 16 && minPct >= buffer;
+
+      const W = 480, H = 180, pad = 24;
+      const maxS = cap;
+      const path = series.map((p, i) => {
+        const x = pad + (i / weeks) * (W - 2 * pad);
+        const y = H - pad - (p.s / maxS) * (H - 2 * pad);
+        return `${i === 0 ? "M" : "L"}${x},${y}`;
+      }).join(" ");
+      const bufY = H - pad - (buffer / 100) * (H - 2 * pad);
+
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-sky-50 via-cyan-50 to-slate-50">
+          <a href="../index.html" className="fixed top-4 left-4 z-50 text-sm bg-white/90 px-3 py-1.5 rounded-lg border shadow-sm">{t.back}</a>
+          <button onClick={() => setLang(lang === "en" ? "zh" : "en")} className="fixed top-4 right-4 z-50 text-sm font-bold text-sky-700 bg-white/90 px-3 py-1.5 rounded-lg border border-sky-200">{t.lang}</button>
+
+          <header className="max-w-5xl mx-auto pt-16 px-4 text-center">
+            <div className="text-sky-700 text-xs font-bold tracking-widest uppercase mb-2">{t.badge}</div>
+            <h1 className="text-3xl md:text-5xl font-extrabold mb-2">{t.title}</h1>
+            <p className="text-slate-500">{t.sub}</p>
+            <div className="mt-4 flex flex-wrap justify-center gap-2 text-xs">
+              <span className="bg-white px-3 py-1 rounded-full border">{t.k}</span>
+              <span className="bg-white px-3 py-1 rounded-full border">{t.s}</span>
+              <span className="bg-white px-3 py-1 rounded-full border">{t.a}</span>
+            </div>
+            <p className="text-xs text-slate-500 mt-3 max-w-2xl mx-auto">{t.ns}</p>
+          </header>
+
+          <main className="max-w-5xl mx-auto px-4 py-8 grid lg:grid-cols-2 gap-6">
+            <section className="bg-white rounded-3xl shadow-xl border p-6 space-y-4">
+              <div className="font-mono text-center text-sky-800 bg-sky-50 rounded-xl p-3 text-sm">{t.formula}</div>
+              {[
+                [t.capacity, cap, setCap, 200, 800],
+                [t.storage, startPct, setStartPct, 20, 100],
+                [t.rain, rain, setRain, 0, 25],
+                [t.demand, demand, setDemand, 10, 35],
+                [t.import, imp, setImp, 0, 30],
+                [t.weeks, weeks, setWeeks, 4, 24],
+                [t.buffer, buffer, setBuffer, 20, 70]
+              ].map(([label, val, set, min, max]) => (
+                <div key={label}>
+                  <div className="flex justify-between text-sm mb-1"><span className="font-bold text-slate-500">{label}</span><span className="font-mono font-bold">{val}</span></div>
+                  <input type="range" min={min} max={max} value={val} onChange={e => set(+e.target.value)} className="w-full accent-sky-600" />
+                </div>
+              ))}
+            </section>
+
+            <section className="bg-white rounded-3xl shadow-xl border p-6">
+              <h3 className="font-bold text-slate-500 text-xs uppercase tracking-widest mb-3">{t.chart}</h3>
+              <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-48 bg-slate-50 rounded-2xl border">
+                <line x1={pad} y1={bufY} x2={W - pad} y2={bufY} stroke="#f59e0b" strokeDasharray="6 4" strokeWidth="2" />
+                <path d={path} fill="none" stroke="#0284c7" strokeWidth="3" strokeLinecap="round" />
+                <text x={pad} y={bufY - 6} fontSize="10" fill="#b45309">buffer</text>
+              </svg>
+              <div className="grid grid-cols-3 gap-2 mt-4 text-center">
+                <div className="bg-slate-50 rounded-xl p-3 border"><div className="text-xs text-slate-400">Final %</div><div className="text-xl font-extrabold">{final.pct.toFixed(0)}%</div></div>
+                <div className="bg-slate-50 rounded-xl p-3 border"><div className="text-xs text-slate-400">Min %</div><div className="text-xl font-extrabold">{minPct.toFixed(0)}%</div></div>
+                <div className="bg-slate-50 rounded-xl p-3 border"><div className="text-xs text-slate-400">Net/wk</div><div className={`text-xl font-extrabold ${(rain+imp-demand)>=0?"text-emerald-600":"text-rose-600"}`}>{(rain+imp-demand).toFixed(0)}</div></div>
+              </div>
+              <div className={`mt-4 rounded-2xl p-4 text-sm border-2 ${ok ? "bg-emerald-50 border-emerald-200 text-emerald-800" : "bg-amber-50 border-amber-200 text-amber-900"}`}>
+                {ok ? t.statusOk : t.statusLow}
+              </div>
+
+              <div className="mt-4 rounded-2xl border border-violet-100 bg-violet-50 p-4">
+                <div className="font-bold text-violet-800 text-sm mb-1"><i className="fa-solid fa-robot mr-2" />{t.coach}</div>
+                <p className="text-sm text-violet-900 mb-2">{t.tips[tipIdx]}</p>
+                <button onClick={() => setTipIdx(i => (i + 1) % t.tips.length)} className="text-xs font-bold text-violet-700 underline">Next tip →</button>
+              </div>
+
+              <div className="mt-4 rounded-2xl border p-4 bg-slate-50">
+                <div className="font-bold text-sm mb-1">{t.challenge}</div>
+                <p className="text-sm text-slate-600 mb-2">{t.challengeText}</p>
+                <div className={`text-sm font-bold ${challengeOk ? "text-emerald-600" : "text-slate-500"}`}>{challengeOk ? t.pass : t.fail}</div>
+              </div>
+            </section>
+          </main>
+          <footer className="text-center py-4 text-slate-500 text-xs border-t">Jeremiah 10:12 · SF Lau</footer>
+        </div>
+      );
+    }
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>

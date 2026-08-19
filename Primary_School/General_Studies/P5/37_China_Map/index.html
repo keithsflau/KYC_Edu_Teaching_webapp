@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - China Map</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: #fff beb;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "China Map Explorer",
+    zh: "中國地圖探索",
+    ja: "中国地図エクスプローラー",
+    ko: "중국 지도 탐험",
+    es: "Explorador del mapa de China",
+    de: "China-Kartenforscher",
+    fi: "Kiinan karttatutkija",
+    fr: "Explorateur de la carte de la Chine",
+    ar: "مستكشف خريطة الصين",
+    it: "Esploratore Mappa Cina"
+  },
+  instruction: {
+    en: "Locate the Province/City:",
+    zh: "找出省份/城市：",
+    ja: "州/都市を見つけてください：",
+    ko: "성/도시를 찾으세요:",
+    es: "Ubica la provincia/ciudad:",
+    de: "Finde die Provinz/Stadt:",
+    fi: "Etsi maakunta/kaupunki:",
+    fr: "Localisez la province/ville :",
+    ar: "حدد موقع المقاطعة/المدينة:",
+    it: "Individua la Provincia/Città:"
+  },
+  beijing: {
+    en: "Beijing",
+    zh: "北京",
+    ja: "北京",
+    ko: "베이징"
+  },
+  shanghai: {
+    en: "Shanghai",
+    zh: "上海",
+    ja: "上海",
+    ko: "상하이"
+  },
+  hk: {
+    en: "Hong Kong",
+    zh: "香港",
+    ja: "香港",
+    ko: "홍콩"
+  },
+  guangdong: {
+    en: "Guangdong",
+    zh: "廣東",
+    ja: "広東",
+    ko: "광둥"
+  },
+  sichuan: {
+    en: "Sichuan",
+    zh: "四川",
+    ja: "四川",
+    ko: "쓰촨"
+  },
+  correct: {
+    en: "Correct!",
+    zh: "正確！",
+    ja: "正解！",
+    ko: "정답!"
+  }
+};
+
+// Rough coords on 100x100 map
+const locs = [{
+  id: "beijing",
+  x: 70,
+  y: 30
+}, {
+  id: "shanghai",
+  x: 80,
+  y: 55
+}, {
+  id: "hk",
+  x: 72,
+  y: 80
+}, {
+  id: "guangdong",
+  x: 70,
+  y: 75
+}, {
+  id: "sichuan",
+  x: 45,
+  y: 55
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [targetIdx, setTargetIdx] = useState(0);
+  const [feedback, setFeedback] = useState(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+  const target = locs[targetIdx];
+  const handleSelect = id => {
+    if (feedback) return;
+    if (id === target.id) {
+      setFeedback("correct");
+      setTimeout(() => {
+        setFeedback(null);
+        setTargetIdx((targetIdx + 1) % locs.length);
+      }, 1500);
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-bold mb-4 text-red-700"
+  }, getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-4 rounded-xl shadow mb-8 text-center border-2 border-red-200"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-sm font-bold text-slate-400"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black text-red-800"
+  }, getText(target.id))), /*#__PURE__*/React.createElement("div", {
+    className: "relative w-full max-w-3xl aspect-[4/3] bg-yellow-50 border-4 border-yellow-200 rounded-2xl overflow-hidden shadow-2xl"
+  }, /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 100 80",
+    className: "absolute inset-0 w-full h-full pointer-events-none opacity-50"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M20,30 L40,10 L80,20 L90,50 L75,80 L50,70 L20,50 Z",
+    fill: "#fecaca"
+  })), locs.map(l => /*#__PURE__*/React.createElement("button", {
+    key: l.id,
+    onClick: () => handleSelect(l.id),
+    className: `absolute w-8 h-8 -translate-x-1/2 -translate-y-1/2 rounded-full border-4 hover:scale-150 transition-transform ${feedback === "correct" && l.id === target.id ? "bg-green-500 border-white ring-4 ring-green-300" : "bg-red-500 border-red-200"}`,
+    style: {
+      left: `${l.x}%`,
+      top: `${l.y}%`
+    }
+  })), feedback && /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 flex items-center justify-center pointer-events-none bg-black/10"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white px-8 py-4 rounded-xl font-black text-4xl text-green-600 shadow-2xl"
+  }, getText("correct")))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

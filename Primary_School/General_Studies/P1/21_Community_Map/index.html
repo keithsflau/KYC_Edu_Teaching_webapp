@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小一常識：社區設施配對 | Community Map</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: url("https://www.transparenttextures.com/patterns/cubes.png"),
+          linear-gradient(135deg, #f0f9ff 0%, #bae6fd 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Community Map",
+    zh: "社區地圖",
+    ja: "コミュニティマップ",
+    ko: "커뮤니티 지도",
+    es: "Mapa de la comunidad",
+    de: "Gemeindekarte",
+    fi: "Yhteisön kartta",
+    fr: "Carte de la communauté",
+    ar: "خريطة المجتمع",
+    it: "Mappa della comunità"
+  },
+  instruction: {
+    en: "Drag the buildings to the correct place!",
+    zh: "把建築物拖到地圖上正確的位置！",
+    ja: "建物を正しい場所にドラッグしてください！",
+    ko: "건물을 올바른 위치로 드래그하세요!",
+    es: "¡Arrastra los edificios al lugar correcto!",
+    de: "Ziehe die Gebäude an die richtige Stelle!",
+    fi: "Raahaa rakennukset oikeaan paikkaan!",
+    fr: "Faites glisser les bâtiments au bon endroit !",
+    ar: "اسحب المباني إلى المكان الصحيح!",
+    it: "Trascina gli edifici nel posto corretto!"
+  },
+  school: {
+    en: "School",
+    zh: "學校",
+    es: "Escuela",
+    de: "Schule",
+    fi: "Koulu",
+    fr: "École",
+    ar: "مدرسة",
+    it: "Scuola"
+  },
+  park: {
+    en: "Park",
+    zh: "公園",
+    es: "Parque",
+    de: "Park",
+    fi: "Puisto",
+    fr: "Parc",
+    ar: "حديقة",
+    it: "Parco"
+  },
+  fire: {
+    en: "Fire Station",
+    zh: "消防局",
+    es: "Estación de bomberos",
+    de: "Feuerwache",
+    fi: "Paloasema",
+    fr: "Caserne de pompiers",
+    ar: "محطة إطفاء",
+    it: "Caserma dei pompieri"
+  },
+  police: {
+    en: "Police Station",
+    zh: "警署",
+    es: "Estación de policía",
+    de: "Polizeistation",
+    fi: "Poliisiasema",
+    fr: "Poste de police",
+    ar: "مركز شرطة",
+    it: "Stazione di polizia"
+  },
+  market: {
+    en: "Market",
+    zh: "街市",
+    es: "Mercado",
+    de: "Markt",
+    fi: "Markkinat",
+    fr: "Marché",
+    ar: "سوق",
+    it: "Mercato"
+  },
+  library: {
+    en: "Library",
+    zh: "圖書館",
+    es: "Biblioteca",
+    de: "Bibliothek",
+    fi: "Kirjasto",
+    fr: "Bibliothèque",
+    ar: "مكتبة",
+    it: "Biblioteca"
+  },
+  check: {
+    en: "Check",
+    zh: "檢查",
+    es: "Comprobar",
+    de: "Prüfen",
+    fi: "Tarkista",
+    fr: "Vérifier",
+    ar: "تحقق",
+    it: "Controlla"
+  },
+  reset: {
+    en: "Reset",
+    zh: "重置",
+    es: "Reiniciar",
+    de: "Zurücksetzen",
+    fi: "Nollaa",
+    fr: "Réinitialiser",
+    ar: "إعادة تعيين",
+    it: "Reimposta"
+  },
+  correct: {
+    en: "My Community is complete!",
+    zh: "我的社區建好了！",
+    es: "¡Mi comunidad está completa!",
+    de: "Meine Gemeinde ist vollständig!",
+    fi: "Yhteisöni on valmis!",
+    fr: "Ma communauté est terminée !",
+    ar: "مجتمعي مكتمل!",
+    it: "La mia comunità è completa!"
+  },
+  wrong: {
+    en: "Some buildings are in the wrong place.",
+    zh: "有些建築物放錯了。",
+    es: "Algunos edificios están en el lugar equivocado.",
+    de: "Einige Gebäude sind am falschen Ort.",
+    fi: "Jotkut rakennukset ovat väärässä paikassa.",
+    fr: "Certains bâtiments sont au mauvais endroit.",
+    ar: "بعض المباني في المكان الخطأ.",
+    it: "Alcuni edifici sono nel posto sbagliato."
+  }
+};
+const buildings = [{
+  id: "school",
+  icon: "🏫"
+}, {
+  id: "park",
+  icon: "🏞️"
+}, {
+  id: "fire",
+  icon: "🚒"
+}, {
+  id: "police",
+  icon: "🚓"
+}, {
+  id: "market",
+  icon: "🥦"
+}, {
+  id: "library",
+  icon: "📚"
+}];
+
+// Grid Layout 2x3
+const slots = [{
+  id: "s1",
+  target: "school",
+  color: "bg-blue-100"
+}, {
+  id: "s2",
+  target: "park",
+  color: "bg-green-100"
+}, {
+  id: "s3",
+  target: "fire",
+  color: "bg-red-100"
+}, {
+  id: "s4",
+  target: "police",
+  color: "bg-slate-200"
+}, {
+  id: "s5",
+  target: "market",
+  color: "bg-orange-100"
+}, {
+  id: "s6",
+  target: "library",
+  color: "bg-yellow-100"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [placements, setPlacements] = useState({}); // slotId -> buildingId
+  const [available, setAvailable] = useState([]);
+  const [status, setStatus] = useState(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+  useEffect(() => {
+    reset();
+  }, []);
+  const reset = () => {
+    setPlacements({});
+    setAvailable(buildings.map(b => b.id).sort(() => Math.random() - 0.5));
+    setStatus(null);
+  };
+  const handleDrop = (bId, slotId) => {
+    // Remove from available
+    setAvailable(prev => prev.filter(id => id !== bId));
+
+    // If slot occupied, return occupant
+    const occupant = placements[slotId];
+    if (occupant) {
+      setAvailable(prev => [...prev, occupant]);
+    }
+    setPlacements(prev => ({
+      ...prev,
+      [slotId]: bId
+    }));
+    setStatus(null);
+  };
+  const handleRemove = slotId => {
+    const bId = placements[slotId];
+    if (!bId) return;
+    const next = {
+      ...placements
+    };
+    delete next[slotId];
+    setPlacements(next);
+    setAvailable(prev => [...prev, bId]);
+    setStatus(null);
+  };
+  const check = () => {
+    const allFilled = slots.every(s => placements[s.id]);
+    if (!allFilled) {
+      setStatus("wrong");
+      return;
+    }
+    const allCorrect = slots.every(s => placements[s.id] === s.target);
+    if (allCorrect) setStatus("correct");else setStatus("wrong");
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-sky-800 mb-4 mt-8 drop-shadow-sm"
+  }, "🗺️ ", getText("title")), /*#__PURE__*/React.createElement("p", {
+    className: "text-xl font-bold text-sky-600 mb-6"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 lg:grid-cols-3 gap-4 p-6 bg-white rounded-3xl shadow-xl w-full max-w-4xl border-8 border-sky-200"
+  }, slots.map(slot => {
+    const occupantId = placements[slot.id];
+    const occupant = buildings.find(b => b.id === occupantId);
+    return /*#__PURE__*/React.createElement("div", {
+      key: slot.id,
+      className: `aspect-video rounded-xl border-4 border-dashed flex flex-col items-center justify-center relative transition-colors ${status === "correct" ? "border-green-400 bg-green-50" : occupant ? "border-sky-400 bg-white" : "border-slate-300 " + slot.color}`,
+      onDragOver: e => e.preventDefault(),
+      onDrop: e => {
+        e.preventDefault();
+        const bId = e.dataTransfer.getData("bId");
+        if (bId) handleDrop(bId, slot.id);
+      },
+      onClick: () => handleRemove(slot.id)
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "absolute top-2 left-2 text-xs font-black text-slate-400 uppercase tracking-widest"
+    }, getText(slot.target)), occupant ? /*#__PURE__*/React.createElement(motion.div, {
+      initial: {
+        scale: 0
+      },
+      animate: {
+        scale: 1
+      },
+      className: "text-center"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "text-6xl md:text-7xl mb-1"
+    }, occupant.icon), /*#__PURE__*/React.createElement("div", {
+      className: "font-bold text-slate-700"
+    }, getText(occupant.id))) : /*#__PURE__*/React.createElement("div", {
+      className: "text-4xl opacity-20"
+    }, "📍"));
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4 my-6"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: check,
+    className: "bg-sky-500 text-white px-8 py-3 rounded-full font-bold shadow-lg hover:bg-sky-600"
+  }, getText("check")), /*#__PURE__*/React.createElement("button", {
+    onClick: reset,
+    className: "bg-slate-200 text-slate-600 px-8 py-3 rounded-full font-bold shadow hover:bg-slate-300"
+  }, getText("reset"))), status && /*#__PURE__*/React.createElement("div", {
+    className: `text-2xl font-black mb-6 ${status === "correct" ? "text-green-600" : "text-red-500"}`
+  }, getText(status)), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-wrap gap-4 justify-center bg-white/60 p-6 rounded-3xl shadow-inner w-full max-w-4xl min-h-[140px]"
+  }, available.map(bId => {
+    const b = buildings.find(x => x.id === bId);
+    return /*#__PURE__*/React.createElement("div", {
+      key: b.id,
+      draggable: true,
+      onDragStart: e => e.dataTransfer.setData("bId", b.id),
+      className: "w-24 h-32 bg-white rounded-xl border-2 border-sky-300 flex flex-col items-center justify-center cursor-grab active:cursor-grabbing shadow-md hover:scale-105 transition-transform"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "text-5xl mb-2"
+    }, b.icon), /*#__PURE__*/React.createElement("div", {
+      className: "text-xs font-bold text-center"
+    }, getText(b.id)));
+  })));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - Greater Bay Area Map</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: #fdf2f8;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Greater Bay Area (GBA)",
+    zh: "大灣區 (GBA)",
+    ja: "グレーターベイエリア",
+    ko: "대만구 (GBA)",
+    es: "Gran Área de la Bahía",
+    de: "Greater Bay Area",
+    fi: "Suurlahtialue",
+    fr: "Grande Baie",
+    ar: "منطقة الخليج الكبرى",
+    it: "Grande Area della Baia"
+  },
+  instruction: {
+    en: "Find the City:",
+    zh: "找出城市：",
+    ja: "都市を見つけてください：",
+    ko: "도시를 찾으세요:",
+    es: "Encuentra la ciudad:",
+    de: "Finde die Stadt:",
+    fi: "Etsi kaupunki:",
+    fr: "Trouvez la ville :",
+    ar: "ابحث عن المدينة:",
+    it: "Trova la Città:"
+  },
+  hongkong: {
+    en: "Hong Kong",
+    zh: "香港",
+    ja: "香港",
+    ko: "홍콩"
+  },
+  macau: {
+    en: "Macau",
+    zh: "澳門",
+    ja: "マカオ",
+    ko: "마카오"
+  },
+  guangzhou: {
+    en: "Guangzhou",
+    zh: "廣州",
+    ja: "広州",
+    ko: "광저우"
+  },
+  shenzhen: {
+    en: "Shenzhen",
+    zh: "深圳",
+    ja: "深セン",
+    ko: "선전"
+  },
+  zhuhai: {
+    en: "Zhuhai",
+    zh: "珠海",
+    ja: "珠海",
+    ko: "주하이"
+  },
+  foshan: {
+    en: "Foshan",
+    zh: "佛山",
+    ja: "仏山",
+    ko: "포산"
+  },
+  dongguan: {
+    en: "Dongguan",
+    zh: "東莞",
+    ja: "東莞",
+    ko: "둥관"
+  },
+  correct: {
+    en: "Correct!",
+    zh: "正確！",
+    ja: "正解！",
+    ko: "정답!"
+  },
+  wrong: {
+    en: "Try Again",
+    zh: "再試一次",
+    ja: "もう一度",
+    ko: "다시 시도"
+  }
+};
+
+// Simplified GBA Locations (percentage on a 100x100 map)
+const cities = [{
+  id: "guangzhou",
+  x: 40,
+  y: 20
+}, {
+  id: "foshan",
+  x: 30,
+  y: 30
+}, {
+  id: "dongguan",
+  x: 60,
+  y: 30
+}, {
+  id: "shenzhen",
+  x: 65,
+  y: 45
+}, {
+  id: "hongkong",
+  x: 70,
+  y: 65
+}, {
+  id: "zhuhai",
+  x: 35,
+  y: 60
+}, {
+  id: "macau",
+  x: 30,
+  y: 65
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [targetIndex, setTargetIndex] = useState(0);
+  const [feedback, setFeedback] = useState(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+  const targetCity = cities[targetIndex];
+  const handleCityClick = city => {
+    if (feedback) return;
+    if (city.id === targetCity.id) {
+      setFeedback("correct");
+      setTimeout(() => {
+        setFeedback(null);
+        setTargetIndex((targetIndex + 1) % cities.length);
+      }, 1500);
+    } else {
+      setFeedback("wrong");
+      setTimeout(() => setFeedback(null), 500);
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-bold mb-4 text-purple-700"
+  }, getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white px-8 py-4 rounded-full shadow-lg mb-8 border-2 border-purple-200 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-sm text-purple-400 font-bold uppercase"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-black text-purple-800 animate-pulse"
+  }, getText(targetCity.id))), /*#__PURE__*/React.createElement("div", {
+    className: "relative w-full max-w-2xl aspect-square bg-blue-50 rounded-3xl border-4 border-blue-200 shadow-xl overflow-hidden cursor-crosshair"
+  }, /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 100 100",
+    className: "absolute inset-0 w-full h-full pointer-events-none"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M10,10 L90,10 L90,40 L80,50 L90,70 L70,80 L50,70 L40,80 L20,70 L10,50 Z",
+    fill: "#ecfdf5",
+    stroke: "#10b981",
+    strokeWidth: "0.5",
+    opacity: "0.5"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M40,20 L55,20 L60,40 L70,60 L50,60 L45,40 Z",
+    fill: "#eff6ff"
+  })), cities.map(city => /*#__PURE__*/React.createElement("button", {
+    key: city.id,
+    onClick: () => handleCityClick(city),
+    className: `absolute w-12 h-12 -ml-6 -mt-6 rounded-full border-4 shadow-lg transition-transform hover:scale-125
+                         ${feedback === "correct" && city.id === targetCity.id ? "bg-green-500 border-white animate-bounce" : "bg-purple-500 border-white hover:bg-purple-400"}
+                      `,
+    style: {
+      left: `${city.x}%`,
+      top: `${city.y}%`
+    }
+  })), feedback && /*#__PURE__*/React.createElement("div", {
+    className: `absolute inset-0 flex items-center justify-center bg-black/50 pointer-events-none`
+  }, /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      scale: 0
+    },
+    animate: {
+      scale: 1
+    },
+    className: `text-6xl font-black px-8 py-4 rounded-xl ${feedback === "correct" ? "bg-green-500 text-white" : "bg-red-500 text-white"}`
+  }, getText(feedback)))), /*#__PURE__*/React.createElement("div", {
+    className: "mt-8 text-center text-slate-400 text-xs"
+  }, "Guangdong-Hong Kong-Macao Greater Bay Area"));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

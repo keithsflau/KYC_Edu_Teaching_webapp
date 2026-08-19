@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Equation of a Plane | M2 Vectors</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+        overflow: hidden;
+      }
+      .glass {
+        background: rgba(15, 23, 42, 0.8);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      input[type="range"] {
+        -webkit-appearance: none;
+        background: transparent;
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        height: 12px;
+        width: 12px;
+        border-radius: 50%;
+        background: white;
+        margin-top: -4px;
+        cursor: pointer;
+      }
+      input[type="range"]::-webkit-slider-runnable-track {
+        width: 100%;
+        height: 4px;
+        background: #475569;
+        border-radius: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="absolute top-4 left-4 z-10 glass p-6 rounded-2xl max-w-sm">
+      <!-- Language Toggle -->
+      <div class="absolute top-4 right-4">
+        <button
+          id="lang-btn"
+          class="px-2 py-1 bg-slate-800 border border-slate-600 rounded-full text-[10px] font-bold text-emerald-400 hover:bg-slate-700 hover:text-white transition flex items-center gap-1"
+        >
+          <i class="fa-solid fa-language"></i>
+          <span id="lang-text">中文</span>
+        </button>
+      </div>
+
+      <h1
+        id="app-title"
+        class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400 mb-2"
+      >
+        Equation of Plane
+      </h1>
+      <p id="app-subtitle" class="text-xs text-slate-300 mb-4">r · n = d</p>
+
+      <div class="space-y-4">
+        <!-- Normal n -->
+        <div>
+          <h3
+            id="label-normal"
+            class="text-xs font-bold text-blue-400 uppercase mb-2"
+          >
+            Normal n
+          </h3>
+          <div class="flex gap-2">
+            <input
+              type="range"
+              min="-1"
+              max="1"
+              step="0.1"
+              id="nx"
+              value="0.5"
+              class="flex-1 accent-blue-500"
+            />
+            <input
+              type="range"
+              min="-1"
+              max="1"
+              step="0.1"
+              id="ny"
+              value="0.7"
+              class="flex-1 accent-blue-500"
+            />
+            <input
+              type="range"
+              min="-1"
+              max="1"
+              step="0.1"
+              id="nz"
+              value="0.3"
+              class="flex-1 accent-blue-500"
+            />
+          </div>
+        </div>
+        <!-- Point d -->
+        <div>
+          <h3
+            id="label-dist"
+            class="text-xs font-bold text-indigo-400 uppercase mb-2"
+          >
+            Distance d (Shift)
+          </h3>
+          <input
+            type="range"
+            min="-5"
+            max="5"
+            step="0.1"
+            id="dd"
+            value="-1.5"
+            class="w-full accent-indigo-500"
+          />
+        </div>
+
+        <div
+          class="p-4 bg-slate-900/50 rounded-xl font-mono text-xs border border-slate-700"
+        >
+          <div class="flex justify-between">
+            <span id="label-eq" class="text-slate-400">Equation:</span>
+            <span id="eq_text" class="text-white font-bold"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="canvas-container" class="w-screen h-screen"></div>
+
+    <script>
+      // Bilingual
+      const translations = {
+        en: {
+          title: "Equation of Plane",
+          subtitle: "r · n = d",
+          normal: "Normal n",
+          dist: "Distance d (Shift)",
+          eq: "Equation:",
+          langBtn: "中文",
+        },
+        zh: {
+          title: "平面方程式",
+          subtitle: "r · n = d",
+          normal: "法向量 n",
+          dist: "距離 d (平移)",
+          eq: "方程式:",
+          langBtn: "English",
+        },
+      };
+
+      let currentLang = "en";
+
+      function updateLanguage() {
+        const t = translations[currentLang];
+        document.getElementById("lang-text").textContent = t.langBtn;
+        document.getElementById("app-title").textContent = t.title;
+        document.getElementById("app-subtitle").textContent = t.subtitle;
+        document.getElementById("label-normal").textContent = t.normal;
+        document.getElementById("label-dist").textContent = t.dist;
+        document.getElementById("label-eq").textContent = t.eq;
+      }
+
+      document.getElementById("lang-btn").addEventListener("click", () => {
+        currentLang = currentLang === "en" ? "zh" : "en";
+        updateLanguage();
+      });
+
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0f172a);
+      const camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        100
+      );
+      camera.position.set(5, 5, 8);
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document
+        .getElementById("canvas-container")
+        .appendChild(renderer.domElement);
+
+      const controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+
+      scene.add(new THREE.GridHelper(10, 10, 0x334155, 0x1e293b));
+      scene.add(new THREE.AxesHelper(2)); // Origin
+      scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+      const dl = new THREE.DirectionalLight(0xffffff, 0.5);
+      dl.position.set(2, 5, 3);
+      scene.add(dl);
+
+      // Plane Object
+      const planeGeo = new THREE.PlaneGeometry(10, 10);
+      const planeMat = new THREE.MeshPhysicalMaterial({
+        color: 0x6366f1, // Indigo
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.5,
+        metalness: 0,
+        roughness: 0.1,
+        clearcoat: 1,
+      });
+      const plane = new THREE.Mesh(planeGeo, planeMat);
+      scene.add(plane);
+
+      // Normal Arrow
+      const arrowN = new THREE.ArrowHelper(
+        new THREE.Vector3(0, 1, 0),
+        new THREE.Vector3(0, 0, 0),
+        3,
+        0x3b82f6
+      );
+      scene.add(arrowN);
+
+      function update() {
+        const nx = parseFloat(document.getElementById("nx").value);
+        const ny = parseFloat(document.getElementById("ny").value);
+        const nz = parseFloat(document.getElementById("nz").value);
+        const d = parseFloat(document.getElementById("dd").value);
+
+        const n = new THREE.Vector3(nx, ny, nz);
+        if (n.lengthSq() < 0.01) n.set(0, 1, 0); // Fallback
+        n.normalize();
+
+        // HUD
+        document.getElementById("eq_text").innerText = `${nx.toFixed(
+          1
+        )}x + ${ny.toFixed(1)}y + ${nz.toFixed(1)}z = ${d}`;
+
+        // Orient plane
+        plane.lookAt(n);
+
+        // Position: Move along normal by distance d
+        // Equation is r . n = d.
+        // So distance from origin is d.
+        plane.position.copy(n.clone().multiplyScalar(d));
+
+        // Arrow position
+        arrowN.position.copy(plane.position);
+        arrowN.setDirection(n);
+      }
+
+      document
+        .querySelectorAll("input")
+        .forEach((i) => i.addEventListener("input", update));
+      update();
+      updateLanguage();
+
+      function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+      }
+      animate();
+
+      window.addEventListener("resize", () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+    </script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

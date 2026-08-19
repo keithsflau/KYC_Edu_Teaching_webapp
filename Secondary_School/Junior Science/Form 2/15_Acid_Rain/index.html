@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Acid Rain City | S2 Science</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #f8fafc;
+      }
+      .rain {
+        background: linear-gradient(
+          to bottom,
+          rgba(255, 255, 255, 0),
+          rgba(255, 255, 255, 0.5)
+        );
+        width: 2px;
+        height: 10px;
+        position: absolute;
+        animation: fall 0.5s linear infinite;
+      }
+      @keyframes fall {
+        from {
+          transform: translateY(-100px);
+        }
+        to {
+          transform: translateY(500px);
+        }
+      }
+      .smoke {
+        animation: smoke 3s infinite;
+        opacity: 0;
+      }
+      @keyframes smoke {
+        0% {
+          transform: translateY(0) scale(1);
+          opacity: 0.8;
+        }
+        100% {
+          transform: translateY(-50px) scale(2);
+          opacity: 0;
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-slate-50 text-slate-800 min-h-screen">
+    <div id="root"></div>
+
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const App = () => {
+  const [factories, setFactories] = useState(true); // Emitter
+  const [cars, setCars] = useState(true); // Emitter
+  const [scrubbers, setScrubbers] = useState(false); // Solution
+  const [converters, setConverters] = useState(false); // Solution
+
+  const [rainPh, setRainPh] = useState(5.6); // Normal rain
+  const [health, setHealth] = useState(100); // Environment health
+
+  // Logic
+  useEffect(() => {
+    const interval = setInterval(() => {
+      let pollution = 0;
+      if (factories && !scrubbers) pollution += 2;
+      if (cars && !converters) pollution += 1;
+
+      // Scrubbers/Converters reduce pollution but don't eliminate completely perhaps?
+      // Let's say Scrubbers fix Factories, Converters fix Cars.
+      if (factories && scrubbers) pollution += 0.2;
+      if (cars && converters) pollution += 0.2;
+
+      // Update pH
+      // Base pH 6.0 in perfect world.
+      // Pollution lowers it.
+      const targetPh = Math.max(3.0, 6.0 - pollution);
+      setRainPh(prev => prev + (targetPh - prev) * 0.1);
+
+      // Update Health
+      setHealth(prev => {
+        if (rainPh < 4.5) return Math.max(0, prev - 1);
+        if (rainPh > 5.5) return Math.min(100, prev + 1);
+        return prev;
+      });
+    }, 500);
+    return () => clearInterval(interval);
+  }, [factories, cars, scrubbers, converters, rainPh]);
+
+  // Visuals based on Health
+  const treeColor = health > 60 ? "text-green-600" : health > 30 ? "text-yellow-600" : "text-stone-500";
+  const statueOpacity = health / 100;
+  const fishCount = Math.floor(health / 20);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "p-8 max-w-6xl mx-auto min-h-screen flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("header", {
+    className: "text-center mb-10 w-full"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-slate-500 font-bold uppercase text-xs tracking-widest"
+  }, "Form 2 Science • Unit 9"), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-slate-800 mb-2"
+  }, "Acid Rain Simulator"), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-500"
+  }, "Managing Pollution: Balancing Industry and Environment.")), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col lg:flex-row gap-8 w-full"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full lg:w-2/3 aspect-video bg-slate-300 rounded-3xl shadow-xl overflow-hidden relative border-4 border-slate-400"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: `absolute inset-0 transition-colors duration-1000 ${rainPh < 4.5 ? "bg-yellow-900/30" : "bg-sky-300"}`
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 pointer-events-none opacity-50"
+  }, Array.from({
+    length: 20
+  }).map((_, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: `rain bg-white`,
+    style: {
+      left: `${i * 5}%`,
+      animationDuration: `${0.5 + Math.random()}s`,
+      animationDelay: `${Math.random()}s`
+    }
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-20 left-10 text-9xl text-slate-700"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-industry"
+  }), factories && /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-0 right-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: `text-4xl ${scrubbers ? "text-white/50" : "text-stone-800"} smoke`
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-smog"
+  })))), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-10 inset-x-0 h-10 bg-slate-600 flex items-center overflow-hidden"
+  }, cars && /*#__PURE__*/React.createElement("div", {
+    className: "absolute animate-slide-right text-3xl text-red-500 left-0"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-car-side"
+  }), !converters && /*#__PURE__*/React.createElement("span", {
+    className: "absolute -right-4 top-0 text-sm text-stone-600 animate-pulse"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-smog"
+  }))), /*#__PURE__*/React.createElement("style", null, `@keyframes slide-right { from { left: -10%; } to { left: 110%; } } .animate-slide-right { animation: slide-right 5s linear infinite; }`)), /*#__PURE__*/React.createElement("div", {
+    className: `absolute bottom-20 right-10 text-8xl ${treeColor} transition-colors duration-1000`
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-tree"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: `absolute bottom-24 right-32 text-6xl ${treeColor} transition-colors duration-1000`
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-tree"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-20 left-1/3 text-6xl text-stone-400 transition-opacity duration-1000",
+    style: {
+      opacity: 0.3 + statueOpacity * 0.7
+    }
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-monument"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-0 right-0 w-1/3 h-20 bg-blue-400 opacity-80 rounded-tl-full overflow-hidden"
+  }, Array.from({
+    length: fishCount
+  }).map((_, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "absolute text-orange-400 text-xl animate-pulse",
+    style: {
+      top: `${Math.random() * 80}%`,
+      left: `${Math.random() * 80}%`
+    }
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-fish"
+  }))))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full lg:w-1/3 space-y-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-6 rounded-3xl shadow-md border border-slate-100 grid grid-cols-2 gap-4"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h3", {
+    className: "font-bold text-slate-400 uppercase text-xs tracking-widest"
+  }, "Rain pH"), /*#__PURE__*/React.createElement("div", {
+    className: `text-4xl font-extrabold ${rainPh < 5 ? "text-red-500" : "text-green-500"}`
+  }, rainPh.toFixed(1))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h3", {
+    className: "font-bold text-slate-400 uppercase text-xs tracking-widest"
+  }, "Eco Health"), /*#__PURE__*/React.createElement("div", {
+    className: `text-4xl font-extrabold ${health < 50 ? "text-red-500" : "text-green-500"}`
+  }, Math.round(health), "%"))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-6 rounded-3xl shadow-md border border-slate-100 space-y-4"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "font-bold text-slate-700"
+  }, "Pollution Sources"), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between items-center p-3 bg-slate-50 rounded-xl"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "font-bold"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-industry mr-2"
+  }), " Factories (SO₂)"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setFactories(!factories),
+    className: `w-12 h-6 rounded-full transition-colors relative ${factories ? "bg-red-500" : "bg-slate-300"}`
+  }, /*#__PURE__*/React.createElement("div", {
+    className: `absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${factories ? "right-1" : "left-1"}`
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between items-center p-3 bg-slate-50 rounded-xl"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "font-bold"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-car mr-2"
+  }), " Cars (NOₓ)"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setCars(!cars),
+    className: `w-12 h-6 rounded-full transition-colors relative ${cars ? "bg-red-500" : "bg-slate-300"}`
+  }, /*#__PURE__*/React.createElement("div", {
+    className: `absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${cars ? "right-1" : "left-1"}`
+  })))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-6 rounded-3xl shadow-md border border-blue-100 space-y-4"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "font-bold text-slate-700"
+  }, "Solutions"), /*#__PURE__*/React.createElement("div", {
+    className: `flex justify-between items-center p-3 rounded-xl border ${scrubbers ? "bg-green-50 border-green-200" : "bg-slate-50 border-transparent"}`
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "font-bold text-sm"
+  }, "Install Scrubbers (Factories)"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setScrubbers(!scrubbers),
+    className: `px-3 py-1 rounded text-xs font-bold ${scrubbers ? "bg-green-500 text-white" : "bg-slate-200 text-slate-500"}`
+  }, scrubbers ? "INSTALLED" : "OFF")), /*#__PURE__*/React.createElement("div", {
+    className: `flex justify-between items-center p-3 rounded-xl border ${converters ? "bg-green-50 border-green-200" : "bg-slate-50 border-transparent"}`
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "font-bold text-sm"
+  }, "Catalytic Converters (Cars)"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setConverters(!converters),
+    className: `px-3 py-1 rounded text-xs font-bold ${converters ? "bg-green-500 text-white" : "bg-slate-200 text-slate-500"}`
+  }, converters ? "INSTALLED" : "OFF"))), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs text-slate-400 p-2"
+  }, "* Sulphur Dioxide (SO2) and Nitrogen Oxides (NOx) dissolve in rainwater to form Acid Rain."))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

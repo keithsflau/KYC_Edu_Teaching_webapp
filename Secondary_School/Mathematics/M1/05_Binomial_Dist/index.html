@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Binomial Distribution | M1 Statistics</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <script
+      type="text/javascript"
+      id="MathJax-script"
+      async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+    ></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+      }
+      .glass {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <div id="root" class="flex-grow flex flex-col"></div>
+    <script>
+const {
+  useState,
+  useEffect,
+  useMemo
+} = React;
+const translations = {
+  en: {
+    unit: "Module 1: Statistics",
+    title: "Binomial Distribution",
+    desc: "Visualize P(X=k) for X ~ B(n, p).",
+    trials: "Number of Trials (n)",
+    prob: "Probability of Success (p)",
+    findP: "Find P(X = k)",
+    mean: "Mean",
+    variance: "Variance",
+    result: "P(X = k)",
+    langBtn: "中文"
+  },
+  zh: {
+    unit: "單元一：統計學",
+    title: "二項分布",
+    desc: "視像化 X ~ B(n, p) 的 P(X=k)。",
+    trials: "試驗次數 (n)",
+    prob: "成功概率 (p)",
+    findP: "求 P(X = k)",
+    mean: "平均值",
+    variance: "方差",
+    result: "P(X = k)",
+    langBtn: "English"
+  }
+};
+// Multiplicative C(n,k) — avoids factorial overflow past 20!
+const comb = (n, k) => {
+  if (k < 0 || k > n) return 0;
+  k = Math.min(k, n - k);
+  let result = 1;
+  for (let i = 1; i <= k; i++) {
+    result = result * (n - k + i) / i;
+  }
+  return result;
+};
+const App = () => {
+  const [lang, setLang] = useState("en");
+  const t = translations[lang];
+  const [n, setN] = useState(10);
+  const [p, setP] = useState(0.5);
+  const [k, setK] = useState(5);
+
+  // Calculate P(X = k) for all k from 0 to n
+  const distribution = useMemo(() => {
+    const dist = [];
+    for (let i = 0; i <= n; i++) {
+      const prob = comb(n, i) * Math.pow(p, i) * Math.pow(1 - p, n - i);
+      dist.push({
+        k: i,
+        prob
+      });
+    }
+    return dist;
+  }, [n, p]);
+  const mean = n * p;
+  const variance = n * p * (1 - p);
+  const selectedProb = distribution[k]?.prob || 0;
+
+  // Bar Chart
+  const w = 600,
+    h = 300;
+  const barWidth = Math.min(40, (w - 80) / (n + 1));
+  const maxProb = Math.max(...distribution.map(d => d.prob));
+  useEffect(() => {
+    if (window.MathJax) window.MathJax.typesetPromise();
+  }, [n, p, k, lang]);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "flex-grow flex flex-col items-center justify-center p-8 select-none"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 right-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLang(l => l === "en" ? "zh" : "en"),
+    className: "px-3 py-1 bg-slate-800 border border-slate-600 rounded-full text-xs font-bold text-emerald-400 hover:bg-slate-700 hover:text-white transition flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-language"
+  }), t.langBtn)), /*#__PURE__*/React.createElement("header", {
+    className: "mb-8 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-emerald-500 font-bold uppercase tracking-widest text-xs mb-2"
+  }, t.unit), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-white mb-2"
+  }, t.title), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-400 font-mono text-lg"
+  }, t.desc)), /*#__PURE__*/React.createElement("div", {
+    className: "glass p-6 rounded-3xl w-full max-w-5xl mb-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-900 p-4 rounded-xl mb-6 overflow-x-auto border border-slate-700"
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: w,
+    height: h,
+    className: "mx-auto"
+  }, /*#__PURE__*/React.createElement("line", {
+    x1: "40",
+    y1: "20",
+    x2: "40",
+    y2: h - 40,
+    stroke: "#475569",
+    strokeWidth: "1"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "40",
+    y1: h - 40,
+    x2: w - 20,
+    y2: h - 40,
+    stroke: "#475569",
+    strokeWidth: "1"
+  }), distribution.map((d, i) => {
+    const barH = maxProb > 0 ? d.prob / maxProb * (h - 80) : 0;
+    const x = 50 + i * barWidth + i * 2;
+    const y = h - 40 - barH;
+    const isSelected = d.k === k;
+    return /*#__PURE__*/React.createElement("g", {
+      key: i,
+      onClick: () => setK(d.k),
+      className: "cursor-pointer"
+    }, /*#__PURE__*/React.createElement("rect", {
+      x: x,
+      y: y,
+      width: barWidth - 2,
+      height: barH,
+      fill: isSelected ? "#6366f1" : "#3b82f6",
+      opacity: isSelected ? 1 : 0.4,
+      rx: "2",
+      className: "transition-all duration-200 hover:opacity-80"
+    }), /*#__PURE__*/React.createElement("text", {
+      x: x + barWidth / 2 - 1,
+      y: h - 25,
+      textAnchor: "middle",
+      className: "text-[10px] fill-slate-500"
+    }, d.k), isSelected && /*#__PURE__*/React.createElement("text", {
+      x: x + barWidth / 2 - 1,
+      y: y - 5,
+      textAnchor: "middle",
+      className: "text-[10px] fill-white font-bold"
+    }, d.prob.toFixed(2)));
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "grid md:grid-cols-3 gap-6 mb-6 px-4"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "text-xs font-bold text-slate-400 block mb-2 uppercase"
+  }, t.trials), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "1",
+    max: "20",
+    value: n,
+    onChange: e => {
+      setN(Number(e.target.value));
+      setK(Math.min(k, Number(e.target.value)));
+    },
+    className: "w-full accent-blue-500"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-right font-mono text-blue-400 font-bold"
+  }, n)), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "text-xs font-bold text-slate-400 block mb-2 uppercase"
+  }, t.prob), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "0.01",
+    max: "0.99",
+    step: "0.01",
+    value: p,
+    onChange: e => setP(Number(e.target.value)),
+    className: "w-full accent-blue-500"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-right font-mono text-blue-400 font-bold"
+  }, p.toFixed(2))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "text-xs font-bold text-slate-400 block mb-2 uppercase"
+  }, t.findP), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "0",
+    max: n,
+    value: k,
+    onChange: e => setK(Number(e.target.value)),
+    className: "w-full accent-indigo-500"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-right font-mono text-indigo-400 font-bold"
+  }, "k = ", k))), /*#__PURE__*/React.createElement("div", {
+    className: "grid md:grid-cols-3 gap-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass p-4 rounded-xl text-center border-t-2 border-blue-500"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold text-blue-400 uppercase"
+  }, t.mean, " (μ = np)"), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-bold text-white font-mono"
+  }, mean.toFixed(2))), /*#__PURE__*/React.createElement("div", {
+    className: "glass p-4 rounded-xl text-center border-t-2 border-purple-500"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold text-purple-400 uppercase"
+  }, t.variance, " (σ² = npq)"), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-bold text-white font-mono"
+  }, variance.toFixed(2))), /*#__PURE__*/React.createElement("div", {
+    className: "glass p-4 rounded-xl text-center border-t-2 border-indigo-500"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold text-indigo-400 uppercase"
+  }, t.result), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-bold text-white font-mono"
+  }, (selectedProb * 100).toFixed(2), "%")))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小六數學：圓的各部分 | Parts of a Circle</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Parts of a Circle",
+    zh: "圓的各部分",
+    ja: "円の各部",
+    ko: "원의 각 부분",
+    es: "Partes de un Círculo",
+    de: "Teile eines Kreises",
+    fi: "Ympyrän osat",
+    fr: "Parties d'un cercle",
+    ar: "أجزاء الدائرة",
+    it: "Parti del Cerchio"
+  },
+  center: {
+    en: "Center",
+    zh: "圓心",
+    ja: "中心",
+    ko: "중심",
+    es: "Centro",
+    de: "Mittelpunkt",
+    fi: "Keskipiste",
+    fr: "Centre",
+    ar: "المركز",
+    it: "Centro"
+  },
+  radius: {
+    en: "Radius",
+    zh: "半徑",
+    ja: "半径",
+    ko: "반지름",
+    es: "Radio",
+    de: "Radius",
+    fi: "Säde",
+    fr: "Rayon",
+    ar: "نصف القطر",
+    it: "Raggio"
+  },
+  diameter: {
+    en: "Diameter",
+    zh: "直徑",
+    ja: "直径",
+    ko: "지름",
+    es: "Diámetro",
+    de: "Durchmesser",
+    fi: "Halkaisija",
+    fr: "Diamètre",
+    ar: "القطر",
+    it: "Diametro"
+  },
+  circumference: {
+    en: "Circumference",
+    zh: "圓周",
+    ja: "円周",
+    ko: "원주",
+    es: "Circunferencia",
+    de: "Umfang",
+    fi: "Kehä",
+    fr: "Circonférence",
+    ar: "المحيط",
+    it: "Circonferenza"
+  },
+  desc_center: {
+    en: "The exact middle point.",
+    zh: "圓的正中心點。",
+    ja: "円の中心点。",
+    ko: "정확한 중심점.",
+    es: "El punto central exacto.",
+    de: "Der genaue Mittelpunkt.",
+    fi: "Tarkka keskipiste.",
+    fr: "Le point central exact.",
+    ar: "نقطة المنتصف بالضبط.",
+    it: "Il punto centrale esatto."
+  },
+  desc_radius: {
+    en: "Distance from center to edge.",
+    zh: "由圓心至圓周的距離。",
+    ja: "中心から端までの距離。",
+    ko: "중심에서 가장자리까지의 거리.",
+    es: "Distancia del centro al borde.",
+    de: "Abstand vom Zentrum zum Rand.",
+    fi: "Etäisyys keskipisteestä reunaan.",
+    fr: "Distance du centre au bord.",
+    ar: "المشافة من المركز إلى الحافة.",
+    it: "Distanza dal centro al bordo."
+  },
+  desc_diameter: {
+    en: "Line through center, width of circle.",
+    zh: "穿過圓心的直線，圓的寬度。",
+    ja: "中心を通る線、円の幅。",
+    ko: "중심을 지나는 선, 원의 너비.",
+    es: "Línea a través del centro, ancho del círculo.",
+    de: "Linie durch die Mitte, Breite des Kreises.",
+    fi: "Viiva keskipisteen läpi, ympyrän leveys.",
+    fr: "Ligne traversant le centre, largeur du cercle.",
+    ar: "خط يمر عبر المركز، عرض الدائرة.",
+    it: "Linea attraverso il centro, larghezza del cerchio."
+  },
+  desc_circumference: {
+    en: "The perimeter or distance around.",
+    zh: "圓的周界。",
+    ja: "周囲の長さ。",
+    ko: "둘레 또는 주변 거리.",
+    es: "El perímetro o distancia alrededor.",
+    de: "Der Umfang oder Abstand herum.",
+    fi: "Ympärysmitta tai matka ympäri.",
+    fr: "Le périmètre ou la distance autour.",
+    ar: "المحيط أو المسافة حول.",
+    it: "Il perimetro o distanza intorno."
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [active, setActive] = useState(null); // 'center', 'radius', 'diameter', 'circumference'
+
+  const parts = ["center", "radius", "diameter", "circumference"];
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4 font-sans bg-slate-900 text-white"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-5xl flex justify-between items-center mb-10"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-black text-amber-400 drop-shadow-[0_0_15px_rgba(251,191,36,0.5)]"
+  }, "⭕ ", getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "flex bg-slate-800/80 p-1.5 rounded-xl border border-white/10 flex-wrap justify-end gap-1 max-w-[50%]"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-amber-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white hover:bg-white/5"}`
+  }, l)))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-12 items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-center relative"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "relative w-80 h-80 md:w-96 md:h-96"
+  }, /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 400 400",
+    className: "w-full h-full drop-shadow-2xl"
+  }, /*#__PURE__*/React.createElement("circle", {
+    cx: "200",
+    cy: "200",
+    r: "150",
+    fill: "none",
+    stroke: "#fbbf24",
+    strokeWidth: "1",
+    opacity: "0.1",
+    className: "animate-pulse"
+  }), /*#__PURE__*/React.createElement(motion.circle, {
+    cx: "200",
+    cy: "200",
+    r: "160",
+    fill: "none",
+    stroke: active === "circumference" ? "#fbbf24" : "#475569",
+    strokeWidth: active === "circumference" ? 8 : 4,
+    className: "transition-colors duration-300 cursor-pointer",
+    onClick: () => setActive("circumference"),
+    whileHover: {
+      strokeWidth: 10
+    }
+  }), /*#__PURE__*/React.createElement(motion.line, {
+    x1: "86",
+    y1: "286",
+    x2: "314",
+    y2: "114" // approx 45 deg through center (200,200) length 320
+    ,
+    stroke: active === "diameter" ? "#f472b6" : "#475569",
+    strokeWidth: active === "diameter" ? 8 : 4,
+    className: "transition-colors duration-300 cursor-pointer",
+    onClick: () => setActive("diameter"),
+    whileHover: {
+      strokeWidth: 10
+    }
+  }), /*#__PURE__*/React.createElement(motion.line, {
+    x1: "200",
+    y1: "200",
+    x2: "360",
+    y2: "200",
+    stroke: active === "radius" ? "#22d3ee" : "#475569",
+    strokeWidth: active === "radius" ? 8 : 4,
+    className: "transition-colors duration-300 cursor-pointer",
+    onClick: () => setActive("radius"),
+    whileHover: {
+      strokeWidth: 10
+    }
+  }), /*#__PURE__*/React.createElement(motion.circle, {
+    cx: "200",
+    cy: "200",
+    r: active === "center" ? 12 : 8,
+    fill: active === "center" ? "#ffffff" : "#94a3b8",
+    className: "cursor-pointer transition-colors duration-300",
+    onClick: () => setActive("center"),
+    whileHover: {
+      scale: 1.5
+    }
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "200",
+    y: "380",
+    textAnchor: "middle",
+    fill: "#94a3b8",
+    fontSize: "12"
+  }, "Click parts to explore")))), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col gap-4"
+  }, parts.map(part => /*#__PURE__*/React.createElement(motion.button, {
+    key: part,
+    onClick: () => setActive(part),
+    whileHover: {
+      scale: 1.02
+    },
+    whileTap: {
+      scale: 0.98
+    },
+    className: `p-6 rounded-2xl border-2 text-left transition-all ${active === part ? "bg-slate-800 border-white/50 shadow-[0_0_20px_rgba(255,255,255,0.1)]" : "bg-slate-800/30 border-white/5 hover:bg-slate-800/50"}`
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-between pointer-events-none"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h3", {
+    className: `text-xl font-bold uppercase mb-1 ${part === "center" ? "text-white" : part === "radius" ? "text-cyan-400" : part === "diameter" ? "text-pink-400" : "text-amber-400"}`
+  }, getText(part, lang)), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-400 text-sm"
+  }, getText(`desc_${part}`, lang))), active === part && /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl"
+  }, "👈")))))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小三數學：3D 圖形轉轉看 | 3D Shape Rotator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        margin: 0;
+        background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+        font-family: "Fredoka", sans-serif;
+      }
+      .scene {
+        width: 300px;
+        height: 300px;
+        perspective: 1000px;
+        margin: 0 auto;
+      }
+      .cube {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        transform-style: preserve-3d;
+        transition: transform 0.1s;
+      }
+      .cube-face {
+        position: absolute;
+        width: 200px;
+        height: 200px;
+        left: 50px;
+        top: 50px;
+        border: 4px solid rgba(255, 255, 255, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 40px;
+        font-weight: bold;
+        color: white;
+        opacity: 0.9;
+      }
+      .front {
+        transform: rotateY(0deg) translateZ(100px);
+        background: rgba(239, 68, 68, 0.6);
+      }
+      .right {
+        transform: rotateY(90deg) translateZ(100px);
+        background: rgba(59, 130, 246, 0.6);
+      }
+      .back {
+        transform: rotateY(180deg) translateZ(100px);
+        background: rgba(16, 185, 129, 0.6);
+      }
+      .left {
+        transform: rotateY(-90deg) translateZ(100px);
+        background: rgba(245, 158, 11, 0.6);
+      }
+      .top {
+        transform: rotateX(90deg) translateZ(100px);
+        background: rgba(139, 92, 246, 0.6);
+      }
+      .bottom {
+        transform: rotateX(-90deg) translateZ(100px);
+        background: rgba(236, 72, 153, 0.6);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useRef,
+  useEffect
+} = React;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "3D Shape Rotator",
+    zh: "立體圖形轉轉看",
+    ja: "3D形状ローテーター",
+    ko: "3D 모양 회전",
+    es: "Rotador de formas 3D",
+    de: "3D-Form-Rotator",
+    fi: "3D-muodon pyörittäjä",
+    fr: "Rotateur de formes 3D",
+    ar: "مدور الأشكال ثلاثية الأبعاد",
+    it: "Rotatore forme 3D"
+  },
+  features: {
+    en: "Shape Features",
+    zh: "圖形特徵",
+    ja: "形状の特徴",
+    ko: "모양 특징",
+    es: "Características de la forma",
+    de: "Formeigenschaften",
+    fi: "Muodon ominaisuudet",
+    fr: "Caractéristiques de la forme",
+    ar: "ميزات الشكل",
+    it: "Caratteristiche della forma"
+  },
+  name: {
+    en: "Name",
+    zh: "名稱",
+    ja: "名前",
+    ko: "이름",
+    es: "Nombre",
+    de: "Name",
+    fi: "Nimi",
+    fr: "Nom",
+    ar: "الاسم",
+    it: "Nome"
+  },
+  faces: {
+    en: "Faces",
+    zh: "面",
+    ja: "面",
+    ko: "면",
+    es: "Caras",
+    de: "Flächen",
+    fi: "Tasot",
+    fr: "Faces",
+    ar: "أوجه",
+    it: "Facce"
+  },
+  edges: {
+    en: "Edges",
+    zh: "邊",
+    ja: "辺",
+    ko: "모서리",
+    es: "Bordes",
+    de: "Kanten",
+    fi: "Reunat",
+    fr: "Arêtes",
+    ar: "حواف",
+    it: "Spigoli"
+  },
+  vertices: {
+    en: "Vertices",
+    zh: "角",
+    ja: "頂点",
+    ko: "꼭짓점",
+    es: "Vértices",
+    de: "Ecken",
+    fi: "Kärjet",
+    fr: "Sommets",
+    ar: "رؤوس",
+    it: "Vertici"
+  },
+  cube: {
+    en: "Cube",
+    zh: "正方體",
+    ja: "立方体",
+    ko: "정육면체",
+    es: "Cubo",
+    de: "Würfel",
+    fi: "Kuutio",
+    fr: "Cube",
+    ar: "مكعب",
+    it: "Cubo"
+  },
+  cuboid: {
+    en: "Cuboid",
+    zh: "長方體",
+    ja: "直方体",
+    ko: "직육면체",
+    es: "Cuboide",
+    de: "Quader",
+    fi: "Suorakulmainen särmiö",
+    fr: "Cuboïde",
+    ar: "متوازي المستطيلات",
+    it: "Cuboide"
+  },
+  rotateX: {
+    en: "Rotate X Axis",
+    zh: "旋轉 X 軸",
+    ja: "X軸回転",
+    ko: "X축 회전",
+    es: "Rotar eje X",
+    de: "X-Achse drehen",
+    fi: "Kierrä X-akselia",
+    fr: "Pivoter l'axe X",
+    ar: "تدوير محور X",
+    it: "Ruota asse X"
+  },
+  faceCnt: {
+    en: "6 Flat Faces",
+    zh: "6 個平面",
+    ja: "6 平面",
+    ko: "6 평면",
+    es: "6 Caras planas",
+    de: "6 flache Flächen",
+    fi: "6 tasaista pintaa",
+    fr: "6 Faces planes",
+    ar: "6 وجوه مسطحة",
+    it: "6 Facce piane"
+  },
+  edgeCnt: {
+    en: "12 Edges",
+    zh: "12 條",
+    ja: "12 辺",
+    ko: "12 개",
+    es: "12 Bordes",
+    de: "12 Kanten",
+    fi: "12 reunaa",
+    fr: "12 Arêtes",
+    ar: "12 حافة",
+    it: "12 Spigoli"
+  },
+  vertCnt: {
+    en: "8 Vertices",
+    zh: "8 個",
+    ja: "8 頂点",
+    ko: "8 개",
+    es: "8 Vértices",
+    de: "8 Ecken",
+    fi: "8 kärkeä",
+    fr: "8 Sommets",
+    ar: "8 رؤوس",
+    it: "8 Vertici"
+  },
+  front: {
+    en: "Front",
+    zh: "前",
+    ja: "前",
+    ko: "앞",
+    es: "Frente",
+    de: "Vorne",
+    fi: "Etu",
+    fr: "Devant",
+    ar: "أمام",
+    it: "Fronte"
+  },
+  back: {
+    en: "Back",
+    zh: "後",
+    ja: "後",
+    ko: "뒤",
+    es: "Atrás",
+    de: "Hinten",
+    fi: "Taka",
+    fr: "Derrière",
+    ar: "خلف",
+    it: "Retro"
+  },
+  left: {
+    en: "Left",
+    zh: "左",
+    ja: "左",
+    ko: "왼쪽",
+    es: "Izquierda",
+    de: "Links",
+    fi: "Vasen",
+    fr: "Gauche",
+    ar: "يسار",
+    it: "Sinistra"
+  },
+  right: {
+    en: "Right",
+    zh: "右",
+    ja: "右",
+    ko: "오른쪽",
+    es: "Derecha",
+    de: "Rechts",
+    fi: "Oikea",
+    fr: "Droite",
+    ar: "يمين",
+    it: "Destra"
+  },
+  top: {
+    en: "Top",
+    zh: "上",
+    ja: "上",
+    ko: "위",
+    es: "Arriba",
+    de: "Oben",
+    fi: "Ylä",
+    fr: "Haut",
+    ar: "أعلى",
+    it: "Alto"
+  },
+  bottom: {
+    en: "Bottom",
+    zh: "下",
+    ja: "下",
+    ko: "아래",
+    es: "Abajo",
+    de: "Unten",
+    fi: "Ala",
+    fr: "Bas",
+    ar: "أسفل",
+    it: "Basso"
+  }
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [rotX, setRotX] = useState(-20);
+  const [rotY, setRotY] = useState(45);
+  const [shape, setShape] = useState("cube");
+
+  // Auto rotate effect
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRotY(y => (y + 0.5) % 360);
+    }, 50);
+    return () => clearInterval(interval);
+  }, []);
+  const getText = key => t[key][lang] || t[key]["en"];
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center justify-center p-8 text-white relative"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-bold mb-8 mt-8 text-indigo-300 text-center"
+  }, getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/10 backdrop-blur-lg rounded-3xl p-12 border border-white/20 shadow-2xl w-full max-w-4xl flex flex-col md:flex-row items-center gap-12"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 flex justify-center items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "scene"
+  }, shape === "cube" && /*#__PURE__*/React.createElement("div", {
+    className: "cube",
+    style: {
+      transform: `rotateX(${rotX}deg) rotateY(${rotY}deg)`
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "cube-face front"
+  }, getText("front")), /*#__PURE__*/React.createElement("div", {
+    className: "cube-face back"
+  }, getText("back")), /*#__PURE__*/React.createElement("div", {
+    className: "cube-face right"
+  }, getText("right")), /*#__PURE__*/React.createElement("div", {
+    className: "cube-face left"
+  }, getText("left")), /*#__PURE__*/React.createElement("div", {
+    className: "cube-face top"
+  }, getText("top")), /*#__PURE__*/React.createElement("div", {
+    className: "cube-face bottom"
+  }, getText("bottom"))), shape === "prism" && /*#__PURE__*/React.createElement("div", {
+    className: "cube",
+    style: {
+      transform: `rotateX(${rotX}deg) rotateY(${rotY}deg)`
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "cube-face front",
+    style: {
+      height: "300px",
+      top: "0",
+      background: "rgba(59, 130, 246, 0.6)"
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "cube-face back",
+    style: {
+      height: "300px",
+      top: "0",
+      background: "rgba(59, 130, 246, 0.6)"
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "cube-face right",
+    style: {
+      height: "300px",
+      top: "0",
+      background: "rgba(16, 185, 129, 0.6)"
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "cube-face left",
+    style: {
+      height: "300px",
+      top: "0",
+      background: "rgba(16, 185, 129, 0.6)"
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "cube-face top",
+    style: {
+      transform: "rotateX(90deg) translateZ(150px)",
+      background: "rgba(239, 68, 68, 0.6)"
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "cube-face bottom",
+    style: {
+      transform: "rotateX(-90deg) translateZ(150px)",
+      background: "rgba(239, 68, 68, 0.6)"
+    }
+  })))), /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 space-y-6 w-full"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "text-3xl font-bold mb-4 border-b border-indigo-400 pb-2"
+  }, getText("features")), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-4 text-lg"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between bg-indigo-900/50 p-4 rounded-xl"
+  }, /*#__PURE__*/React.createElement("span", null, getText("name")), /*#__PURE__*/React.createElement("span", {
+    className: "font-bold text-yellow-400"
+  }, shape === "cube" ? getText("cube") : getText("cuboid"))), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between bg-indigo-900/50 p-4 rounded-xl"
+  }, /*#__PURE__*/React.createElement("span", null, getText("faces")), /*#__PURE__*/React.createElement("span", {
+    className: "font-bold text-pink-400"
+  }, getText("faceCnt"))), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between bg-indigo-900/50 p-4 rounded-xl"
+  }, /*#__PURE__*/React.createElement("span", null, getText("edges")), /*#__PURE__*/React.createElement("span", {
+    className: "font-bold text-green-400"
+  }, getText("edgeCnt"))), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between bg-indigo-900/50 p-4 rounded-xl"
+  }, /*#__PURE__*/React.createElement("span", null, getText("vertices")), /*#__PURE__*/React.createElement("span", {
+    className: "font-bold text-cyan-400"
+  }, getText("vertCnt")))), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4 pt-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setShape("cube"),
+    className: `flex-1 py-3 rounded-xl font-bold transition-all ${shape === "cube" ? "bg-indigo-500 shadow-lg" : "bg-indigo-900/50 hover:bg-indigo-800"}`
+  }, getText("cube")), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setShape("prism"),
+    className: `flex-1 py-3 rounded-xl font-bold transition-all ${shape === "prism" ? "bg-indigo-500 shadow-lg" : "bg-indigo-900/50 hover:bg-indigo-800"}`
+  }, getText("cuboid"))), /*#__PURE__*/React.createElement("div", {
+    className: "mt-4"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "text-sm font-bold text-indigo-300"
+  }, getText("rotateX")), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "-90",
+    max: "90",
+    value: rotX,
+    onChange: e => setRotX(parseInt(e.target.value, 10)),
+    className: "w-full h-2 bg-indigo-900 rounded-lg appearance-none cursor-pointer"
+  })))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

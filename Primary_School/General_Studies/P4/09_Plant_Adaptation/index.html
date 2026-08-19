@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - Plant Adaptation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: #fef3c7;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Plant Adaptation",
+    zh: "植物的適應",
+    ja: "植物の適応",
+    ko: "식물의 적응",
+    es: "Adaptación de las plantas",
+    de: "Pflanzenanpassung",
+    fi: "Kasvien sopeutuminen",
+    fr: "Adaptation des plantes",
+    ar: "تكيف النبات",
+    it: "Adattamento delle Piante"
+  },
+  instruction: {
+    en: "Match the feature to the environment!",
+    zh: "將特徵配對到正確的環境！",
+    ja: "特徴を環境に合わせてください！",
+    ko: "특징을 환경에 맞추세요!",
+    es: "¡Combina la característica con el entorno!",
+    de: "Ordne das Merkmal der Umgebung zu!",
+    fi: "Yhdistä ominaisuus ympäristöön!",
+    fr: "Associez la caractéristique à l'environnement !",
+    ar: "طابق الميزة بالبيئة!",
+    it: "Abbina la caratteristica all'ambiente!"
+  },
+  correct: {
+    en: "Correct!",
+    zh: "答對了！",
+    ja: "正解！",
+    ko: "정답!",
+    es: "¡Correcto!",
+    de: "Richtig!",
+    fi: "Oikein!",
+    fr: "Correct !",
+    ar: "صحيح!",
+    it: "Corretto!"
+  },
+  desert: {
+    en: "Desert (Dry)",
+    zh: "沙漠 (乾燥)",
+    ja: "砂漠 (乾燥)",
+    ko: "사막 (건조)",
+    es: "Desierto (Seco)",
+    de: "Wüste (Trocken)",
+    fi: "Aavikko (Kuiva)",
+    fr: "Désert (Sec)",
+    ar: "صحراء (جاف)",
+    it: "Deserto (Secco)"
+  },
+  rainforest: {
+    en: "Rainforest (Wet)",
+    zh: "雨林 (潮濕)",
+    ja: "熱帯雨林 (湿潤)",
+    ko: "열대우림 (습함)",
+    es: "Selva tropical (Húmedo)",
+    de: "Regenwald (Nass)",
+    fi: "Sademetsä (Märkä)",
+    fr: "Forêt tropicale (Humide)",
+    ar: "غابة مطيرة (رطب)",
+    it: "Foresta Pluviale (Umido)"
+  },
+  cactus: {
+    en: "Cactus",
+    zh: "仙人掌",
+    ja: "サボテン",
+    ko: "선인장",
+    es: "Cactus",
+    de: "Kaktus",
+    fi: "Kaktus",
+    fr: "Cactus",
+    ar: "صبار",
+    it: "Cactus"
+  },
+  fern: {
+    en: "Fern",
+    zh: "蕨類",
+    ja: "シダ",
+    ko: "고사리",
+    es: "Helecho",
+    de: "Farn",
+    fi: "Saniainen",
+    fr: "Fougère",
+    ar: "سرخس",
+    it: "Felce"
+  },
+  feature_needles: {
+    en: "Needle leaves (Save water)",
+    zh: "針狀葉 (保水)",
+    ja: "針状葉 (節水)",
+    ko: "바늘잎 (물 절약)",
+    es: "Hojas de aguja (Ahorrar agua)",
+    de: "Nadelblätter (Wasser sparen)",
+    fi: "Neulaslehdet (Säästää vettä)",
+    fr: "Feuilles en aiguilles (Économiser l'eau)",
+    ar: "أوراق إبرية (توفير الماء)",
+    it: "Foglie ad ago (Risparmia acqua)"
+  },
+  feature_stem: {
+    en: "Thick stem (Store water)",
+    zh: "肥厚莖 (儲水)",
+    ja: "太い茎 (貯水)",
+    ko: "두꺼운 줄기 (물 저장)",
+    es: "Tallo grueso (Almacenar agua)",
+    de: "Dicker Stamm (Wasser speichern)",
+    fi: "Paksu varsi (Varastoi vettä)",
+    fr: "Tige épaisse (Stocker l'eau)",
+    ar: "جذع سميك (تخزين الماء)",
+    it: "Gambo spesso (Immagazzina acqua)"
+  },
+  feature_broad: {
+    en: "Broad leaves (Catch sun)",
+    zh: "闊大葉片 (吸收陽光)",
+    ja: "広い葉 (日光を浴びる)",
+    ko: "넓은 잎 (햇빛 포착)",
+    es: "Hojas anchas (Captar sol)",
+    de: "Breite Blätter (Sonne einfangen)",
+    fi: "Leveät lehdet (Kerää auringonvaloa)",
+    fr: "Feuilles larges (Capter le soleil)",
+    ar: "أوراق عريضة (التقاط الشمس)",
+    it: "Foglie larghe (Cattura sole)"
+  },
+  feature_drip: {
+    en: "Drip tips (Drain water)",
+    zh: "滴水葉尖 (排水)",
+    ja: "ドリップチップ (排水)",
+    ko: "드립 팁 (배수)",
+    es: "Puntas de goteo (Drenar agua)",
+    de: "Tropfspitzen (Wasser ableiten)",
+    fi: "Tippukärjet (Valuttaa vettä)",
+    fr: "Pointes d'égouttement (Drainer l'eau)",
+    ar: "رؤوس تقاطر (صرف الماء)",
+    it: "Punte a goccia (Drenare acqua)"
+  }
+};
+const traits = [{
+  id: "feature_needles",
+  target: "desert",
+  icon: "🌵"
+}, {
+  id: "feature_stem",
+  target: "desert",
+  icon: "🥒"
+}, {
+  id: "feature_broad",
+  target: "rainforest",
+  icon: "🍃"
+}, {
+  id: "feature_drip",
+  target: "rainforest",
+  icon: "💧"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [queue, setQueue] = useState([]);
+  const [currentTrait, setCurrentTrait] = useState(null);
+  const [feedback, setFeedback] = useState(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+  useEffect(() => {
+    resetGame();
+  }, []);
+  const resetGame = () => {
+    const shuf = [...traits].sort(() => Math.random() - 0.5);
+    setQueue(shuf);
+    setCurrentTrait(shuf[0]);
+    setFeedback(null);
+  };
+  const handleChoice = envId => {
+    if (feedback) return;
+    if (currentTrait.target === envId) {
+      setFeedback("correct");
+      setTimeout(() => {
+        setFeedback(null);
+        const nextIdx = queue.indexOf(currentTrait) + 1;
+        if (nextIdx < queue.length) {
+          setCurrentTrait(queue[nextIdx]);
+        } else {
+          setCurrentTrait(null); // GameOver
+        }
+      }, 1000);
+    } else {
+      setFeedback("wrong"); // reuse from i18n if possible, but simplest is state
+      setTimeout(() => setFeedback(null), 800);
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-bold mb-8 text-amber-800"
+  }, getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "flex w-full max-w-5xl h-[600px] border-4 border-amber-900 rounded-3xl overflow-hidden relative shadow-2xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    onClick: () => handleChoice("desert"),
+    className: "flex-1 bg-gradient-to-b from-blue-200 to-amber-200 relative cursor-pointer hover:opacity-90 transition-opacity border-r-4 border-white"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 left-1/2 -translate-x-1/2 font-bold text-2xl text-amber-900 bg-white/60 px-4 py-1 rounded-full"
+  }, getText("desert")), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-10 left-10 text-9xl"
+  }, "🌵"), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-10 right-10 text-6xl animate-pulse"
+  }, "☀️")), /*#__PURE__*/React.createElement("div", {
+    onClick: () => handleChoice("rainforest"),
+    className: "flex-1 bg-gradient-to-b from-blue-800 to-green-900 relative cursor-pointer hover:opacity-90 transition-opacity"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 left-1/2 -translate-x-1/2 font-bold text-2xl text-white bg-black/40 px-4 py-1 rounded-full"
+  }, getText("rainforest")), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-10 right-10 text-9xl"
+  }, "🌿"), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-10 left-10 text-6xl animate-bounce"
+  }, "🌧️")), currentTrait ? /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-8 rounded-3xl shadow-2xl flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-8xl mb-4"
+  }, currentTrait.icon), /*#__PURE__*/React.createElement("div", {
+    className: "font-bold text-2xl text-slate-800 text-center"
+  }, getText(currentTrait.id)), /*#__PURE__*/React.createElement("div", {
+    className: "text-slate-500 mt-2"
+  }, getText("instruction")), feedback && /*#__PURE__*/React.createElement("div", {
+    className: `absolute inset-0 flex items-center justify-center rounded-3xl 
+                           ${feedback === "correct" ? "bg-green-500/90 text-white" : "bg-red-500/90 text-white"}
+                        `
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black"
+  }, getText("correct")))) : /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-8 rounded-3xl shadow-2xl text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl mb-4"
+  }, "🎉"), /*#__PURE__*/React.createElement("button", {
+    onClick: resetGame,
+    className: "bg-amber-600 text-white px-8 py-3 rounded-full font-bold shadow-lg hover:bg-amber-700"
+  }, "Play Again"))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cross Product | M2 Vectors</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+        overflow: hidden;
+      }
+      .glass {
+        background: rgba(15, 23, 42, 0.8);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      input[type="range"] {
+        -webkit-appearance: none;
+        background: transparent;
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        height: 12px;
+        width: 12px;
+        border-radius: 50%;
+        background: white;
+        margin-top: -4px;
+        cursor: pointer;
+      }
+      input[type="range"]::-webkit-slider-runnable-track {
+        width: 100%;
+        height: 4px;
+        background: #475569;
+        border-radius: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="absolute top-4 left-4 z-10 glass p-6 rounded-2xl max-w-sm">
+      <!-- Language Toggle -->
+      <div class="absolute top-4 right-4">
+        <button
+          id="lang-btn"
+          class="px-2 py-1 bg-slate-800 border border-slate-600 rounded-full text-[10px] font-bold text-emerald-400 hover:bg-slate-700 hover:text-white transition flex items-center gap-1"
+        >
+          <i class="fa-solid fa-language"></i>
+          <span id="lang-text">中文</span>
+        </button>
+      </div>
+
+      <h1
+        id="app-title"
+        class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-rose-400 mb-2"
+      >
+        Cross Product
+      </h1>
+      <p id="app-subtitle" class="text-xs text-slate-300 mb-4">A × B = C</p>
+
+      <div class="space-y-4">
+        <!-- Vector A -->
+        <div>
+          <h3
+            id="label-vecA"
+            class="text-xs font-bold text-orange-400 uppercase mb-2"
+          >
+            Vector A
+          </h3>
+          <div class="flex gap-2">
+            <input
+              type="range"
+              min="-3"
+              max="3"
+              step="0.5"
+              id="ax"
+                value="1"
+              class="flex-1 accent-orange-500"
+            />
+            <input
+              type="range"
+              min="-3"
+              max="3"
+              step="0.5"
+              id="ay"
+                value="2"
+              class="flex-1 accent-orange-500"
+            />
+            <input
+              type="range"
+              min="-3"
+              max="3"
+              step="0.5"
+              id="az"
+                value="-1"
+              class="flex-1 accent-orange-500"
+            />
+          </div>
+        </div>
+        <!-- Vector B -->
+        <div>
+          <h3
+            id="label-vecB"
+            class="text-xs font-bold text-rose-400 uppercase mb-2"
+          >
+            Vector B
+          </h3>
+          <div class="flex gap-2">
+            <input
+              type="range"
+              min="-3"
+              max="3"
+              step="0.5"
+              id="bx"
+                value="3"
+              class="flex-1 accent-rose-500"
+            />
+            <input
+              type="range"
+              min="-3"
+              max="3"
+              step="0.5"
+              id="by"
+                value="0"
+              class="flex-1 accent-rose-500"
+            />
+            <input
+              type="range"
+              min="-3"
+              max="3"
+              step="0.5"
+              id="bz"
+                value="2"
+              class="flex-1 accent-rose-500"
+            />
+          </div>
+        </div>
+
+        <div
+          class="p-4 bg-slate-900/50 rounded-xl space-y-2 font-mono text-xs border border-slate-700"
+        >
+          <div class="flex justify-between">
+            <span id="label-normal" class="text-slate-400">Normal Vector</span>
+            <span id="val_c" class="text-white font-bold"></span>
+          </div>
+          <div class="flex justify-between">
+            <span id="label-area" class="text-slate-400">Area (|A×B|)</span>
+            <span id="val_area" class="text-emerald-400 font-bold"></span>
+          </div>
+        </div>
+        <p
+          id="label-description"
+          class="text-[10px] text-slate-500 text-center"
+          data-original="The result is perpendicular to both A and B. <br /> Right Hand Rule!"
+        >
+          The result is perpendicular to both A and B. <br />
+          Right Hand Rule!
+        </p>
+      </div>
+    </div>
+
+    <div id="canvas-container" class="w-screen h-screen"></div>
+
+    <script>
+      // Bilingual
+      const translations = {
+        en: {
+          title: "Cross Product",
+          subtitle: "A × B = C",
+          vecA: "Vector A",
+          vecB: "Vector B",
+          normal: "Normal Vector",
+          area: "Area (|A×B|)",
+          desc: "The result is perpendicular to both A and B. <br /> Right Hand Rule!",
+          langBtn: "中文",
+        },
+        zh: {
+          title: "叉積 (Cross Product)",
+          subtitle: "A × B = C",
+          vecA: "向量 A",
+          vecB: "向量 B",
+          normal: "法向量",
+          area: "面積 (|A×B|)",
+          desc: "結果垂直於 A 和 B。<br /> 右手定則！",
+          langBtn: "English",
+        },
+      };
+
+      let currentLang = "en";
+
+      function updateLanguage() {
+        const t = translations[currentLang];
+        document.getElementById("lang-text").textContent = t.langBtn;
+        document.getElementById("app-title").textContent = t.title;
+        document.getElementById("app-subtitle").textContent = t.subtitle;
+        document.getElementById("label-vecA").textContent = t.vecA;
+        document.getElementById("label-vecB").textContent = t.vecB;
+        document.getElementById("label-normal").textContent = t.normal;
+        document.getElementById("label-area").textContent = t.area;
+        document.getElementById("label-description").innerHTML = t.desc;
+      }
+
+      document.getElementById("lang-btn").addEventListener("click", () => {
+        currentLang = currentLang === "en" ? "zh" : "en";
+        updateLanguage();
+      });
+
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0f172a);
+      const camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        100
+      );
+      camera.position.set(5, 5, 8);
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document
+        .getElementById("canvas-container")
+        .appendChild(renderer.domElement);
+
+      const controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+
+      scene.add(new THREE.GridHelper(10, 10, 0x334155, 0x1e293b));
+      scene.add(new THREE.AxesHelper(2));
+      scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+
+      // Objects
+      const arrowA = new THREE.ArrowHelper(
+        new THREE.Vector3(1, 0, 0),
+        new THREE.Vector3(0, 0, 0),
+        1,
+        0xfb923c
+      ); // Orange
+      const arrowB = new THREE.ArrowHelper(
+        new THREE.Vector3(0, 1, 0),
+        new THREE.Vector3(0, 0, 0),
+        1,
+        0xf43f5e
+      ); // Rose
+      const arrowC = new THREE.ArrowHelper(
+        new THREE.Vector3(0, 0, 1),
+        new THREE.Vector3(0, 0, 0),
+        1,
+        0x34d399
+      ); // Emerald
+
+      // Parallelogram Area
+      const polyGeo = new THREE.BufferGeometry(); // Triangle 1
+      // Actually simple 2 triangles = Quad
+      const mat = new THREE.MeshBasicMaterial({
+        color: 0x34d399,
+        transparent: true,
+        opacity: 0.3,
+        side: THREE.DoubleSide,
+      });
+      const areaMesh = new THREE.Mesh(polyGeo, mat);
+
+      scene.add(arrowA);
+      scene.add(arrowB);
+      scene.add(arrowC);
+      scene.add(areaMesh);
+
+      function update() {
+        const vA = new THREE.Vector3(
+          parseFloat(document.getElementById("ax").value),
+          parseFloat(document.getElementById("ay").value),
+          parseFloat(document.getElementById("az").value)
+        );
+        const vB = new THREE.Vector3(
+          parseFloat(document.getElementById("bx").value),
+          parseFloat(document.getElementById("by").value),
+          parseFloat(document.getElementById("bz").value)
+        );
+
+        // Calc Cross
+        const vC = new THREE.Vector3().crossVectors(vA, vB);
+
+        // HUD
+        document.getElementById("val_c").innerText = `(${vC.x.toFixed(
+          1
+        )}, ${vC.y.toFixed(1)}, ${vC.z.toFixed(1)})`;
+        document.getElementById("val_area").innerText = vC.length().toFixed(2);
+
+        // Arrows
+        if (vA.length() > 0.01) {
+          arrowA.setDirection(vA.clone().normalize());
+          arrowA.setLength(vA.length());
+        }
+        if (vB.length() > 0.01) {
+          arrowB.setDirection(vB.clone().normalize());
+          arrowB.setLength(vB.length());
+        }
+        if (vC.length() > 0.01) {
+          arrowC.setDirection(vC.clone().normalize());
+          arrowC.setLength(vC.length());
+        } else {
+          arrowC.setLength(0);
+        }
+
+        // Parallelogram: Origin -> A -> (A+B) -> B -> Origin
+        const vSum = new THREE.Vector3().addVectors(vA, vB);
+        const vertices = new Float32Array([
+          0,
+          0,
+          0,
+          vA.x,
+          vA.y,
+          vA.z,
+          vB.x,
+          vB.y,
+          vB.z,
+
+          vB.x,
+          vB.y,
+          vB.z,
+          vA.x,
+          vA.y,
+          vA.z,
+          vSum.x,
+          vSum.y,
+          vSum.z,
+        ]);
+        polyGeo.setAttribute(
+          "position",
+          new THREE.BufferAttribute(vertices, 3)
+        );
+        polyGeo.attributes.position.needsUpdate = true;
+      }
+
+      document
+        .querySelectorAll("input")
+        .forEach((i) => i.addEventListener("input", update));
+      update();
+      updateLanguage();
+
+      function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+      }
+      animate();
+
+      window.addEventListener("resize", () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+    </script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

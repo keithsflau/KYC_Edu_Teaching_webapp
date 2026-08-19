@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小五數學：容量與體積 | Capacity and Volume</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+      input[type="range"] {
+        -webkit-appearance: none;
+        background: transparent;
+        height: 6px;
+        border-radius: 3px;
+        background: rgba(255, 255, 255, 0.2);
+        cursor: pointer;
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        height: 18px;
+        width: 18px;
+        border-radius: 50%;
+        background: #0ea5e9;
+        margin-top: -6px;
+        box-shadow: 0 0 10px #0ea5e9;
+        border: 2px solid white;
+        transition: transform 0.1s;
+      }
+      input[type="range"]::-webkit-slider-thumb:hover {
+        transform: scale(1.2);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Capacity & Volume",
+    zh: "容量與體積",
+    ja: "容積と体積",
+    ko: "용량과 부피",
+    es: "Capacidad y Volumen",
+    de: "Kapazität und Volumen",
+    fi: "Kapasiteetti ja tilavuus",
+    fr: "Capacité et volume",
+    ar: "السعة والحجم",
+    it: "Capacità e Volume"
+  },
+  length: {
+    en: "Length L",
+    zh: "長 L",
+    ja: "長さ L",
+    ko: "길이 L",
+    es: "Longitud L",
+    de: "Länge L",
+    fi: "Pituus L",
+    fr: "Longueur L",
+    ar: "الطول L",
+    it: "Lunghezza L"
+  },
+  width: {
+    en: "Width W",
+    zh: "闊 W",
+    ja: "幅 W",
+    ko: "너비 W",
+    es: "Ancho W",
+    de: "Breite B",
+    fi: "Leveys L",
+    fr: "Largeur l",
+    ar: "العرض W",
+    it: "Larghezza W"
+  },
+  height: {
+    en: "Height H",
+    zh: "高 H",
+    ja: "高さ H",
+    ko: "높이 H",
+    es: "Altura H",
+    de: "Höhe H",
+    fi: "Korkeus K",
+    fr: "Hauteur H",
+    ar: "الارتفاع H",
+    it: "Altezza H"
+  },
+  fillLevel: {
+    en: "Fill Level",
+    zh: "裝水量",
+    ja: "水位",
+    ko: "채운 양",
+    es: "Nivel de llenado",
+    de: "Füllstand",
+    fi: "Täyttöaste",
+    fr: "Niveau de remplissage",
+    ar: "مستوى الامتلاء",
+    it: "Livello di riempimento"
+  },
+  containerVolume: {
+    en: "Container Volume",
+    zh: "容器體積",
+    ja: "容器の体積",
+    ko: "용기 부피",
+    es: "Volumen del Contenedor",
+    de: "Behältervolumen",
+    fi: "Säiliön tilavuus",
+    fr: "Volume du conteneur",
+    ar: "حجم الحاوية",
+    it: "Volume del contenitore"
+  },
+  capacity: {
+    en: "Capacity",
+    zh: "容量",
+    ja: "容積",
+    ko: "용량",
+    es: "Capacidad",
+    de: "Kapazität",
+    fi: "Kapasiteetti",
+    fr: "Capacité",
+    ar: "السعة",
+    it: "Capacità"
+  },
+  currentWater: {
+    en: "Current Water",
+    zh: "現裝水量",
+    ja: "現在の水量",
+    ko: "현재 물의 양",
+    es: "Agua Actual",
+    de: "Aktuelle Wassermenge",
+    fi: "Nykyinen vesimäärä",
+    fr: "Eau actuelle",
+    ar: "الماء الحالي",
+    it: "Acqua attuale"
+  },
+  tipTitle: {
+    en: "Remember: 1 cm³ = 1 mL",
+    zh: "記住: 1 cm³ = 1 mL",
+    ja: "覚えておこう: 1 cm³ = 1 mL",
+    ko: "기억하세요: 1 cm³ = 1 mL",
+    es: "Recuerda: 1 cm³ = 1 mL",
+    de: "Merke: 1 cm³ = 1 mL",
+    fi: "Muista: 1 cm³ = 1 mL",
+    fr: "Rappelez-vous : 1 cm³ = 1 mL",
+    ar: "تذكر: 1 cm³ = 1 mL",
+    it: "Ricorda: 1 cm³ = 1 mL"
+  },
+  tipText: {
+    en: "Volume describes the space occupied by an object, Capacity describes how much liquid a container can hold.",
+    zh: "體積 (Volume) 描述物體佔用的空間，容量 (Capacity) 描述容器能裝多少液體。",
+    ja: "体積は物体が占める空間を表し、容積は容器にどれくらいの液体が入るかを表します。",
+    ko: "부피는 물체가 차지하는 공간을 의미하고, 용량은 용기가 담을 수 있는 액체의 양을 의미합니다.",
+    es: "El volumen describe el espacio ocupado por un objeto, la capacidad describe cuánto líquido puede contener un recipiente.",
+    de: "Volumen beschreibt den von einem Objekt eingenommenen Raum, Kapazität beschreibt, wie viel Flüssigkeit ein Behälter fassen kann.",
+    fi: "Tilavuus kuvaa esineen viemää tilaa, kapasiteetti kuvaa kuinka paljon nestettä säiliöön mahtuu.",
+    fr: "Le volume décrit l'espace occupé par un objet, la capacité décrit la quantité de liquide qu'un conteneur peut contenir.",
+    ar: "الحجم يصف الحيز الذي يشغله الجسم، بينما السعة تصف كمية السائل التي يمكن أن تحتويها الحاوية.",
+    it: "Il volume descrive lo spazio occupato da un oggetto, la capacità descrive quanto liquido può contenere un contenitore."
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [l, setL] = useState(10);
+  const [w, setW] = useState(8);
+  const [h, setH] = useState(6);
+  const [fillPercent, setFillPercent] = useState(75);
+  const totalVolume = l * w * h;
+  const capacity = totalVolume; // 1 cm³ = 1 mL
+  const filledVolume = Math.round(totalVolume * fillPercent / 100);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4 font-sans bg-slate-900 text-white"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-5xl flex justify-between items-center mb-10"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-black text-sky-400 drop-shadow-[0_0_15px_rgba(14,165,233,0.5)]"
+  }, "💧 ", getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "flex bg-slate-800/80 p-1.5 rounded-xl border border-white/10 flex-wrap justify-end gap-1 max-w-[50%]"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-sky-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white hover:bg-white/5"}`
+  }, l)))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-5xl flex flex-col md:flex-row gap-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 glass-panel p-8 rounded-3xl flex items-center justify-center min-h-[400px]"
+  }, /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 300 300",
+    className: "w-full h-full max-w-sm overflow-visible"
+  }, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("linearGradient", {
+    id: "waterGrad",
+    x1: "0%",
+    y1: "0%",
+    x2: "0%",
+    y2: "100%"
+  }, /*#__PURE__*/React.createElement("stop", {
+    offset: "0%",
+    stopColor: "#38bdf8",
+    stopOpacity: "0.8"
+  }), /*#__PURE__*/React.createElement("stop", {
+    offset: "100%",
+    stopColor: "#0284c7",
+    stopOpacity: "0.9"
+  })), /*#__PURE__*/React.createElement("filter", {
+    id: "dropshadow"
+  }, /*#__PURE__*/React.createElement("feDropShadow", {
+    dx: "2",
+    dy: "2",
+    stdDeviation: "4",
+    floodOpacity: "0.3"
+  }))), (() => {
+    const scale = 200 / Math.max(l, h, w);
+    const sw = w * scale * 0.8; // Width in SVG
+    const sh = h * scale * 0.8; // Height in SVG
+    const sl = l * scale * 0.8; // Length (Depth) in SVG - represented by skew
+
+    // Perspective: Front face is rectangle. Side/Top recede.
+    // Let's do simple 2D front view with depth indication?
+    // Or standard Isometric?
+    // Isometric:
+    // x axis: 30 deg
+    // y axis: -30 deg?
+    // z axis: -90 deg.
+
+    // Center in viewbox 150,150.
+    const iso = (x, y, z) => {
+      // x=width(L?), y=depth(W?), z=height(H?)
+      const u = 20; // unit
+      const ix = (x - y) * Math.cos(Math.PI / 6);
+      const iy = (x + y) * Math.sin(Math.PI / 6) - z;
+      return {
+        x: 150 + ix * u,
+        y: 200 + iy * u
+      };
+    };
+
+    // But L, W, H are dynamic.
+    // Let's normalize u so it fits.
+    const maxDim = Math.max(l, w, h);
+    const u = 100 / maxDim;
+
+    // Center of bottom:
+    const cx = 150,
+      cy = 250;
+    const iso2 = (dx, dy, dz) => {
+      // dx (L) goes right-down
+      // dy (W) goes left-down
+      // dz (H) goes up
+      const ang = Math.PI / 6;
+      const px = (dx - dy) * Math.cos(ang);
+      const py = (dx + dy) * Math.sin(ang) - dz;
+      return {
+        x: cx + px * u,
+        y: cy + py * u
+      };
+    };
+
+    // Points
+    // Origin is Back-Bottom-Left?
+    // Let's say origin is center bottom.
+    // Box corners: 0..L, 0..W, 0..H.
+    // Shift so center is center.
+
+    const pts = h_val => [iso2(-l / 2, -w / 2, h_val),
+    // Back Left
+    iso2(l / 2, -w / 2, h_val),
+    // Back Right
+    iso2(l / 2, w / 2, h_val),
+    // Front Right
+    iso2(-l / 2, w / 2, h_val) // Front Left
+    ];
+    const bottom = pts(0);
+    const top = pts(h);
+    const waterTop = pts(h * (fillPercent / 100));
+
+    // Draw Back lines (dashed)
+    // Draw Water
+    // Draw Front lines
+
+    return /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("path", {
+      d: `M${bottom[0].x},${bottom[0].y} L${bottom[1].x},${bottom[1].y} L${top[1].x},${top[1].y} L${top[0].x},${top[0].y} Z`,
+      fill: "rgba(255,255,255,0.05)",
+      stroke: "rgba(255,255,255,0.2)",
+      strokeDasharray: "4 4"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: `M${bottom[0].x},${bottom[0].y} L${bottom[3].x},${bottom[3].y} L${top[3].x},${top[3].y} L${top[0].x},${top[0].y} Z`,
+      fill: "rgba(255,255,255,0.05)",
+      stroke: "rgba(255,255,255,0.2)",
+      strokeDasharray: "4 4"
+    }), fillPercent > 0 && /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("path", {
+      d: `M${bottom[3].x},${bottom[3].y} L${bottom[0].x},${bottom[0].y} L${waterTop[0].x},${waterTop[0].y} L${waterTop[3].x},${waterTop[3].y} Z`,
+      fill: "url(#waterGrad)",
+      opacity: "0.6"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: `M${bottom[1].x},${bottom[1].y} L${bottom[2].x},${bottom[2].y} L${waterTop[2].x},${waterTop[2].y} L${waterTop[1].x},${waterTop[1].y} Z`,
+      fill: "url(#waterGrad)",
+      opacity: "0.8"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: `M${bottom[3].x},${bottom[3].y} L${bottom[2].x},${bottom[2].y} L${waterTop[2].x},${waterTop[2].y} L${waterTop[3].x},${waterTop[3].y} Z`,
+      fill: "url(#waterGrad)",
+      opacity: "0.7"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: `M${waterTop[0].x},${waterTop[0].y} L${waterTop[1].x},${waterTop[1].y} L${waterTop[2].x},${waterTop[2].y} L${waterTop[3].x},${waterTop[3].y} Z`,
+      fill: "#7dd3fc",
+      opacity: "0.9"
+    })), /*#__PURE__*/React.createElement("path", {
+      d: `M${bottom[2].x},${bottom[2].y} L${bottom[3].x},${bottom[3].y} L${top[3].x},${top[3].y} L${top[2].x},${top[2].y} Z`,
+      fill: "none",
+      stroke: "white",
+      strokeWidth: "2"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: `M${bottom[2].x},${bottom[2].y} L${bottom[1].x},${bottom[1].y} L${top[1].x},${top[1].y} L${top[2].x},${top[2].y} Z`,
+      fill: "none",
+      stroke: "white",
+      strokeWidth: "2"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: `M${top[0].x},${top[0].y} L${top[1].x},${top[1].y} L${top[2].x},${top[2].y} L${top[3].x},${top[3].y} Z`,
+      fill: "none",
+      stroke: "white",
+      strokeWidth: "2"
+    }), /*#__PURE__*/React.createElement("text", {
+      x: bottom[2].x + 10,
+      y: bottom[2].y + 10,
+      fill: "white",
+      fontSize: "12"
+    }, l, "cm"), /*#__PURE__*/React.createElement("text", {
+      x: bottom[3].x - 20,
+      y: bottom[3].y + 10,
+      fill: "white",
+      fontSize: "12"
+    }, w, "cm"), /*#__PURE__*/React.createElement("text", {
+      x: top[2].x + 5,
+      y: top[2].y + (bottom[2].y - top[2].y) / 2,
+      fill: "white",
+      fontSize: "12"
+    }, h, "cm"));
+  })())), /*#__PURE__*/React.createElement("div", {
+    className: "w-full md:w-96 flex flex-col gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 rounded-2xl flex flex-col gap-6"
+  }, /*#__PURE__*/React.createElement(ControlSlider, {
+    label: getText("length", lang),
+    val: l,
+    set: setL,
+    max: 20,
+    color: "text-sky-300"
+  }), /*#__PURE__*/React.createElement(ControlSlider, {
+    label: getText("width", lang),
+    val: w,
+    set: setW,
+    max: 20,
+    color: "text-sky-300"
+  }), /*#__PURE__*/React.createElement(ControlSlider, {
+    label: getText("height", lang),
+    val: h,
+    set: setH,
+    max: 20,
+    color: "text-sky-300"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "pt-4 border-t border-white/10"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between text-sm font-bold text-sky-400 mb-2"
+  }, /*#__PURE__*/React.createElement("span", null, getText("fillLevel", lang)), /*#__PURE__*/React.createElement("span", null, fillPercent, "%")), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "0",
+    max: "100",
+    value: fillPercent,
+    onChange: e => setFillPercent(Number(e.target.value)),
+    className: "w-full"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 rounded-2xl space-y-4"
+  }, /*#__PURE__*/React.createElement(StatRow, {
+    label: getText("containerVolume", lang),
+    val: `${totalVolume} cm³`,
+    sub: `${l} × ${w} × ${h}`,
+    color: "text-white"
+  }), /*#__PURE__*/React.createElement(StatRow, {
+    label: getText("capacity", lang),
+    val: `${(capacity / 1000).toFixed(3)} L`,
+    sub: `${capacity} mL`,
+    color: "text-sky-300"
+  }), /*#__PURE__*/React.createElement(StatRow, {
+    label: getText("currentWater", lang),
+    val: `${Math.round(filledVolume)} mL`,
+    sub: "",
+    color: "text-blue-300"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "bg-amber-500/20 border border-amber-500/30 p-4 rounded-xl text-xs text-amber-200"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "font-bold mb-1"
+  }, "💡 ", getText("tipTitle", lang)), getText("tipText", lang)))));
+}
+const ControlSlider = ({
+  label,
+  val,
+  set,
+  max = 20,
+  color
+}) => /*#__PURE__*/React.createElement("div", {
+  className: "flex flex-col gap-2"
+}, /*#__PURE__*/React.createElement("div", {
+  className: `flex justify-between font-bold text-sm ${color}`
+}, /*#__PURE__*/React.createElement("label", null, label), /*#__PURE__*/React.createElement("span", null, val, " cm")), /*#__PURE__*/React.createElement("input", {
+  type: "range",
+  min: "1",
+  max: max,
+  value: val,
+  onChange: e => set(Number(e.target.value)),
+  className: "w-full"
+}));
+const StatRow = ({
+  label,
+  val,
+  sub,
+  color
+}) => /*#__PURE__*/React.createElement("div", {
+  className: "flex justify-between items-center"
+}, /*#__PURE__*/React.createElement("div", {
+  className: "text-slate-400 text-xs font-bold uppercase tracking-widest text-right w-24"
+}, label), /*#__PURE__*/React.createElement("div", {
+  className: "text-right"
+}, /*#__PURE__*/React.createElement("div", {
+  className: `text-2xl font-black ${color}`
+}, val), sub && /*#__PURE__*/React.createElement("div", {
+  className: "text-xs font-mono opacity-60"
+}, sub)));
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

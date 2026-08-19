@@ -1,0 +1,762 @@
+﻿<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>暗室文字尋寶 (Text Scavenger Hunt)</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        body { background-color: #1a1a1a; font-family: 'Noto Sans TC', sans-serif; }
+        .flashlight-cursor { cursor: none; }
+        /* 增加文字被選中時的微動畫 */
+        @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1.1); } }
+        .found-anim { animation: pop 0.3s ease-out forwards; }
+        
+        /* 慶祝動畫 */
+        @keyframes celebrate-bounce {
+            0%, 100% { transform: translateY(0) scale(1); }
+            25% { transform: translateY(-20px) scale(1.1); }
+            50% { transform: translateY(-10px) scale(1.05); }
+            75% { transform: translateY(-15px) scale(1.08); }
+        }
+        @keyframes celebrate-rotate {
+            0% { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(180deg) scale(1.2); }
+            100% { transform: rotate(360deg) scale(1); }
+        }
+        @keyframes celebrate-fade-in {
+            0% { opacity: 0; transform: scale(0.5); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        @keyframes celebrate-shine {
+            0% { background-position: -200% center; }
+            100% { background-position: 200% center; }
+        }
+        @keyframes confetti-fall {
+            0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+        .celebrate-title {
+            animation: celebrate-bounce 1s ease-in-out infinite, celebrate-fade-in 0.8s ease-out;
+        }
+        .celebrate-emoji {
+            animation: celebrate-rotate 2s ease-in-out infinite;
+            display: inline-block;
+        }
+        .celebrate-text {
+            background: linear-gradient(90deg, #ffd700, #ffed4e, #ffd700);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: celebrate-fade-in 1s ease-out, celebrate-shine 3s linear infinite;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script>
+const {
+  useState,
+  useEffect,
+  useRef,
+  useMemo
+} = React;
+
+// ==========================================
+// 📚 關卡數據庫 (只需修改這裡即可增加文章)
+// ==========================================
+const LEVELS = [{
+  id: 1,
+  title: "激烈的陸運會",
+  instruction: "找出所有 **動詞**",
+  content: "發令槍響起，運動員像箭一樣衝出起跑線。觀眾在看台上吶喊助威，氣氛熱烈。小明咬緊牙關，擺動雙臂，拼命向前跑。最後，他壓線衝過終點，奪得了金牌。",
+  targets: ["響起", "衝出", "吶喊", "助威", "咬緊", "擺動", "跑", "壓線", "衝過", "奪得"]
+}, {
+  id: 2,
+  title: "颱風襲港",
+  instruction: "找出所有 **形容詞**",
+  content: "窗外狂風呼嘯，天空變得灰暗一片。街道上冷冷清清，只有零星的車輛駛過。平日挺拔的大樹，現在被吹得東歪西倒。猛烈的雨點拍打著玻璃，發出巨大的聲響。",
+  targets: ["灰暗", "冷冷清清", "零星", "挺拔", "東歪西倒", "猛烈", "巨大"]
+}, {
+  id: 3,
+  title: "飲茶記趣",
+  instruction: "找出所有 **食物名詞**",
+  content: "星期天，我們一家去茶樓。爸爸點了蝦餃和燒賣，媽媽喜歡吃鳳爪。服務員推著蒸籠走過，香氣四溢。我最愛的是熱騰騰的叉燒包，還有滑溜溜的腸粉。",
+  targets: ["蝦餃", "燒賣", "鳳爪", "蒸籠", "叉燒包", "腸粉"]
+}, {
+  id: 4,
+  title: "中秋賞月",
+  instruction: "找出所有 **動詞**",
+  content: "中秋節晚上，我們提著燈籠去公園。大家圍坐在草地上，抬頭觀賞明月。妹妹切開月餅，分給每個人。我們一邊吃，一邊猜燈謎，度過了一個溫馨的晚上。",
+  targets: ["提著", "圍坐", "抬頭", "觀賞", "切開", "分給", "吃", "猜", "度過"]
+}, {
+  id: 5,
+  title: "街市喧鬧",
+  instruction: "找出所有 **象聲詞 (聲音)**",
+  content: "走進街市，耳邊傳來各種聲音。魚販的刀「霍霍」地響，活魚在水裡「潑剌」地跳。遠處傳來「叮叮」的電車聲，還有人們討價還價的「嗡嗡」聲，真熱鬧。",
+  targets: ["霍霍", "潑剌", "叮叮", "嗡嗡"]
+}, {
+  id: 6,
+  title: "遊獅子山",
+  instruction: "找出所有 **形容詞**",
+  content: "獅子山雄偉地聳立在九龍塘後。山路崎嶇難行，我們累得氣喘吁吁。登上山頂，涼爽的風吹來，眼前的景色壯麗無比，密密麻麻的高樓大廈盡收眼底。",
+  targets: ["雄偉", "崎嶇", "氣喘吁吁", "涼爽", "壯麗", "密密麻麻"]
+}, {
+  id: 7,
+  title: "考試前夕",
+  instruction: "找出所有 **心理動詞 (內心活動)**",
+  content: "看著堆積如山的筆記，我感到十分焦慮。我擔心明天的試題太難，又後悔平時沒有努力溫習。我希望時間可以倒流，但現在只能硬著頭皮去理解這些課文。",
+  targets: ["感到", "焦慮", "擔心", "後悔", "希望", "理解"]
+}, {
+  id: 8,
+  title: "歲晚大掃除",
+  instruction: "找出所有 **動詞**",
+  content: "新年快到了，全家總動員大掃除。爸爸負責抹窗，媽媽洗窗簾。我幫忙掃地和拖地，還把舊玩具執拾好，捐給有需要的人。家裡煥然一新。",
+  targets: ["大掃除", "抹", "洗", "掃", "拖", "執拾", "捐給"]
+}, {
+  id: 9,
+  title: "圖書館的下午",
+  instruction: "找出所有 **名詞 (物件/設施)**",
+  content: "圖書館裡十分安靜。一排排書架上放滿了圖書。我找了一張椅子坐下，翻開雜誌。旁邊的電腦區有人在查資料，牆上的時鐘滴答滴答地走著。",
+  targets: ["圖書館", "書架", "圖書", "椅子", "雜誌", "電腦區", "資料", "牆", "時鐘"]
+}, {
+  id: 10,
+  title: "我的志願",
+  instruction: "找出所有 **動詞**",
+  content: "長大後，我想成為一名醫生。我要醫治生病的病人，研究新的藥物。我會用心聆聽他們的痛苦，盡力幫助他們恢復健康，貢獻社會。",
+  targets: ["成為", "醫治", "研究", "聆聽", "幫助", "恢復", "貢獻"]
+}, {
+  id: 11,
+  title: "公園晨運",
+  instruction: "找出所有 **動詞**",
+  content: "清晨時分，爺爺到公園晨運。他先做熱身運動，然後慢跑幾圈。接著他打太極拳，動作緩慢而優美。最後他坐在長椅上休息，欣賞美麗的風景。",
+  targets: ["做", "慢跑", "打", "坐", "休息", "欣賞"]
+}, {
+  id: 12,
+  title: "市場購物",
+  instruction: "找出所有 **名詞 (物品)**",
+  content: "媽媽帶我去市場買菜。我們買了新鮮的蔬菜、水果和魚。市場裡有各種各樣的貨物，還有熱鬧的叫賣聲。我們提著大包小包回家。",
+  targets: ["市場", "菜", "蔬菜", "水果", "魚", "貨物", "叫賣聲", "包"]
+}, {
+  id: 13,
+  title: "雨天上學",
+  instruction: "找出所有 **形容詞**",
+  content: "今天下著傾盆大雨，天空陰沉沉的。我撐著雨傘，小心翼翼地走在濕滑的路上。校園裡到處都是水窪，同學們都躲在走廊避雨。",
+  targets: ["傾盆", "陰沉沉的", "濕滑", "水窪"]
+}, {
+  id: 14,
+  title: "課堂學習",
+  instruction: "找出所有 **動詞**",
+  content: "老師在黑板上寫字，我們專心聽講。同學們認真做筆記，積極回答問題。下課後，我們討論剛才學到的知識，互相幫助理解難題。",
+  targets: ["寫", "聽", "做", "回答", "討論", "幫助", "理解"]
+}, {
+  id: 15,
+  title: "動物園遊記",
+  instruction: "找出所有 **名詞 (動物)**",
+  content: "我們參觀了動物園，看到了許多動物。有大象、獅子、老虎、長頸鹿和熊貓。最有趣的是猴子，它們在樹上跳來跳去，非常活潑。",
+  targets: ["動物園", "動物", "大象", "獅子", "老虎", "長頸鹿", "熊貓", "猴子"]
+}, {
+  id: 16,
+  title: "海邊遊玩",
+  instruction: "找出所有 **動詞**",
+  content: "我們到海邊遊玩，先在沙灘上堆沙堡，然後跳進海裡游泳。海浪一波一波地衝過來，我們在淺水區嬉戲。最後我們坐在沙灘上，欣賞美麗的日落。",
+  targets: ["遊玩", "堆", "跳", "游泳", "衝", "嬉戲", "坐", "欣賞"]
+}, {
+  id: 17,
+  title: "圖書分享",
+  instruction: "找出所有 **名詞 (書籍相關)**",
+  content: "圖書館舉辦了閱讀分享會。同學們帶來了自己喜歡的故事書、小說和漫畫。大家輪流介紹書本的內容，分享閱讀心得。",
+  targets: ["圖書館", "分享會", "故事書", "小說", "漫畫", "書本", "內容", "心得"]
+}, {
+  id: 18,
+  title: "運動比賽",
+  instruction: "找出所有 **動詞**",
+  content: "學校舉辦了運動會，同學們都積極參與。我們跑步、跳遠、投球，展現運動才能。觀眾們為我們加油打氣，氣氛非常熱烈。",
+  targets: ["舉辦", "參與", "跑步", "跳遠", "投球", "展現", "加油", "打氣"]
+}, {
+  id: 19,
+  title: "四季變化",
+  instruction: "找出所有 **形容詞**",
+  content: "春天溫暖，夏天炎熱，秋天涼爽，冬天寒冷。每個季節都有不同的特色，春天花開，夏天綠樹成蔭，秋天落葉，冬天雪花飄飄。",
+  targets: ["溫暖", "炎熱", "涼爽", "寒冷", "不同", "綠樹成蔭"]
+}, {
+  id: 20,
+  title: "家庭聚餐",
+  instruction: "找出所有 **動詞**",
+  content: "週末全家人一起聚餐。媽媽準備了豐盛的菜餚，爸爸幫忙擺設餐具。我們圍坐在一起，一邊吃飯一邊聊天，享受溫馨的時光。",
+  targets: ["聚餐", "準備", "擺設", "圍坐", "吃飯", "聊天", "享受"]
+}, {
+  id: 21,
+  title: "科學實驗",
+  instruction: "找出所有 **名詞 (實驗用品)**",
+  content: "我們在實驗室做科學實驗。老師準備了試管、燒杯、顯微鏡和各種化學藥品。我們仔細觀察實驗現象，記錄實驗結果。",
+  targets: ["實驗室", "實驗", "試管", "燒杯", "顯微鏡", "藥品", "現象", "結果"]
+}, {
+  id: 22,
+  title: "音樂會",
+  instruction: "找出所有 **動詞**",
+  content: "學校舉辦了音樂會，同學們表演各種節目。有人彈鋼琴，有人拉小提琴，還有人唱歌。觀眾們專心聆聽，不時鼓掌喝彩。",
+  targets: ["舉辦", "表演", "彈", "拉", "唱歌", "聆聽", "鼓掌", "喝彩"]
+}, {
+  id: 23,
+  title: "農場體驗",
+  instruction: "找出所有 **名詞 (農場相關)**",
+  content: "我們參觀了農場，看到了許多農作物和動物。有稻米、蔬菜、雞、鴨和牛。農夫向我們介紹農場的工作，我們學到了很多知識。",
+  targets: ["農場", "農作物", "動物", "稻米", "蔬菜", "雞", "鴨", "牛", "農夫", "工作", "知識"]
+}, {
+  id: 24,
+  title: "戶外寫生",
+  instruction: "找出所有 **動詞**",
+  content: "美術課時，老師帶我們到公園寫生。我們選擇喜歡的風景，拿出畫筆和顏料開始繪畫。大家專心致志地畫畫，創作美麗的作品。",
+  targets: ["帶", "選擇", "拿出", "開始", "繪畫", "畫", "創作"]
+}, {
+  id: 25,
+  title: "交通工具",
+  instruction: "找出所有 **名詞 (交通工具)**",
+  content: "城市裡有各種交通工具，包括巴士、地鐵、的士和電車。人們根據需要選擇合適的交通工具出行，既方便又快捷。",
+  targets: ["城市", "交通工具", "巴士", "地鐵", "的士", "電車", "人們", "需要"]
+}, {
+  id: 26,
+  title: "植樹活動",
+  instruction: "找出所有 **動詞**",
+  content: "學校組織了植樹活動，我們一起到公園種樹。大家分工合作，有人挖坑，有人扶樹，有人填土，有人澆水。我們希望這些樹能茁壯成長。",
+  targets: ["組織", "種樹", "分工", "合作", "挖", "扶", "填", "澆", "希望", "成長"]
+}, {
+  id: 27,
+  title: "節日慶祝",
+  instruction: "找出所有 **名詞 (節日相關)**",
+  content: "春節是重要的節日，家家戶戶都貼春聯、掛燈籠。人們準備年糕、糖果和紅包，互相拜年祝福。街上到處都是喜慶的氣氛。",
+  targets: ["春節", "節日", "春聯", "燈籠", "年糕", "糖果", "紅包", "街上", "氣氛"]
+}, {
+  id: 28,
+  title: "志願服務",
+  instruction: "找出所有 **動詞**",
+  content: "我們參加了志願服務活動，到老人院探訪長者。我們幫忙打掃衛生，陪他們聊天，還表演節目給他們看。長者們都很開心，我們也感到很有意義。",
+  targets: ["參加", "探訪", "幫忙", "打掃", "陪", "聊天", "表演", "看", "感到"]
+}, {
+  id: 29,
+  title: "自然現象",
+  instruction: "找出所有 **名詞 (自然現象)**",
+  content: "大自然有許多神奇的現象，如彩虹、閃電、雷聲和風暴。我們要學會觀察和了解這些自然現象，保護我們的地球環境。",
+  targets: ["大自然", "現象", "彩虹", "閃電", "雷聲", "風暴", "地球", "環境"]
+}, {
+  id: 30,
+  title: "手工製作",
+  instruction: "找出所有 **動詞**",
+  content: "手工課上，我們學習製作手工藝品。我們用紙張摺紙鶴，用黏土捏小動物，還用布料縫製小布袋。每個人都很認真，作品都很精美。",
+  targets: ["學習", "製作", "摺", "捏", "縫製", "認真"]
+}, {
+  id: 31,
+  title: "校園設施",
+  instruction: "找出所有 **名詞 (校園設施)**",
+  content: "學校裡有許多設施，包括教室、操場、圖書館、實驗室和食堂。這些設施為我們提供了良好的學習環境，讓我們能夠全面發展。",
+  targets: ["學校", "設施", "教室", "操場", "圖書館", "實驗室", "食堂", "環境"]
+}, {
+  id: 32,
+  title: "環保行動",
+  instruction: "找出所有 **動詞**",
+  content: "我們積極參與環保行動，減少使用塑膠袋，分類回收垃圾，節約用水用電。我們還種植花草，美化校園環境，為保護地球出一分力。",
+  targets: ["參與", "減少", "使用", "分類", "回收", "節約", "種植", "美化", "保護", "出"]
+}, {
+  id: 33,
+  title: "傳統文化",
+  instruction: "找出所有 **名詞 (文化相關)**",
+  content: "我們學習傳統文化，了解書法、國畫、戲曲和武術。這些都是中華文化的瑰寶，我們要好好傳承和發揚這些優秀的傳統。",
+  targets: ["傳統", "文化", "書法", "國畫", "戲曲", "武術", "瑰寶", "傳統"]
+}, {
+  id: 34,
+  title: "團隊合作",
+  instruction: "找出所有 **動詞**",
+  content: "在團隊活動中，我們學會了合作。大家分工明確，互相配合，共同完成任務。遇到困難時，我們一起討論解決方法，互相鼓勵支持。",
+  targets: ["學會", "分工", "配合", "完成", "遇到", "討論", "解決", "鼓勵", "支持"]
+}, {
+  id: 35,
+  title: "健康生活",
+  instruction: "找出所有 **名詞 (健康相關)**",
+  content: "保持健康的生活方式很重要。我們要均衡飲食，多吃蔬菜水果，多運動鍛煉身體。還要保證充足的睡眠，保持愉快的心情。",
+  targets: ["健康", "生活方式", "飲食", "蔬菜", "水果", "運動", "身體", "睡眠", "心情"]
+}, {
+  id: 36,
+  title: "科技發展",
+  instruction: "找出所有 **動詞**",
+  content: "科技不斷發展，改變了我們的生活。我們使用電腦學習，用手機通訊，上網查資料。科技讓我們的生活更加便利，但也需要合理使用。",
+  targets: ["發展", "改變", "使用", "學習", "通訊", "上網", "查", "讓", "需要"]
+}, {
+  id: 37,
+  title: "友誼珍貴",
+  instruction: "找出所有 **形容詞**",
+  content: "真正的友誼是珍貴的。好朋友會在你困難時幫助你，在你開心時與你分享快樂。友誼需要真誠、信任和理解，這樣的友誼才能長久。",
+  targets: ["真正", "珍貴", "困難", "開心", "真誠", "長久"]
+}, {
+  id: 38,
+  title: "閱讀樂趣",
+  instruction: "找出所有 **動詞**",
+  content: "閱讀帶給我們很多樂趣。我們可以通過閱讀了解世界，學習知識，開闊視野。好的書籍就像好朋友，陪伴我們成長，啟發我們思考。",
+  targets: ["帶給", "了解", "學習", "開闊", "陪伴", "成長", "啟發", "思考"]
+}, {
+  id: 39,
+  title: "夢想追求",
+  instruction: "找出所有 **名詞 (抽象概念)**",
+  content: "每個人都有自己的夢想。夢想是我們前進的動力，給我們希望和方向。只要我們努力學習，堅持不懈，就能實現自己的夢想。",
+  targets: ["人", "夢想", "動力", "希望", "方向", "夢想"]
+}, {
+  id: 40,
+  title: "感恩之心",
+  instruction: "找出所有 **動詞**",
+  content: "我們要學會感恩，感謝父母的養育，感謝老師的教導，感謝朋友的幫助。感恩讓我們更加珍惜擁有的一切，也讓我們的心靈更加美好。",
+  targets: ["學會", "感謝", "養育", "教導", "幫助", "珍惜", "擁有", "讓"]
+}, {
+  id: 41,
+  title: "季節活動",
+  instruction: "找出所有 **名詞 (活動)**",
+  content: "不同季節有不同的活動。春天可以踏青賞花，夏天可以游泳戲水，秋天可以登高賞葉，冬天可以堆雪人打雪仗。每個季節都有獨特的樂趣。",
+  targets: ["季節", "活動", "春天", "夏天", "秋天", "冬天", "樂趣"]
+}, {
+  id: 42,
+  title: "學習方法",
+  instruction: "找出所有 **動詞**",
+  content: "好的學習方法很重要。我們要專心聽講，認真思考，積極提問，及時複習。還要多做練習，鞏固知識，這樣才能學得更好。",
+  targets: ["聽", "思考", "提問", "複習", "做", "鞏固", "學"]
+}, {
+  id: 43,
+  title: "社區服務",
+  instruction: "找出所有 **名詞 (社區相關)**",
+  content: "我們積極參與社區服務，幫助鄰居，清潔街道，維護社區環境。社區是我們共同的家園，我們要一起努力，讓社區變得更加美好。",
+  targets: ["社區", "服務", "鄰居", "街道", "環境", "家園", "社區"]
+}, {
+  id: 44,
+  title: "創意思維",
+  instruction: "找出所有 **動詞**",
+  content: "創意思維很重要，它能幫助我們解決問題。我們要敢於想像，勇於嘗試，不怕失敗。通過不斷的思考和實踐，我們能夠創造出新的想法和方法。",
+  targets: ["幫助", "解決", "想像", "嘗試", "思考", "實踐", "創造"]
+}, {
+  id: 45,
+  title: "歷史文化",
+  instruction: "找出所有 **名詞 (歷史相關)**",
+  content: "我們學習歷史文化，了解古代的朝代、文物、古蹟和傳統習俗。歷史告訴我們過去的故事，讓我們更好地理解現在，展望未來。",
+  targets: ["歷史", "文化", "朝代", "文物", "古蹟", "習俗", "故事", "現在", "未來"]
+}, {
+  id: 46,
+  title: "責任擔當",
+  instruction: "找出所有 **動詞**",
+  content: "我們要學會承擔責任，對自己的行為負責。在學校要遵守紀律，在家要幫助父母，在社會要做個好公民。責任讓我們成長，讓我們變得更有擔當。",
+  targets: ["學會", "承擔", "負責", "遵守", "幫助", "做", "讓", "成長", "變得"]
+}, {
+  id: 47,
+  title: "藝術欣賞",
+  instruction: "找出所有 **名詞 (藝術相關)**",
+  content: "藝術能夠豐富我們的生活。我們可以欣賞繪畫、音樂、舞蹈和戲劇等各種藝術形式。藝術讓我們感受美，提升我們的審美能力和文化素養。",
+  targets: ["藝術", "生活", "繪畫", "音樂", "舞蹈", "戲劇", "形式", "美", "能力", "素養"]
+}, {
+  id: 48,
+  title: "成長歷程",
+  instruction: "找出所有 **動詞**",
+  content: "成長是一個不斷學習的過程。我們要勇敢面對挑戰，積極克服困難，不斷提升自己。每一次的經歷都是成長的機會，讓我們變得更加堅強和成熟。",
+  targets: ["面對", "克服", "提升", "變得"]
+}, {
+  id: 49,
+  title: "美好未來",
+  instruction: "找出所有 **形容詞**",
+  content: "我們對未來充滿希望和期待。只要我們努力學習，積極向上，就能創造美好的未來。未來是屬於我們的，讓我們一起努力，讓未來更加光明和美好。",
+  targets: ["美好", "希望", "期待", "積極", "向上", "光明", "美好"]
+}, {
+  id: 50,
+  title: "成就夢想",
+  instruction: "找出所有 **動詞**",
+  content: "經過努力學習，我們終於完成了所有挑戰。我們學會了堅持，學會了合作，學會了思考。這些經歷讓我們成長，讓我們更有信心去實現更大的夢想。",
+  targets: ["經過", "完成", "學會", "堅持", "合作", "思考", "成長", "實現"]
+}];
+
+// 智能數據處理器：將文章和答案轉換成遊戲需要的格式
+const parseLevelData = levelData => {
+  let parts = [];
+  let currentText = levelData.content;
+
+  // 簡單的分詞邏輯 (這不是完美的 NLP，但在這個遊戲中足夠好用)
+  // 我們通過循環查找目標詞來切割文章
+
+  // 為了不打亂順序，我們將文章拆分成字符，然後標記每個字符是否屬於目標詞
+  const chars = currentText.split('').map((c, idx) => ({
+    char: c,
+    index: idx,
+    isTarget: false,
+    targetId: null
+  }));
+  levelData.targets.forEach((target, tIdx) => {
+    let searchIndex = 0;
+    while (true) {
+      const foundIndex = currentText.indexOf(target, searchIndex);
+      if (foundIndex === -1) break;
+
+      // 標記這些字符為目標
+      for (let i = 0; i < target.length; i++) {
+        chars[foundIndex + i].isTarget = true;
+        chars[foundIndex + i].targetWord = target; // 記錄它屬於哪個詞
+        chars[foundIndex + i].targetId = `${tIdx}-${foundIndex}`; // 唯一ID避免重複計算
+      }
+      searchIndex = foundIndex + 1;
+    }
+  });
+
+  // 將字符重新組合成詞塊 (Chunks) 以便渲染
+  let chunks = [];
+  let currentChunk = {
+    text: "",
+    isTarget: false,
+    id: Math.random()
+  };
+  chars.forEach((c, i) => {
+    // 如果當前字符的屬性(是否目標)與上一個不同，或者它是新目標詞的開始
+    const prevC = i > 0 ? chars[i - 1] : null;
+    const isNewGroup = prevC && (c.isTarget !== prevC.isTarget || c.isTarget && c.targetId !== prevC.targetId);
+    if (isNewGroup) {
+      chunks.push(currentChunk);
+      currentChunk = {
+        text: c.char,
+        isTarget: c.isTarget,
+        id: Math.random()
+      };
+    } else {
+      currentChunk.text += c.char;
+      currentChunk.isTarget = c.isTarget;
+    }
+  });
+  chunks.push(currentChunk);
+  return chunks.filter(c => c.text.length > 0);
+};
+const App = () => {
+  const [currentLevelIdx, setCurrentLevelIdx] = useState(0);
+  const [storyChunks, setStoryChunks] = useState([]);
+  const [foundCount, setFoundCount] = useState(0);
+  const [totalTargets, setTotalTargets] = useState(0);
+  const [gameWon, setGameWon] = useState(false);
+  const [health, setHealth] = useState(3);
+  const [gameOver, setGameOver] = useState(false);
+  const [allLevelsCompleted, setAllLevelsCompleted] = useState(false);
+  const containerRef = useRef(null);
+  const canvasRef = useRef(null);
+
+  // 當關卡改變時，加載新數據
+  useEffect(() => {
+    const level = LEVELS[currentLevelIdx];
+    const parsedChunks = parseLevelData(level);
+
+    // 為每個 chunk 加上遊戲狀態
+    setStoryChunks(parsedChunks.map(c => ({
+      ...c,
+      found: false
+      // 只有當它是目標時才計算
+    })));
+
+    // 計算有多少個目標「詞組」(不是字符)
+    // 這裡簡化邏輯：計算 chunks 中 isTarget 為 true 的數量
+    const targetCount = parsedChunks.filter(c => c.isTarget).length;
+    setTotalTargets(targetCount);
+    setFoundCount(0);
+    setGameWon(false);
+    setGameOver(false);
+    setHealth(3); // 重置生命值
+
+    // 延遲重置 canvas 確保容器尺寸已計算
+    setTimeout(() => {
+      resetCanvas();
+    }, 50);
+  }, [currentLevelIdx]);
+
+  // 監聽生命值變化，當生命值 <= 0 時觸發遊戲結束
+  useEffect(() => {
+    if (health <= 0 && !gameOver) {
+      setGameOver(true);
+      revealAll();
+    }
+  }, [health, gameOver]);
+  const resetCanvas = () => {
+    const canvas = canvasRef.current;
+    const container = containerRef.current;
+    if (!canvas || !container) return;
+
+    // 確保容器尺寸已計算
+    const width = container.offsetWidth || container.clientWidth;
+    const height = container.offsetHeight || container.clientHeight;
+    if (width === 0 || height === 0) {
+      // 如果尺寸還沒準備好，延遲執行
+      setTimeout(resetCanvas, 50);
+      return;
+    }
+    const ctx = canvas.getContext('2d');
+    canvas.width = width;
+    canvas.height = height;
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '20px Noto Sans TC';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const text = '移動滑鼠尋找答案...';
+    const textMetrics = ctx.measureText(text);
+    const textWidth = textMetrics.width;
+
+    // 確保文字不會超出畫布寬度（留出邊距）
+    if (textWidth > canvas.width - 40) {
+      ctx.font = `${Math.floor(20 * (canvas.width - 40) / textWidth)}px Noto Sans TC`;
+    }
+    ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+  };
+
+  // 監聽視窗調整和初始載入
+  useEffect(() => {
+    // 初始載入時延遲一下確保容器尺寸已計算
+    const timer = setTimeout(() => {
+      resetCanvas();
+    }, 100);
+    window.addEventListener('resize', resetCanvas);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', resetCanvas);
+    };
+  }, []);
+  const handleMouseMove = e => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    ctx.globalCompositeOperation = 'destination-out';
+    const gradient = ctx.createRadialGradient(x, y, 10, x, y, 60);
+    gradient.addColorStop(0, 'rgba(0,0,0,1)');
+    gradient.addColorStop(0.5, 'rgba(0,0,0,0.5)');
+    gradient.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.beginPath();
+    ctx.arc(x, y, 60, 0, Math.PI * 2);
+    ctx.fillStyle = gradient;
+    ctx.fill();
+    ctx.globalCompositeOperation = 'source-over';
+  };
+  const handleWordClick = index => {
+    if (gameOver || gameWon) return;
+    const chunk = storyChunks[index];
+    if (chunk.found) return;
+    if (chunk.isTarget) {
+      const newChunks = [...storyChunks];
+      newChunks[index].found = true;
+      setStoryChunks(newChunks);
+      setFoundCount(prev => prev + 1);
+      playSound('success');
+      if (foundCount + 1 === totalTargets) {
+        setGameWon(true);
+        revealAll();
+      }
+    } else {
+      playSound('error');
+      setHealth(prev => {
+        const newHealth = Math.max(0, prev - 1);
+        return newHealth;
+      });
+    }
+  };
+  const revealAll = () => {
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  };
+  const playSound = type => {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    const ctx = new AudioContext();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    if (type === 'success') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(600, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.1);
+      gain.gain.setValueAtTime(0.1, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+    } else {
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(150, ctx.currentTime);
+      osc.frequency.linearRampToValueAtTime(100, ctx.currentTime + 0.1);
+      gain.gain.setValueAtTime(0.1, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+    }
+    osc.start();
+    osc.stop(ctx.currentTime + 0.2);
+  };
+  const nextLevel = () => {
+    setHealth(3); // 重置生命值
+    if (currentLevelIdx < LEVELS.length - 1) {
+      setCurrentLevelIdx(prev => prev + 1);
+    } else {
+      // 完成所有關卡，顯示慶祝畫面
+      setAllLevelsCompleted(true);
+    }
+  };
+  const restartGame = () => {
+    // 重置所有遊戲狀態
+    setHealth(3);
+    setGameOver(false);
+    setGameWon(false);
+    setAllLevelsCompleted(false);
+    setFoundCount(0);
+
+    // 強制重新加載第一關
+    // 如果當前已經在第 0 關，先設置為最後一關再設置回 0，確保 useEffect 會觸發
+    if (currentLevelIdx === 0) {
+      setCurrentLevelIdx(LEVELS.length - 1);
+      setTimeout(() => {
+        setCurrentLevelIdx(0);
+      }, 10);
+    } else {
+      setCurrentLevelIdx(0);
+    }
+  };
+  const currentLevel = LEVELS[currentLevelIdx];
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center justify-center p-4 bg-slate-900 text-slate-200"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-3xl mb-4 flex justify-between items-center bg-slate-800 p-4 rounded-xl shadow-lg border border-slate-700"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-3"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "bg-blue-600 text-xs px-2 py-1 rounded text-white font-bold"
+  }, "Level ", currentLevelIdx + 1), /*#__PURE__*/React.createElement("h1", {
+    className: "text-xl font-bold text-yellow-400"
+  }, currentLevel.title)), /*#__PURE__*/React.createElement("p", {
+    className: "text-sm text-slate-300 mt-1"
+  }, "任務：", currentLevel.instruction)), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-right"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs text-slate-400 mb-1"
+  }, "生命值"), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2"
+  }, [0, 1, 2].map(i => {
+    const isActive = i < (health || 0);
+    return /*#__PURE__*/React.createElement("span", {
+      key: `heart-${i}`,
+      style: {
+        color: isActive ? '#ef4444' : '#475569',
+        opacity: isActive ? 1 : 0.5,
+        transition: 'color 0.2s, opacity 0.2s'
+      },
+      className: "text-2xl"
+    }, "❤️");
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "text-right"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-mono font-bold text-green-400"
+  }, foundCount, " ", /*#__PURE__*/React.createElement("span", {
+    className: "text-sm text-slate-500"
+  }, "/ ", totalTargets))))), /*#__PURE__*/React.createElement("div", {
+    className: "relative w-full max-w-3xl rounded-xl overflow-hidden shadow-2xl bg-white flashlight-cursor",
+    ref: containerRef,
+    onMouseMove: handleMouseMove,
+    style: {
+      minHeight: '500px',
+      width: '100%'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-0 left-0 w-full h-full p-10 text-2xl leading-loose tracking-wider font-serif text-slate-800 select-none flex flex-wrap content-start break-words overflow-wrap-anywhere"
+  }, storyChunks.map((item, index) => /*#__PURE__*/React.createElement("span", {
+    key: item.id,
+    onClick: () => handleWordClick(index),
+    className: `
+                                        inline-block px-1 m-1 rounded transition-all duration-200 relative z-10 whitespace-normal
+                                        ${item.found ? 'bg-yellow-300 text-black font-bold shadow-md found-anim cursor-default' : 'hover:bg-gray-200 cursor-pointer'}
+                                    `
+  }, item.text))), /*#__PURE__*/React.createElement("canvas", {
+    ref: canvasRef,
+    className: "absolute top-0 left-0 w-full h-full pointer-events-none z-20"
+  }), gameWon && /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/70 backdrop-blur-sm animate-fade-in"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white text-slate-900 p-8 rounded-2xl shadow-2xl text-center transform scale-110 border-4 border-yellow-400"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "text-4xl font-bold mb-2 text-green-600"
+  }, "🎉 關卡完成！"), /*#__PURE__*/React.createElement("p", {
+    className: "mb-6 text-xl text-slate-600"
+  }, "你找出了所有的目標！"), /*#__PURE__*/React.createElement("button", {
+    onClick: nextLevel,
+    className: "px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white text-lg rounded-full font-bold transition-all shadow-lg hover:scale-105"
+  }, currentLevelIdx < LEVELS.length - 1 ? "下一關 ➡️" : "完成任務 🎉"))), gameOver && /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/70 backdrop-blur-sm animate-fade-in"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white text-slate-900 p-8 rounded-2xl shadow-2xl text-center transform scale-110 border-4 border-red-400"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "text-4xl font-bold mb-2 text-red-600"
+  }, "💔 遊戲結束"), /*#__PURE__*/React.createElement("p", {
+    className: "mb-6 text-xl text-slate-600"
+  }, "生命值已用完！"), /*#__PURE__*/React.createElement("button", {
+    onClick: restartGame,
+    className: "px-8 py-4 bg-red-600 hover:bg-red-700 text-white text-lg rounded-full font-bold transition-all shadow-lg hover:scale-105"
+  }, "重新開始 🔄")))), allLevelsCompleted && /*#__PURE__*/React.createElement("div", {
+    className: "fixed inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 overflow-hidden"
+  }, [...Array(50)].map((_, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "absolute",
+    style: {
+      left: `${Math.random() * 100}%`,
+      animation: `confetti-fall ${2 + Math.random() * 3}s linear infinite`,
+      animationDelay: `${Math.random() * 2}s`,
+      fontSize: `${10 + Math.random() * 20}px`
+    }
+  }, ['🎉', '🎊', '✨', '🌟', '⭐', '💫'][Math.floor(Math.random() * 6)]))), /*#__PURE__*/React.createElement("div", {
+    className: "relative z-10 text-center px-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "celebrate-emoji text-8xl mb-6"
+  }, "🎉"), /*#__PURE__*/React.createElement("h1", {
+    className: "celebrate-title text-6xl md:text-7xl font-bold mb-4 text-white"
+  }, "恭喜你完成任務！"), /*#__PURE__*/React.createElement("p", {
+    className: "celebrate-text text-3xl md:text-4xl font-bold mb-8"
+  }, "你成功完成了所有 ", LEVELS.length, " 關挑戰！"), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-wrap justify-center gap-4 mb-8"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "celebrate-emoji text-5xl"
+  }, "🏆"), /*#__PURE__*/React.createElement("span", {
+    className: "celebrate-emoji text-5xl",
+    style: {
+      animationDelay: '0.2s'
+    }
+  }, "🎖️"), /*#__PURE__*/React.createElement("span", {
+    className: "celebrate-emoji text-5xl",
+    style: {
+      animationDelay: '0.4s'
+    }
+  }, "⭐"), /*#__PURE__*/React.createElement("span", {
+    className: "celebrate-emoji text-5xl",
+    style: {
+      animationDelay: '0.6s'
+    }
+  }, "🌟"), /*#__PURE__*/React.createElement("span", {
+    className: "celebrate-emoji text-5xl",
+    style: {
+      animationDelay: '0.8s'
+    }
+  }, "💎")), /*#__PURE__*/React.createElement("p", {
+    className: "text-xl md:text-2xl text-white/90 mb-8"
+  }, "你的努力和堅持值得讚賞！"), /*#__PURE__*/React.createElement("button", {
+    onClick: restartGame,
+    className: "px-12 py-6 bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-300 hover:to-orange-400 text-white text-2xl rounded-full font-bold transition-all shadow-2xl hover:scale-110 transform",
+    style: {
+      animation: 'celebrate-bounce 2s ease-in-out infinite'
+    }
+  }, "再次挑戰 🔄"))));
+};
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+
+</body>
+</html>
+

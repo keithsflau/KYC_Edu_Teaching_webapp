@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Circle Properties 1 | S5 Math 圓的性質</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <script
+      type="text/javascript"
+      id="MathJax-script"
+      async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+    ></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+      }
+    </style>
+  </head>
+  <body class="bg-indigo-50 text-slate-800 min-h-screen">
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect,
+  useRef
+} = React;
+const translations = {
+  en: {
+    unit: "Unit 3: Trigonometry & Circles",
+    title: "Angle at Center",
+    desc: "Property: Angle at center is twice angle at circumference.",
+    drag: "Drag points A, B, or C around the circle.",
+    angleCenter: "Angle at Center (AOB)",
+    angleCircum: "Angle at Circumference (ACB)",
+    property: "∠AOB = 2 × ∠ACB"
+  },
+  zh: {
+    unit: "單元三：三角學與圓",
+    title: "圓心角",
+    desc: "性質：圓心角是圓周角的兩倍。",
+    drag: "在圓上拖動點 A、B 或 C。",
+    angleCenter: "圓心角 (AOB)",
+    angleCircum: "圓周角 (ACB)",
+    property: "∠AOB = 2 × ∠ACB"
+  }
+};
+const App = () => {
+  const [lang, setLang] = useState("en");
+  const t = translations[lang];
+
+  // State for angles in radians (0 to 2PI)
+  const [angleA, setAngleA] = useState(3.2); // Bottom Left ish
+  const [angleB, setAngleB] = useState(5.6); // Bottom Right ish
+  const [angleC, setAngleC] = useState(1.8); // Top
+
+  const radius = 120;
+  const cx = 200;
+  const cy = 200;
+
+  // Calculate coordinates
+  const getPos = ang => ({
+    x: cx + radius * Math.cos(ang),
+    y: cy + radius * Math.sin(ang)
+  });
+  const posA = getPos(angleA);
+  const posB = getPos(angleB);
+  const posC = getPos(angleC);
+  const posO = {
+    x: cx,
+    y: cy
+  };
+
+  // Calculate degrees for display
+  // We need angle AOB and ACB.
+  // AOB is the minor arc angle if we consider simple cases, but geometry can be complex.
+  // Let's ensure C is on the major arc for simplicity in this demo, or handle reflex angles.
+  // To simplify: Calculate the difference between A and B coordinates relative to center/C.
+
+  const vectors = {
+    OA: {
+      x: posA.x - cx,
+      y: posA.y - cy
+    },
+    OB: {
+      x: posB.x - cx,
+      y: posB.y - cy
+    },
+    CA: {
+      x: posA.x - posC.x,
+      y: posA.y - posC.y
+    },
+    CB: {
+      x: posB.x - posC.x,
+      y: posB.y - posC.y
+    }
+  };
+  const dot = (v1, v2) => v1.x * v2.x + v1.y * v2.y;
+  const mag = v => Math.sqrt(v.x * v.x + v.y * v.y);
+  const angleBetween = (v1, v2) => Math.acos(dot(v1, v2) / (mag(v1) * mag(v2))) * 180 / Math.PI;
+  const degAOB = angleBetween(vectors.OA, vectors.OB);
+  const degACB = angleBetween(vectors.CA, vectors.CB);
+
+  // Check if C is on the major arc. If degAOB approx 2 * degACB, we are good.
+  // If degAOB roughly 360 - 2*degACB, we are on minor arc.
+  // For this interactive, we usually want to show the property holding true.
+  // We will display the 'subtended' angle AOB.
+
+  // Refined calculation for AOB based on arc length logic
+  // Normalize angles to 0-360
+  const norm = a => {
+    let deg = a * 180 / Math.PI % 360;
+    if (deg < 0) deg += 360;
+    return deg;
+  };
+
+  // Let's assume user drags A and B to define the arc, and C is the point on the alternate arc.
+  // We compute the central angle for the arc NOT containing C.
+  // This is actually tricky to implement robustly without knowing 'which' side C is.
+  // Simple heuristic: The property AOB = 2ACB holds if O and C are on same side of chord AB? No.
+  // It holds if C is on the major arc subtended by minor arc AB.
+
+  const isReflex = Math.abs(degAOB - 2 * degACB) > 1; // Tolerance
+  const displayAOB = isReflex ? 360 - degAOB : degAOB;
+  // Actually, usually AOB refers to the angle subtended by the same arc as ACB.
+  // If ACB is e.g. 100, AOB reflex is 200.
+  // Let's just show the calculated values and a message.
+
+  // Interaction
+  const svgRef = useRef(null);
+  const [dragging, setDragging] = useState(null);
+  const handlePointerDown = (e, point) => {
+    setDragging(point);
+    e.target.setPointerCapture(e.pointerId);
+  };
+  const handlePointerMove = e => {
+    if (!dragging) return;
+    const rect = svgRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left - cx;
+    const y = e.clientY - rect.top - cy;
+    const ang = Math.atan2(y, x);
+    if (dragging === "A") setAngleA(ang);
+    if (dragging === "B") setAngleB(ang);
+    if (dragging === "C") setAngleC(ang);
+  };
+  const handlePointerUp = () => setDragging(null);
+  useEffect(() => {
+    if (window.MathJax) window.MathJax.typesetPromise();
+  }, [degAOB, degACB, lang]);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "p-8 max-w-4xl mx-auto min-h-screen flex flex-col items-center select-none"
+  }, /*#__PURE__*/React.createElement("header", {
+    className: "mb-8 text-center w-full relative"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLang(lang === "en" ? "zh" : "en"),
+    className: "absolute right-0 top-0 px-4 py-2 bg-white rounded-full shadow border border-indigo-200 text-sm font-bold text-indigo-600 hover:bg-indigo-50 transition"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-globe mr-2"
+  }), lang === "en" ? "中文" : "ENG"), /*#__PURE__*/React.createElement("div", {
+    className: "text-indigo-600 font-bold uppercase text-xs tracking-widest mb-2"
+  }, t.unit), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-slate-900 mb-2"
+  }, t.title), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-500"
+  }, t.desc)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-6 rounded-3xl shadow-xl border border-indigo-100 w-full mb-8 flex flex-col md:flex-row gap-8 items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "relative"
+  }, /*#__PURE__*/React.createElement("svg", {
+    ref: svgRef,
+    width: "400",
+    height: "400",
+    className: "bg-slate-50 rounded-full cursor-pointer touch-none shadow-inner",
+    onPointerMove: handlePointerMove,
+    onPointerUp: handlePointerUp
+  }, /*#__PURE__*/React.createElement("circle", {
+    cx: cx,
+    cy: cy,
+    r: radius,
+    stroke: "#94a3b8",
+    strokeWidth: "2",
+    fill: "white"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: cx,
+    y1: cy,
+    x2: posA.x,
+    y2: posA.y,
+    stroke: "#f43f5e",
+    strokeWidth: "2",
+    strokeDasharray: "5"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: cx,
+    y1: cy,
+    x2: posB.x,
+    y2: posB.y,
+    stroke: "#f43f5e",
+    strokeWidth: "2",
+    strokeDasharray: "5"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: posC.x,
+    y1: posC.y,
+    x2: posA.x,
+    y2: posA.y,
+    stroke: "#3b82f6",
+    strokeWidth: "3"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: posC.x,
+    y1: posC.y,
+    x2: posB.x,
+    y2: posB.y,
+    stroke: "#3b82f6",
+    strokeWidth: "3"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: posA.x,
+    y1: posA.y,
+    x2: posB.x,
+    y2: posB.y,
+    stroke: "#CBD5E1",
+    strokeWidth: "1"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: cx,
+    cy: cy,
+    r: "4",
+    fill: "#64748b"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: cx - 10,
+    y: cy + 20,
+    className: "text-xs fill-slate-500 font-bold"
+  }, "O"), /*#__PURE__*/React.createElement("g", {
+    onPointerDown: e => handlePointerDown(e, "A")
+  }, /*#__PURE__*/React.createElement("circle", {
+    cx: posA.x,
+    cy: posA.y,
+    r: "12",
+    fill: "rgba(244, 63, 94, 0.2)"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: posA.x,
+    cy: posA.y,
+    r: "6",
+    fill: "#f43f5e"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: posA.x + 10,
+    y: posA.y + 10,
+    className: "font-bold fill-rose-600"
+  }, "A")), /*#__PURE__*/React.createElement("g", {
+    onPointerDown: e => handlePointerDown(e, "B")
+  }, /*#__PURE__*/React.createElement("circle", {
+    cx: posB.x,
+    cy: posB.y,
+    r: "12",
+    fill: "rgba(244, 63, 94, 0.2)"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: posB.x,
+    cy: posB.y,
+    r: "6",
+    fill: "#f43f5e"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: posB.x + 10,
+    y: posB.y + 10,
+    className: "font-bold fill-rose-600"
+  }, "B")), /*#__PURE__*/React.createElement("g", {
+    onPointerDown: e => handlePointerDown(e, "C")
+  }, /*#__PURE__*/React.createElement("circle", {
+    cx: posC.x,
+    cy: posC.y,
+    r: "12",
+    fill: "rgba(59, 130, 246, 0.2)"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: posC.x,
+    cy: posC.y,
+    r: "6",
+    fill: "#3b82f6"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: posC.x + 10,
+    y: posC.y - 10,
+    className: "font-bold fill-blue-600"
+  }, "C"))), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-4 left-0 right-0 text-center text-xs text-slate-400 pointer-events-none"
+  }, t.drag)), /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 space-y-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-rose-50 p-6 rounded-2xl border border-rose-100 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-sm font-bold text-rose-400 uppercase mb-2"
+  }, t.angleCenter), /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-extrabold text-rose-600 font-mono"
+  }, (isReflex ? 360 - degAOB : degAOB).toFixed(1), "°")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-blue-50 p-6 rounded-2xl border border-blue-100 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-sm font-bold text-blue-400 uppercase mb-2"
+  }, t.angleCircum), /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-extrabold text-blue-600 font-mono"
+  }, degACB.toFixed(1), "°")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-indigo-50 p-4 rounded-xl border border-indigo-100 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-sm font-bold text-indigo-400 uppercase mb-2"
+  }, t.property), /*#__PURE__*/React.createElement("div", {
+    className: "font-mono text-lg text-indigo-800"
+  }, (degACB * 2).toFixed(1), "° ≈", " ", (isReflex ? 360 - degAOB : degAOB).toFixed(1), "°"), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs text-slate-400 mt-2"
+  }, "(Small differences due to rounding)")))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

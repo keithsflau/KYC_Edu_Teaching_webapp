@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Histogram Builder | S4 Math 直方圖</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+      }
+    </style>
+  </head>
+  <body class="bg-purple-50 text-slate-800 min-h-screen">
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useMemo
+} = React;
+const translations = {
+  en: {
+    unit: "Unit 5: Statistics",
+    title: "Histogram Builder",
+    desc: "Visualize frequency distribution of data.",
+    data: "Data (comma-separated)",
+    bins: "Number of Bins",
+    frequency: "Frequency",
+    classWidth: "Class Width"
+  },
+  zh: {
+    unit: "單元五：統計學",
+    title: "直方圖生成器",
+    desc: "視像化數據的頻率分布。",
+    data: "數據（逗號分隔）",
+    bins: "組數",
+    frequency: "頻率",
+    classWidth: "組距"
+  }
+};
+const App = () => {
+  const [lang, setLang] = useState("en");
+  const t = translations[lang];
+  const [input, setInput] = useState("9, 14, 18, 21, 24, 27, 31, 33, 36, 39, 44, 47, 51, 54, 58, 61, 66, 69, 73, 77");
+  const [numBins, setNumBins] = useState(6);
+  const histogram = useMemo(() => {
+    const nums = input.split(/[,\s]+/).map(Number).filter(n => !isNaN(n));
+    if (nums.length < 2) return null;
+    const min = Math.min(...nums);
+    const max = Math.max(...nums);
+    const range = max - min;
+    const binWidth = range / numBins;
+    const bins = [];
+    for (let i = 0; i < numBins; i++) {
+      const lower = min + i * binWidth;
+      const upper = min + (i + 1) * binWidth;
+      const count = nums.filter(n => n >= lower && (i === numBins - 1 ? n <= upper : n < upper)).length;
+      bins.push({
+        lower,
+        upper,
+        count
+      });
+    }
+    return {
+      bins,
+      binWidth,
+      max: Math.max(...bins.map(b => b.count))
+    };
+  }, [input, numBins]);
+
+  // Chart
+  const w = 550,
+    h = 300;
+  const chartH = 220;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "p-8 max-w-4xl mx-auto min-h-screen flex flex-col items-center select-none"
+  }, /*#__PURE__*/React.createElement("header", {
+    className: "mb-8 text-center w-full relative"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLang(lang === "en" ? "zh" : "en"),
+    className: "absolute right-0 top-0 px-4 py-2 bg-white rounded-full shadow border border-purple-200 text-sm font-bold text-purple-600 hover:bg-purple-50 transition"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-globe mr-2"
+  }), lang === "en" ? "中文" : "ENG"), /*#__PURE__*/React.createElement("div", {
+    className: "text-purple-600 font-bold uppercase text-xs tracking-widest mb-2"
+  }, t.unit), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-slate-900 mb-2"
+  }, t.title), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-500"
+  }, t.desc)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-6 rounded-3xl shadow-xl border border-purple-100 w-full mb-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "mb-6"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "text-sm font-bold text-slate-500 block mb-2"
+  }, t.data), /*#__PURE__*/React.createElement("textarea", {
+    value: input,
+    onChange: e => setInput(e.target.value),
+    className: "w-full p-4 bg-slate-50 rounded-xl border border-slate-200 font-mono focus:ring-2 focus:ring-purple-400 outline-none h-20"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "mb-6"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "text-sm font-bold text-slate-500 block mb-2"
+  }, t.bins), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "3",
+    max: "10",
+    value: numBins,
+    onChange: e => setNumBins(Number(e.target.value)),
+    className: "w-full accent-purple-500"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between text-sm"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-slate-400"
+  }, t.bins, ": ", numBins), histogram && /*#__PURE__*/React.createElement("span", {
+    className: "text-purple-600 font-mono"
+  }, t.classWidth, ": ", histogram.binWidth.toFixed(1)))), histogram ? /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-50 p-4 rounded-xl overflow-x-auto"
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: w,
+    height: h,
+    className: "mx-auto"
+  }, /*#__PURE__*/React.createElement("line", {
+    x1: "60",
+    y1: "20",
+    x2: "60",
+    y2: chartH + 30,
+    stroke: "#94a3b8",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "30",
+    y: chartH / 2,
+    textAnchor: "middle",
+    transform: `rotate(-90, 30, ${chartH / 2})`,
+    className: "text-xs fill-slate-400"
+  }, t.frequency), /*#__PURE__*/React.createElement("line", {
+    x1: "60",
+    y1: chartH + 30,
+    x2: w - 20,
+    y2: chartH + 30,
+    stroke: "#94a3b8",
+    strokeWidth: "2"
+  }), histogram.bins.map((bin, i) => {
+    const barWidth = (w - 100) / histogram.bins.length - 4;
+    const barHeight = histogram.max > 0 ? bin.count / histogram.max * chartH : 0;
+    const x = 70 + i * (barWidth + 4);
+    const y = chartH + 30 - barHeight;
+    return /*#__PURE__*/React.createElement("g", {
+      key: i
+    }, /*#__PURE__*/React.createElement("rect", {
+      x: x,
+      y: y,
+      width: barWidth,
+      height: barHeight,
+      fill: "#a855f7",
+      stroke: "#9333ea",
+      strokeWidth: "1",
+      className: "hover:opacity-80 transition"
+    }), /*#__PURE__*/React.createElement("text", {
+      x: x + barWidth / 2,
+      y: y - 5,
+      textAnchor: "middle",
+      className: "text-xs fill-purple-600 font-bold"
+    }, bin.count), /*#__PURE__*/React.createElement("text", {
+      x: x + barWidth / 2,
+      y: h - 10,
+      textAnchor: "middle",
+      className: "text-[9px] fill-slate-400"
+    }, bin.lower.toFixed(0), "-", bin.upper.toFixed(0)));
+  }))) : /*#__PURE__*/React.createElement("div", {
+    className: "text-center text-slate-400 py-12"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-chart-bar text-4xl mb-2"
+  }), /*#__PURE__*/React.createElement("p", null, "Enter at least 2 data points")), histogram && /*#__PURE__*/React.createElement("div", {
+    className: "mt-6 bg-purple-50 p-4 rounded-xl border border-purple-100 overflow-x-auto"
+  }, /*#__PURE__*/React.createElement("table", {
+    className: "w-full text-sm"
+  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", {
+    className: "border-b border-purple-200"
+  }, /*#__PURE__*/React.createElement("th", {
+    className: "py-2 text-purple-500"
+  }, "Class Interval"), /*#__PURE__*/React.createElement("th", {
+    className: "py-2 text-purple-500"
+  }, t.frequency))), /*#__PURE__*/React.createElement("tbody", {
+    className: "font-mono"
+  }, histogram.bins.map((bin, i) => /*#__PURE__*/React.createElement("tr", {
+    key: i,
+    className: "border-b border-purple-100"
+  }, /*#__PURE__*/React.createElement("td", {
+    className: "py-2 text-center"
+  }, bin.lower.toFixed(1), " - ", bin.upper.toFixed(1)), /*#__PURE__*/React.createElement("td", {
+    className: "py-2 text-center font-bold text-purple-700"
+  }, bin.count))))))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

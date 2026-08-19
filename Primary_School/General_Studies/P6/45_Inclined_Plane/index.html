@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - Inclined Plane</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: #f8fafc;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "The Ramp Challenge",
+    zh: "斜面挑戰",
+    ja: "スロープチャレンジ",
+    ko: "경사로 챌린지",
+    es: "El desafío de la rampa",
+    de: "Die Rampen-Herausforderung",
+    fi: "Ramppikilpailu",
+    fr: "Le défi de la rampe",
+    ar: "تحدي المنحدر",
+    it: "La Sfida della Rampa"
+  },
+  instruction: {
+    en: "Compare lifting vs using a ramp.",
+    zh: "比較直接提起與使用斜面。",
+    ja: "持ち上げるとスロープを使うのを比較してください。",
+    ko: "들어 올리는 것과 경사로를 사용하는 것을 비교하세요.",
+    es: "Compara levantar vs usar una rampa.",
+    de: "Vergleiche Heben vs. Rampe benutzen.",
+    fi: "Vertaa nostamista rampin käyttöön.",
+    fr: "Comparez le levage à l'utilisation d'une rampe.",
+    ar: "قارن بين الرفع واستخدام المنحدر.",
+    it: "Confronta il sollevamento con l'uso di una rampa."
+  },
+  ramp: {
+    en: "Use Ramp (Easy)",
+    zh: "使用斜面 (省力)",
+    ja: "スロープを使う (簡単)",
+    ko: "경사로 사용 (쉬움)"
+  },
+  lift: {
+    en: "Lift Straight Up (Hard)",
+    zh: "直接提起 (費力)",
+    ja: "真っ直ぐ持ち上げる (難しい)",
+    ko: "똑바로 들어 올리기 (어려움)"
+  },
+  move: {
+    en: "MOVE",
+    zh: "移動",
+    ja: "移動",
+    ko: "이동"
+  },
+  reset: {
+    en: "Reset",
+    zh: "重置",
+    ja: "リセット",
+    ko: "재설정"
+  }
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [mode, setMode] = useState("ramp"); // ramp, lift
+  const [progress, setProgress] = useState(0);
+  const [effortMsg, setEffortMsg] = useState("");
+  const getText = key => t[key][lang] || t[key]["en"];
+  const switchMode = next => {
+    setMode(next);
+    setProgress(0);
+    setEffortMsg("");
+  };
+  // Ramp: one push reaches the top. Lift: needs several harder pushes (more force / less gain).
+  const move = () => {
+    if (mode === "ramp") {
+      setProgress(100);
+      setEffortMsg(lang === "zh" ? "斜面省力，一次就能推上去！" : "Ramp needs less force — one push!");
+      return;
+    }
+    setProgress(p => {
+      const next = Math.min(100, p + 25);
+      if (next < 100) {
+        setEffortMsg(lang === "zh" ? "直接提起較費力，要多按幾次！" : "Lifting needs more force — keep pushing!");
+      } else {
+        setEffortMsg(lang === "zh" ? "終於提起了，但比斜面費力得多！" : "Lifted — but much harder than the ramp!");
+      }
+      return next;
+    });
+  };
+  const reset = () => {
+    setProgress(0);
+    setEffortMsg("");
+  };
+  const barrelBottom = 10 + progress / 100 * 300;
+  const barrelLeft = mode === "ramp" ? 50 + progress / 100 * 400 : 450;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-bold mb-8 text-slate-800"
+  }, getText("title")), /*#__PURE__*/React.createElement("p", {
+    className: "mb-8 font-bold text-slate-500"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4 mb-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => switchMode("ramp"),
+    className: `px-4 py-2 rounded-lg font-bold ${mode === "ramp" ? "bg-blue-600 text-white" : "bg-white text-blue-600 border border-blue-300"}`
+  }, getText("ramp")), /*#__PURE__*/React.createElement("button", {
+    onClick: () => switchMode("lift"),
+    className: `px-4 py-2 rounded-lg font-bold ${mode === "lift" ? "bg-blue-600 text-white" : "bg-white text-blue-600 border border-blue-300"}`
+  }, getText("lift"))), /*#__PURE__*/React.createElement("div", {
+    className: "relative w-full max-w-3xl h-[400px] border-b-8 border-slate-700 bg-sky-50 rounded-t-xl overflow-hidden mb-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-[100px] right-0 w-[200px] h-[300px] bg-slate-300 border-l-4 border-slate-400"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute bg-red-500 text-white px-2 font-bold right-2 top-2"
+  }, "TRUCK")), mode === "ramp" && /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-0 right-[200px] w-[400px] h-[300px] bg-amber-200 origin-bottom-right",
+    style: {
+      clipPath: "polygon(0 100%, 100% 0, 100% 100%)"
+    }
+  }), /*#__PURE__*/React.createElement(motion.div, {
+    className: "absolute text-6xl w-16 h-16",
+    animate: {
+      bottom: barrelBottom,
+      left: barrelLeft
+    },
+    transition: {
+      duration: mode === "ramp" ? 2 : 0.6,
+      ease: "easeInOut"
+    }
+  }, "🛢️"), mode === "lift" && progress < 100 && /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-10 left-[450px] text-xs text-red-500 font-bold"
+  }, lang === "zh" ? "需要更大的力！" : "Needs more force!")), /*#__PURE__*/React.createElement("div", {
+    className: "mb-4 h-8 text-center font-bold text-slate-600"
+  }, effortMsg), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: move,
+    className: "px-12 py-4 bg-green-500 text-white font-black text-2xl rounded-full shadow-lg hover:scale-105 active:scale-95 transition-transform"
+  }, getText("move")), /*#__PURE__*/React.createElement("button", {
+    onClick: reset,
+    className: "px-6 py-4 bg-gray-400 text-white font-bold rounded-lg"
+  }, getText("reset"))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

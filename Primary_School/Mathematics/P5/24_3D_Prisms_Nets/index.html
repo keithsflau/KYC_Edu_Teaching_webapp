@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小五數學：柱體與摺紙圖 | Prisms and Nets</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      :root {
+        --primary-glow: rgba(34, 197, 94, 0.5);
+        --glass-bg: rgba(255, 255, 255, 0.05);
+        --glass-border: rgba(255, 255, 255, 0.1);
+      }
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: radial-gradient(circle at 50% 0%, #0f172a 0%, #020617 100%);
+        color: white;
+        overflow: hidden;
+        margin: 0;
+      }
+
+      /* Rich Aesthetics & Animations */
+      .glass-panel {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+        transition: all 0.3s ease;
+      }
+
+      .glass-btn {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .glass-btn::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          45deg,
+          transparent 0%,
+          rgba(255, 255, 255, 0.1) 50%,
+          transparent 100%
+        );
+        transform: translateX(-100%);
+        transition: 0.5s;
+      }
+
+      .glass-btn:hover::after {
+        transform: translateX(100%);
+      }
+
+      .glass-btn:hover {
+        background: rgba(255, 255, 255, 0.15);
+        transform: translateY(-2px);
+        box-shadow: 0 0 20px var(--primary-glow);
+        border-color: rgba(34, 197, 94, 0.5);
+      }
+
+      .glass-btn.active {
+        background: rgba(34, 197, 94, 0.2);
+        border-color: #22c55e;
+        color: #4ade80;
+        box-shadow: 0 0 25px rgba(34, 197, 94, 0.3);
+      }
+
+      /* Custom Slider */
+      input[type="range"] {
+        -webkit-appearance: none;
+        background: transparent;
+        height: 6px;
+        border-radius: 3px;
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        height: 20px;
+        width: 20px;
+        border-radius: 50%;
+        background: #22c55e;
+        cursor: pointer;
+        margin-top: -7px;
+        box-shadow: 0 0 15px #22c55e;
+        transition: transform 0.2s;
+        border: 2px solid white;
+      }
+
+      input[type="range"]::-webkit-slider-thumb:hover {
+        transform: scale(1.2);
+      }
+
+      input[type="range"]::-webkit-slider-runnable-track {
+        width: 100%;
+        height: 6px;
+        cursor: pointer;
+        background: linear-gradient(
+          90deg,
+          #22c55e var(--range-progress, 0%),
+          rgba(255, 255, 255, 0.1) var(--range-progress, 0%)
+        );
+        border-radius: 3px;
+      }
+
+      .canvas-wrapper {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        background: radial-gradient(
+          circle at 50% 50%,
+          rgba(30, 58, 138, 0.1) 0%,
+          transparent 70%
+        );
+      }
+
+      /* Animations */
+      @keyframes float {
+        0% {
+          transform: translateY(0px);
+        }
+        50% {
+          transform: translateY(-10px);
+        }
+        100% {
+          transform: translateY(0px);
+        }
+      }
+
+      .floating-ui {
+        animation: float 6s ease-in-out infinite;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+  useLayoutEffect
+} = React;
+
+// Safe I18n
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+
+// Icons
+const IconBase = ({
+  children,
+  size = 24,
+  className = ""
+}) => /*#__PURE__*/React.createElement("svg", {
+  xmlns: "http://www.w3.org/2000/svg",
+  width: size,
+  height: size,
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: "2",
+  strokeLinecap: "round",
+  strokeLinejoin: "round",
+  className: className
+}, children);
+const BoxIcon = p => /*#__PURE__*/React.createElement(IconBase, p, /*#__PURE__*/React.createElement("path", {
+  d: "M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"
+}), /*#__PURE__*/React.createElement("polyline", {
+  points: "3.27 6.96 12 12.01 20.73 6.96"
+}), /*#__PURE__*/React.createElement("line", {
+  x1: "12",
+  y1: "22.08",
+  x2: "12",
+  y2: "12"
+}));
+const TriangleIcon = p => /*#__PURE__*/React.createElement(IconBase, p, /*#__PURE__*/React.createElement("path", {
+  d: "M13.73 4a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3z"
+}));
+const LayersIcon = p => /*#__PURE__*/React.createElement(IconBase, p, /*#__PURE__*/React.createElement("polygon", {
+  points: "12 2 2 7 12 12 22 7 12 2"
+}), /*#__PURE__*/React.createElement("polyline", {
+  points: "2 17 12 22 22 17"
+}), /*#__PURE__*/React.createElement("polyline", {
+  points: "2 12 12 17 22 12"
+}));
+const PlayIcon = p => /*#__PURE__*/React.createElement(IconBase, p, /*#__PURE__*/React.createElement("polygon", {
+  points: "5 3 19 12 5 21 5 3"
+}));
+const PauseIcon = p => /*#__PURE__*/React.createElement(IconBase, p, /*#__PURE__*/React.createElement("rect", {
+  x: "6",
+  y: "4",
+  width: "4",
+  height: "16"
+}), /*#__PURE__*/React.createElement("rect", {
+  x: "14",
+  y: "4",
+  width: "4",
+  height: "16"
+}));
+
+// Translations
+const t = {
+  title: {
+    en: "Prisms & Nets",
+    zh: "柱體與摺紙圖",
+    ja: "角柱と展開図",
+    ko: "각기둥과 전개도",
+    es: "Prismas y Redes",
+    de: "Prismen und Netze",
+    fi: "Särmiöt ja levityskuvat",
+    fr: "Prismes et patrons",
+    ar: "الموشورات والشبكات",
+    it: "Prismi e Sviluppi"
+  },
+  cube: {
+    en: "Cube",
+    zh: "正方體",
+    ja: "立方体",
+    ko: "정육면체",
+    es: "Cubo",
+    de: "Würfel",
+    fi: "Kuutio",
+    fr: "Cube",
+    ar: "مكعب",
+    it: "Cubo"
+  },
+  cuboid: {
+    en: "Cuboid",
+    zh: "長方體",
+    ja: "直方体",
+    ko: "직육면체",
+    es: "Cuboide",
+    de: "Quader",
+    fi: "Suorakulmainen särmiö",
+    fr: "Parallélépipède",
+    ar: "متوازي المستطيلات",
+    it: "Parallelepipedo"
+  },
+  prism: {
+    en: "Triangular Prism",
+    zh: "三角柱體",
+    ja: "三角柱",
+    ko: "삼각기둥",
+    es: "Prisma Triangular",
+    de: "Dreiecksprisma",
+    fi: "Kolmioprisma",
+    fr: "Prisme triangulaire",
+    ar: "موشور ثلاثي",
+    it: "Prisma triangolare"
+  },
+  unfold: {
+    en: "Unfold",
+    zh: "展開",
+    ja: "展開",
+    ko: "펼치기",
+    es: "Desplegar",
+    de: "Aufklappen",
+    fi: "Avaa",
+    fr: "Déplier",
+    ar: "بسط",
+    it: "Apri"
+  },
+  fold: {
+    en: "Fold",
+    zh: "摺疊",
+    ja: "折る",
+    ko: "접기",
+    es: "Plegar",
+    de: "Falten",
+    fi: "Taita",
+    fr: "Plier",
+    ar: "طي",
+    it: "Chiudi"
+  },
+  auto: {
+    en: "Auto",
+    zh: "自動演示",
+    ja: "自動",
+    ko: "자동",
+    es: "Auto",
+    de: "Auto",
+    fi: "Auto",
+    fr: "Auto",
+    ar: "تلقائي",
+    it: "Auto"
+  },
+  faces: {
+    en: "Faces",
+    zh: "面",
+    ja: "面",
+    ko: "면",
+    es: "Caras",
+    de: "Flächen",
+    fi: "Tahkot",
+    fr: "Faces",
+    ar: "وجوه",
+    it: "Facce"
+  },
+  edges: {
+    en: "Edges",
+    zh: "邊",
+    ja: "辺",
+    ko: "모서리",
+    es: "Aristas",
+    de: "Kanten",
+    fi: "Särmät",
+    fr: "Arêtes",
+    ar: "حواف",
+    it: "Spigoli"
+  },
+  vertices: {
+    en: "Vertices",
+    zh: "頂點",
+    ja: "頂点",
+    ko: "꼭짓점",
+    es: "Vértices",
+    de: "Ecken",
+    fi: "Kärjet",
+    fr: "Sommets",
+    ar: "رؤوس",
+    it: "Vertici"
+  },
+  euler: {
+    en: "Euler's Formula",
+    zh: "歐拉公式",
+    ja: "オイラーの公式",
+    ko: "오일러 공식",
+    es: "Fórmula de Euler",
+    de: "Eulersche Formel",
+    fi: "Eulerin lause",
+    fr: "Formule d'Euler",
+    ar: "صيغة أويلر",
+    it: "Formula di Eulero"
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+
+// --- THREE.JS ENGINE ---
+function Scene({
+  shape,
+  fold,
+  isAuto,
+  onAutoToggle
+}) {
+  const mountRef = useRef(null);
+  const sceneDataRef = useRef({
+    scene: null,
+    camera: null,
+    renderer: null,
+    pivotGroups: {},
+    root: null,
+    frameId: null
+  });
+
+  // 1. Initialize Scene (Run Once)
+  useLayoutEffect(() => {
+    if (!window.THREE) return;
+    const w = mountRef.current.clientWidth;
+    const h = mountRef.current.clientHeight;
+
+    // Scene Setup
+    const scene = new THREE.Scene();
+    // scene.background = new THREE.Color(0x0f172a); // Let CSS handle BG
+
+    const camera = new THREE.PerspectiveCamera(40, w / h, 0.1, 100);
+    camera.position.set(6, 6, 8);
+    camera.lookAt(0, 0, 0);
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true
+    });
+    renderer.setSize(w, h);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    mountRef.current.appendChild(renderer.domElement);
+
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    scene.add(ambientLight);
+    const mainLight = new THREE.DirectionalLight(0xffffff, 1.2);
+    mainLight.position.set(5, 10, 7);
+    mainLight.castShadow = true;
+    mainLight.shadow.mapSize.width = 1024;
+    mainLight.shadow.mapSize.height = 1024;
+    scene.add(mainLight);
+    const fillLight = new THREE.PointLight(0x22c55e, 0.5);
+    fillLight.position.set(-5, 2, -5);
+    scene.add(fillLight);
+    sceneDataRef.current = {
+      ...sceneDataRef.current,
+      scene,
+      camera,
+      renderer
+    };
+
+    // Handle Resize
+    const handleResize = () => {
+      const nw = mountRef.current.clientWidth;
+      const nh = mountRef.current.clientHeight;
+      renderer.setSize(nw, nh);
+      camera.aspect = nw / nh;
+      camera.updateProjectionMatrix();
+    };
+    window.addEventListener("resize", handleResize);
+
+    // Interaction State
+    let isDragging = false;
+    let prevPos = {
+      x: 0,
+      y: 0
+    };
+    const canvas = renderer.domElement;
+    const startDrag = (x, y) => {
+      isDragging = true;
+      prevPos = {
+        x,
+        y
+      };
+    };
+    const moveDrag = (x, y) => {
+      if (!isDragging) return;
+      const dx = x - prevPos.x;
+      const dy = y - prevPos.y;
+
+      // Orbit Logic
+      const root = sceneDataRef.current.root;
+      if (root) {
+        root.rotation.y += dx * 0.01;
+        root.rotation.x += dy * 0.01;
+      }
+      prevPos = {
+        x,
+        y
+      };
+    };
+    const endDrag = () => {
+      isDragging = false;
+    };
+    canvas.addEventListener("mousedown", e => startDrag(e.clientX, e.clientY));
+    window.addEventListener("mousemove", e => moveDrag(e.clientX, e.clientY));
+    window.addEventListener("mouseup", endDrag);
+    canvas.addEventListener("touchstart", e => startDrag(e.touches[0].clientX, e.touches[0].clientY), {
+      passive: false
+    });
+    window.addEventListener("touchmove", e => moveDrag(e.touches[0].clientX, e.touches[0].clientY), {
+      passive: false
+    });
+    window.addEventListener("touchend", endDrag);
+
+    // Animation Loop
+    const animate = () => {
+      sceneDataRef.current.frameId = requestAnimationFrame(animate);
+      // Gentle float if not dragging
+      if (!isDragging && sceneDataRef.current.root) {
+        sceneDataRef.current.root.position.y = Math.sin(Date.now() * 0.001) * 0.1;
+      }
+      renderer.render(scene, camera);
+    };
+    animate();
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      if (sceneDataRef.current.frameId) cancelAnimationFrame(sceneDataRef.current.frameId);
+      mountRef.current.removeChild(renderer.domElement);
+    };
+  }, []);
+
+  // 2. Build Shape Logic (Run when shape changes)
+  useEffect(() => {
+    const {
+      scene
+    } = sceneDataRef.current;
+    if (!scene) return;
+
+    // Cleanup old
+    const oldRoot = scene.getObjectByName("ModelRoot");
+    if (oldRoot) scene.remove(oldRoot);
+    const root = new THREE.Object3D();
+    root.name = "ModelRoot";
+    scene.add(root);
+    sceneDataRef.current.root = root;
+
+    // Materials
+    const faceMat = new THREE.MeshPhysicalMaterial({
+      color: 0x4ade80,
+      metalness: 0,
+      roughness: 0.1,
+      transmission: 0.2,
+      opacity: 0.9,
+      transparent: true,
+      side: THREE.DoubleSide
+    });
+    const edgeMat = new THREE.LineBasicMaterial({
+      color: 0xffffff,
+      linewidth: 2
+    });
+
+    // Helper to make face
+    const makeFace = (geom, pos, rot) => {
+      const mesh = new THREE.Mesh(geom, faceMat);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      const edges = new THREE.EdgesGeometry(geom);
+      const line = new THREE.LineSegments(edges, edgeMat);
+      mesh.add(line);
+      if (pos) mesh.position.set(...pos);
+      if (rot) mesh.rotation.set(...rot); // Euler array
+      return mesh;
+    };
+    const pivots = {};
+    if (shape === "cube") {
+      const s = 1.5;
+      const geo = new THREE.PlaneGeometry(s, s);
+
+      // Base
+      const base = makeFace(geo, [0, 0, 0], [-Math.PI / 2, 0, 0]); // lying flat initially? No, let's build in "Net" orientation then fold, or "3D" then unfold.
+      // Let's build as logic implies:
+      // We want 0 = Cube (3D), 1 = Flat (Net)
+      // Let's build the BASE face fixed.
+      base.rotation.set(0, 0, 0); // Facing Z
+      root.add(base);
+
+      // Define Hinges attached to Base
+      // Right
+      const pRight = new THREE.Object3D();
+      pRight.position.set(s / 2, 0, 0);
+      base.add(pRight);
+      const fRight = makeFace(geo, [s / 2, 0, 0]);
+      pRight.add(fRight);
+      pivots.right = pRight;
+
+      // Left
+      const pLeft = new THREE.Object3D();
+      pLeft.position.set(-s / 2, 0, 0);
+      base.add(pLeft);
+      const fLeft = makeFace(geo, [-s / 2, 0, 0]);
+      pLeft.add(fLeft);
+      pivots.left = pLeft;
+
+      // Top
+      const pTop = new THREE.Object3D();
+      pTop.position.set(0, s / 2, 0);
+      base.add(pTop);
+      const fTop = makeFace(geo, [0, s / 2, 0]);
+      pTop.add(fTop);
+      pivots.top = pTop;
+
+      // Bottom
+      const pBot = new THREE.Object3D();
+      pBot.position.set(0, -s / 2, 0);
+      base.add(pBot);
+      const fBot = makeFace(geo, [0, -s / 2, 0]);
+      pBot.add(fBot);
+      pivots.bottom = pBot;
+
+      // Far (Attached to Top)
+      const pFar = new THREE.Object3D();
+      pFar.position.set(0, s / 2, 0); // Relative to Top Face
+      fTop.add(pFar);
+      const fFar = makeFace(geo, [0, s / 2, 0]);
+      pFar.add(fFar);
+      pivots.far = pFar;
+    } else if (shape === "cuboid") {
+      const w = 1.2,
+        h = 2.0,
+        d = 1.2;
+      const geoFrontBack = new THREE.PlaneGeometry(w, h); // Front/Back
+      const geoSide = new THREE.PlaneGeometry(d, h); // Sides
+      const geoTopBot = new THREE.PlaneGeometry(w, d); // Top/Bot
+
+      // Base (Front)
+      const base = makeFace(geoFrontBack);
+      root.add(base);
+
+      // Right (Side)
+      const pRight = new THREE.Object3D();
+      pRight.position.set(w / 2, 0, 0);
+      base.add(pRight);
+      const fRight = makeFace(geoSide, [d / 2, 0, 0]);
+      pRight.add(fRight);
+      pivots.right = pRight;
+
+      // Left (Side)
+      const pLeft = new THREE.Object3D();
+      pLeft.position.set(-w / 2, 0, 0);
+      base.add(pLeft);
+      const fLeft = makeFace(geoSide, [-d / 2, 0, 0]);
+      pLeft.add(fLeft);
+      pivots.left = pLeft;
+
+      // Top (Cap)
+      const pTop = new THREE.Object3D();
+      pTop.position.set(0, h / 2, 0);
+      base.add(pTop);
+      const fTop = makeFace(geoTopBot, [0, d / 2, 0]);
+      pTop.add(fTop);
+      pivots.top = pTop;
+
+      // Bot (Cap)
+      const pBot = new THREE.Object3D();
+      pBot.position.set(0, -h / 2, 0);
+      base.add(pBot);
+      const fBot = makeFace(geoTopBot, [0, -d / 2, 0]);
+      pBot.add(fBot);
+      pivots.bottom = pBot;
+
+      // Back (attached to Right Side) - Alternative Net
+      // Let's attach Back to Top for classic 'T' or cross
+      // Let's Attach Back to Top like cube
+      const pBack = new THREE.Object3D();
+      pBack.position.set(0, d, 0); // At the end of Top Face
+      fTop.add(pBack);
+      const fBack = makeFace(geoFrontBack, [0, h / 2, 0]);
+      pBack.add(fBack);
+      pivots.back = pBack;
+    } else if (shape === "prism") {
+      // Triangular Prism
+      // Base Rect
+      const w = 1.5,
+        l = 2.5;
+      const baseGeo = new THREE.PlaneGeometry(w, l);
+      const base = makeFace(baseGeo);
+      root.add(base);
+
+      // Triangle logic
+      // Equilateral triangle h = w * sqrt(3) / 2
+      const hTri = w * Math.sqrt(3) / 2;
+      const shapeTri = new THREE.Shape();
+      shapeTri.moveTo(-w / 2, -hTri / 2);
+      shapeTri.lineTo(w / 2, -hTri / 2);
+      shapeTri.lineTo(0, hTri / 2);
+      shapeTri.lineTo(-w / 2, -hTri / 2);
+      const geoTri = new THREE.ShapeGeometry(shapeTri);
+
+      // Left Wall (Rect)
+      const pLeft = new THREE.Object3D();
+      pLeft.position.set(-w / 2, 0, 0);
+      base.add(pLeft);
+      const fLeft = makeFace(baseGeo, [-w / 2, 0, 0]);
+      pLeft.add(fLeft);
+      pivots.left = pLeft;
+
+      // Right Wall (Rect)
+      const pRight = new THREE.Object3D();
+      pRight.position.set(w / 2, 0, 0);
+      base.add(pRight);
+      const fRight = makeFace(baseGeo, [w / 2, 0, 0]);
+      pRight.add(fRight);
+      pivots.right = pRight;
+
+      // Top Triangle
+      const pTop = new THREE.Object3D();
+      pTop.position.set(0, l / 2, 0);
+      base.add(pTop);
+      const fTop = makeFace(geoTri, [0, hTri / 2, 0]);
+      pTop.add(fTop);
+      pivots.top = pTop;
+
+      // Bottom Triangle
+      const pBot = new THREE.Object3D();
+      pBot.position.set(0, -l / 2, 0);
+      base.add(pBot);
+      // Orient triangle to point outwards
+      const fBot = makeFace(geoTri, [0, -hTri / 2, 0]);
+      // We need to rotate the geometry or mesh to make it point appropriately?
+      // The shape points UP.
+      fBot.rotation.z = Math.PI; // Flip it
+      pBot.add(fBot);
+      pivots.bottom = pBot;
+    }
+    sceneDataRef.current.pivotGroups = pivots;
+
+    // Initial Rotation
+    // root.rotation.x = Math.PI / 4;
+    root.rotation.x = -0.5;
+    root.rotation.y = 0.5;
+  }, [shape]);
+
+  // 3. Update Fold (Runs on every frame of interaction, optimized)
+  useEffect(() => {
+    const {
+      pivotGroups: p
+    } = sceneDataRef.current;
+    if (!p) return;
+
+    // Fold: 0 (3D) -> 1 (Flat)
+    // Angles need to go from "Formed" to 0 (Flat)
+    // 90 degrees = PI/2.
+    // Flat = 0 rotation.
+    // Formed = 90 deg (or specific angle).
+
+    // Current logic: 1 = Flat (0 deg), 0 = Formed (90 deg)
+    // So Angle = MaxAngle * (1 - fold)
+
+    const f = 1 - fold;
+    if (shape === "cube") {
+      const a = Math.PI / 2 * f;
+      if (p.right) p.right.rotation.y = a;
+      if (p.left) p.left.rotation.y = -a;
+      if (p.top) p.top.rotation.x = -a;
+      if (p.bottom) p.bottom.rotation.x = a;
+      if (p.far) p.far.rotation.x = -a;
+    } else if (shape === "cuboid") {
+      const a = Math.PI / 2 * f;
+      if (p.right) p.right.rotation.y = a;
+      if (p.left) p.left.rotation.y = -a;
+      if (p.top) p.top.rotation.x = -a;
+      if (p.bottom) p.bottom.rotation.x = a; // Wait, bottom folds UP to front? No usually down.
+      // If base is center. Top folds up/back. Bottom folds down/back.
+      // Direction depends on axis.
+      // Setup: Top is at y+, folds around X. To go BACK (+Z -> -Z ?), it rotates negative X?
+      // Standard Right Hand Rule. X axis points Right.
+      // Top face is at +Y. Hinge is at +Y.
+      // To fold towards -Z (back), it must rotate -X?
+      // Yes.
+      if (p.back) p.back.rotation.x = -a;
+    } else if (shape === "prism") {
+      // Side walls meet at 60 deg relative to floor?
+      // Exterior angle is 180-60 = 120.
+      // So walls rotate 120 deg from flat? No.
+      // If flat is 0. Formed is...
+      // They fold UP.
+      // Triangle angle 60.
+      // Walls angle to Base = 60.
+      // Fold amount = (180 - 60) = 120? That would fold them INWARD passed vertical.
+      // No, Wall to Base interior angle is 60.
+      // So it rotates 60 degrees from "Extended Flat"? No.
+      // 0 = Flat (Coplanar).
+      // To form prism, rotate UP by (180 - 60) = 120.
+      // WAIT.
+      // Net: -_-_
+      // Formed: /\
+      // The side walls rotate 60 degrees relative to the horizon?
+      // The Angle between Base and Side is 60.
+      // Flat state: Angle is 180.
+      // Folded state: Angle is 60.
+      // Rotation = 180 - 60 = 120.
+      // Let's try 60 deg * f?
+      // If I rotate 60 deg (PI/3), it stands up like a / \ with 60 deg base angle? Yes.
+      // Wait, Prism Angle logic.
+      // Equilateral Prism: Walls lean in. Top angle 60.
+      // Base angles 60.
+      // So rotation from flat (0) is 60? No, that would mean angle between ground and wall is 180-60=120.
+      // Correct rotation is 180 (flat) -> 60 (internal). Delta = 120.
+      const prismAngle = Math.PI * 2 / 3 * f; // 120 deg * f
+
+      if (p.left) p.left.rotation.y = -prismAngle;
+      if (p.right) p.right.rotation.y = prismAngle;
+
+      // Triangles (Caps) fold up 90 deg
+      const capAngle = Math.PI / 2 * f;
+      if (p.top) p.top.rotation.x = -capAngle;
+      if (p.bottom) p.bottom.rotation.x = capAngle;
+    }
+  }, [fold, shape]);
+  return /*#__PURE__*/React.createElement("div", {
+    ref: mountRef,
+    className: "w-full h-full"
+  });
+}
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [shape, setShape] = useState("cube");
+  const [fold, setFold] = useState(0);
+  const [isAuto, setIsAuto] = useState(false);
+
+  // Auto Animation Effect
+  useEffect(() => {
+    let interval;
+    if (isAuto) {
+      let direction = 1; // 1 = unfolding (to 1), -1 = folding (to 0)
+      const speed = 0.015;
+      interval = setInterval(() => {
+        setFold(prev => {
+          let next = prev + speed * direction;
+          if (next >= 1) {
+            next = 1;
+            direction = -1;
+          }
+          if (next <= 0) {
+            next = 0;
+            direction = 1;
+          }
+          return next;
+        });
+      }, 16);
+    }
+    return () => clearInterval(interval);
+  }, [isAuto]);
+
+  // Reset fold when shape changes
+  const selectShape = s => {
+    setShape(s);
+    setFold(0);
+    setIsAuto(false);
+  };
+  const shapeData = {
+    cube: {
+      faces: 6,
+      vertices: 8,
+      edges: 12
+    },
+    cuboid: {
+      faces: 6,
+      vertices: 8,
+      edges: 12
+    },
+    prism: {
+      faces: 5,
+      vertices: 6,
+      edges: 9
+    }
+  };
+  const stats = shapeData[shape];
+  return /*#__PURE__*/React.createElement("div", {
+    className: "relative w-screen h-screen overflow-hidden"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "canvas-wrapper"
+  }, /*#__PURE__*/React.createElement(Scene, {
+    shape: shape,
+    fold: fold
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "relative z-10 w-full h-full flex flex-col p-4 md:p-8 pointer-events-none"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between items-start pointer-events-auto"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel px-6 py-4 rounded-2xl flex flex-col gap-1"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-2xl md:text-3xl font-black bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent"
+  }, getText("title", lang)), /*#__PURE__*/React.createElement("p", {
+    className: "text-sm text-gray-400 font-mono tracking-widest uppercase"
+  }, "Interactive Learning Module")), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-2 rounded-xl flex gap-1 flex-wrap justify-end max-w-[200px]"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-4 py-2 rounded-lg font-bold text-sm transition-all ${lang === l ? "bg-green-500 text-white shadow-lg shadow-green-500/30" : "hover:bg-white/10 text-gray-400"}`
+  }, l)))), /*#__PURE__*/React.createElement("div", {
+    className: "mt-auto grid grid-cols-1 md:grid-cols-12 gap-6 pointer-events-auto items-end"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "md:col-span-3 glass-panel p-4 rounded-2xl space-y-3"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold text-green-400 uppercase tracking-widest mb-1 pl-1"
+  }, getText("faces", lang), " Type"), [{
+    id: "cube",
+    icon: BoxIcon,
+    label: "cube"
+  }, {
+    id: "cuboid",
+    icon: LayersIcon,
+    label: "cuboid"
+  }, {
+    id: "prism",
+    icon: TriangleIcon,
+    label: "prism"
+  }].map(item => /*#__PURE__*/React.createElement("button", {
+    key: item.id,
+    onClick: () => selectShape(item.id),
+    className: `glass-btn w-full p-3 rounded-xl flex items-center gap-3 text-left ${shape === item.id ? "active" : "text-gray-300"}`
+  }, /*#__PURE__*/React.createElement(item.icon, {
+    size: 20
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "font-bold text-lg"
+  }, getText(item.label, lang))))), /*#__PURE__*/React.createElement("div", {
+    className: "md:col-span-6 glass-panel p-6 rounded-2xl flex flex-col gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setIsAuto(!isAuto),
+    className: `glass-btn p-3 rounded-full flex items-center justify-center ${isAuto ? "active" : "text-white"}`
+  }, isAuto ? /*#__PURE__*/React.createElement(PauseIcon, {
+    size: 24
+  }) : /*#__PURE__*/React.createElement(PlayIcon, {
+    size: 24
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 flex flex-col"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between text-xs font-bold text-green-400 uppercase mb-2"
+  }, /*#__PURE__*/React.createElement("span", null, getText("fold", lang), " (3D)"), /*#__PURE__*/React.createElement("span", null, getText("unfold", lang), " (Net)")), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "0",
+    max: "1",
+    step: "0.001",
+    value: fold,
+    onChange: e => {
+      setFold(parseFloat(e.target.value));
+      setIsAuto(false);
+    },
+    style: {
+      "--range-progress": `${fold * 100}%`
+    }
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-3 gap-4 border-t border-white/10 pt-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs text-gray-400 uppercase mb-1"
+  }, getText("faces", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-black"
+  }, stats.faces)), /*#__PURE__*/React.createElement("div", {
+    className: "text-center border-l border-white/10"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs text-gray-400 uppercase mb-1"
+  }, getText("edges", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-black"
+  }, stats.edges)), /*#__PURE__*/React.createElement("div", {
+    className: "text-center border-l border-white/10"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs text-gray-400 uppercase mb-1"
+  }, getText("vertices", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-black"
+  }, stats.vertices)))), /*#__PURE__*/React.createElement("div", {
+    className: "md:col-span-3 glass-panel p-6 rounded-2xl flex flex-col items-center justify-center text-center floating-ui"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold text-green-400 uppercase tracking-widest mb-3"
+  }, getText("euler", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-black/40 border border-green-500/30 rounded-lg px-4 py-2 mb-3"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "font-mono text-lg text-green-300"
+  }, "F + V - E = 2")), /*#__PURE__*/React.createElement("div", {
+    className: "text-sm font-bold opacity-80"
+  }, stats.faces, " + ", stats.vertices, " - ", stats.edges, " =", " ", /*#__PURE__*/React.createElement("span", {
+    className: "text-green-400 text-xl"
+  }, "2"))))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

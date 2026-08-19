@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - China Geography</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: #fdf2f8;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "China Geography Map",
+    zh: "中國地理地圖",
+    ja: "中国地理マップ",
+    ko: "중국 지리 지도",
+    es: "Mapa de geografía de China",
+    de: "China Geographie Karte",
+    fi: "Kiinan maantiedekartta",
+    fr: "Carte géographique de la Chine",
+    ar: "خريطة جغرافية الصين",
+    it: "Mappa Geografica Cina"
+  },
+  instruction: {
+    en: "Drag the label to the correct location.",
+    zh: "將標籤拖到正確的位置。",
+    ja: "ラベルを正しい場所にドラッグしてください。",
+    ko: "레이블을 올바른 위치로 드래그하세요.",
+    es: "Arrastra la etiqueta a la ubicación correcta.",
+    de: "Ziehe das Etikett an die richtige Stelle.",
+    fi: "Vedä etiketti oikeaan paikkaan.",
+    fr: "Faites glisser l'étiquette vers le bon emplacement.",
+    ar: "اسحب الملصق إلى الموقع الصحيح.",
+    it: "Trascina l'etichetta nella posizione corretta."
+  },
+  beijing: {
+    en: "Beijing (Capital)",
+    zh: "北京 (首都)",
+    ja: "北京 (首都)",
+    ko: "베이징 (수도)",
+    es: "Pekín (Capital)",
+    de: "Peking (Hauptstadt)",
+    fi: "Peking (Pääkaupunki)",
+    fr: "Pékin (Capitale)",
+    ar: "بكين (العاصمة)",
+    it: "Pechino (Capitale)"
+  },
+  shanghai: {
+    en: "Shanghai",
+    zh: "上海",
+    ja: "上海",
+    ko: "상하이",
+    es: "Shanghái",
+    de: "Shanghai",
+    fi: "Shanghai",
+    fr: "Shanghai",
+    ar: "شنغهاي",
+    it: "Shanghai"
+  },
+  hongkong: {
+    en: "Hong Kong",
+    zh: "香港",
+    ja: "香港",
+    ko: "홍콩",
+    es: "Hong Kong",
+    de: "Hongkong",
+    fi: "Hongkong",
+    fr: "Hong Kong",
+    ar: "هونغ كونغ",
+    it: "Hong Kong"
+  },
+  yellowriver: {
+    en: "Yellow River",
+    zh: "黃河",
+    ja: "黄河",
+    ko: "황허",
+    es: "Río Amarillo",
+    de: "Gelber Fluss",
+    fi: "Keltainenjoki",
+    fr: "Fleuve Jaune",
+    ar: "النهر الأصفر",
+    it: "Fiume Giallo"
+  },
+  yangtze: {
+    en: "Yangtze River",
+    zh: "長江",
+    ja: "長江",
+    ko: "양쯔강",
+    es: "Río Yangtsé",
+    de: "Jangtsekiang",
+    fi: "Jangtse",
+    fr: "Fleuve Yangtze",
+    ar: "نهر اليانغتسي",
+    it: "Fiume Azzurro"
+  },
+  thibet: {
+    en: "Qinghai-Tibet Plateau",
+    zh: "青藏高原",
+    ja: "青海チベット高原",
+    ko: "칭짱 고원",
+    es: "Meseta tibetana",
+    de: "Tibet-Plateau",
+    fi: "Tiibetin ylänkö",
+    fr: "Plateau tibétain",
+    ar: "هضبة التبت",
+    it: "Altopiano del Tibet"
+  }
+};
+const locations = [{
+  id: "beijing",
+  top: 28,
+  left: 63,
+  type: "city"
+}, {
+  id: "shanghai",
+  top: 55,
+  left: 72,
+  type: "city"
+}, {
+  id: "hongkong",
+  top: 80,
+  left: 65,
+  type: "city"
+}, {
+  id: "yellowriver",
+  top: 38,
+  left: 55,
+  type: "river"
+},
+// Rough center point
+{
+  id: "yangtze",
+  top: 55,
+  left: 55,
+  type: "river"
+}, {
+  id: "thibet",
+  top: 50,
+  left: 20,
+  type: "area"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [placed, setPlaced] = useState([]);
+  const [selected, setSelected] = useState(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+  const handleDragStart = (e, id) => {
+    e.dataTransfer.setData("id", id);
+    setSelected(id);
+  };
+  const tryPlace = (draggedId, targetId) => {
+    if (draggedId && draggedId === targetId) {
+      setPlaced(prev => prev.includes(targetId) ? prev : [...prev, targetId]);
+      setSelected(null);
+    }
+  };
+  const handleDrop = (e, targetId) => {
+    e.preventDefault();
+    const draggedId = e.dataTransfer.getData("id") || selected;
+    tryPlace(draggedId, targetId);
+  };
+  const handleZoneClick = targetId => {
+    // Touch / click fallback (HTML5 drag is unreliable on tablets)
+    if (selected) tryPlace(selected, targetId);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-bold mb-4 text-red-700"
+  }, getText("title")), /*#__PURE__*/React.createElement("p", {
+    className: "mb-4 font-bold text-slate-500"
+  }, getText("instruction"), selected ? ` → ${getText(selected)}` : ""), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col md:flex-row gap-8 w-full max-w-5xl items-start justify-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "relative w-full max-w-2xl aspect-[4/3] bg-blue-100 rounded-3xl border-4 border-slate-300 shadow-xl overflow-hidden"
+  }, /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 100 80",
+    className: "absolute inset-0 w-full h-full"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M20,40 L30,20 L50,15 L70,20 L80,30 L80,50 L70,70 L50,75 L30,60 Z",
+    fill: "#fecaca",
+    stroke: "#ef4444",
+    strokeWidth: "0.5"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M30,35 Q45,25 65,38",
+    fill: "none",
+    stroke: "#ca8a04",
+    strokeWidth: "1",
+    opacity: "0.5"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M25,45 Q45,60 72,55",
+    fill: "none",
+    stroke: "#3b82f6",
+    strokeWidth: "1",
+    opacity: "0.5"
+  })), locations.map(loc => /*#__PURE__*/React.createElement("div", {
+    key: loc.id,
+    role: "button",
+    tabIndex: 0,
+    onDragOver: e => e.preventDefault(),
+    onDrop: e => handleDrop(e, loc.id),
+    onClick: () => handleZoneClick(loc.id),
+    onKeyDown: e => {
+      if (e.key === "Enter" || e.key === " ") handleZoneClick(loc.id);
+    },
+    className: `absolute w-16 h-16 rounded-full border-2 border-dashed border-red-400 flex items-center justify-center transition-all bg-white/30 cursor-pointer
+                            ${placed.includes(loc.id) ? "border-solid border-green-600 bg-white shadow-lg opacity-100" : "opacity-60"}
+                            ${selected && selected === loc.id ? "ring-4 ring-yellow-400" : ""}
+                         `,
+    style: {
+      top: `${loc.top}%`,
+      left: `${loc.left}%`,
+      transform: "translate(-50%, -50%)"
+    }
+  }, placed.includes(loc.id) && /*#__PURE__*/React.createElement("div", {
+    className: "text-[10px] font-bold text-center leading-tight"
+  }, getText(loc.id).split("(")[0])))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full md:w-64 flex flex-col gap-2"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "font-bold text-slate-700 mb-2"
+  }, "Labels"), locations.map(loc => !placed.includes(loc.id) ? /*#__PURE__*/React.createElement("div", {
+    key: loc.id,
+    role: "button",
+    tabIndex: 0,
+    draggable: true,
+    onDragStart: e => handleDragStart(e, loc.id),
+    onClick: () => setSelected(loc.id),
+    onKeyDown: e => {
+      if (e.key === "Enter" || e.key === " ") setSelected(loc.id);
+    },
+    className: `bg-white p-3 rounded-lg shadow cursor-pointer border text-sm font-bold text-center hover:bg-slate-50 ${selected === loc.id ? "border-yellow-400 ring-2 ring-yellow-300" : "border-slate-200"}`
+  }, getText(loc.id)) : /*#__PURE__*/React.createElement("div", {
+    key: loc.id,
+    className: "bg-green-100 p-3 rounded-lg text-green-800 text-sm font-bold text-center opacity-50"
+  }, "✓ ", getText(loc.id))))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - HK Map Master</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: skyblue;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Hong Kong Map Master",
+    zh: "香港地圖大師",
+    ja: "香港地図マスター",
+    ko: "홍콩 지도 마스터",
+    es: "Maestro del Mapa de Hong Kong",
+    de: "Hongkong-Kartenmeister",
+    fi: "Hongkongin karttamestari",
+    fr: "Maître de la carte de Hong Kong",
+    ar: "خبير خريطة هونغ كونغ",
+    it: "Maestro della Mappa di Hong Kong"
+  },
+  instruction: {
+    en: "Identify the districts!",
+    zh: "辨認這些地區！",
+    ja: "地区を特定してください！",
+    ko: "지역을 식별하세요!",
+    es: "¡Identifica los distritos!",
+    de: "Erkenne die Bezirke!",
+    fi: "Tunnista alueet!",
+    fr: "Identifiez les quartiers !",
+    ar: "حدد المناطق!",
+    it: "Identifica i distretti!"
+  },
+  pick_first: {
+    en: "First tap a district name below!",
+    zh: "請先點選下方的地區名稱！",
+    ja: "先に下の地区名を選んでください！",
+    ko: "먼저 아래 지역 이름을 선택하세요!",
+    es: "¡Primero elige un nombre abajo!",
+    de: "Wähle zuerst einen Namen unten!",
+    fi: "Valitse ensin alueen nimi alta!",
+    fr: "Choisissez d'abord un nom ci-dessous !",
+    ar: "اختر اسم المنطقة أولاً!",
+    it: "Prima scegli un nome sotto!"
+  },
+  hk_island: {
+    en: "Hong Kong Island",
+    zh: "香港島",
+    ja: "香港島",
+    ko: "홍콩 섬",
+    es: "Isla de Hong Kong",
+    de: "Hongkong-Insel",
+    fi: "Hongkongin saari",
+    fr: "Île de Hong Kong",
+    ar: "جزيرة هونغ كونغ",
+    it: "Isola di Hong Kong"
+  },
+  kowloon: {
+    en: "Kowloon",
+    zh: "九龍",
+    ja: "九龍",
+    ko: "구룡",
+    es: "Kowloon",
+    de: "Kowloon",
+    fi: "Kowloon",
+    fr: "Kowloon",
+    ar: "كولون",
+    it: "Kowloon"
+  },
+  nt: {
+    en: "New Territories",
+    zh: "新界",
+    ja: "新界",
+    ko: "신계",
+    es: "Nuevos Territorios",
+    de: "Neue Territorien",
+    fi: "Uudet alueet",
+    fr: "Nouveaux Territoires",
+    ar: "الأقاليم الجديدة",
+    it: "Nuovi Territori"
+  },
+  lantau: {
+    en: "Lantau Island",
+    zh: "大嶼山",
+    ja: "ランタオ島",
+    ko: "란타우 섬",
+    es: "Isla Lantau",
+    de: "Lantau-Insel",
+    fi: "Lantaun saari",
+    fr: "Île de Lantau",
+    ar: "جزيرة لانتاو",
+    it: "Isola di Lantau"
+  },
+  correct: {
+    en: "Correct!",
+    zh: "答對了！",
+    ja: "正解！",
+    ko: "정답!",
+    es: "¡Correcto!",
+    de: "Richtig!",
+    fi: "Oikein!",
+    fr: "Correct !",
+    ar: "صحيح!",
+    it: "Corretto!"
+  },
+  wrong: {
+    en: "Try Again",
+    zh: "再試一次",
+    ja: "もう一度",
+    ko: "다시 시도",
+    es: "Intentar de nuevo",
+    de: "Versuch es nochmal",
+    fi: "Yritä uudelleen",
+    fr: "Réessayez",
+    ar: "حاول مرة أخرى",
+    it: "Riprova"
+  }
+};
+const districts = [{
+  id: "hk_island",
+  x: 60,
+  y: 70,
+  w: 20,
+  h: 10,
+  color: "bg-red-400"
+}, {
+  id: "kowloon",
+  x: 60,
+  y: 55,
+  w: 15,
+  h: 10,
+  color: "bg-orange-400"
+}, {
+  id: "nt",
+  x: 50,
+  y: 30,
+  w: 40,
+  h: 25,
+  color: "bg-green-400"
+}, {
+  id: "lantau",
+  x: 25,
+  y: 65,
+  w: 20,
+  h: 15,
+  color: "bg-purple-400"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [selectedId, setSelectedId] = useState(null);
+  const [feedback, setFeedback] = useState(null);
+  const [completed, setCompleted] = useState({});
+  const getText = key => t[key][lang] || t[key]["en"];
+  const handleSelect = id => {
+    if (completed[id]) return;
+    if (!selectedId) {
+      setFeedback("pick_first");
+      setTimeout(() => setFeedback(null), 1200);
+      return;
+    }
+    if (selectedId === id) {
+      setCompleted(prev => ({
+        ...prev,
+        [id]: true
+      }));
+      setFeedback("correct");
+      setSelectedId(null);
+      setTimeout(() => setFeedback(null), 1000);
+    } else {
+      setFeedback("wrong");
+      setTimeout(() => setFeedback(null), 500);
+    }
+  };
+  const startSelection = id => {
+    setSelectedId(id);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden bg-blue-300"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-3xl font-black text-white drop-shadow-md mb-4 absolute top-8"
+  }, getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/90 p-6 rounded-xl shadow-lg z-10 w-full max-w-4xl h-[600px] relative mt-16 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "relative w-full flex-grow bg-blue-100 rounded-xl overflow-hidden mb-4"
+  }, districts.map(d => /*#__PURE__*/React.createElement(motion.div, {
+    key: d.id,
+    initial: {
+      opacity: 0.8
+    },
+    whileHover: {
+      opacity: 1,
+      scale: 1.05
+    },
+    className: `absolute rounded-2xl cursor-pointer flex items-center justify-center text-center shadow-lg border-2 border-white
+                           ${d.color} ${completed[d.id] ? "brightness-110" : ""}
+                        `,
+    style: {
+      left: d.x + "%",
+      top: d.y + "%",
+      width: d.w + "%",
+      height: d.h + "%"
+    },
+    onClick: () => handleSelect(d.id)
+  }, completed[d.id] && /*#__PURE__*/React.createElement("span", {
+    className: "font-bold text-white drop-shadow-md text-sm md:text-xl"
+  }, getText(d.id))))), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-wrap gap-2 justify-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full text-center font-bold text-slate-700 bg-white/80 p-2 rounded mb-2"
+  }, feedback ? getText(feedback) : getText("instruction")), districts.map(d => !completed[d.id] && /*#__PURE__*/React.createElement("button", {
+    key: d.id,
+    onClick: () => startSelection(d.id),
+    className: `px-4 py-2 rounded-lg font-bold shadow-md transition-all text-left
+                              ${selectedId === d.id ? "bg-yellow-400 text-slate-900 border-2 border-slate-900 scale-105" : "bg-white text-slate-700 hover:bg-slate-100"}
+                           `
+  }, "📍 ", getText(d.id))), Object.keys(completed).length === districts.length && /*#__PURE__*/React.createElement("div", {
+    className: "bg-green-500 text-white font-bold p-4 rounded-xl text-center animate-bounce"
+  }, getText("correct")))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

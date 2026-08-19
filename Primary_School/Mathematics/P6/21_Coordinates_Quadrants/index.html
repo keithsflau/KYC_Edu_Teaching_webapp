@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小六數學：四象限坐標 | Four Quadrants</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+      /* Custom Grid Pattern for easier React drawing */
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Coordinate Quadrants",
+    zh: "四象限坐標",
+    ja: "座標象限",
+    ko: "좌표 사분면",
+    es: "Cuadrantes de Coordenadas",
+    de: "Koordinatenquadranten",
+    fi: "Koordinaattineljännekset",
+    fr: "Quadrants de coordonnées",
+    ar: "أرباع الإحداثيات",
+    it: "Quadranti Coordinate"
+  },
+  currentPoint: {
+    en: "Current Point",
+    zh: "當前點",
+    ja: "現在の点",
+    ko: "현재 위치",
+    es: "Punto Actual",
+    de: "Aktueller Punkt",
+    fi: "Nykyinen piste",
+    fr: "Point actuel",
+    ar: "النقطة الحالية",
+    it: "Punto Corrente"
+  },
+  quadrant: {
+    en: "Quadrant",
+    zh: "象限",
+    ja: "象限",
+    ko: "사분면",
+    es: "Cuadrante",
+    de: "Quadrant",
+    fi: "Neljännes",
+    fr: "Quadrant",
+    ar: "الربع",
+    it: "Quadrante"
+  },
+  axis: {
+    en: "On Axis",
+    zh: "軸上",
+    ja: "軸上",
+    ko: "축 위",
+    es: "En el Eje",
+    de: "Auf der Achse",
+    fi: "Akselilla",
+    fr: "Sur l'axe",
+    ar: "على المحور",
+    it: "Sull'asse"
+  },
+  origin: {
+    en: "Origin",
+    zh: "原點",
+    ja: "原点",
+    ko: "원점",
+    es: "Origen",
+    de: "Ursprung",
+    fi: "Origo",
+    fr: "Origine",
+    ar: "الأصل",
+    it: "Origine"
+  },
+  clickHint: {
+    en: "Click anywhere on the grid",
+    zh: "點擊網格上的任意位置",
+    ja: "グリッド上の任意の場所をクリック",
+    ko: "그리드의 아무 곳이나 클릭하세요",
+    es: "Haz clic en cualquier lugar de la cuadrícula",
+    de: "Klicken Sie irgendwo auf das Raster",
+    fi: "Napsauta mitä tahansa ruudukossa",
+    fr: "Cliquez n'importe où sur la grille",
+    ar: "انقر في أي مكان على الشبكة",
+    it: "Clicca ovunque sulla griglia"
+  },
+  q1: {
+    en: "I (+,+)",
+    zh: "I (+,+)",
+    ja: "I (+,+)",
+    ko: "제1 (+,+)",
+    es: "I (+,+)"
+  },
+  q2: {
+    en: "II (-,+)",
+    zh: "II (-,+)",
+    ja: "II (-,+)",
+    ko: "제2 (-,+)",
+    es: "II (-,+)"
+  },
+  q3: {
+    en: "III (-,-)",
+    zh: "III (-,-)",
+    ja: "III (-,-)",
+    ko: "제3 (-,-)",
+    es: "III (-,-)"
+  },
+  q4: {
+    en: "IV (+,-)",
+    zh: "IV (+,-)",
+    ja: "IV (+,-)",
+    ko: "제4 (+,-)",
+    es: "IV (+,-)"
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key; // Minimal fallback
+
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [point, setPoint] = useState({
+    x: 3,
+    y: 4
+  });
+  const getQuadrantInfo = (x, y) => {
+    if (x === 0 && y === 0) return {
+      label: getText("origin", lang),
+      color: "text-white"
+    };
+    if (x === 0 || y === 0) return {
+      label: getText("axis", lang),
+      color: "text-slate-400"
+    };
+    if (x > 0 && y > 0) return {
+      label: getText("q1", lang) + " " + getText("quadrant", lang).split(" ")[0],
+      color: "text-lime-400"
+    };
+    if (x < 0 && y > 0) return {
+      label: getText("q2", lang) + " " + getText("quadrant", lang).split(" ")[0],
+      color: "text-yellow-400"
+    };
+    if (x < 0 && y < 0) return {
+      label: getText("q3", lang) + " " + getText("quadrant", lang).split(" ")[0],
+      color: "text-red-400"
+    };
+    if (x > 0 && y < 0) return {
+      label: getText("q4", lang) + " " + getText("quadrant", lang).split(" ")[0],
+      color: "text-blue-400"
+    };
+    return {
+      label: "",
+      color: ""
+    };
+  };
+  const quadInfo = getQuadrantInfo(point.x, point.y);
+  const handleGridClick = e => {
+    const svg = e.currentTarget;
+    const pt = svg.createSVGPoint();
+    pt.x = e.clientX;
+    pt.y = e.clientY;
+    const cursorPt = pt.matrixTransform(svg.getScreenCTM().inverse());
+
+    // Grid is 400x400. Center 200,200. Each unit 20px. Range -10 to 10.
+    const rawX = (cursorPt.x - 200) / 20;
+    const rawY = (200 - cursorPt.y) / 20;
+    setPoint({
+      x: Math.round(rawX),
+      y: Math.round(rawY)
+    });
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4 font-sans bg-slate-900 text-white"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-5xl flex justify-between items-center mb-8"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-black text-lime-400 drop-shadow-[0_0_15px_rgba(163,230,53,0.5)]"
+  }, "🌐 ", getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "flex bg-slate-800/80 p-1.5 rounded-xl border border-white/10 flex-wrap justify-end gap-1 max-w-[50%]"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-lime-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white hover:bg-white/5"}`
+  }, l)))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-4 rounded-3xl aspect-square relative flex items-center justify-center"
+  }, /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 400 400",
+    className: "w-full h-full cursor-crosshair",
+    onClick: handleGridClick
+  }, /*#__PURE__*/React.createElement("rect", {
+    x: "200",
+    y: "0",
+    width: "200",
+    height: "200",
+    fill: "rgba(163, 230, 53, 0.1)"
+  }), " ", /*#__PURE__*/React.createElement("rect", {
+    x: "0",
+    y: "0",
+    width: "200",
+    height: "200",
+    fill: "rgba(250, 204, 21, 0.1)"
+  }), " ", /*#__PURE__*/React.createElement("rect", {
+    x: "0",
+    y: "200",
+    width: "200",
+    height: "200",
+    fill: "rgba(248, 113, 113, 0.1)"
+  }), " ", /*#__PURE__*/React.createElement("rect", {
+    x: "200",
+    y: "200",
+    width: "200",
+    height: "200",
+    fill: "rgba(96, 165, 250, 0.1)"
+  }), " ", Array.from({
+    length: 21
+  }).map((_, i) => /*#__PURE__*/React.createElement("g", {
+    key: i
+  }, /*#__PURE__*/React.createElement("line", {
+    x1: i * 20,
+    y1: "0",
+    x2: i * 20,
+    y2: "400",
+    stroke: "rgba(255,255,255,0.1)",
+    strokeWidth: i === 10 ? 0 : 1
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "0",
+    y1: i * 20,
+    x2: "400",
+    y2: i * 20,
+    stroke: "rgba(255,255,255,0.1)",
+    strokeWidth: i === 10 ? 0 : 1
+  }))), /*#__PURE__*/React.createElement("line", {
+    x1: "200",
+    y1: "0",
+    x2: "200",
+    y2: "400",
+    stroke: "white",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "0",
+    y1: "200",
+    x2: "400",
+    y2: "200",
+    stroke: "white",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "380",
+    y: "215",
+    fill: "white",
+    fontSize: "12",
+    fontWeight: "bold"
+  }, "x"), /*#__PURE__*/React.createElement("text", {
+    x: "210",
+    y: "20",
+    fill: "white",
+    fontSize: "12",
+    fontWeight: "bold"
+  }, "y"), /*#__PURE__*/React.createElement(motion.circle, {
+    animate: {
+      cx: 200 + point.x * 20,
+      cy: 200 - point.y * 20
+    },
+    r: "8",
+    fill: point.x > 0 && point.y > 0 ? "#a3e635" // Lime
+    : point.x < 0 && point.y > 0 ? "#facc15" // Yellow
+    : point.x < 0 && point.y < 0 ? "#f87171" // Red
+    : point.x > 0 && point.y < 0 ? "#60a5fa" // Blue
+    : "#ffffff",
+    stroke: "white",
+    strokeWidth: "3",
+    className: "drop-shadow-lg"
+  }), /*#__PURE__*/React.createElement(motion.text, {
+    animate: {
+      x: 200 + point.x * 20 + 15,
+      y: 200 - point.y * 20 - 10
+    },
+    fill: "white",
+    fontSize: "14",
+    fontWeight: "bold",
+    style: {
+      textShadow: "0 2px 4px rgba(0,0,0,0.5)"
+    }
+  }, "(", point.x, ", ", point.y, ")")), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-4 left-4 text-xs text-slate-400 font-bold bg-slate-900/80 px-2 py-1 rounded border border-white/10"
+  }, getText("clickHint", lang))), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col justify-center gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-8 rounded-3xl text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-slate-400 font-bold uppercase mb-2"
+  }, getText("currentPoint", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl font-black font-mono text-white mb-2"
+  }, "(", point.x, ", ", point.y, ")")), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-8 rounded-3xl text-center flex-1 flex flex-col justify-center items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-slate-400 font-bold uppercase mb-4"
+  }, getText("quadrant", lang)), /*#__PURE__*/React.createElement("div", {
+    className: `text-5xl font-black ${quadInfo.color} drop-shadow-md transition-colors`
+  }, quadInfo.label), /*#__PURE__*/React.createElement("div", {
+    className: "mt-8 grid grid-cols-2 w-32 h-32 gap-1 opacity-50"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: `border-2 border-slate-600 rounded-tl-lg bg-yellow-500/20 ${point.x < 0 && point.y > 0 ? "bg-yellow-500 border-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.5)] opacity-100" : ""}`
+  }), /*#__PURE__*/React.createElement("div", {
+    className: `border-2 border-slate-600 rounded-tr-lg bg-lime-500/20 ${point.x > 0 && point.y > 0 ? "bg-lime-500 border-lime-400 shadow-[0_0_10px_rgba(163,230,53,0.5)] opacity-100" : ""}`
+  }), /*#__PURE__*/React.createElement("div", {
+    className: `border-2 border-slate-600 rounded-bl-lg bg-red-500/20 ${point.x < 0 && point.y < 0 ? "bg-red-500 border-red-400 shadow-[0_0_10px_rgba(248,113,113,0.5)] opacity-100" : ""}`
+  }), /*#__PURE__*/React.createElement("div", {
+    className: `border-2 border-slate-600 rounded-br-lg bg-blue-500/20 ${point.x > 0 && point.y < 0 ? "bg-blue-500 border-blue-400 shadow-[0_0_10px_rgba(96,165,250,0.5)] opacity-100" : ""}`
+  }))))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

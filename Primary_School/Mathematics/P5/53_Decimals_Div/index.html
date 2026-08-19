@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小五數學：小數除法 | Decimal Division</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(220, 38, 38, 0.15); /* Red 600 alpha */
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+// Inline icons (lucide-react UMD is blocked / unavailable)
+const iconProps = (size, className) => ({
+  width: size, height: size, viewBox: "0 0 24 24", fill: "none",
+  stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", className
+});
+const RefreshCw = ({ size = 24, className = "" }) => React.createElement("svg", iconProps(size, className),
+  React.createElement("path", { d: "M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" }),
+  React.createElement("path", { d: "M21 3v5h-5" }),
+  React.createElement("path", { d: "M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" }),
+  React.createElement("path", { d: "M8 16H3v5" }));
+const MoveRight = ({ size = 24, className = "" }) => React.createElement("svg", iconProps(size, className),
+  React.createElement("path", { d: "M18 8L22 12L18 16" }),
+  React.createElement("path", { d: "M2 12H22" }));
+const CheckCircle2 = ({ size = 24, className = "" }) => React.createElement("svg", iconProps(size, className),
+  React.createElement("circle", { cx: "12", cy: "12", r: "10" }),
+  React.createElement("path", { d: "m9 12 2 2 4-4" }));
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Decimal Division",
+    zh: "小數除法",
+    ja: "小数の割り算",
+    ko: "소수 나눗셈",
+    es: "División de Decimales",
+    de: "Dezimaldivision",
+    fi: "Desimaalilukujen jakolasku",
+    fr: "Division décimale",
+    ar: "قسمة الأعداد العشرية",
+    it: "Divisione decimale"
+  },
+  subtitle: {
+    en: "Decimal Division: Shifting the Point",
+    zh: "小數除法：移動小數點",
+    ja: "小数の割り算：小数点を移動する",
+    ko: "소수 나눗셈: 소수점 이동",
+    es: "División de Decimales: Moviendo el Punto",
+    de: "Dezimaldivision: Das Komma verschieben",
+    fi: "Desimaalilukujen jakolasku: Pisteen siirtäminen",
+    fr: "Division décimale : Déplacement de la virgule",
+    ar: "قسمة الأعداد العشرية: نقل الفاصلة",
+    it: "Divisione decimale: Spostamento del punto"
+  },
+  hint1: {
+    en: "We don't like decimal divisors.",
+    zh: "我們不喜歡除數是小數...",
+    ja: "小数の除数は扱いにくいです...",
+    ko: "나누는 수가 소수면 계산하기 어려워요...",
+    es: "No nos gustan los divisores decimales.",
+    de: "Wir mögen keine Dezimalteiler.",
+    fi: "Emme pidä desimaalijakajista.",
+    fr: "Nous n'aimons pas les diviseurs décimaux.",
+    ar: "لا نفضل القواسم العشرية.",
+    it: "Non ci piacciono i divisori decimali."
+  },
+  hint2: {
+    en: "Move the point right! Make it whole!",
+    zh: "把小數點向右移！變整數！",
+    ja: "小数点を右に移動して整数にしましょう！",
+    ko: "소수점을 오른쪽으로 옮겨서 정수로 만드세요!",
+    es: "¡Mueve el punto a la derecha! ¡Hazlo entero!",
+    de: "Verschiebe das Komma nach rechts! Mach es ganz!",
+    fi: "Siirrä pistettä oikealle! Tee siitä kokonaisluku!",
+    fr: "Déplacez la virgule vers la droite ! Rendez-le entier !",
+    ar: "حرك الفاصلة لليمين! اجعلها عدداً صحيحاً!",
+    it: "Sposta il punto a destra! Rendilo intero!"
+  },
+  next: {
+    en: "Next Step",
+    zh: "下一步",
+    ja: "次のステップ",
+    ko: "다음 단계",
+    es: "Siguiente Paso",
+    de: "Nächster Schritt",
+    fi: "Seuraava vaihe",
+    fr: "Étape suivante",
+    ar: "الخطوة التالية",
+    it: "Passo successivo"
+  },
+  tryAgain: {
+    en: "New Question",
+    zh: "新題目",
+    ja: "新しい問題",
+    ko: "새 문제",
+    es: "Nueva Pregunta",
+    de: "Neue Frage",
+    fi: "Uusi kysymys",
+    fr: "Nouvelle question",
+    ar: "سؤال جديد",
+    it: "Nuova domanda"
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [dividend, setDividend] = useState(2.4);
+  const [divisor, setDivisor] = useState(0.6);
+  const [step, setStep] = useState(0); // 0: init, 1: shifted, 2: solved
+
+  const generate = () => {
+    const d = Math.floor(Math.random() * 8) + 2; // 2..9
+    const q = Math.floor(Math.random() * 8) + 2; // 2..9
+    setDivisor(d / 10);
+    setDividend(d * q / 10);
+    setStep(0);
+  };
+  useEffect(() => {
+    generate();
+  }, []);
+  const result = Math.round(dividend / divisor);
+  const divStr = divisor.toFixed(1);
+  const dendStr = dividend.toFixed(1);
+
+  // Calculate shifted values for display in step 1 & 2
+  // e.g. 0.6 -> 6, 2.4 -> 24
+  const divShifted = (divisor * 10).toFixed(0);
+  const dendShifted = (dividend * 10).toFixed(0);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-4xl flex justify-between items-center mb-10"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-3xl md:text-5xl font-black text-red-500 drop-shadow-[0_0_15px_rgba(239,68,68,0.5)]"
+  }, "➗ ", getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-800/80 p-1.5 rounded-xl border border-white/10 flex flex-wrap justify-end gap-1 max-w-[50%]"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-red-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white hover:bg-white/5"}`
+  }, l)))), /*#__PURE__*/React.createElement("main", {
+    className: "w-full max-w-4xl flex flex-col gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-12 rounded-[2rem] flex flex-col items-center justify-center min-h-[400px] relative overflow-hidden"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-8 md:gap-16 text-5xl md:text-8xl font-black font-mono relative z-10 text-white"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center gap-4"
+  }, /*#__PURE__*/React.createElement(AnimatePresence, {
+    mode: "wait"
+  }, step === 0 ? /*#__PURE__*/React.createElement(motion.div, {
+    key: "dend-0",
+    initial: {
+      opacity: 0,
+      y: 20
+    },
+    animate: {
+      opacity: 1,
+      y: 0
+    },
+    exit: {
+      opacity: 0,
+      y: -20
+    },
+    className: "flex items-baseline"
+  }, /*#__PURE__*/React.createElement("span", null, dendStr.split(".")[0]), /*#__PURE__*/React.createElement("span", {
+    className: "text-blue-400"
+  }, "."), /*#__PURE__*/React.createElement("span", null, dendStr.split(".")[1])) : /*#__PURE__*/React.createElement(motion.div, {
+    key: "dend-1",
+    initial: {
+      opacity: 0,
+      y: 20
+    },
+    animate: {
+      opacity: 1,
+      y: 0
+    },
+    className: "relative"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-green-400"
+  }, dendShifted), step === 1 && /*#__PURE__*/React.createElement(motion.span, {
+    initial: {
+      x: -40,
+      opacity: 0.5
+    },
+    animate: {
+      x: 20,
+      opacity: 0
+    },
+    transition: {
+      duration: 1
+    },
+    className: "absolute top-0 text-blue-400/50"
+  }, "."))), /*#__PURE__*/React.createElement("span", {
+    className: "text-sm font-sans font-bold text-slate-500 uppercase tracking-widest"
+  }, "Dividend")), /*#__PURE__*/React.createElement("span", {
+    className: "text-slate-600"
+  }, "÷"), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center gap-4"
+  }, /*#__PURE__*/React.createElement(AnimatePresence, {
+    mode: "wait"
+  }, step === 0 ? /*#__PURE__*/React.createElement(motion.div, {
+    key: "div-0",
+    initial: {
+      opacity: 0,
+      y: 20
+    },
+    animate: {
+      opacity: 1,
+      y: 0
+    },
+    exit: {
+      opacity: 0,
+      y: -20
+    },
+    className: "flex items-baseline"
+  }, /*#__PURE__*/React.createElement("span", null, divStr.split(".")[0]), /*#__PURE__*/React.createElement("span", {
+    className: "text-red-400"
+  }, "."), /*#__PURE__*/React.createElement("span", null, divStr.split(".")[1])) : /*#__PURE__*/React.createElement(motion.div, {
+    key: "div-1",
+    initial: {
+      opacity: 0,
+      y: 20
+    },
+    animate: {
+      opacity: 1,
+      y: 0
+    },
+    className: "relative"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-green-400"
+  }, divShifted), step === 1 && /*#__PURE__*/React.createElement(motion.span, {
+    initial: {
+      x: -40,
+      opacity: 0.5
+    },
+    animate: {
+      x: 20,
+      opacity: 0
+    },
+    transition: {
+      duration: 1
+    },
+    className: "absolute top-0 text-red-400/50"
+  }, "."))), /*#__PURE__*/React.createElement("span", {
+    className: "text-sm font-sans font-bold text-slate-500 uppercase tracking-widest"
+  }, "Divisor")), /*#__PURE__*/React.createElement(AnimatePresence, null, step === 2 && /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      width: 0,
+      opacity: 0
+    },
+    animate: {
+      width: "auto",
+      opacity: 1
+    },
+    className: "flex items-center gap-8 overflow-hidden"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-slate-600"
+  }, "="), /*#__PURE__*/React.createElement("span", {
+    className: "text-green-400 drop-shadow-[0_0_20px_rgba(74,222,128,0.5)]"
+  }, result)))), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-8 left-0 w-full text-center px-4"
+  }, /*#__PURE__*/React.createElement(AnimatePresence, {
+    mode: "wait"
+  }, /*#__PURE__*/React.createElement(motion.div, {
+    key: step,
+    initial: {
+      opacity: 0,
+      y: -10
+    },
+    animate: {
+      opacity: 1,
+      y: 0
+    },
+    exit: {
+      opacity: 0,
+      y: 10
+    },
+    className: `text-xl font-bold px-6 py-2 rounded-full inline-block ${step === 0 ? "bg-red-500/10 text-red-300 border border-red-500/20" : step === 1 ? "bg-blue-500/10 text-blue-300 border border-blue-500/20" : "bg-green-500/20 text-green-300 border border-green-500/30"}`
+  }, step === 0 && getText("hint1", lang), step === 1 && getText("hint2", lang), step === 2 && `${dendShifted} ÷ ${divShifted} = ${result}`))), step === 1 && /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 pointer-events-none flex justify-center items-center gap-[200px] opacity-30"
+  }, /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      x: -10,
+      opacity: 0
+    },
+    animate: {
+      x: 10,
+      opacity: 1
+    },
+    transition: {
+      repeat: Infinity,
+      repeatType: "reverse",
+      duration: 0.8
+    },
+    className: "text-white font-bold text-lg"
+  }, "×10"), /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      x: -10,
+      opacity: 0
+    },
+    animate: {
+      x: 10,
+      opacity: 1
+    },
+    transition: {
+      repeat: Infinity,
+      repeatType: "reverse",
+      duration: 0.8
+    },
+    className: "text-white font-bold text-lg"
+  }, "×10"))), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-center"
+  }, step < 2 ? /*#__PURE__*/React.createElement("button", {
+    onClick: () => setStep(s => s + 1),
+    className: "bg-red-600 hover:bg-red-500 text-white font-bold text-xl px-12 py-4 rounded-full shadow-lg hover:shadow-red-500/30 transition-all flex items-center gap-3"
+  }, getText("next", lang), " ", step === 0 ? /*#__PURE__*/React.createElement(MoveRight, null) : /*#__PURE__*/React.createElement(CheckCircle2, null)) : /*#__PURE__*/React.createElement("button", {
+    onClick: generate,
+    className: "bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xl px-12 py-4 rounded-full shadow-lg hover:shadow-emerald-500/30 transition-all flex items-center gap-3"
+  }, /*#__PURE__*/React.createElement(RefreshCw, null), " ", getText("tryAgain", lang)))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

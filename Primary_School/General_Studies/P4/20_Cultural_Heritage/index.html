@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - Cultural Heritage</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: #fff7ed;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Cultural Heritage Match",
+    zh: "文化遺產配對",
+    ja: "文化遺産マッチ",
+    ko: "문화 유산 연결",
+    es: "Emparejamiento de patrimonio cultural",
+    de: "Kulturerbe-Match",
+    fi: "Kulttuuriperintöjen yhdistäminen",
+    fr: "Match de patrimoine culturel",
+    ar: "مباراة التراث الثقافي",
+    it: "Abbinamento Patrimonio Culturale"
+  },
+  instruction: {
+    en: "Match the festival to the item!",
+    zh: "將節日與相關物品配對！",
+    ja: "祭りとアイテムを合わせてください！",
+    ko: "축제와 물건을 연결하세요!",
+    es: "¡Combina el festival con el artículo!",
+    de: "Ordne das Fest dem Gegenstand zu!",
+    fi: "Yhdistä juhla esineeseen!",
+    fr: "Associez le festival à l'objet !",
+    ar: "طابق المهرجان بالعنصر!",
+    it: "Abbina il festival all'articolo!"
+  },
+  correct: {
+    en: "Correct!",
+    zh: "答對了！",
+    ja: "正解！",
+    ko: "정답!",
+    es: "¡Correcto!",
+    de: "Richtig!",
+    fi: "Oikein!",
+    fr: "Correct !",
+    ar: "صحيح!",
+    it: "Corretto!"
+  },
+  wrong: {
+    en: "Try again!",
+    zh: "再試一次！",
+    ja: "もう一度！",
+    ko: "다시 시도!",
+    es: "¡Inténtalo de nuevo!",
+    de: "Nochmal versuchen!",
+    fi: "Yritä uudelleen!",
+    fr: "Réessaie !",
+    ar: "حاول مرة أخرى!",
+    it: "Riprova!"
+  },
+  cny: {
+    en: "Lunar New Year",
+    zh: "農曆新年",
+    ja: "旧正月",
+    ko: "설날",
+    es: "Año Nuevo Lunar",
+    de: "Mondneujahr",
+    fi: "Kuun uusi vuosi",
+    fr: "Nouvel An lunaire",
+    ar: "رأس السنة القمرية",
+    it: "Capodanno Lunare"
+  },
+  mid_autumn: {
+    en: "Mid-Autumn Festival",
+    zh: "中秋節",
+    ja: "中秋節",
+    ko: "추석",
+    es: "Festival del Medio Otoño",
+    de: "Mittherbstfest",
+    fi: "Keskisyksyn juhla",
+    fr: "Fête de la mi-automne",
+    ar: "مهرجان منتصف الخريف",
+    it: "Festa di Metà Autunno"
+  },
+  dragon_boat: {
+    en: "Dragon Boat Festival",
+    zh: "端午節",
+    ja: "端午の節句",
+    ko: "단오절",
+    es: "Festival del Bote del Dragón",
+    de: "Drachenbootfest",
+    fi: "Lohikäärmevenejuhla",
+    fr: "Fête des bateaux-dragons",
+    ar: "مهرجان قوارب التنين",
+    it: "Festa delle Barche Drago"
+  },
+  bun_fest: {
+    en: "Cheung Chau Bun Festival",
+    zh: "長洲太平清醮",
+    ja: "長洲饅頭節",
+    ko: "청차우 번 축제",
+    es: "Festival del Bollo de Cheung Chau",
+    de: "Cheung Chau Brötchenfest",
+    fi: "Cheung Chau Bun -juhla",
+    fr: "Festival des petits pains de Cheung Chau",
+    ar: "مهرجان كعكة تشيونغ تشاو",
+    it: "Festival del Panino di Cheung Chau"
+  },
+  red_packet: {
+    en: "Red Packet",
+    zh: "利是 (紅包)",
+    ja: "お年玉",
+    ko: "세뱃돈",
+    es: "Sobre rojo",
+    de: "Roter Umschlag",
+    fi: "Punainen kirjekuori",
+    fr: "Enveloppe rouge",
+    ar: "ظرف أحمر",
+    it: "Busta Rossa"
+  },
+  lantern: {
+    en: "Lantern",
+    zh: "燈籠",
+    ja: "提灯",
+    ko: "등롱",
+    es: "Linterna",
+    de: "Laterne",
+    fi: "Lyhty",
+    fr: "Lanterne",
+    ar: "فانوس",
+    it: "Lanterna"
+  },
+  rice_dumpling: {
+    en: "Rice Dumpling",
+    zh: "粽子",
+    ja: "ちまき",
+    ko: "粽子 (쫑쯔)",
+    es: "Bola de arroz",
+    de: "Reiskloß",
+    fi: "Riisimyky",
+    fr: "Boulette de riz",
+    ar: "زongzi",
+    it: "Gnocco di Riso"
+  },
+  bun_tower: {
+    en: "Bun Tower",
+    zh: "包山",
+    ja: "包山",
+    ko: "번 타워",
+    es: "Torre de bollos",
+    de: "Brötchenturm",
+    fi: "Pullatorni",
+    fr: "Tour de petits pains",
+    ar: "برج الكعك",
+    it: "Torre di Panini"
+  }
+};
+const festivals = [{
+  id: "cny",
+  item: "red_packet",
+  icon: "🧧"
+}, {
+  id: "mid_autumn",
+  item: "lantern",
+  icon: "🏮"
+}, {
+  id: "dragon_boat",
+  item: "rice_dumpling",
+  icon: "🐲"
+},
+// using dragon for festival
+{
+  id: "bun_fest",
+  item: "bun_tower",
+  icon: "⛰️"
+} // Mountain/Tower proxy
+];
+const items = [{
+  id: "red_packet",
+  icon: "🧧"
+}, {
+  id: "lantern",
+  icon: "🏮"
+}, {
+  id: "rice_dumpling",
+  icon: "🍙"
+},
+// Rice ball proxy
+{
+  id: "bun_tower",
+  icon: "🥯"
+} // Bagel/Bun proxy
+];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [festQueue, setFestQueue] = useState([]);
+  const [currentFest, setCurrentFest] = useState(null);
+  const [feedback, setFeedback] = useState(null);
+  const getText = key => (t[key] && (t[key][lang] || t[key]["en"])) || key;
+  useEffect(() => {
+    restart();
+  }, []);
+  const restart = () => {
+    const s = [...festivals].sort(() => Math.random() - 0.5);
+    setFestQueue(s);
+    setCurrentFest(s[0]);
+    setFeedback(null);
+  };
+  const handleMatch = itemId => {
+    if (feedback) return;
+    if (currentFest.item === itemId) {
+      setFeedback("correct");
+      setTimeout(() => {
+        setFeedback(null);
+        const nextIndex = festQueue.indexOf(currentFest) + 1;
+        if (nextIndex < festQueue.length) {
+          setCurrentFest(festQueue[nextIndex]);
+        } else {
+          setCurrentFest(null); // End
+        }
+      }, 1000);
+    } else {
+      setFeedback("wrong");
+      setTimeout(() => setFeedback(null), 500);
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center justify-center p-4",
+    style: {
+      backgroundImage: "radial-gradient(circle at 20% 20%, #fecaca 0%, transparent 40%), radial-gradient(circle at 80% 0%, #fde68a 0%, transparent 35%), linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)"
+    }
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-black mb-8 text-red-700 bg-white/80 px-8 py-2 rounded-full shadow-lg"
+  }, getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-4xl flex flex-col items-center gap-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-md bg-red-600 text-white p-8 rounded-3xl shadow-2xl text-center border-4 border-yellow-400 relative"
+  }, currentFest ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    className: "text-8xl mb-4 filter drop-shadow-md"
+  }, currentFest.icon), /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-bold"
+  }, getText(currentFest.id))) : /*#__PURE__*/React.createElement("div", {
+    className: "py-10"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl mb-4"
+  }, "🎉"), /*#__PURE__*/React.createElement("button", {
+    onClick: restart,
+    className: "bg-yellow-400 text-red-900 px-8 py-3 rounded-full font-black hover:bg-yellow-300"
+  }, "Play Again")), feedback && /*#__PURE__*/React.createElement("div", {
+    className: `absolute inset-0 flex items-center justify-center rounded-2xl bg-black/50 z-10`
+  }, /*#__PURE__*/React.createElement("div", {
+    className: `text-4xl font-bold px-8 py-4 rounded-xl ${feedback === "correct" ? "bg-green-500" : "bg-red-500"}`
+  }, getText(feedback)))), currentFest && /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 md:grid-cols-4 gap-4 w-full"
+  }, items.map(item => /*#__PURE__*/React.createElement("button", {
+    key: item.id,
+    onClick: () => handleMatch(item.id),
+    className: "bg-white hover:bg-red-50 p-6 rounded-2xl shadow-lg flex flex-col items-center justify-center border-2 border-red-100 transition-transform active:scale-95 group"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-5xl mb-2 group-hover:scale-110 transition-transform"
+  }, item.icon), /*#__PURE__*/React.createElement("div", {
+    className: "font-bold text-slate-700 text-sm md:text-base text-center"
+  }, getText(item.id)))))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

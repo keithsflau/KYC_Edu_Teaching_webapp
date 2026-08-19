@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Related Rates | M2 Calculus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+      }
+      .glass {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .draggable {
+        cursor: grab;
+      }
+      .draggable:active {
+        cursor: grabbing;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <div id="root" class="flex-grow flex flex-col"></div>
+    <script>
+const {
+  useState,
+  useRef
+} = React;
+const translations = {
+  en: {
+    unit: "Unit 2: Calculus",
+    title: "Related Rates",
+    subtitle: "Falling Ladder Problem",
+    physTitle: "Ladder Physics",
+    physDesc: "The ladder (Length L=5m) slides down the wall. If the bottom is pulled out at constant speed dx/dt, how fast does the top fall?",
+    insightTitle: "Critical Insight",
+    insightDesc: "As x approaches 5 (ladder flat on ground), y approaches 0. Since <strong>dy/dt = -(x/y) dx/dt</strong>, the speed approaches infinity!<br/><br/>Drag the green dot to the right to see the red arrow explode in length.",
+    langBtn: "中文"
+  },
+  zh: {
+    unit: "第二單元：微積分",
+    title: "相關變率",
+    subtitle: "梯子滑落問題",
+    physTitle: "物理模型",
+    physDesc: "梯子 (長度 L=5m) 沿牆角滑落。若底部以恆定速率 dx/dt 被拉出，頂部下降的速度是多少？",
+    insightTitle: "關鍵觀察",
+    insightDesc: "當 x 接近 5 (梯子平躺於地)，y 接近 0。由於 <strong>dy/dt = -(x/y) dx/dt</strong>，速度趨向無窮大！<br/><br/>向右拖動綠點，觀察紅色箭頭長度的急劇變化。",
+    langBtn: "English"
+  }
+};
+const App = () => {
+  // Ladder problem: x^2 + y^2 = L^2
+  // Length L = 5
+  const [lang, setLang] = useState("en");
+  const t = translations[lang];
+  const L = 5;
+  const [x, setX] = useState(4);
+  const [dragging, setDragging] = useState(false);
+
+  // Calc y
+  const y = Math.sqrt(L * L - x * x);
+
+  // Rates
+  // 2x dx/dt + 2y dy/dt = 0
+  // dy/dt = - (x/y) * dx/dt
+  const dxdt = 0.5; // Assume base moving at 0.5 m/s right
+  const dydt = -(x / y) * dxdt;
+
+  // Visuals
+  const w = 600,
+    h = 600;
+  const scale = 80;
+  const originX = 50,
+    originY = h - 50;
+  const toScreen = (lx, ly) => ({
+    x: originX + lx * scale,
+    y: originY - ly * scale
+  });
+  const fromScreenX = sx => (sx - originX) / scale;
+  const handleMouseMove = e => {
+    if (!dragging) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    let nx = fromScreenX(e.clientX - rect.left);
+    if (nx < 0.1) nx = 0.1;
+    if (nx > 4.9) nx = 4.9;
+    setX(nx);
+  };
+  const topP = toScreen(0, y);
+  const botP = toScreen(x, 0);
+
+  // Velocity Vectors (scaled for display)
+  const vScale = 50;
+  const arrowY_len = Math.abs(dydt) * vScale;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "flex-grow flex flex-col items-center justify-center p-8 select-none",
+    onMouseUp: () => setDragging(false)
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 right-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLang(l => l === "en" ? "zh" : "en"),
+    className: "px-3 py-1 bg-slate-800 border border-slate-600 rounded-full text-xs font-bold text-emerald-400 hover:bg-slate-700 hover:text-white transition flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-language"
+  }), t.langBtn)), /*#__PURE__*/React.createElement("header", {
+    className: "mb-8 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-emerald-500 font-bold uppercase tracking-widest text-xs mb-2"
+  }, t.unit), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-white mb-2"
+  }, t.title), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-400 font-mono text-lg"
+  }, t.subtitle)), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col lg:flex-row gap-8 w-full max-w-6xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 glass p-6 rounded-3xl relative flex items-center justify-center aspect-square"
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: "100%",
+    height: "100%",
+    viewBox: "0 0 600 600",
+    className: "overflow-visible bg-slate-900 rounded-xl",
+    onMouseMove: handleMouseMove
+  }, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("marker", {
+    id: "head-v",
+    markerWidth: "6",
+    markerHeight: "6",
+    refX: "5",
+    refY: "3",
+    orient: "auto"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M0,0 L6,3 L0,6",
+    fill: "#f43f5e"
+  })), /*#__PURE__*/React.createElement("marker", {
+    id: "head-vx",
+    markerWidth: "6",
+    markerHeight: "6",
+    refX: "5",
+    refY: "3",
+    orient: "auto"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M0,0 L6,3 L0,6",
+    fill: "#10b981"
+  }))), /*#__PURE__*/React.createElement("line", {
+    x1: originX,
+    y1: originY,
+    x2: originX,
+    y2: originY - 500,
+    stroke: "#475569",
+    strokeWidth: "4"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: originX,
+    y1: originY,
+    x2: originX + 500,
+    y2: originY,
+    stroke: "#475569",
+    strokeWidth: "4"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: topP.x,
+    y1: topP.y,
+    x2: botP.x,
+    y2: botP.y,
+    stroke: "#e2e8f0",
+    strokeWidth: "8",
+    strokeLinecap: "round"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: botP.x,
+    y1: botP.y,
+    x2: botP.x + 60,
+    y2: botP.y,
+    stroke: "#10b981",
+    strokeWidth: "4",
+    markerEnd: "url(#head-vx)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: botP.x + 20,
+    y: botP.y + 20,
+    fill: "#10b981",
+    fontWeight: "bold"
+  }, "dx/dt"), /*#__PURE__*/React.createElement("line", {
+    x1: topP.x,
+    y1: topP.y,
+    x2: topP.x,
+    y2: topP.y + arrowY_len,
+    stroke: "#f43f5e",
+    strokeWidth: "4",
+    markerEnd: "url(#head-v)"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: topP.x + 10,
+    y: topP.y + arrowY_len / 2,
+    fill: "#f43f5e",
+    fontWeight: "bold"
+  }, "dy/dt"), /*#__PURE__*/React.createElement("circle", {
+    cx: botP.x,
+    cy: botP.y,
+    r: "15",
+    fill: "#10b981",
+    opacity: "0.2",
+    className: "draggable",
+    onMouseDown: () => setDragging(true)
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: botP.x,
+    cy: botP.y,
+    r: "6",
+    fill: "#10b981",
+    stroke: "white",
+    strokeWidth: "2",
+    style: {
+      pointerEvents: "none"
+    }
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full lg:w-96 space-y-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass p-6 rounded-2xl"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-lg font-bold text-white mb-4"
+  }, t.physTitle), /*#__PURE__*/React.createElement("p", {
+    className: "text-xs text-slate-400 mb-4"
+  }, t.physDesc), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-4 font-mono text-sm bg-slate-800 p-4 rounded-xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-slate-400"
+  }, "x:"), /*#__PURE__*/React.createElement("span", {
+    className: "text-emerald-400 font-bold"
+  }, x.toFixed(2), " m")), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-slate-400"
+  }, "y:"), /*#__PURE__*/React.createElement("span", {
+    className: "text-white font-bold"
+  }, y.toFixed(2), " m")), /*#__PURE__*/React.createElement("div", {
+    className: "border-t border-slate-600 my-2"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-slate-400"
+  }, "dx/dt:"), /*#__PURE__*/React.createElement("span", {
+    className: "text-emerald-400"
+  }, "0.5 m/s")), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-slate-400"
+  }, "dy/dt:"), /*#__PURE__*/React.createElement("span", {
+    className: "text-rose-400 text-xl font-bold"
+  }, dydt.toFixed(3), " m/s")))), /*#__PURE__*/React.createElement("div", {
+    className: "glass p-6 rounded-2xl border-l-4 border-rose-500"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-xs font-bold text-rose-400 uppercase mb-2"
+  }, t.insightTitle), /*#__PURE__*/React.createElement("p", {
+    className: "text-xs text-slate-300",
+    dangerouslySetInnerHTML: {
+      __html: t.insightDesc
+    }
+  })))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小三數學：心算特訓班 | Mental Math</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect,
+  useRef
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Mental Math Training",
+    zh: "心算特訓",
+    ja: "暗算トレーニング",
+    ko: "암산 훈련",
+    es: "Entrenamiento de cálculo mental",
+    de: "Kopfrechentraining",
+    fi: "Päässälasku",
+    fr: "Calcul mental",
+    ar: "تدريب الحساب الذهني",
+    it: "Calcolo mentale"
+  },
+  challenge: {
+    en: "Challenge your speed!",
+    zh: "挑戰你的運算速度！",
+    ja: "スピードに挑戦！",
+    ko: "속도에 도전하세요!",
+    es: "¡Desafía tu velocidad!",
+    de: "Fordere deine Geschwindigkeit heraus!",
+    fi: "Haasta nopeutesi!",
+    fr: "Défiez votre vitesse !",
+    ar: "تحدى سرعتك!",
+    it: "Sfida la tua velocità!"
+  },
+  start: {
+    en: "Start Challenge",
+    zh: "開始挑戰",
+    ja: "挑戦開始",
+    ko: "도전 시작",
+    es: "Iniciar desafío",
+    de: "Herausforderung starten",
+    fi: "Aloita haaste",
+    fr: "Commencer le défi",
+    ar: "ابدأ التحدي",
+    it: "Inizia sfida"
+  },
+  score: {
+    en: "Score",
+    zh: "得分",
+    ja: "スコア",
+    ko: "점수",
+    es: "Puntuación",
+    de: "Punktzahl",
+    fi: "Pisteet",
+    fr: "Score",
+    ar: "النتيجة",
+    it: "Punteggio"
+  },
+  combo: {
+    en: "Combo!",
+    zh: "連擊!",
+    ja: "コンボ!",
+    ko: "콤보!",
+    es: "¡Combo!",
+    de: "Combo!",
+    fi: "Kombo!",
+    fr: "Combo !",
+    ar: "كومبو!",
+    it: "Combo!"
+  },
+  timeUp: {
+    en: "Time's Up!",
+    zh: "時間到！",
+    ja: "時間切れ！",
+    ko: "시간 종료!",
+    es: "¡Se acabó el tiempo!",
+    de: "Zeit abgelaufen!",
+    fi: "Aika loppui!",
+    fr: "Temps écoulé !",
+    ar: "انتهى الوقت!",
+    it: "Tempo scaduto!"
+  },
+  finalScore: {
+    en: "Final Score",
+    zh: "最終得分",
+    ja: "最終スコア",
+    ko: "최종 점수",
+    es: "Puntuación final",
+    de: "Endpunktzahl",
+    fi: "Loppupisteet",
+    fr: "Score final",
+    ar: "النتيجة النهائية",
+    it: "Punteggio finale"
+  },
+  maxCombo: {
+    en: "Max Combo",
+    zh: "最高連擊",
+    ja: "最大コンボ",
+    ko: "최대 콤보",
+    es: "Combo máx",
+    de: "Max. Combo",
+    fi: "Max kombo",
+    fr: "Combo max",
+    ar: "أقصى كومبو",
+    it: "Combo max"
+  },
+  rank: {
+    en: "Rank",
+    zh: "評級",
+    ja: "ランク",
+    ko: "등급",
+    es: "Rango",
+    de: "Rang",
+    fi: "Sijoitus",
+    fr: "Rang",
+    ar: "الرتبة",
+    it: "Rango"
+  },
+  ranks: {
+    godlike: {
+      en: "Math God! 👑",
+      zh: "神算! 👑",
+      ja: "計算の神! 👑",
+      ko: "수학의 신! 👑",
+      es: "¡Dios de las mates! 👑",
+      de: "Mathe-Gott! 👑",
+      fi: "Matikkajumala! 👑",
+      fr: "Dieu des maths ! 👑",
+      ar: "إله الرياضيات! 👑",
+      it: "Dio della matematica! 👑"
+    },
+    master: {
+      en: "Master! 🌟",
+      zh: "高手! 🌟",
+      ja: "達人! 🌟",
+      ko: "고수! 🌟",
+      es: "¡Maestro! 🌟",
+      de: "Meister! 🌟",
+      fi: "Mestari! 🌟",
+      fr: "Maître ! 🌟",
+      ar: "أستاذ! 🌟",
+      it: "Maestro! 🌟"
+    },
+    good: {
+      en: "Good! 👍",
+      zh: "不錯! 👍",
+      ja: "いいね! 👍",
+      ko: "좋아요! 👍",
+      es: "¡Bien! 👍",
+      de: "Gut! 👍",
+      fi: "Hyvä! 👍",
+      fr: "Bien ! 👍",
+      ar: "جيد! 👍",
+      it: "Bene! 👍"
+    },
+    keepUp: {
+      en: "Keep it up! 💪",
+      zh: "加油! 💪",
+      ja: "頑張れ! 💪",
+      ko: "힘내세요! 💪",
+      es: "¡Sigue así! 💪",
+      de: "Weiter so! 💪",
+      fi: "Jaksaa jaksaa! 💪",
+      fr: "Continuez ! 💪",
+      ar: "استمر! 💪",
+      it: "Continua così! 💪"
+    }
+  },
+  playAgain: {
+    en: "Play Again",
+    zh: "再玩一次",
+    ja: "もう一度プレイ",
+    ko: "다시 하기",
+    es: "Jugar de nuevo",
+    de: "Nochmal spielen",
+    fi: "Pelaa uudelleen",
+    fr: "Rejouer",
+    ar: "العب مرة أخرى",
+    it: "Gioca ancora"
+  },
+  home: {
+    en: "Return Home",
+    zh: "返回主頁",
+    ja: "ホームに戻る",
+    ko: "홈으로",
+    es: "Volver al inicio",
+    de: "Zurück",
+    fi: "Etusivulle",
+    fr: "Accueil",
+    ar: "العودة للرئيسية",
+    it: "Home"
+  }
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [gameState, setGameState] = useState("menu"); // menu, playing, gameover
+  const [question, setQuestion] = useState({
+    q: "",
+    a: 0
+  });
+  const [input, setInput] = useState("");
+  const [score, setScore] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(30);
+  const [combo, setCombo] = useState(0);
+  const [feedback, setFeedback] = useState(null);
+  const inputRef = useRef(null);
+  const generateQuestion = () => {
+    const types = ["+", "-"];
+    const type = types[Math.floor(Math.random() * types.length)];
+    let a, b;
+    if (type === "+") {
+      a = Math.floor(Math.random() * 50) + 1;
+      b = Math.floor(Math.random() * 50) + 1;
+      return {
+        q: `${a} + ${b}`,
+        a: a + b
+      };
+    } else {
+      a = Math.floor(Math.random() * 50) + 20;
+      b = Math.floor(Math.random() * a);
+      return {
+        q: `${a} - ${b}`,
+        a: a - b
+      };
+    }
+  };
+  useEffect(() => {
+    let timer;
+    if (gameState === "playing" && timeLeft > 0) {
+      timer = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
+    } else if (timeLeft === 0) {
+      setGameState("gameover");
+    }
+    return () => clearInterval(timer);
+  }, [gameState, timeLeft]);
+  useEffect(() => {
+    if (gameState === "playing") {
+      setQuestion(generateQuestion());
+      setInput("");
+      setScore(0);
+      setCombo(0);
+      setTimeLeft(30);
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
+  }, [gameState]);
+  const handleInput = val => {
+    setInput(val);
+    if (parseInt(val, 10) === question.a) {
+      setScore(s => s + 10 + combo * 2);
+      setCombo(c => c + 1);
+      setFeedback({
+        type: "correct",
+        id: Date.now()
+      });
+      setQuestion(generateQuestion());
+      setInput("");
+      setTimeLeft(t => Math.min(30, t + 2)); // Bonus time
+    }
+  };
+  const getRankText = () => {
+    if (score > 500) return t.ranks.godlike[lang] || t.ranks.godlike["en"];
+    if (score > 300) return t.ranks.master[lang] || t.ranks.master["en"];
+    if (score > 100) return t.ranks.good[lang] || t.ranks.good["en"];
+    return t.ranks.keepUp[lang] || t.ranks.keepUp["en"];
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center justify-center p-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 right-4 z-50"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/95 backdrop-blur-xl rounded-3xl p-8 shadow-2xl w-full max-w-lg text-center relative overflow-hidden"
+  }, gameState === "menu" && /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      opacity: 0
+    },
+    animate: {
+      opacity: 1
+    }
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-green-700 mb-2"
+  }, "⚡ ", t.title[lang] || t.title["en"]), /*#__PURE__*/React.createElement("p", {
+    className: "text-xl text-green-600 mb-8 font-bold"
+  }, t.challenge[lang] || t.challenge["en"]), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setGameState("playing"),
+    className: "px-8 py-6 bg-green-500 hover:bg-green-600 text-white text-2xl md:text-3xl font-black rounded-2xl shadow-lg hover:scale-105 transition-all w-full"
+  }, t.start[lang] || t.start["en"])), gameState === "playing" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between items-center mb-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xl font-bold text-slate-500"
+  }, "⏱️", " ", /*#__PURE__*/React.createElement("span", {
+    className: `${timeLeft < 5 ? "text-red-500 animate-pulse" : "text-slate-700"}`
+  }, timeLeft, "s")), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-black text-green-600"
+  }, t.score[lang] || t.score["en"], ": ", score)), /*#__PURE__*/React.createElement(motion.div, {
+    key: question.q,
+    initial: {
+      scale: 0.8,
+      opacity: 0
+    },
+    animate: {
+      scale: 1,
+      opacity: 1
+    },
+    className: "bg-slate-100 rounded-2xl p-8 md:p-12 mb-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-5xl md:text-6xl font-black text-slate-800"
+  }, question.q)), /*#__PURE__*/React.createElement("input", {
+    ref: inputRef,
+    type: "number",
+    value: input,
+    onChange: e => handleInput(e.target.value),
+    className: "w-full bg-transparent text-center text-7xl font-black text-green-600 outline-none placeholder-green-200 mb-4",
+    placeholder: "?",
+    autoFocus: true
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "h-2 bg-slate-200 rounded-full overflow-hidden"
+  }, /*#__PURE__*/React.createElement(motion.div, {
+    className: "h-full bg-green-500",
+    initial: {
+      width: "100%"
+    },
+    animate: {
+      width: `${timeLeft / 30 * 100}%`
+    },
+    transition: {
+      duration: 0.5
+    }
+  })), combo > 1 && /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      y: 20,
+      opacity: 0
+    },
+    animate: {
+      y: 0,
+      opacity: 1
+    },
+    className: "absolute top-4 right-4 bg-yellow-400 text-yellow-900 font-black px-3 py-1 rounded-full transform rotate-12 shadow-lg"
+  }, combo, " ", t.combo[lang] || t.combo["en"], " 🔥")), gameState === "gameover" && /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      opacity: 0
+    },
+    animate: {
+      opacity: 1
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl mb-4"
+  }, "🏆"), /*#__PURE__*/React.createElement("h2", {
+    className: "text-4xl font-black text-slate-800 mb-2"
+  }, t.timeUp[lang] || t.timeUp["en"]), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl text-slate-500 mb-8 font-bold"
+  }, t.finalScore[lang] || t.finalScore["en"]), /*#__PURE__*/React.createElement("div", {
+    className: "text-8xl font-black text-green-600 mb-8"
+  }, score), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 gap-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-green-50 p-4 rounded-xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-sm text-green-700 font-bold mb-1"
+  }, t.maxCombo[lang] || t.maxCombo["en"]), /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-black text-green-800"
+  }, combo)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-yellow-50 p-4 rounded-xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-sm text-yellow-700 font-bold mb-1"
+  }, t.rank[lang] || t.rank["en"]), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl md:text-3xl font-black text-yellow-800"
+  }, getRankText()))), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setGameState("playing"),
+    className: "mt-8 px-8 py-4 bg-green-500 hover:bg-green-600 text-white text-xl font-black rounded-xl shadow-lg w-full"
+  }, t.playAgain[lang] || t.playAgain["en"]), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setGameState("menu"),
+    className: "mt-4 px-8 py-4 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xl font-bold rounded-xl w-full"
+  }, t.home[lang] || t.home["en"]))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

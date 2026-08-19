@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小二常識：私隱小管家 | Privacy Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n || {
+  LanguageSelector: () => null,
+  get: (o, lang) => (o && (o[lang] || o.en)) || ""
+};
+const t = {
+  title: {
+    en: "Privacy Manager",
+    zh: "私隱小管家",
+    ja: "プライバシーマネージャー",
+    ko: "개인정보 관리자",
+    es: "Gestor de Privacidad",
+    de: "Datenschutz-Manager",
+    fi: "Yksityisyydensuoja",
+    fr: "Gestionnaire de Confidentialité",
+    ar: "مدير الخصوصية",
+    it: "Gestore Privacy"
+  },
+  instruction: {
+    en: "Should you share this?",
+    zh: "這資料可以分享給陌生人嗎？",
+    ja: "これは共有すべきですか？",
+    ko: "이것을 공유해도 될까요?",
+    es: "¿Deberías compartir esto?",
+    de: "Solltest du das teilen?",
+    fi: "Pitäisikö sinun jakaa tämä?",
+    fr: "Devriez-vous partager ceci ?",
+    ar: "هل يجب عليك مشاركة هذا؟",
+    it: "Dovresti condividere questo?"
+  },
+  public: {
+    en: "Okay to Share",
+    zh: "可以分享",
+    ja: "共有OK",
+    ko: "공유 가능",
+    es: "OK para compartir",
+    de: "Teilen OK",
+    fi: "Saa jakaa",
+    fr: "Partage OK",
+    ar: "موافق للمشاركة",
+    it: "OK Condividere"
+  },
+  private: {
+    en: "Keep Secret!",
+    zh: "必須保密！",
+    ja: "秘密にして！",
+    ko: "비밀 유지!",
+    es: "¡Mantener en secreto!",
+    de: "Geheim halten!",
+    fi: "Pidä salassa!",
+    fr: "Garder secret !",
+    ar: "يحفظ سراً!",
+    it: "Mantieni Segreto!"
+  },
+  name: {
+    en: "First Name",
+    zh: "名字 (例如: 陳大文)",
+    ja: "名前",
+    ko: "이름",
+    es: "Nombre",
+    de: "Vorname",
+    fi: "Etunimi",
+    fr: "Prénom",
+    ar: "الاسم الأول",
+    it: "Nome"
+  },
+  phone: {
+    en: "Phone Number",
+    zh: "電話號碼",
+    ja: "電話番号",
+    ko: "전화번호",
+    es: "Número de Teléfono",
+    de: "Telefonnummer",
+    fi: "Puhelinnumero",
+    fr: "Numéro de téléphone",
+    ar: "رقم الهاتف",
+    it: "Numero di Telefono"
+  },
+  address: {
+    en: "Home Address",
+    zh: "住址",
+    ja: "住所",
+    ko: "집 주소",
+    es: "Dirección",
+    de: "Adresse",
+    fi: "Kotiosoite",
+    fr: "Adresse",
+    ar: "عنوان المنزل",
+    it: "Indirizzo di Casa"
+  },
+  school: {
+    en: "School Name",
+    zh: "學校名稱",
+    ja: "学校名",
+    ko: "학교 이름",
+    es: "Nombre de la Escuela",
+    de: "Schulname",
+    fi: "Koulun nimi",
+    fr: "Nom de l'école",
+    ar: "اسم المدرسة",
+    it: "Nome della Scuola"
+  },
+  password: {
+    en: "Password",
+    zh: "密碼",
+    ja: "パスワード",
+    ko: "비밀번호",
+    es: "Contraseña",
+    de: "Passwort",
+    fi: "Salasana",
+    fr: "Mot de passe",
+    ar: "كلمة المرور",
+    it: "Password"
+  },
+  photo: {
+    en: "Selfie in Uniform",
+    zh: "穿校服的照片",
+    ja: "制服の写真",
+    ko: "교복 입은 사진",
+    es: "Foto en uniforme",
+    de: "Foto in Uniform",
+    fi: "Kuva koulupuvussa",
+    fr: "Photo en uniforme",
+    ar: "صورة بالزي الرسمي",
+    it: "Foto in Uniforme"
+  },
+  favColor: {
+    en: "Favorite Color",
+    zh: "喜歡的顏色",
+    ja: "好きな色",
+    ko: "좋아하는 색",
+    es: "Color Favorito",
+    de: "Lieblingsfarbe",
+    fi: "Lempiväri",
+    fr: "Couleur préférée",
+    ar: "اللون المفضل",
+    it: "Colore Preferito"
+  },
+  favFood: {
+    en: "Favorite Food",
+    zh: "喜歡的食物",
+    ja: "好きな食べ物",
+    ko: "좋아하는 음식",
+    es: "Comida Favorita",
+    de: "Lieblingsessen",
+    fi: "Lempiruoka",
+    fr: "Nourriture préférée",
+    ar: "طعام مفضل",
+    it: "Cibo Preferito"
+  },
+  hobby: {
+    en: "My Hobby",
+    zh: "我的嗜好",
+    ja: "趣味",
+    ko: "내 취미",
+    es: "Mi Pasatiempo",
+    de: "Mein Hobby",
+    fi: "Harrastukseni",
+    fr: "Mon passe-temps",
+    ar: "هوايتي",
+    it: "Il Mio Hobby"
+  },
+  pet: {
+    en: "My Pet",
+    zh: "我的寵物",
+    ja: "ペット",
+    ko: "내 애완동물",
+    es: "Mi Mascota",
+    de: "Mein Haustier",
+    fi: "Lemmikkini",
+    fr: "Mon animal",
+    ar: "حيواني الاليف",
+    it: "Il Mio Animale"
+  },
+  correct: {
+    en: "Correct! Stay Safe!",
+    zh: "正確！保護自己！",
+    ja: "正解！安全第一！",
+    ko: "정답! 안전을 유지하세요!",
+    es: "¡Correcto! ¡Mantente seguro!",
+    de: "Richtig! Bleib sicher!",
+    fi: "Oikein! Pysy turvassa!",
+    fr: "Correct ! Restez en sécurité !",
+    ar: "صحيح! ابق آمنًا!",
+    it: "Corretto! Rimani al Sicuro!"
+  },
+  wrong: {
+    en: "Oops! Be careful!",
+    zh: "哎呀！要小心！",
+    ja: "おっと！気をつけて！",
+    ko: "이런! 조심하세요!",
+    es: "¡Uy! ¡Ten cuidado!",
+    de: "Hoppla! Sei vorsichtig!",
+    fi: "Hups! Ole varovainen!",
+    fr: "Oups ! Fais attention !",
+    ar: "عفوًا! كن حذرا!",
+    it: "Oops! Fai attenzione!"
+  },
+  score: {
+    en: "Privacy Score",
+    zh: "私隱分數",
+    ja: "プライバシースコア",
+    ko: "개인정보 점수",
+    es: "Puntuación de Privacidad",
+    de: "Datenschutz-Punktestand",
+    fi: "Yksityisyyspisteet",
+    fr: "Score de Confidentialité",
+    ar: "درجة الخصوصية",
+    it: "Punteggio Privacy"
+  },
+  completed: {
+    en: "Privacy Expert!",
+    zh: "私隱專家！",
+    ja: "プライバシーエキスパート！",
+    ko: "개인정보 전문가!",
+    es: "¡Experto en Privacidad!",
+    de: "Datenschutz-Experte!",
+    fi: "Yksityisyysasiantuntija!",
+    fr: "Expert en Confidentialité !",
+    ar: "خبير الخصوصية!",
+    it: "Esperto di Privacy!"
+  },
+  restart: {
+    en: "Play Again",
+    zh: "再玩一次",
+    ja: "もう一度プレイ",
+    ko: "다시 하기",
+    es: "Jugar de Nuevo",
+    de: "Nochmal spielen",
+    fi: "Pelaa uudelleen",
+    fr: "Rejouer",
+    ar: "العب مرة أخرى",
+    it: "Gioca di Nuovo"
+  }
+};
+const dataItems = [{
+  id: "phone",
+  type: "private",
+  icon: "📱"
+}, {
+  id: "address",
+  type: "private",
+  icon: "🏠"
+}, {
+  id: "password",
+  type: "private",
+  icon: "🔑"
+}, {
+  id: "school",
+  type: "private",
+  icon: "🏫"
+},
+// Generally private online
+{
+  id: "photo",
+  type: "private",
+  icon: "📸"
+}, {
+  id: "favColor",
+  type: "public",
+  icon: "🎨"
+}, {
+  id: "favFood",
+  type: "public",
+  icon: "🍔"
+}, {
+  id: "hobby",
+  type: "public",
+  icon: "⚽"
+}, {
+  id: "pet",
+  type: "public",
+  icon: "🐶"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [queue, setQueue] = useState([]);
+  const [currentItem, setCurrentItem] = useState(null);
+  const [score, setScore] = useState(0);
+  const [feedback, setFeedback] = useState(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+  useEffect(() => {
+    initGame();
+  }, []);
+  const initGame = () => {
+    const q = [...dataItems].sort(() => Math.random() - 0.5);
+    setQueue(q);
+    setCurrentItem(q[0]);
+    setScore(0);
+    setFeedback(null);
+  };
+  const handleChoice = choice => {
+    if (feedback) return;
+    if (choice === currentItem.type) {
+      setScore(s => s + 10);
+      setFeedback("correct");
+    } else {
+      setScore(s => Math.max(0, s - 5));
+      setFeedback("wrong");
+    }
+    setTimeout(() => {
+      setFeedback(null);
+      const nextIdx = queue.indexOf(currentItem) + 1;
+      if (nextIdx < queue.length) {
+        setCurrentItem(queue[nextIdx]);
+      } else {
+        setCurrentItem(null); // Finished
+      }
+    }, 1000);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-indigo-900 mb-4 mt-8 drop-shadow-sm bg-white/50 px-6 py-2 rounded-full"
+  }, "🔒 ", getText("title")), currentItem ? /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-md flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "font-bold text-indigo-700 mb-6 bg-white px-4 py-1 rounded-full shadow"
+  }, getText("score"), ": ", score), /*#__PURE__*/React.createElement("div", {
+    className: "relative w-72 h-96 bg-white rounded-3xl shadow-2xl border-8 border-indigo-100 flex flex-col items-center justify-center p-6 text-center mb-8 transform transition-transform hover:scale-105"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 right-4 text-3xl opacity-20"
+  }, "❓"), /*#__PURE__*/React.createElement(motion.div, {
+    key: currentItem.id,
+    initial: {
+      scale: 0.5,
+      opacity: 0
+    },
+    animate: {
+      scale: 1,
+      opacity: 1
+    },
+    className: "bg-indigo-50 w-32 h-32 rounded-full flex items-center justify-center text-7xl mb-6 shadow-inner"
+  }, currentItem.icon), /*#__PURE__*/React.createElement("h2", {
+    className: "text-2xl font-black text-slate-800 mb-4"
+  }, getText(currentItem.id)), feedback && /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      opacity: 0,
+      y: 20
+    },
+    animate: {
+      opacity: 1,
+      y: 0
+    },
+    className: `absolute inset-0 bg-white/90 flex items-center justify-center text-3xl font-black rounded-2xl ${feedback === "correct" ? "text-green-600" : "text-red-500"}`
+  }, getText(feedback))), /*#__PURE__*/React.createElement("p", {
+    className: "font-bold text-slate-500 mb-6 bg-indigo-50 px-4 py-2 rounded-xl text-center"
+  }, "\"", getText("instruction"), "\""), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4 w-full"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => handleChoice("public"),
+    className: "flex-1 bg-green-500 hover:bg-green-600 text-white py-4 rounded-2xl shadow-xl font-bold text-lg flex flex-col items-center border-b-4 border-green-700 active:border-b-0 active:translate-y-1"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-3xl mb-1"
+  }, "📢"), getText("public")), /*#__PURE__*/React.createElement("button", {
+    onClick: () => handleChoice("private"),
+    className: "flex-1 bg-red-500 hover:bg-red-600 text-white py-4 rounded-2xl shadow-xl font-bold text-lg flex flex-col items-center border-b-4 border-red-700 active:border-b-0 active:translate-y-1"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-3xl mb-1"
+  }, "🤫"), getText("private")))) : /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/90 p-12 rounded-3xl shadow-xl text-center mt-12"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-8xl mb-4"
+  }, "🛡️"), /*#__PURE__*/React.createElement("h2", {
+    className: "text-3xl font-black text-indigo-800 mb-6"
+  }, getText("completed")), /*#__PURE__*/React.createElement("p", {
+    className: "text-xl mb-8 font-bold text-slate-600"
+  }, getText("score"), ": ", score), /*#__PURE__*/React.createElement("button", {
+    onClick: initGame,
+    className: "bg-indigo-500 text-white px-10 py-4 rounded-full font-black text-xl hover:bg-indigo-600 shadow-xl border-b-4 border-indigo-700 active:border-b-0 active:translate-y-1"
+  }, getText("restart"), " 🔄")));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

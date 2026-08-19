@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小三常識：交通規劃師 | Transport Planner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Transport Planner",
+    zh: "交通規劃師",
+    ja: "交通プランナー",
+    ko: "교통 플래너",
+    es: "Planificador de Transporte",
+    de: "Verkehrsplaner",
+    fi: "Liikennesuunnittelija",
+    fr: "Planificateur de transport",
+    ar: "مخطط النقل",
+    it: "Pianificatore di Trasporti"
+  },
+  instruction: {
+    en: "Choose the best transport!",
+    zh: "選擇最合適的交通工具！",
+    ja: "最適な交通手段を選ぼう！",
+    ko: "가장 좋은 교통수단을 선택하세요!",
+    es: "¡Elige el mejor transporte!",
+    de: "Wähle das beste Transportmittel!",
+    fi: "Valitse paras kulkuneuvo!",
+    fr: "Choisissez le meilleur transport !",
+    ar: "اختر أفضل وسيلة نقل!",
+    it: "Scegli il miglior trasporto!"
+  },
+  mtr: {
+    en: "MTR",
+    zh: "港鐵",
+    ja: "MTR",
+    ko: "MTR",
+    es: "MTR",
+    de: "MTR",
+    fi: "MTR",
+    fr: "MTR",
+    ar: "مترو",
+    it: "MTR"
+  },
+  bus: {
+    en: "Bus",
+    zh: "巴士",
+    ja: "バス",
+    ko: "버스",
+    es: "Autobús",
+    de: "Bus",
+    fi: "Bussi",
+    fr: "Bus",
+    ar: "حافلة",
+    it: "Autobus"
+  },
+  ferry: {
+    en: "Ferry",
+    zh: "渡輪",
+    ja: "フェリー",
+    ko: "페리",
+    es: "Ferry",
+    de: "Fähre",
+    fi: "Lautta",
+    fr: "Ferry",
+    ar: "عبارة",
+    it: "Traghetto"
+  },
+  taxi: {
+    en: "Taxi",
+    zh: "的士",
+    ja: "タクシー",
+    ko: "택시",
+    es: "Taxi",
+    de: "Taxi",
+    fi: "Taksi",
+    fr: "Taxi",
+    ar: "تاكسي",
+    it: "Taxi"
+  },
+  plane: {
+    en: "Plane",
+    zh: "飛機",
+    ja: "飛行機",
+    ko: "비행기",
+    es: "Avión",
+    de: "Flugzeug",
+    fi: "Lentokone",
+    fr: "Avion",
+    ar: "طائرة",
+    it: "Aereo"
+  },
+  walk: {
+    en: "Walk",
+    zh: "步行",
+    ja: "徒歩",
+    ko: "걷기",
+    es: "Caminar",
+    de: "Gehen",
+    fi: "Kävellä",
+    fr: "Marcher",
+    ar: "مشى",
+    it: "Camminare"
+  },
+  q1: {
+    en: "Central to Tsim Sha Tsui (Fastest & Cheap)",
+    zh: "中環 去 尖沙咀 (最快且便宜)",
+    ja: "セントラルからチムサーチョイ (速くて安い)",
+    ko: "센트럴에서 침사추이까지 (가장 빠르고 저렴함)",
+    es: "De Central a Tsim Sha Tsui (Más rápido y barato)",
+    de: "Von Central nach Tsim Sha Tsui (Schnell & Günstig)",
+    fi: "Centralista Tsim Sha Tsuihin (Nopein & Halpa)",
+    fr: "De Central à Tsim Sha Tsui (Le plus rapide et le moins cher)",
+    ar: "من سنترال إلى تsim Sha Tsui (الأسرع والأرخص)",
+    it: "Da Central a Tsim Sha Tsui (Più Veloce ed Economico)"
+  },
+  q2: {
+    en: "Central to Cheung Chau",
+    zh: "中環 去 長洲",
+    ja: "セントラルから長洲",
+    ko: "센트럴에서 청차우까지",
+    es: "De Central a Cheung Chau",
+    de: "Von Central nach Cheung Chau",
+    fi: "Centralista Cheung Chauhun",
+    fr: "De Central à Cheung Chau",
+    ar: "من سنترال إلى تشانغ تشاو",
+    it: "Da Central a Cheung Chau"
+  },
+  q3: {
+    en: "Home to Park nearby (Healthy)",
+    zh: "家 去 附近的公園 (健康)",
+    ja: "家から近くの公園 (健康)",
+    ko: "집에서 가까운 공원 (건강)",
+    es: "De casa al parque cercano (Saludable)",
+    de: "Von zu Hause zum nahegelegenen Park (Gesund)",
+    fi: "Kotoa lähipuistoon (Terveellinen)",
+    fr: "De la maison au parc voisin (Sain)",
+    ar: "من المنزل إلى الحديقة القريبة (صحي)",
+    it: "Da Casa al Parco vicino (Salutare)"
+  },
+  q4: {
+    en: "Hong Kong to Japan",
+    zh: "香港 去 日本",
+    ja: "香港から日本",
+    ko: "홍콩에서 일본까지",
+    es: "De Hong Kong a Japón",
+    de: "Von Hongkong nach Japan",
+    fi: "Hongkongista Japaniin",
+    fr: "De Hong Kong au Japon",
+    ar: "من هونغ كونغ إلى اليابان",
+    it: "Da Hong Kong al Giappone"
+  },
+  q5: {
+    en: "Rush to Hospital (Emergency)",
+    zh: "趕去醫院 (緊急)",
+    ja: "病院へ急ぐ (緊急)",
+    ko: "병원으로 급히 가기 (응급)",
+    es: "Ir corriendo al hospital (Emergencia)",
+    de: "Eile ins Krankenhaus (Notfall)",
+    fi: "Kiirehdi sairaalaan (Hätätilanne)",
+    fr: "Urgence à l'hôpital (Urgence)",
+    ar: "الاسراع إلى المستشفى (طوارئ)",
+    it: "Corsa all'Ospedale (Emergenza)"
+  },
+  correct: {
+    en: "Great Choice!",
+    zh: "很好的選擇！",
+    ja: "素晴らしい選択！",
+    ko: "탁월한 선택!",
+    es: "¡Gran Elección!",
+    de: "Gute Wahl!",
+    fi: "Harvinaisen hyvä valinta!",
+    fr: "Excellent choix !",
+    ar: "اختيار رائع!",
+    it: "Ottima Scelta!"
+  },
+  wrong: {
+    en: "Not the best option.",
+    zh: "這不是最好的選擇。",
+    ja: "最良の選択ではありません。",
+    ko: "최선의 선택이 아닙니다.",
+    es: "No es la mejor opción.",
+    de: "Nicht die beste Option.",
+    fi: "Ei paras vaihtoehto.",
+    fr: "Pas la meilleure option.",
+    ar: "ليس الخيار الأفضل.",
+    it: "Non l'opzione migliore."
+  },
+  completed: {
+    en: "Route Master!",
+    zh: "路線大師！",
+    ja: "ルートマスター！",
+    ko: "경로 마스터!",
+    es: "¡Maestro de Rutas!",
+    de: "Routenmeister!",
+    fi: "Reittimestari!",
+    fr: "Maître des itinéraires !",
+    ar: "خبير الطرق!",
+    it: "Maestro dei Percorsi!"
+  },
+  reset: {
+    en: "Play Again",
+    zh: "再玩一次",
+    ja: "もう一度プレイ",
+    ko: "다시 하기",
+    es: "Jugar de Nuevo",
+    de: "Nochmal spielen",
+    fi: "Pelaa uudelleen",
+    fr: "Rejouer",
+    ar: "العب مرة أخرى",
+    it: "Gioca di Nuovo"
+  }
+};
+const tasks = [{
+  id: 1,
+  q: "q1",
+  best: ["mtr"],
+  icon: "🏙️"
+},
+// MTR is the standard fastest+cheap cross-harbour answer for P3
+{
+  id: 2,
+  q: "q2",
+  best: ["ferry"],
+  icon: "🏝️"
+}, {
+  id: 3,
+  q: "q3",
+  best: ["walk"],
+  icon: "🌳"
+}, {
+  id: 4,
+  q: "q4",
+  best: ["plane"],
+  icon: "🏯"
+}, {
+  id: 5,
+  q: "q5",
+  best: ["taxi"],
+  icon: "🏥"
+}];
+const options = [{
+  id: "mtr",
+  icon: "🚇",
+  color: "bg-red-100 border-red-400"
+}, {
+  id: "bus",
+  icon: "🚌",
+  color: "bg-yellow-100 border-yellow-400"
+}, {
+  id: "ferry",
+  icon: "🛳️",
+  color: "bg-green-100 border-green-400"
+}, {
+  id: "taxi",
+  icon: "🚕",
+  color: "bg-red-50 border-red-500"
+}, {
+  id: "plane",
+  icon: "✈️",
+  color: "bg-blue-100 border-blue-400"
+}, {
+  id: "walk",
+  icon: "🚶",
+  color: "bg-emerald-100 border-emerald-400"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [qIdx, setQIdx] = useState(0);
+  const [feedback, setFeedback] = useState(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+  const currentTask = tasks[qIdx];
+  const handleChoice = optId => {
+    if (feedback) return;
+
+    // Allow acceptable answers logic if needed, simplify for P3
+    // For Q1: MTR is strictly fastest usually. Ferry is scenic. Let's accept both for "Cross harbour" context if vague, but question says "Fastest". MTR wins.
+    // Actually let's make it strict based on common sense taught in P3.
+
+    if (currentTask.best.includes(optId)) {
+      setFeedback("correct");
+      setTimeout(() => {
+        setFeedback(null);
+        setQIdx(i => i < tasks.length - 1 ? i + 1 : -1);
+      }, 1000);
+    } else {
+      setFeedback("wrong");
+      setTimeout(() => setFeedback(null), 800);
+    }
+  };
+  const reset = () => {
+    setQIdx(0);
+    setFeedback(null);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 flex flex-col items-center select-none font-sans overflow-hidden"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-slate-700 mb-4 mt-8 drop-shadow-sm bg-white/50 px-6 py-2 rounded-full"
+  }, "🚦 ", getText("title")), qIdx !== -1 ? /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-2xl flex flex-col items-center flex-1 justify-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-8 rounded-3xl shadow-xl w-full border-b-8 border-slate-200 text-center mb-8 relative"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl mb-4"
+  }, currentTask.icon), /*#__PURE__*/React.createElement("h2", {
+    className: "text-2xl font-black text-slate-800"
+  }, getText(currentTask.q)), feedback && /*#__PURE__*/React.createElement("div", {
+    className: `absolute top-0 left-0 w-full h-full rounded-2xl flex items-center justify-center bg-white/90 z-10 font-black text-3xl ${feedback === "correct" ? "text-green-600" : "text-red-500"}`
+  }, getText(feedback))), /*#__PURE__*/React.createElement("p", {
+    className: "font-bold text-slate-500 mb-6 bg-white/60 px-6 py-1 rounded-full"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 md:grid-cols-3 gap-4 w-full"
+  }, options.map(opt => /*#__PURE__*/React.createElement("button", {
+    key: opt.id,
+    onClick: () => handleChoice(opt.id),
+    disabled: feedback,
+    className: `${opt.color} border-b-4 rounded-xl p-4 flex flex-col items-center shadow-md transition-transform active:scale-95 hover:-translate-y-1`
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-5xl mb-1"
+  }, opt.icon), /*#__PURE__*/React.createElement("div", {
+    className: "font-bold text-slate-800 leading-tight"
+  }, getText(opt.id))))), /*#__PURE__*/React.createElement("div", {
+    className: "mt-8 flex gap-2"
+  }, tasks.map((_, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: `w-3 h-3 rounded-full ${i === qIdx ? "bg-blue-500 scale-125" : i < qIdx ? "bg-green-400" : "bg-slate-300"}`
+  })))) : /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/90 p-12 rounded-3xl shadow-xl text-center mt-20"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-8xl mb-4"
+  }, "🏆"), /*#__PURE__*/React.createElement("h2", {
+    className: "text-3xl font-black text-slate-800 mb-6"
+  }, getText("completed")), /*#__PURE__*/React.createElement("button", {
+    onClick: reset,
+    className: "bg-slate-700 text-white px-10 py-4 rounded-full font-black text-xl hover:bg-slate-800 shadow-xl"
+  }, getText("reset"), " 🔄")));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小一常識：中國地圖拼圖 | China Map Puzzle</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #fefce8 0%, #fde047 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "China Map Fun",
+    zh: "中國地圖小百科",
+    ja: "中国地図",
+    ko: "중국 지도 재미",
+    es: "Diversión con el mapa de China",
+    de: "China-Karten-Spaß",
+    fi: "Kiinan karttahupi",
+    fr: "Amusement avec la carte de Chine",
+    ar: "متعة خريطة الصين",
+    it: "Divertimento con la mappa della Cina"
+  },
+  instruction: {
+    en: "Drag the icons to the correct place on the map!",
+    zh: "把圖示拖到地圖上正確的位置！",
+    ja: "地図上の正しい場所にアイコンをドラッグしてください！",
+    ko: "아이콘을 지도의 올바른 위치로 드래그하세요!",
+    es: "¡Arrastra los iconos al lugar correcto en el mapa!",
+    de: "Ziehe die Symbole an die richtige Stelle auf der Karte!",
+    fi: "Raahaa kuvakkeet oikeaan paikkaan kartalla!",
+    fr: "Faites glisser les icônes au bon endroit sur la carte !",
+    ar: "اسحب الرموز إلى المكان الصحيح على الخريطة!",
+    it: "Trascina le icone nel posto corretto sulla mappa!"
+  },
+  bj: {
+    en: "Beijing (Capital)",
+    zh: "北京 (首都)",
+    es: "Pekín (Capital)",
+    de: "Peking (Hauptstadt)",
+    fi: "Peking (Pääkaupunki)",
+    fr: "Pékin (Capitale)",
+    ar: "بكين (العاصمة)",
+    it: "Pechino (Capitale)"
+  },
+  hk: {
+    en: "Hong Kong",
+    zh: "香港",
+    es: "Hong Kong",
+    de: "Hongkong",
+    fi: "Hongkong",
+    fr: "Hong Kong",
+    ar: "هونغ كونغ",
+    it: "Hong Kong"
+  },
+  sichuan: {
+    en: "Sichuan (Panda Home)",
+    zh: "四川 (熊貓故鄉)",
+    es: "Sichuan (Hogar del Panda)",
+    de: "Sichuan (Pandas Heimat)",
+    fi: "Sihuan (Pandan koti)",
+    fr: "Sichuan (Maison du Panda)",
+    ar: "سيتشوان (موطن الباندا)",
+    it: "Sichuan (Casa del Panda)"
+  },
+  flag: {
+    en: "National Flag",
+    zh: "國旗",
+    es: "Bandera nacional",
+    de: "Nationalflagge",
+    fi: "Kansallislippu",
+    fr: "Drapeau national",
+    ar: "العلم الوطني",
+    it: "Bandiera nazionale"
+  },
+  panda: {
+    en: "Panda",
+    zh: "熊貓",
+    es: "Panda",
+    de: "Panda",
+    fi: "Panda",
+    fr: "Panda",
+    ar: "باندا",
+    it: "Panda"
+  },
+  bauhinia: {
+    en: "Bauhinia",
+    zh: "洋紫荊",
+    es: "Bauhinia",
+    de: "Bauhinie",
+    fi: "Bauhinia",
+    fr: "Bauhinia",
+    ar: "بوهينيا",
+    it: "Bauhinia"
+  },
+  check: {
+    en: "Check",
+    zh: "檢查",
+    es: "Comprobar",
+    de: "Prüfen",
+    fi: "Tarkista",
+    fr: "Vérifier",
+    ar: "تحقق",
+    it: "Controlla"
+  },
+  reset: {
+    en: "Reset",
+    zh: "重置",
+    es: "Reiniciar",
+    de: "Zurücksetzen",
+    fi: "Nollaa",
+    fr: "Réinitialiser",
+    ar: "إعادة تعيين",
+    it: "Reimposta"
+  },
+  correct: {
+    en: "Great Geography Skill!",
+    zh: "地理小博士！",
+    es: "¡Gran habilidad geográfica!",
+    de: "Tolle Geografie-Kenntnisse!",
+    fi: "Hienot maantiedon taidot!",
+    fr: "Grande compétence en géographie !",
+    ar: "مهارة جغرافية رائعة!",
+    it: "Grande abilità geografica!"
+  },
+  wrong: {
+    en: "Try again!",
+    zh: "再試一次！",
+    es: "¡Inténtalo de nuevo!",
+    de: "Versuch es nochmal!",
+    fi: "Yritä uudelleen!",
+    fr: "Réessayez !",
+    ar: "حاول مرة أخرى!",
+    it: "Riprova!"
+  }
+};
+const locations = [{
+  id: "bj",
+  name: "bj",
+  x: 65,
+  y: 30,
+  targetItem: "flag"
+}, {
+  id: "sichuan",
+  name: "sichuan",
+  x: 45,
+  y: 55,
+  targetItem: "panda"
+}, {
+  id: "hk",
+  name: "hk",
+  x: 68,
+  y: 75,
+  targetItem: "bauhinia"
+}];
+const items = [{
+  id: "flag",
+  icon: "🇨🇳",
+  label: "flag"
+}, {
+  id: "panda",
+  icon: "🐼",
+  label: "panda"
+}, {
+  id: "bauhinia",
+  icon: "🌸",
+  label: "bauhinia"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [placements, setPlacements] = useState({}); // locId -> itemId
+  const [status, setStatus] = useState(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+  const handleDrop = (itemId, locId) => {
+    setPlacements(prev => ({
+      ...prev,
+      [locId]: itemId
+    }));
+    setStatus(null);
+  };
+  const check = () => {
+    const allCorrect = locations.every(loc => placements[loc.id] === loc.targetItem);
+    if (allCorrect) setStatus("correct");else setStatus("wrong");
+  };
+  const reset = () => {
+    setPlacements({});
+    setStatus(null);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-rose-700 mb-4 mt-8 drop-shadow-sm"
+  }, "🗺️ ", getText("title")), /*#__PURE__*/React.createElement("p", {
+    className: "font-bold text-rose-800 mb-8"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "relative w-full max-w-md aspect-[4/3] bg-yellow-100 rounded-3xl border-4 border-yellow-300 shadow-xl overflow-hidden mb-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-[10%] left-[10%] w-[80%] h-[80%] bg-white rounded-[40%_60%_70%_30%_/_40%_50%_60%_50%] opacity-50 border-2 border-slate-200"
+  }), locations.map(loc => {
+    const placedItemId = placements[loc.id];
+    const placedItem = items.find(i => i.id === placedItemId);
+    return /*#__PURE__*/React.createElement("div", {
+      key: loc.id,
+      className: `absolute w-24 h-24 -ml-12 -mt-12 rounded-full border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all ${status === "correct" ? "border-green-500 bg-green-100/80" : placedItem ? "border-rose-400 bg-white/80" : "border-slate-400 bg-white/40 hover:bg-white/60"}`,
+      style: {
+        left: `${loc.x}%`,
+        top: `${loc.y}%`
+      },
+      onDragOver: e => e.preventDefault(),
+      onDrop: e => {
+        e.preventDefault();
+        const iId = e.dataTransfer.getData("itemId");
+        if (iId) handleDrop(iId, loc.id);
+      },
+      onClick: () => {
+        // Remove
+        const next = {
+          ...placements
+        };
+        delete next[loc.id];
+        setPlacements(next);
+        setStatus(null);
+      }
+    }, placedItem ? /*#__PURE__*/React.createElement(motion.button, {
+      initial: {
+        scale: 0
+      },
+      animate: {
+        scale: 1
+      },
+      className: "text-center"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "text-4xl"
+    }, placedItem.icon)) : /*#__PURE__*/React.createElement("div", {
+      className: "text-center"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "text-2xl opacity-30"
+    }, "📍")), /*#__PURE__*/React.createElement("div", {
+      className: `absolute -bottom-8 bg-white/80 px-2 py-1 rounded text-xs font-bold whitespace-nowrap shadow-sm ${placedItem ? "text-black" : "text-slate-500"}`
+    }, getText(loc.name)));
+  })), status && /*#__PURE__*/React.createElement("div", {
+    className: `text-2xl font-black mb-6 ${status === "correct" ? "text-green-600" : "text-red-500"}`
+  }, getText(status)), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4 bg-white/60 p-4 rounded-2xl"
+  }, items.map(item => {
+    // Hide if placed
+    const isPlaced = Object.values(placements).includes(item.id);
+    if (isPlaced) return /*#__PURE__*/React.createElement("div", {
+      key: item.id,
+      className: "w-20 h-20"
+    });
+    return /*#__PURE__*/React.createElement("div", {
+      key: item.id,
+      draggable: true,
+      onDragStart: e => e.dataTransfer.setData("itemId", item.id),
+      className: "w-20 h-20 bg-white rounded-xl shadow-md flex flex-col items-center justify-center cursor-grab active:cursor-grabbing hover:scale-110 transition-transform"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "text-4xl mb-1"
+    }, item.icon), /*#__PURE__*/React.createElement("div", {
+      className: "text-[10px] font-bold text-slate-600"
+    }, getText(item.label)));
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col gap-2"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: check,
+    className: "bg-rose-500 text-white px-4 py-2 rounded-xl font-bold hover:bg-rose-600 shadow h-full"
+  }, getText("check")), /*#__PURE__*/React.createElement("button", {
+    onClick: reset,
+    className: "bg-slate-200 text-slate-600 px-4 py-2 rounded-xl font-bold hover:bg-slate-300 shadow h-full"
+  }, getText("reset")))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小二常識：小息做什麼？ | Recess Time</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect,
+  useRef
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Recess Time",
+    zh: "小息做什麼？",
+    ja: "休み時間",
+    ko: "쉬는 시간",
+    es: "Hora del Recreo",
+    de: "Pause",
+    fi: "Välitunti",
+    fr: "Temps de Récréation",
+    ar: "وقت الإستراحة",
+    it: "Ora di Ricreazione"
+  },
+  instruction: {
+    en: "Is this behavior Good or Bad?",
+    zh: "這行為是好還是壞？",
+    ja: "この行動はいいですか、それとも悪いですか？",
+    ko: "이 행동은 좋은가요, 나쁜가요?",
+    es: "¿Este comportamiento es bueno o malo?",
+    de: "Ist dieses Verhalten gut oder schlecht?",
+    fi: "Onko tämä käytös hyvää vai huonoa?",
+    fr: "Ce comportement est-il bon ou mauvais ?",
+    ar: "هل هذا السلوك جيد أم سيء؟",
+    it: "Questo comportamento è buono o cattivo?"
+  },
+  good: {
+    en: "Good",
+    zh: "好",
+    ja: "良い",
+    ko: "좋음",
+    es: "Bueno",
+    de: "Gut",
+    fi: "Hyvä",
+    fr: "Bon",
+    ar: "جيد",
+    it: "Buono"
+  },
+  bad: {
+    en: "Bad",
+    zh: "壞",
+    ja: "悪い",
+    ko: "나쁨",
+    es: "Malo",
+    de: "Schlecht",
+    fi: "Huono",
+    fr: "Mauvais",
+    ar: "سيء",
+    it: "Cattivo"
+  },
+  score: {
+    en: "Score",
+    zh: "分數",
+    ja: "スコア",
+    ko: "점수",
+    es: "Puntuación",
+    de: "Punktzahl",
+    fi: "Pisteet",
+    fr: "Score",
+    ar: "نتيجة",
+    it: "Punteggio"
+  },
+  time: {
+    en: "Time",
+    zh: "時間",
+    ja: "時間",
+    ko: "시간",
+    es: "Tiempo",
+    de: "Zeit",
+    fi: "Aika",
+    fr: "Temps",
+    ar: "وقت",
+    it: "Tempo"
+  },
+  start: {
+    en: "Start Game",
+    zh: "開始遊戲",
+    ja: "ゲーム開始",
+    ko: "게임 시작",
+    es: "Empezar Juego",
+    de: "Spiel starten",
+    fi: "Aloita peli",
+    fr: "Démarrer le jeu",
+    ar: "بدء اللعبة",
+    it: "Inizia Gioco"
+  },
+  gameover: {
+    en: "Game Over",
+    zh: "遊戲結束",
+    ja: "ゲームオーバー",
+    ko: "게임 오버",
+    es: "Juego Terminado",
+    de: "Spiel ist aus",
+    fi: "Peli ohi",
+    fr: "Fin du jeu",
+    ar: "انتهت اللعبة",
+    it: "Fine Gioco"
+  },
+  restart: {
+    en: "Play Again",
+    zh: "再玩一次",
+    ja: "もう一度プレイ",
+    ko: "다시 하기",
+    es: "Jugar de Nuevo",
+    de: "Nochmal spielen",
+    fi: "Pelaa uudelleen",
+    fr: "Rejouer",
+    ar: "العب مرة أخرى",
+    it: "Gioca di Nuovo"
+  },
+  final: {
+    en: "Final Score",
+    zh: "最終分數",
+    ja: "最終スコア",
+    ko: "최종 점수",
+    es: "Puntuación Final",
+    de: "Endpunktzahl",
+    fi: "Loppupisteet",
+    fr: "Score Final",
+    ar: "النتيجة النهائية",
+    it: "Punteggio Finale"
+  },
+  drink: {
+    en: "Drinking Water",
+    zh: "喝水",
+    ja: "水を飲む",
+    ko: "물 마시기",
+    es: "Beber Agua",
+    de: "Wasser trinken",
+    fi: "Veden juominen",
+    fr: "Boire de l'eau",
+    ar: "شرب الماء",
+    it: "Bere Acqua"
+  },
+  toilet: {
+    en: "Going to Toilet",
+    zh: "去洗手間",
+    ja: "トイレに行く",
+    ko: "화장실 가기",
+    es: "Ir al Baño",
+    de: "Zur Toilette gehen",
+    fi: "Vessassa käyminen",
+    fr: "Aller aux toilettes",
+    ar: "الذهاب إلى المرحاض",
+    it: "Andare in Bagno"
+  },
+  share: {
+    en: "Sharing Snacks",
+    zh: "分享零食",
+    ja: "おやつを分ける",
+    ko: "간식 나누기",
+    es: "Compartir Merienda",
+    de: "Snacks teilen",
+    fi: "Eväiden jakaminen",
+    fr: "Partager le goûter",
+    ar: "مشاركة الوجبات الخفيفة",
+    it: "Condividere Snack"
+  },
+  queue: {
+    en: "Queueing Up",
+    zh: "排隊",
+    ja: "並ぶ",
+    ko: "줄 서기",
+    es: "Hacer Cola",
+    de: "Anstehen",
+    fi: "Jonottaminen",
+    fr: "Faire la queue",
+    ar: "الاصطفاف",
+    it: "Fare la Fila"
+  },
+  chat: {
+    en: "Chatting",
+    zh: "聊天",
+    ja: "おしゃべり",
+    ko: "대화하기",
+    es: "Charlar",
+    de: "Plaudern",
+    fi: "Juttelu",
+    fr: "Bavarder",
+    ar: "الدردشة",
+    it: "Chiacchierare"
+  },
+  read: {
+    en: "Reading",
+    zh: "閱讀",
+    ja: "読書",
+    ko: "독서",
+    es: "Leer",
+    de: "Lesen",
+    fi: "Lukeminen",
+    fr: "Lire",
+    ar: "قراءة",
+    it: "Leggere"
+  },
+  run: {
+    en: "Running in Hallway",
+    zh: "走廊奔跑",
+    ja: "廊下を走る",
+    ko: "복도에서 뛰기",
+    es: "Correr en el pasillo",
+    de: "Im Flur rennen",
+    fi: "Juokseminen käytävällä",
+    fr: "Courir dans le couloir",
+    ar: "الجري في الممر",
+    it: "Correre nel Corridoio"
+  },
+  fight: {
+    en: "Fighting",
+    zh: "打架",
+    ja: "喧嘩",
+    ko: "싸우기",
+    es: "Pelear",
+    de: "Kämpfen",
+    fi: "Tappeleminen",
+    fr: "Se battre",
+    ar: "قتال",
+    it: "Combattere"
+  },
+  litter: {
+    en: "Littering",
+    zh: "亂拋垃圾",
+    ja: "ポイ捨て",
+    ko: "쓰레기 버리기",
+    es: "Tirar basura",
+    de: "Müll wegwerfen",
+    fi: "Roskaaminen",
+    fr: "Jeter des ordures",
+    ar: "رمي القمامة",
+    it: "Gettare Rifiuti"
+  },
+  shout: {
+    en: "Shouting",
+    zh: "大叫",
+    ja: "叫ぶ",
+    ko: "소리 지르기",
+    es: "Gritar",
+    de: "Schreien",
+    fi: "Huutaminen",
+    fr: "Crier",
+    ar: "صراخ",
+    it: "Urlare"
+  },
+  push: {
+    en: "Pushing",
+    zh: "推撞",
+    ja: "押す",
+    ko: "밀기",
+    es: "Empujar",
+    de: "Schubsen",
+    fi: "Töniminen",
+    fr: "Pousser",
+    ar: "دفع",
+    it: "Spingere"
+  },
+  climb: {
+    en: "Climbing desks",
+    zh: "爬桌子",
+    ja: "机に登る",
+    ko: "책상에 오르기",
+    es: "Subirse a las mesas",
+    de: "Auf Tische klettern",
+    fi: "Pöydille kiipeily",
+    fr: "Grimper sur les bureaux",
+    ar: "تسلق المكاتب",
+    it: "Arrampicarsi sui Banchi"
+  }
+};
+const actions = [{
+  id: "drink",
+  type: "good",
+  icon: "💧"
+}, {
+  id: "toilet",
+  type: "good",
+  icon: "🚻"
+}, {
+  id: "share",
+  type: "good",
+  icon: "🍪"
+}, {
+  id: "queue",
+  type: "good",
+  icon: "🚶🚶"
+}, {
+  id: "chat",
+  type: "good",
+  icon: "💬"
+}, {
+  id: "read",
+  type: "good",
+  icon: "📖"
+}, {
+  id: "run",
+  type: "bad",
+  icon: "🏃💨"
+}, {
+  id: "fight",
+  type: "bad",
+  icon: "🥊"
+}, {
+  id: "litter",
+  type: "bad",
+  icon: "🚮"
+}, {
+  id: "shout",
+  type: "bad",
+  icon: "📢"
+}, {
+  id: "push",
+  type: "bad",
+  icon: "👐"
+}, {
+  id: "climb",
+  type: "bad",
+  icon: "🧗"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isGameOver, setIsGameOver] = useState(false);
+  const [currentAction, setCurrentAction] = useState(null);
+  const [score, setScore] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(30);
+  const [feedback, setFeedback] = useState(null); // 'correct' | 'wrong'
+
+  const timerRef = useRef(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+  useEffect(() => {
+    if (isPlaying && timeLeft > 0) {
+      timerRef.current = setInterval(() => {
+        setTimeLeft(t => t - 1);
+      }, 1000);
+    } else if (timeLeft === 0 && isPlaying) {
+      endGame();
+    }
+    return () => clearInterval(timerRef.current);
+  }, [isPlaying, timeLeft]);
+  const startGame = () => {
+    setScore(0);
+    setTimeLeft(30);
+    setIsPlaying(true);
+    setIsGameOver(false);
+    nextAction();
+  };
+  const endGame = () => {
+    setIsPlaying(false);
+    setIsGameOver(true);
+    clearInterval(timerRef.current);
+  };
+  const nextAction = () => {
+    const random = actions[Math.floor(Math.random() * actions.length)];
+    setCurrentAction({
+      ...random,
+      uid: Date.now()
+    });
+    setFeedback(null);
+  };
+  const handleChoice = type => {
+    if (feedback) return; // Prevent double click
+
+    if (currentAction.type === type) {
+      setScore(s => s + 10);
+      setFeedback("correct");
+    } else {
+      setScore(s => Math.max(0, s - 5));
+      setFeedback("wrong");
+      // Haptic/Visual shake
+    }
+    setTimeout(() => {
+      nextAction();
+    }, 400); // Quick transition for reaction game
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 flex flex-col items-center overflow-hidden"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-sky-800 mb-4 mt-8 drop-shadow-sm bg-white/50 px-6 py-2 rounded-full"
+  }, "🔔 ", getText("title")), !isPlaying && !isGameOver && /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/90 p-12 rounded-3xl shadow-xl text-center mt-8"
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "text-xl font-bold text-slate-500 mb-8"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("button", {
+    onClick: startGame,
+    className: "bg-sky-500 text-white px-10 py-4 rounded-full font-black text-2xl hover:bg-sky-600 shadow-xl border-b-4 border-sky-700 active:border-b-0 active:translate-y-1"
+  }, getText("start"), " ▶️")), isGameOver && /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/90 p-12 rounded-3xl shadow-xl text-center mt-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-8xl mb-4"
+  }, "🏁"), /*#__PURE__*/React.createElement("h2", {
+    className: "text-3xl font-black text-sky-800 mb-2"
+  }, getText("gameover")), /*#__PURE__*/React.createElement("p", {
+    className: "text-2xl font-bold text-slate-600 mb-8"
+  }, getText("final"), ": ", score), /*#__PURE__*/React.createElement("button", {
+    onClick: startGame,
+    className: "bg-yellow-500 text-white px-10 py-4 rounded-full font-black text-2xl hover:bg-yellow-600 shadow-xl border-b-4 border-yellow-700 active:border-b-0 active:translate-y-1"
+  }, getText("restart"), " 🔄")), isPlaying && /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-md flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between w-full bg-slate-900/80 text-white px-6 py-3 rounded-full mb-6 font-bold text-xl backdrop-blur"
+  }, /*#__PURE__*/React.createElement("span", null, getText("time"), ": ", timeLeft, "s"), /*#__PURE__*/React.createElement("span", null, getText("score"), ": ", score)), /*#__PURE__*/React.createElement(AnimatePresence, {
+    mode: "wait"
+  }, currentAction && /*#__PURE__*/React.createElement(motion.div, {
+    key: currentAction.uid,
+    initial: {
+      scale: 0.8,
+      opacity: 0,
+      y: 50
+    },
+    animate: {
+      scale: 1,
+      opacity: 1,
+      y: 0
+    },
+    exit: {
+      scale: 0.8,
+      opacity: 0,
+      y: -50
+    },
+    className: `w-full aspect-square bg-white rounded-3xl shadow-2xl flex flex-col items-center justify-center border-8 border-white relative overflow-hidden ${feedback === "correct" ? "ring-8 ring-green-400" : feedback === "wrong" ? "ring-8 ring-red-400" : ""}`
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-8xl md:text-9xl mb-4"
+  }, currentAction.icon), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-black text-slate-700 bg-slate-100 px-4 py-1 rounded-full text-center"
+  }, getText(currentAction.id)), feedback && /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      opacity: 0
+    },
+    animate: {
+      opacity: 1
+    },
+    className: `absolute inset-0 flex items-center justify-center text-9xl bg-black/20 backdrop-blur-sm`
+  }, feedback === "correct" ? "✅" : "❌"))), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-6 w-full mt-8"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => handleChoice("good"),
+    className: "flex-1 bg-green-500 hover:bg-green-600 text-white py-6 rounded-2xl shadow-xl border-b-8 border-green-700 active:border-b-0 active:translate-y-2 transition-all flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-4xl mb-1"
+  }, "👍"), /*#__PURE__*/React.createElement("span", {
+    className: "font-black text-xl"
+  }, getText("good"))), /*#__PURE__*/React.createElement("button", {
+    onClick: () => handleChoice("bad"),
+    className: "flex-1 bg-red-500 hover:bg-red-600 text-white py-6 rounded-2xl shadow-xl border-b-8 border-red-700 active:border-b-0 active:translate-y-2 transition-all flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-4xl mb-1"
+  }, "👎"), /*#__PURE__*/React.createElement("span", {
+    className: "font-black text-xl"
+  }, getText("bad"))))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

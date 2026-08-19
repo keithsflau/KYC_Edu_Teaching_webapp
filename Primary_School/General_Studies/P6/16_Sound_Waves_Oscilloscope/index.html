@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>常識科：聲波示波器 | Sound Waves Oscilloscope</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- p5.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/addons/p5.sound.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a; /* Slate 900 */
+        color: white;
+        overflow: hidden;
+      }
+      .glass-panel {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      }
+      /* Custom Range Slider */
+      input[type="range"] {
+        -webkit-appearance: none;
+        background: transparent;
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        height: 24px;
+        width: 24px;
+        border-radius: 50%;
+        background: white;
+        cursor: pointer;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        margin-top: -10px;
+      }
+      input[type="range"]::-webkit-slider-runnable-track {
+        width: 100%;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect,
+  useRef
+} = React;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Sound Lab",
+    zh: "聲波實驗室"
+  },
+  start: {
+    en: "Start Microphone",
+    zh: "啟動麥克風"
+  },
+  stop: {
+    en: "Stop",
+    zh: "停止"
+  },
+  mode: {
+    en: "Mode",
+    zh: "模式"
+  },
+  mic: {
+    en: "Microphone",
+    zh: "麥克風"
+  },
+  sim: {
+    en: "Simulation",
+    zh: "模擬"
+  },
+  freq: {
+    en: "Frequency (Pitch)",
+    zh: "頻率 (音調)"
+  },
+  amp: {
+    en: "Amplitude (Loudness)",
+    zh: "振幅 (音量)"
+  },
+  error: {
+    en: "Microphone access denied or not supported.",
+    zh: "無法存取麥克風或瀏覽器不支援。"
+  },
+  instruction: {
+    en: "Whistle or clap to see the waves!",
+    zh: "吹口哨或拍手看看波形變化！"
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [isMicActive, setIsMicActive] = useState(false);
+  const [mode, setMode] = useState("sim"); // sim | mic
+  const [simFreq, setSimFreq] = useState(200);
+  const [simAmp, setSimAmp] = useState(0.5);
+  const [error, setError] = useState(null);
+  const canvasRef = useRef(null);
+  const p5Ref = useRef(null);
+  const micRef = useRef(null);
+  const oscRef = useRef(null); // Oscillator for simulation sound output? Maybe just visual.
+  // Let's keep simulation VISUAL ONLY to avoid annoying beeps.
+
+  useEffect(() => {
+    // Initialize p5 instance
+    const sketch = p => {
+      let mic, fft, osc;
+      p.setup = () => {
+        const canvas = p.createCanvas(canvasRef.current.clientWidth, canvasRef.current.clientHeight);
+        canvas.parent(canvasRef.current);
+        p.background(15, 23, 42); // Slate 900
+
+        mic = new p5.AudioIn();
+        micRef.current = mic;
+        fft = new p5.FFT();
+        fft.setInput(mic);
+      };
+      p.draw = () => {
+        p.background(15, 23, 42, 50); // Trail effect
+
+        p.stroke(255);
+        p.noFill();
+
+        // Draw Grid
+        p.stroke(30, 41, 59); // Slate 800
+        p.strokeWeight(1);
+        for (let x = 0; x < p.width; x += 50) p.line(x, 0, x, p.height);
+        for (let y = 0; y < p.height; y += 50) p.line(0, y, p.width, y);
+
+        // Draw Wave
+        p.stroke(45, 212, 191); // Teal 400
+        p.strokeWeight(3);
+        p.beginShape();
+        if (mode === "mic" && isMicActive) {
+          const waveform = fft.waveform();
+          for (let i = 0; i < waveform.length; i++) {
+            let x = p.map(i, 0, waveform.length, 0, p.width);
+            let y = p.map(waveform[i], -1, 1, 0, p.height);
+            p.vertex(x, y);
+          }
+        } else {
+          // Simulation Mode
+          // Draw a sine wave based on simFreq and simAmp
+          // Visually map freq (Hz) to width.
+          // 200Hz -> visible cycles.
+          const cycles = p.map(simFreq, 50, 1000, 1, 20);
+          const amplitude = p.map(simAmp, 0, 1, 10, p.height / 2 - 20);
+          for (let x = 0; x < p.width; x++) {
+            const angle = p.map(x, 0, p.width, 0, p.TWO_PI * cycles);
+            // Animate
+            const y = p.height / 2 + p.sin(angle + p.frameCount * 0.1 * (simFreq / 200)) * amplitude;
+            p.vertex(x, y);
+          }
+        }
+        p.endShape();
+
+        // Analysis Text
+        p.noStroke();
+        p.fill(148, 163, 184); // Slate 400
+        p.textFont("JetBrains Mono");
+        p.textSize(12);
+        if (mode === "mic" && isMicActive) {
+          let level = mic.getLevel();
+          p.text(`Vol: ${(level * 100).toFixed(1)}%`, 10, 20);
+        } else {
+          p.text(`${simFreq} Hz`, 10, 20);
+        }
+      };
+      p.windowResized = () => {
+        p.resizeCanvas(canvasRef.current.clientWidth, canvasRef.current.clientHeight);
+      };
+    };
+    p5Ref.current = new p5(sketch);
+    return () => {
+      if (p5Ref.current) p5Ref.current.remove();
+      if (micRef.current) micRef.current.stop();
+    };
+  }, []);
+
+  // Sync React State with P5 Logic
+  useEffect(() => {
+    if (p5Ref.current) {
+      // P5 draws continuously reading refs/state if possible?
+      // Actually inside global mode variable is safest or accessing prop.
+      // We used closure scope variables in sketch. Let's update them via refs or global hack?
+      // For p5 instance mode, we can attach data to the p instance.
+      p5Ref.current.simFreq = simFreq;
+    }
+  }, [simFreq, simAmp, mode, isMicActive]);
+  const toggleMic = async () => {
+    if (!isMicActive) {
+      try {
+        await micRef.current.start();
+        setIsMicActive(true);
+        setError(null);
+      } catch (e) {
+        console.error(e);
+        setError("error");
+      }
+    } else {
+      micRef.current.stop();
+      setIsMicActive(false);
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-5xl flex justify-between items-center mb-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: `w-3 h-12 rounded-full ${isMicActive ? "bg-green-500 animate-pulse" : "bg-teal-500"}`
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-3xl font-black text-teal-400 tracking-tight"
+  }, getText("title", lang))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-800 p-1 rounded-lg flex gap-1"
+  }, ["zh", "en"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-4 py-2 rounded-md font-bold text-sm transition-all ${lang === l ? "bg-teal-600 text-white" : "text-slate-400 hover:text-white"}`
+  }, l === "zh" ? "中文" : "ENG")))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-5xl flex gap-6 mb-6"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setMode("sim"),
+    className: `flex-1 py-3 rounded-xl font-bold border-2 transition-all ${mode === "sim" ? "border-teal-500 bg-teal-500/20 text-teal-300" : "border-slate-700 bg-slate-800 text-slate-400"}`
+  }, getText("sim", lang)), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setMode("mic"),
+    className: `flex-1 py-3 rounded-xl font-bold border-2 transition-all ${mode === "mic" ? "border-green-500 bg-green-500/20 text-green-300" : "border-slate-700 bg-slate-800 text-slate-400"}`
+  }, getText("mic", lang))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-5xl aspect-[2/1] bg-black rounded-3xl border-4 border-slate-700 overflow-hidden relative shadow-2xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    ref: canvasRef,
+    className: "w-full h-full"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 right-4 font-mono text-teal-500 text-xs tracking-widest opacity-50 pointer-events-none"
+  }, "OSCILLOSCOPE PRO")), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-5xl mt-6 flex flex-col md:flex-row gap-6"
+  }, mode === "sim" ? /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 glass-panel p-6 rounded-2xl flex flex-col gap-6"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between text-teal-300 font-bold mb-2"
+  }, /*#__PURE__*/React.createElement("span", null, getText("freq", lang)), /*#__PURE__*/React.createElement("span", null, simFreq, " Hz")), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "50",
+    max: "1000",
+    value: simFreq,
+    onChange: e => setSimFreq(Number(e.target.value))
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between text-teal-300 font-bold mb-2"
+  }, /*#__PURE__*/React.createElement("span", null, getText("amp", lang)), /*#__PURE__*/React.createElement("span", null, (simAmp * 100).toFixed(0), " %")), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "0",
+    max: "1",
+    step: "0.01",
+    value: simAmp,
+    onChange: e => setSimAmp(Number(e.target.value))
+  }))) : /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 glass-panel p-6 rounded-2xl flex flex-col items-center justify-center gap-4"
+  }, error ? /*#__PURE__*/React.createElement("div", {
+    className: "text-red-400 font-bold"
+  }, getText(error, lang)) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    className: "text-slate-300 font-bold mb-2"
+  }, getText("instruction", lang)), /*#__PURE__*/React.createElement("button", {
+    onClick: toggleMic,
+    className: `w-20 h-20 rounded-full flex items-center justify-center text-3xl transition-all shadow-xl ${isMicActive ? "bg-red-500 hover:bg-red-600 animate-pulse" : "bg-green-500 hover:bg-green-600"}`
+  }, isMicActive ? "⏹" : "🎤"), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs text-slate-500 uppercase font-bold tracking-widest mt-2"
+  }, isMicActive ? getText("stop", lang) : getText("start", lang))))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

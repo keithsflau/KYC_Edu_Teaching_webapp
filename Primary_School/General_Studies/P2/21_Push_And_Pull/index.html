@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小二常識：推與拉 | Push and Pull</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #e0f2fe 0%, #bfdbfe 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Push and Pull",
+    zh: "推與拉",
+    ja: "押すと引く",
+    ko: "밀기와 당기기",
+    es: "Empujar y Tirar",
+    de: "Drücken und Ziehen",
+    fi: "Työntää ja Vetää",
+    fr: "Pousser et Tirer",
+    ar: "الدفع والسحب",
+    it: "Spingere e Tirare"
+  },
+  instruction: {
+    en: "Sort the actions!",
+    zh: "將動作分類！",
+    ja: "行動を分類してください！",
+    ko: "행동을 분류하세요!",
+    es: "¡Clasifica las acciones!",
+    de: "Sortiere die Aktionen!",
+    fi: "Lajittele toimet!",
+    fr: "Triez les actions !",
+    ar: "فرز الإجراءات!",
+    it: "Ordina le azioni!"
+  },
+  push: {
+    en: "Push",
+    zh: "推",
+    ja: "押す",
+    ko: "밀기",
+    es: "Empujar",
+    de: "Drücken",
+    fi: "Työntää",
+    fr: "Pousser",
+    ar: "دفع",
+    it: "Spingere"
+  },
+  pull: {
+    en: "Pull",
+    zh: "拉",
+    ja: "引く",
+    ko: "당기기",
+    es: "Tirar",
+    de: "Ziehen",
+    fi: "Vetää",
+    fr: "Tirer",
+    ar: "سحب",
+    it: "Tirare"
+  },
+  cart: {
+    en: "Pushing Cart",
+    zh: "推購物車",
+    ja: "カートを押す",
+    ko: "카트 밀기",
+    es: "Empujar Carrito",
+    de: "Einkaufswagen schieben",
+    fi: "Työntää kärryä",
+    fr: "Pousser le chariot",
+    ar: "دفع العربة",
+    it: "Spingere il Carrello"
+  },
+  door_open: {
+    en: "Open Door (Out)",
+    zh: "推門",
+    ja: "ドアを開ける（外）",
+    ko: "문 열기 (밀기)",
+    es: "Abrir Puerta (Fuera)",
+    de: "Tür öffnen (Aus)",
+    fi: "Avaa ovi (Ulos)",
+    fr: "Ouvrir la porte (Ext)",
+    ar: "فتح الباب (دفع)",
+    it: "Apri Porta (Spingi)"
+  },
+  button: {
+    en: "Press Button",
+    zh: "按鈕",
+    ja: "ボタンを押す",
+    ko: "버튼 누르기",
+    es: "Presionar Botón",
+    de: "Knopf drücken",
+    fi: "Paina nappia",
+    fr: "Appuyer sur le bouton",
+    ar: "ضغط الزر",
+    it: "Premi Bottone"
+  },
+  tug: {
+    en: "Tug of War",
+    zh: "拔河",
+    ja: "綱引き",
+    ko: "줄다리기",
+    es: "Tira y Afloja",
+    de: "Tauziehen",
+    fi: "Köydenveto",
+    fr: "Tir à la corde",
+    ar: "شد الحبل",
+    it: "Tiro alla Fune"
+  },
+  drawer: {
+    en: "Open Drawer",
+    zh: "拉開抽屜",
+    ja: "引き出しを開ける",
+    ko: "서랍 열기",
+    es: "Abrir Cajón",
+    de: "Schublade öffnen",
+    fi: "Avaa laatikko",
+    fr: "Ouvrir le tiroir",
+    ar: "فتح الدرج",
+    it: "Apri Cassetto"
+  },
+  kite: {
+    en: "Flying Kite",
+    zh: "放風箏",
+    ja: "凧揚げ",
+    ko: "연 날리기",
+    es: "Volar Cometa",
+    de: "Drachensteigen",
+    fi: "Leijan lennätys",
+    fr: "Cerf-volant",
+    ar: "تطيير طائرة ورقية",
+    it: "Far volare l'aquilone"
+  },
+  check: {
+    en: "Check",
+    zh: "檢查",
+    ja: "確認",
+    ko: "확인",
+    es: "Comprobar",
+    de: "Prüfen",
+    fi: "Tarkista",
+    fr: "Vérifier",
+    ar: "تحقق",
+    it: "Controlla"
+  },
+  reset: {
+    en: "Reset",
+    zh: "重置",
+    ja: "リセット",
+    ko: "리셋",
+    es: "Reiniciar",
+    de: "Zurücksetzen",
+    fi: "Nollaa",
+    fr: "Réinitialiser",
+    ar: "إعادة تعيين",
+    it: "Resetta"
+  },
+  correct: {
+    en: "Correct! Forces are fun!",
+    zh: "答對了！力學真有趣！",
+    ja: "正解！力は面白い！",
+    ko: "정답! 힘은 재미있어요!",
+    es: "¡Correcto! ¡Las fuerzas son divertidas!",
+    de: "Richtig! Kräfte machen Spaß!",
+    fi: "Oikein! Voimat ovat hauskoja!",
+    fr: "Correct ! Les forces sont amusantes !",
+    ar: "صحيح! القوى ممتعة!",
+    it: "Corretto! Le forze sono divertenti!"
+  },
+  wrong: {
+    en: "Some are wrong.",
+    zh: "有些分類錯了。",
+    ja: "間違っているものがあります。",
+    ko: "일부가 틀렸습니다.",
+    es: "Algunos están mal.",
+    de: "Einige sind falsch.",
+    fi: "Jotkut ovat väärin.",
+    fr: "Certains sont faux.",
+    ar: "البعض خاطئ.",
+    it: "Alcuni sono sbagliati."
+  }
+};
+const tasks = [{
+  id: "cart",
+  label: "cart",
+  icon: "🛒",
+  type: "push"
+}, {
+  id: "tug",
+  label: "tug",
+  icon: "🪢",
+  type: "pull"
+}, {
+  id: "door_open",
+  label: "door_open",
+  icon: "🚪💨",
+  type: "push"
+}, {
+  id: "drawer",
+  label: "drawer",
+  icon: "🗄️",
+  type: "pull"
+}, {
+  id: "button",
+  label: "button",
+  icon: "👆",
+  type: "push"
+}, {
+  id: "kite",
+  label: "kite",
+  icon: "🪁",
+  type: "pull"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [placements, setPlacements] = useState({}); // itemId -> 'push' | 'pull'
+  const [available, setAvailable] = useState([]);
+  const [status, setStatus] = useState(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+  useEffect(() => {
+    reset();
+  }, []);
+  const reset = () => {
+    setAvailable(tasks.map(t => t.id).sort(() => Math.random() - 0.5));
+    setPlacements({});
+    setStatus(null);
+  };
+  const handleDrop = (id, zone) => {
+    setPlacements(prev => ({
+      ...prev,
+      [id]: zone
+    }));
+    setAvailable(prev => prev.filter(x => x !== id));
+    setStatus(null);
+  };
+  const check = () => {
+    if (available.length > 0) {
+      setStatus("wrong"); // Or incomplete
+      return;
+    }
+    const wrongItems = tasks.filter(task => placements[task.id] !== task.type);
+    if (wrongItems.length === 0) setStatus("correct");else setStatus("wrong");
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-blue-900 mb-4 mt-8 drop-shadow-sm bg-white/50 px-6 py-2 rounded-full"
+  }, "✋ ", getText("title")), /*#__PURE__*/React.createElement("p", {
+    className: "font-bold text-blue-800 mb-8"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col md:flex-row gap-8 w-full max-w-5xl mb-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 bg-blue-100 rounded-3xl p-6 border-4 border-dashed border-blue-400 min-h-[300px] flex flex-col items-center",
+    onDragOver: e => e.preventDefault(),
+    onDrop: e => {
+      e.preventDefault();
+      const id = e.dataTransfer.getData("id");
+      if (id) handleDrop(id, "push");
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black text-blue-500 mb-4 bg-white/80 px-8 py-2 rounded-xl shadow uppercase disable-select pointer-events-none"
+  }, "➡️ ", getText("push")), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-wrap gap-4 justify-center"
+  }, Object.entries(placements).filter(([id, zone]) => zone === "push").map(([id, zone]) => {
+    const item = tasks.find(t => t.id === id);
+    return /*#__PURE__*/React.createElement(motion.div, {
+      key: id,
+      layoutId: id,
+      className: "bg-white p-4 rounded-xl shadow-md w-32 flex flex-col items-center cursor-pointer",
+      onClick: () => {
+        const n = {
+          ...placements
+        };
+        delete n[id];
+        setPlacements(n);
+        setAvailable(p => [...p, id]);
+        setStatus(null);
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "text-5xl mb-2"
+    }, item.icon), /*#__PURE__*/React.createElement("div", {
+      className: "text-xs font-bold text-slate-600 text-center"
+    }, getText(item.label)));
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 bg-purple-100 rounded-3xl p-6 border-4 border-dashed border-purple-400 min-h-[300px] flex flex-col items-center",
+    onDragOver: e => e.preventDefault(),
+    onDrop: e => {
+      e.preventDefault();
+      const id = e.dataTransfer.getData("id");
+      if (id) handleDrop(id, "pull");
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black text-purple-500 mb-4 bg-white/80 px-8 py-2 rounded-xl shadow uppercase disable-select pointer-events-none"
+  }, "⬅️ ", getText("pull")), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-wrap gap-4 justify-center"
+  }, Object.entries(placements).filter(([id, zone]) => zone === "pull").map(([id, zone]) => {
+    const item = tasks.find(t => t.id === id);
+    return /*#__PURE__*/React.createElement(motion.div, {
+      key: id,
+      layoutId: id,
+      className: "bg-white p-4 rounded-xl shadow-md w-32 flex flex-col items-center cursor-pointer",
+      onClick: () => {
+        const n = {
+          ...placements
+        };
+        delete n[id];
+        setPlacements(n);
+        setAvailable(p => [...p, id]);
+        setStatus(null);
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "text-5xl mb-2"
+    }, item.icon), /*#__PURE__*/React.createElement("div", {
+      className: "text-xs font-bold text-slate-600 text-center"
+    }, getText(item.label)));
+  })))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-4xl bg-white/60 p-6 rounded-3xl min-h-[120px] mb-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-wrap gap-4 justify-center"
+  }, available.map(id => {
+    const item = tasks.find(t => t.id === id);
+    return /*#__PURE__*/React.createElement(motion.div, {
+      key: id,
+      layoutId: id,
+      draggable: true,
+      onDragStart: e => e.dataTransfer.setData("id", id),
+      className: "bg-white p-4 rounded-xl shadow-md w-32 flex flex-col items-center cursor-grab active:cursor-grabbing hover:scale-105 transition-transform"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "text-5xl mb-2"
+    }, item.icon), /*#__PURE__*/React.createElement("div", {
+      className: "text-xs font-bold text-slate-600 text-center"
+    }, getText(item.label)));
+  }))), status && /*#__PURE__*/React.createElement("div", {
+    className: `p-4 rounded-2xl font-black text-center text-xl shadow w-full max-w-md mb-8 ${status === "correct" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"}`
+  }, getText(status)), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4 w-full max-w-md"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: check,
+    className: "flex-1 bg-blue-600 text-white py-4 rounded-xl font-bold shadow-xl border-b-4 border-blue-800 active:border-b-0 active:translate-y-1 text-xl"
+  }, getText("check")), /*#__PURE__*/React.createElement("button", {
+    onClick: reset,
+    className: "bg-slate-200 text-slate-600 px-8 py-4 rounded-xl font-bold shadow-xl border-b-4 border-slate-400 active:border-b-0 active:translate-y-1 text-xl"
+  }, getText("reset"))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies Interactive Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Nunito", sans-serif;
+        background: #f0f4f8;
+        background-image: radial-gradient(
+            at 10% 10%,
+            hsla(253, 16%, 7%, 1) 0,
+            transparent 50%
+          ),
+          radial-gradient(at 50% 0%, hsla(225, 39%, 30%, 1) 0, transparent 50%),
+          radial-gradient(at 100% 0%, hsla(339, 49%, 30%, 1) 0, transparent 50%);
+        background-attachment: fixed;
+        min-height: 100vh;
+      }
+      .glass-card {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+      }
+      .title-font {
+        font-family: "Fredoka", sans-serif;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <script>
+const {
+  useState,
+  useMemo
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+
+// --- Data Structure ---
+const appsData = {
+  P1: ["01_School_Tour", "02_Pack_My_Bag", "03_Classroom_Rules", "04_Focus_Class", "05_Meeting_Friends", "06_My_Five_Senses", "07_Teeth_Brushing", "08_Healthy_Plate", "09_My_Feelings", "10_Good_Posture", "11_My_Family_Tree", "12_Housework_Hero", "13_Home_Safety", "14_Save_Water", "15_Filial_Piety_Acts", "16_Animal_Sorting", "17_Plant_Growth", "18_Four_Seasons", "19_Weather_Reporter", "20_Recycling_Bin", "21_Community_Map", "22_Transport_Sounds", "23_Good_Citizen", "24_Helping_Professions", "25_Sink_Or_Float", "26_Magnet_Fun", "27_Chinese_Festivals", "28_China_Map_Puzzle", "29_Flag_Raising", "30_Simple_Machine"],
+  P2: ["01_My_Timetable", "02_Recess_Time", "03_Classroom_Duty", "04_Conflict_Solver", "05_Light_School_Bag", "06_Food_Pyramid", "07_Hand_Washing", "08_Eye_Care", "09_Hygiene_Check", "10_Lets_Exercise", "11_Growth_Timeline", "12_Safe_Body", "13_Privacy_Manager", "14_Emotion_Matching", "15_Emergency_Call", "16_Traffic_Lights", "17_MTR_Etiquette", "18_Go_Shopping", "19_Post_Office", "20_Park_Rules", "21_Push_And_Pull", "22_Light_And_Shadow", "23_Save_Energy", "24_Compass_Directions", "25_Museum_Manners", "26_Old_Hong_Kong", "27_Chinese_Customs", "28_Plant_Parts_Function", "29_Animal_Habitats", "30_Green_Manager"],
+  P3: ["01_Nutrient_Match", "02_Balanced_Lunchbox", "03_Germ_Fighter", "04_Digestive_System", "05_Healthy_Teeth", "06_HK_Districts", "07_Community_Facilities", "08_Transport_Planner", "09_Tunnel_Toll", "10_Smart_Citizen", "11_Weather_Signals", "12_Water_Cycle", "13_Cloud_Types", "14_Pollution_Busters", "15_4R_Recycling", "16_Material_Properties", "17_Sink_Float_Adv", "18_States_Of_Matter", "19_Waterproof_Test", "20_Magnetic_Force", "21_Animal_Classes", "22_Plant_Lifecycle", "23_Animal_Movement", "24_Food_Chain", "25_Living_NonLiving", "26_HK_Landmarks", "27_Traditional_Snacks", "28_Festival_Calendar", "29_Then_And_Now", "30_Cultural_Manners"],
+  P4: ["01_Food_Pyramid_Pro", "02_Food_Labels", "03_Digestive_System", "04_HK_Map_Master", "05_Gov_Services", "06_Smart_Shopper", "07_Plant_Parts_Micro", "08_Photosynthesis_Lab", "09_Plant_Adaptation", "10_Circuit_Builder", "11_Conductors_Test", "12_Electrical_Safety", "13_Magnet_Electromagnet", "14_Compass_Explorer", "15_Map_Legend", "16_IT_Password", "17_Cyber_Defense", "18_Netiquette", "19_History_Detective", "20_Cultural_Heritage", "21_Water_Treatment", "22_Water_Use_Audit", "23_Air_Quality", "24_Light_Shadows", "25_Sound_Vibration", "26_Pitch_Volume", "27_Simple_Machines", "28_Friction_Lab", "29_Solar_Energy", "30_Typhoon_Prep"],
+  P5: ["01_Nutrition_Scanner", "02_Body_Systems_Map", "03_Circulatory_Flow", "04_Respiratory_Lab", "05_Puberty_Changes", "06_Anti_Drug_Quiz", "07_Food_Preservation", "08_Electric_Conductors_Lv2", "09_Force_and_Motion", "10_Simple_Machines_Lever", "11_Sound_Transmission", "12_Light_Reflection", "13_Ecosystem_Balance", "14_Photosynthesis_Deep", "15_Rock_Cycle", "16_Water_Filtration_Adv", "17_Renewable_Energy_City", "18_Carbon_Footprint", "19_China_Geography", "20_Greater_Bay_Area", "21_Cultural_Heritage_Protect", "22_Constitution_Basic_Law", "23_Rights_Responsibilities", "24_Media_Literacy", "25_Consumer_Rights", "26_Coding_Logic", "27_AI_Classifier", "28_Climate_Change", "29_Endangered_Species", "30_Disease_Prevention", "31_Puberty_Changes", "32_Personal_Hygiene", "33_Skeletal_System", "34_Muscular_System", "35_Respiratory_Lab", "36_Circulatory_Pump", "37_China_Map", "38_Great_Inventions", "39_Silk_Road", "40_Dynasty_Timeline", "41_Light_Spectrum", "42_Lens_Lab", "43_Eye_Structure", "44_Sound_Travel", "45_Ear_Anatomy", "46_Heat_Transfer", "47_Thermal_Expansion", "48_Energy_Forms", "49_Green_Energy", "50_Carbon_Footprint", "51_Mosquito_Control", "52_Stress_Buster", "53_Say_No_Drugs", "54_Gender_Equality", "55_Info_Timeline", "56_Financial_Planner", "57_History_Timeline", "58_Tech_Evolution", "59_Space_Exploration", "60_Natural_Disasters"],
+  P6: ["01_World_Continents", "02_Electric_Circuit_Master", "03_Global_Warming", "04_Simple_Machines_Pulley", "05_Volcano_Explorer", "06_Food_Chain_Web", "07_Solar_Eclipse", "08_History_Civilizations", "09_Puberty_Hygiene", "10_Drug_Awareness", "11_Renewable_Energy", "12_Diseases_Vectors", "13_Stress_Management", "14_Common_Chemicals", "15_Evolution_Game", "16_Sound_Waves_Oscilloscope", "17_Light_Prism", "18_Human_Reproduction", "19_Greenhouse_Effect", "20_Cyber_Safety_Password", "21_Endangered_Species", "22_Space_Weight", "23_Fair_Trade", "24_Media_Bias", "25_Simple_Machines_Lever", "26_Budget_Trip", "27_Time_Zone", "28_Constitutional_Rights", "29_Mental_Health_Check", "30_Graduation_Memory", "31_Reproduction", "32_DNA_Traits", "33_Immune_Warriors", "34_World_Map_Pro", "35_Global_Landmarks", "36_Natural_Wonders", "37_Solar_System", "38_Moon_Phases", "39_Eclipse_Viewer", "40_Space_Missions", "41_Force_Motion", "42_Friction_Lab", "43_Lever_Logic", "44_Pulley_Power", "45_Inclined_Plane", "46_Modern_China", "47_International_Orgs", "48_Global_Citizen", "49_World_Poverty", "50_Fair_Trade", "51_Pollution_Global", "52_Space_Debris", "53_Media_Literacy", "54_IP_Rights", "55_First_Aid", "56_Mental_Wellness", "57_Adolescence", "58_Secondary_Prep", "59_Future_Career", "60_Memories_Book"]
+};
+const icons = {
+  P1: "🌱",
+  P2: "🌿",
+  P3: "🌳",
+  P4: "🌍",
+  P5: "🚀",
+  P6: "🌌"
+};
+const colors = {
+  P1: "from-green-400 to-emerald-600",
+  P2: "from-teal-400 to-cyan-600",
+  P3: "from-sky-400 to-blue-600",
+  P4: "from-indigo-400 to-purple-600",
+  P5: "from-fuchsia-400 to-pink-600",
+  P6: "from-rose-400 to-red-600"
+};
+const appTranslations = {
+  // P1
+  "01_School_Tour": "校園遊蹤",
+  "02_Pack_My_Bag": "收拾書包",
+  "03_Classroom_Rules": "課室規則",
+  "04_Focus_Class": "專心上課",
+  "05_Meeting_Friends": "認識新朋友",
+  "06_My_Five_Senses": "我的五官",
+  "07_Teeth_Brushing": "刷牙好習慣",
+  "08_Healthy_Plate": "健康餐盤",
+  "09_My_Feelings": "我的感受",
+  "10_Good_Posture": "正確坐姿",
+  "11_My_Family_Tree": "我的家庭樹",
+  "12_Housework_Hero": "家務小幫手",
+  "13_Home_Safety": "家居安全",
+  "14_Save_Water": "節約用水",
+  "15_Filial_Piety_Acts": "孝順行為",
+  "16_Animal_Sorting": "動物分類",
+  "17_Plant_Growth": "植物生長",
+  "18_Four_Seasons": "四季變化",
+  "19_Weather_Reporter": "天氣報告",
+  "20_Recycling_Bin": "回收箱",
+  "21_Community_Map": "社區地圖",
+  "22_Transport_Sounds": "交通工具聲音",
+  "23_Good_Citizen": "好好公民",
+  "24_Helping_Professions": "為我們服務的人",
+  "25_Sink_Or_Float": "浮與沉",
+  "26_Magnet_Fun": "磁鐵樂趣",
+  "27_Chinese_Festivals": "中國節日",
+  "28_China_Map_Puzzle": "中國地圖拼圖",
+  "29_Flag_Raising": "升旗禮",
+  "30_Simple_Machine": "簡單機械",
+  // P2
+  "01_My_Timetable": "我的時間表",
+  "02_Recess_Time": "小息時間",
+  "03_Classroom_Duty": "班長職責",
+  "04_Conflict_Solver": "解決衝突",
+  "05_Light_School_Bag": "輕書包",
+  "06_Food_Pyramid": "食物金字塔",
+  "07_Hand_Washing": "正確洗手",
+  "08_Eye_Care": "護眼操",
+  "09_Hygiene_Check": "衛生檢查",
+  "10_Lets_Exercise": "一齊做運動",
+  "11_Growth_Timeline": "成長時間線",
+  "12_Safe_Body": "身體自主",
+  "13_Privacy_Manager": "私隱管理",
+  "14_Emotion_Matching": "情緒配對",
+  "15_Emergency_Call": "緊急求助",
+  "16_Traffic_Lights": "交通燈",
+  "17_MTR_Etiquette": "港鐵禮儀",
+  "18_Go_Shopping": "去購物",
+  "19_Post_Office": "郵政局",
+  "20_Park_Rules": "公園規則",
+  "21_Push_And_Pull": "推與拉",
+  "22_Light_And_Shadow": "光與影",
+  "23_Save_Energy": "節約能源",
+  "24_Compass_Directions": "指南針方向",
+  "25_Museum_Manners": "博物館禮儀",
+  "26_Old_Hong_Kong": "香港昔日",
+  "27_Chinese_Customs": "中國習俗",
+  "28_Plant_Parts_Function": "植物各部分功能",
+  "29_Animal_Habitats": "動物棲息地",
+  "30_Green_Manager": "環保經理",
+  // P3
+  "01_Nutrient_Match": "營養配對",
+  "02_Balanced_Lunchbox": "均衡午餐",
+  "03_Germ_Fighter": "細菌殺手",
+  "04_Digestive_System": "消化系統",
+  "05_Healthy_Teeth": "健康牙齒",
+  "06_HK_Districts": "香港十八區",
+  "07_Community_Facilities": "社區設施",
+  "08_Transport_Planner": "交通規劃師",
+  "09_Tunnel_Toll": "隧道收費",
+  "10_Smart_Citizen": "智慧市民",
+  "11_Weather_Signals": "天氣信號",
+  "12_Water_Cycle": "水循環",
+  "13_Cloud_Types": "雲的種類",
+  "14_Pollution_Busters": "污染剋星",
+  "15_4R_Recycling": "4R回收",
+  "16_Material_Properties": "物料性質",
+  "17_Sink_Float_Adv": "浮沉探究",
+  "18_States_Of_Matter": "物質三態",
+  "19_Waterproof_Test": "防水測試",
+  "20_Magnetic_Force": "磁力",
+  "21_Animal_Classes": "動物類別",
+  "22_Plant_Lifecycle": "植物生命週期",
+  "23_Animal_Movement": "動物活動方式",
+  "24_Food_Chain": "食物鏈",
+  "25_Living_NonLiving": "生物與非生物",
+  "26_HK_Landmarks": "香港地標",
+  "27_Traditional_Snacks": "傳統小食",
+  "28_Festival_Calendar": "節日表",
+  "29_Then_And_Now": "昔日與現在",
+  "30_Cultural_Manners": "文化禮儀",
+  // P4
+  "01_Food_Pyramid_Pro": "進階食物金字塔",
+  "02_Food_Labels": "食物標籤",
+  "03_Digestive_System": "消化系統",
+  "04_HK_Map_Master": "香港地圖大師",
+  "05_Gov_Services": "政府服務",
+  "06_Smart_Shopper": "精明消費者",
+  "07_Plant_Parts_Micro": "植物顯微鏡",
+  "08_Photosynthesis_Lab": "光合作用實驗室",
+  "09_Plant_Adaptation": "植物適應",
+  "10_Circuit_Builder": "電路建造師",
+  "11_Conductors_Test": "導電體測試",
+  "12_Electrical_Safety": "這是電力安全",
+  "13_Magnet_Electromagnet": "電磁鐵",
+  "14_Compass_Explorer": "指南針探險",
+  "15_Map_Legend": "地圖圖例",
+  "16_IT_Password": "密碼安全",
+  "17_Cyber_Defense": "網絡防衛",
+  "18_Netiquette": "網絡禮儀",
+  "19_History_Detective": "歷史偵探",
+  "20_Cultural_Heritage": "文化遺產",
+  "21_Water_Treatment": "食水處理",
+  "22_Water_Use_Audit": "用水審計",
+  "23_Air_Quality": "空氣質素",
+  "24_Light_Shadows": "光與影",
+  "25_Sound_Vibration": "聲音與振動",
+  "26_Pitch_Volume": "音調與音量",
+  "27_Simple_Machines": "簡單機械",
+  "28_Friction_Lab": "摩擦力實驗室",
+  "29_Solar_Energy": "太陽能",
+  "30_Typhoon_Prep": "防風措施",
+  // P5
+  "01_Nutrition_Scanner": "營養掃瞄器",
+  "02_Body_Systems_Map": "人體系統地圖",
+  "03_Circulatory_Flow": "血液循環",
+  "04_Respiratory_Lab": "呼吸實驗室",
+  "05_Puberty_Changes": "青春期變化",
+  "06_Anti_Drug_Quiz": "抗毒問答",
+  "07_Food_Preservation": "食物保存",
+  "08_Electric_Conductors_Lv2": "導電體 Lv2",
+  "09_Force_and_Motion": "力與運動",
+  "10_Simple_Machines_Lever": "簡單機械-槓桿",
+  "11_Sound_Transmission": "聲音傳播",
+  "12_Light_Reflection": "光的反射",
+  "13_Ecosystem_Balance": "生態平衡",
+  "14_Photosynthesis_Deep": "深入光合作用",
+  "15_Rock_Cycle": "岩石循環",
+  "16_Water_Filtration_Adv": "進階濾水",
+  "17_Renewable_Energy_City": "可再生能源城市",
+  "18_Carbon_Footprint": "碳足印",
+  "19_China_Geography": "中國地理",
+  "20_Greater_Bay_Area": "大灣區",
+  "21_Cultural_Heritage_Protect": "文化遺產保護",
+  "22_Constitution_Basic_Law": "憲法與基本法",
+  "23_Rights_Responsibilities": "權利與義務",
+  "24_Media_Literacy": "媒體素養",
+  "25_Consumer_Rights": "消費者權益",
+  "26_Coding_Logic": "編程邏輯",
+  "27_AI_Classifier": "AI 分類器",
+  "28_Climate_Change": "氣候變化",
+  "29_Endangered_Species": "瀕危物種",
+  "30_Disease_Prevention": "預防疾病",
+  "31_Puberty_Changes": "青春期變化",
+  "32_Personal_Hygiene": "個人衛生",
+  "33_Skeletal_System": "骨骼系統",
+  "34_Muscular_System": "肌肉系統",
+  "35_Respiratory_Lab": "呼吸實驗室",
+  "36_Circulatory_Pump": "循環泵",
+  "37_China_Map": "中國地圖",
+  "38_Great_Inventions": "偉大發明",
+  "39_Silk_Road": "絲綢之路",
+  "40_Dynasty_Timeline": "朝代時間軸",
+  "41_Light_Spectrum": "光譜",
+  "42_Lens_Lab": "透鏡實驗",
+  "43_Eye_Structure": "眼睛構造",
+  "44_Sound_Travel": "聲音傳播",
+  "45_Ear_Anatomy": "耳朵構造",
+  "46_Heat_Transfer": "熱傳遞",
+  "47_Thermal_Expansion": "熱脹冷縮",
+  "48_Energy_Forms": "能量形式",
+  "49_Green_Energy": "綠色能源",
+  "50_Carbon_Footprint": "碳足印",
+  "51_Mosquito_Control": "控蚊措施",
+  "52_Stress_Buster": "減壓大法",
+  "53_Say_No_Drugs": "向毒品說不",
+  "54_Gender_Equality": "性別平等",
+  "55_Info_Timeline": "資訊時間軸",
+  "56_Financial_Planner": "理財規劃師",
+  "57_History_Timeline": "歷史時間軸",
+  "58_Tech_Evolution": "科技演變",
+  "59_Space_Exploration": "太空探索",
+  "60_Natural_Disasters": "自然災害",
+  // P6
+  "01_World_Continents": "世界各大洲",
+  "02_Electric_Circuit_Master": "電路大師",
+  "03_Global_Warming": "全球暖化",
+  "04_Simple_Machines_Pulley": "簡單機械-滑輪",
+  "05_Volcano_Explorer": "火山探險",
+  "06_Food_Chain_Web": "食物網",
+  "07_Solar_Eclipse": "日蝕",
+  "08_History_Civilizations": "歷史文明",
+  "09_Puberty_Hygiene": "青春期衛生",
+  "10_Drug_Awareness": "藥物認知",
+  "11_Renewable_Energy": "可再生能源",
+  "12_Diseases_Vectors": "病媒傳播",
+  "13_Stress_Management": "壓力管理",
+  "14_Common_Chemicals": "常見化學品",
+  "15_Evolution_Game": "演化遊戲",
+  "16_Sound_Waves_Oscilloscope": "聲波示波器",
+  "17_Light_Prism": "三稜鏡",
+  "18_Human_Reproduction": "人類生殖",
+  "19_Greenhouse_Effect": "溫室效應",
+  "20_Cyber_Safety_Password": "網絡安全密碼",
+  "21_Endangered_Species": "瀕危物種",
+  "22_Space_Weight": "太空體重",
+  "23_Fair_Trade": "公平貿易",
+  "24_Media_Bias": "媒體偏見",
+  "25_Simple_Machines_Lever": "簡單機械-槓桿",
+  "26_Budget_Trip": "預算旅行",
+  "27_Time_Zone": "時區",
+  "28_Constitutional_Rights": "憲法權利",
+  "29_Mental_Health_Check": "心理健康檢測",
+  "30_Graduation_Memory": "畢業回憶",
+  "31_Reproduction": "生殖",
+  "32_DNA_Traits": "DNA特徵",
+  "33_Immune_Warriors": "免疫戰士",
+  "34_World_Map_Pro": "專業世界地圖",
+  "35_Global_Landmarks": "全球地標",
+  "36_Natural_Wonders": "自然奇觀",
+  "37_Solar_System": "太陽系",
+  "38_Moon_Phases": "月相",
+  "39_Eclipse_Viewer": "食相觀測",
+  "40_Space_Missions": "太空任務",
+  "41_Force_Motion": "力與運動",
+  "42_Friction_Lab": "摩擦力實驗室",
+  "43_Lever_Logic": "槓桿原理",
+  "44_Pulley_Power": "滑輪動力",
+  "45_Inclined_Plane": "斜面",
+  "46_Modern_China": "現代中國",
+  "47_International_Orgs": "國際組織",
+  "48_Global_Citizen": "世界公民",
+  "49_World_Poverty": "世界貧窮",
+  "50_Fair_Trade": "公平貿易",
+  "51_Pollution_Global": "全球污染",
+  "52_Space_Debris": "太空碎片",
+  "53_Media_Literacy": "媒體素養",
+  "54_IP_Rights": "知識產權",
+  "55_First_Aid": "急救常識",
+  "56_Mental_Wellness": "心理健康",
+  "57_Adolescence": "青少年期",
+  "58_Secondary_Prep": "升中準備",
+  "59_Future_Career": "未來職業",
+  "60_Memories_Book": "回憶錄"
+};
+const AppCard = ({
+  name,
+  grade,
+  index,
+  label,
+  lang
+}) => {
+  const formattedName = name.split("_").slice(1).join(" ");
+  const appNumber = name.split("_")[0];
+  const displayName = lang === "zh" && appTranslations[name] ? appTranslations[name] : formattedName;
+  return /*#__PURE__*/React.createElement(motion.a, {
+    href: `./${grade}/${name}/index.html`,
+    target: "_blank",
+    initial: {
+      opacity: 0,
+      y: 20
+    },
+    animate: {
+      opacity: 1,
+      y: 0
+    },
+    transition: {
+      delay: index * 0.05
+    },
+    whileHover: {
+      scale: 1.05,
+      y: -5
+    },
+    whileTap: {
+      scale: 0.95
+    },
+    className: "glass-card rounded-2xl p-4 flex flex-col items-center justify-between h-40 hover:shadow-2xl transition-all cursor-pointer group"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: `w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg bg-gradient-to-br ${colors[grade]} shadow-lg mb-3 group-hover:rotate-12 transition-transform`
+  }, appNumber), /*#__PURE__*/React.createElement("div", {
+    className: "text-center font-bold text-slate-700 leading-tight group-hover:text-slate-900 transition-colors"
+  }, displayName), /*#__PURE__*/React.createElement("div", {
+    className: "mt-2 text-xs text-slate-400 font-semibold uppercase tracking-wider"
+  }, label || "Interactive App"));
+};
+const App = () => {
+  const [selectedGrade, setSelectedGrade] = useState("P1");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [lang, setLang] = useState("en");
+  const translations = {
+    en: {
+      title: "GS Portal",
+      curriculum: "Curriculum",
+      explore: "Explore",
+      apps: "interactive learning applications",
+      search: "Search topics...",
+      noResults: "No application found",
+      version: "v1.0.0 • General Studies",
+      interactiveApp: "Interactive App"
+    },
+    zh: {
+      title: "常識科",
+      curriculum: "課程",
+      explore: "探索",
+      apps: "個互動學習應用",
+      search: "搜尋課題...",
+      noResults: "找不到應用程式",
+      version: "v1.0.0 • 常識科",
+      interactiveApp: "互動教學"
+    }
+  };
+  const t = translations[lang];
+  const filteredApps = useMemo(() => {
+    return appsData[selectedGrade].filter(app => app.toLowerCase().includes(searchTerm.toLowerCase().replace(" ", "_")));
+  }, [selectedGrade, searchTerm]);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col md:flex-row min-h-screen max-w-7xl mx-auto md:p-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full md:w-64 glass-card md:rounded-3xl p-6 flex flex-col gap-4 md:sticky md:top-8 md:h-[calc(100vh-4rem)] z-10"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 title-font text-center md:text-left mb-4"
+  }, t.title), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLang(lang === "en" ? "zh" : "en"),
+    className: "w-full mb-4 px-4 py-2 bg-white/50 hover:bg-white/80 rounded-xl text-slate-600 font-bold transition-all border border-white/50 shadow-sm flex items-center justify-center gap-2"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fas fa-language"
+  }), lang === "en" ? "中文" : "English"), /*#__PURE__*/React.createElement("div", {
+    className: "flex overflow-x-auto md:flex-col gap-3 pb-4 md:pb-0"
+  }, Object.keys(appsData).map(grade => /*#__PURE__*/React.createElement("button", {
+    key: grade,
+    onClick: () => setSelectedGrade(grade),
+    className: `flex items-center gap-4 px-4 py-3 rounded-xl font-bold transition-all min-w-[120px] md:min-w-0 ${selectedGrade === grade ? `bg-gradient-to-r ${colors[grade]} text-white shadow-lg scale-105` : "hover:bg-white/50 text-slate-600 hover:text-slate-900"}`
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-xl"
+  }, icons[grade]), /*#__PURE__*/React.createElement("span", null, grade), /*#__PURE__*/React.createElement("span", {
+    className: "ml-auto text-xs opacity-70 bg-black/20 px-2 py-0.5 rounded-full"
+  }, appsData[grade].length)))), /*#__PURE__*/React.createElement("div", {
+    className: "mt-auto hidden md:block text-xs text-slate-400 text-center"
+  }, t.version)), /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 p-4 md:pl-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col md:flex-row justify-between items-center mb-8 gap-4"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-black text-white drop-shadow-lg title-font"
+  }, selectedGrade, " ", t.curriculum), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-200 mt-1 font-medium"
+  }, t.explore, " ", appsData[selectedGrade].length, " ", t.apps)), /*#__PURE__*/React.createElement("div", {
+    className: "relative w-full md:w-96"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fas fa-search"
+  })), /*#__PURE__*/React.createElement("input", {
+    type: "text",
+    placeholder: t.search,
+    value: searchTerm,
+    onChange: e => setSearchTerm(e.target.value),
+    className: "w-full glass-card pl-10 pr-4 py-3 rounded-xl outline-none focus:ring-2 ring-blue-400/50 transition-all placeholder:text-slate-400 text-slate-700 font-bold"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 pb-20"
+  }, /*#__PURE__*/React.createElement(AnimatePresence, {
+    mode: "popLayout"
+  }, filteredApps.map((app, index) => /*#__PURE__*/React.createElement(AppCard, {
+    key: app,
+    name: app,
+    grade: selectedGrade,
+    index: index % 10,
+    label: t.interactiveApp,
+    lang: lang
+  })))), filteredApps.length === 0 && /*#__PURE__*/React.createElement("div", {
+    className: "text-center py-20 text-white/50"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl mb-4"
+  }, "🔍"), /*#__PURE__*/React.createElement("div", {
+    className: "text-xl font-bold"
+  }, t.noResults))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

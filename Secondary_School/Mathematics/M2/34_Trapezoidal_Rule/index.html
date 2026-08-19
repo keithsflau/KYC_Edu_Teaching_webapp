@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Trapezoidal Rule | M2 Calculus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+      }
+      .glass {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <div id="root" class="flex-grow flex flex-col"></div>
+    <script>
+const {
+  useState,
+  useRef
+} = React;
+const translations = {
+  en: {
+    unit: "Unit 3: Integration",
+    title: "Riemann Sums",
+    subtitle: "Approximation Techniques",
+    settings: "Settings",
+    method: "Method",
+    mLeft: "Left",
+    mRight: "Right",
+    mTrap: "Trap",
+    intervals: "Subintervals n",
+    results: "Results",
+    trueArea: "True Area:",
+    approx: "Approx:",
+    error: "Error:",
+    langBtn: "中文"
+  },
+  zh: {
+    unit: "第三單元：積分",
+    title: "黎曼和",
+    subtitle: "近似技術",
+    settings: "設定",
+    method: "方法",
+    mLeft: "左端點",
+    mRight: "右端點",
+    mTrap: "梯形法",
+    intervals: "子區間數 n",
+    results: "結果",
+    trueArea: "真實面積:",
+    approx: "近似值:",
+    error: "誤差:",
+    langBtn: "English"
+  }
+};
+const App = () => {
+  // Function f(x) = 0.1x^3 - 0.5x^2 + 4
+
+  const [lang, setLang] = useState("en");
+  const t = translations[lang];
+  const f = x => 0.1 * Math.pow(x, 3) - 0.5 * Math.pow(x, 2) + 4;
+  const [n, setN] = useState(5); // Subintervals
+  const [method, setMethod] = useState("trap"); // left, right, trap
+
+  // Limits
+  const a = 0;
+  const b = 5;
+  const width = (b - a) / n;
+
+  // Calculate Area
+  let approxArea = 0;
+  if (method === "left") {
+    for (let i = 0; i < n; i++) approxArea += f(a + i * width) * width;
+  } else if (method === "right") {
+    for (let i = 1; i <= n; i++) approxArea += f(a + i * width) * width;
+  } else {
+    // Trap
+    for (let i = 0; i < n; i++) {
+      const h1 = f(a + i * width);
+      const h2 = f(a + (i + 1) * width);
+      approxArea += (h1 + h2) / 2 * width;
+    }
+  }
+
+  // True Area
+  // Int f(x) = 0.025x^4 - 0.166x^3 + 4x
+  const F = x => 0.025 * Math.pow(x, 4) - 0.5 / 3 * Math.pow(x, 3) + 4 * x;
+  const trueArea = F(b) - F(a);
+
+  // Visuals
+  const w = 600,
+    h = 400;
+  const originX = 50,
+    originY = 350;
+  const scaleX = 500 / 6; // 0 to 6
+  const scaleY = 300 / 8; // Max height ~7ish
+
+  const toScreen = (x, y) => ({
+    x: originX + x * scaleX,
+    y: originY - y * scaleY
+  });
+  const pts = [];
+  for (let x = 0; x <= 6; x += 0.1) pts.push({
+    x,
+    y: f(x)
+  });
+  const pathCurve = `M ${pts.map(p => {
+    const s = toScreen(p.x, p.y);
+    return `${s.x},${s.y}`;
+  }).join(" L ")}`;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "flex-grow flex flex-col items-center justify-center p-8 select-none"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 right-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLang(l => l === "en" ? "zh" : "en"),
+    className: "px-3 py-1 bg-slate-800 border border-slate-600 rounded-full text-xs font-bold text-emerald-400 hover:bg-slate-700 hover:text-white transition flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-language"
+  }), t.langBtn)), /*#__PURE__*/React.createElement("header", {
+    className: "mb-8 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-emerald-500 font-bold uppercase tracking-widest text-xs mb-2"
+  }, t.unit), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-white mb-2"
+  }, t.title), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-400 font-mono text-lg"
+  }, t.subtitle)), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col lg:flex-row gap-8 w-full max-w-6xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 glass p-6 rounded-3xl relative"
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: "100%",
+    height: "400",
+    viewBox: "0 0 600 400",
+    className: "bg-slate-900 rounded-xl overflow-visible"
+  }, /*#__PURE__*/React.createElement("line", {
+    x1: originX,
+    y1: "0",
+    x2: originX,
+    y2: originY,
+    stroke: "#475569",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "0",
+    y1: originY,
+    x2: w,
+    y2: originY,
+    stroke: "#475569",
+    strokeWidth: "2"
+  }), Array.from({
+    length: n
+  }).map((_, i) => {
+    const x1 = a + i * width;
+    const x2 = a + (i + 1) * width;
+    const y1 = f(x1);
+    const y2 = f(x2);
+    const s1 = toScreen(x1, 0); // bot left
+    const s2 = toScreen(x2, 0); // bot right
+    const t1 = toScreen(x1, y1); // top left
+    const t2 = toScreen(x2, y2); // top right
+
+    let d = "";
+    if (method === "left") {
+      d = `M ${s1.x},${s1.y} L ${s1.x},${t1.y} L ${s2.x},${t1.y} L ${s2.x},${s2.y} Z`;
+    } else if (method === "right") {
+      d = `M ${s1.x},${s1.y} L ${s1.x},${t2.y} L ${s2.x},${t2.y} L ${s2.x},${s2.y} Z`;
+    } else {
+      // Trap
+      d = `M ${s1.x},${s1.y} L ${s1.x},${t1.y} L ${s2.x},${t2.y} L ${s2.x},${s2.y} Z`;
+    }
+    return /*#__PURE__*/React.createElement("path", {
+      key: i,
+      d: d,
+      fill: "rgba(251, 191, 36, 0.3)",
+      stroke: "#fbbf24",
+      strokeWidth: "1"
+    });
+  }), /*#__PURE__*/React.createElement("path", {
+    d: pathCurve,
+    fill: "none",
+    stroke: "#2dd4bf",
+    strokeWidth: "3"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full lg:w-80 space-y-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass p-6 rounded-2xl"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-lg font-bold text-white mb-4"
+  }, t.settings), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-4"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold uppercase text-slate-500 mb-2"
+  }, t.method), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-3 gap-1"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setMethod("left"),
+    className: `py-2 rounded text-xs font-bold ${method === "left" ? "bg-amber-500 text-slate-900" : "bg-slate-800 text-slate-400"}`
+  }, t.mLeft), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setMethod("right"),
+    className: `py-2 rounded text-xs font-bold ${method === "right" ? "bg-amber-500 text-slate-900" : "bg-slate-800 text-slate-400"}`
+  }, t.mRight), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setMethod("trap"),
+    className: `py-2 rounded text-xs font-bold ${method === "trap" ? "bg-amber-500 text-slate-900" : "bg-slate-800 text-slate-400"}`
+  }, t.mTrap))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between text-xs font-bold uppercase text-slate-500 mb-2"
+  }, /*#__PURE__*/React.createElement("span", null, t.intervals), /*#__PURE__*/React.createElement("span", {
+    className: "text-amber-400"
+  }, n)), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "1",
+    max: "20",
+    step: "1",
+    value: n,
+    onChange: e => setN(Number(e.target.value)),
+    className: "w-full accent-amber-500"
+  })))), /*#__PURE__*/React.createElement("div", {
+    className: "glass p-6 rounded-2xl"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-xs font-bold text-slate-400 uppercase mb-4"
+  }, t.results), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-2 font-mono text-sm"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-emerald-400"
+  }, t.trueArea), /*#__PURE__*/React.createElement("span", null, trueArea.toFixed(4))), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-amber-400"
+  }, t.approx), /*#__PURE__*/React.createElement("span", null, approxArea.toFixed(4))), /*#__PURE__*/React.createElement("div", {
+    className: "border-t border-slate-600 my-2"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between text-rose-400 font-bold"
+  }, /*#__PURE__*/React.createElement("span", null, t.error), /*#__PURE__*/React.createElement("span", null, Math.abs(trueArea - approxArea).toFixed(4))))))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

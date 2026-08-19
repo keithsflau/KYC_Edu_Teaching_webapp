@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>常識科：力與運動 | Force & Motion Physics</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a; /* Slate 900 */
+        color: white;
+        overflow: hidden;
+      }
+      .glass-panel {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+      }
+      canvas {
+        border-radius: 1rem;
+        box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.5);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect,
+  useRef
+} = React;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Physics Lab: Force & Motion",
+    zh: "物理實驗室：力與運動",
+    ja: "物理実験：力と運動",
+    ko: "물리 실험실: 힘과 운동",
+    es: "Laboratorio de Física: Fuerza y Movimiento",
+    de: "Physiklabor: Kraft & Bewegung",
+    fi: "Fysiikkalaboratorio: Voima ja liike",
+    fr: "Labo de Physique : Force et Mouvement",
+    ar: "مختبر الفيزياء: القوة والحركة",
+    it: "Laboratorio di Fisica: Forza e Moto"
+  },
+  reset: {
+    en: "Reset",
+    zh: "重置",
+    ja: "リセット",
+    ko: "초기화",
+    es: "Reiniciar",
+    de: "Zurücksetzen",
+    fi: "Nollaa",
+    fr: "Réinitialiser",
+    ar: "إعادة ضبط",
+    it: "Reimposta"
+  },
+  spawn: {
+    en: "Spawn Box",
+    zh: "生成箱子",
+    ja: "箱を生成",
+    ko: "박스 생성",
+    es: "Generar Caja",
+    de: "Box erzeugen",
+    fi: "Luo laatikko",
+    fr: "Générer une boîte",
+    ar: "إنشاء صندوق",
+    it: "Genera Scatola"
+  },
+  clear: {
+    en: "Clear All",
+    zh: "清除所有",
+    ja: "すべてクリア",
+    ko: "모두 지우기",
+    es: "Borrar Todo",
+    de: "Alles löschen",
+    fi: "Tyhjennä kaikki",
+    fr: "Tout effacer",
+    ar: "مسح الكل",
+    it: "Cancella Tutto"
+  },
+  friction: {
+    en: "Friction",
+    zh: "摩擦力",
+    ja: "摩擦",
+    ko: "마찰",
+    es: "Fricción",
+    de: "Reibung",
+    fi: "Kitka",
+    fr: "Frottement",
+    ar: "احتكاك",
+    it: "Attrito"
+  },
+  gravity: {
+    en: "Gravity",
+    zh: "重力",
+    ja: "重力",
+    ko: "중력",
+    es: "Gravedad",
+    de: "Schwerkraft",
+    fi: "Painovoima",
+    fr: "Gravité",
+    ar: "جاذبية",
+    it: "Gravità"
+  },
+  bounciness: {
+    en: "Bounciness",
+    zh: "彈性",
+    ja: "弾力",
+    ko: "탄성",
+    es: "Rebote",
+    de: "Elastizität",
+    fi: "Kimmoisuus",
+    fr: "Rebond",
+    ar: "ارتداد",
+    it: "Rimbalzo"
+  },
+  tip: {
+    en: "Click and drag objects to throw them!",
+    zh: "點擊並拖動對象以投擲它們！",
+    ja: "オブジェクトをクリックしてドラッグして投げてください！",
+    ko: "객체를 클릭하고 드래그하여 던지세요!",
+    es: "¡Haz clic y arrastra objetos para lanzarlos!",
+    de: "Objekte anklicken und ziehen, um sie zu werfen!",
+    fi: "Napsauta ja vedä esineitä heittääksesi ne!",
+    fr: "Cliquez et faites glisser les objets pour les lancer !",
+    ar: "انقر واسحب الكائنات لرميها!",
+    it: "Clicca e trascina gli oggetti per lanciarli!"
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+function App() {
+  const [lang, setLang] = useState("zh");
+  const sceneRef = useRef(null);
+  const engineRef = useRef(null);
+
+  // Physics Params
+  const [friction, setFriction] = useState(0.5);
+  const [restitution, setRestitution] = useState(0.5); // Bounciness
+  const [gravity, setGravity] = useState(1);
+  useEffect(() => {
+    // Matter.js Setup
+    const Engine = Matter.Engine,
+      Render = Matter.Render,
+      Runner = Matter.Runner,
+      Bodies = Matter.Bodies,
+      Composite = Matter.Composite,
+      Mouse = Matter.Mouse,
+      MouseConstraint = Matter.MouseConstraint;
+    const engine = Engine.create();
+    engineRef.current = engine;
+    const w = sceneRef.current.clientWidth;
+    const h = sceneRef.current.clientHeight;
+    const render = Render.create({
+      element: sceneRef.current,
+      engine: engine,
+      options: {
+        width: w,
+        height: h,
+        background: "#1e293b",
+        // Slate 800
+        wireframes: false,
+        showAngleIndicator: false
+      }
+    });
+
+    // Boundaries
+    const ground = Bodies.rectangle(w / 2, h + 50, w * 2, 100, {
+      isStatic: true,
+      render: {
+        fillStyle: "#334155"
+      }
+    });
+    const leftWall = Bodies.rectangle(-50, h / 2, 100, h * 2, {
+      isStatic: true
+    });
+    const rightWall = Bodies.rectangle(w + 50, h / 2, 100, h * 2, {
+      isStatic: true
+    });
+
+    // Initial Boxes
+    const boxA = Bodies.rectangle(w / 2 - 50, 200, 80, 80, {
+      render: {
+        fillStyle: "#ef4444"
+      },
+      chamfer: {
+        radius: 10
+      }
+    });
+    const boxB = Bodies.rectangle(w / 2 + 50, 50, 80, 80, {
+      render: {
+        fillStyle: "#3b82f6"
+      },
+      chamfer: {
+        radius: 10
+      }
+    });
+    const circle = Bodies.circle(w / 2, 100, 40, {
+      render: {
+        fillStyle: "#eab308"
+      },
+      restitution: 0.9
+    });
+    Composite.add(engine.world, [ground, leftWall, rightWall, boxA, boxB, circle]);
+
+    // Interaction
+    const mouse = Mouse.create(render.canvas);
+    const mouseConstraint = MouseConstraint.create(engine, {
+      mouse: mouse,
+      constraint: {
+        stiffness: 0.2,
+        render: {
+          visible: false
+        }
+      }
+    });
+    Composite.add(engine.world, mouseConstraint);
+    render.mouse = mouse;
+    Render.run(render);
+    const runner = Runner.create();
+    Runner.run(runner, engine);
+
+    // Resize Handler
+    const handleResize = () => {
+      const nw = sceneRef.current.clientWidth;
+      const nh = sceneRef.current.clientHeight;
+      render.canvas.width = nw;
+      render.canvas.height = nh;
+      Matter.Body.setPosition(ground, {
+        x: nw / 2,
+        y: nh + 50
+      });
+      Matter.Body.setPosition(rightWall, {
+        x: nw + 50,
+        y: nh / 2
+      });
+    };
+    window.addEventListener("resize", handleResize);
+    return () => {
+      Render.stop(render);
+      Runner.stop(runner);
+      Composite.clear(engine.world);
+      Engine.clear(engine);
+      render.canvas.remove();
+      render.canvas = null;
+      render.context = null;
+      render.textures = {};
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
+  // Update Physics props
+  useEffect(() => {
+    if (engineRef.current) {
+      engineRef.current.gravity.y = gravity;
+      const bodies = Matter.Composite.allBodies(engineRef.current.world);
+      bodies.forEach(b => {
+        if (!b.isStatic) {
+          b.friction = friction;
+          b.restitution = restitution;
+        }
+      });
+    }
+  }, [friction, restitution, gravity]);
+  const spawnBox = () => {
+    if (!engineRef.current) return;
+    const w = sceneRef.current.clientWidth;
+    const colors = ["#ef4444", "#3b82f6", "#10b981", "#f59e0b", "#8b5cf6"];
+    const size = 40 + Math.random() * 60;
+    const box = Matter.Bodies.rectangle(Math.random() * (w - 100) + 50, 50, size, size, {
+      render: {
+        fillStyle: colors[Math.floor(Math.random() * colors.length)]
+      },
+      friction: friction,
+      restitution: restitution,
+      chamfer: {
+        radius: 10
+      }
+    });
+    Matter.Composite.add(engineRef.current.world, box);
+  };
+  const clearAll = () => {
+    const bodies = Matter.Composite.allBodies(engineRef.current.world);
+    const removables = bodies.filter(b => !b.isStatic);
+    Matter.Composite.remove(engineRef.current.world, removables);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col p-4 md:p-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between items-center mb-6"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h1", {
+    className: "text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-blue-500"
+  }, getText("title", lang)), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-400 text-sm mt-1"
+  }, getText("tip", lang))), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-wrap gap-1 max-w-md justify-end"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-slate-700 text-white" : "text-slate-500 hover:text-white"}`
+  }, l)))), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col lg:flex-row gap-6 flex-1 h-full min-h-[60vh]"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 relative bg-slate-800 rounded-3xl overflow-hidden shadow-2xl border-2 border-slate-700",
+    ref: sceneRef
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "w-full lg:w-80 glass-panel p-6 rounded-3xl flex flex-col gap-6 h-fit"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 gap-2"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: spawnBox,
+    className: "bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95 transition-all text-sm"
+  }, "+ ", getText("spawn", lang)), /*#__PURE__*/React.createElement("button", {
+    onClick: clearAll,
+    className: "bg-red-600 hover:bg-red-500 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95 transition-all text-sm"
+  }, "🗑 ", getText("clear", lang))), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-4"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between text-sm font-bold text-slate-400 mb-1"
+  }, /*#__PURE__*/React.createElement("span", null, getText("gravity", lang)), /*#__PURE__*/React.createElement("span", null, gravity.toFixed(1))), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "0",
+    max: "2",
+    step: "0.1",
+    value: gravity,
+    onChange: e => setGravity(Number(e.target.value)),
+    className: "w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-teal-400"
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between text-sm font-bold text-slate-400 mb-1"
+  }, /*#__PURE__*/React.createElement("span", null, getText("bounciness", lang)), /*#__PURE__*/React.createElement("span", null, restitution.toFixed(1))), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "0",
+    max: "1.2",
+    step: "0.1",
+    value: restitution,
+    onChange: e => setRestitution(Number(e.target.value)),
+    className: "w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-purple-400"
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between text-sm font-bold text-slate-400 mb-1"
+  }, /*#__PURE__*/React.createElement("span", null, getText("friction", lang)), /*#__PURE__*/React.createElement("span", null, friction.toFixed(1))), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "0",
+    max: "1",
+    step: "0.1",
+    value: friction,
+    onChange: e => setFriction(Number(e.target.value)),
+    className: "w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-orange-400"
+  }))))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

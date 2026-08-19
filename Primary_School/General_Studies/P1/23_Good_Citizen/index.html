@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小一常識：好市民迷宮 | Good Citizen</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #ddd6fe 0%, #a78bfa 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n || {
+  LanguageSelector: () => null,
+  get: (o, lang) => (o && (o[lang] || o.en)) || ""
+};
+const t = {
+  title: {
+    en: "Good Citizen Maze",
+    zh: "好市民迷宮",
+    ja: "良い市民迷路",
+    ko: "모범 시민 미로",
+    es: "Laberinto del buen ciudadano",
+    de: "Labyrinth des guten Bürgers",
+    fi: "Hyvän kansalaisen sokkelo",
+    fr: "Labyrinthe du bon citoyen",
+    ar: "متاهة المواطن الصالح",
+    it: "Labirinto del buon cittadino"
+  },
+  instruction: {
+    en: "Collect Good Deeds (Green) and avoid Bad Deeds (Red)!",
+    zh: "收集好行為 (綠色)，避開壞行為 (紅色)！",
+    ja: "良い行い（緑）を集めて、悪い行い（赤）を避けよう！",
+    ko: "선행(녹색)을 모으고 나쁜 행동(빨간색)을 피하세요!",
+    es: "¡Recoge buenas acciones (verde) y evita las malas acciones (rojo)!",
+    de: "Sammle gute Taten (Grün) und vermeide schlechte Taten (Rot)!",
+    fi: "Kerää hyviä tekoja (vihreä) ja vältä pahoja tekoja (punainen)!",
+    fr: "Collectez les bonnes actions (vert) et évitez les mauvaises actions (rouge) !",
+    ar: "اجمع الأعمال الصالحة (الأخضر) وتجنب الأعمال السيئة (الأحمر)!",
+    it: "Raccogli le buone azioni (verde) ed evita le cattive azioni (rosso)!"
+  },
+  win: {
+    en: "You are a Super Citizen!",
+    zh: "你是超級好市民！",
+    es: "¡Eres un súper ciudadano!",
+    de: "Du bist ein Superbürger!",
+    fi: "Olet superkansalainen!",
+    fr: "Vous êtes un super citoyen !",
+    ar: "أنت مواطن خارق!",
+    it: "Sei un super cittadino!"
+  },
+  lose: {
+    en: "Oh no! Be careful!",
+    zh: "哎呀！要小心！",
+    es: "¡Oh no! ¡Ten cuidado!",
+    de: "Oh nein! Sei vorsichtig!",
+    fi: "Voi ei! Ole varovainen!",
+    fr: "Oh non ! Faites attention !",
+    ar: "أوه لا! كن حذرا!",
+    it: "Oh no! Stai attento!"
+  },
+  restart: {
+    en: "Try Again",
+    zh: "再試一次",
+    es: "Inténtalo de nuevo",
+    de: "Versuch es noch einmal",
+    fi: "Yritä uudelleen",
+    fr: "Réessayez",
+    ar: "حاول مرة أخرى",
+    it: "Riprova"
+  },
+  score: {
+    en: "Score",
+    zh: "分數",
+    es: "Puntuación",
+    de: "Punktzahl",
+    fi: "Pisteet",
+    fr: "Score",
+    ar: "نتيجة",
+    it: "Punteggio"
+  }
+};
+
+// 10x10 Grid
+const GRID_W = 10;
+const GRID_H = 10;
+
+// Items
+const items = [{
+  x: 2,
+  y: 1,
+  type: "bad",
+  icon: "🗑️"
+},
+// Littering
+{
+  x: 5,
+  y: 2,
+  type: "good",
+  icon: "🤝"
+},
+// Helping
+{
+  x: 8,
+  y: 3,
+  type: "bad",
+  icon: "👊"
+},
+// Fighting
+{
+  x: 3,
+  y: 5,
+  type: "good",
+  icon: "🧹"
+},
+// Cleaning
+{
+  x: 6,
+  y: 6,
+  type: "bad",
+  icon: "🗣️"
+},
+// Shouting
+{
+  x: 1,
+  y: 7,
+  type: "good",
+  icon: "👵"
+},
+// Respect
+{
+  x: 7,
+  y: 8,
+  type: "good",
+  icon: "🚶"
+},
+// Queueing
+{
+  x: 9,
+  y: 9,
+  type: "goal",
+  icon: "🏫"
+}];
+
+// Walls for Maze effect (simplified)
+const walls = ["1,1", "1,2", "3,1", "3,3", "3,4", "5,5", "5,6", "7,1", "7,2", "8,5", "2,6", "4,8", "6,8"];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [pos, setPos] = useState({
+    x: 0,
+    y: 0
+  });
+  const [score, setScore] = useState(0);
+  const [collected, setCollected] = useState([]);
+  const [status, setStatus] = useState("playing"); // playing, win, lose
+
+  const getText = key => t[key][lang] || t[key]["en"];
+  const move = (dx, dy) => {
+    if (status !== "playing") return;
+    const nx = pos.x + dx;
+    const ny = pos.y + dy;
+
+    // Bounds
+    if (nx < 0 || nx >= GRID_W || ny < 0 || ny >= GRID_H) return;
+    // Walls
+    if (walls.includes(`${nx},${ny}`)) return;
+    setPos({
+      x: nx,
+      y: ny
+    });
+    checkItem(nx, ny);
+  };
+  const checkItem = (x, y) => {
+    const item = items.find(i => i.x === x && i.y === y);
+    if (item) {
+      if (item.type === "goal") {
+        setStatus("win");
+      } else if (!collected.includes(`${x},${y}`)) {
+        if (item.type === "good") {
+          setScore(s => s + 100);
+          setCollected(prev => [...prev, `${x},${y}`]);
+        } else if (item.type === "bad") {
+          setScore(s => Math.max(0, s - 50));
+          // Shake effect?
+          // Simple "Lose" condition for strictness? Let's just deduct score.
+        }
+      }
+    }
+  };
+  const restart = () => {
+    setPos({
+      x: 0,
+      y: 0
+    });
+    setScore(0);
+    setCollected([]);
+    setStatus("playing");
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-black text-purple-900 mb-2 mt-4 drop-shadow-sm text-center"
+  }, "🏙️ ", getText("title")), /*#__PURE__*/React.createElement("p", {
+    className: "font-bold text-purple-800 mb-4 text-center text-sm md:text-base"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "font-black text-2xl text-white bg-purple-500 px-6 py-2 rounded-full mb-4 shadow"
+  }, getText("score"), ": ", score), /*#__PURE__*/React.createElement("div", {
+    className: "relative bg-white p-2 rounded-xl shadow-2xl border-4 border-purple-300"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "grid gap-1",
+    style: {
+      gridTemplateColumns: `repeat(${GRID_W}, minmax(0, 1fr))`,
+      width: "min(90vw, 400px)",
+      height: "min(90vw, 400px)"
+    }
+  }, Array.from({
+    length: GRID_H * GRID_W
+  }).map((_, i) => {
+    const x = i % GRID_W;
+    const y = Math.floor(i / GRID_W);
+    const isWall = walls.includes(`${x},${y}`);
+    const item = items.find(it => it.x === x && it.y === y);
+    const isCollected = collected.includes(`${x},${y}`);
+    return /*#__PURE__*/React.createElement("div", {
+      key: i,
+      className: `rounded-md flex items-center justify-center text-xl md:text-2xl ${isWall ? "bg-slate-800" : "bg-purple-50"}`
+    }, item && !isCollected && item.type !== "goal" && /*#__PURE__*/React.createElement("span", null, item.icon), item && item.type === "goal" && /*#__PURE__*/React.createElement("span", null, item.icon));
+  })), /*#__PURE__*/React.createElement(motion.div, {
+    className: "absolute top-2 left-2 w-[calc(100%-16px)] h-[calc(100%-16px)] pointer-events-none"
+  }, /*#__PURE__*/React.createElement(motion.div, {
+    className: "absolute text-2xl md:text-3xl flex items-center justify-center z-10",
+    animate: {
+      left: `${pos.x / GRID_W * 100}%`,
+      top: `${pos.y / GRID_H * 100}%`,
+      width: `${100 / GRID_W}%`,
+      height: `${100 / GRID_H}%`
+    },
+    transition: {
+      type: "spring",
+      stiffness: 300,
+      damping: 30
+    }
+  }, "🧒")), status === "win" && /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 bg-white/90 flex flex-col items-center justify-center rounded-xl z-20"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl mb-4"
+  }, "🏆"), /*#__PURE__*/React.createElement("h2", {
+    className: "text-2xl font-black text-purple-800 mb-4"
+  }, getText("win")), /*#__PURE__*/React.createElement("button", {
+    onClick: restart,
+    className: "bg-purple-500 text-white px-6 py-2 rounded-full font-bold shadow"
+  }, getText("restart")))), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-3 gap-2 mt-8 w-48"
+  }, /*#__PURE__*/React.createElement("div", null), /*#__PURE__*/React.createElement("button", {
+    onClick: () => move(0, -1),
+    className: "bg-purple-500 text-white p-4 rounded-xl shadow-lg active:bg-purple-600 text-2xl"
+  }, "⬆️"), /*#__PURE__*/React.createElement("div", null), /*#__PURE__*/React.createElement("button", {
+    onClick: () => move(-1, 0),
+    className: "bg-purple-500 text-white p-4 rounded-xl shadow-lg active:bg-purple-600 text-2xl"
+  }, "⬅️"), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-center font-bold text-purple-300"
+  }, "KEYS"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => move(1, 0),
+    className: "bg-purple-500 text-white p-4 rounded-xl shadow-lg active:bg-purple-600 text-2xl"
+  }, "➡️"), /*#__PURE__*/React.createElement("div", null), /*#__PURE__*/React.createElement("button", {
+    onClick: () => move(0, 1),
+    className: "bg-purple-500 text-white p-4 rounded-xl shadow-lg active:bg-purple-600 text-2xl"
+  }, "⬇️"), /*#__PURE__*/React.createElement("div", null)));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

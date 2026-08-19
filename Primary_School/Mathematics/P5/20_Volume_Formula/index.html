@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小五數學：長方體體積公式 | Cuboid Volume Formula</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+      .scene-3d {
+        perspective: 1000px;
+        transform-style: preserve-3d;
+      }
+      .cube-3d {
+        transform-style: preserve-3d;
+        transition: transform 0.1s ease-out, width 0.3s, height 0.3s;
+      }
+      .face {
+        position: absolute;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        opacity: 0.9;
+      }
+      .face-front {
+        transform: translateZ(var(--d-half));
+        background: rgba(236, 72, 153, 0.6);
+      }
+      .face-back {
+        transform: rotateY(180deg) translateZ(var(--d-half));
+        background: rgba(236, 72, 153, 0.6);
+      }
+      .face-right {
+        transform: rotateY(90deg) translateZ(var(--w-half));
+        background: rgba(219, 39, 119, 0.6);
+      }
+      .face-left {
+        transform: rotateY(-90deg) translateZ(var(--w-half));
+        background: rgba(219, 39, 119, 0.6);
+      }
+      .face-top {
+        transform: rotateX(90deg) translateZ(var(--h-half));
+        background: rgba(244, 114, 182, 0.6);
+      }
+      .face-bottom {
+        transform: rotateX(-90deg) translateZ(var(--h-half));
+        background: rgba(244, 114, 182, 0.6);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Volume Formula",
+    zh: "體積公式",
+    ja: "体積の公式",
+    ko: "부피 공식",
+    es: "Fórmula de Volumen",
+    de: "Volumenformel",
+    fi: "Tilavuuskaava",
+    fr: "Formule de volume",
+    ar: "صيغة الحجم",
+    it: "Formula del Volume"
+  },
+  length: {
+    en: "Length",
+    zh: "長",
+    ja: "長さ",
+    ko: "길이",
+    es: "Largo",
+    de: "Länge",
+    fi: "Pituus",
+    fr: "Longueur",
+    ar: "الطول",
+    it: "Lunghezza"
+  },
+  width: {
+    en: "Width",
+    zh: "闊",
+    ja: "幅",
+    ko: "너비",
+    es: "Ancho",
+    de: "Breite",
+    fi: "Leveys",
+    fr: "Largeur",
+    ar: "العرض",
+    it: "Larghezza"
+  },
+  height: {
+    en: "Height",
+    zh: "高",
+    ja: "高さ",
+    ko: "높이",
+    es: "Altura",
+    de: "Höhe",
+    fi: "Korkeus",
+    fr: "Hauteur",
+    ar: "الارتفاع",
+    it: "Altezza"
+  },
+  formula: {
+    en: "Volume = L × W × H",
+    zh: "體積 = 長 × 闊 × 高",
+    ja: "体積 = 長さ × 幅 × 高さ",
+    ko: "부피 = 길이 × 너비 × 높이",
+    es: "Volumen = L × A × A",
+    de: "Volumen = L × B × H",
+    fi: "Tilavuus = P × L × K",
+    fr: "Volume = L × l × h",
+    ar: "الحجم = الطول × العرض × الارتفاع",
+    it: "Volume = L × P × A"
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [dim, setDim] = useState({
+    l: 6,
+    w: 4,
+    h: 5
+  });
+  const [rot, setRot] = useState({
+    x: -25,
+    y: -45
+  });
+  const U = 30; // Unit multiplier in px
+
+  // Handling rotation drag
+  const handleMouseMove = e => {
+    if (e.buttons === 1) {
+      setRot(p => ({
+        x: p.x + e.movementY,
+        y: p.y + e.movementX
+      }));
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4 font-sans bg-slate-900 text-white",
+    onMouseMove: handleMouseMove
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-5xl flex justify-between items-center mb-10 pointer-events-none"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-black text-pink-400 drop-shadow-[0_0_15px_rgba(244,114,182,0.5)]"
+  }, "📦 ", getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "flex bg-slate-800/80 p-1.5 rounded-xl border border-white/10 flex-wrap justify-end gap-1 max-w-[50%] pointer-events-auto"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-pink-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white hover:bg-white/5"}`
+  }, l)))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-6xl flex flex-col lg:flex-row gap-8 items-start"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 w-full glass-panel rounded-3xl overflow-hidden relative h-[500px] flex items-center justify-center border-4 border-slate-700/50 cursor-move"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 opacity-20 pointer-events-none",
+    style: {
+      backgroundImage: "linear-gradient(#f9a8d4 1px, transparent 1px), linear-gradient(90deg, #f9a8d4 1px, transparent 1px)",
+      backgroundSize: "40px 40px"
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "scene-3d w-full h-full flex items-center justify-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "cube-3d relative",
+    style: {
+      width: `${dim.l * U}px`,
+      height: `${dim.h * U}px`,
+      // Depth is managed via transforms
+      transform: `rotateX(${rot.x}deg) rotateY(${rot.y}deg)`,
+      "--d-half": `${dim.w * U / 2}px`,
+      "--w-half": `${dim.l * U / 2}px`,
+      // distance from center to side face
+      "--h-half": `${dim.h * U / 2}px` // distance from center to top/bottom
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "face face-front flex items-center justify-center text-white/50 font-bold text-2xl",
+    style: {
+      width: dim.l * U,
+      height: dim.h * U
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "face face-back",
+    style: {
+      width: dim.l * U,
+      height: dim.h * U
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "face face-right",
+    style: {
+      width: dim.w * U,
+      height: dim.h * U
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "face face-left",
+    style: {
+      width: dim.w * U,
+      height: dim.h * U
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "face face-top flex items-center justify-center text-white/50 font-bold",
+    style: {
+      width: dim.l * U,
+      height: dim.w * U
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "face face-bottom",
+    style: {
+      width: dim.l * U,
+      height: dim.w * U
+    }
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-4 text-xs text-slate-500 uppercase font-bold tracking-widest pointer-events-none"
+  }, "Drag to Rotate")), /*#__PURE__*/React.createElement("div", {
+    className: "w-full lg:w-80 flex flex-col gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 rounded-3xl flex flex-col gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col gap-4"
+  }, /*#__PURE__*/React.createElement(ControlSlider, {
+    label: getText("length", lang),
+    val: dim.l,
+    set: v => setDim({
+      ...dim,
+      l: v
+    }),
+    color: "text-pink-300"
+  }), /*#__PURE__*/React.createElement(ControlSlider, {
+    label: getText("width", lang),
+    val: dim.w,
+    set: v => setDim({
+      ...dim,
+      w: v
+    }),
+    color: "text-pink-300"
+  }), /*#__PURE__*/React.createElement(ControlSlider, {
+    label: getText("height", lang),
+    val: dim.h,
+    set: v => setDim({
+      ...dim,
+      h: v
+    }),
+    color: "text-pink-300"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "h-px bg-white/10 my-2"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-950/50 p-4 rounded-xl border border-white/5 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-slate-400 text-xs font-bold uppercase tracking-widest mb-2"
+  }, getText("formula", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black text-white"
+  }, dim.l * dim.w * dim.h), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs text-pink-400 mt-1 font-mono"
+  }, dim.l, " × ", dim.w, " × ", dim.h))))));
+}
+const ControlSlider = ({
+  label,
+  val,
+  set,
+  color
+}) => /*#__PURE__*/React.createElement("div", {
+  className: "flex flex-col gap-2"
+}, /*#__PURE__*/React.createElement("div", {
+  className: `flex justify-between font-bold ${color}`
+}, /*#__PURE__*/React.createElement("label", null, label), /*#__PURE__*/React.createElement("span", null, val)), /*#__PURE__*/React.createElement("input", {
+  type: "range",
+  min: "1",
+  max: "10",
+  value: val,
+  onChange: e => set(Number(e.target.value)),
+  className: "w-full accent-pink-500"
+}));
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

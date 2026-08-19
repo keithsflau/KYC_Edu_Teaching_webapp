@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - Food Labels</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: radial-gradient(circle, #f0fdf4 0%, #dcfce7 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Food Label Detective",
+    zh: "食物標籤偵探",
+    ja: "食品ラベル探偵",
+    ko: "식품 라벨 탐정",
+    es: "Detective de Etiquetas de Alimentos",
+    de: "Lebensmitteletiketten-Detektiv",
+    fi: "Ruokaetikettietsivä",
+    fr: "Détective d'étiquettes alimentaires",
+    ar: "مخبر ملصقات الغذاء",
+    it: "Investigatore di Etichette Alimentari"
+  },
+  instruction: {
+    en: "Read the label and answer the question.",
+    zh: "閱讀標籤並回答問題。",
+    ja: "ラベルを読んで質問に答えてください。",
+    ko: "라벨을 읽고 질문에 답하세요.",
+    es: "Lee la etiqueta y responde la pregunta.",
+    de: "Lies das Etikett und antworte auf die Frage.",
+    fi: "Lue etiketti ja vastaa kysymykseen.",
+    fr: "Lisez l'étiquette et répondez à la question.",
+    ar: "اقرأ الملصق وأجب عن السؤال.",
+    it: "Leggi l'etichetta e rispondi alla domanda."
+  },
+  correct: {
+    en: "Correct!",
+    zh: "答對了！",
+    ja: "正解！",
+    ko: "정답!",
+    es: "¡Correcto!",
+    de: "Richtig!",
+    fi: "Oikein!",
+    fr: "Correct !",
+    ar: "صحيح!",
+    it: "Corretto!"
+  },
+  wrong: {
+    en: "Try Again",
+    zh: "再試一次",
+    ja: "もう一度",
+    ko: "다시 시도",
+    es: "Inténtalo de nuevo",
+    de: "Versuch es nochmal",
+    fi: "Yritä uudelleen",
+    fr: "Réessayez",
+    ar: "حاول مرة أخرى",
+    it: "Riprova"
+  },
+  expiry: {
+    en: "Expiry Date",
+    zh: "到期日",
+    ja: "有効期限",
+    ko: "유통기한",
+    es: "Fecha de caducidad",
+    de: "Verfallsdatum",
+    fi: "Viimeinen käyttöpäivä",
+    fr: "Date d'expiration",
+    ar: "تاريخ انتهاء الصلاحية",
+    it: "Data di Scadenza"
+  },
+  sugar: {
+    en: "Sugar",
+    zh: "糖",
+    ja: "砂糖",
+    ko: "설탕",
+    es: "Azúcar",
+    de: "Zucker",
+    fi: "Sokeri",
+    fr: "Sucre",
+    ar: "سكر",
+    it: "Zucchero"
+  },
+  protein: {
+    en: "Protein",
+    zh: "蛋白質",
+    ja: "タンパク質",
+    ko: "단백질",
+    es: "Proteína",
+    de: "Protein",
+    fi: "Proteiini",
+    fr: "Protéines",
+    ar: "بروتين",
+    it: "Proteine"
+  },
+  energy: {
+    en: "Energy",
+    zh: "能量",
+    ja: "エネルギー",
+    ko: "에너지",
+    es: "Energía",
+    de: "Energie",
+    fi: "Energia",
+    fr: "Énergie",
+    ar: "طاقة",
+    it: "Energia"
+  },
+  q_sugar: {
+    en: "How much sugar is in this?",
+    zh: "這裡含有多少糖？",
+    ja: "砂糖はどれくらい含まれていますか？",
+    ko: "설탕은 얼마나 들어 있습니까?",
+    es: "¿Cuánta azúcar hay en esto?",
+    de: "Wie viel Zucker ist darin enthalten?",
+    fi: "Kuinka paljon sokeria tässä on?",
+    fr: "Combien de sucre y a-t-il ?",
+    ar: "كم كمية السكر الموجودة في هذا؟",
+    it: "Quanto zucchero c'è?"
+  },
+  q_expiry: {
+    en: "When does this expire?",
+    zh: "這什麼時候過期？",
+    ja: "これはいつ期限切れになりますか？",
+    ko: "언제 만료됩니까?",
+    es: "¿Cuándo caduca esto?",
+    de: "Wann läuft das ab?",
+    fi: "Milloin tämä vanhenee?",
+    fr: "Quand cela expire-t-il ?",
+    ar: "متى تنتهي صلاحية هذا؟",
+    it: "Quando scade?"
+  }
+};
+const foods = [{
+  id: 1,
+  name: "Juice Box",
+  color: "bg-orange-100",
+  label: {
+    energy: "120 kcal",
+    protein: "0 g",
+    sugar: "25 g",
+    expiry: "2025-12-31"
+  },
+  questions: [{
+    type: "q_sugar",
+    correct: "25 g",
+    options: ["10 g", "25 g", "0 g", "100 g"]
+  }, {
+    type: "q_expiry",
+    correct: "2025-12-31",
+    options: ["2024-01-01", "2025-12-31", "2026-06-01"]
+  }]
+}, {
+  id: 2,
+  name: "Yogurt",
+  color: "bg-blue-100",
+  label: {
+    energy: "90 kcal",
+    protein: "5 g",
+    sugar: "12 g",
+    expiry: "2024-05-20"
+  },
+  questions: [{
+    type: "q_sugar",
+    correct: "12 g",
+    options: ["5 g", "12 g", "20 g"]
+  }, {
+    type: "q_expiry",
+    correct: "2024-05-20",
+    options: ["2024-05-20", "2025-12-01", "2023-10-10"]
+  }]
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [level, setLevel] = useState(0);
+  const [qIndex, setQIndex] = useState(0);
+  const [feedback, setFeedback] = useState(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+  const currentItem = foods[level];
+  const currentQ = currentItem?.questions[qIndex];
+  const checkAnswer = ans => {
+    if (feedback) return;
+    if (ans === currentQ.correct) {
+      setFeedback("correct");
+      setTimeout(() => {
+        setFeedback(null);
+        if (qIndex < currentItem.questions.length - 1) {
+          setQIndex(qIndex + 1);
+        } else {
+          if (level < foods.length - 1) {
+            setLevel(level + 1);
+            setQIndex(0);
+          } else {
+            setLevel(0); // Loop
+            setQIndex(0);
+          }
+        }
+      }, 1000);
+    } else {
+      setFeedback("wrong");
+      setTimeout(() => setFeedback(null), 1000);
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center justify-center p-6"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-3xl font-black text-green-700 mb-6 bg-white/50 px-6 py-2 rounded-full"
+  }, "🔍 ", getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col md:flex-row gap-8 items-center bg-white p-8 rounded-3xl shadow-xl border-4 border-green-200"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: `w-64 h-80 ${currentItem.color} rounded-2xl flex flex-col items-center justify-center border-4 border-slate-300 relative`
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl mb-4"
+  }, "🧃"), /*#__PURE__*/React.createElement("div", {
+    className: "font-bold text-2xl text-slate-700"
+  }, currentItem.name), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-2 right-2 cursor-pointer group"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-2 rounded-full shadow-md text-2xl"
+  }, "📋"), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-10 right-0 w-48 bg-white border border-slate-300 p-4 rounded-xl shadow-xl hidden group-hover:block z-10 text-left text-sm"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "font-bold border-b mb-2"
+  }, "Nutrition Facts"), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between"
+  }, /*#__PURE__*/React.createElement("span", null, getText("energy")), " ", /*#__PURE__*/React.createElement("span", null, currentItem.label.energy)), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between"
+  }, /*#__PURE__*/React.createElement("span", null, getText("protein")), " ", /*#__PURE__*/React.createElement("span", null, currentItem.label.protein)), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between font-bold text-red-500"
+  }, /*#__PURE__*/React.createElement("span", null, getText("sugar")), " ", /*#__PURE__*/React.createElement("span", null, currentItem.label.sugar)), /*#__PURE__*/React.createElement("div", {
+    className: "mt-2 text-xs text-slate-500 border-t pt-1"
+  }, getText("expiry"), ": ", currentItem.label.expiry))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/90 p-4 rounded-xl mt-4 text-left text-sm w-5/6 shadow-inner border border-slate-200"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between"
+  }, /*#__PURE__*/React.createElement("span", null, "⚡ ", getText("energy")), " ", /*#__PURE__*/React.createElement("span", null, currentItem.label.energy)), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between"
+  }, /*#__PURE__*/React.createElement("span", null, "💪 ", getText("protein")), " ", /*#__PURE__*/React.createElement("span", null, currentItem.label.protein)), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between font-bold text-red-600"
+  }, /*#__PURE__*/React.createElement("span", null, "🍬 ", getText("sugar")), " ", /*#__PURE__*/React.createElement("span", null, currentItem.label.sugar)), /*#__PURE__*/React.createElement("div", {
+    className: "mt-2 text-xs text-slate-500 border-t pt-1 flex justify-between"
+  }, /*#__PURE__*/React.createElement("span", null, "📅 ", getText("expiry")), " ", /*#__PURE__*/React.createElement("span", null, currentItem.label.expiry)))), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col gap-4 w-full md:w-80"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "font-bold text-xl text-slate-800"
+  }, getText(currentQ.type)), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-1 gap-3"
+  }, currentQ.options.map(opt => /*#__PURE__*/React.createElement("button", {
+    key: opt,
+    onClick: () => checkAnswer(opt),
+    className: "bg-green-100 hover:bg-green-200 text-green-900 font-bold py-3 px-6 rounded-xl border-2 border-green-300 transition-colors"
+  }, opt))), feedback && /*#__PURE__*/React.createElement("div", {
+    className: `text-center font-bold text-xl p-3 rounded-xl ${feedback === "correct" ? "bg-green-500 text-white" : "bg-red-500 text-white"}`
+  }, getText(feedback)))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

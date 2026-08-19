@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General vs Particular Solutions | M2 Calculus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+      }
+      .glass {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <div id="root" class="flex-grow flex flex-col"></div>
+    <script>
+const {
+  useState
+} = React;
+const translations = {
+  en: {
+    unit: "Unit 2: Calculus",
+    title: "General vs Particular",
+    eq: "dy/dx = 2x ⇒ y = x² + C",
+    hint: "Click to set Boundary Condition",
+    genTitle: "General Solution",
+    genEq: "y = x² + C",
+    genDesc: "Represents the entire family of possible curves.",
+    partTitle: "Particular Solution",
+    pass: "Passes Through",
+    calcConst: "Calculated Constant",
+    finalEq: "Final Equation",
+    langBtn: "中文"
+  },
+  zh: {
+    unit: "第二單元：微積分",
+    title: "通解與特解",
+    eq: "dy/dx = 2x ⇒ y = x² + C",
+    hint: "點擊以設定邊界條件",
+    genTitle: "通解",
+    genEq: "y = x² + C",
+    genDesc: "代表所有可能的曲線族。",
+    partTitle: "特解",
+    pass: "通過點",
+    calcConst: "計算常數",
+    finalEq: "最終方程式",
+    langBtn: "English"
+  }
+};
+const App = () => {
+  // Diff Eq: dy/dx = 2x
+  // General Solution: y = x^2 + C
+
+  // Particular Solution requires point (x0, y0)
+  // C = y0 - x0^2
+
+  const [lang, setLang] = useState("en");
+  const t = translations[lang];
+  const [point, setPoint] = useState({
+    x: 0,
+    y: 0
+  });
+  const [hover, setHover] = useState(false);
+  const C = point.y - point.x * point.x;
+
+  // Visualization
+  const w = 600,
+    h = 400;
+  const rangeX = 4;
+  const rangeY = 4;
+  const scaleX = w / (2 * rangeX);
+  const scaleY = h / (2 * rangeY);
+  const originX = w / 2;
+  const originY = h / 2;
+  const toScreen = (x, y) => ({
+    x: originX + x * scaleX,
+    y: originY - y * scaleY
+  });
+  const fromScreen = (sx, sy) => ({
+    x: (sx - originX) / scaleX,
+    y: (originY - sy) / scaleY
+  });
+
+  // Family of curves
+  const curves = [];
+  for (let c = -3; c <= 3; c += 1) {
+    const pts = [];
+    for (let x = -rangeX; x <= rangeX; x += 0.1) pts.push({
+      x,
+      y: x * x + c
+    });
+    curves.push({
+      c,
+      pts
+    });
+  }
+
+  // Particular Curve
+  const pPts = [];
+  for (let x = -rangeX; x <= rangeX; x += 0.1) pPts.push({
+    x,
+    y: x * x + C
+  });
+  const pPath = `M ${pPts.map(p => {
+    const sp = toScreen(p.x, p.y);
+    return `${sp.x},${sp.y}`;
+  }).join(" L ")}`;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "flex-grow flex flex-col items-center justify-center p-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 right-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLang(l => l === "en" ? "zh" : "en"),
+    className: "px-3 py-1 bg-slate-800 border border-slate-600 rounded-full text-xs font-bold text-emerald-400 hover:bg-slate-700 hover:text-white transition flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-language"
+  }), t.langBtn)), /*#__PURE__*/React.createElement("header", {
+    className: "mb-8 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-emerald-500 font-bold uppercase tracking-widest text-xs mb-2"
+  }, t.unit), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-white mb-2"
+  }, t.title), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-400 font-mono text-lg"
+  }, t.eq)), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col lg:flex-row gap-8 w-full max-w-6xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 glass p-6 rounded-3xl relative overflow-hidden cursor-crosshair group",
+    onMouseMove: e => {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const sx = e.clientX - rect.left - 24; // -padding
+      const sy = e.clientY - rect.top - 24;
+      // Need to refactor click handling into svg
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 left-4 z-10 pointer-events-none"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded text-xs font-bold border border-emerald-500/50"
+  }, t.hint)), /*#__PURE__*/React.createElement("svg", {
+    width: "100%",
+    height: "400",
+    viewBox: "0 0 600 400",
+    className: "overflow-visible",
+    onClick: e => {
+      const rect = e.target.getBoundingClientRect();
+      const sx = (e.clientX - rect.left) * (600 / rect.width);
+      const sy = (e.clientY - rect.top) * (400 / rect.height);
+      setPoint(fromScreen(sx, sy));
+    }
+  }, /*#__PURE__*/React.createElement("line", {
+    x1: originX,
+    y1: "0",
+    x2: originX,
+    y2: h,
+    stroke: "#475569",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "0",
+    y1: originY,
+    x2: w,
+    y2: originY,
+    stroke: "#475569",
+    strokeWidth: "2"
+  }), curves.map((curve, i) => /*#__PURE__*/React.createElement("path", {
+    key: i,
+    d: `M ${curve.pts.map(p => {
+      const sp = toScreen(p.x, p.y);
+      return `${sp.x},${sp.y}`;
+    }).join(" L ")}`,
+    fill: "none",
+    stroke: "#ffffff",
+    strokeOpacity: "0.1",
+    strokeWidth: "1"
+  })), /*#__PURE__*/React.createElement("path", {
+    d: pPath,
+    fill: "none",
+    stroke: "#f43f5e",
+    strokeWidth: "4"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: toScreen(point.x, point.y).x,
+    cy: toScreen(point.x, point.y).y,
+    r: "8",
+    fill: "#f43f5e",
+    stroke: "white",
+    strokeWidth: "2",
+    className: "animate-pulse"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full lg:w-96 space-y-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass p-6 rounded-2xl border-l-4 border-slate-500"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-sm font-bold text-slate-300 uppercase mb-2"
+  }, t.genTitle), /*#__PURE__*/React.createElement("p", {
+    className: "font-mono text-2xl text-slate-400"
+  }, t.genEq), /*#__PURE__*/React.createElement("p", {
+    className: "text-xs text-slate-500 mt-2"
+  }, t.genDesc)), /*#__PURE__*/React.createElement("div", {
+    className: "glass p-6 rounded-2xl border-l-4 border-rose-500"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-sm font-bold text-rose-400 uppercase mb-2"
+  }, t.partTitle), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-4"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
+    className: "text-xs text-slate-500 uppercase block mb-1"
+  }, t.pass), /*#__PURE__*/React.createElement("span", {
+    className: "font-mono text-xl text-white"
+  }, "(", point.x.toFixed(2), ", ", point.y.toFixed(2), ")")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
+    className: "text-xs text-slate-500 uppercase block mb-1"
+  }, t.calcConst), /*#__PURE__*/React.createElement("span", {
+    className: "font-mono text-xl text-emerald-400"
+  }, "C = ", C.toFixed(2))), /*#__PURE__*/React.createElement("div", {
+    className: "pt-4 border-t border-slate-700"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-xs text-slate-500 uppercase block mb-1"
+  }, t.finalEq), /*#__PURE__*/React.createElement("span", {
+    className: "font-mono text-2xl text-white font-bold bg-rose-500/20 px-2 py-1 rounded"
+  }, "y = x² ", C >= 0 ? "+" : "-", " ", Math.abs(C).toFixed(2))))))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

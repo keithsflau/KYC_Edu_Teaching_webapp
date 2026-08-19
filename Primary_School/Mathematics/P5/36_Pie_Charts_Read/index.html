@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小五數學：圓形圖大師 | Pie Chart Master</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #0f172a 100%);
+        color: white;
+      }
+      .glass-panel {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect,
+  useRef
+} = React;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Pie Charts Master",
+    zh: "圓形圖大師",
+    ja: "円グラフマスター",
+    ko: "원형 차트 마스터",
+    es: "Maestro de Gráficos Circulares",
+    de: "Kreisdiagramm-Meister",
+    fi: "Ympyräkaaviomestari",
+    fr: "Maître des Diagrammes Circulaires",
+    ar: "سيد الرسوم البيانية الدائرية",
+    it: "Maestro dei Grafici a Torta"
+  },
+  chartTitle: {
+    en: "Favorite Sports",
+    zh: "最喜歡的運動",
+    ja: "好きなスポーツ",
+    ko: "좋아하는 스포츠",
+    es: "Deportes Favoritos",
+    de: "Lieblingssportarten",
+    fi: "Suosikkiurheilulajit",
+    fr: "Sports Préférés",
+    ar: "الرياضات المفضلة",
+    it: "Sport Preferiti"
+  },
+  football: {
+    en: "Football",
+    zh: "足球",
+    ja: "サッカー",
+    ko: "축구",
+    es: "Fútbol",
+    de: "Fußball",
+    fi: "Jalkapallo",
+    fr: "Football",
+    ar: "كرة القدم",
+    it: "Calcio"
+  },
+  basketball: {
+    en: "Basketball",
+    zh: "籃球",
+    ja: "バスケットボール",
+    ko: "농구",
+    es: "Baloncesto",
+    de: "Basketball",
+    fi: "Koripallo",
+    fr: "Basketball",
+    ar: "كرة السلة",
+    it: "Pallacanestro"
+  },
+  swimming: {
+    en: "Swimming",
+    zh: "游泳",
+    ja: "水泳",
+    ko: "수영",
+    es: "Natación",
+    de: "Schwimmen",
+    fi: "Uinti",
+    fr: "Natation",
+    ar: "السباحة",
+    it: "Nuoto"
+  },
+  running: {
+    en: "Running",
+    zh: "跑步",
+    ja: "ランニング",
+    ko: "달리기",
+    es: "Correr",
+    de: "Laufen",
+    fi: "Juoksu",
+    fr: "Course à pied",
+    ar: "الركض",
+    it: "Corsa"
+  },
+  others: {
+    en: "Others",
+    zh: "其他",
+    ja: "その他",
+    ko: "기타",
+    es: "Otros",
+    de: "Andere",
+    fi: "Muut",
+    fr: "Autres",
+    ar: "أخرى",
+    it: "Altri"
+  },
+  edit: {
+    en: "Edit Values",
+    zh: "編輯數值",
+    ja: "値を編集",
+    ko: "값 편집",
+    es: "Editar Valores",
+    de: "Werte bearbeiten",
+    fi: "Muokkaa arvoja",
+    fr: "Modifier les valeurs",
+    ar: "تعديل القيم",
+    it: "Modifica Valori"
+  },
+  total: {
+    en: "Total",
+    zh: "總數",
+    ja: "合計",
+    ko: "합계",
+    es: "Total",
+    de: "Gesamt",
+    fi: "Yhteensä",
+    fr: "Total",
+    ar: "المجموع",
+    it: "Totale"
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+function App() {
+  const [lang, setLang] = useState("zh");
+  const chartRef = useRef(null);
+  const [chartInstance, setChartInstance] = useState(null);
+  const [data, setData] = useState([{
+    id: "football",
+    value: 30,
+    color: "#3b82f6"
+  }, {
+    id: "basketball",
+    value: 25,
+    color: "#ef4444"
+  }, {
+    id: "swimming",
+    value: 20,
+    color: "#22c55e"
+  }, {
+    id: "running",
+    value: 15,
+    color: "#f59e0b"
+  }, {
+    id: "others",
+    value: 10,
+    color: "#8b5cf6"
+  }]);
+  useEffect(() => {
+    if (chartInstance) {
+      chartInstance.destroy();
+    }
+    const ctx = chartRef.current.getContext("2d");
+    const newChart = new Chart(ctx, {
+      type: "doughnut",
+      data: {
+        labels: data.map(d => getText(d.id, lang)),
+        datasets: [{
+          data: data.map(d => d.value),
+          backgroundColor: data.map(d => d.color),
+          borderWidth: 0,
+          hoverOffset: 20,
+          hoverBorderWidth: 4,
+          hoverBorderColor: "white"
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: "60%",
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            titleFont: {
+              size: 16,
+              family: "Outfit"
+            },
+            bodyFont: {
+              size: 14,
+              family: "Outfit"
+            },
+            padding: 16,
+            cornerRadius: 12,
+            displayColors: true,
+            backgroundColor: "rgba(0,0,0,0.8)",
+            backdropFilter: "blur(4px)",
+            callbacks: {
+              label: function (context) {
+                let label = context.label || "";
+                if (label) label += ": ";
+                label += context.raw;
+                const total = context.chart._metasets[context.datasetIndex].total;
+                const percentage = Math.round(context.raw / total * 100) + "%";
+                return label + " (" + percentage + ")";
+              }
+            }
+          }
+        },
+        animation: {
+          animateScale: true,
+          animateRotate: true
+        }
+      }
+    });
+    setChartInstance(newChart);
+    return () => {
+      if (newChart) newChart.destroy();
+    };
+  }, [data, lang]);
+  const updateValue = (index, val) => {
+    const newData = [...data];
+    newData[index].value = Number(val);
+    setData(newData);
+  };
+  const total = data.reduce((a, b) => a + b.value, 0);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 md:p-8 flex flex-col items-center font-sans"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-7xl flex flex-col md:flex-row justify-between items-center mb-8 gap-4"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent drop-shadow-lg text-center md:text-left"
+  }, getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-800/80 p-1.5 rounded-xl flex flex-wrap justify-center gap-1 backdrop-blur-md border border-white/10 max-w-full"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-blue-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white hover:bg-white/5"}`
+  }, l)))), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col lg:flex-row gap-8 w-full max-w-7xl flex-1 min-h-[500px]"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 glass-panel rounded-3xl p-8 flex flex-col items-center justify-center relative min-h-[400px] border border-white/10 shadow-[0_0_50px_rgba(59,130,246,0.1)]"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "absolute top-8 left-8 text-2xl font-black text-slate-300 tracking-tight"
+  }, getText("chartTitle", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "relative w-full h-[400px] lg:h-full flex items-center justify-center mt-12 lg:mt-0"
+  }, /*#__PURE__*/React.createElement("canvas", {
+    ref: chartRef
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 flex items-center justify-center pointer-events-none"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl font-black text-white drop-shadow-xl font-mono"
+  }, total), /*#__PURE__*/React.createElement("div", {
+    className: "text-blue-300 font-bold uppercase tracking-widest text-sm mt-1"
+  }, getText("total", lang)))))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full lg:w-96 flex flex-col gap-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 rounded-3xl flex-1 flex flex-col gap-4 overflow-y-auto"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between items-center mb-2 px-2"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "font-bold text-lg text-slate-300 flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "w-2 h-6 bg-blue-500 rounded-full"
+  }), getText("edit", lang))), data.map((d, i) => /*#__PURE__*/React.createElement("div", {
+    key: d.id,
+    className: "bg-slate-800/40 p-4 rounded-2xl border border-white/5 group hover:border-blue-500/30 hover:bg-slate-800/60 transition-all"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between items-center mb-3"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-3"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-3 h-3 rounded-full shadow-[0_0_8px_currentColor]",
+    style: {
+      color: d.color,
+      backgroundColor: d.color
+    }
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "font-bold text-base text-white"
+  }, getText(d.id, lang))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-black/30 px-2 py-1 rounded-md text-xs font-mono font-bold text-blue-300"
+  }, total > 0 ? Math.round(d.value / total * 100) : 0, "%")), /*#__PURE__*/React.createElement("div", {
+    className: "relative h-8 flex items-center"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "0",
+    max: "100",
+    value: d.value,
+    onChange: e => updateValue(i, e.target.value),
+    className: "w-full accent-blue-500 h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer z-10"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute -top-6 px-2 py-0.5 bg-blue-600 rounded text-[10px] font-bold text-white pointer-events-none transform -translate-x-1/2 transition-all opacity-0 group-hover:opacity-100",
+    style: {
+      left: `${d.value}%`
+    }
+  }, d.value)), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-1"
+  }, /*#__PURE__*/React.createElement("span", null, "0"), /*#__PURE__*/React.createElement("span", null, d.value), /*#__PURE__*/React.createElement("span", null, "100"))))))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

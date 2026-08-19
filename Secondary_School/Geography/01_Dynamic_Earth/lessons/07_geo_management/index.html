@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>07 地質資源與災害管理 | 動態地球</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <link rel="stylesheet" href="../../shared/earth.css">
+</head>
+<body class="lesson-07">
+  <nav class="lesson-nav">
+    <a href="../../index.html" class="lesson-nav__back">← 動態地球</a>
+    <span class="lesson-nav__title">07 · 資源與管理</span>
+    <span style="width:4rem"></span>
+  </nav>
+  <div class="layout layout--case">
+    <div class="viz-panel viz-panel--explorer" id="explorer-root"></div>
+    <aside class="side-panel side-panel--wide" id="lesson-panel"></aside>
+  </div>
+  <div class="lesson-pager" id="lesson-pager" style="max-width:56rem;margin:0 auto;padding:1rem 1.25rem 2rem"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="../../shared/lesson-content.js"></script>
+  <script src="../../shared/lesson-exercises.js"></script>
+  <script src="../../shared/lesson-ui.js"></script>
+  <script src="../../shared/case-explorer.js"></script>
+  <script>
+    const caseData = LESSON_CONTENT.geo_management.cases;
+    const CASE_TO_SITE = {
+      airport: 'airport',
+      shamwan: 'shamwan',
+      slope: 'slope_nt',
+      resource: 'quarry',
+    };
+
+    function syncCaseButtons(caseKey) {
+      document.querySelectorAll('[data-case-sync]').forEach((btn) => {
+        btn.classList.toggle('is-active', btn.dataset.caseSync === caseKey);
+      });
+    }
+
+    function renderFullCase(caseKey, site) {
+      const c = caseData[caseKey];
+      const box = document.getElementById('full-case');
+      if (!c || !box) return;
+
+      const siteNote = site && site.caseKey === caseKey && site.id !== CASE_TO_SITE[caseKey]
+        ? `<p class="case-site-note">📍 地圖站點：<strong>${site.name}</strong>（${site.region}）— ${site.detail}</p>`
+        : '';
+
+      box.innerHTML = `
+        <h3>${c.title}</h3>
+        ${siteNote}
+        <p style="font-size:0.8rem;color:var(--muted);margin-bottom:0.65rem"><strong>持份者：</strong>${c.stakeholders || '—'}</p>
+        <p style="font-size:0.82rem;margin-bottom:0.35rem"><strong>時間線</strong></p>
+        <ul class="timeline">${c.timeline.map((t) => `<li>${t}</li>`).join('')}</ul>
+        <div class="case-impact-grid">
+          <div>
+            <p class="case-impact-label">影響</p>
+            <ul class="case-impact-list">${c.impacts.map((i) => `<li>${i}</li>`).join('')}</ul>
+          </div>
+          <div>
+            <p class="case-impact-label">緩解／管理</p>
+            <ul class="case-impact-list">${c.mitigation.map((m) => `<li>${m}</li>`).join('')}</ul>
+          </div>
+        </div>`;
+      syncCaseButtons(caseKey);
+    }
+
+    const explorer = CaseExplorer.createCaseExplorer(document.getElementById('explorer-root'), {
+      defaultSite: 'airport',
+      onSelect(site) {
+        renderFullCase(site.caseKey, site);
+      },
+    });
+
+    LessonUI.initLesson('geo_management', {
+      title: '地質資源與災害管理',
+      lead: '左：衛星圖標示真實位置（可拖曳縮放）。右：DSE 筆記、持份者練習、12 題測驗、長題評分準則。',
+      pager: {
+        prev: '../06_tectonic_hazards/index.html',
+        prevLabel: '構造災害',
+        next: '../../index.html',
+        nextLabel: '完成 · 返回單元',
+      },
+    });
+
+    const overview = document.querySelector('.lesson-pane');
+
+    const jumpCard = LessonUI.el('div', 'card');
+    jumpCard.innerHTML = `
+      <h3>快速跳轉 DSE 個案</h3>
+      <p class="muted" style="margin-bottom:0.5rem">按鈕會同步左側地圖與個案選單</p>
+      <div class="case-sync-bar">
+        <button type="button" class="btn is-active" data-case-sync="airport">赤鱲角填海</button>
+        <button type="button" class="btn" data-case-sync="shamwan">深灣 1972</button>
+        <button type="button" class="btn" data-case-sync="slope">斜坡管理</button>
+        <button type="button" class="btn" data-case-sync="resource">地質資源</button>
+      </div>`;
+    overview.appendChild(jumpCard);
+
+    const caseBox = LessonUI.el('div', 'card');
+    caseBox.id = 'full-case';
+    overview.appendChild(caseBox);
+    renderFullCase('airport', explorer.getSelected());
+
+    document.querySelectorAll('[data-case-sync]').forEach((btn) => {
+      btn.onclick = () => {
+        const key = btn.dataset.caseSync;
+        const siteId = CASE_TO_SITE[key] || key;
+        explorer.select(siteId);
+      };
+    });
+
+    const statsCard = LessonUI.el('div', 'card');
+    statsCard.innerHTML = `<h3>香港數據一覽</h3>
+      <table class="data-table">
+        <tr><td>註冊斜坡</td><td>約 60,000 個</td></tr>
+        <tr><td>赤鱲角填海填料</td><td>約 2.5 億 m³</td></tr>
+        <tr><td>深灣事件</td><td>1972年6月18日</td></tr>
+        <tr><td>土力工程處</td><td>1977 年成立</td></tr>
+        <tr><td>大型填海審批</td><td>須環境影響評估（EIA）</td></tr>
+      </table>`;
+    document.querySelectorAll('.lesson-pane')[1].prepend(statsCard);
+  </script>
+</body>
+</html>

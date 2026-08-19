@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - Water Filtration</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: #ecfeff;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Water Filter Builder",
+    zh: "濾水器建造者",
+    ja: "浄水器ビルダー",
+    ko: "정수기 만들기",
+    es: "Constructor de filtros de agua",
+    de: "Wasserfilter-Bauer",
+    fi: "Vesisuodattimen rakentaja",
+    fr: "Constructeur de filtre à eau",
+    ar: "باني تصفية المياه",
+    it: "Costruttore Filtro Acqua"
+  },
+  instruction: {
+    en: "Build the filter layers from Coarse to Fine!",
+    zh: "由粗到細建立過濾層！",
+    ja: "粗いものから細かいものへフィルター層を作ろう！",
+    ko: "거친 것부터 고운 것까지 필터 층을 만드세요!",
+    es: "¡Construye las capas de filtro de grueso a fino!",
+    de: "Baue die Filterschichten von grob nach fein auf!",
+    fi: "Rakenna suodatinsarjat karkeasta hienoon!",
+    fr: "Construisez les couches filtrantes du grossier au fin !",
+    ar: "ابنِ طبقات المرشح من الخشن إلى الناعم!",
+    it: "Costruisci gli strati del filtro da Grossolano a Fine!"
+  },
+  gravel: {
+    en: "Gravel (Large)",
+    zh: "礫石 (大)",
+    ja: "砂利 (大)",
+    ko: "자갈 (이물질 제거)",
+    es: "Grava (Grande)",
+    de: "Kies (Groß)",
+    fi: "Sora (Suuri)",
+    fr: "Gravier (Grand)",
+    ar: "حصى (كبير)",
+    it: "Ghiaia (Grande)"
+  },
+  sand: {
+    en: "Sand (Fine)",
+    zh: "沙 (細)",
+    ja: "砂 (小)",
+    ko: "모래 (미세 물질 제거)",
+    es: "Arena (Fina)",
+    de: "Sand (Fein)",
+    fi: "Hiekka (Hieno)",
+    fr: "Sable (Fin)",
+    ar: "رمل (ناعم)",
+    it: "Sabbia (Fine)"
+  },
+  charcoal: {
+    en: "Charcoal (Chemicals)",
+    zh: "活性碳 (化學物質)",
+    ja: "木炭 (化学物質)",
+    ko: "숯 (화학물질 흡착)",
+    es: "Carbón (Químicos)",
+    de: "Kohle (Chemikalien)",
+    fi: "Hiili (Kemikaalit)",
+    fr: "Charbon (Chimiques)",
+    ar: "فحم (مواد كيميائية)",
+    it: "Carbone (Chimici)"
+  },
+  cotton: {
+    en: "Cotton (Base)",
+    zh: "棉花 (底層)",
+    ja: "綿 (ベース)",
+    ko: "솜 (마지막 여과)",
+    es: "Algodón (Base)",
+    de: "Baumwolle (Basis)",
+    fi: "Puuvilla (Pohja)",
+    fr: "Coton (Base)",
+    ar: "قطن (قاعدة)",
+    it: "Cotone (Base)"
+  },
+  pour: {
+    en: "Pour Water",
+    zh: "倒水",
+    ja: "水を注ぐ",
+    ko: "물 부기",
+    es: "Verter agua",
+    de: "Wasser gießen",
+    fi: "Kaada vettä",
+    fr: "Verser l'eau",
+    ar: "صب الماء",
+    it: "Versa Acqua"
+  },
+  reset: {
+    en: "Reset",
+    zh: "重置",
+    ja: "リセット",
+    ko: "초기화",
+    es: "Reiniciar",
+    de: "Zurücksetzen",
+    fi: "Nollaa",
+    fr: "Réinitialiser",
+    ar: "إعادة تعيين",
+    it: "Ripristina"
+  },
+  result_clean: {
+    en: "Clean Water!",
+    zh: "乾淨的水！",
+    ja: "きれいな水！",
+    ko: "깨끗한 물!",
+    es: "¡Agua limpia!",
+    de: "Sauberes Wasser!",
+    fi: "Puhdasta vettä!",
+    fr: "Eau propre !",
+    ar: "ماء نظيف!",
+    it: "Acqua Pulita!"
+  },
+  result_dirty: {
+    en: "Still Dirty...",
+    zh: "仍然很髒...",
+    ja: "まだ汚れている...",
+    ko: "아직 더러움...",
+    es: "Todavía sucio...",
+    de: "Noch schmutzig...",
+    fi: "Vielä likainen...",
+    fr: "Encore sale...",
+    ar: "لا يزال قذرا...",
+    it: "Ancora Sporco..."
+  }
+};
+const materials = [{
+  id: "gravel",
+  color: "bg-stone-500",
+  texture: "🪨"
+}, {
+  id: "sand",
+  color: "bg-yellow-200",
+  texture: "∴"
+}, {
+  id: "charcoal",
+  color: "bg-gray-800",
+  texture: "⬛"
+}, {
+  id: "cotton",
+  color: "bg-white",
+  texture: "☁️"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [layers, setLayers] = useState([]); // Bottom to Top visually? Usually build upwards.
+  const [filtering, setFiltering] = useState(false);
+  const [result, setResult] = useState(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+  const addLayer = mat => {
+    if (layers.length < 4 && !filtering) {
+      setLayers([...layers, mat]); // Stack on top
+    }
+  };
+  const reset = () => {
+    setLayers([]);
+    setFiltering(false);
+    setResult(null);
+  };
+  const pour = () => {
+    if (layers.length === 0) return;
+    setFiltering(true);
+
+    // Correct order (Top down): Gravel -> Sand -> Charcoal -> Cotton.
+    // User stacks Bottom Up? Or adds to Top?
+    // Stack visual: Oldest at Bottom.
+    // If user adds: Cotton, then Charcoal, then Sand, then Gravel.
+    // Array: [Cotton, Charcoal, Sand, Gravel]
+    // Correct order check:
+    // Bottom (index 0) = Cotton
+    // Index 1 = Charcoal
+    // Index 2 = Sand
+    // Index 3 = Gravel
+
+    // Check sequence
+    const expectedOrder = ["cotton", "charcoal", "sand", "gravel"]; // Ideal
+
+    // Flexible check: Cotton at bottom is crucial. Gravel at top is good.
+    // Just check exact match for "Perfect" clean.
+
+    setTimeout(() => {
+      const currentIds = layers.map(l => l.id);
+      const isPerfect = JSON.stringify(currentIds) === JSON.stringify(expectedOrder);
+      setResult(isPerfect ? "result_clean" : "result_dirty");
+      setFiltering(false);
+    }, 2000);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-bold mb-8 text-cyan-700"
+  }, getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col md:flex-row gap-12 items-end justify-center w-full max-w-4xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "relative w-48 h-[400px] flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-16 h-8 bg-cyan-100 border-x-4 border-cyan-300"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "w-48 h-[300px] bg-cyan-50/50 border-4 border-cyan-300 rounded-b-3xl border-t-0 flex flex-col-reverse overflow-hidden relative"
+  }, layers.map((l, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: `w-full h-1/4 ${l.color} flex items-center justify-center text-2xl border-t border-black/10`
+  }, l.texture, " ", getText(l.id).split(" ")[0])), layers.length === 0 && /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 flex items-center justify-center text-cyan-300 font-bold opacity-50"
+  }, "Empty")), /*#__PURE__*/React.createElement("div", {
+    className: "mt-4 w-32 h-20 border-b-4 border-x-4 border-slate-400 rounded-b-xl relative overflow-hidden"
+  }, result === "result_clean" && /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-0 w-full h-16 bg-blue-300 opacity-60 animate-bounce-slow"
+  }), result === "result_dirty" && /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-0 w-full h-16 bg-yellow-700 opacity-60 animate-bounce-slow"
+  })), filtering && /*#__PURE__*/React.createElement("div", {
+    className: "absolute -top-20 left-1/2 -translate-x-1/2 flex flex-col items-center z-20"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl rotate-45"
+  }, "🫗"), /*#__PURE__*/React.createElement(motion.div, {
+    className: "w-4 bg-yellow-700 h-64 opacity-50",
+    initial: {
+      scaleY: 0
+    },
+    animate: {
+      scaleY: 1
+    }
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col gap-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-6 rounded-2xl shadow-lg"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "font-bold text-slate-500 mb-4"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 gap-4"
+  }, materials.map(m => /*#__PURE__*/React.createElement("button", {
+    key: m.id,
+    onClick: () => addLayer(m),
+    disabled: layers.length >= 4 || filtering,
+    className: `p-4 rounded-xl font-bold flex flex-col items-center gap-2 border-2 text-sm transition-transform active:scale-95 hover:bg-slate-50
+                                  ${layers.length >= 4 ? "opacity-50 cursor-not-allowed" : "border-slate-200"}
+                               `
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl"
+  }, m.texture), /*#__PURE__*/React.createElement("div", null, getText(m.id)))))), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: pour,
+    disabled: filtering || layers.length === 0,
+    className: "flex-1 bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 rounded-xl shadow-lg disabled:opacity-50"
+  }, getText("pour")), /*#__PURE__*/React.createElement("button", {
+    onClick: reset,
+    className: "bg-slate-500 hover:bg-slate-400 text-white font-bold py-3 px-6 rounded-xl shadow-lg"
+  }, getText("reset"))), result && /*#__PURE__*/React.createElement("div", {
+    className: `text-center font-black text-2xl px-4 py-2 rounded-xl animate-bounce ${result === "result_clean" ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"}`
+  }, getText(result)))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

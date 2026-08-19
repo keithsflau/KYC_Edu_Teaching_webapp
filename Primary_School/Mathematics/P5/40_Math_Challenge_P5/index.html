@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小五數學：數理挑戰 | P5 Math Challenge</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(99, 102, 241, 0.15); /* Indigo 500 alpha */
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(129, 140, 248, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+      .btn-glass {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.2s;
+      }
+      .btn-glass:hover {
+        background: rgba(255, 255, 255, 0.15);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "P5 Math Challenge",
+    zh: "P5 數理挑戰",
+    ja: "P5 数学チャレンジ",
+    ko: "P5 수학 챌린지",
+    es: "Desafío Matemático P5",
+    de: "P5 Mathe-Challenge",
+    fi: "P5 Matematiikkahaaste",
+    fr: "Défi Math P5",
+    ar: "تحدي الرياضيات P5",
+    it: "Sfida Matematica P5"
+  },
+  start: {
+    en: "Start Challenge",
+    zh: "開始挑戰",
+    ja: "チャレンジ開始",
+    ko: "챌린지 시작",
+    es: "Iniciar Desafío",
+    de: "Starten",
+    fi: "Aloita",
+    fr: "Commencer",
+    ar: "ابدأ التحدي",
+    it: "Inizia"
+  },
+  score: {
+    en: "Score",
+    zh: "分數",
+    ja: "スコア",
+    ko: "점수",
+    es: "Puntuación",
+    de: "Punktzahl",
+    fi: "Pisteet",
+    fr: "Score",
+    ar: "النتيجة",
+    it: "Punteggio"
+  },
+  q1: {
+    en: "3/4 + 1/2 = ?",
+    zh: "3/4 + 1/2 = ?",
+    ja: "3/4 + 1/2 = ?",
+    ko: "3/4 + 1/2 = ?",
+    es: "3/4 + 1/2 = ?",
+    de: "3/4 + 1/2 = ?",
+    fi: "3/4 + 1/2 = ?",
+    fr: "3/4 + 1/2 = ?",
+    ar: "3/4 + 1/2 = ?",
+    it: "3/4 + 1/2 = ?"
+  },
+  q2: {
+    en: "Area of Triangle Formula?",
+    zh: "三角形面積公式？",
+    ja: "三角形の面積の公式？",
+    ko: "삼각형의 넓이 공식?",
+    es: "¿Fórmula del Área del Triángulo?",
+    de: "Formel für Dreiecksfläche?",
+    fi: "Kolmion pinta-alan kaava?",
+    fr: "Formule de l'aire du triangle ?",
+    ar: "صيغة مساحة المثلث؟",
+    it: "Formula Area Triangolo?"
+  },
+  q2_opt1: {
+    en: "Base × Height",
+    zh: "底 × 高",
+    ja: "底辺 × 高さ",
+    ko: "밑변 × 높이",
+    es: "Base × Altura",
+    de: "Basis × Höhe",
+    fi: "Kanta × Korkeus",
+    fr: "Base × Hauteur",
+    ar: "القاعدة × الارتفاع",
+    it: "Base × Altezza"
+  },
+  q2_opt2: {
+    en: "Base × Height ÷ 2",
+    zh: "底 × 高 ÷ 2",
+    ja: "底辺 × 高さ ÷ 2",
+    ko: "밑변 × 높이 ÷ 2",
+    es: "Base × Altura ÷ 2",
+    de: "Basis × Höhe ÷ 2",
+    fi: "Kanta × Korkeus ÷ 2",
+    fr: "Base × Hauteur ÷ 2",
+    ar: "القاعدة × الارتفاع ÷ 2",
+    it: "Base × Altezza ÷ 2"
+  },
+  q2_opt3: {
+    en: "Base + Height",
+    zh: "底 + 高",
+    ja: "底辺 + 高さ",
+    ko: "밑변 + 높이",
+    es: "Base + Altura",
+    de: "Basis + Höhe",
+    fi: "Kanta + Korkeus",
+    fr: "Base + Hauteur",
+    ar: "القاعدة + الارتفاع",
+    it: "Base + Altezza"
+  },
+  q2_opt4: {
+    en: "Base × Height × 2",
+    zh: "底 × 高 × 2",
+    ja: "底辺 × 高さ × 2",
+    ko: "밑변 × 높이 × 2",
+    es: "Base × Altura × 2",
+    de: "Basis × Höhe × 2",
+    fi: "Kanta × Korkeus × 2",
+    fr: "Base × Hauteur × 2",
+    ar: "القاعدة × الارتفاع × 2",
+    it: "Base × Altezza × 2"
+  },
+  q3: {
+    en: "25% equals?",
+    zh: "25% 等於？",
+    ja: "25% は？",
+    ko: "25%는?",
+    es: "¿25% es igual a?",
+    de: "25% entspricht?",
+    fi: "25% vastaa?",
+    fr: "25% égale ?",
+    ar: "25% يساوي؟",
+    it: "25% uguale?"
+  },
+  q4: {
+    en: "Volume of Cuboid Formula?",
+    zh: "長方體體積公式？",
+    ja: "直方体の体積の公式？",
+    ko: "직육면체의 부피 공식?",
+    es: "¿Fórmula del Volumen del Cuboide?",
+    de: "Formel für Quadervolumen?",
+    fi: "Suorakulmaisen särmiön tilavuus?",
+    fr: "Formule du volume du cuboïde ?",
+    ar: "صيغة حجم متوازي المستطيلات؟",
+    it: "Formula Volume Cuboide?"
+  },
+  q4_opt1: {
+    en: "L × W",
+    zh: "長 × 闊",
+    ja: "縦 × 横",
+    ko: "가로 × 세로",
+    es: "L × A",
+    de: "L × B",
+    fi: "P × L",
+    fr: "L × l",
+    ar: "الطول × العرض",
+    it: "L × P"
+  },
+  q4_opt2: {
+    en: "L × W × H",
+    zh: "長 × 闊 × 高",
+    ja: "縦 × 横 × 高さ",
+    ko: "가로 × 세로 × 높이",
+    es: "L × A × H",
+    de: "L × B × H",
+    fi: "P × L × K",
+    fr: "L × l × H",
+    ar: "الطول × العرض × الارتفاع",
+    it: "L × P × A"
+  },
+  q4_opt3: {
+    en: "L + W + H",
+    zh: "長 + 闊 + 高",
+    ja: "縦 + 横 + 高さ",
+    ko: "가로 + 세로 + 높이",
+    es: "L + A + H",
+    de: "L + B + H",
+    fi: "P + L + K",
+    fr: "L + l + H",
+    ar: "الطول + العرض + الارتفاع",
+    it: "L + P + A"
+  },
+  q4_opt4: {
+    en: "2(L + W)",
+    zh: "2(長 + 闊)",
+    ja: "2(縦 + 横)",
+    ko: "2(가로 + 세로)",
+    es: "2(L + A)",
+    de: "2(L + B)",
+    fi: "2(P + L)",
+    fr: "2(L + l)",
+    ar: "2(الطول + العرض)",
+    it: "2(L + P)"
+  },
+  q7: {
+    en: "Angle of North-East?",
+    zh: "東北方的角度？",
+    ja: "北東の角度？",
+    ko: "북동쪽의 각도?",
+    es: "¿Ángulo del Noreste?",
+    de: "Winkel von Nordost?",
+    fi: "Koillisen kulma?",
+    fr: "Angle du Nord-Est ?",
+    ar: "زاوية الشمال الشرقي؟",
+    it: "Angolo Nord-Est?"
+  },
+  q8: {
+    en: "Round 3.456 to 1 d.p.",
+    zh: "3.456 四捨五入至一位小數",
+    ja: "3.456 を小数第1位で四捨五入",
+    ko: "3.456 소수 첫째자리 반올림",
+    es: "Redondear 3.456 a 1 d.",
+    de: "Runde 3,456 auf 1 Dez.",
+    fi: "Pyöristä 3.456 1 des.",
+    fr: "Arrondir 3.456 à 1 déc.",
+    ar: "قرب 3.456 إلى منزلة واحدة",
+    it: "Arrotonda 3.456 a 1 dec."
+  },
+  completed: {
+    en: "Challenge Complete!",
+    zh: "挑戰完成！",
+    ja: "チャレンジ完了！",
+    ko: "챌린지 완료!",
+    es: "¡Desafío Completado!",
+    de: "Herausforderung Abgeschlossen!",
+    fi: "Haaste Suoritettu!",
+    fr: "Défi Terminé !",
+    ar: "اكتمل التحدي!",
+    it: "Sfida Completata!"
+  },
+  playAgain: {
+    en: "Play Again",
+    zh: "再玩一次",
+    ja: "もう一度プレイ",
+    ko: "다시하기",
+    es: "Jugar de Nuevo",
+    de: "Nochmal Spielen",
+    fi: "Pelaa Uudelleen",
+    fr: "Rejouer",
+    ar: "العب مرة أخرى",
+    it: "Gioca Ancora"
+  },
+  correct: {
+    en: "Correct!",
+    zh: "答對了！",
+    ja: "正解！",
+    ko: "정답!",
+    es: "¡Correcto!",
+    de: "Richtig!",
+    fi: "Oikein!",
+    fr: "Correct !",
+    ar: "صحيح!",
+    it: "Corretto!"
+  },
+  wrong: {
+    en: "Wrong!",
+    zh: "答錯了！",
+    ja: "不正解！",
+    ko: "오답!",
+    es: "¡Incorrecto!",
+    de: "Falsch!",
+    fi: "Väärin!",
+    fr: "Faux !",
+    ar: "خطأ!",
+    it: "Sbagliato!"
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [gameState, setGameState] = useState("menu"); // menu, playing, end
+  const [qIndex, setQIndex] = useState(0);
+  const [score, setScore] = useState(0);
+  const [feedback, setFeedback] = useState(null); // null, correct, wrong
+
+  const questions = [{
+    q: "q1",
+    opts: ["5/4", "4/6", "1", "5/6"],
+    ans: 0
+  }, {
+    q: "q2",
+    opts: ["q2_opt1", "q2_opt2", "q2_opt3", "q2_opt4"],
+    ans: 1,
+    dynamic: true
+  }, {
+    q: "q3",
+    opts: ["0.25", "0.025", "2.5", "25"],
+    ans: 0
+  }, {
+    q: "q4",
+    opts: ["q4_opt1", "q4_opt2", "q4_opt3", "q4_opt4"],
+    ans: 1,
+    dynamic: true
+  }, {
+    q: "2x + 3 = 11, x = ?",
+    opts: ["4", "5", "7", "3"],
+    ans: 0
+  }, {
+    q: "1.5 × 0.4 = ?",
+    opts: ["0.6", "0.06", "6", "60"],
+    ans: 0
+  }, {
+    q: "q7",
+    opts: ["45°", "90°", "135°", "180°"],
+    ans: 0
+  }, {
+    q: "q8",
+    opts: ["3.4", "3.5", "3.46", "3.0"],
+    ans: 1
+  }];
+  const handleAnswer = idx => {
+    if (feedback) return; // Prevent double clicks
+    const correct = idx === questions[qIndex].ans;
+    if (correct) {
+      setScore(s => s + 100);
+      setFeedback("correct");
+    } else {
+      setFeedback("wrong");
+    }
+    setTimeout(() => {
+      setFeedback(null);
+      if (qIndex < questions.length - 1) {
+        setQIndex(qIndex + 1);
+      } else {
+        setGameState("end");
+      }
+    }, 1000);
+  };
+  const startGame = () => {
+    setScore(0);
+    setQIndex(0);
+    setGameState("playing");
+    setFeedback(null);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4 relative overflow-hidden"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-10 left-10 w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl animate-pulse"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-10 right-10 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-pulse delay-700"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-4xl flex justify-between items-center mb-10 z-10"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-black text-indigo-400 drop-shadow-[0_0_15px_rgba(129,140,248,0.5)]"
+  }, "🏆 ", getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-800/80 p-1.5 rounded-xl border border-white/10 flex flex-wrap justify-end gap-1 max-w-[50%]"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-indigo-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white hover:bg-white/5"}`
+  }, l)))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-3xl flex flex-col items-center z-10"
+  }, /*#__PURE__*/React.createElement(AnimatePresence, {
+    mode: "wait"
+  }, gameState === "menu" && /*#__PURE__*/React.createElement(motion.div, {
+    key: "menu",
+    initial: {
+      opacity: 0,
+      scale: 0.9
+    },
+    animate: {
+      opacity: 1,
+      scale: 1
+    },
+    exit: {
+      opacity: 0,
+      scale: 0.9
+    },
+    className: "glass-panel p-12 rounded-3xl flex flex-col items-center gap-8 text-center w-full max-w-lg"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-8xl"
+  }, "🎮"), /*#__PURE__*/React.createElement("div", {
+    className: "text-slate-300 text-lg"
+  }, "Are you ready to test your skills?"), /*#__PURE__*/React.createElement("button", {
+    onClick: startGame,
+    className: "w-full py-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-black text-2xl shadow-lg hover:shadow-indigo-500/50 hover:scale-105 transition-all"
+  }, getText("start", lang))), gameState === "playing" && /*#__PURE__*/React.createElement(motion.div, {
+    key: "playing",
+    initial: {
+      opacity: 0,
+      x: 50
+    },
+    animate: {
+      opacity: 1,
+      x: 0
+    },
+    exit: {
+      opacity: 0,
+      x: -50
+    },
+    className: "w-full max-w-2xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between items-end mb-4 px-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-indigo-300 font-bold"
+  }, "Question ", qIndex + 1, " / ", questions.length), /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-black text-yellow-400 drop-shadow-[0_0_10px_rgba(250,204,21,0.5)]"
+  }, score)), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-8 rounded-3xl relative overflow-hidden"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "text-3xl md:text-4xl font-black text-white text-center mb-10 leading-snug"
+  }, getText(questions[qIndex].q, lang)), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 gap-4"
+  }, questions[qIndex].opts.map((opt, i) => /*#__PURE__*/React.createElement("button", {
+    key: i,
+    onClick: () => handleAnswer(i),
+    disabled: feedback !== null,
+    className: `
+                                                p-6 rounded-2xl text-xl font-bold transition-all border
+                                                ${feedback === null ? "bg-white/5 border-white/10 hover:bg-white/10 hover:border-indigo-400/50 hover:shadow-[0_0_20px_rgba(99,102,241,0.3)]" : i === questions[qIndex].ans ? "bg-green-500 text-white border-green-400 shadow-[0_0_20px_rgba(34,197,94,0.5)]" // Show correct answer
+    : "bg-white/5 border-white/10 opacity-50"}
+                                                ${feedback === "wrong" && feedback !== null && "grayscale"} 
+                                            `
+  }, questions[qIndex].dynamic ? getText(opt, lang) : opt))), /*#__PURE__*/React.createElement(AnimatePresence, null, feedback && /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      opacity: 0
+    },
+    animate: {
+      opacity: 1
+    },
+    exit: {
+      opacity: 0
+    },
+    className: "absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center pointer-events-none"
+  }, /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      scale: 0.5,
+      rotate: -10
+    },
+    animate: {
+      scale: 1.2,
+      rotate: 0
+    },
+    className: `text-6xl font-black ${feedback === "correct" ? "text-green-400" : "text-red-400"} drop-shadow-[0_0_30px_currentColor]`
+  }, getText(feedback, lang)))))), gameState === "end" && /*#__PURE__*/React.createElement(motion.div, {
+    key: "end",
+    initial: {
+      opacity: 0,
+      scale: 0.9
+    },
+    animate: {
+      opacity: 1,
+      scale: 1
+    },
+    className: "glass-panel p-12 rounded-3xl flex flex-col items-center gap-6 text-center w-full max-w-lg"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-8xl"
+  }, "🏆"), /*#__PURE__*/React.createElement("h2", {
+    className: "text-3xl font-black text-white"
+  }, getText("completed", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "text-xl text-slate-300"
+  }, getText("score", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "text-7xl font-black text-yellow-400 drop-shadow-[0_0_30px_rgba(250,204,21,0.5)]"
+  }, score), /*#__PURE__*/React.createElement("button", {
+    onClick: startGame,
+    className: "w-full py-4 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold text-xl transition-all mt-4"
+  }, getText("playAgain", lang))))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

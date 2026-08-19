@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小五數學：閱讀折線圖 | Reading Line Graphs</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(30, 58, 138, 0.3); /* Blue 900 */
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(96, 165, 250, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Reading Line Graphs",
+    zh: "閱讀折線圖",
+    ja: "折れ線グラフを読む",
+    ko: "꺾은선 그래프 읽기",
+    es: "Lectura de Gráficos Lineales",
+    de: "Liniendiagramme lesen",
+    fi: "Viivakaavioiden lukeminen",
+    fr: "Lecture de graphiques linéaires",
+    ar: "قراءة الرسوم البيانية الخطية",
+    it: "Lettura grafici a linee"
+  },
+  graphTitle: {
+    en: "Monthly Avg. Temp.",
+    zh: "香港月平均氣溫",
+    ja: "月平均気温",
+    ko: "월별 평균 기온",
+    es: "Temp. Promedio Mensual",
+    de: "Monatliche Durchschnittstemp.",
+    fi: "Kuukausittainen keskilämpötila",
+    fr: "Temp. moy. mensuelle",
+    ar: "متوسط درجة الحرارة الشهرية",
+    it: "Temp. media mensile"
+  },
+  selectedInfo: {
+    en: "Avg Temp of {month}",
+    zh: "{month} 的平均氣溫",
+    ja: "{month} の平均気温",
+    ko: "{month}의 평균 기온",
+    es: "Temp. prom. de {month}",
+    de: "Durchschnittstemp. von {month}",
+    fi: "{month}n keskilämpötila",
+    fr: "Temp. moy. de {month}",
+    ar: "متوسط حرارة {month}",
+    it: "Temp. media di {month}"
+  },
+  tip: {
+    en: "Click on points to see values",
+    zh: "點擊圖上的點來查看數據",
+    ja: "ポイントをクリックして値を確認",
+    ko: "값을 보려면 점을 클릭하세요",
+    es: "Clic en puntos para ver valores",
+    de: "Klicke auf Punkte für Werte",
+    fi: "Klikkaa pisteitä nähdäksesi arvot",
+    fr: "Cliquez sur les points pour voir les valeurs",
+    ar: "انقر على النقاط لرؤية القيم",
+    it: "Clicca sui punti per vedere i valori"
+  },
+  jan: {
+    en: "Jan",
+    zh: "1月",
+    ja: "1月",
+    ko: "1월",
+    es: "Ene",
+    de: "Jan",
+    fi: "Tammi",
+    fr: "Jan",
+    ar: "يناير",
+    it: "Gen"
+  },
+  feb: {
+    en: "Feb",
+    zh: "2月",
+    ja: "2月",
+    ko: "2월",
+    es: "Feb",
+    de: "Feb",
+    fi: "Helmi",
+    fr: "Fév",
+    ar: "فبراير",
+    it: "Feb"
+  },
+  mar: {
+    en: "Mar",
+    zh: "3月",
+    ja: "3月",
+    ko: "3월",
+    es: "Mar",
+    de: "Mär",
+    fi: "Maalis",
+    fr: "Mar",
+    ar: "مارس",
+    it: "Mar"
+  },
+  apr: {
+    en: "Apr",
+    zh: "4月",
+    ja: "4月",
+    ko: "4월",
+    es: "Abr",
+    de: "Apr",
+    fi: "Huhti",
+    fr: "Avr",
+    ar: "أبريل",
+    it: "Apr"
+  },
+  may: {
+    en: "May",
+    zh: "5月",
+    ja: "5月",
+    ko: "5월",
+    es: "May",
+    de: "Mai",
+    fi: "Touko",
+    fr: "Mai",
+    ar: "مايو",
+    it: "Mag"
+  },
+  jun: {
+    en: "Jun",
+    zh: "6月",
+    ja: "6月",
+    ko: "6월",
+    es: "Jun",
+    de: "Jun",
+    fi: "Kesä",
+    fr: "Juin",
+    ar: "يونيو",
+    it: "Giu"
+  }
+};
+const getText = (key, lang, vars) => {
+  let s = t[key]?.[lang] || t[key]?.["en"] || key;
+  if (vars && typeof s === "string") {
+    for (const [k, v] of Object.entries(vars)) {
+      s = s.replaceAll(`{${k}}`, v);
+    }
+  }
+  return s;
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [selected, setSelected] = useState(null);
+  const data = [{
+    month: "jan",
+    temp: 15
+  }, {
+    month: "feb",
+    temp: 17
+  }, {
+    month: "mar",
+    temp: 22
+  }, {
+    month: "apr",
+    temp: 26
+  }, {
+    month: "may",
+    temp: 30
+  }, {
+    month: "jun",
+    temp: 32
+  }];
+  const maxTemp = 35;
+  const minTemp = 10;
+  const range = maxTemp - minTemp;
+
+  // SVG Dimensions
+  const width = 350;
+  const height = 220;
+  const padding = {
+    top: 30,
+    bottom: 30,
+    left: 40,
+    right: 20
+  };
+  const chartW = width - padding.left - padding.right;
+  const chartH = height - padding.top - padding.bottom; // 160
+
+  const points = data.map((d, i) => ({
+    x: padding.left + i * (chartW / (data.length - 1)),
+    y: height - padding.bottom - (d.temp - minTemp) / range * chartH,
+    ...d
+  }));
+  const pointString = points.map(p => `${p.x},${p.y}`).join(" ");
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-4xl flex justify-between items-center mb-10"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-black text-blue-400 drop-shadow-[0_0_15px_rgba(96,165,250,0.5)]"
+  }, "📈 ", getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-800/80 p-1.5 rounded-xl border border-white/10 flex flex-wrap justify-end gap-1 max-w-[50%]"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-blue-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white hover:bg-white/5"}`
+  }, l)))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-3xl flex flex-col gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 md:p-8 rounded-3xl flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-xl font-bold text-blue-200 mb-6 tracking-wide uppercase"
+  }, getText("graphTitle", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-lg relative"
+  }, /*#__PURE__*/React.createElement("svg", {
+    viewBox: `0 0 ${width} ${height}`,
+    className: "w-full h-auto overflow-visible"
+  }, [0, 0.2, 0.4, 0.6, 0.8, 1].map(p => {
+    const val = minTemp + range * p;
+    const y = height - padding.bottom - p * chartH;
+    return /*#__PURE__*/React.createElement("g", {
+      key: p
+    }, /*#__PURE__*/React.createElement("line", {
+      x1: padding.left,
+      y1: y,
+      x2: width - padding.right,
+      y2: y,
+      stroke: "rgba(255,255,255,0.1)",
+      strokeDasharray: "4 4"
+    }), /*#__PURE__*/React.createElement("text", {
+      x: padding.left - 5,
+      y: y + 4,
+      textAnchor: "end",
+      className: "text-[10px] fill-slate-400 font-mono"
+    }, Math.round(val), "°"));
+  }), points.map((p, i) => /*#__PURE__*/React.createElement("text", {
+    key: i,
+    x: p.x,
+    y: height - 10,
+    textAnchor: "middle",
+    className: "text-[10px] fill-slate-300 font-bold uppercase tracking-wider"
+  }, getText(p.month, lang))), /*#__PURE__*/React.createElement("path", {
+    d: `M${points[0].x},${height - padding.bottom} L${pointString} L${points[points.length - 1].x},${height - padding.bottom} Z`,
+    fill: "rgba(59, 130, 246, 0.1)"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: `M${pointString}`,
+    fill: "none",
+    stroke: "#60a5fa",
+    strokeWidth: "3",
+    strokeLinecap: "round",
+    strokeLinejoin: "round"
+  }), points.map((p, i) => /*#__PURE__*/React.createElement(motion.g, {
+    key: i,
+    whileHover: {
+      scale: 1.5
+    },
+    onClick: () => setSelected(i),
+    className: "cursor-pointer"
+  }, /*#__PURE__*/React.createElement("circle", {
+    cx: p.x,
+    cy: p.y,
+    r: selected === i ? 6 : 4,
+    fill: "#1e3a8a",
+    stroke: selected === i ? "#fff" : "#60a5fa",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: p.x,
+    cy: p.y,
+    r: "15",
+    fill: "transparent"
+  })))))), /*#__PURE__*/React.createElement("div", {
+    className: "h-32"
+  }, /*#__PURE__*/React.createElement(AnimatePresence, {
+    mode: "wait"
+  }, selected !== null ? /*#__PURE__*/React.createElement(motion.div, {
+    key: "info",
+    initial: {
+      opacity: 0,
+      y: 10
+    },
+    animate: {
+      opacity: 1,
+      y: 0
+    },
+    exit: {
+      opacity: 0,
+      y: -10
+    },
+    className: "glass-panel p-6 rounded-2xl flex items-center justify-between border-l-4 border-l-blue-400 bg-blue-900/20"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-lg text-blue-200"
+  }, getText("selectedInfo", lang, {
+    month: getText(data[selected].month, lang)
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "text-5xl font-black text-white drop-shadow-[0_0_10px_rgba(96,165,250,0.8)]"
+  }, data[selected].temp, "°C")) : /*#__PURE__*/React.createElement(motion.div, {
+    key: "tip",
+    initial: {
+      opacity: 0
+    },
+    animate: {
+      opacity: 1
+    },
+    exit: {
+      opacity: 0
+    },
+    className: "bg-amber-500/10 border border-amber-500/20 p-6 rounded-2xl flex items-center gap-4 text-amber-200 justify-center h-full"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-3xl"
+  }, "💡"), /*#__PURE__*/React.createElement("span", {
+    className: "font-bold text-lg"
+  }, getText("tip", lang)))))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

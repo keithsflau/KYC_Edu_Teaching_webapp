@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小五數學：八個方向 | 3D Compass</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      :root {
+        --primary-glow: rgba(6, 182, 212, 0.5);
+        --glass-bg: rgba(255, 255, 255, 0.1);
+        --glass-border: rgba(255, 255, 255, 0.2);
+      }
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: radial-gradient(circle at 50% 0%, #083344 0%, #000000 100%);
+        color: white;
+        overflow: hidden;
+        margin: 0;
+      }
+      .glass-panel {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      }
+      .glass-btn {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        transition: 0.3s;
+      }
+      .glass-btn:hover {
+        background: rgba(6, 182, 212, 0.4);
+        border-color: #06b6d4;
+        box-shadow: 0 0 20px var(--primary-glow);
+      }
+      .glass-btn.active {
+        background: #06b6d4;
+        border-color: #06b6d4;
+        box-shadow: 0 0 20px var(--primary-glow);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect,
+  useRef,
+  useLayoutEffect
+} = React;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "3D Compass",
+    zh: "3D 指南針",
+    ja: "3D コンパス",
+    ko: "3D 나침반",
+    es: "Brújula 3D",
+    de: "3D Kompass",
+    fi: "3D Kompassi",
+    fr: "Boussole 3D",
+    ar: "بوصلة ثلاثية الأبعاد",
+    it: "Bussola 3D"
+  },
+  N: {
+    en: "North",
+    zh: "北方",
+    ja: "北",
+    ko: "북쪽",
+    es: "Norte",
+    de: "Norden",
+    fi: "Pohjoinen",
+    fr: "Nord",
+    ar: "شمال",
+    it: "Nord"
+  },
+  NE: {
+    en: "Northeast",
+    zh: "東北",
+    ja: "北東",
+    ko: "북동",
+    es: "Noreste",
+    de: "Nordost",
+    fi: "Koillinen",
+    fr: "Nord-Est",
+    ar: "شمال شرق",
+    it: "Nord-Est"
+  },
+  E: {
+    en: "East",
+    zh: "東方",
+    ja: "東",
+    ko: "동쪽",
+    es: "Este",
+    de: "Osten",
+    fi: "Itä",
+    fr: "Est",
+    ar: "شرق",
+    it: "Est"
+  },
+  SE: {
+    en: "Southeast",
+    zh: "東南",
+    ja: "南東",
+    ko: "남동",
+    es: "Sureste",
+    de: "Südost",
+    fi: "Kaakko",
+    fr: "Sud-Est",
+    ar: "جنوب شرق",
+    it: "Sud-Est"
+  },
+  S: {
+    en: "South",
+    zh: "南方",
+    ja: "南",
+    ko: "남쪽",
+    es: "Sur",
+    de: "Süden",
+    fi: "Etelä",
+    fr: "Sud",
+    ar: "جنوب",
+    it: "Sud"
+  },
+  SW: {
+    en: "Southwest",
+    zh: "西南",
+    ja: "南西",
+    ko: "남서",
+    es: "Suroeste",
+    de: "Südwest",
+    fi: "Lounas",
+    fr: "Sud-Ouest",
+    ar: "جنوب غرب",
+    it: "Sud-Ovest"
+  },
+  W: {
+    en: "West",
+    zh: "西方",
+    ja: "西",
+    ko: "서쪽",
+    es: "Oeste",
+    de: "Westen",
+    fi: "Länsi",
+    fr: "Ouest",
+    ar: "غرب",
+    it: "Ovest"
+  },
+  NW: {
+    en: "Northwest",
+    zh: "西北",
+    ja: "北西",
+    ko: "북서",
+    es: "Noroeste",
+    de: "Nordwest",
+    fi: "Luode",
+    fr: "Nord-Ouest",
+    ar: "شمال غرب",
+    it: "Nord-Ovest"
+  },
+  angle: {
+    en: "Angle",
+    zh: "角度",
+    ja: "角度",
+    ko: "각도",
+    es: "Ángulo",
+    de: "Winkel",
+    fi: "Kulma",
+    fr: "Angle",
+    ar: "زاوية",
+    it: "Angolo"
+  },
+  selected: {
+    en: "Selected",
+    zh: "已選",
+    ja: "選択中",
+    ko: "선택됨",
+    es: "Seleccionado",
+    de: "Ausgewählt",
+    fi: "Valittu",
+    fr: "Sélectionné",
+    ar: "مختار",
+    it: "Selezionato"
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+function Scene({
+  targetAngle,
+  setAngle
+}) {
+  const mountRef = useRef(null);
+  const sceneDataRef = useRef({});
+  useLayoutEffect(() => {
+    const w = mountRef.current.clientWidth;
+    const h = mountRef.current.clientHeight;
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 100);
+    camera.position.set(0, 15, 10);
+    camera.lookAt(0, 0, 0);
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true
+    });
+    renderer.setSize(w, h);
+    renderer.shadowMap.enabled = true;
+    mountRef.current.appendChild(renderer.domElement);
+
+    // Lights
+    const amb = new THREE.AmbientLight(0xffffff, 0.5);
+    scene.add(amb);
+    const spot = new THREE.SpotLight(0x06b6d4, 2);
+    spot.position.set(5, 10, 5);
+    spot.castShadow = true;
+    scene.add(spot);
+
+    // Compass Body
+    const bodyGeo = new THREE.CylinderGeometry(4, 4, 1, 64);
+    const bodyMat = new THREE.MeshStandardMaterial({
+      color: 0x111111,
+      metalness: 0.8,
+      roughness: 0.2,
+      emissive: 0x06b6d4,
+      emissiveIntensity: 0.1
+    });
+    const body = new THREE.Mesh(bodyGeo, bodyMat);
+    body.receiveShadow = true;
+    scene.add(body);
+
+    // Glass Top
+    const glassGeo = new THREE.CylinderGeometry(3.8, 3.8, 0.1, 64);
+    const glassMat = new THREE.MeshPhysicalMaterial({
+      color: 0xffffff,
+      metalness: 0,
+      roughness: 0,
+      transmission: 0.9,
+      transparent: true
+    });
+    const glass = new THREE.Mesh(glassGeo, glassMat);
+    glass.position.y = 0.6;
+    scene.add(glass);
+
+    // Needle
+    const needleGroup = new THREE.Group();
+    needleGroup.position.y = 0.8;
+    scene.add(needleGroup);
+    const needleGeo = new THREE.BoxGeometry(0.5, 0.1, 5);
+    const needleMat = new THREE.MeshStandardMaterial({
+      color: 0xcccccc,
+      metalness: 1,
+      roughness: 0.3
+    });
+    const needle = new THREE.Mesh(needleGeo, needleMat);
+    // Decorate needle: North tip Red
+    const nTipGeo = new THREE.ConeGeometry(0.5, 2, 4);
+    const nTipMat = new THREE.MeshStandardMaterial({
+      color: 0xff0000,
+      metalness: 0.5,
+      roughness: 0.2
+    });
+    const nTip = new THREE.Mesh(nTipGeo, nTipMat);
+    nTip.rotation.x = -Math.PI / 2;
+    nTip.position.z = -2.5; // Points to -Z (North)
+    needleGroup.add(nTip);
+    const sTipGeo = new THREE.ConeGeometry(0.5, 2, 4);
+    const sTipMat = new THREE.MeshStandardMaterial({
+      color: 0xaaaaaa,
+      metalness: 0.5,
+      roughness: 0.2
+    });
+    const sTip = new THREE.Mesh(sTipGeo, sTipMat);
+    sTip.rotation.x = Math.PI / 2;
+    sTip.position.z = 2.5; // South
+    needleGroup.add(sTip);
+
+    // Center cap
+    const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.3, 16), new THREE.MeshStandardMaterial({
+      color: 0xffd700
+    }));
+    needleGroup.add(cap);
+
+    // Direction Marks (N, E, S, W)
+    const createLabel = (text, x, z) => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 128;
+      canvas.height = 128;
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = text === "N" ? "#ff4444" : "#06b6d4";
+      ctx.font = "bold 80px Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(text, 64, 64);
+      const tex = new THREE.CanvasTexture(canvas);
+      const mat = new THREE.SpriteMaterial({
+        map: tex
+      });
+      const sprite = new THREE.Sprite(mat);
+      sprite.position.set(x, 1.5, z);
+      sprite.scale.set(2, 2, 2);
+      scene.add(sprite);
+    };
+    createLabel("N", 0, -5);
+    createLabel("S", 0, 5);
+    createLabel("E", 5, 0);
+    createLabel("W", -5, 0);
+
+    // Ticks
+    for (let i = 0; i < 360; i += 45) {
+      const rad = i * Math.PI / 180;
+      const x = Math.sin(rad) * 3.5;
+      const z = Math.cos(rad) * 3.5;
+      const tick = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.5), new THREE.MeshBasicMaterial({
+        color: 0x555555
+      }));
+      tick.position.set(x, 0.5, z);
+      tick.lookAt(0, 0.5, 0);
+      scene.add(tick);
+    }
+    sceneDataRef.current = {
+      scene,
+      camera,
+      renderer,
+      needleGroup
+    };
+    const animate = () => {
+      requestAnimationFrame(animate);
+      // Smooth lerp needle
+      const targetRad = sceneDataRef.current.targetRad || 0;
+      if (needleGroup.rotation.y !== targetRad) {
+        needleGroup.rotation.y += (targetRad - needleGroup.rotation.y) * 0.1;
+      }
+      renderer.render(scene, camera);
+    };
+    animate();
+    const handleResize = () => {
+      const w = mountRef.current.clientWidth,
+        h = mountRef.current.clientHeight;
+      renderer.setSize(w, h);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    };
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      mountRef.current.removeChild(renderer.domElement);
+    };
+  }, []);
+  useEffect(() => {
+    if (sceneDataRef.current.needleGroup) {
+      sceneDataRef.current.targetRad = -targetAngle * Math.PI / 180;
+    }
+  }, [targetAngle]);
+  return /*#__PURE__*/React.createElement("div", {
+    ref: mountRef,
+    className: "w-full h-full"
+  });
+}
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [selected, setSelected] = useState("N");
+  const directions = [{
+    id: "N",
+    angle: 0
+  }, {
+    id: "NE",
+    angle: 45
+  }, {
+    id: "E",
+    angle: 90
+  }, {
+    id: "SE",
+    angle: 135
+  }, {
+    id: "S",
+    angle: 180
+  }, {
+    id: "SW",
+    angle: 225
+  }, {
+    id: "W",
+    angle: 270
+  }, {
+    id: "NW",
+    angle: 315
+  }];
+  const current = directions.find(d => d.id === selected);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "relative w-screen h-screen overflow-hidden"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0"
+  }, /*#__PURE__*/React.createElement(Scene, {
+    targetAngle: current.angle,
+    setAngle: () => {}
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 pointer-events-none p-6 flex flex-col justify-between"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between items-start pointer-events-auto"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel px-6 py-4 rounded-2xl"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-3xl font-black text-cyan-400"
+  }, getText("title", lang))), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-2 rounded-xl flex gap-1 flex-wrap max-w-sm justify-end"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-cyan-500 text-white" : "text-gray-400 hover:text-white"}`
+  }, l)))), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 rounded-3xl pointer-events-auto max-w-4xl mx-auto w-full mb-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col md:flex-row gap-8 items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 grid grid-cols-3 gap-3 w-full"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "col-start-2"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setSelected("N"),
+    className: `glass-btn w-full py-3 rounded-lg font-bold ${selected === "N" ? "active" : "text-white"}`
+  }, getText("N", lang))), /*#__PURE__*/React.createElement("div", {
+    className: "col-start-1 row-start-2"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setSelected("W"),
+    className: `glass-btn w-full py-3 rounded-lg font-bold ${selected === "W" ? "active" : "text-white"}`
+  }, getText("W", lang))), /*#__PURE__*/React.createElement("div", {
+    className: "col-start-2 row-start-2 flex items-center justify-center font-black text-2xl text-cyan-400"
+  }, current.angle, "°"), /*#__PURE__*/React.createElement("div", {
+    className: "col-start-3 row-start-2"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setSelected("E"),
+    className: `glass-btn w-full py-3 rounded-lg font-bold ${selected === "E" ? "active" : "text-white"}`
+  }, getText("E", lang))), /*#__PURE__*/React.createElement("div", {
+    className: "col-start-2 row-start-3"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setSelected("S"),
+    className: `glass-btn w-full py-3 rounded-lg font-bold ${selected === "S" ? "active" : "text-white"}`
+  }, getText("S", lang))), /*#__PURE__*/React.createElement("div", {
+    className: "col-start-1 row-start-1"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setSelected("NW"),
+    className: `glass-btn w-full py-2 text-xs rounded-lg ${selected === "NW" ? "active" : "text-gray-400"}`
+  }, getText("NW", lang))), /*#__PURE__*/React.createElement("div", {
+    className: "col-start-3 row-start-1"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setSelected("NE"),
+    className: `glass-btn w-full py-2 text-xs rounded-lg ${selected === "NE" ? "active" : "text-gray-400"}`
+  }, getText("NE", lang))), /*#__PURE__*/React.createElement("div", {
+    className: "col-start-1 row-start-3"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setSelected("SW"),
+    className: `glass-btn w-full py-2 text-xs rounded-lg ${selected === "SW" ? "active" : "text-gray-400"}`
+  }, getText("SW", lang))), /*#__PURE__*/React.createElement("div", {
+    className: "col-start-3 row-start-3"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setSelected("SE"),
+    className: `glass-btn w-full py-2 text-xs rounded-lg ${selected === "SE" ? "active" : "text-gray-400"}`
+  }, getText("SE", lang)))), /*#__PURE__*/React.createElement("div", {
+    className: "text-white/70 text-sm md:w-48 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-lg font-bold text-cyan-400 mb-2"
+  }, getText("selected", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-black mb-1"
+  }, getText(selected, lang)), /*#__PURE__*/React.createElement("div", {
+    className: "text-5xl font-mono text-white/90"
+  }, current.angle, "°"))))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

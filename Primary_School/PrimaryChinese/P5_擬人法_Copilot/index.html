@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小五中文：擬人法大冒險</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                50: "#f0f9ff",
+                100: "#e0f2fe",
+                200: "#bae6fd",
+                300: "#7dd3fc",
+                400: "#38bdf8",
+                500: "#0ea5e9",
+                600: "#0284c7",
+                700: "#0369a1",
+                800: "#075985",
+                900: "#0c4a6e",
+              },
+              accent: {
+                yellow: "#facc15",
+                orange: "#fb923c",
+                pink: "#f472b6",
+              },
+            },
+            animation: {
+              "bounce-slow": "bounce 3s infinite",
+              wiggle: "wiggle 0.5s ease-in-out infinite",
+              pop: "pop 0.3s ease-out forwards",
+            },
+            keyframes: {
+              wiggle: {
+                "0%, 100%": { transform: "rotate(-3deg)" },
+                "50%": { transform: "rotate(3deg)" },
+              },
+              pop: {
+                "0%": { transform: "scale(0.9)", opacity: "0.5" },
+                "100%": { transform: "scale(1)", opacity: "1" },
+              },
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #f1f5f9;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+      }
+
+      .glass-panel {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+          0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      }
+
+      .sentence-hover:hover {
+        background-color: #e0f2fe; /* brand-100 */
+        cursor: pointer;
+        border-radius: 4px;
+      }
+      .sentence-selected {
+        background-color: #bae6fd; /* brand-200 */
+        border-radius: 4px;
+        box-shadow: 0 0 0 2px #0ea5e9; /* brand-500 */
+      }
+    </style>
+  </head>
+
+  <body
+    class="min-h-screen bg-[url('https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?q=80&w=2400&auto=format&fit=crop')] bg-cover bg-fixed bg-center text-slate-800 font-sans"
+  >
+    <!-- Overlay for background readability -->
+    <div class="fixed inset-0 bg-blue-50/90 z-0 pointer-events-none"></div>
+
+    <!-- Confetti Canvas -->
+    <canvas
+      id="confetti"
+      class="fixed inset-0 pointer-events-none z-50"
+    ></canvas>
+
+    <!-- Header -->
+    <header
+      class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-indigo-100 shadow-sm transition-all duration-300"
+      id="mainHeader"
+    >
+      <div class="max-w-7xl mx-auto px-4 py-3">
+        <div
+          class="flex flex-col md:flex-row md:items-center justify-between gap-4"
+        >
+          <!-- Logo & Title -->
+          <div
+            class="flex items-center gap-3 group cursor-pointer"
+            onclick="document.querySelector('[data-tab=tabIntro]').click()"
+          >
+            <div
+              class="h-12 w-12 rounded-2xl bg-gradient-to-br from-brand-400 to-brand-600 text-white grid place-items-center shadow-lg group-hover:scale-110 transition-transform duration-300"
+            >
+              <span class="text-2xl">🏃</span>
+            </div>
+            <div>
+              <h1
+                class="text-xl md:text-2xl font-black text-brand-900 tracking-tight"
+              >
+                小五中文：擬人法大冒險
+              </h1>
+              <p class="text-xs md:text-sm text-brand-600 font-medium">
+                讓文字動起來！Level Up！
+              </p>
+            </div>
+          </div>
+
+          <!-- Stats & Badges -->
+          <div
+            class="flex items-center gap-4 bg-slate-50/80 p-2 pr-4 rounded-2xl border border-slate-200"
+          >
+            <!-- Score -->
+            <div class="flex items-center gap-3 px-3">
+              <div class="text-center">
+                <p
+                  class="text-[10px] text-slate-500 font-bold uppercase tracking-wider"
+                >
+                  星星
+                </p>
+                <p
+                  class="text-xl font-black text-accent-orange"
+                  id="headerStars"
+                >
+                  0
+                </p>
+              </div>
+              <div class="w-px h-8 bg-slate-200"></div>
+              <div class="text-center">
+                <p
+                  class="text-[10px] text-slate-500 font-bold uppercase tracking-wider"
+                >
+                  連對
+                </p>
+                <p class="text-xl font-black text-brand-600" id="headerStreak">
+                  0
+                </p>
+              </div>
+            </div>
+
+            <!-- Badges Mini View -->
+            <div id="badgeMiniList" class="hidden sm:flex items-center gap-1">
+              <!-- Badges will be injected here -->
+            </div>
+
+            <button
+              id="btnShowBadges"
+              class="p-2 rounded-xl hover:bg-white text-slate-400 hover:text-brand-500 transition-colors"
+              title="查看成就"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                class="stroke-current stroke-2"
+              >
+                <circle cx="12" cy="8" r="7" />
+                <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav
+          class="mt-4 flex gap-2 overflow-x-auto pb-2 no-scrollbar"
+          id="navTabs"
+        >
+          <button class="tab-btn active" data-tab="tabIntro">🏠 大廳</button>
+          <button class="tab-btn" data-tab="tabStory">📖 故事尋寶</button>
+          <button class="tab-btn" data-tab="tabFind">🔍 找一找</button>
+          <button class="tab-btn" data-tab="tabCompare">⚖️ 擬人 vs 比喻</button>
+          <button class="tab-btn" data-tab="tabRewrite">✍️ 創意改寫</button>
+          <button class="tab-btn" data-tab="tabChallenge">🏆 班級挑戰</button>
+          <button class="tab-btn" data-tab="tabVote">🗳️ 投票站</button>
+          <!-- <button class="tab-btn" data-tab="tabTeacher">👨‍🏫 老師專區</button> -->
+        </nav>
+      </div>
+    </header>
+
+    <main class="relative z-10 max-w-7xl mx-auto px-4 py-6 space-y-6">
+      <!-- Badges Modal (Hidden by default) -->
+      <div
+        id="badgeModal"
+        class="hidden fixed inset-0 z-50 flex items-center justify-center p-4"
+      >
+        <div
+          class="absolute inset-0 bg-black/40 backdrop-blur-sm"
+          onclick="toggleBadges()"
+        ></div>
+        <div
+          class="relative bg-white rounded-3xl shadow-2xl max-w-2xl w-full p-6 animate-pop"
+        >
+          <div class="flex justify-between items-center mb-6">
+            <h3 class="text-2xl font-black text-slate-800">🎉 我的成就櫃</h3>
+            <button
+              onclick="toggleBadges()"
+              class="p-2 bg-slate-100 rounded-full hover:bg-slate-200"
+            >
+              ✕
+            </button>
+          </div>
+          <div id="badgeGrid" class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <!-- Badges injected via JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Intro -->
+      <section id="tabIntro" class="tab-panel animate-pop">
+        <div class="grid lg:grid-cols-12 gap-6">
+          <!-- Hero Card -->
+          <div
+            class="lg:col-span-8 p-8 rounded-[2rem] bg-gradient-to-br from-indigo-500 to-brand-600 text-white shadow-xl relative overflow-hidden"
+          >
+            <div
+              class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"
+            ></div>
+            <div class="relative z-10">
+              <span
+                class="px-3 py-1 rounded-full bg-white/20 text-xs font-bold uppercase tracking-wider mb-4 inline-block"
+                >今日任務</span
+              >
+              <h2 class="text-3xl md:text-5xl font-black mb-4 leading-tight">
+                讓句子「活」起來！
+              </h2>
+              <p class="text-lg text-indigo-100 mb-8 max-w-lg">
+                擬人法就是給物件和自然現象「魔法」，讓它們像人一樣會哭、會笑、會說話。快來挑戰關卡，收集所有「擬人徽章」吧！
+              </p>
+              <div class="flex flex-wrap gap-3">
+                <button
+                  onclick="clickTab('tabStory')"
+                  class="px-6 py-3 rounded-xl bg-white text-indigo-600 font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all flex items-center gap-2"
+                >
+                  <span>📖</span> 開始故事冒險
+                </button>
+                <button
+                  onclick="clickTab('tabFind')"
+                  class="px-6 py-3 rounded-xl bg-indigo-700/50 text-white font-bold border border-white/20 hover:bg-indigo-700 transition-all"
+                >
+                  先做熱身練習
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Stats / Daily -->
+          <div class="lg:col-span-4 space-y-4">
+            <div
+              class="p-6 rounded-[2rem] bg-white border border-slate-200 shadow-sm h-full flex flex-col justify-center"
+            >
+              <h3 class="text-lg font-bold text-slate-500 mb-2">學習進度</h3>
+              <div class="flex items-end gap-2 mb-2">
+                <span
+                  class="text-4xl font-black text-brand-600"
+                  id="introTotalStars"
+                  >0</span
+                >
+                <span class="text-sm text-slate-400 mb-1">/ 顆星星</span>
+              </div>
+              <div
+                class="w-full bg-slate-100 rounded-full h-3 mb-4 overflow-hidden"
+              >
+                <div
+                  id="introProgressBar"
+                  class="bg-gradient-to-r from-accent-yellow to-accent-orange h-full rounded-full w-0 transition-all duration-1000"
+                ></div>
+              </div>
+              <p class="text-xs text-slate-400" id="introNextBadgeTip">
+                再得 5 顆星解鎖下一個徽章！
+              </p>
+            </div>
+          </div>
+
+          <!-- Concept Cards -->
+          <div class="lg:col-span-12 grid md:grid-cols-3 gap-6">
+            <div
+              class="p-6 rounded-3xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow group"
+            >
+              <div
+                class="w-12 h-12 rounded-2xl bg-orange-100 text-orange-500 grid place-items-center mb-4 group-hover:scale-110 transition-transform text-2xl"
+              >
+                😊
+              </div>
+              <h3 class="text-lg font-bold mb-2">賦予情感</h3>
+              <p class="text-slate-500 text-sm leading-relaxed">
+                讓死板板的物件有喜怒哀樂。<br />例：太陽<span
+                  class="text-orange-500 font-bold"
+                  >笑</span
+                >得好開心。
+              </p>
+            </div>
+            <div
+              class="lg:col-span-1 p-6 rounded-3xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow group"
+            >
+              <div
+                class="w-12 h-12 rounded-2xl bg-blue-100 text-blue-500 grid place-items-center mb-4 group-hover:scale-110 transition-transform text-2xl"
+              >
+                🏃
+              </div>
+              <h3 class="text-lg font-bold mb-2">賦予動作</h3>
+              <p class="text-slate-500 text-sm leading-relaxed">
+                讓靜止的東西跑起來、動起來。<br />例：風兒在草地上<span
+                  class="text-blue-500 font-bold"
+                  >奔跑</span
+                >。
+              </p>
+            </div>
+            <div
+              class="lg:col-span-1 p-6 rounded-3xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow group"
+            >
+              <div
+                class="w-12 h-12 rounded-2xl bg-pink-100 text-pink-500 grid place-items-center mb-4 group-hover:scale-110 transition-transform text-2xl"
+              >
+                🗣️
+              </div>
+              <h3 class="text-lg font-bold mb-2">賦予語言</h3>
+              <p class="text-slate-500 text-sm leading-relaxed">
+                讓無法說話的東西開口表達。<br />例：小鳥<span
+                  class="text-pink-500 font-bold"
+                  >唱</span
+                >著動人的歌。
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- NEW: Story Mode -->
+      <section id="tabStory" class="tab-panel hidden animate-pop">
+        <div class="grid lg:grid-cols-12 gap-6">
+          <div class="lg:col-span-4">
+            <div
+              class="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm sticky top-24"
+            >
+              <h2 class="text-2xl font-black mb-2">📖 故事尋寶</h2>
+              <p class="text-slate-600 mb-6 text-sm">
+                閱讀下面的故事，點擊你認為是<span
+                  class="font-bold text-brand-600"
+                  >擬人句</span
+                >的句子。找出所有擬人句即可通關！
+              </p>
+
+              <div
+                class="flex items-center justify-between bg-slate-50 p-4 rounded-2xl border border-slate-100 mb-4"
+              >
+                <span class="text-slate-500 text-sm font-bold">已找到</span>
+                <div class="flex items-baseline gap-1">
+                  <span
+                    id="storyFoundCount"
+                    class="text-3xl font-black text-brand-600"
+                    >0</span
+                  >
+                  <span class="text-slate-400 text-sm" id="storyTotalCount"
+                    >/ 5</span
+                  >
+                </div>
+              </div>
+
+              <button
+                id="storyCheckBtn"
+                class="w-full py-4 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold shadow-lg shadow-brand-200 transition-all"
+              >
+                檢查答案
+              </button>
+              <div
+                id="storyFeedback"
+                class="mt-4 hidden p-4 rounded-xl text-center text-sm font-bold"
+              ></div>
+            </div>
+          </div>
+
+          <div class="lg:col-span-8">
+            <div
+              class="p-8 rounded-[2rem] bg-white border border-slate-200 shadow-sm leading-loose text-lg text-slate-700 relative"
+              id="storyContainer"
+            >
+              <!-- Story content will be injected by JS -->
+              <div class="animate-pulse space-y-4">
+                <div class="h-4 bg-slate-100 rounded w-3/4"></div>
+                <div class="h-4 bg-slate-100 rounded w-full"></div>
+                <div class="h-4 bg-slate-100 rounded w-5/6"></div>
+                <div class="h-4 bg-slate-100 rounded w-full"></div>
+              </div>
+            </div>
+            <div class="mt-4 flex justify-between">
+              <button
+                id="storyPrev"
+                class="px-4 py-2 rounded-xl text-slate-400 hover:bg-white disabled:opacity-30"
+              >
+                ← 上一篇
+              </button>
+              <button
+                id="storyNext"
+                class="px-4 py-2 rounded-xl text-slate-400 hover:bg-white disabled:opacity-30"
+              >
+                下一篇 →
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Find Mode -->
+      <section id="tabFind" class="tab-panel hidden animate-pop">
+        <div
+          class="p-1 rounded-3xl bg-gradient-to-b from-white to-slate-50 border border-slate-200 shadow-sm max-w-4xl mx-auto"
+        >
+          <div class="p-6 md:p-10 text-center">
+            <div
+              class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-100 text-slate-500 font-bold text-xs uppercase tracking-wider mb-6"
+            >
+              <span id="findProgress">1 / 10</span>
+            </div>
+
+            <h2
+              id="findSentence"
+              class="text-2xl md:text-4xl font-black text-slate-800 leading-snug mb-10 min-h-[120px] flex items-center justify-center"
+            >
+              題目載入中...
+            </h2>
+
+            <div class="grid grid-cols-2 gap-4 max-w-lg mx-auto mb-8">
+              <button
+                id="btnFindYes"
+                class="group relative py-6 rounded-2xl bg-white border-2 border-brand-100 hover:border-brand-500 hover:bg-brand-50 transition-all shadow-sm"
+              >
+                <div
+                  class="text-4xl mb-2 group-hover:scale-110 transition-transform"
+                >
+                  ✅
+                </div>
+                <span
+                  class="text-lg font-bold text-slate-700 group-hover:text-brand-600"
+                  >有擬人法</span
+                >
+              </button>
+              <button
+                id="btnFindNo"
+                class="group relative py-6 rounded-2xl bg-white border-2 border-slate-100 hover:border-slate-400 hover:bg-slate-50 transition-all shadow-sm"
+              >
+                <div
+                  class="text-4xl mb-2 group-hover:scale-110 transition-transform"
+                >
+                  ❌
+                </div>
+                <span class="text-lg font-bold text-slate-700">沒有</span>
+              </button>
+            </div>
+
+            <div
+              id="findFeedback"
+              class="hidden max-w-xl mx-auto p-4 rounded-xl text-left border-l-4 mb-6"
+            ></div>
+
+            <button
+              id="btnFindNext"
+              class="hidden px-8 py-3 rounded-xl bg-slate-900 text-white font-bold hover:scale-105 transition-transform shadow-xl mx-auto"
+            >
+              下一題 →
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Compare Mode -->
+      <section id="tabCompare" class="tab-panel hidden animate-pop">
+        <div class="max-w-4xl mx-auto">
+          <div
+            class="p-8 rounded-3xl bg-white border border-slate-200 shadow-sm mb-6"
+          >
+            <div class="flex justify-between items-center mb-6">
+              <h2 class="text-xl font-black flex items-center gap-2">
+                <span
+                  class="w-8 h-8 rounded-lg bg-purple-100 text-purple-600 grid place-items-center text-sm"
+                  >VS</span
+                >
+                擬人法 vs 比喻
+              </h2>
+              <span id="cmpProgress" class="font-bold text-slate-400"
+                >1 / 10</span
+              >
+            </div>
+
+            <div
+              class="p-6 rounded-2xl bg-slate-50 border border-slate-100 mb-8 text-center"
+            >
+              <p
+                id="cmpSentence"
+                class="text-2xl font-bold text-slate-800 leading-relaxed"
+              >
+                ...
+              </p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-4">
+              <button
+                id="btnCmpP"
+                class="cmp-btn p-4 rounded-xl border-2 border-transparent bg-brand-50 hover:bg-brand-100 hover:border-brand-300 text-brand-700 font-bold transition-all"
+              >
+                🏃 擬人法
+              </button>
+              <button
+                id="btnCmpS"
+                class="cmp-btn p-4 rounded-xl border-2 border-transparent bg-orange-50 hover:bg-orange-100 hover:border-orange-300 text-orange-700 font-bold transition-all"
+              >
+                🍎 比喻
+              </button>
+              <button
+                id="btnCmpN"
+                class="cmp-btn p-4 rounded-xl border-2 border-transparent bg-slate-50 hover:bg-slate-100 hover:border-slate-300 text-slate-600 font-bold transition-all"
+              >
+                🙅‍♂️ 都不是
+              </button>
+            </div>
+          </div>
+
+          <div
+            id="cmpFeedback"
+            class="hidden p-5 rounded-2xl bg-white border shadow-sm mb-4 animate-pop"
+          ></div>
+
+          <div class="flex justify-end">
+            <button
+              id="btnCmpNext"
+              class="hidden px-6 py-3 rounded-xl bg-slate-900 text-white font-bold hover:bg-black transition-colors"
+            >
+              下一題 →
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Rewrite Mode -->
+      <section id="tabRewrite" class="tab-panel hidden animate-pop">
+        <div class="grid lg:grid-cols-2 gap-6">
+          <!-- Input Area -->
+          <div
+            class="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm"
+          >
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-xl font-black">✍️ 創意改寫</h2>
+              <button
+                id="btnRwNew"
+                class="text-sm font-bold text-brand-600 hover:bg-brand-50 px-3 py-1 rounded-lg transition-colors"
+              >
+                🔄 換一題
+              </button>
+            </div>
+
+            <div class="mb-6">
+              <p
+                class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2"
+              >
+                請把這句改成擬人句
+              </p>
+              <div
+                class="p-5 rounded-2xl bg-slate-50 border border-slate-200 relative overflow-hidden"
+              >
+                <div
+                  class="absolute top-0 left-0 w-1 h-full bg-slate-300"
+                ></div>
+                <p id="rwBase" class="text-xl font-bold text-slate-700">...</p>
+              </div>
+            </div>
+
+            <textarea
+              id="rwInput"
+              rows="4"
+              class="w-full p-4 rounded-2xl border-2 border-slate-100 bg-white focus:border-brand-400 focus:ring-0 transition-all font-medium text-lg placeholder:text-slate-300 resize-none"
+              placeholder="試著加入「笑、哭、說話」等動作..."
+            ></textarea>
+
+            <div class="flex gap-3 mt-4">
+              <button
+                id="btnRwSubmit"
+                class="flex-1 py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold transition-transform active:scale-95"
+              >
+                送出檢查 ✨
+              </button>
+              <button
+                id="btnRwSaveToVote"
+                class="px-4 py-3 rounded-xl border-2 border-slate-100 hover:bg-slate-50 font-bold text-slate-600"
+                title="加入投票候選"
+              >
+                🗳️
+              </button>
+            </div>
+
+            <div
+              id="rwFeedback"
+              class="mt-4 hidden p-4 rounded-2xl border bg-slate-50"
+            ></div>
+          </div>
+
+          <!-- History / Gallery -->
+          <div class="space-y-4">
+            <div
+              class="p-6 rounded-3xl bg-white/80 border border-slate-200 shadow-sm backdrop-blur h-full flex flex-col"
+            >
+              <h3 class="font-bold text-slate-500 mb-4">你的創作記錄</h3>
+              <ul
+                id="rwGallery"
+                class="space-y-3 overflow-y-auto max-h-[400px] pr-2 flex-1"
+              >
+                <!-- Items -->
+                <li class="text-center text-slate-400 text-sm py-10">
+                  還沒有記錄，快寫一句吧！
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Challenge Mode -->
+      <section id="tabChallenge" class="tab-panel hidden animate-pop">
+        <div class="max-w-3xl mx-auto text-center">
+          <!-- Setup -->
+          <div
+            id="chSetup"
+            class="p-8 rounded-[2.5rem] bg-white border border-slate-200 shadow-xl"
+          >
+            <div
+              class="w-16 h-16 rounded-3xl bg-red-100 text-red-500 mx-auto grid place-items-center text-3xl mb-6 shadow-lg shadow-red-50"
+            >
+              🔥
+            </div>
+            <h2 class="text-3xl font-black mb-2">班級大挑戰</h2>
+            <p class="text-slate-500 mb-8">準備好跟同學比一比了嗎？</p>
+
+            <div class="max-w-sm mx-auto space-y-4">
+              <input
+                id="chTeamName"
+                class="w-full text-center p-4 rounded-xl bg-slate-50 border-2 border-transparent focus:bg-white focus:border-brand-400 font-bold text-lg outline-none"
+                placeholder="輸入隊伍名稱"
+              />
+
+              <div class="grid grid-cols-2 gap-4">
+                <div class="bg-slate-50 p-3 rounded-xl">
+                  <label
+                    class="block text-xs font-bold text-slate-400 uppercase"
+                    >時間</label
+                  >
+                  <input
+                    id="chSeconds"
+                    type="number"
+                    value="60"
+                    class="bg-transparent text-center font-black text-xl w-full outline-none"
+                  />
+                </div>
+                <div class="bg-slate-50 p-3 rounded-xl">
+                  <label
+                    class="block text-xs font-bold text-slate-400 uppercase"
+                    >模式</label
+                  >
+                  <select
+                    id="chMode"
+                    class="bg-transparent text-center font-bold text-sm w-full outline-none appearance-none"
+                  >
+                    <option value="mix">混合挑戰</option>
+                    <option value="find">只找擬人</option>
+                    <option value="compare">擬人比喻</option>
+                  </select>
+                </div>
+              </div>
+
+              <button
+                id="btnChStart"
+                class="w-full py-4 rounded-xl bg-gradient-to-r from-red-500 to-pink-600 text-white font-black text-xl shadow-xl hover:scale-105 transition-transform"
+              >
+                開始挑戰！
+              </button>
+            </div>
+
+            <!-- Leaderboard Mini -->
+            <div class="mt-8 border-t border-slate-100 pt-6">
+              <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-slate-400 text-sm uppercase">
+                  排行榜
+                </h3>
+                <div class="gap-2 flex">
+                  <button
+                    onclick="clearLeaderboard()"
+                    class="text-xs text-slate-300 hover:text-red-500"
+                  >
+                    清空
+                  </button>
+                </div>
+              </div>
+              <ul id="chLeaderboard" class="space-y-2 text-left"></ul>
+            </div>
+          </div>
+
+          <!-- Gameplay Interface (Hidden initially) -->
+          <div id="chGame" class="hidden relative">
+            <!-- Timer Bar -->
+            <div class="fixed top-0 left-0 w-full h-2 bg-slate-200 z-50">
+              <div
+                id="chTimerBar"
+                class="h-full bg-red-500 w-full transition-all duration-1000 ease-linear"
+              ></div>
+            </div>
+
+            <div
+              class="p-8 rounded-[2.5rem] bg-white border border-slate-200 shadow-xl min-h-[400px] flex flex-col justify-center"
+            >
+              <div class="flex justify-between items-center mb-8">
+                <div
+                  class="bg-slate-100 px-4 py-2 rounded-lg font-mono font-bold text-slate-600"
+                  id="chTimerDisplay"
+                >
+                  60s
+                </div>
+                <div
+                  class="text-3xl font-black text-brand-600"
+                  id="chScoreDisplay"
+                >
+                  0
+                </div>
+              </div>
+
+              <p
+                id="chSentence"
+                class="text-2xl md:text-4xl font-black text-slate-800 leading-snug mb-10"
+              >
+                準備中...
+              </p>
+
+              <div id="chAnswerArea" class="grid gap-4"></div>
+
+              <button
+                id="btnChStop"
+                class="mt-8 text-slate-300 hover:text-red-500 font-bold text-sm"
+              >
+                給老師：強制停止
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Vote Mode -->
+      <section id="tabVote" class="tab-panel hidden animate-pop">
+        <div class="grid lg:grid-cols-12 gap-6">
+          <div
+            class="lg:col-span-8 p-6 rounded-3xl bg-white border border-slate-200 shadow-sm"
+          >
+            <h2 class="text-2xl font-black mb-6">🗳️ 創意投票站</h2>
+            <ul id="voteList" class="space-y-4">
+              <!-- Votes -->
+            </ul>
+          </div>
+          <div class="lg:col-span-4">
+            <div
+              class="p-6 rounded-3xl bg-indigo-900 text-white shadow-xl sticky top-24"
+            >
+              <h3
+                class="font-bold text-indigo-300 mb-4 uppercase text-xs tracking-wider"
+              >
+                實時戰況
+              </h3>
+              <ul id="voteResults" class="space-y-4"></ul>
+              <hr class="border-white/10 my-6" />
+              <div class="grid grid-cols-2 gap-2">
+                <button
+                  id="btnVoteExport"
+                  class="p-2 rounded bg-white/10 hover:bg-white/20 text-xs font-bold"
+                >
+                  匯出記錄
+                </button>
+                <button
+                  id="btnVoteClear"
+                  class="p-2 rounded bg-white/10 hover:bg-red-500/50 text-xs font-bold"
+                >
+                  清空
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="mt-12 py-8 bg-slate-50 border-t border-slate-200">
+      <div class="max-w-6xl mx-auto px-4 text-center">
+        <p class="text-slate-400 text-xs">
+          © 2025 小五中文學習工具（P5 Chinese Copilot） |
+          <span class="text-slate-300">本地遊覽器版本·無雲端數據</span>
+        </p>
+      </div>
+    </footer>
+
+    <!-- Styles for Tab Switching -->
+    <style>
+      .tab-btn {
+        padding: 0.5rem 1rem;
+        border-radius: 999px;
+        font-weight: 700;
+        color: #64748b;
+        white-space: nowrap;
+        transition: all 0.2s;
+      }
+      .tab-btn:hover {
+        background-color: #f1f5f9;
+        color: #334155;
+      }
+      .tab-btn.active {
+        background-color: #0ea5e9; /* brand-500 */
+        color: white;
+        box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+      }
+    </style>
+
+    <script src="./logic.js"></script>
+  </body>
+</html>

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小三數學：數形推理偵探 | Logic Detective</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #475569 0%, #0f172a 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n || {
+  LanguageSelector: () => null,
+  get: (o, lang) => (o && (o[lang] || o.en)) || ""
+};
+const t = {
+  title: {
+    en: "Logic Detective",
+    zh: "數形推理偵探",
+    ja: "論理探偵",
+    ko: "논리 탐정",
+    es: "Detective lógico",
+    de: "Logik-Detektiv",
+    fi: "Logiikkaetsivä",
+    fr: "Détective logique",
+    ar: "محقق المنطق",
+    it: "Detective logico"
+  },
+  question: {
+    en: "Question:",
+    zh: "請問：",
+    ja: "質問：",
+    ko: "질문:",
+    es: "Pregunta:",
+    de: "Frage:",
+    fi: "Kysymys:",
+    fr: "Question :",
+    ar: "السؤال:",
+    it: "Domanda:"
+  },
+  submit: {
+    en: "Submit",
+    zh: "提交",
+    ja: "送信",
+    ko: "제출",
+    es: "Enviar",
+    de: "Absenden",
+    fi: "Lähetä",
+    fr: "Soumettre",
+    ar: "إرسال",
+    it: "Invia"
+  },
+  solved: {
+    en: "✓ Case Solved!",
+    zh: "✓ 破案了！",
+    ja: "✓ 解決しました！",
+    ko: "✓ 해결되었습니다!",
+    es: "✓ ¡Caso resuelto!",
+    de: "✓ Fall gelöst!",
+    fi: "✓ Tapaus ratkaistu!",
+    fr: "✓ Affaire classée !",
+    ar: "✓ تم حل القضية!",
+    it: "✓ Caso risolto!"
+  },
+  incorrect: {
+    en: "✗ Clue incorrect, try again!",
+    zh: "✗ 線索不對，再試試看！",
+    ja: "✗ 手がかりが間違っています、もう一度！",
+    ko: "✗ 단서가 틀렸습니다, 다시 시도하세요!",
+    es: "✗ Pista incorrecta, ¡inténtalo de nuevo!",
+    de: "✗ Hinweis falsch, versuch es nochmal!",
+    fi: "✗ Vihje väärin, yritä uudelleen!",
+    fr: "✗ Indice incorrect, réessayez !",
+    ar: "✗ الدليل غير صحيح، حاول مرة أخرى!",
+    it: "✗ Indizio errato, riprova!"
+  },
+  hints: {
+    1: {
+      en: "If two apples are 10, how much is one apple?",
+      zh: "如果兩個蘋果是10，一個蘋果是多少？",
+      ja: "リンゴ2つで10なら、1つはいくら？",
+      ko: "사과 두 개가 10이라면, 하나는 얼마일까요?",
+      es: "Si dos manzanas son 10, ¿cuánto es una?",
+      de: "Wenn zwei Äpfel 10 sind, wie viel ist einer?",
+      fi: "Jos kaksi omenaa on 10, paljonko yksi on?",
+      fr: "Si deux pommes font 10, combien en fait une ?",
+      ar: "إذا كان تفاحتان تساويان 10، فكم تساوي تفاحة واحدة؟",
+      it: "Se due mele sono 10, quanto vale una?"
+    },
+    2: {
+      en: "Find out how much a star represents first.",
+      zh: "先找出星星代表多少",
+      ja: "まず星がいくらかを見つけよう",
+      ko: "별이 얼마인지 먼저 찾으세요",
+      es: "Averigua primero cuánto representa una estrella",
+      de: "Finde zuerst heraus, wie viel ein Stern wert ist",
+      fi: "Selvitä ensin, paljonko tähti edustaa",
+      fr: "Trouvez d'abord ce que représente une étoile",
+      ar: "اكتشف كم تمثل النجمة أولاً",
+      it: "Scopri prima quanto vale una stella"
+    },
+    generic: {
+      en: "Try substituting numbers.",
+      zh: "試試代入數字計算",
+      ja: "数字を代入してみて",
+      ko: "숫자를 대입해보세요",
+      es: "Prueba sustituyendo números",
+      de: "Versuche Zahlen einzusetzen",
+      fi: "Kokeile sijoittaa numeroita",
+      fr: "Essayez de substituer des nombres",
+      ar: "حاول استبدال الأرقام",
+      it: "Prova a sostituire i numeri"
+    }
+  }
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [level, setLevel] = useState(1);
+  const [puzzles, setPuzzles] = useState([{
+    id: 1,
+    rows: [{
+      items: ["🍎", "+", "🍎"],
+      res: 10
+    }, {
+      items: ["🍎", "+", "🍌"],
+      res: 12
+    }],
+    question: ["🍌"],
+    answer: 7,
+    hintKey: 1
+  }, {
+    id: 2,
+    rows: [{
+      items: ["⭐", "+", "⭐", "+", "⭐"],
+      res: 15
+    }, {
+      items: ["⭐", "+", "🌙"],
+      res: 9
+    }],
+    question: ["🌙"],
+    answer: 4,
+    hintKey: 2
+  }]);
+  const [currentP_idx, setCurrentP_idx] = useState(0);
+  const currentP = puzzles[currentP_idx];
+  const generateRandom = () => {
+    const shapes = ["🐱", "🐶", "🦊", "🐸", "🦁"];
+    const shape1 = shapes[Math.floor(Math.random() * shapes.length)];
+    let shape2 = shapes[Math.floor(Math.random() * shapes.length)];
+    while (shape1 === shape2) shape2 = shapes[Math.floor(Math.random() * shapes.length)];
+    const val1 = Math.floor(Math.random() * 8) + 2;
+    const val2 = Math.floor(Math.random() * 8) + 1;
+    return {
+      id: Date.now(),
+      rows: [{
+        items: [shape1, "+", shape1],
+        res: val1 * 2
+      }, {
+        items: [shape1, "+", shape2],
+        res: val1 + val2
+      }],
+      question: [shape1, "+", shape2, "+", shape2],
+      answer: val1 + val2 * 2,
+      hintKey: "generic"
+    };
+  };
+  const [userInput, setUserInput] = useState("");
+  const [feedback, setFeedback] = useState(null);
+  const nextPuzzle = () => {
+    setPuzzles(prev => currentP_idx >= prev.length - 1 ? [...prev, generateRandom()] : prev);
+    setCurrentP_idx(idx => idx + 1);
+    setUserInput("");
+    setFeedback(null);
+  };
+  const check = () => {
+    if (parseInt(userInput, 10) === currentP.answer) {
+      setFeedback("correct");
+      setTimeout(nextPuzzle, 1500);
+    } else {
+      setFeedback("incorrect");
+    }
+  };
+  const getHint = () => t.hints[currentP.hintKey][lang] || t.hints[currentP.hintKey]["en"];
+  const getText = key => t[key][lang] || t[key]["en"];
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-8 flex flex-col items-center text-white"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-6xl font-black text-yellow-400 mb-8 mt-8 drop-shadow-lg text-center"
+  }, "🕵️ ", getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-800/80 backdrop-blur-md rounded-3xl p-8 shadow-2xl w-full max-w-lg border border-slate-700"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "mb-8 space-y-4"
+  }, currentP.rows.map((row, i) => /*#__PURE__*/React.createElement(motion.div, {
+    key: i,
+    initial: {
+      x: -20,
+      opacity: 0
+    },
+    animate: {
+      x: 0,
+      opacity: 1
+    },
+    transition: {
+      delay: i * 0.2
+    },
+    className: "flex items-center justify-between bg-slate-700/50 p-4 rounded-xl text-3xl font-bold"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-2"
+  }, row.items.map((it, idx) => /*#__PURE__*/React.createElement("span", {
+    key: idx
+  }, it))), /*#__PURE__*/React.createElement("div", {
+    className: "text-yellow-400"
+  }, "= ", row.res)))), /*#__PURE__*/React.createElement("div", {
+    className: "border-t-4 border-slate-600 my-6 pt-6 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xl font-bold text-slate-400 mb-4"
+  }, getText("question")), /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black mb-6 flex justify-center items-center gap-2"
+  }, currentP.question.map((q, i) => /*#__PURE__*/React.createElement("span", {
+    key: i
+  }, q)), /*#__PURE__*/React.createElement("span", null, "= ?")), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: userInput,
+    onChange: e => setUserInput(e.target.value),
+    className: "flex-1 bg-slate-900 border-2 border-slate-600 rounded-xl px-4 text-3xl font-black text-center text-white outline-none focus:border-yellow-400",
+    placeholder: "?",
+    onKeyDown: e => e.key === "Enter" && check()
+  }), /*#__PURE__*/React.createElement("button", {
+    onClick: check,
+    className: "bg-yellow-500 hover:bg-yellow-600 text-black px-8 rounded-xl font-black text-xl transition-all"
+  }, getText("submit")))), feedback === "correct" && /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 bg-green-500/90 backdrop-blur-sm rounded-3xl flex items-center justify-center z-10"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl md:text-5xl font-black text-white animate-bounce text-center"
+  }, getText("solved"))), feedback === "incorrect" && /*#__PURE__*/React.createElement("div", {
+    className: "mt-4 bg-red-500/20 text-red-200 p-4 rounded-xl text-center font-bold animate-pulse"
+  }, getText("incorrect"), /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("span", {
+    className: "text-sm opacity-80 mt-1 block"
+  }, getHint()))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

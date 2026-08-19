@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小二數學：數字排序 | Ordering Numbers</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #ecfccb 0%, #84cc16 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "🔢 Ordering Numbers",
+    zh: "🔢 數字排序",
+    ja: "🔢 数の並べ替え",
+    ko: "🔢 숫자 순서",
+    es: "🔢 Ordenar números",
+    de: "🔢 Zahlen ordnen",
+    fi: "🔢 Numeroiden järjestys",
+    fr: "🔢 Ordonner les nombres",
+    ar: "🔢 ترتيب الأرقام",
+    it: "🔢 Ordinare i numeri"
+  },
+  order: {
+    en: "Order from {o}",
+    zh: "請由 {o} 排列",
+    ja: "{o} で並べてください",
+    ko: "{o} 순서로 정렬하세요",
+    es: "Ordenar de {o}",
+    de: "Ordne von {o}",
+    fi: "Järjestä {o}",
+    fr: "Ordonner du {o}",
+    ar: "رتب من {o}",
+    it: "Ordina dal {o}"
+  },
+  SmallToBig: {
+    en: "Smallest to Largest",
+    zh: "小至大",
+    ja: "小さい順",
+    ko: "작은 수부터 큰 수",
+    es: "Menor a Mayor",
+    de: "Klein nach Groß",
+    fi: "Pienimmäsä suurimpaan",
+    fr: "Plus petit au plus grand",
+    ar: "الأصغر إلى الأكبر",
+    it: "Più piccolo al più grande"
+  },
+  BigToSmall: {
+    en: "Largest to Smallest",
+    zh: "大至小",
+    ja: "大きい順",
+    ko: "큰 수부터 작은 수",
+    es: "Mayor a Menor",
+    de: "Groß nach Klein",
+    fi: "Suurimmasta pienimpään",
+    fr: "Plus grand au plus petit",
+    ar: "الأكبر إلى الأصغر",
+    it: "Più grande al più piccolo"
+  },
+  reset: {
+    en: "Reset",
+    zh: "重置",
+    ja: "リセット",
+    ko: "초기화",
+    es: "Reiniciar",
+    de: "Zurücksetzen",
+    fi: "Nollaa",
+    fr: "Réinitialiser",
+    ar: "إعادة تعيين",
+    it: "Reimposta"
+  },
+  check: {
+    en: "Check",
+    zh: "檢查",
+    ja: "確認",
+    ko: "확인",
+    es: "Comprobar",
+    de: "Prüfen",
+    fi: "Tarkista",
+    fr: "Vérifier",
+    ar: "تحقق",
+    it: "Controlla"
+  }
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [nums, setNums] = useState([]);
+  const [order, setOrder] = useState("asc"); // asc (Small to Big), desc (Big to Small)
+  const [slots, setSlots] = useState([null, null, null]);
+  const [pool, setPool] = useState([]);
+  const [feedback, setFeedback] = useState("");
+  const newGame = () => {
+    let ns = [];
+    while (ns.length < 3) {
+      let r = Math.floor(Math.random() * 900) + 100;
+      if (!ns.includes(r)) ns.push(r);
+    }
+    setNums(ns);
+    setOrder(Math.random() > 0.5 ? "asc" : "desc");
+    setPool([...ns].sort(() => Math.random() - 0.5));
+    setSlots([null, null, null]);
+    setFeedback("");
+  };
+  useEffect(newGame, []);
+  const selectNum = n => {
+    setSlots(prev => {
+      const idx = prev.findIndex(s => s === null);
+      if (idx === -1) return prev;
+      const next = [...prev];
+      next[idx] = n;
+      return next;
+    });
+    setPool(prev => prev.filter(x => x !== n));
+    setFeedback("");
+  };
+  const deselectNum = (n, idx) => {
+    setSlots(prev => {
+      const next = [...prev];
+      next[idx] = null;
+      return next;
+    });
+    setPool(prev => [...prev, n]);
+    setFeedback("");
+  };
+  const checkGame = () => {
+    if (slots.includes(null)) return;
+    const sorted = [...nums].sort((a, b) => order === "asc" ? a - b : b - a);
+    if (JSON.stringify(slots) === JSON.stringify(sorted)) {
+      setFeedback("CORRECT");
+      setTimeout(newGame, 1500);
+    } else {
+      setFeedback("WRONG");
+    }
+  };
+  const reset = () => {
+    setSlots([null, null, null]);
+    setPool([...nums]);
+  };
+  const getOrderText = () => {
+    let key = order === "asc" ? "SmallToBig" : "BigToSmall";
+    let txt = t.order[lang] || t.order["en"];
+    let oWord = t[key][lang] || t[key]["en"];
+    return txt.replace("{o}", oWord);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-8 flex flex-col items-center justify-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-5xl font-black text-lime-900 mb-8 max-w-2xl text-center"
+  }, t.title[lang] || t.title["en"]), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/90 rounded-3xl p-8 shadow-2xl w-full max-w-4xl text-center border-4 border-lime-300"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "text-3xl font-bold text-slate-700 mb-8"
+  }, getOrderText()), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-center gap-4 mb-12"
+  }, slots.map((s, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    onClick: () => s !== null && deselectNum(s, i),
+    className: `w-40 h-40 rounded-2xl border-4 border-dashed border-lime-400 flex items-center justify-center text-5xl font-black text-lime-800 cursor-pointer shadow-inner bg-lime-50
+                        ${s ? "bg-lime-200 border-solid" : "opacity-50"}`
+  }, s, i < 2 && /*#__PURE__*/React.createElement("div", {
+    className: "absolute -right-6 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none"
+  }, "➜")))), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-center gap-6 mb-8 min-h-[100px]"
+  }, pool.map(n => /*#__PURE__*/React.createElement("button", {
+    key: n,
+    onClick: () => selectNum(n),
+    className: "w-32 py-4 bg-white border-4 border-lime-500 rounded-xl text-3xl font-black text-lime-700 shadow-lg hover:bg-lime-100 hover:scale-105 transition-all"
+  }, n))), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-center gap-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: reset,
+    className: "px-6 py-3 bg-red-400 text-white rounded-xl font-bold shadow hover:bg-red-500"
+  }, t.reset[lang] || t.reset["en"]), /*#__PURE__*/React.createElement("button", {
+    onClick: checkGame,
+    className: "px-10 py-3 bg-lime-500 text-white rounded-xl font-black text-2xl shadow-xl hover:bg-lime-600 active:scale-95 transition-transform"
+  }, t.check[lang] || t.check["en"])), /*#__PURE__*/React.createElement("div", {
+    className: "h-16 mt-8"
+  }, feedback === "CORRECT" && /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black text-green-500 animate-bounce"
+  }, get("correct", lang)), feedback === "WRONG" && /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black text-red-500 animate-shake"
+  }, get("wrong", lang)))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

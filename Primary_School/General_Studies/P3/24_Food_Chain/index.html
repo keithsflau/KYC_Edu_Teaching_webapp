@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小三常識：食物鏈 | Food Chain</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #fef3c7 0%, #fcd34d 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Food Chain",
+    zh: "食物鏈",
+    ja: "食物連鎖",
+    ko: "먹이 사슬",
+    es: "Cadena Alimentaria",
+    de: "Nahrungskette",
+    fi: "Ravintoketju",
+    fr: "Chaîne alimentaire",
+    ar: "السلسلة الغذائية",
+    it: "Catena Alimentare"
+  },
+  instruction: {
+    en: "Who eats whom? Build the chain!",
+    zh: "誰吃誰？排列食物鏈！",
+    ja: "誰が誰を食べる？鎖を作ろう！",
+    ko: "누가 누구를 먹나요? 사슬을 만드세요!",
+    es: "¿Quién come a quién? ¡Construye la cadena!",
+    de: "Wer frisst wen? Baue die Kette!",
+    fi: "Kuka syö kenet? Rakenna ketju!",
+    fr: "Qui mange qui ? Construisez la chaîne !",
+    ar: "من يأكل من؟ ابني السلسلة!",
+    it: "Chi mangia chi? Costruisci la catena!"
+  },
+  sun: {
+    en: "Sun",
+    zh: "太陽",
+    ja: "太陽",
+    ko: "태양",
+    es: "Sol",
+    de: "Sonne",
+    fi: "Aurinko",
+    fr: "Soleil",
+    ar: "شمس",
+    it: "Sole"
+  },
+  grass: {
+    en: "Grass",
+    zh: "草",
+    ja: "草",
+    ko: "풀",
+    es: "Hierba",
+    de: "Gras",
+    fi: "Ruoho",
+    fr: "Herbe",
+    ar: "عشب",
+    it: "Erba"
+  },
+  rabbit: {
+    en: "Rabbit",
+    zh: "兔子",
+    ja: "ウサギ",
+    ko: "토끼",
+    es: "Conejo",
+    de: "Kaninchen",
+    fi: "Kani",
+    fr: "Lapin",
+    ar: "أرنب",
+    it: "Coniglio"
+  },
+  snake: {
+    en: "Snake",
+    zh: "蛇",
+    ja: "蛇",
+    ko: "뱀",
+    es: "Serpiente",
+    de: "Schlange",
+    fi: "Käärme",
+    fr: "Serpent",
+    ar: "ثعبان",
+    it: "Serpente"
+  },
+  eagle: {
+    en: "Eagle",
+    zh: "老鷹",
+    ja: "鷲",
+    ko: "독수리",
+    es: "Águila",
+    de: "Adler",
+    fi: "Kotka",
+    fr: "Aigle",
+    ar: "نسر",
+    it: "Aquila"
+  },
+  caterpillar: {
+    en: "Caterpillar",
+    zh: "毛蟲",
+    ja: "芋虫",
+    ko: "애벌레",
+    es: "Oruga",
+    de: "Raupe",
+    fi: "Toukka",
+    fr: "Chenille",
+    ar: "يرقة",
+    it: "Bruco"
+  },
+  bird: {
+    en: "Bird",
+    zh: "小鳥",
+    ja: "鳥",
+    ko: "새",
+    es: "Pájaro",
+    de: "Vogel",
+    fi: "Lintu",
+    fr: "Oiseau",
+    ar: "طائر",
+    it: "Uccello"
+  },
+  corn: {
+    en: "Corn",
+    zh: "粟米",
+    ja: "トウモロコシ",
+    ko: "옥수수",
+    es: "Maíz",
+    de: "Mais",
+    fi: "Maissi",
+    fr: "Maïs",
+    ar: "ذرة",
+    it: "Mais"
+  },
+  rat: {
+    en: "Rat",
+    zh: "老鼠",
+    ja: "ネズミ",
+    ko: "쥐",
+    es: "Rata",
+    de: "Ratte",
+    fi: "Rotta",
+    fr: "Rat",
+    ar: "جرذ",
+    it: "Ratto"
+  },
+  owl: {
+    en: "Owl",
+    zh: "貓頭鷹",
+    ja: "フクロウ",
+    ko: "부엉이",
+    es: "Búho",
+    de: "Eule",
+    fi: "Pöllö",
+    fr: "Hibou",
+    ar: "بومة",
+    it: "Gufo"
+  },
+  check: {
+    en: "Check",
+    zh: "檢查",
+    ja: "確認",
+    ko: "확인",
+    es: "Comprobar",
+    de: "Prüfen",
+    fi: "Tarkista",
+    fr: "Vérifier",
+    ar: "تحقق",
+    it: "Controlla"
+  },
+  correct: {
+    en: "Correct Chain!",
+    zh: "食物鏈正確！",
+    ja: "正解！",
+    ko: "정답입니다!",
+    es: "¡Cadena Correcta!",
+    de: "Richtige Kette!",
+    fi: "Oikea ketju!",
+    fr: "Chaîne correcte !",
+    ar: "سلسلة صحيحة!",
+    it: "Catena Corretta!"
+  },
+  wrong: {
+    en: "Chain Broken!",
+    zh: "食物鏈錯誤！",
+    ja: "鎖が切れています！",
+    ko: "사슬이 끊어졌어요!",
+    es: "¡Cadena Rota!",
+    de: "Kette unterbrochen!",
+    fi: "Ketju rikki!",
+    fr: "Chaîne brisée !",
+    ar: "السلسلة مكسورة!",
+    it: "Catena Espzzata!"
+  },
+  reset: {
+    en: "Next Chain",
+    zh: "下一個",
+    ja: "次の鎖",
+    ko: "다음 사슬",
+    es: "Siguiente Cadena",
+    de: "Nächste Kette",
+    fi: "Seuraava ketju",
+    fr: "Chaîne suivante",
+    ar: "السلسلة التالية",
+    it: "Prossima Catena"
+  },
+  level: {
+    en: "Level",
+    zh: "關卡",
+    ja: "レベル",
+    ko: "레벨",
+    es: "Nivel",
+    de: "Level",
+    fi: "Taso",
+    fr: "Niveau",
+    ar: "مستوى",
+    it: "Livello"
+  }
+};
+const chains = [
+// Level 1: Simple 3
+{
+  items: ["sun", "grass", "rabbit", "eagle"],
+  order: ["sun", "grass", "rabbit", "eagle"]
+},
+// Level 2:
+{
+  items: ["sun", "grass", "caterpillar", "bird", "eagle"],
+  order: ["sun", "grass", "caterpillar", "bird", "eagle"]
+},
+// Level 3:
+{
+  items: ["sun", "corn", "rat", "snake", "eagle"],
+  order: ["sun", "corn", "rat", "snake", "eagle"]
+}];
+const visuals = {
+  sun: "☀️",
+  grass: "🌱",
+  rabbit: "🐇",
+  snake: "🐍",
+  eagle: "🦅",
+  caterpillar: "🐛",
+  bird: "🐦",
+  corn: "🌽",
+  rat: "🐀",
+  owl: "🦉"
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [level, setLevel] = useState(0);
+  const [pool, setPool] = useState([]);
+  const [line, setLine] = useState([]);
+  const [feedback, setFeedback] = useState(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+  useEffect(() => {
+    loadLevel(0);
+  }, []);
+  const loadLevel = lvl => {
+    if (lvl >= chains.length) {
+      setLevel(0); // Loop or end
+      loadLevel(0);
+      return;
+    }
+    setLevel(lvl);
+    setFeedback(null);
+    setLine([]);
+    // Shuffle pool
+    const newPool = [...chains[lvl].items].sort(() => Math.random() - 0.5);
+    setPool(newPool);
+  };
+  const moveToLine = item => {
+    if (feedback === "correct") return;
+    setLine(prev => [...prev, item]);
+    setPool(prev => prev.filter(i => i !== item));
+    setFeedback(null);
+  };
+  const moveToPool = item => {
+    if (feedback === "correct") return;
+    setPool(prev => [...prev, item]);
+    setLine(prev => prev.filter(i => i !== item));
+    setFeedback(null);
+  };
+  const check = () => {
+    const currentChain = chains[level];
+    if (line.length !== currentChain.order.length) {
+      setFeedback("wrong");
+      return;
+    }
+
+    // Check exact match
+    const isCorrect = line.every((item, i) => item === currentChain.order[i]);
+    if (isCorrect) {
+      setFeedback("correct");
+    } else {
+      setFeedback("wrong");
+    }
+  };
+  const nextLevel = () => {
+    loadLevel(level + 1);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 flex flex-col items-center select-none font-sans overflow-hidden"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-amber-700 mb-2 mt-8 drop-shadow-sm bg-white/50 px-6 py-2 rounded-full"
+  }, "🔗 ", getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "font-bold text-amber-800 mb-6 bg-white/40 px-4 py-1 rounded-full"
+  }, getText("level"), ": ", level + 1), /*#__PURE__*/React.createElement("p", {
+    className: "font-bold text-amber-900 mb-4 text-xl"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-5xl min-h-[160px] bg-white/80 rounded-3xl p-6 border-4 border-amber-300 flex flex-wrap items-center justify-center gap-2 mb-8 shadow-inner"
+  }, line.length === 0 && /*#__PURE__*/React.createElement("div", {
+    className: "text-amber-800/30 text-2xl font-black animate-pulse"
+  }, "Drag items here"), /*#__PURE__*/React.createElement(AnimatePresence, null, line.map((item, i) => /*#__PURE__*/React.createElement("div", {
+    key: `${item}-${i}`,
+    className: "flex items-center"
+  }, i > 0 && /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl text-amber-600 mx-1 font-black"
+  }, "➡"), /*#__PURE__*/React.createElement(motion.button, {
+    layoutId: item,
+    onClick: () => moveToPool(item),
+    className: "bg-white p-4 rounded-xl shadow-lg border-2 border-amber-500 hover:bg-red-50 hover:border-red-400 transition-colors"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl md:text-5xl"
+  }, visuals[item]), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold mt-1 text-slate-700"
+  }, getText(item))))))), /*#__PURE__*/React.createElement("div", {
+    className: "h-16 mb-6"
+  }, feedback ? /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4 items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: `px-8 py-2 rounded-2xl font-black text-2xl shadow-xl ${feedback === "correct" ? "bg-green-500 text-white" : "bg-red-500 text-white"}`
+  }, getText(feedback)), feedback === "correct" && /*#__PURE__*/React.createElement("button", {
+    onClick: nextLevel,
+    className: "bg-blue-600 text-white px-8 py-2 rounded-2xl font-black text-2xl shadow-xl hover:bg-blue-700 animate-bounce"
+  }, getText("reset"), " ➡")) : line.length === chains[level].items.length && /*#__PURE__*/React.createElement("button", {
+    onClick: check,
+    className: "bg-green-600 text-white px-10 py-3 rounded-full font-black text-2xl shadow-xl hover:bg-green-700"
+  }, getText("check"))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-4xl p-6 bg-amber-200/50 rounded-3xl flex flex-wrap justify-center gap-4 border-t-4 border-amber-300"
+  }, /*#__PURE__*/React.createElement(AnimatePresence, null, pool.map(item => /*#__PURE__*/React.createElement(motion.button, {
+    key: item,
+    layoutId: item,
+    onClick: () => moveToLine(item),
+    className: "bg-white p-4 rounded-xl shadow border-2 border-white hover:border-amber-500 transition-all active:scale-95"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl md:text-5xl"
+  }, visuals[item]), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold mt-1 text-slate-700"
+  }, getText(item)))))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

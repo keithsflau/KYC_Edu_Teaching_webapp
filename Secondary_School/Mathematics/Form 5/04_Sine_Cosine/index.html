@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sine & Cosine Rule | S5 Math</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <script
+      type="text/javascript"
+      id="MathJax-script"
+      async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+    ></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #fdf2f8; /* rose-50 */
+        color: #1e293b;
+      }
+      .glass {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <div id="root" class="flex-grow flex flex-col"></div>
+    <script>
+const {
+  useState,
+  useEffect,
+  useMemo
+} = React;
+const translations = {
+  en: {
+    unit: "Unit 3: Trigonometry",
+    title: "Sine & Cosine Rule Explorer",
+    desc: "Solve triangles using AAS, SAS, or SSS cases.",
+    sideA: "Side a",
+    sideB: "Side b",
+    sideC: "Side c",
+    angleA: "Angle A",
+    angleB: "Angle B",
+    angleC: "Angle C",
+    calculate: "Solve Triangle",
+    mode: "Mode",
+    reset: "Reset",
+    area: "Area",
+    error: "Invalid Triangle",
+    langBtn: "中文"
+  },
+  zh: {
+    unit: "單元三：三角學",
+    title: "正弦及餘弦定律探索器",
+    desc: "使用 AAS, SAS 或 SSS 條件解三角形。",
+    sideA: "邊長 a",
+    sideB: "邊長 b",
+    sideC: "邊長 c",
+    angleA: "角 A",
+    angleB: "角 B",
+    angleC: "角 C",
+    calculate: "解三角形",
+    mode: "模式",
+    reset: "重置",
+    area: "面積",
+    error: "無效的三角形",
+    langBtn: "English"
+  }
+};
+const App = () => {
+  const [lang, setLang] = useState("en");
+  const t = translations[lang];
+
+  // Mode: SSS, SAS, AAS
+  const [mode, setMode] = useState("SAS");
+
+  // Inputs
+  const [val1, setVal1] = useState(6); // a or Side 1
+  const [val2, setVal2] = useState(55); // Angle or Side 2
+  const [val3, setVal3] = useState(8); // Side 3 or Side 2
+
+  const [solution, setSolution] = useState(null);
+
+  // Solver Logic
+  useEffect(() => {
+    let res = {
+      valid: false
+    };
+    if (mode === "SAS") {
+      // b, A, c given? Let's say inputs are: side b, Angle A, side c
+      // Standardize: val1 = b, val2 = A (deg), val3 = c
+      const b = val1;
+      const A_deg = val2;
+      const c = val3;
+      const A = A_deg * Math.PI / 180;
+      if (b > 0 && c > 0 && A_deg > 0 && A_deg < 180) {
+        // Cosine Rule: a^2 = b^2 + c^2 - 2bc cosA
+        const a = Math.sqrt(b * b + c * c - 2 * b * c * Math.cos(A));
+        // Sine Rule for B: sinB/b = sinA/a
+        const sinB = b * Math.sin(A) / a;
+        const B = Math.asin(sinB);
+        const C = Math.PI - A - B;
+        res = {
+          valid: true,
+          a,
+          b,
+          c,
+          A: A_deg,
+          B: B * 180 / Math.PI,
+          C: C * 180 / Math.PI
+        };
+      }
+    } else if (mode === "SSS") {
+      const a = val1,
+        b = val2,
+        c = val3;
+      if (a + b > c && a + c > b && b + c > a) {
+        // Cosine Rule for Angles
+        const A = Math.acos((b * b + c * c - a * a) / (2 * b * c));
+        const B = Math.acos((a * a + c * c - b * b) / (2 * a * c));
+        const C = Math.PI - A - B;
+        res = {
+          valid: true,
+          a,
+          b,
+          c,
+          A: A * 180 / Math.PI,
+          B: B * 180 / Math.PI,
+          C: C * 180 / Math.PI
+        };
+      }
+    } else if (mode === "AAS") {
+      // Angle A, Angle B, Side a
+      const A_deg = val1;
+      const B_deg = val2;
+      const a = val3;
+      if (A_deg + B_deg < 180 && a > 0) {
+        const C_deg = 180 - A_deg - B_deg;
+        const A = A_deg * Math.PI / 180;
+        const B = B_deg * Math.PI / 180;
+        const C = C_deg * Math.PI / 180;
+        // Sine Rule
+        const b = a * Math.sin(B) / Math.sin(A);
+        const c = a * Math.sin(C) / Math.sin(A);
+        res = {
+          valid: true,
+          a,
+          b,
+          c,
+          A: A_deg,
+          B: B_deg,
+          C: C_deg
+        };
+      }
+    }
+
+    // Calculate Area
+    if (res.valid) {
+      // 0.5 ab sinC
+      // Heron's formula is safer for SSS
+      const s = (res.a + res.b + res.c) / 2;
+      res.area = Math.sqrt(s * (s - res.a) * (s - res.b) * (s - res.c));
+    }
+    setSolution(res);
+  }, [mode, val1, val2, val3]);
+
+  // SVG Point Calculation
+  const getPoints = () => {
+    if (!solution || !solution.valid) return [];
+    const {
+      a,
+      b,
+      c,
+      A,
+      B,
+      C
+    } = solution;
+    const A_rad = A * Math.PI / 180;
+    const Ax = 0,
+      Ay = 0;
+    const Bx = c,
+      By = 0;
+    const Cx = b * Math.cos(A_rad);
+    const Cy = b * Math.sin(A_rad);
+
+    // Bounding box
+    const minX = Math.min(Ax, Bx, Cx);
+    const maxX = Math.max(Ax, Bx, Cx);
+    const minY = Math.min(Ay, By, Cy);
+    const maxY = Math.max(Ay, By, Cy);
+    const w = maxX - minX;
+    const h = maxY - minY;
+    const scale = Math.min(250 / w, 180 / h);
+    const offX = (300 - w * scale) / 2 - minX * scale;
+    const offY = (300 - h * scale) / 2 - minY * scale; // Invert Y later
+
+    const toSvg = (x, y) => ({
+      x: x * scale + offX,
+      y: 250 - (y * scale + offY) // Flip Y
+    });
+    return [toSvg(Ax, Ay), toSvg(Bx, By), toSvg(Cx, Cy)];
+  };
+  const pts = getPoints();
+  return /*#__PURE__*/React.createElement("div", {
+    className: "flex-grow flex flex-col items-center justify-center p-8 select-none"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 right-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLang(l => l === "en" ? "zh" : "en"),
+    className: "px-3 py-1 bg-white border border-rose-200 rounded-full text-xs font-bold text-rose-600 hover:bg-rose-50 transition flex items-center gap-2 shadow-sm"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-language"
+  }), t.langBtn)), /*#__PURE__*/React.createElement("header", {
+    className: "mb-8 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-rose-600 font-bold uppercase tracking-widest text-xs mb-2"
+  }, t.unit), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-slate-900 mb-2"
+  }, t.title), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-500 font-mono text-lg"
+  }, t.desc)), /*#__PURE__*/React.createElement("div", {
+    className: "glass p-8 rounded-3xl w-full max-w-5xl mb-8 flex flex-col lg:flex-row gap-8 shadow-xl border border-rose-100/50"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-2 mb-8 bg-slate-100/50 p-1.5 rounded-2xl"
+  }, ["SAS", "SSS", "AAS"].map(m => /*#__PURE__*/React.createElement("button", {
+    key: m,
+    onClick: () => setMode(m),
+    className: `flex-1 py-2.5 rounded-xl font-bold transition text-sm ${mode === m ? "bg-white text-rose-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`
+  }, m))), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-6 bg-white/50 p-6 rounded-2xl border border-white"
+  }, mode === "SAS" && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "text-xs font-bold text-slate-400 uppercase mb-1.5 block"
+  }, t.sideB), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "1",
+    max: "100",
+    value: val1,
+    onChange: e => setVal1(Number(e.target.value)),
+    className: "w-full accent-rose-500"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-right font-mono text-rose-600 font-bold mt-1"
+  }, val1)), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "text-xs font-bold text-slate-400 uppercase mb-1.5 block"
+  }, t.angleA, " (°)"), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "1",
+    max: "179",
+    value: val2,
+    onChange: e => setVal2(Number(e.target.value)),
+    className: "w-full accent-blue-500"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-right font-mono text-blue-600 font-bold mt-1"
+  }, val2, "°")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "text-xs font-bold text-slate-400 uppercase mb-1.5 block"
+  }, t.sideC), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "1",
+    max: "100",
+    value: val3,
+    onChange: e => setVal3(Number(e.target.value)),
+    className: "w-full accent-rose-500"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-right font-mono text-rose-600 font-bold mt-1"
+  }, val3))), mode === "SSS" && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "text-xs font-bold text-slate-400 uppercase mb-1.5 block"
+  }, t.sideA), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "1",
+    max: "100",
+    value: val1,
+    onChange: e => setVal1(Number(e.target.value)),
+    className: "w-full accent-rose-500"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-right font-mono text-rose-600 font-bold mt-1"
+  }, val1)), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "text-xs font-bold text-slate-400 uppercase mb-1.5 block"
+  }, t.sideB), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "1",
+    max: "100",
+    value: val2,
+    onChange: e => setVal2(Number(e.target.value)),
+    className: "w-full accent-rose-500"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-right font-mono text-rose-600 font-bold mt-1"
+  }, val2)), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "text-xs font-bold text-slate-400 uppercase mb-1.5 block"
+  }, t.sideC), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "1",
+    max: "100",
+    value: val3,
+    onChange: e => setVal3(Number(e.target.value)),
+    className: "w-full accent-rose-500"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-right font-mono text-rose-600 font-bold mt-1"
+  }, val3))), mode === "AAS" && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "text-xs font-bold text-slate-400 uppercase mb-1.5 block"
+  }, t.angleA, " (°)"), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "1",
+    max: "178",
+    value: val1,
+    onChange: e => setVal1(Number(e.target.value)),
+    className: "w-full accent-blue-500"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-right font-mono text-blue-600 font-bold mt-1"
+  }, val1, "°")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "text-xs font-bold text-slate-400 uppercase mb-1.5 block"
+  }, t.angleB, " (°)"), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "1",
+    max: 179 - val1,
+    value: val2,
+    onChange: e => setVal2(Number(e.target.value)),
+    className: "w-full accent-blue-500"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-right font-mono text-blue-600 font-bold mt-1"
+  }, val2, "°")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "text-xs font-bold text-slate-400 uppercase mb-1.5 block"
+  }, t.sideA), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "1",
+    max: "100",
+    value: val3,
+    onChange: e => setVal3(Number(e.target.value)),
+    className: "w-full accent-rose-500"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "text-right font-mono text-rose-600 font-bold mt-1"
+  }, val3))))), /*#__PURE__*/React.createElement("div", {
+    className: "flex-[2] flex flex-col items-center justify-center min-h-[400px] bg-white rounded-2xl shadow-sm border border-slate-100 p-8"
+  }, solution && solution.valid && pts.length === 3 ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("svg", {
+    width: "300",
+    height: "300",
+    className: "overflow-visible mb-8"
+  }, /*#__PURE__*/React.createElement("polygon", {
+    points: `${pts[0].x},${pts[0].y} ${pts[1].x},${pts[1].y} ${pts[2].x},${pts[2].y}`,
+    fill: "rgba(244, 63, 94, 0.05)",
+    stroke: "#f43f5e",
+    strokeWidth: "3",
+    strokeLinejoin: "round"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: pts[0].x - 15,
+    y: pts[0].y + 20,
+    className: "font-bold fill-blue-600"
+  }, "A"), /*#__PURE__*/React.createElement("text", {
+    x: pts[1].x + 10,
+    y: pts[1].y + 20,
+    className: "font-bold fill-blue-600"
+  }, "B"), /*#__PURE__*/React.createElement("text", {
+    x: pts[2].x,
+    y: pts[2].y - 15,
+    className: "font-bold fill-blue-600 text-center"
+  }, "C")), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 lg:grid-cols-3 gap-3 w-full"
+  }, [{
+    l: "a",
+    v: solution.a.toFixed(2),
+    c: "slate"
+  }, {
+    l: "b",
+    v: solution.b.toFixed(2),
+    c: "slate"
+  }, {
+    l: "c",
+    v: solution.c.toFixed(2),
+    c: "slate"
+  }, {
+    l: "∠A",
+    v: solution.A.toFixed(1) + "°",
+    c: "blue"
+  }, {
+    l: "∠B",
+    v: solution.B.toFixed(1) + "°",
+    c: "blue"
+  }, {
+    l: "∠C",
+    v: solution.C.toFixed(1) + "°",
+    c: "blue"
+  }].map((item, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: `bg-${item.c}-50 p-3 rounded-xl text-center border border-${item.c}-100`
+  }, /*#__PURE__*/React.createElement("div", {
+    className: `text-xs text-${item.c}-400 font-bold mb-1`
+  }, item.l), /*#__PURE__*/React.createElement("div", {
+    className: `text-xl font-mono font-bold text-${item.c}-700`
+  }, item.v)))), /*#__PURE__*/React.createElement("div", {
+    className: "mt-6 bg-emerald-50 px-6 py-3 rounded-xl border border-emerald-100 text-emerald-700 font-bold text-sm w-full text-center"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-calculator mr-2"
+  }), " ", t.area, ":", " ", solution.area.toFixed(2))) : /*#__PURE__*/React.createElement("div", {
+    className: "text-slate-400 italic flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-triangle-exclamation text-4xl mb-3 text-rose-300"
+  }), t.error))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

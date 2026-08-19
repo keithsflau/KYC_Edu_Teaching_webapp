@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GHS & NFPA Lab Label Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      /* NFPA Diamond Construction */
+      .nfpa-container {
+        position: relative;
+        width: 100px;
+        height: 100px;
+        font-family: Arial, sans-serif;
+        font-weight: bold;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr 1fr;
+        transform: rotate(45deg);
+        margin: 16px; /* Space for rotation */
+        background-color: transparent;
+      }
+      .nfpa-box {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        color: black;
+        border: 1px solid rgba(0, 0, 0, 0.2);
+      }
+      .nfpa-box span {
+        transform: rotate(-45deg);
+        display: block;
+      }
+      /* Grid Positions:
+           (0,0) Top-Left cell -> Rotates to Top -> Fire (Red)
+           (0,1) Top-Right cell -> Rotates to Right -> React (Yellow)
+           (1,0) Bot-Left cell -> Rotates to Left -> Health (Blue)
+           (1,1) Bot-Right cell -> Rotates to Bottom -> Special (White)
+        */
+      .nfpa-fire {
+        background-color: #e83a3a;
+        color: white;
+        grid-column: 1;
+        grid-row: 1;
+      }
+      .nfpa-react {
+        background-color: #facc15;
+        color: black;
+        grid-column: 2;
+        grid-row: 1;
+      }
+      .nfpa-health {
+        background-color: #4b88e8;
+        color: white;
+        grid-column: 1;
+        grid-row: 2;
+      }
+      .nfpa-special {
+        background-color: white;
+        color: black;
+        grid-column: 2;
+        grid-row: 2;
+      }
+
+      /* Print Settings */
+      @media print {
+        body {
+          background: white;
+        }
+        .no-print {
+          display: none !important;
+        }
+        #preview-container {
+          border: none;
+          box-shadow: none;
+          margin: 0;
+          padding: 0;
+          position: absolute;
+          top: 0;
+          left: 0;
+        }
+        /* Force background colors to print */
+        .nfpa-container,
+        .nfpa-fire,
+        .nfpa-health,
+        .nfpa-react,
+        .nfpa-special {
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+      }
+    </style>
+</head>
+  <body class="bg-gray-100 text-gray-800 min-h-screen flex flex-col">
+    <nav
+      class="bg-slate-800 text-white p-4 shadow-md no-print flex justify-between items-center"
+    >
+      <div class="flex items-center gap-2">
+        <svg
+          class="w-6 h-6 text-yellow-400"
+          fill="currentColor"
+          viewBox="0 0 20 20"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+            clip-rule="evenodd"
+          />
+        </svg>
+        <h1 class="text-xl font-bold">
+          LabLabel
+          <span class="text-slate-400 font-normal text-sm"
+            >Standard GHS/NFPA Generator</span
+          >
+        </h1>
+      </div>
+      <button
+        onclick="window.print()"
+        class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded text-sm font-semibold flex items-center gap-2 transition"
+      >
+        <svg
+          class="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+          ></path>
+        </svg>
+        Print
+      </button>
+    </nav>
+
+    <div class="flex flex-1 md:flex-row flex-col overflow-hidden">
+      <aside
+        class="w-full md:w-1/3 bg-white border-r border-gray-200 p-6 overflow-y-auto no-print h-full shadow-xl z-10"
+      >
+        <h2
+          class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4"
+        >
+          Label Configuration
+        </h2>
+
+        <div class="space-y-5">
+          <div class="bg-slate-50 p-3 rounded border border-slate-200">
+            <label class="block text-sm font-semibold mb-1"
+              >Chemical Name</label
+            >
+            <input
+              type="text"
+              id="inp-name"
+              class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+              placeholder="e.g. Acetone"
+            />
+
+            <div class="grid grid-cols-2 gap-2 mt-2">
+              <div>
+                <label class="block text-sm font-semibold mb-1"
+                  >Signal Word</label
+                >
+                <select
+                  id="inp-signal"
+                  class="w-full p-2 border rounded font-bold text-red-600 bg-white"
+                >
+                  <option value="DANGER">DANGER</option>
+                  <option value="WARNING">WARNING</option>
+                  <option value="">(None)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-semibold mb-1">Date</label>
+                <input
+                  type="date"
+                  id="inp-date"
+                  class="w-full p-2 border rounded text-sm"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h3 class="text-sm font-bold text-gray-700 mb-2">
+              GHS Pictograms (Select all that apply)
+            </h3>
+            <div class="grid grid-cols-3 gap-2">
+              <div
+                id="ghs-checks"
+                class="col-span-3 grid grid-cols-3 gap-2"
+              ></div>
+            </div>
+          </div>
+
+          <div class="bg-slate-50 p-3 rounded border border-slate-200">
+            <h3 class="text-sm font-bold text-gray-700 mb-2">
+              NFPA 704 Ratings
+            </h3>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-xs font-bold text-blue-600"
+                  >Health (Blue)</label
+                >
+                <input
+                  type="number"
+                  id="nfpa-h"
+                  min="0"
+                  max="4"
+                  value="0"
+                  class="w-full p-1 border rounded"
+                />
+              </div>
+              <div>
+                <label class="text-xs font-bold text-red-600"
+                  >Flammability (Red)</label
+                >
+                <input
+                  type="number"
+                  id="nfpa-f"
+                  min="0"
+                  max="4"
+                  value="0"
+                  class="w-full p-1 border rounded"
+                />
+              </div>
+              <div>
+                <label class="text-xs font-bold text-yellow-600"
+                  >Instability (Yel)</label
+                >
+                <input
+                  type="number"
+                  id="nfpa-r"
+                  min="0"
+                  max="4"
+                  value="0"
+                  class="w-full p-1 border rounded"
+                />
+              </div>
+              <div>
+                <label class="text-xs font-bold text-gray-600"
+                  >Special (White)</label
+                >
+                <select id="nfpa-s" class="w-full p-1 border rounded text-sm">
+                  <option value="">None</option>
+                  <option value="OX">OX</option>
+                  <option value="W̸">W̸ (no water)</option>
+                  <option value="SA">SA</option>
+                  <option value="COR">COR</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold mb-1"
+              >Hazard Statements / Notes</label
+            >
+            <textarea
+              id="inp-notes"
+              rows="3"
+              class="w-full p-2 border rounded text-sm"
+              placeholder="e.g. Highly flammable liquid and vapor. Causes serious eye irritation."
+            ></textarea>
+          </div>
+        </div>
+      </aside>
+
+      <main
+        class="flex-1 bg-gray-200 flex items-center justify-center p-8 relative"
+      >
+        <div class="absolute top-4 right-4 text-gray-500 text-xs no-print">
+          Preview (4in x 3in approx)
+        </div>
+
+        <div
+          id="preview-container"
+          class="bg-white w-[600px] h-[400px] shadow-2xl overflow-hidden relative flex border-4 border-black"
+        >
+          <div class="w-2/3 p-6 flex flex-col h-full border-r-2 border-black">
+            <div
+              id="out-signal-box"
+              class="bg-red-600 text-white text-center py-2 mb-4 rounded-sm border-2 border-black"
+            >
+              <h2
+                id="out-signal"
+                class="text-4xl font-black uppercase tracking-tighter"
+              >
+                DANGER
+              </h2>
+            </div>
+
+            <div class="flex-1">
+              <h1
+                id="out-name"
+                class="text-4xl font-bold leading-tight break-words mb-2"
+              >
+                ACETONE
+              </h1>
+              <p
+                id="out-notes"
+                class="text-sm font-medium text-gray-700 whitespace-pre-line leading-snug"
+              >
+                Highly flammable liquid and vapor.
+              </p>
+            </div>
+
+            <div
+              class="mt-auto pt-4 border-t border-gray-300 text-xs text-gray-500 flex justify-between"
+            >
+              <span
+                >Prep:
+                <span id="out-date" class="font-mono text-black font-bold"
+                  >2023-10-25</span
+                ></span
+              >
+              <span>Lab Safety</span>
+            </div>
+          </div>
+
+          <div class="w-1/3 flex flex-col items-center p-4 bg-slate-50">
+            <div
+              id="out-ghs-grid"
+              class="flex flex-wrap justify-center gap-1 mb-6 w-full min-h-[100px]"
+            >
+              <!-- GHS Icons will appear here -->
+            </div>
+
+            <div class="mt-auto">
+              <div class="nfpa-container transform scale-90">
+                <!-- Layout updated for CSS Grid -->
+                <div class="nfpa-box nfpa-fire">
+                  <span id="out-nfpa-f">0</span>
+                </div>
+                <div class="nfpa-box nfpa-react">
+                  <span id="out-nfpa-r">0</span>
+                </div>
+                <div class="nfpa-box nfpa-health">
+                  <span id="out-nfpa-h">0</span>
+                </div>
+                <div class="nfpa-box nfpa-special">
+                  <span id="out-nfpa-s"></span>
+                </div>
+              </div>
+              <div
+                class="text-[10px] text-center mt-2 text-slate-400 font-sans"
+              >
+                NFPA 704
+              </div>
+            </div>
+          </div>
+        </div>
+
+</main>
+    </div>
+
+    <script>
+      // Official GHS Pictograms as embedded SVGs
+      const ghsData = [
+        {
+          id: "explosive",
+          label: "Explosive",
+          svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 579 579"><path d="M25.3 289.7L289.3 553.7 553.4 289.6 465.3 201.7 377.5 113.5 289.4 25.6 25.3 289.7z" fill="#fff"/><path d="M147.7 148l-141.7 141.7 141.7 141.7 141.7 141.6L431 431.3 572.7 289.6 431 148C353 70 289.4 6.3 289.4 6.3S225.6 70 147.7 148zM408.6 170.4L527.8 289.6 408.5 408.9 289.3 528.1 170 409 51 289.6 170 170.4 289.4 51.2 408.6 170.4z" fill="#f00"/><path d="M285.4 126.3l-18 20.6 5.8 44.7-22.3-3.6-25 38.3 11 11-38.3 25 3.6 22.3-44.7-5.8-20.6 18-20.6-18 5.8-44.7-22.3 3.6 38.3-59 83.2-83.2 59-38.3-3.6 22.3 62-6c2-9 12-25 15-28 6-6 40-7 47 0 6 6 5 44-3 51-1-6 2-15-2-18-4-4-15-2-18 4s3 24-4 29c-5 4-22 3-27-2l-18 10zm-62 135c10 0 19 8 19 19s-8 19-19 19-19-8-19-19 8-19 19-19zm86-36c13 0 24 11 24 24s-11 24-24 24-24-11-24-24 11-24 24-24z" fill="#000"/></svg>`,
+        },
+        {
+          id: "flammable",
+          label: "Flammable",
+          svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 579 579"><path d="M25 290 289 554 553 290 289 26 25 290z" fill="#fff"/><path d="M148 148 6 290l142 141 141 142 142-142 142-141-142-142L289 6 148 148zm261 22 119 120-119 119-120 119-119-119L51 290l119-120L289 51l120 119z" fill="#f00"/><path d="M290 121c-18 34 3 53-20 102-13-10-6-47-30-48 3 12 1 16 0 20-3 17-8 31 3 52-17-8-18-23-32-33 3 16-4 49 15 81-17-2-23-8-41-26 19 100 34 103 105 109-6-1-42-7-55-48 0-10-1 9 34 10-22-35-16-28-14-48 10 13 2 15 27 25-8-26 13-43 8-73 6 13 26 11 25 73 17-19 18-6 26-26 1 11 6 25-17 49 6 2 16 3 31-8-15 18-1 18-40 46 49 1 81-30 80-97-2 6-3 18-29 21 16-16 25-49 12-75-5 4-12 24-29 29 8-14 6-32 6-32s3-25-12-45c-4 30-4 46-23 50 3-17 4-26-6-46-10-21-22-42-24-62zm-81 274v18h171v-18H209z" fill="#000"/></svg>`,
+        },
+        {
+          id: "oxidizer",
+          label: "Oxidizer",
+          svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 579 579"><path d="M25 290 289 554 553 290 289 26 25 290z" fill="#fff"/><path d="M148 148 6 290l142 141 141 142 142-142 142-141-142-142L289 6 148 148zm261 22 119 120-119 119-120 119-119-119L51 290l119-120L289 51l120 119z" fill="#f00"/><path d="M359 106c-5 1-28 6-38 18-23 27-21 44-21 69 0 23 4 52-25 57-12 2-18-9-33-9-19 0-25 10-33 13-23-11-23-31-18-50 2-10 1-13-9-13-14 0-14 36 2 48 14 11 39 12 39 31 0 5-6 8-14 9l-42-2c-15 0-27-2-29 18-1 11 4 21 15 22 25 1 23-10 51-10 33 0 45 44 14 59-15 7-38 3-53 10-18 8-22 34 2 46 22 12 65-10 74 15 11 30-24 53-53 53-26 0-38-12-38-38 0-12-7-19-19-19-11 0-17 8-17 19 0 44 29 74 74 74 38 0 71-20 84-55 7-18-1-39-3-58 13 4 27 7 40 10 9 2 24 13 22 24-2 16-16 11-25 13l-94 1v17h206v-17h-83c-23 0-18 20-41 11-13-5-28-20-25-36 2-15 16-19 28-23-38-9-75-17-113-26 21-18 43-41 43-71 0-8-1-17-7-22 5-9 19 7 26 12 16 11 36 4 39-15 6-27-38-34-45-66-8-37-8-61-39-91-20-19-33-25-63-29z" fill="#000"/></svg>`,
+        },
+        {
+          id: "gas",
+          label: "Comp. Gas",
+          svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 579 579"><path d="M25 290 289 554 553 290 289 26 25 290z" fill="#fff"/><path d="M148 148 6 290l142 141 141 142 142-142 142-141-142-142L289 6 148 148zm261 22 119 120-119 119-120 119-119-119L51 290l119-120L289 51l120 119z" fill="#f00"/><path d="M438 288c0 14-8 19-14 36-9 24-6 24-30 40-75 51-177 50-248-8-2-2-12-14-22-19-21-9-40 22-54 39l-13 15h276l-13-15c-14-17-33-48-54-39-10 4-20 17-22 19-71 58-173 59-248 8-24-16-21-16-30-40-6-16-14-21-14-36h-18v34h9v118h36v-118h207v118h36v-118h9v-34h-18z" fill="#000"/></svg>`,
+        },
+        {
+          id: "corrosive",
+          label: "Corrosive",
+          svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 735 735"><path d="m367.5 727.4 360-360-360-360-360 360z" fill="#fff"/><path d="m367.5 670.3-302.8-302.8 302.8-302.8 302.8 302.8z" fill="#f00"/><path d="m367.5 670.3-302.8-302.8 302.8-302.8 302.8 302.8z" fill-opacity="0" stroke="#f00" stroke-width="12"/><path d="m233.3 384.1c-11.1 0-17.9-3.85-21.1-10.13h-79.98v36.56h199.3v-36.56h-72.5c-4.93 6.32-14.54 10.13-25.76 10.13zm2.56-42.97c0 8.56 12 11.23 18.22 3.75 3.06-3.68 3.98-9 2.1-13.43-1.89-4.43-40.42-78.7-46.06-88.75-5.63 10.13-43.25 84.81-45.13 89.24-1.88 4.43-0.97 9.75 2.1 13.43 6.22 7.48 18.22 4.81 18.22-3.75v-12.75l25.26 12.38 25.27-12.38zm39.14 42.97h226.7v-25.96c0-12.22-30.73-14.73-40.09 4.34-5.18 10.55-22.39 10.55-27.57 0-9.35-19.16-40.09-16.71-40.09-4.34v25.96h-118.9zm134.7-48.4c-9.52-20.73-19.17-48.97-19.17-50.6 0-3.67 5.16-5.87 9.07-3.66 4.93 2.78 6.7 9.87 10.61 24.32 1.34 4.96 4.9 14.74 5.92 18.2 2.62-5.74 7.6-18.72 10.74-25.04 2.87-5.764 7.37-12.83 11.96-15.65 3.82-2.35 9 0.08 9 3.66 0 1.94-9.36 29.58-18.8 48.77h-19.33z" fill="#000"/></svg>`,
+        },
+        {
+          id: "toxic",
+          label: "Toxic",
+          svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 735 735"><path d="m367.5 727.4 360-360-360-360-360 360z" fill="#fff"/><path d="m367.5 670.3-302.8-302.8 302.8-302.8 302.8 302.8z" fill="#f00"/><path d="m367.5 670.3-302.8-302.8 302.8-302.8 302.8 302.8z" fill-opacity="0" stroke="#f00" stroke-width="12"/><path d="m361.6 364.2c8.23 0 5.45-3.33 12.48-3.33 5.73 0 3.79 3.24 11.56 3.24 7.21 0 8.97-5.45 8.97-7.67 0-3.42-3.88-5.62-5.64-10.26-1.76-4.62-5.18-21.72-15.62-21.72-3.84 0-6.1 1.57-8.97 4.99-4.71 5.55-5.09 14.87-8 18.49-2.87 3.51-3.98 7.28-3.98 9.25 0 2.13 1.02 7 9.25 7zm-57.97 50.84c-3.1 7.27-5.02 14.19-21.6 15.63-12.89 1.12-14.84-17.76-14.84-24.84 0-21.5-12.41-35.03-34.42-32.96-18.41 1.74-27.14 26.26-12.11 39.53 14.1 12.45 3.09 35.84-15 35.84-20.08 0-46.73-22.19-35.29-47.58 11.75-26.08 61.16-65.06 91.54-36.91 3.21 2.97 4.75 6.47 5.92 9.24 7.67-17.75 25.42-30.04 46.5-30.04h46.34c21.08 0 38.83 12.29 46.5 30.04 1.17-2.77 2.71-6.27 5.92-9.24 30.38-28.15 79.79 10.83 91.54 36.91 11.44 25.39-15.21 47.58-35.29 47.58-18.09 0-29.1-23.39-15-35.84 15.03-13.27 6.3-37.79-12.12-39.53-22-2.07-34.41 11.46-34.41 32.96 0 7.08-1.95 25.96-14.84 24.84-16.58-1.44-18.5-8.36-21.6-15.63-6.53-15.34-19.12-25.43-37.04-25.43h-32.14c-17.92 0-30.51 10.09-37.04 25.43zm119 72.82c-4.49-8.78-7.9-10.35-18.59-8.41-31.95 5.8-49.88 5.73-82.68 0-10.69-1.94-14.1 6.38-18.59 15.16-9.71 18.95-6.66 35.26 21 43.11 25.89 7.35 60.15 7.03 82.25 0 27.66-7.85 30.71-24.16 21-43.11z" fill="#000"/><path d="m395.7 395.3c0-23.3 15.82-36.84 27.97-36.84 13.9 0 22.84 8.78 22.84 22.28 0 16.74-32.93 25.89-50.81 14.56" fill="#000"/><path d="m395.7 395.3c35.43 27.27 46.5 6.01 46.5-16.74" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width="3"/><path d="m339.3 395.3c0-23.3-15.82-36.84-27.97-36.84-13.9 0-22.84 8.78-22.84 22.28 0 16.74 32.93 25.89 50.81 14.56" fill="#000"/><path d="m339.3 395.3c-35.43 27.27-46.5 6.01-46.5-16.74" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width="3"/><path d="m367.5 240.5c-61.9 0-98.81 37.89-98.81 83.35 0 24.51 16.97 39.46 32.89 54.26-6.79 9.93-19.14 26.54 13.59 26.54 8.64 0 21.04-3.52 28.66-3.8 0 0 11.23 20.34 23.66 20.34 12.43 0 23.66-20.34 23.66-20.34 7.62 0.28 20.02 3.8 28.66 3.8 32.73 0 20.38-16.61 13.59-26.54 15.92-14.8 32.89-29.75 32.89-54.26 0-45.46-36.9-83.35-98.81-83.35z" fill="#000"/></svg>`,
+        },
+        {
+          id: "irritant",
+          label: "Irritant",
+          svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 579 579"><path d="M25 290 289 554 553 290 289 26 25 290z" fill="#fff"/><path d="M148 148 6 290l142 141 141 142 142-142 142-141-142-142L289 6 148 148zm261 22 119 120-119 119-120 119-119-119L51 290l119-120L289 51l120 119z" fill="#f00"/><path d="M289 143h-2a48 48 0 0 0-30 12 23 23 0 0 0-6 11c0 1 0 1-1 4 1 2 20 131 20 134 1 5 13 18 19 18 12 0 22-14 24-18l20-134c1-1 1-2 1-4 0-2 0-3 0-5a23 23 0 0 0-11-14 50 50 0 0 0-29-8h-3zm2 201h-1a30 30 0 0 0-24 14 34 34 0 0 0-6 23 34 34 0 0 0 12 22 31 31 0 0 0 20 7 32 32 0 0 0 26-14 34 34 0 0 0 5-23 39 39 0 0 0-3-11 32 32 0 0 0-28-18" fill="#000"/></svg>`,
+        },
+        {
+          id: "health",
+          label: "Health Haz",
+          svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 735 735"><path d="m367.5 727.4 360-360-360-360-360 360z" fill="#fff"/><path d="m367.5 670.3-302.8-302.8 302.8-302.8 302.8 302.8z" fill="#f00"/><path d="m367.5 670.3-302.8-302.8 302.8-302.8 302.8 302.8z" fill-opacity="0" stroke="#f00" stroke-width="12"/><path d="m369.2 136.1c-42.38 0-76.74 37.02-76.74 82.66 0 29.67 11.1 71.32 32.73 96.82l-2.65 27.07-58.04 21.03c0.93 4.53 4.94 7.94 9.74 7.94 0.85 0 1.67-0.12 2.45-0.34l58.05-20.91 30.68 18.25-15.03 58.74c-4.99 21.02-14.07 92.48-18.15 119.6-1.55 10.32 5.09 19.92 14.86 21.49 1.13 0.18 2.27 0.27 3.39 0.27 8.52 0 16.03-5.22 18.57-13.43 4.29-13.8 28.84-93.65 28.84-93.65l17.72 23.36 12 119.5c0.41 12.82 10.27 23.31 22.42 24.36l3.96 0.1c11.39 0 21.46-8.21 23.51-19.16l25.86-137.9 14.57-22.18c0.04 0.26 0.09 0.52 0.09 0.79 0 4.14-0.12 8.08-0.27 11.77-0.11 2.37-0.19 4.62-0.19 6.72 0 32.06 17.13 52.88 38.08 52.88 9 0 17.91-3.9 23.71-10.45 0.53-0.6 1.05-1.22 1.54-1.85 15.65-20.08 19.19-56.12 7.74-80.49-14.36-30.56-42.78-79.35-71.21-127.3-6.23-10.51-36.93-60.65-38.35-64.84-2.14-6.3-4.57-12.72-7.24-19.26 6.88-29.35 15.48-81.54 15.48-106.8 0-45.64-34.36-82.66-76.74-82.66zm0 18.3c32.28 0 58.44 28.88 58.44 64.36 0 23.49-11.23 72.82-17.65 99.88l-0.56 2.38 1.48 1.95c1.19 1.56 31.9 42.02 46.12 66.01 27.66 46.66 54.38 91.95 67.8 120.5 8.16 17.37 5.4 46.3-7.51 62.86-2.92 3.75-7.5 6.07-12.29 6.07-11.45 0-20.89-13.3-20.89-39.75 0-2.31 0.08-4.7 0.2-7.19 0.16-3.83 0.28-7.85 0.28-11.99 0-2.32-0.26-4.9-0.96-7.86l-0.75-3.15-2.07-2.58-19.1-23.77-24.84 132.5-12.63-125.8-1.02-10.15-7.66-6.72-24.31-21.36-4.63 14.88c-0.29 0.94-5.59 18.06-11.96 40.85-2.52 9.02-5.71 19.38-7.94 26.54l13.63-53.31 1.84-7.21-3.76-6.2-36.56-60.36 21.05-7.57 2.65-0.95 0.32-2.79c1.07-9.33 2.08-17.75 2.08-25.07 0-35.48-25.16-64.36-58.44-64.36z" fill="#000"/><path d="m424.8 280.4 5.38 27.8 45.31-24.96c4.66-2.56 6.35-8.41 3.78-13.06-2.56-4.66-8.4-6.35-13.06-3.78l-41.41 22.81" fill="#fff"/></svg>`,
+        },
+        {
+          id: "env",
+          label: "Environment",
+          svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 735 735"><path d="m367.5 727.4 360-360-360-360-360 360z" fill="#fff"/><path d="m367.5 670.3-302.8-302.8 302.8-302.8 302.8 302.8z" fill="#f00"/><path d="m367.5 670.3-302.8-302.8 302.8-302.8 302.8 302.8z" fill-opacity="0" stroke="#f00" stroke-width="12"/><g stroke="#000" stroke-width="5"><path d="m223.7 367.2h281.2"/><path stroke-width="4" d="m462.7 418 32.98 23.79-31.36 15.1 42.2 3.79-11.36 15.1h23.3l.54 16.76-294.2-1.605s49.2-14.58 57.3-8.635c10.82-4.87 89.8-38.4 89.8-36.2m-75.72-25.98-29.75 1.08s-11.9-46.52 14.6-59.5c26.5-12.98 56.78-3.785 56.78-3.785s-23.77-50.84 5.405-72.48c29.17-21.6 57.3.54 57.3.54s6.49-33.53 43.81-22.18c21.6 6.49 20 40 20 40s36.78-9.735 44.89 12.98c8.11 22.68-15.14 42.18-15.14 42.18l-197.9 .54z"/><path fill="#fff" d="m355.2 445.1c7.29 0 11.23 3.52 11.23 6.94 0 5.4-30.82 2.1-30.82-3.1 0-5.32 12.3-3.84 19.59-3.84"/></g><ellipse cy="385.8" cx="484.3" rx="5.95" ry="5.13"/></svg>`,
+        },
+      ];
+
+      // Init UI
+      const checksContainer = document.getElementById("ghs-checks");
+      ghsData.forEach((item) => {
+        const wrapper = document.createElement("label");
+        wrapper.className =
+          "flex flex-col items-center justify-center p-2 border rounded cursor-pointer hover:bg-slate-100 bg-white text-center";
+        wrapper.innerHTML = `
+                <input type="checkbox" class="ghs-checkbox mb-1 accent-red-600" value="${item.id}">
+                <div class="w-8 h-8 opacity-70 flex items-center justify-center">${item.svg}</div>
+                <span class="text-[10px] leading-none mt-1 font-medium text-slate-600">${item.label}</span>
+            `;
+        checksContainer.appendChild(wrapper);
+      });
+
+      function updateLabel() {
+        // Text Fields
+        document.getElementById("out-name").textContent =
+          document.getElementById("inp-name").value || "CHEMICAL NAME";
+        document.getElementById("out-date").textContent =
+          document.getElementById("inp-date").value || "YYYY-MM-DD";
+        document.getElementById("out-notes").textContent =
+          document.getElementById("inp-notes").value || "";
+
+        // Signal Word Logic
+        const signal = document.getElementById("inp-signal").value;
+        const signalBox = document.getElementById("out-signal-box");
+        if (!signal) {
+          signalBox.style.display = "none";
+        } else {
+          signalBox.style.display = "block";
+          document.getElementById("out-signal").textContent = signal;
+          // Toggle Warning Orange vs Danger Red
+          if (signal === "WARNING") {
+            signalBox.className =
+              "bg-orange-500 text-black text-center py-2 mb-4 rounded-sm border-2 border-black";
+          } else {
+            signalBox.className =
+              "bg-red-600 text-white text-center py-2 mb-4 rounded-sm border-2 border-black";
+          }
+        }
+
+        // NFPA
+        document.getElementById("out-nfpa-h").textContent =
+          document.getElementById("nfpa-h").value;
+        document.getElementById("out-nfpa-f").textContent =
+          document.getElementById("nfpa-f").value;
+        document.getElementById("out-nfpa-r").textContent =
+          document.getElementById("nfpa-r").value;
+        document.getElementById("out-nfpa-s").textContent =
+          document.getElementById("nfpa-s").value;
+
+        // GHS Icons
+        const grid = document.getElementById("out-ghs-grid");
+        grid.innerHTML = "";
+        const checkedBoxes = document.querySelectorAll(".ghs-checkbox:checked");
+
+        // Adjust size based on count to fit nicely
+        const sizeClass = checkedBoxes.length > 4 ? "w-10 h-10" : "w-14 h-14";
+
+        checkedBoxes.forEach((chk) => {
+          const item = ghsData.find((d) => d.id === chk.value);
+          if (item) {
+            const div = document.createElement("div");
+            div.className = `${sizeClass} flex items-center justify-center`;
+            div.innerHTML = item.svg; // Insert SVG
+            grid.appendChild(div);
+          }
+        });
+      }
+
+      // Event Listeners
+      document.querySelectorAll("input, select, textarea").forEach((el) => {
+        el.addEventListener("input", updateLabel);
+      });
+
+      // Set Default Date
+      document.getElementById("inp-date").valueAsDate = new Date();
+      updateLabel();
+    </script>
+
+    <!-- Footer -->
+    <footer
+      style="
+        text-align: center;
+        padding: 1rem;
+        color: #707070;
+        font-size: 0.875rem;
+      "
+    >
+      <p style="font-style: italic; margin-bottom: 0.25rem">
+        But God made the earth by his power; he founded the world by his wisdom
+        and stretched out the heavens by his understanding. Jeremiah 10:12
+      </p>
+      <p style="font-size: 0.75rem; margin-bottom: 0.25rem; margin-top: 0.5rem">
+        「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書
+        10:12
+      </p>
+      <p
+        style="
+          font-size: 0.75rem;
+          margin-top: 0.5rem;
+          padding-top: 0.5rem;
+          border-top: 1px solid #d1d5db;
+        "
+      >
+        @ 2025 Generated by Gemini Pro 3.0 Prepared by SF Lau
+      </p>
+    </footer>
+
+</body>
+</html>

@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小五數學：體積單位換算 | Volume Unit Conversion</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Volume Unit Conversion",
+    zh: "體積單位換算",
+    ja: "体積単位変換",
+    ko: "부피 단위 변환",
+    es: "Conversión de Unidades de Volumen",
+    de: "Volumeneinheiten Umrechnung",
+    fi: "Tilavuusyksiköiden muunnos",
+    fr: "Conversion d'unités de volume",
+    ar: "تحويل وحدات الحجم",
+    it: "Conversione unità di volume"
+  },
+  relations: {
+    en: "Conversion Relations",
+    zh: "換算關係",
+    ja: "変換関係",
+    ko: "변환 관계",
+    es: "Relaciones de Conversión",
+    de: "Umrechnungsverhältnisse",
+    fi: "Muunnossuhteet",
+    fr: "Relations de conversion",
+    ar: "علاقات التحويل",
+    it: "Relazioni di conversione"
+  },
+  m3Option: {
+    en: "m³ (Cubic Meter)",
+    zh: "m³ (立方米)",
+    ja: "m³ (立方メートル)",
+    ko: "m³ (세제곱미터)",
+    es: "m³ (Metro Cúbico)",
+    de: "m³ (Kubikmeter)",
+    fi: "m³ (Kuutiometri)",
+    fr: "m³ (Mètre cube)",
+    ar: "m³ (متر مكعب)",
+    it: "m³ (Metro cubo)"
+  },
+  cm3Option: {
+    en: "cm³ (Cubic Centimeter)",
+    zh: "cm³ (立方厘米)",
+    ja: "cm³ (立方センチメートル)",
+    ko: "cm³ (세제곱센티미터)",
+    es: "cm³ (Centímetro Cúbico)",
+    de: "cm³ (Kubikzentimeter)",
+    fi: "cm³ (Kuutiosenttimetri)",
+    fr: "cm³ (Centimètre cube)",
+    ar: "cm³ (سنتيمتر مكعب)",
+    it: "cm³ (Centimetro cubo)"
+  },
+  lOption: {
+    en: "L (Liter)",
+    zh: "L (公升)",
+    ja: "L (リットル)",
+    ko: "L (리터)",
+    es: "L (Litro)",
+    de: "L (Liter)",
+    fi: "L (Litra)",
+    fr: "L (Litre)",
+    ar: "L (لتر)",
+    it: "L (Litro)"
+  },
+  cm3Header: {
+    en: "Cubic Centimeter",
+    zh: "立方厘米",
+    ja: "立方センチメートル",
+    ko: "세제곱센티미터",
+    es: "Centímetro Cúbico",
+    de: "Kubikzentimeter",
+    fi: "Kuutiosenttimetri",
+    fr: "Centimètre cube",
+    ar: "سنتيمتر مكعب",
+    it: "Centimetro cubo"
+  },
+  mlHeader: {
+    en: "Milliliter",
+    zh: "毫升",
+    ja: "ミリリットル",
+    ko: "밀리리터",
+    es: "Mililitro",
+    de: "Milliliter",
+    fi: "Millilitra",
+    fr: "Millilitre",
+    ar: "ملليلتر",
+    it: "Millilitro"
+  },
+  lHeader: {
+    en: "Liter",
+    zh: "公升",
+    ja: "リットル",
+    ko: "리터",
+    es: "Litro",
+    de: "Liter",
+    fi: "Litra",
+    fr: "Litre",
+    ar: "لتر",
+    it: "Litro"
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [value, setValue] = useState(1);
+  const [fromUnit, setFromUnit] = useState("m3");
+  const conversions = {
+    m3: {
+      toCm3: 1000000,
+      toMl: 1000000,
+      toL: 1000
+    },
+    cm3: {
+      toCm3: 1,
+      toMl: 1,
+      toL: 0.001
+    },
+    L: {
+      toCm3: 1000,
+      toMl: 1000,
+      toL: 1
+    }
+  };
+  const c = conversions[fromUnit];
+  const cm3 = value * c.toCm3;
+  const ml = value * c.toMl;
+  const liters = value * c.toL;
+  const formatNumber = num => {
+    // Avoid tiny floating point errors
+    if (Math.abs(num) < 0.000001) return 0;
+    // Up to 6 decimal places, remove trailing zeros
+    return parseFloat(num.toFixed(6)).toLocaleString();
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4 font-sans bg-slate-900 text-white"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-5xl flex justify-between items-center mb-10"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-black text-amber-400 drop-shadow-[0_0_15px_rgba(251,191,36,0.5)]"
+  }, "📏 ", getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "flex bg-slate-800/80 p-1.5 rounded-xl border border-white/10 flex-wrap justify-end gap-1 max-w-[50%]"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-amber-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white hover:bg-white/5"}`
+  }, l)))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-4xl flex flex-col gap-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-8 rounded-3xl flex flex-col md:flex-row items-center gap-6 justify-center"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    step: "0.1",
+    value: value,
+    onChange: e => setValue(parseFloat(e.target.value) || 0),
+    className: "w-full md:w-48 bg-slate-950/50 border-2 border-slate-700 rounded-xl px-4 py-3 text-center text-3xl font-black text-amber-400 focus:border-amber-500 outline-none transition-colors"
+  }), /*#__PURE__*/React.createElement("select", {
+    value: fromUnit,
+    onChange: e => setFromUnit(e.target.value),
+    className: "w-full md:w-auto bg-slate-800 border-2 border-slate-700 rounded-xl px-4 py-3 text-xl font-bold focus:border-amber-500 outline-none cursor-pointer"
+  }, /*#__PURE__*/React.createElement("option", {
+    value: "m3"
+  }, getText("m3Option", lang)), /*#__PURE__*/React.createElement("option", {
+    value: "cm3"
+  }, getText("cm3Option", lang)), /*#__PURE__*/React.createElement("option", {
+    value: "L"
+  }, getText("lOption", lang)))), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-1 md:grid-cols-3 gap-6"
+  }, /*#__PURE__*/React.createElement(ResultCard, {
+    label: getText("cm3Header", lang),
+    unit: "cm³",
+    value: formatNumber(cm3),
+    color: "bg-amber-500/20 border-amber-500/30 text-amber-300",
+    delay: 0
+  }), /*#__PURE__*/React.createElement(ResultCard, {
+    label: getText("mlHeader", lang),
+    unit: "mL",
+    value: formatNumber(ml),
+    color: "bg-blue-500/20 border-blue-500/30 text-blue-300",
+    delay: 0.1
+  }), /*#__PURE__*/React.createElement(ResultCard, {
+    label: getText("lHeader", lang),
+    unit: "L",
+    value: formatNumber(liters),
+    color: "bg-green-500/20 border-green-500/30 text-green-300",
+    delay: 0.2
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 rounded-2xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-slate-400 font-bold uppercase tracking-widest text-xs mb-4"
+  }, "📖 ", getText("relations", lang)), /*#__PURE__*/React.createElement("ul", {
+    className: "space-y-2 font-mono text-sm md:text-base text-slate-300"
+  }, /*#__PURE__*/React.createElement("li", {
+    className: "flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "w-2 h-2 rounded-full bg-amber-500"
+  }), " ", "1 m³ = 1,000,000 cm³"), /*#__PURE__*/React.createElement("li", {
+    className: "flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "w-2 h-2 rounded-full bg-blue-500"
+  }), " 1 cm³ = 1 mL"), /*#__PURE__*/React.createElement("li", {
+    className: "flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "w-2 h-2 rounded-full bg-green-500"
+  }), " ", "1 L = 1,000 mL = 1,000 cm³"), /*#__PURE__*/React.createElement("li", {
+    className: "flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "w-2 h-2 rounded-full bg-white"
+  }), " 1 m³ = 1,000 L")))));
+}
+const ResultCard = ({
+  label,
+  unit,
+  value,
+  color,
+  delay
+}) => /*#__PURE__*/React.createElement(motion.div, {
+  initial: {
+    opacity: 0,
+    y: 20
+  },
+  animate: {
+    opacity: 1,
+    y: 0
+  },
+  transition: {
+    delay
+  },
+  className: `glass-panel p-6 rounded-2xl flex flex-col items-center justify-center gap-2 border ${color.replace("bg-", "border-").split(" ")[1]}`
+}, /*#__PURE__*/React.createElement("div", {
+  className: "text-sm font-bold uppercase tracking-wider opacity-80"
+}, label), /*#__PURE__*/React.createElement("div", {
+  className: `text-3xl font-black ${color.split(" ").pop()}`
+}, value), /*#__PURE__*/React.createElement("div", {
+  className: "text-xs font-mono opacity-60"
+}, unit));
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

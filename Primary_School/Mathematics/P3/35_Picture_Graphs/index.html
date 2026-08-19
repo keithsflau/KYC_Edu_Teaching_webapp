@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小三數學：趣味象形圖 | Fun Pictograms</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #fde68a 0%, #f59e0b 100%);
+      }
+      .grid-bg {
+        background-image: radial-gradient(#d1d5db 1px, transparent 1px);
+        background-size: 20px 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Fun Pictograms",
+    zh: "趣味象形圖",
+    ja: "楽しい絵グラフ",
+    ko: "재미있는 그림 그래프",
+    es: "Pictogramas divertidos",
+    de: "Lustige Piktogramme",
+    fi: "Hauskat kuvaajat",
+    fr: "Pictogrammes amusants",
+    ar: "الصور التوضيحية الممتعة",
+    it: "Pittogrammi divertenti"
+  },
+  data: {
+    en: "Survey Data",
+    zh: "調查數據",
+    ja: "調査データ",
+    ko: "설문 데이터",
+    es: "Datos de la encuesta",
+    de: "Umfragedaten",
+    fi: "Kyselytiedot",
+    fr: "Données de l'enquête",
+    ar: "بيانات الاستطلاع",
+    it: "Dati sondaggio"
+  },
+  legend: {
+    en: "Legend Settings",
+    zh: "圖例設定",
+    ja: "凡例設定",
+    ko: "범례 설정",
+    es: "Ajustes de leyenda",
+    de: "Legendeneinstellungen",
+    fi: "Selitteen asetukset",
+    fr: "Paramètres de légende",
+    ar: "إعدادات المفتاح",
+    it: "Impostazioni legenda"
+  },
+  represents: {
+    en: "Each icon represents",
+    zh: "每個圖案代表",
+    ja: "各アイコンは以下を表します",
+    ko: "각 아이콘은 다음을 나타냅니다",
+    es: "Cada icono representa",
+    de: "Jedes Symbol steht für",
+    fi: "Jokainen kuvake edustaa",
+    fr: "Chaque icône représente",
+    ar: "كل رمز يمثل",
+    it: "Ogni icona rappresenta"
+  },
+  people: {
+    en: "people",
+    zh: "人",
+    ja: "人",
+    ko: "명",
+    es: "personas",
+    de: "Personen",
+    fi: "henkilöä",
+    fr: "personnes",
+    ar: "أشخاص",
+    it: "persone"
+  },
+  surveyTitle: {
+    en: "Class Activity Survey",
+    zh: "全班喜愛活動調查",
+    ja: "クラス活動調査",
+    ko: "학급 활동 설문조사",
+    es: "Encuesta de actividades de clase",
+    de: "Klassenaktivitätsumfrage",
+    fi: "Luokan toimintakysely",
+    fr: "Enquête sur les activités de classe",
+    ar: "استطلاع نشاط الصف",
+    it: "Indagine sulle attività di classe"
+  },
+  legendRep: {
+    en: "Legend: 1 Icon = {n} People",
+    zh: "代表：1 個圖案 = {n} 人",
+    ja: "凡例: 1 アイコン = {n} 人",
+    ko: "범례: 1 아이콘 = {n} 명",
+    es: "Leyenda: 1 icono = {n} personas",
+    de: "Legende: 1 Symbol = {n} Personen",
+    fi: "Selite: 1 kuvake = {n} henkilöä",
+    fr: "Légende : 1 icône = {n} personnes",
+    ar: "المفتاح: 1 رمز = {n} أشخاص",
+    it: "Legenda: 1 icona = {n} persone"
+  },
+  items: {
+    books: {
+      en: "Reading",
+      zh: "喜愛圖書",
+      ja: "読書",
+      ko: "독서",
+      es: "Lectura",
+      de: "Lesen",
+      fi: "Lukeminen",
+      fr: "Lecture",
+      ar: "قراءة",
+      it: "Lettura"
+    },
+    sports: {
+      en: "Sports",
+      zh: "喜愛運動",
+      ja: "スポーツ",
+      ko: "스포츠",
+      es: "Deportes",
+      de: "Sport",
+      fi: "Urheilu",
+      fr: "Sports",
+      ar: "رياضة",
+      it: "Sport"
+    },
+    music: {
+      en: "Music",
+      zh: "喜愛音樂",
+      ja: "音楽",
+      ko: "음악",
+      es: "Música",
+      de: "Musik",
+      fi: "Musiikki",
+      fr: "Musique",
+      ar: "موسيقى",
+      it: "Musica"
+    }
+  }
+};
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [scale, setScale] = useState(1);
+  const [data, setData] = useState([{
+    key: "books",
+    icon: "📚",
+    count: 4,
+    color: "bg-blue-100 border-blue-300"
+  }, {
+    key: "sports",
+    icon: "⚽",
+    count: 6,
+    color: "bg-green-100 border-green-300"
+  }, {
+    key: "music",
+    icon: "🎵",
+    count: 3,
+    color: "bg-pink-100 border-pink-300"
+  }]);
+  const updateCount = (idx, delta) => {
+    const newData = [...data];
+    newData[idx].count = Math.max(0, newData[idx].count + delta);
+    setData(newData);
+  };
+  const getItemName = key => t.items[key][lang] || t.items[key]["en"];
+  const getLegendText = () => (t.legendRep[lang] || t.legendRep["en"]).replace("{n}", scale);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-8 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-6xl font-black text-amber-900 mb-8 mt-8 drop-shadow-sm text-center"
+  }, "📊 ", t.title[lang] || t.title["en"]), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/90 backdrop-blur-md rounded-3xl p-8 shadow-2xl max-w-5xl w-full flex flex-col lg:flex-row gap-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "lg:w-1/3 space-y-4"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "text-2xl font-bold text-amber-800 mb-4"
+  }, t.data[lang] || t.data["en"]), data.map((item, idx) => /*#__PURE__*/React.createElement("div", {
+    key: idx,
+    className: "bg-white rounded-xl p-4 shadow-sm border-2 border-slate-100 flex items-center justify-between"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-3"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl"
+  }, item.icon), /*#__PURE__*/React.createElement("div", {
+    className: "font-bold text-slate-700 text-sm md:text-base"
+  }, getItemName(item.key))), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-3"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => updateCount(idx, -1),
+    className: "w-8 h-8 rounded-full bg-slate-100 hover:bg-red-100 text-slate-600 font-bold"
+  }, "-"), /*#__PURE__*/React.createElement("span", {
+    className: "text-xl font-black w-6 text-center"
+  }, item.count), /*#__PURE__*/React.createElement("button", {
+    onClick: () => updateCount(idx, 1),
+    className: "w-8 h-8 rounded-full bg-slate-100 hover:bg-green-100 text-slate-600 font-bold"
+  }, "+")))), /*#__PURE__*/React.createElement("div", {
+    className: "mt-8 p-4 bg-amber-50 rounded-xl border-2 border-amber-200"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "block text-lg font-bold text-amber-800 mb-2"
+  }, t.legend[lang] || t.legend["en"]), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl"
+  }, "⭐"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "font-bold text-slate-700"
+  }, t.represents[lang] || t.represents["en"]), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-2 mt-1 flex-wrap"
+  }, [1, 2, 5, 10].map(v => /*#__PURE__*/React.createElement("button", {
+    key: v,
+    onClick: () => setScale(v),
+    className: `px-3 py-1 rounded-lg font-bold ${scale === v ? "bg-amber-500 text-white" : "bg-white text-amber-700"}`
+  }, v)), /*#__PURE__*/React.createElement("span", {
+    className: "self-center font-bold text-slate-600"
+  }, t.people[lang] || t.people["en"])))))), /*#__PURE__*/React.createElement("div", {
+    className: "lg:w-2/3 bg-white rounded-3xl border-4 border-slate-200 p-8 relative grid-bg"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "text-2xl md:text-3xl font-black text-center text-slate-700 mb-8 border-b-2 border-slate-100 pb-4"
+  }, t.surveyTitle[lang] || t.surveyTitle["en"]), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-8"
+  }, data.map((item, idx) => {
+    const numIcons = item.count / scale;
+    return /*#__PURE__*/React.createElement("div", {
+      key: idx,
+      className: "flex items-center"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "w-24 md:w-32 font-bold text-right pr-4 text-lg md:text-xl text-slate-600 truncate"
+    }, getItemName(item.key)), /*#__PURE__*/React.createElement("div", {
+      className: "flex-1 min-h-[60px] flex items-center flex-wrap gap-2 p-2 rounded-xl bg-slate-50"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "flex flex-wrap gap-1"
+    }, [...Array(Math.floor(numIcons))].map((_, i) => /*#__PURE__*/React.createElement(motion.div, {
+      key: `full-${i}`,
+      initial: {
+        scale: 0
+      },
+      animate: {
+        scale: 1
+      },
+      className: "text-3xl md:text-4xl drop-shadow-md"
+    }, item.icon)), numIcons % 1 !== 0 && /*#__PURE__*/React.createElement(motion.div, {
+      initial: {
+        scale: 0
+      },
+      animate: {
+        scale: 1
+      },
+      className: "text-3xl md:text-4xl drop-shadow-md relative overflow-hidden",
+      style: {
+        width: `${numIcons % 1 * 36}px`
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "w-[36px]"
+    }, item.icon)))), /*#__PURE__*/React.createElement("div", {
+      className: "w-12 md:w-16 font-black text-slate-400 pl-4"
+    }, item.count));
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-4 right-4 text-slate-400 font-bold bg-white/80 px-4 py-2 rounded-lg backdrop-blur-sm border border-slate-200"
+  }, getLegendText()))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小五數學：3D 立體體積建造器 | 3D Volume Builder</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(30, 58, 138, 0.2); /* Blue 900 */
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(96, 165, 250, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+      #canvas-container {
+        width: 100%;
+        height: 400px;
+        border-radius: 1.5rem;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect,
+  useRef
+} = React;
+const {
+  motion
+} = window.Motion;
+const BoxSelect = (props) => React.createElement("span", { "aria-hidden": true }, "📦");
+const Cube = (props) => React.createElement("span", { "aria-hidden": true }, "🧊");
+const RotateCcw = (props) => React.createElement("span", { "aria-hidden": true }, "↺");
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "3D Volume Builder",
+    zh: "3D 立體體積探索",
+    ja: "3D体積ビルダー",
+    ko: "3D 부피 빌더",
+    es: "Constructor de Volumen 3D",
+    de: "3D-Volumen-Editor",
+    fi: "3D-tilavuusrakentaja",
+    fr: "Constructeur de volume 3D",
+    ar: "منشئ الحجم ثلاثي الأبعاد",
+    it: "Costruttore di volumi 3D"
+  },
+  subtitle: {
+    en: "Cuboid × Cube",
+    zh: "長方體 × 正方體",
+    ja: "直方体 × 立方体",
+    ko: "직육면체 × 정육면체",
+    es: "Cuboide × Cubo",
+    de: "Quader × Würfel",
+    fi: "Suorakulmainen särmiö × Kuutio",
+    fr: "Parallélépipède × Cube",
+    ar: "متوازي المستطيلات × مكعب",
+    it: "Parallelepipedo × Cubo"
+  },
+  length: {
+    en: "Length (L)",
+    zh: "長 (L)",
+    ja: "長さ (L)",
+    ko: "길이 (L)",
+    es: "Largo (L)",
+    de: "Länge (L)",
+    fi: "Pituus (L)",
+    fr: "Longueur (L)",
+    ar: "الطول (L)",
+    it: "Lunghezza (L)"
+  },
+  width: {
+    en: "Width (W)",
+    zh: "闊 (W)",
+    ja: "幅 (W)",
+    ko: "너비 (W)",
+    es: "Ancho (W)",
+    de: "Breite (W)",
+    fi: "Leveys (W)",
+    fr: "Largeur (W)",
+    ar: "العرض (W)",
+    it: "Larghezza (W)"
+  },
+  height: {
+    en: "Height (H)",
+    zh: "高 (H)",
+    ja: "高さ (H)",
+    ko: "높이 (H)",
+    es: "Altura (H)",
+    de: "Höhe (H)",
+    fi: "Korkeus (H)",
+    fr: "Hauteur (H)",
+    ar: "الارتفاع (H)",
+    it: "Altezza (H)"
+  },
+  volume: {
+    en: "Volume",
+    zh: "體積",
+    ja: "体積",
+    ko: "부피",
+    es: "Volumen",
+    de: "Volumen",
+    fi: "Tilavuus",
+    fr: "Volume",
+    ar: "حجم",
+    it: "Volume"
+  },
+  formulaTitle: {
+    en: "Volume Formula",
+    zh: "體積公式",
+    ja: "体積の公式",
+    ko: "부피 공식",
+    es: "Fórmula del Volumen",
+    de: "Volumenformel",
+    fi: "Tilavuuden kaava",
+    fr: "Formule du volume",
+    ar: "صيغة الحجم",
+    it: "Formula del volume"
+  },
+  formula: {
+    en: "Volume = Length × Width × Height",
+    zh: "體積 = 長 × 闊 × 高",
+    ja: "体積 = 長さ × 幅 × 高さ",
+    ko: "부피 = 길이 × 너비 × 높이",
+    es: "Volumen = Largo × Ancho × Altura",
+    de: "Volumen = Länge × Breite × Höhe",
+    fi: "Tilavuus = Pituus × Leveys × Korkeus",
+    fr: "Volume = Longueur × Largeur × Hauteur",
+    ar: "الحجم = الطول × العرض × الارتفاع",
+    it: "Volume = Lunghezza × Larghezza × Altezza"
+  },
+  surfaceArea: {
+    en: "Surface Area",
+    zh: "表面積",
+    ja: "表面積",
+    ko: "겉넓이",
+    es: "Área Superficial",
+    de: "Oberfläche",
+    fi: "Pinta-ala",
+    fr: "Surface",
+    ar: "مساحة السطح",
+    it: "Area superficiale"
+  },
+  adjust: {
+    en: "Adjust Dimensions",
+    zh: "調整尺寸",
+    ja: "寸法を調整",
+    ko: "치수 조정",
+    es: "Ajustar dimensiones",
+    de: "Abmessungen anpassen",
+    fi: "Säädä mittoja",
+    fr: "Ajuster les dimensions",
+    ar: "ضبط الأبعاد",
+    it: "Regola dimensioni"
+  },
+  makeCube: {
+    en: "Make Cube",
+    zh: "變成正方體",
+    ja: "立方体にする",
+    ko: "정육면체 만들기",
+    es: "Hacer Cubo",
+    de: "Würfel erstellen",
+    fi: "Tee kuutio",
+    fr: "Faire un cube",
+    ar: "اصنع مكعباً",
+    it: "Crea cubo"
+  },
+  reset: {
+    en: "Reset",
+    zh: "重設",
+    ja: "リセット",
+    ko: "초기화",
+    es: "Restablecer",
+    de: "Zurücksetzen",
+    fi: "Nollaa",
+    fr: "Réinitialiser",
+    ar: "إعادة تعيين",
+    it: "Ripristina"
+  },
+  tipsTitle: {
+    en: "Learning Tips",
+    zh: "學習重點",
+    ja: "学習のヒント",
+    ko: "학습 팁",
+    es: "Consejos",
+    de: "Lerntipps",
+    fi: "Oppimisvinkit",
+    fr: "Astuces",
+    ar: "نصائح",
+    it: "Suggerimenti"
+  },
+  tipVol: {
+    en: "Volume: Space occupied by an object",
+    zh: "體積：物體所佔的空間大小",
+    ja: "体積：物体が占める空間の大きさ",
+    ko: "부피: 물체가 차지하는 공간의 크기",
+    es: "Volumen: Espacio ocupado",
+    de: "Volumen: Raum, den ein Objekt einnimmt",
+    fi: "Tilavuus: Esineen tila",
+    fr: "Volume : Espace occupé",
+    ar: "الحجم: المساحة المشغولة",
+    it: "Volume: Spazio occupato"
+  },
+  tipUnit: {
+    en: "Unit: Cubic Centimeters (cm³)",
+    zh: "單位：立方厘米 (cm³)",
+    ja: "単位：立方センチメートル (cm³)",
+    ko: "단위: 세제곱센티미터 (cm³)",
+    es: "Unidad: cm³",
+    de: "Einheit: cm³",
+    fi: "Yksikkö: cm³",
+    fr: "Unité : cm³",
+    ar: "الوحدة: سم³",
+    it: "Unità: cm³"
+  },
+  tipCuboid: {
+    en: "Cuboid: L, W, H can be different",
+    zh: "長方體：長、闊、高都可以不同",
+    ja: "直方体：辺の長さが異なる",
+    ko: "직육면체: 변의 길이가 다를 수 있음",
+    es: "Cuboide: L, A, A diferentes",
+    de: "Quader: L, B, H unterschiedlich",
+    fi: "Särmiö: Mitat voivat vaihdella",
+    fr: "Parallélépipède : Dimensions différentes",
+    ar: "متوازي المستطيلات: الأبعاد مختلفة",
+    it: "Parallelepipedo: L, L, A diversi"
+  },
+  tipCube: {
+    en: "Cube: L, W, H are all same",
+    zh: "正方體：長、闊、高都相同",
+    ja: "立方体：辺の長さがすべて同じ",
+    ko: "정육면체: 모든 변이 같음",
+    es: "Cubo: L, A, A iguales",
+    de: "Würfel: Alle Seiten gleich",
+    fi: "Kuutio: Kaikki sivut samat",
+    fr: "Cube : Dimensions identiques",
+    ar: "المكعب: الأبعاد متساوية",
+    it: "Cubo: L, L, A uguali"
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [length, setLength] = useState(5);
+  const [width, setWidth] = useState(4);
+  const [height, setHeight] = useState(3);
+  const [shape, setShape] = useState("cuboid");
+  const canvasRef = useRef(null);
+  const sceneRef = useRef(null);
+  const meshRef = useRef(null);
+  const rendererRef = useRef(null);
+  const volume = length * width * height;
+  const surfaceArea = 2 * (length * width + width * height + height * length);
+  useEffect(() => {
+    // Three.js Setup (Dark Mode)
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0f172a); // Dark background
+
+    const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+    camera.position.set(12, 12, 16);
+    camera.lookAt(0, 0, 0);
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true
+    });
+    renderer.setSize(500, 400);
+    // Handle resize nicely in real layout via CSS mostly, but init size matters
+
+    if (canvasRef.current) {
+      canvasRef.current.innerHTML = "";
+      canvasRef.current.appendChild(renderer.domElement);
+    }
+
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    scene.add(ambientLight);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    directionalLight.position.set(10, 20, 10);
+    scene.add(directionalLight);
+    const backLight = new THREE.DirectionalLight(0x4444ff, 0.5);
+    backLight.position.set(-10, -10, -10);
+    scene.add(backLight);
+
+    // Grid
+    const gridHelper = new THREE.GridHelper(30, 30, 0x444444, 0x222222);
+    scene.add(gridHelper);
+
+    // Axes
+    const axesHelper = new THREE.AxesHelper(5);
+    scene.add(axesHelper);
+    sceneRef.current = scene;
+    rendererRef.current = renderer;
+
+    // Animation Loop
+    let animationId;
+    const animate = () => {
+      animationId = requestAnimationFrame(animate);
+      if (meshRef.current) {
+        // Gentle rotation
+        // meshRef.current.rotation.y += 0.002;
+      }
+      // Orbit controls logic would be better but keeping simple for now
+      renderer.render(scene, camera);
+    };
+    animate();
+    return () => {
+      cancelAnimationFrame(animationId);
+      renderer.dispose();
+    };
+  }, []);
+  useEffect(() => {
+    if (sceneRef.current) {
+      // Remove old mesh
+      if (meshRef.current) sceneRef.current.remove(meshRef.current);
+
+      // Create new block composition or single geometry
+      // Using a Group of cubes to visualize "counting" if needed, but single box is cleaner for formula
+      // Let's use single box with texture/segments to show units
+
+      const geometry = new THREE.BoxGeometry(length, height, width);
+
+      // Materials
+      // Main transparent color
+      const baseColor = shape === "cube" ? 0x10b981 : 0x3b82f6;
+      const material = new THREE.MeshStandardMaterial({
+        color: baseColor,
+        transparent: true,
+        opacity: 0.8,
+        roughness: 0.2,
+        metalness: 0.1
+      });
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.position.y = height / 2;
+
+      // Wireframe for edges
+      const edges = new THREE.EdgesGeometry(geometry);
+      const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({
+        color: 0xffffff,
+        linewidth: 2
+      }));
+      mesh.add(line);
+
+      // Inner voxel grid lines (optional, maybe too messy)
+      // Ideally we'd map a texture for grid lines
+
+      sceneRef.current.add(mesh);
+      meshRef.current = mesh;
+    }
+  }, [length, width, height, shape]);
+  const setCube = () => {
+    setShape("cube");
+    setLength(5);
+    setWidth(5);
+    setHeight(5);
+  };
+  const reset = () => {
+    setShape("cuboid");
+    setLength(5);
+    setWidth(4);
+    setHeight(3);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-6xl flex justify-between items-center mb-6"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-3xl md:text-5xl font-black text-blue-400 drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]"
+  }, "📦 ", getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-800/80 p-1.5 rounded-xl border border-white/10 flex flex-wrap justify-end gap-1"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-blue-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white hover:bg-white/5"}`
+  }, l)))), /*#__PURE__*/React.createElement("main", {
+    className: "w-full max-w-6xl grid grid-cols-1 lg:grid-cols-3 gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "lg:col-span-2 flex flex-col gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-4 rounded-3xl relative"
+  }, /*#__PURE__*/React.createElement("div", {
+    id: "canvas-container",
+    ref: canvasRef,
+    className: "w-full h-[400px] md:h-[500px] bg-slate-900/50 rounded-2xl cursor-move"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-6 left-6 flex flex-col gap-2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-black/40 backdrop-blur px-3 py-1 rounded-lg text-xs font-mono text-slate-300 border border-white/10"
+  }, getText("length", lang), ": ", length), /*#__PURE__*/React.createElement("div", {
+    className: "bg-black/40 backdrop-blur px-3 py-1 rounded-lg text-xs font-mono text-slate-300 border border-white/10"
+  }, getText("width", lang), ": ", width), /*#__PURE__*/React.createElement("div", {
+    className: " bg-black/40 backdrop-blur px-3 py-1 rounded-lg text-xs font-mono text-slate-300 border border-white/10"
+  }, getText("height", lang), ": ", height))), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 md:grid-cols-4 gap-4"
+  }, [{
+    label: "length",
+    val: length,
+    col: "text-blue-400"
+  }, {
+    label: "width",
+    val: width,
+    col: "text-green-400"
+  }, {
+    label: "height",
+    val: height,
+    col: "text-purple-400"
+  }, {
+    label: "volume",
+    val: volume,
+    unit: "cm³",
+    col: "text-amber-400 font-black"
+  }].map((stat, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "glass-panel p-4 rounded-2xl flex flex-col items-center justify-center"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-xs uppercase tracking-widest text-slate-400"
+  }, getText(stat.label, lang)), /*#__PURE__*/React.createElement("span", {
+    className: `text-3xl ${stat.col}`
+  }, stat.val), stat.unit && /*#__PURE__*/React.createElement("span", {
+    className: "text-xs text-slate-500"
+  }, stat.unit)))), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 rounded-2xl flex flex-col gap-2"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-blue-300 font-bold uppercase tracking-widest text-sm border-b border-white/10 pb-2 mb-2"
+  }, "📐 ", getText("formulaTitle", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "font-mono text-lg text-slate-300"
+  }, "V = L × W × H"), /*#__PURE__*/React.createElement("div", {
+    className: "font-mono text-xl md:text-2xl text-white"
+  }, "= ", /*#__PURE__*/React.createElement("span", {
+    className: "text-blue-400"
+  }, length), " ×", " ", /*#__PURE__*/React.createElement("span", {
+    className: "text-green-400"
+  }, width), " ×", " ", /*#__PURE__*/React.createElement("span", {
+    className: "text-purple-400"
+  }, height), " =", " ", /*#__PURE__*/React.createElement("span", {
+    className: "text-amber-400"
+  }, volume)), /*#__PURE__*/React.createElement("div", {
+    className: "mt-4 text-sm text-slate-400"
+  }, getText("surfaceArea", lang), " = 2(LW + WH + HL) =", " ", surfaceArea))), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 rounded-3xl flex flex-col gap-6"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-xl font-bold text-white flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement(BoxSelect, {
+    size: 20
+  }), " ", getText("adjust", lang)), [{
+    label: "length",
+    val: length,
+    set: setLength,
+    max: 10,
+    col: "accent-blue-500"
+  }, {
+    label: "width",
+    val: width,
+    set: setWidth,
+    max: 10,
+    col: "accent-green-500"
+  }, {
+    label: "height",
+    val: height,
+    set: setHeight,
+    max: 10,
+    col: "accent-purple-500"
+  }].map(s => /*#__PURE__*/React.createElement("div", {
+    key: s.label
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between text-sm mb-2 text-slate-300"
+  }, /*#__PURE__*/React.createElement("span", null, getText(s.label, lang)), /*#__PURE__*/React.createElement("span", {
+    className: "font-bold"
+  }, s.val, " cm")), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "1",
+    max: s.max,
+    value: s.val,
+    onChange: e => {
+      s.set(Number(e.target.value));
+      if (shape === "cube") setShape("cuboid");
+    },
+    className: `w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer ${s.col}`
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-2 mt-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: setCube,
+    className: "flex-1 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold transition-all shadow-lg flex items-center justify-center gap-2"
+  }, /*#__PURE__*/React.createElement(Cube, {
+    size: 18
+  }), " ", getText("makeCube", lang)), /*#__PURE__*/React.createElement("button", {
+    onClick: reset,
+    className: "px-4 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-bold transition-all flex items-center justify-center"
+  }, /*#__PURE__*/React.createElement(RotateCcw, {
+    size: 18
+  })))), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 rounded-3xl flex-1"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-lg font-bold text-amber-300 mb-4 flex items-center gap-2"
+  }, "💡 ", getText("tipsTitle", lang)), /*#__PURE__*/React.createElement("ul", {
+    className: "space-y-3 text-sm text-slate-300"
+  }, /*#__PURE__*/React.createElement("li", {
+    className: "flex gap-2"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-amber-500"
+  }, "•"), /*#__PURE__*/React.createElement("span", null, getText("tipVol", lang))), /*#__PURE__*/React.createElement("li", {
+    className: "flex gap-2"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-amber-500"
+  }, "•"), /*#__PURE__*/React.createElement("span", null, getText("tipUnit", lang))), /*#__PURE__*/React.createElement("li", {
+    className: "flex gap-2"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-amber-500"
+  }, "•"), /*#__PURE__*/React.createElement("span", null, getText("tipCuboid", lang))), /*#__PURE__*/React.createElement("li", {
+    className: "flex gap-2"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-amber-500"
+  }, "•"), /*#__PURE__*/React.createElement("span", null, getText("tipCube", lang))))))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

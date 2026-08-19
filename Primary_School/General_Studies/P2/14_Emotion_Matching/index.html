@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小二常識：情緒紅綠燈 | Emotion Traffic Light</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Emotion Traffic Light",
+    zh: "情緒紅綠燈",
+    ja: "感情の信号機",
+    ko: "감정 신호등",
+    es: "Semáforo de Emociones",
+    de: "Gefühlsampel",
+    fi: "Tunne liikennevalot",
+    fr: "Feu de Circulation des Émotions",
+    ar: "إشارة المرور العاطفية",
+    it: "Semaforo delle Emozioni"
+  },
+  instruction: {
+    en: "How to handle this feeling?",
+    zh: "如何處理這種情緒？",
+    ja: "この感情をどう処理しますか？",
+    ko: "이 감정을 어떻게 처리해야 할까요?",
+    es: "¿Cómo manejar este sentimiento?",
+    de: "Wie gehe ich mit diesem Gefühl um?",
+    fi: "Kuinka käsitellä tätä tunnetta?",
+    fr: "Comment gérer ce sentiment ?",
+    ar: "كيف تتعامل مع هذا الشعور؟",
+    it: "Come gestire questa sensazione?"
+  },
+  red: {
+    en: "Stop (Calm Down)",
+    zh: "停 (冷靜)",
+    ja: "止まれ (落ち着く)",
+    ko: "멈춤 (진정하기)",
+    es: "Parar (Calmarse)",
+    de: "Stopp (Beruhigen)",
+    fi: "Seis (Rauhoitu)",
+    fr: "Arrêt (Se calmer)",
+    ar: "توقف (هدئ أعصابك)",
+    it: "Stop (Calmati)"
+  },
+  yellow: {
+    en: "Think (What to do?)",
+    zh: "想 (怎麼辦？)",
+    ja: "考える (どうする？)",
+    ko: "생각 (어떻게 할까?)",
+    es: "Pensar (¿Qué hacer?)",
+    de: "Denken (Was tun?)",
+    fi: "Mieti (Mitä tehdä?)",
+    fr: "Penser (Que faire ?)",
+    ar: "فكر (ماذا تفعل؟)",
+    it: "Pensa (Cosa fare?)"
+  },
+  green: {
+    en: "Go (Act)",
+    zh: "行 (行動)",
+    ja: "進む (行動)",
+    ko: "진행 (행동)",
+    es: "Ir (Actuar)",
+    de: "Los (Handeln)",
+    fi: "Mene (Toimi)",
+    fr: "Allez (Agir)",
+    ar: "اذهب (تصرف)",
+    it: "Vai (Agisci)"
+  },
+  angry: {
+    en: "Very Angry! Want to hit!",
+    zh: "很生氣！想打人！",
+    ja: "とても怒っている！殴りたい！",
+    ko: "화가 나요! 때리고 싶어요!",
+    es: "¡Muy enojado! ¡Quiero golpear!",
+    de: "Sehr wütend! Will schlagen!",
+    fi: "Olen vihainen! Tekee mieli lyödä!",
+    fr: "Très en colère ! Envie de frapper !",
+    ar: "غاضب جدا! تريد أن تضرب!",
+    it: "Molto Arrabbiato! Voglio colpire!"
+  },
+  nervous: {
+    en: "Nervous about exam...",
+    zh: "考試前很緊張...",
+    ja: "試験で緊張している...",
+    ko: "시험 때문에 긴장돼요...",
+    es: "Nervioso por el examen...",
+    de: "Nervös wegen Prüfung...",
+    fi: "Jännittää koetta...",
+    fr: "Nerveux pour l'examen...",
+    ar: "متوتر بشأن الامتحان ...",
+    it: "Nervoso per l'esame..."
+  },
+  sad: {
+    en: "Sad because friend left.",
+    zh: "朋友走了很傷心。",
+    ja: "友達が行ってしまって悲しい。",
+    ko: "친구가 떠나서 슬퍼요.",
+    es: "Triste porque mi amigo se fue.",
+    de: "Traurig, weil Freund weg ist.",
+    fi: "Surullinen koska ystävä lähti.",
+    fr: "Triste parce que l'ami est parti.",
+    ar: "حزين لأن صديقي غادر.",
+    it: "Triste perché l'amico se n'è andato."
+  },
+  excited: {
+    en: "Too excited running around!",
+    zh: "太興奮亂跑！",
+    ja: "興奮して走り回ってる！",
+    ko: "너무 신나서 뛰어다녀요!",
+    es: "¡Demasiado emocionado corriendo!",
+    de: "Zu aufgeregt, renne herum!",
+    fi: "Liian innoissaan juoksemassa ympäriinsä!",
+    fr: "Trop excité à courir partout !",
+    ar: "متحمس جدا للجري!",
+    it: "Troppo eccitato correndo in giro!"
+  },
+  redAction: {
+    en: "Take deep breaths. 1...2...3...",
+    zh: "深呼吸... 1... 2... 3...",
+    ja: "深呼吸して。1...2...3...",
+    ko: "심호흡을 하세요. 1...2...3...",
+    es: "Respira hondo. 1...2...3...",
+    de: "Tief durchatmen. 1...2...3...",
+    fi: "Hengitä syvään. 1...2...3...",
+    fr: "Respirez profondément. 1...2...3...",
+    ar: "خذ أنفاسا عميقة. 1... 2... 3...",
+    it: "Fai respiri profondi. 1...2...3..."
+  },
+  yellowAction: {
+    en: "Think: Hitting hurts others.",
+    zh: "想：打人會令別人受傷。",
+    ja: "考える：殴ると相手が痛い。",
+    ko: "생각: 때리면 다른 사람이 다쳐요.",
+    es: "Piensa: Golpear lastima a otros.",
+    de: "Denke: Schlagen tut anderen weh.",
+    fi: "Mieti: Lyöminen sattuu toisiin.",
+    fr: "Pensez : Frapper fait mal aux autres.",
+    ar: "فكر: الضرب يؤذي الآخرين.",
+    it: "Pensa: Colpire fa male agli altri."
+  },
+  greenAction: {
+    en: "Tell teacher or draw a picture.",
+    zh: "告訴老師或畫畫發洩。",
+    ja: "先生に言うか、絵を描く。",
+    ko: "선생님께 말하거나 그림을 그리세요.",
+    es: "Dile al maestro o dibuja un dibujo.",
+    de: "Sag es dem Lehrer oder male ein Bild.",
+    fi: "Kerro opettajalle tai piirrä kuva.",
+    fr: "Dites-le au professeur ou dessinez une image.",
+    ar: "أخبر المعلم أو ارسم صورة.",
+    it: "Dillo all'insegnante o disegna un'immagine."
+  },
+  redActionNervous: {
+    en: "Stop and drink water.",
+    zh: "停下來，喝一口水。",
+    ja: "止まって水を飲む。",
+    ko: "멈추고 물을 마시세요.",
+    es: "Para y bebe agua.",
+    de: "Stopp und trink Wasser.",
+    fi: "Pysähdy ja juo vettä.",
+    fr: "Arrête-toi et bois de l'eau.",
+    ar: "توقف واشرب ماء.",
+    it: "Fermati e bevi acqua."
+  },
+  yellowActionNervous: {
+    en: "Think: I studied hard, I can do it.",
+    zh: "想：我有溫習，我做得到。",
+    ja: "考える：勉強したからできる。",
+    ko: "생각: 열심히 공부했어요. 할 수 있어요.",
+    es: "Piensa: Estudié mucho, puedo hacerlo.",
+    de: "Denke: Ich habe gelernt, ich schaffe das.",
+    fi: "Mieti: Harjoittelin kovasti, pystyn siihen.",
+    fr: "Pense : J'ai étudié, je peux le faire.",
+    ar: "فكر: ذاكرت جيدا، أستطيع ذلك.",
+    it: "Pensa: Ho studiato, ce la posso fare."
+  },
+  greenActionNervous: {
+    en: "Do my best!",
+    zh: "盡力而為！",
+    ja: "ベストを尽くす！",
+    ko: "최선을 다해요!",
+    es: "¡Haz lo mejor que pueda!",
+    de: "Gib dein Bestes!",
+    fi: "Tee parhaasi!",
+    fr: "Fais de ton mieux !",
+    ar: "ابذل قصارى جهدك!",
+    it: "Fai del tuo meglio!"
+  },
+  redActionExcited: {
+    en: "Stop running!",
+    zh: "先停下來，不要亂跑！",
+    ja: "走らないで止まろう！",
+    ko: "뛰지 말고 멈추세요!",
+    es: "¡Deja de correr!",
+    de: "Hör auf zu rennen!",
+    fi: "Lopeta juokseminen!",
+    fr: "Arrête de courir !",
+    ar: "توقف عن الجري!",
+    it: "Smetti di correre!"
+  },
+  yellowActionExcited: {
+    en: "Think: I might bump into others.",
+    zh: "想：亂跑可能撞到別人。",
+    ja: "考える：ぶつかるかもしれない。",
+    ko: "생각: 다른 사람과 부딪힐 수 있어요.",
+    es: "Piensa: Podría chocar con otros.",
+    de: "Denke: Ich könnte jemanden anstoßen.",
+    fi: "Mieti: Saatan törmätä muihin.",
+    fr: "Pense : Je pourrais bousculer quelqu'un.",
+    ar: "فكر: قد أصطدم بالآخرين.",
+    it: "Pensa: Potrei urtare qualcuno."
+  },
+  greenActionExcited: {
+    en: "Play safely.",
+    zh: "安全地玩耍。",
+    ja: "安全に遊ぼう。",
+    ko: "안전하게 놀아요.",
+    es: "Juega con seguridad.",
+    de: "Spiele sicher.",
+    fi: "Leiki turvallisesti.",
+    fr: "Joue en sécurité.",
+    ar: "العب بأمان.",
+    it: "Gioca in sicurezza."
+  },
+  next: {
+    en: "Next Step",
+    zh: "下一步",
+    ja: "次のステップ",
+    ko: "다음 단계",
+    es: "Siguiente Paso",
+    de: "Nächster Schritt",
+    fi: "Seuraava vaihe",
+    fr: "Étape Suivante",
+    ar: "الخطوة التالية",
+    it: "Passo Successivo"
+  },
+  restart: {
+    en: "Try Another",
+    zh: "試試其他",
+    ja: "他を試す",
+    ko: "다른 것 시도",
+    es: "Probar Otro",
+    de: "Ein anderes versuchen",
+    fi: "Kokeile toista",
+    fr: "Essayer un autre",
+    ar: "جرب آخر",
+    it: "Prova un Altro"
+  },
+  great: {
+    en: "Great job managing emotions!",
+    zh: "處理情緒做得好！",
+    ja: "感情のコントロールが上手ですね！",
+    ko: "감정 조절을 잘했어요!",
+    es: "¡Gran trabajo manejando emociones!",
+    de: "Super, wie du mit Gefühlen umgehst!",
+    fi: "Hienoa työtä tunteiden hallinnassa!",
+    fr: "Bravo pour la gestion des émotions !",
+    ar: "عمل عظيم في إدارة العواطف!",
+    it: "Ottimo lavoro nella gestione delle emozioni!"
+  }
+};
+const scenarios = [{
+  id: "angry",
+  icon: "😡",
+  color: "bg-red-100",
+  redKey: "redAction",
+  yellowKey: "yellowAction",
+  greenKey: "greenAction"
+}, {
+  id: "nervous",
+  icon: "😰",
+  color: "bg-blue-100",
+  redKey: "redActionNervous",
+  yellowKey: "yellowActionNervous",
+  greenKey: "greenActionNervous"
+}, {
+  id: "excited",
+  icon: "😆",
+  color: "bg-yellow-100",
+  redKey: "redActionExcited",
+  yellowKey: "yellowActionExcited",
+  greenKey: "greenActionExcited"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [scenario, setScenario] = useState(null);
+  const [step, setStep] = useState(0); // 0: Select Scenario, 1: Red, 2: Yellow, 3: Green, 4: Done
+
+  const getText = key => t[key][lang] || t[key]["en"];
+  const selectScenario = s => {
+    setScenario(s);
+    setStep(1);
+  };
+  const nextStep = () => {
+    setStep(s => s + 1);
+  };
+  const reset = () => {
+    setScenario(null);
+    setStep(0);
+  };
+
+  const getSteppedText = (s, step) => {
+    const key = step === 1 ? s.redKey : step === 2 ? s.yellowKey : s.greenKey;
+    return getText(key);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-slate-800 mb-8 mt-8 drop-shadow-sm bg-white/50 px-6 py-2 rounded-full"
+  }, "🚥 ", getText("title")), step === 0 && /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-2xl grid grid-cols-1 md:grid-cols-3 gap-6"
+  }, scenarios.map(s => /*#__PURE__*/React.createElement("button", {
+    key: s.id,
+    onClick: () => selectScenario(s),
+    className: `${s.color} p-6 rounded-3xl shadow-lg flex flex-col items-center justify-center gap-4 hover:scale-105 transition-transform border-4 border-white`
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-6xl"
+  }, s.icon), /*#__PURE__*/React.createElement("span", {
+    className: "font-bold text-slate-700 text-lg"
+  }, getText(s.id))))), step > 0 && scenario && /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-md flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-800 p-4 rounded-3xl flex flex-col gap-4 shadow-2xl mb-8 border-4 border-slate-600"
+  }, /*#__PURE__*/React.createElement(motion.div, {
+    animate: {
+      opacity: step === 1 ? 1 : 0.3,
+      scale: step === 1 ? 1.1 : 1
+    },
+    className: "w-20 h-20 bg-red-500 rounded-full shadow-lg border-4 border-red-600"
+  }), /*#__PURE__*/React.createElement(motion.div, {
+    animate: {
+      opacity: step === 2 ? 1 : 0.3,
+      scale: step === 2 ? 1.1 : 1
+    },
+    className: "w-20 h-20 bg-yellow-400 rounded-full shadow-lg border-4 border-yellow-500"
+  }), /*#__PURE__*/React.createElement(motion.div, {
+    animate: {
+      opacity: step === 3 ? 1 : 0.3,
+      scale: step === 3 ? 1.1 : 1
+    },
+    className: "w-20 h-20 bg-green-500 rounded-full shadow-lg border-4 border-green-600"
+  })), /*#__PURE__*/React.createElement(AnimatePresence, {
+    mode: "wait"
+  }, step <= 3 ? /*#__PURE__*/React.createElement(motion.div, {
+    key: step,
+    initial: {
+      opacity: 0,
+      x: 50
+    },
+    animate: {
+      opacity: 1,
+      x: 0
+    },
+    exit: {
+      opacity: 0,
+      x: -50
+    },
+    className: "bg-white p-8 rounded-3xl shadow-xl text-center w-full min-h-[200px] flex flex-col items-center justify-center border-b-8 border-slate-200"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: `text-4xl font-black mb-4 ${step === 1 ? "text-red-500" : step === 2 ? "text-yellow-500" : "text-green-500"}`
+  }, step === 1 ? getText("red") : step === 2 ? getText("yellow") : getText("green")), /*#__PURE__*/React.createElement("p", {
+    className: "text-xl font-bold text-slate-600 mb-6"
+  }, getSteppedText(scenario, step)), /*#__PURE__*/React.createElement("button", {
+    onClick: nextStep,
+    className: "bg-slate-700 text-white px-8 py-3 rounded-full font-bold shadow-lg hover:bg-slate-800 text-lg"
+  }, getText("next"), " ➡️")) : /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      scale: 0
+    },
+    animate: {
+      scale: 1
+    },
+    className: "bg-white p-12 rounded-3xl shadow-xl text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-8xl mb-4"
+  }, "😌"), /*#__PURE__*/React.createElement("h2", {
+    className: "text-3xl font-black text-green-600 mb-6"
+  }, getText("great")), /*#__PURE__*/React.createElement("button", {
+    onClick: reset,
+    className: "bg-blue-500 text-white px-10 py-4 rounded-full font-black text-xl hover:bg-blue-600 shadow-xl"
+  }, getText("restart"), " 🔄")))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Atomic Structure Builder | 原子結構構建器</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: "Inter", sans-serif;
+      user-select: none;
+    }
+
+    .glass-panel {
+      background: rgba(30, 41, 59, 0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(148, 163, 184, 0.1);
+    }
+
+    .particle {
+      cursor: grab;
+      transition: transform 0.1s;
+    }
+
+    .particle:active {
+      cursor: grabbing;
+      transform: scale(1.1);
+    }
+
+    .electron-shell {
+      border: 1px dashed rgba(148, 163, 184, 0.3);
+      border-radius: 50%;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+  </style>
+</head>
+
+<body class="bg-slate-950 text-white min-h-screen flex flex-col overflow-hidden">
+  <!-- Header -->
+  <header
+    class="bg-slate-900/50 backdrop-blur-md border-b border-slate-800 px-6 py-4 flex justify-between items-center z-10">
+    <div class="flex items-center gap-4">
+      <a href="../../index.html" class="text-slate-400 hover:text-white transition-colors" aria-label="Back to Chemistry hub">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+      </a>
+      <h1 class="text-xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+        Atomic Builder
+        <span class="text-slate-500 font-medium text-sm ml-2">原子結構</span>
+      </h1>
+    </div>
+    <button onclick="resetAtom()"
+      class="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm text-slate-300 transition-colors">
+      Reset 重置
+    </button>
+  </header>
+
+  <main class="flex-grow flex relative">
+    <!-- Construction Area (Canvas Layer) -->
+    <div id="workspace"
+      class="relative flex-grow bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-black">
+      <!-- Electron Shells Visuals -->
+      <div class="electron-shell w-[200px] h-[200px]"></div>
+      <div class="electron-shell w-[350px] h-[350px]"></div>
+      <div class="electron-shell w-[500px] h-[500px]"></div>
+
+      <!-- Nucleus Target Zone -->
+      <div
+        class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full bg-purple-500/5 glow-nucleus flex items-center justify-center pointer-events-none">
+        <div class="w-2 h-2 bg-purple-500/50 rounded-full"></div>
+      </div>
+
+      <canvas id="atomCanvas" class="absolute inset-0 w-full h-full"></canvas>
+    </div>
+
+    <!-- Sidebar / Source -->
+    <div class="w-80 glass-panel border-l border-slate-800 flex flex-col z-20">
+      <!-- Stats Panel -->
+      <div class="p-6 border-b border-slate-800">
+        <div class="flex items-center justify-between mb-4">
+          <div
+            class="w-16 h-16 bg-gradient-to-br from-slate-700 to-slate-800 rounded-xl border border-slate-600 flex flex-col items-center justify-center shadow-lg">
+            <span id="mass-display" class="text-xs text-slate-400 leading-none mb-0.5">1</span>
+            <span id="symbol-display"
+              class="text-2xl font-bold bg-gradient-to-br from-white to-slate-400 bg-clip-text text-transparent">H</span>
+            <span id="atomic-num-display" class="text-xs text-slate-400 leading-none mt-0.5">1</span>
+          </div>
+          <div class="text-right">
+            <div id="name-display" class="text-xl font-bold text-white">
+              Hydrogen
+            </div>
+            <div id="charge-display" class="text-sm text-slate-400">
+              Neutral Atom
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-2 text-sm">
+          <div class="flex justify-between">
+            <span class="text-slate-400">Protons (質子)</span>
+            <span id="p-count" class="font-mono text-red-400">1</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-400">Neutrons (中子)</span>
+            <span id="n-count" class="font-mono text-slate-300">0</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-400">Electrons (電子)</span>
+            <span id="e-count" class="font-mono text-blue-400">1</span>
+          </div>
+          <div class="mt-4 pt-4 border-t border-slate-700/50">
+            <div class="flex justify-between items-center">
+              <span class="text-slate-400">Net Charge (淨電荷)</span>
+              <span id="net-charge" class="font-bold text-white">0</span>
+            </div>
+            <div class="flex justify-between items-center mt-1">
+              <span class="text-slate-400">Mass Number (質量數)</span>
+              <span id="mass-num" class="font-bold text-white">1</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Particle Dispenser -->
+      <div class="flex-grow p-6 flex flex-col gap-4">
+        <h3 class="text-sm font-semibold text-slate-500 uppercase tracking-wider">
+          Add Particles
+        </h3>
+        <p class="text-xs text-slate-500 mb-2">
+          Drag particles to the center
+        </p>
+
+        <div
+          class="flex items-center gap-4 p-3 rounded-lg bg-slate-800/50 border border-slate-700/50 hover:bg-slate-800 transition-colors cursor-grab"
+          id="drag-proton" draggable="true">
+          <div
+            class="w-8 h-8 rounded-full bg-gradient-to-br from-red-500 to-red-600 shadow-[0_0_15px_rgba(239,68,68,0.4)] flex items-center justify-center font-bold text-xs">
+            +
+          </div>
+          <div class="text-sm font-medium">Proton 質子</div>
+        </div>
+
+        <div
+          class="flex items-center gap-4 p-3 rounded-lg bg-slate-800/50 border border-slate-700/50 hover:bg-slate-800 transition-colors cursor-grab"
+          id="drag-neutron" draggable="true">
+          <div
+            class="w-8 h-8 rounded-full bg-gradient-to-br from-slate-400 to-slate-500 shadow-[0_0_15px_rgba(148,163,184,0.3)] flex items-center justify-center font-bold text-xs text-slate-900">
+            0
+          </div>
+          <div class="text-sm font-medium">Neutron 中子</div>
+        </div>
+
+        <div
+          class="flex items-center gap-4 p-3 rounded-lg bg-slate-800/50 border border-slate-700/50 hover:bg-slate-800 transition-colors cursor-grab"
+          id="drag-electron" draggable="true">
+          <div
+            class="w-6 h-6 rounded-full bg-gradient-to-br from-blue-400 to-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.4)] flex items-center justify-center font-bold text-[10px] text-white">
+            -
+          </div>
+          <div class="text-sm font-medium">Electron 電子</div>
+        </div>
+
+        <div id="stability-alert"
+          class="mt-auto p-3 rounded-lg bg-green-900/30 border border-green-500/30 text-green-400 text-xs text-center hidden">
+          Stable Isotope
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Data
+    const ELEMENTS = [
+      "Neutronium",
+      "Hydrogen",
+      "Helium",
+      "Lithium",
+      "Beryllium",
+      "Boron",
+      "Carbon",
+      "Nitrogen",
+      "Oxygen",
+      "Fluorine",
+      "Neon",
+      "Sodium",
+      "Magnesium",
+      "Aluminium",
+      "Silicon",
+      "Phosphorus",
+      "Sulfur",
+      "Chlorine",
+      "Argon",
+      "Potassium",
+      "Calcium",
+    ];
+    const SYMBOLS = [
+      "n",
+      "H",
+      "He",
+      "Li",
+      "Be",
+      "B",
+      "C",
+      "N",
+      "O",
+      "F",
+      "Ne",
+      "Na",
+      "Mg",
+      "Al",
+      "Si",
+      "P",
+      "S",
+      "Cl",
+      "Ar",
+      "K",
+      "Ca",
+    ];
+
+    // State
+    let protons = [];
+    let neutrons = [];
+    let electrons = [];
+
+    let canvas, ctx;
+    let width, height;
+    let centerX, centerY;
+
+    // Init
+    window.onload = function () {
+      canvas = document.getElementById("atomCanvas");
+      ctx = canvas.getContext("2d");
+      resize();
+      window.addEventListener("resize", resize);
+
+      // Initial state: Hydrogen-1
+      addParticle("proton", 0, 0);
+      addParticle("electron", 100, 0);
+
+      animate();
+      updateStats();
+
+      // Drag Events
+      setupDragAndDrop();
+    };
+
+    function resize() {
+      width = canvas.width = canvas.offsetWidth;
+      height = canvas.height = canvas.offsetHeight;
+      centerX = width / 2;
+      centerY = height / 2;
+    }
+
+    // Particle Class
+    class Particle {
+      constructor(type, x, y) {
+        this.type = type;
+        this.x = x || (Math.random() - 0.5) * 50;
+        this.y = y || (Math.random() - 0.5) * 50;
+        this.vx = (Math.random() - 0.5) * 0.5;
+        this.vy = (Math.random() - 0.5) * 0.5;
+
+        // Physics target
+        this.targetX = 0;
+        this.targetY = 0;
+        this.angle = Math.random() * Math.PI * 2;
+        this.orbitRadius = 0;
+        this.orbitalSpeed = 0;
+      }
+
+      update(index, total) {
+        if (this.type === "proton" || this.type === "neutron") {
+          // Nucleus logic: cluster in center
+          // Simple packing: varying radius based on total count
+          const radius = Math.sqrt(protons.length + neutrons.length) * 6; // Compact packing
+          // We want them to jiggle in a sphere
+
+          // Simple spring to center but avoid overlap
+          // For improved viz, let's just make them swarm in a tight ball
+          const noiseX = Math.sin(Date.now() * 0.001 + index) * 2;
+          const noiseY = Math.cos(Date.now() * 0.0013 + index) * 2;
+
+          // Distribute slightly
+          // Use a simple layout or just random walk within radius
+          // Let's use a force-directed approach for nucleus in a simplified way:
+          // Just attract to 0,0
+
+          const dist = Math.sqrt(this.x * this.x + this.y * this.y);
+          if (dist > radius + 5) {
+            this.vx -= this.x * 0.005;
+            this.vy -= this.y * 0.005;
+          }
+
+          // Damping
+          this.vx *= 0.95;
+          this.vy *= 0.95;
+
+          // Min jiggle
+          this.vx += (Math.random() - 0.5) * 0.2;
+          this.vy += (Math.random() - 0.5) * 0.2;
+
+          this.x += this.vx;
+          this.y += this.vy;
+        } else if (this.type === "electron") {
+          // Orbital logic
+          // Shell 1: 2, Shell 2: 8, Shell 3: 8...
+          let shell = 1;
+          let capacity = 2;
+          let countInPrevShells = 0;
+
+          if (index >= 2) {
+            shell = 2;
+            capacity = 8;
+            countInPrevShells = 2;
+          }
+          if (index >= 10) {
+            shell = 3;
+            capacity = 8;
+            countInPrevShells = 10;
+          }
+          if (index >= 18) {
+            shell = 4;
+            capacity = 18; // technically 18, but we only go up to Ca (20)
+            countInPrevShells = 18;
+          }
+
+          const shellRadius = shell === 1 ? 100 : shell === 2 ? 175 : shell === 3 ? 250 : 325;
+          const speed = shell === 1 ? 0.02 : shell === 2 ? 0.015 : shell === 3 ? 0.01 : 0.005;
+
+          this.angle += speed;
+
+          // Distribute electrons evenly in shell?
+          // Ideally yes, but rotating random start angles is okay for visual
+          // Let's try to keeping them spaced if possible, but basic rotation is fine
+
+          this.x =
+            Math.cos(this.angle + index * ((Math.PI * 2) / capacity)) *
+            shellRadius;
+          this.y =
+            Math.sin(this.angle + index * ((Math.PI * 2) / capacity)) *
+            shellRadius;
+        }
+      }
+
+      draw(ctx) {
+        const cx = centerX + this.x;
+        const cy = centerY + this.y;
+
+        let color, size, text;
+        if (this.type === "proton") {
+          color = "#ef4444";
+          size = 12;
+          text = "+";
+        } else if (this.type === "neutron") {
+          color = "#94a3b8";
+          size = 12;
+          text = "";
+        } else {
+          color = "#3b82f6";
+          size = 6;
+          text = "";
+        }
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, size, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        // Glow
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = color;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        if (text) {
+          ctx.fillStyle = "white";
+          ctx.font = "10px Inter";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(text, cx, cy);
+        }
+        ctx.closePath();
+      }
+    }
+
+    function addParticle(type, x, y) {
+      // Limit check
+      if (protons.length + neutrons.length > 50 && type !== "electron")
+        return;
+
+      const p = new Particle(type, x, y);
+      if (type === "proton") protons.push(p);
+      if (type === "neutron") neutrons.push(p);
+      if (type === "electron") electrons.push(p);
+      updateStats();
+    }
+
+    function removeParticle(type) {
+      if (type === "proton") protons.pop();
+      if (type === "neutron") neutrons.pop();
+      if (type === "electron") electrons.pop();
+      updateStats();
+    }
+
+    function resetAtom() {
+      protons = [];
+      neutrons = [];
+      electrons = [];
+      addParticle("proton", 0, 0); // Reset to Hydrogen
+      addParticle("electron", 100, 0);
+      updateStats();
+    }
+
+    function updateStats() {
+      const p = protons.length;
+      const n = neutrons.length;
+      const e = electrons.length;
+      const mass = p + n;
+      const charge = p - e;
+
+      document.getElementById("p-count").innerText = p;
+      document.getElementById("n-count").innerText = n;
+      document.getElementById("e-count").innerText = e;
+      document.getElementById("mass-num").innerText = mass;
+
+      const netChargeText =
+        charge > 0 ? `+${charge}` : charge < 0 ? `${charge}` : "0";
+      document.getElementById("net-charge").innerText = netChargeText;
+      document.getElementById("net-charge").className =
+        charge !== 0 ? "font-bold text-yellow-400" : "font-bold text-white";
+
+      // Element Info
+      if (p > 0 && p <= 20) {
+        document.getElementById("symbol-display").innerText = SYMBOLS[p];
+        document.getElementById("name-display").innerText = ELEMENTS[p];
+        document.getElementById("atomic-num-display").innerText = p;
+      } else if (p === 0) {
+        document.getElementById("symbol-display").innerText = "?";
+        document.getElementById("name-display").innerText = "Nothing";
+        document.getElementById("atomic-num-display").innerText = 0;
+      } else {
+        document.getElementById("symbol-display").innerText = "X";
+        document.getElementById("name-display").innerText = "Unknown (>20)";
+        document.getElementById("atomic-num-display").innerText = p;
+      }
+
+      document.getElementById("mass-display").innerText = mass;
+
+      // Charge text
+      if (charge === 0)
+        document.getElementById("charge-display").innerText = "Neutral Atom";
+      else if (charge > 0)
+        document.getElementById("charge-display").innerText =
+          "Cation (Positive Ion)";
+      else
+        document.getElementById("charge-display").innerText =
+          "Anion (Negative Ion)";
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      ctx.clearRect(0, 0, width, height);
+
+      // Draw nucleus
+      [...protons, ...neutrons].forEach((p, i) => {
+        p.update(i, protons.length + neutrons.length);
+        p.draw(ctx);
+      });
+
+      // Draw electrons (on top)
+      electrons.forEach((p, i) => {
+        p.update(i, electrons.length);
+        p.draw(ctx);
+      });
+    }
+
+    // --- Drag and Drop Logic ---
+    function setupDragAndDrop() {
+      const types = ["proton", "neutron", "electron"];
+
+      types.forEach((type) => {
+        const el = document.getElementById(`drag-${type}`);
+
+        el.addEventListener("dragstart", (e) => {
+          e.dataTransfer.setData("type", type);
+          e.dataTransfer.effectAllowed = "copy";
+        });
+      });
+
+      const workspace = document.getElementById("workspace");
+
+      workspace.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "copy";
+      });
+
+      workspace.addEventListener("drop", (e) => {
+        e.preventDefault();
+        const type = e.dataTransfer.getData("type");
+        if (type) {
+          addParticle(type, 0, 0); // Drop to center essentially
+
+          // Visual feedback at drop location?
+          // We just spawn it into the system.
+        }
+      });
+
+      // Click to add support as well for ease of use
+      types.forEach((type) => {
+        document
+          .getElementById(`drag-${type}`)
+          .addEventListener("click", () => {
+            addParticle(type, 0, 0);
+          });
+      });
+    }
+  </script>
+
+
+  <!-- Footer -->
+  <footer class="text-center py-4 text-slate-500 text-sm">
+    <p class="italic mb-1">
+      But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+      understanding. Jeremiah 10:12
+    </p>
+    <p class="text-xs mb-1 mt-2">
+      「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+    </p>
+    <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+      @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+    </p>
+  </footer>
+</body>
+
+</html>

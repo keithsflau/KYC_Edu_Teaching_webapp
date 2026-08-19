@@ -1,0 +1,562 @@
+﻿<!DOCTYPE html>
+<html lang="zh-HK">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>找正確字詞兔仔 - Find Correct Word Rabbit</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', 'Microsoft YaHei', 'SimHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #8B4513 0%, #A0522D 50%, #CD853F 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        #root {
+            width: 100%;
+            max-width: 1000px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .game-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 20px 40px 40px 40px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .game-header {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .game-title {
+            font-size: 2em;
+            color: #8B4513;
+            margin-bottom: 8px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .prompt {
+            font-size: 1.5em;
+            color: #DC143C;
+            font-weight: bold;
+            margin-bottom: 5px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        .prompt-en {
+            font-size: 1em;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .score-board {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .score-item {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .canvas-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        canvas {
+            display: block;
+            border: 4px solid #8B4513;
+            border-radius: 15px;
+            background: linear-gradient(180deg, #D2B48C 0%, #DEB887 100%);
+            cursor: pointer;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.2), 0 4px 8px rgba(0, 0, 0, 0.3);
+            margin: 0 auto;
+        }
+
+        .instructions {
+            text-align: center;
+            color: #666;
+            font-size: 1em;
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(139, 69, 19, 0.1);
+            border-radius: 10px;
+        }
+
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .back-link a {
+            color: #8B4513;
+            text-decoration: none;
+            font-size: 1.1em;
+            transition: color 0.3s;
+        }
+
+        .back-link a:hover {
+            color: #A0522D;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+
+    <script>
+const {
+  useState,
+  useEffect,
+  useRef
+} = React;
+
+// Chinese typo pairs - [correct, typo] - Cleaned list
+const TYPO_PAIRS = [['必須', '必需'], ['已經', '以經'], ['已經', '己經'], ['因為', '因位'], ['所以', '所已'], ['時候', '時侯'], ['時候', '時後'], ['知道', '知到'], ['知道', '知導'], ['應該', '應改'], ['應該', '應概'], ['問題', '問提'], ['學習', '學息'], ['重要', '重藥'], ['開始', '開使'], ['完成', '完程'], ['幫助', '幫住'], ['準備', '準被'], ['發現', '發見'], ['決定', '決訂'], ['繼續', '繼績'], ['選擇', '選澤'], ['成功', '成攻'], ['努力', '努立'], ['清楚', '清礎'], ['正確', '正碓'], ['認真', '認眞'], ['經驗', '經験'], ['理解', '理觧'], ['進步', '進歩'], ['辦法', '辦発'], ['方法', '方發'], ['方向', '方嚮'], ['機會', '機会'], ['研究', '硏究'], ['特別', '特列'], ['態度', '態渡'], ['注意', '注義'], ['影響', '影嚮'], ['環境', '環竟'], ['發展', '発展'], ['能力', '能立'], ['克服', '刻服'], ['形式', '型式'], ['原則', '原側'], ['安慰', '安尉'], ['妨礙', '防礙'], ['創造', '創做'], ['獎勵', '奬勵'], ['精彩', '精采'], ['凋零', '彫零'], ['讚美', '贊美'], ['接受', '接授'], ['表達', '表逹'], ['思考', '思攷'], ['討論', '討諭'], ['處理', '処理'], ['建立', '建力'], ['進行', '進形'], ['執行', '執形'], ['實現', '実現'], ['達到', '達道'], ['獲得', '獲德'], ['取得', '取德'], ['保持', '保恃'], ['維持', '維恃'], ['改善', '改膳'], ['提高', '提告'], ['增加', '增架'], ['減少', '減小'], ['改變', '改変'], ['調整', '調正'], ['安排', '安牌'], ['組織', '組識'], ['管理', '管里'], ['控制', '控治'], ['檢查', '檢査'], ['觀察', '觀査'], ['分析', '分折'], ['比較', '比交'], ['分辨', '分辯'], ['判斷', '判段'], ['測試', '測式'], ['試驗', '試験'], ['練習', '練息'], ['訓練', '訓煉'], ['教育', '教肓'], ['提升', '提昇'], ['修正', '修政'], ['改正', '改政'], ['適應', '適応'], ['配合', '配和'], ['合作', '合做'], ['支援', '支緩'], ['支持', '支恃'], ['促進', '促近'], ['發明', '発明'], ['預備', '預被'], ['籌備', '籌被'], ['經歷', '徑歴']];
+const GRID_SIZE = 3;
+const HOLE_RADIUS = 60;
+const MOLE_RADIUS = 50;
+const MOLE_POP_HEIGHT = 40;
+const ANIMATION_SPEED = 0.15;
+function TypoWhackAMole() {
+  const canvasRef = useRef(null);
+  const animationFrameRef = useRef(null);
+  const [score, setScore] = useState(0);
+  const [misses, setMisses] = useState(0);
+  const [currentPrompt, setCurrentPrompt] = useState(null);
+  const [gameState, setGameState] = useState('playing'); // 'playing', 'paused'
+
+  const holesRef = useRef([]);
+  const activeMolesRef = useRef([]);
+  const currentPairRef = useRef(null);
+  const lastSpawnTimeRef = useRef(0);
+  const spawnIntervalRef = useRef(2000); // 2 seconds
+
+  // Calculate difficulty based on score
+  const getDifficultySettings = () => {
+    const level = Math.floor(score / 50); // Every 50 points = 1 level
+    const baseSpawnInterval = 2000;
+    const baseVisibleTime = 2000;
+
+    // Spawn interval decreases with score (min 600ms)
+    const spawnInterval = Math.max(600, baseSpawnInterval - level * 100);
+
+    // Visible time decreases with score (min 800ms)
+    const visibleTime = Math.max(800, baseVisibleTime - level * 50);
+    return {
+      spawnInterval,
+      visibleTime
+    };
+  };
+
+  // Set canvas size and initialize holes in a 3x3 grid
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    // Set canvas size first
+    canvas.width = 600;
+    canvas.height = 600;
+
+    // Calculate evenly distributed positions for 3x3 grid
+    // Increased padding to ensure word labels are visible at the top
+    const paddingTop = 120; // More top padding for word labels
+    const paddingBottom = 100;
+    const paddingLeft = 100;
+    const paddingRight = 100;
+    const availableWidth = canvas.width - paddingLeft - paddingRight;
+    const availableHeight = canvas.height - paddingTop - paddingBottom;
+    const spacingX = availableWidth / (GRID_SIZE - 1);
+    const spacingY = availableHeight / (GRID_SIZE - 1);
+    holesRef.current = [];
+    for (let row = 0; row < GRID_SIZE; row++) {
+      for (let col = 0; col < GRID_SIZE; col++) {
+        holesRef.current.push({
+          x: paddingLeft + col * spacingX,
+          y: paddingTop + row * spacingY,
+          radius: HOLE_RADIUS,
+          hasMole: false
+        });
+      }
+    }
+  }, []);
+
+  // Select a random typo pair
+  const selectRandomPair = () => {
+    const pair = TYPO_PAIRS[Math.floor(Math.random() * TYPO_PAIRS.length)];
+    const correctWord = pair[0];
+    const typoWord = pair[1];
+
+    // Always look for the correct word
+    currentPairRef.current = {
+      correct: correctWord,
+      typo: typoWord,
+      targetIsTypo: false // Always find the correct word
+    };
+    setCurrentPrompt({
+      correct: correctWord,
+      typo: typoWord,
+      targetIsTypo: false
+    });
+  };
+
+  // Spawn a rabbit at a random hole
+  const spawnMole = () => {
+    if (!currentPairRef.current) selectRandomPair();
+    const availableHoles = holesRef.current.filter(h => !h.hasMole);
+    if (availableHoles.length === 0) return;
+    const randomHole = availableHoles[Math.floor(Math.random() * availableHoles.length)];
+    const isTypo = Math.random() > 0.5;
+    const word = isTypo ? currentPairRef.current.typo : currentPairRef.current.correct;
+    const {
+      visibleTime
+    } = getDifficultySettings();
+    randomHole.hasMole = true;
+    activeMolesRef.current.push({
+      holeIndex: holesRef.current.indexOf(randomHole),
+      x: randomHole.x,
+      y: randomHole.y,
+      word: word,
+      isTypo: isTypo,
+      popProgress: 0,
+      // 0 = hidden, 1 = fully popped
+      state: 'popping',
+      // 'popping', 'visible', 'hitting', 'hiding'
+      hitResult: null,
+      // 'success', 'fail', null
+      animationTimer: 0,
+      visibleTime: visibleTime // Store visible time for this mole
+    });
+  };
+
+  // Handle canvas click - map click coordinates to hole grid
+  const handleCanvasClick = e => {
+    if (gameState !== 'playing') return;
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const clickX = (e.clientX - rect.left) * scaleX;
+    const clickY = (e.clientY - rect.top) * scaleY;
+
+    // Map click coordinates to hole grid
+    const paddingTop = 120;
+    const paddingBottom = 100;
+    const paddingLeft = 100;
+    const paddingRight = 100;
+    const spacingX = (canvas.width - paddingLeft - paddingRight) / (GRID_SIZE - 1);
+    const spacingY = (canvas.height - paddingTop - paddingBottom) / (GRID_SIZE - 1);
+
+    // Find which hole was clicked
+    for (let i = 0; i < holesRef.current.length; i++) {
+      const hole = holesRef.current[i];
+      const dx = clickX - hole.x;
+      const dy = clickY - hole.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      // Check if click is within hole radius
+      if (distance <= HOLE_RADIUS) {
+        // Find rabbit at this hole
+        const mole = activeMolesRef.current.find(m => m.holeIndex === i);
+        if (mole && mole.state === 'visible') {
+          // Rabbit hit! Check if it's the correct word
+          const isCorrect = !mole.isTypo; // Success if clicked on correct word
+
+          mole.state = 'hitting';
+          mole.hitResult = isCorrect ? 'success' : 'fail';
+          mole.animationTimer = 60; // 1 second at 60fps
+
+          if (isCorrect) {
+            setScore(prev => prev + 10);
+          } else {
+            setMisses(prev => prev + 1);
+          }
+
+          // Select new pair for next round
+          setTimeout(() => {
+            selectRandomPair();
+          }, 1000);
+          break;
+        }
+      }
+    }
+  };
+
+  // Animation loop
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw holes
+      holesRef.current.forEach((hole, index) => {
+        // Draw hole (dark circle)
+        ctx.fillStyle = '#654321';
+        ctx.beginPath();
+        ctx.arc(hole.x, hole.y, hole.radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Draw hole rim
+        ctx.strokeStyle = '#8B4513';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        // Draw grass/dirt texture
+        ctx.fillStyle = '#3D2817';
+        ctx.beginPath();
+        ctx.arc(hole.x, hole.y, hole.radius - 5, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Update and draw rabbits
+      const now = Date.now();
+      const {
+        spawnInterval
+      } = getDifficultySettings();
+      spawnIntervalRef.current = spawnInterval;
+      if (now - lastSpawnTimeRef.current > spawnIntervalRef.current) {
+        spawnMole();
+        lastSpawnTimeRef.current = now;
+      }
+
+      // Update and draw rabbits (iterate backwards to safely remove items)
+      for (let i = activeMolesRef.current.length - 1; i >= 0; i--) {
+        const mole = activeMolesRef.current[i];
+        const hole = holesRef.current[mole.holeIndex];
+        if (mole.state === 'popping') {
+          mole.popProgress += ANIMATION_SPEED;
+          if (mole.popProgress >= 1) {
+            mole.popProgress = 1;
+            mole.state = 'visible';
+            // Start hiding after visibleTime (based on difficulty)
+            const visibleTime = mole.visibleTime || 2000;
+            setTimeout(() => {
+              if (mole.state === 'visible') {
+                mole.state = 'hiding';
+              }
+            }, visibleTime);
+          }
+        } else if (mole.state === 'hiding') {
+          mole.popProgress -= ANIMATION_SPEED;
+          if (mole.popProgress <= 0) {
+            mole.popProgress = 0;
+            hole.hasMole = false;
+            activeMolesRef.current.splice(i, 1);
+            continue; // Skip drawing this mole
+          }
+        } else if (mole.state === 'hitting') {
+          mole.animationTimer--;
+          if (mole.animationTimer <= 0) {
+            mole.state = 'hiding';
+          }
+        }
+
+        // Draw rabbit
+        const moleY = hole.y - MOLE_POP_HEIGHT * mole.popProgress;
+
+        // Rabbit body (white/light gray circle)
+        ctx.fillStyle = mole.hitResult === 'success' ? '#90EE90' : mole.hitResult === 'fail' ? '#FFB6C1' : '#F5F5F5';
+        ctx.beginPath();
+        ctx.arc(mole.x, moleY, MOLE_RADIUS, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Rabbit outline
+        ctx.strokeStyle = '#8B4513';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Rabbit ears (two long ears)
+        ctx.fillStyle = mole.hitResult === 'success' ? '#90EE90' : mole.hitResult === 'fail' ? '#FFB6C1' : '#F5F5F5';
+        // Left ear
+        ctx.beginPath();
+        ctx.ellipse(mole.x - 15, moleY - MOLE_RADIUS - 10, 8, 20, -0.3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        // Right ear
+        ctx.beginPath();
+        ctx.ellipse(mole.x + 15, moleY - MOLE_RADIUS - 10, 8, 20, 0.3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Rabbit face
+        if (mole.hitResult === 'success') {
+          // Save context for rotation
+          ctx.save();
+          ctx.translate(mole.x, moleY);
+          // Rotate mole slightly for dizzy effect
+          const rotation = (60 - mole.animationTimer) * 0.1;
+          ctx.rotate(rotation);
+
+          // Dizzy eyes (X marks) - rotated for rabbit
+          ctx.strokeStyle = '#000';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(-15, -8);
+          ctx.lineTo(-5, 2);
+          ctx.moveTo(-5, -8);
+          ctx.lineTo(-15, 2);
+          ctx.moveTo(5, -8);
+          ctx.lineTo(15, 2);
+          ctx.moveTo(15, -8);
+          ctx.lineTo(5, 2);
+          ctx.stroke();
+          ctx.restore();
+
+          // Spinning stars around head
+          const stars = 8;
+          const starRotation = Date.now() / 30;
+          for (let i = 0; i < stars; i++) {
+            const angle = (starRotation + i * Math.PI * 2 / stars) % (Math.PI * 2);
+            const starX = mole.x + Math.cos(angle) * (MOLE_RADIUS + 20);
+            const starY = moleY + Math.sin(angle) * (MOLE_RADIUS + 20);
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            // Draw star shape instead of circle
+            ctx.save();
+            ctx.translate(starX, starY);
+            ctx.rotate(angle);
+            ctx.beginPath();
+            for (let j = 0; j < 5; j++) {
+              const a = j * Math.PI * 2 / 5 - Math.PI / 2;
+              const r = j % 2 === 0 ? 5 : 2;
+              const x = Math.cos(a) * r;
+              const y = Math.sin(a) * r;
+              if (j === 0) ctx.moveTo(x, y);else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+          }
+        } else if (mole.hitResult === 'fail') {
+          // Laughing face
+          ctx.fillStyle = '#000';
+          // Eyes (closed, curved)
+          ctx.beginPath();
+          ctx.arc(mole.x - 12, moleY - 5, 4, 0, Math.PI);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(mole.x + 12, moleY - 5, 4, 0, Math.PI);
+          ctx.stroke();
+          // Big laughing mouth
+          ctx.beginPath();
+          ctx.arc(mole.x, moleY + 10, 15, 0, Math.PI);
+          ctx.stroke();
+        } else {
+          // Normal rabbit eyes
+          ctx.fillStyle = '#000';
+          ctx.beginPath();
+          ctx.arc(mole.x - 12, moleY - 3, 3, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(mole.x + 12, moleY - 3, 3, 0, Math.PI * 2);
+          ctx.fill();
+          // Rabbit nose (small triangle)
+          ctx.fillStyle = '#FF69B4';
+          ctx.beginPath();
+          ctx.moveTo(mole.x, moleY + 3);
+          ctx.lineTo(mole.x - 3, moleY + 8);
+          ctx.lineTo(mole.x + 3, moleY + 8);
+          ctx.closePath();
+          ctx.fill();
+          // Rabbit mouth (small line)
+          ctx.strokeStyle = '#000';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(mole.x, moleY + 8);
+          ctx.lineTo(mole.x, moleY + 12);
+          ctx.stroke();
+        }
+
+        // Word sign
+        ctx.fillStyle = '#FFF';
+        ctx.fillRect(mole.x - 35, moleY - MOLE_RADIUS - 25, 70, 20);
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(mole.x - 35, moleY - MOLE_RADIUS - 25, 70, 20);
+
+        // Word text
+        ctx.fillStyle = '#000';
+        ctx.font = 'bold 18px "Microsoft JhengHei", "Microsoft YaHei", "SimHei", Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(mole.word, mole.x, moleY - MOLE_RADIUS - 15);
+      }
+      animationFrameRef.current = requestAnimationFrame(animate);
+    };
+    animate();
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, [gameState]);
+
+  // Initialize first pair
+  useEffect(() => {
+    selectRandomPair();
+  }, []);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "game-container"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "game-header"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "game-title"
+  }, "找正確字詞兔仔"), /*#__PURE__*/React.createElement("div", {
+    className: "prompt"
+  }, currentPrompt && /*#__PURE__*/React.createElement(React.Fragment, null, "找出正確的字詞！", /*#__PURE__*/React.createElement("div", {
+    className: "prompt-en"
+  }, "Find the CORRECT one! (Find the correct word)"))), /*#__PURE__*/React.createElement("div", {
+    className: "score-board"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "score-item"
+  }, "分數 Score: ", score), /*#__PURE__*/React.createElement("div", {
+    className: "score-item"
+  }, "錯誤 Misses: ", misses))), /*#__PURE__*/React.createElement("div", {
+    className: "canvas-container"
+  }, /*#__PURE__*/React.createElement("canvas", {
+    ref: canvasRef,
+    onClick: handleCanvasClick
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "instructions"
+  }, /*#__PURE__*/React.createElement("p", null, "點擊兔仔來找出正確的字詞！正確點擊得10分，錯誤點擊會增加錯誤次數。"), /*#__PURE__*/React.createElement("p", null, "Click on rabbits to find correct words! Correct hits score 10 points, wrong hits increase misses.")), /*#__PURE__*/React.createElement("div", {
+    className: "back-link"
+  }, /*#__PURE__*/React.createElement("a", {
+    href: "../index.html"
+  }, "← 返回主頁 Back to Home")));
+}
+ReactDOM.render(/*#__PURE__*/React.createElement(TypoWhackAMole, null), document.getElementById('root'));
+</script>
+
+</body>
+
+</html>
+

@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - Plant Parts Micro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: #ecfccb;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Microscope Lab",
+    zh: "顯微鏡實驗室",
+    ja: "顕微鏡ラボ",
+    ko: "현미경 실험실",
+    es: "Laboratorio de Microscopio",
+    de: "Mikroskop-Labor",
+    fi: "Mikroskooppilaboratorio",
+    fr: "Laboratoire de microscope",
+    ar: "مختبر المجهر",
+    it: "Laboratorio Microscopio"
+  },
+  instruction: {
+    en: "Identify what you see under the microscope!",
+    zh: "辨認你在顯微鏡下看到的東西！",
+    ja: "顕微鏡の下に見えるものを特定してください！",
+    ko: "현미경으로 보이는 것을 식별하세요!",
+    es: "¡Identifica lo que ves bajo el microscopio!",
+    de: "Identifiziere, was du unter dem Mikroskop siehst!",
+    fi: "Tunnista mitä näet mikroskoopissa!",
+    fr: "Identifiez ce que vous voyez au microscope !",
+    ar: "حدد ما تراه تحت المجهر!",
+    it: "Identifica cosa vedi al microscopio!"
+  },
+  correct: {
+    en: "Correct!",
+    zh: "答對了！",
+    ja: "正解！",
+    ko: "정답!",
+    es: "¡Correcto!",
+    de: "Richtig!",
+    fi: "Oikein!",
+    fr: "Correct !",
+    ar: "صحيح!",
+    it: "Corretto!"
+  },
+  cell_wall: {
+    en: "Cell Wall",
+    zh: "細胞壁",
+    ja: "細胞壁",
+    ko: "세포벽",
+    es: "Pared celular",
+    de: "Zellwand",
+    fi: "Soluseinä",
+    fr: "Paroi cellulaire",
+    ar: "الجدار الخلوي",
+    it: "Parete Cellulare"
+  },
+  chloroplast: {
+    en: "Chloroplast",
+    zh: "葉綠體",
+    ja: "葉緑体",
+    ko: "엽록체",
+    es: "Cloroplasto",
+    de: "Chloroplast",
+    fi: "Viherhiukkanen",
+    fr: "Chloroplaste",
+    ar: "البلاستيدات الخضراء",
+    it: "Cloroplasto"
+  },
+  stomata: {
+    en: "Stomata",
+    zh: "氣孔",
+    ja: "気孔",
+    ko: "기공",
+    es: "Estomas",
+    de: "Spaltöffnungen",
+    fi: "Ilmaraot",
+    fr: "Stomates",
+    ar: "الثغور",
+    it: "Stomi"
+  },
+  nucleus: {
+    en: "Nucleus",
+    zh: "細胞核",
+    ja: "細胞核",
+    ko: "세포핵",
+    es: "Núcleo",
+    de: "Zellkern",
+    fi: "Tuma",
+    fr: "Noyau",
+    ar: "نواة",
+    it: "Nucleo"
+  }
+};
+const slides = [{
+  id: 1,
+  name: "leaf_cell",
+  target: "chloroplast",
+  hint: "Green dots that make food"
+}, {
+  id: 2,
+  name: "onion_cell",
+  target: "cell_wall",
+  view: /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 100 100",
+    className: "w-full h-full bg-yellow-50 rounded-full overflow-hidden"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M10,20 h80 M10,40 h80 M10,60 h80",
+    stroke: "#a3a3a3",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M30,20 v20 M70,20 v20 M50,40 v20 M30,60 v20",
+    stroke: "#a3a3a3",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: "0",
+    y: "0",
+    width: "100",
+    height: "100",
+    fill: "none",
+    stroke: "#a3a3a3",
+    strokeWidth: "10",
+    opacity: "0.3"
+  })),
+  hint: "The hard outer layer"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [slideIndex, setSlideIndex] = useState(0);
+  const [feedback, setFeedback] = useState(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+  const currentSlide = slides[slideIndex];
+  const chloroplastDots = React.useMemo(() => Array.from({
+    length: 20
+  }, (_, i) => ({
+    key: i,
+    cx: 14 + i % 5 * 16 + i % 3 * 2,
+    cy: 18 + Math.floor(i / 5) * 18 + i % 2 * 3,
+    r: 2.2
+  })), []);
+  const leafCellView = /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 100 100",
+    className: "w-full h-full bg-green-100 rounded-full overflow-hidden"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M10,10 h80 v80 h-80 z",
+    fill: "none",
+    stroke: "#22c55e",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M30,10 v80 M50,10 v80 M70,10 v80 M10,30 h80 M10,50 h80 M10,70 h80",
+    stroke: "#22c55e",
+    strokeWidth: "1",
+    opacity: "0.5"
+  }), chloroplastDots.map(d => /*#__PURE__*/React.createElement("circle", {
+    key: d.key,
+    cx: d.cx,
+    cy: d.cy,
+    r: d.r,
+    fill: "green"
+  })));
+  const checkAnswer = ans => {
+    if (ans === currentSlide.target) {
+      setFeedback("correct");
+      setTimeout(() => {
+        setFeedback(null);
+        setSlideIndex((slideIndex + 1) % slides.length);
+      }, 1000);
+    } else {
+      setFeedback("wrong");
+      setTimeout(() => setFeedback(null), 500);
+    }
+  };
+  const slideView = currentSlide.id === 1 ? leafCellView : currentSlide.view;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4 font-sans bg-lime-50"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-bold mb-4 text-lime-800"
+  }, "🔬 ", getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center gap-8 w-full max-w-2xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "relative w-80 h-80 rounded-full border-[16px] border-slate-700 shadow-2xl bg-white overflow-hidden group"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 z-10 pointer-events-none rounded-full shadow-[inset_0_0_40px_rgba(0,0,0,0.5)]"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "w-[150%] h-[150%] -ml-[25%] -mt-[25%] transition-transform duration-1000 group-hover:scale-110"
+  }, slideView), feedback && /*#__PURE__*/React.createElement("div", {
+    className: `absolute inset-0 flex items-center justify-center z-20 bg-black/50`
+  }, /*#__PURE__*/React.createElement("div", {
+    className: `text-3xl font-bold px-4 py-2 rounded ${feedback === "correct" ? "text-green-400" : "text-red-400"}`
+  }, getText(feedback === "correct" ? "correct" : "instruction")))), /*#__PURE__*/React.createElement("p", {
+    className: "font-bold text-slate-600 text-lg"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 gap-4 w-full"
+  }, ["cell_wall", "chloroplast", "stomata", "nucleus"].map(opt => /*#__PURE__*/React.createElement("button", {
+    key: opt,
+    onClick: () => checkAnswer(opt),
+    className: "bg-white hover:bg-lime-100 text-lime-900 border-2 border-lime-200 py-4 rounded-xl font-bold shadow-sm transition-all active:scale-95"
+  }, getText(opt))))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小三常識：香港地圖 | HK Districts</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: radial-gradient(circle at center, #bfdbfe 0%, #3b82f6 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "HK Districts",
+    zh: "香港十八區",
+    ja: "香港の区",
+    ko: "홍콩의 구",
+    es: "Distritos de HK",
+    de: "HK-Bezirke",
+    fi: "HK:n alueet",
+    fr: "Districts de HK",
+    ar: "مناطق هونغ كونغ",
+    it: "Distretti di HK"
+  },
+  instruction: {
+    en: "Find the district!",
+    zh: "找出指定的地區！",
+    ja: "地区を見つけてください！",
+    ko: "구역을 찾으세요!",
+    es: "¡Encuentra el distrito!",
+    de: "Finde den Bezirk!",
+    fi: "Etsi alue!",
+    fr: "Trouvez le district !",
+    ar: "ابحث عن المنطقة!",
+    it: "Trova il distretto!"
+  },
+  hki: {
+    en: "HK Island",
+    zh: "香港島",
+    ja: "香港島",
+    ko: "홍콩섬",
+    es: "Isla de HK",
+    de: "HK-Insel",
+    fi: "HK:n saari",
+    fr: "Île de HK",
+    ar: "جزيرة هونغ كونغ",
+    it: "Isola di HK"
+  },
+  kln: {
+    en: "Kowloon",
+    zh: "九龍",
+    ja: "九龍",
+    ko: "구룡",
+    es: "Kowloon",
+    de: "Kowloon",
+    fi: "Kowloon",
+    fr: "Kowloon",
+    ar: "كولون",
+    it: "Kowloon"
+  },
+  nt: {
+    en: "New Territories",
+    zh: "新界",
+    ja: "新界",
+    ko: "신계",
+    es: "Nuevos Territorios",
+    de: "New Territories",
+    fi: "Uudet territoriot",
+    fr: "Nouveaux Territoires",
+    ar: "الأقاليم الجديدة",
+    it: "Nuovi Territori"
+  },
+  region_mode: {
+    en: "Regions",
+    zh: "三大區域",
+    ja: "地域",
+    ko: "지역",
+    es: "Regiones",
+    de: "Regionen",
+    fi: "Alueet",
+    fr: "Régions",
+    ar: "مناطق",
+    it: "Regioni"
+  },
+  district_mode: {
+    en: "Districts",
+    zh: "十八區",
+    ja: "地区",
+    ko: "구",
+    es: "Distritos",
+    de: "Bezirke",
+    fi: "Alueet",
+    fr: "Districts",
+    ar: "مقاطعات",
+    it: "Distretti"
+  },
+  correct: {
+    en: "Correct!",
+    zh: "答對了！",
+    ja: "正解！",
+    ko: "정답입니다!",
+    es: "¡Correcto!",
+    de: "Richtig!",
+    fi: "Oikein!",
+    fr: "Correct !",
+    ar: "صحيح!",
+    it: "Corretto!"
+  },
+  wrong: {
+    en: "Try Again",
+    zh: "再試一次",
+    ja: "もう一度",
+    ko: "다시 시도하세요",
+    es: "Inténtalo de nuevo",
+    de: "Versuch es nochmal",
+    fi: "Yritä uudelleen",
+    fr: "Réessayez",
+    ar: "حاول مرة أخرى",
+    it: "Riprova"
+  },
+  score: {
+    en: "Score",
+    zh: "分數",
+    ja: "スコア",
+    ko: "점수",
+    es: "Puntuación",
+    de: "Punktzahl",
+    fi: "Pisteet",
+    fr: "Score",
+    ar: "نتيجة",
+    it: "Punteggio"
+  },
+  // Districts
+  central: {
+    en: "Central & Western",
+    zh: "中西區",
+    ja: "中西区",
+    ko: "중서구",
+    es: "Central y Oeste",
+    de: "Zentral & West",
+    fi: "Keski- ja länsipiiri",
+    fr: "Centre et Ouest",
+    ar: "الوسط والغرب",
+    it: "Centrale e Occidentale"
+  },
+  eastern: {
+    en: "Eastern",
+    zh: "東區",
+    ja: "東区",
+    ko: "동구",
+    es: "Este",
+    de: "Ost",
+    fi: "Itäinen",
+    fr: "Est",
+    ar: "شرقي",
+    it: "Orientale"
+  },
+  southern: {
+    en: "Southern",
+    zh: "南區",
+    ja: "南区",
+    ko: "남구",
+    es: "Sur",
+    de: "Süd",
+    fi: "Eteläinen",
+    fr: "Sud",
+    ar: "جنوبي",
+    it: "Meridionale"
+  },
+  wan_chai: {
+    en: "Wan Chai",
+    zh: "灣仔區",
+    ja: "湾仔区",
+    ko: "완차이",
+    es: "Wan Chai",
+    de: "Wan Chai",
+    fi: "Wan Chai",
+    fr: "Wan Chai",
+    ar: "وان تشاي",
+    it: "Wan Chai"
+  },
+  sham_shui_po: {
+    en: "Sham Shui Po",
+    zh: "深水埗區",
+    ja: "深水埗区",
+    ko: "삼수이포",
+    es: "Sham Shui Po",
+    de: "Sham Shui Po",
+    fi: "Sham Shui Po",
+    fr: "Sham Shui Po",
+    ar: "شام شوي بو",
+    it: "Sham Shui Po"
+  },
+  kowloon_city: {
+    en: "Kowloon City",
+    zh: "九龍城區",
+    ja: "九龍城区",
+    ko: "구룡성",
+    es: "Ciudad de Kowloon",
+    de: "Kowloon City",
+    fi: "Kowloon City",
+    fr: "Kowloon City",
+    ar: "مدينة كولون",
+    it: "Kowloon City"
+  },
+  kwun_tong: {
+    en: "Kwun Tong",
+    zh: "觀塘區",
+    ja: "観塘区",
+    ko: "관탕",
+    es: "Kwun Tong",
+    de: "Kwun Tong",
+    fi: "Kwun Tong",
+    fr: "Kwun Tong",
+    ar: "كوون تونغ",
+    it: "Kwun Tong"
+  },
+  wong_tai_sin: {
+    en: "Wong Tai Sin",
+    zh: "黃大仙區",
+    ja: "黄大仙区",
+    ko: "황대선",
+    es: "Wong Tai Sin",
+    de: "Wong Tai Sin",
+    fi: "Wong Tai Sin",
+    fr: "Wong Tai Sin",
+    ar: "وينه تاي سين",
+    it: "Wong Tai Sin"
+  },
+  yau_tsim_mong: {
+    en: "Yau Tsim Mong",
+    zh: "油尖旺區",
+    ja: "油尖旺区",
+    ko: "유침몽",
+    es: "Yau Tsim Mong",
+    de: "Yau Tsim Mong",
+    fi: "Yau Tsim Mong",
+    fr: "Yau Tsim Mong",
+    ar: "ياو تسيم مونغ",
+    it: "Yau Tsim Mong"
+  },
+  islands: {
+    en: "Islands",
+    zh: "離島區",
+    ja: "離島区",
+    ko: "이도",
+    es: "Islas",
+    de: "Inseln",
+    fi: "Saaret",
+    fr: "Îles",
+    ar: "جزر",
+    it: "Isole"
+  },
+  kwai_tsing: {
+    en: "Kwai Tsing",
+    zh: "葵青區",
+    ja: "葵青区",
+    ko: "콰이칭",
+    es: "Kwai Tsing",
+    de: "Kwai Tsing",
+    fi: "Kwai Tsing",
+    fr: "Kwai Tsing",
+    ar: "كواي تسينغ",
+    it: "Kwai Tsing"
+  },
+  north: {
+    en: "North",
+    zh: "北區",
+    ja: "北区",
+    ko: "북구",
+    es: "Norte",
+    de: "Nord",
+    fi: "Pohjoinen",
+    fr: "Nord",
+    ar: "شمالي",
+    it: "Nord"
+  },
+  sai_kung: {
+    en: "Sai Kung",
+    zh: "西貢區",
+    ja: "西貢区",
+    ko: "사이쿵",
+    es: "Sai Kung",
+    de: "Sai Kung",
+    fi: "Sai Kung",
+    fr: "Sai Kung",
+    ar: "ساي كونغ",
+    it: "Sai Kung"
+  },
+  sha_tin: {
+    en: "Sha Tin",
+    zh: "沙田區",
+    ja: "沙田区",
+    ko: "샤틴",
+    es: "Sha Tin",
+    de: "Sha Tin",
+    fi: "Sha Tin",
+    fr: "Sha Tin",
+    ar: "شا تين",
+    it: "Sha Tin"
+  },
+  tai_po: {
+    en: "Tai Po",
+    zh: "大埔區",
+    ja: "大埔区",
+    ko: "타이포",
+    es: "Tai Po",
+    de: "Tai Po",
+    fi: "Tai Po",
+    fr: "Tai Po",
+    ar: "تاي بو",
+    it: "Tai Po"
+  },
+  tsuen_wan: {
+    en: "Tsuen Wan",
+    zh: "荃灣區",
+    ja: "荃湾区",
+    ko: "춘완",
+    es: "Tsuen Wan",
+    de: "Tsuen Wan",
+    fi: "Tsuen Wan",
+    fr: "Tsuen Wan",
+    ar: "تسوان وان",
+    it: "Tsuen Wan"
+  },
+  tuen_mun: {
+    en: "Tuen Mun",
+    zh: "屯門區",
+    ja: "屯門区",
+    ko: "툰문",
+    es: "Tuen Mun",
+    de: "Tuen Mun",
+    fi: "Tuen Mun",
+    fr: "Tuen Mun",
+    ar: "توين مون",
+    it: "Tuen Mun"
+  },
+  yuen_long: {
+    en: "Yuen Long",
+    zh: "元朗區",
+    ja: "元朗区",
+    ko: "위안랑",
+    es: "Yuen Long",
+    de: "Yuen Long",
+    fi: "Yuen Long",
+    fr: "Yuen Long",
+    ar: "يوين لونغ",
+    it: "Yuen Long"
+  }
+};
+
+// Simplified Map Data (Abstract SVG Paths/Circles)
+// Since sketching exact HK map path string is hard, we use approximate bubble locations for P3 conceptual learning.
+const mapData = [
+// NT (Green)
+{
+  id: "north",
+  region: "nt",
+  x: 50,
+  y: 15,
+  size: 10,
+  color: "#86efac"
+}, {
+  id: "yuen_long",
+  region: "nt",
+  x: 25,
+  y: 25,
+  size: 12,
+  color: "#86efac"
+}, {
+  id: "tai_po",
+  region: "nt",
+  x: 65,
+  y: 25,
+  size: 10,
+  color: "#86efac"
+}, {
+  id: "tuen_mun",
+  region: "nt",
+  x: 15,
+  y: 35,
+  size: 8,
+  color: "#86efac"
+}, {
+  id: "sha_tin",
+  region: "nt",
+  x: 60,
+  y: 40,
+  size: 8,
+  color: "#86efac"
+}, {
+  id: "tsuen_wan",
+  region: "nt",
+  x: 35,
+  y: 40,
+  size: 6,
+  color: "#86efac"
+}, {
+  id: "kwai_tsing",
+  region: "nt",
+  x: 35,
+  y: 48,
+  size: 5,
+  color: "#86efac"
+}, {
+  id: "sai_kung",
+  region: "nt",
+  x: 80,
+  y: 45,
+  size: 12,
+  color: "#86efac"
+}, {
+  id: "islands",
+  region: "nt",
+  x: 15,
+  y: 70,
+  size: 15,
+  color: "#86efac"
+},
+// Lantau
+
+// Kowloon (Yellow)
+{
+  id: "sham_shui_po",
+  region: "kln",
+  x: 45,
+  y: 50,
+  size: 5,
+  color: "#fde047"
+}, {
+  id: "kowloon_city",
+  region: "kln",
+  x: 55,
+  y: 50,
+  size: 5,
+  color: "#fde047"
+}, {
+  id: "wong_tai_sin",
+  region: "kln",
+  x: 55,
+  y: 45,
+  size: 4,
+  color: "#fde047"
+}, {
+  id: "kwun_tong",
+  region: "kln",
+  x: 65,
+  y: 52,
+  size: 5,
+  color: "#fde047"
+}, {
+  id: "yau_tsim_mong",
+  region: "kln",
+  x: 48,
+  y: 56,
+  size: 5,
+  color: "#fde047"
+},
+// HK Island (Red)
+{
+  id: "central",
+  region: "hki",
+  x: 45,
+  y: 70,
+  size: 6,
+  color: "#fca5a5"
+}, {
+  id: "wan_chai",
+  region: "hki",
+  x: 52,
+  y: 70,
+  size: 4,
+  color: "#fca5a5"
+}, {
+  id: "eastern",
+  region: "hki",
+  x: 60,
+  y: 72,
+  size: 6,
+  color: "#fca5a5"
+}, {
+  id: "southern",
+  region: "hki",
+  x: 50,
+  y: 80,
+  size: 8,
+  color: "#fca5a5"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [target, setTarget] = useState(null);
+  const [score, setScore] = useState(0);
+  const [feedback, setFeedback] = useState(null); // correct, wrong
+
+  const getText = key => t[key][lang] || t[key]["en"];
+  useEffect(() => {
+    pickTarget();
+  }, []);
+  const pickTarget = () => {
+    const random = mapData[Math.floor(Math.random() * mapData.length)];
+    setTarget(random);
+    setFeedback(null);
+  };
+  const checkAnswer = item => {
+    if (feedback) return;
+    if (item.id === target.id) {
+      setScore(s => s + 10);
+      setFeedback("correct");
+      setTimeout(pickTarget, 1000);
+    } else {
+      setFeedback("wrong");
+      setTimeout(() => setFeedback(null), 800);
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 flex flex-col items-center select-none"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-white mb-4 mt-8 drop-shadow-md"
+  }, "🗺️ ", getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/90 p-4 rounded-full shadow-xl mb-6 flex gap-8 items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "font-bold text-slate-500"
+  }, getText("instruction")), target && /*#__PURE__*/React.createElement("div", {
+    className: "font-black text-3xl text-blue-600 animate-pulse"
+  }, getText(target.id)), /*#__PURE__*/React.createElement("div", {
+    className: "font-bold bg-blue-100 text-blue-800 px-3 py-1 rounded-full"
+  }, getText("score"), ": ", score)), /*#__PURE__*/React.createElement("div", {
+    className: "relative w-full max-w-2xl aspect-[4/3] bg-blue-100 rounded-3xl shadow-2xl border-4 border-white overflow-hidden"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 opacity-10 bg-[url('data:image/svg+xml;utf8,<svg width=\\'20\\' height=\\'20\\' viewBox=\\'0 0 20 20\\' xmlns=\\'http://www.w3.org/2000/svg\\'><path d=\\'M0 10 Q5 5 10 10 T20 10\\' stroke=\\'blue\\' fill=\\'none\\'/></svg>')]"
+  }), mapData.map(item => /*#__PURE__*/React.createElement(motion.button, {
+    key: item.id,
+    whileHover: {
+      scale: 1.1,
+      zIndex: 10
+    },
+    whileTap: {
+      scale: 0.9
+    },
+    onClick: () => checkAnswer(item),
+    className: `absolute rounded-full shadow-lg border-2 border-white/50 flex items-center justify-center transition-colors 
+                             ${feedback === "correct" && item.id === target.id ? "bg-green-500 !border-white scale-125 z-20" : ""}
+                             ${feedback === "wrong" && item.id !== target.id ? "opacity-50" : "opacity-100"}
+                         `,
+    style: {
+      left: `${item.x}%`,
+      top: `${item.y}%`,
+      width: `${item.size * 1.5}%`,
+      // slightly larger relative size
+      height: `${item.size * 1.5 * (4 / 3)}%`,
+      // Aspect ratio fix aproximation
+      backgroundColor: item.color
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "overflow-hidden text-[10px] md:text-xs font-bold text-slate-800 leading-none text-center px-1 pointer-events-none"
+  }, getText(item.id)))), feedback && /*#__PURE__*/React.createElement("div", {
+    className: `absolute inset-0 flex items-center justify-center pointer-events-none z-30`
+  }, /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      scale: 0
+    },
+    animate: {
+      scale: 1
+    },
+    className: `p-6 rounded-3xl font-black text-4xl shadow-2xl ${feedback === "correct" ? "bg-green-500 text-white" : "bg-red-500 text-white"}`
+  }, getText(feedback)))), /*#__PURE__*/React.createElement("div", {
+    className: "mt-8 flex gap-4 text-xs font-bold text-white/80"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-4 h-4 bg-[#fca5a5] rounded-full border border-white"
+  }), " ", getText("hki")), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-4 h-4 bg-[#fde047] rounded-full border border-white"
+  }), " ", getText("kln")), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-4 h-4 bg-[#86efac] rounded-full border border-white"
+  }), " ", getText("nt"))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

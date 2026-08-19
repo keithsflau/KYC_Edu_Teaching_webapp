@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pascal's Triangle | S6 Math 組合</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+      }
+    </style>
+  </head>
+  <body class="bg-amber-50 text-slate-800 min-h-screen">
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const translations = {
+  en: {
+    unit: "Unit 1: Statistics & Prob",
+    title: "Pascal's Triangle (nCr)",
+    desc: "Relationship between Triangle coefficients and Combinations.",
+    row: "Row n",
+    highlight: "Highlight nCr",
+    val: "Value",
+    formula: "nCr = n! / (r!(n-r)!)"
+  },
+  zh: {
+    unit: "第一單元：統計與概率",
+    title: "巴斯卡三角形 (nCr)",
+    desc: "三角形係數與組合的關係。",
+    row: "行 n",
+    highlight: "高亮 nCr",
+    val: "數值",
+    formula: "nCr = n! / (r!(n-r)!)"
+  }
+};
+const App = () => {
+  const [lang, setLang] = useState("en");
+  const t = translations[lang];
+  const [rows, setRows] = useState(7);
+  const [hoverCell, setHoverCell] = useState(null); // {n, r}
+
+  // Generate Triangle
+  const triangle = [];
+  for (let n = 0; n <= rows; n++) {
+    const row = [];
+    for (let r = 0; r <= n; r++) {
+      if (r === 0 || r === n) row.push(1);else {
+        const prev = triangle[n - 1];
+        row.push(prev[r - 1] + prev[r]);
+      }
+    }
+    triangle.push(row);
+  }
+  const calcNCR = (n, r) => {
+    if (r < 0 || r > n) return 0;
+    let res = 1;
+    for (let i = 0; i < r; i++) {
+      res = res * (n - i) / (i + 1);
+    }
+    return res;
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "p-8 max-w-4xl mx-auto min-h-screen flex flex-col items-center select-none"
+  }, /*#__PURE__*/React.createElement("header", {
+    className: "mb-8 text-center w-full relative"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLang(lang === "en" ? "zh" : "en"),
+    className: "absolute right-0 top-0 px-4 py-2 bg-white rounded-full shadow border border-amber-200 text-sm font-bold text-amber-600 hover:bg-amber-50 transition"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-globe mr-2"
+  }), lang === "en" ? "中文" : "ENG"), /*#__PURE__*/React.createElement("div", {
+    className: "text-amber-600 font-bold uppercase text-xs tracking-widest mb-2"
+  }, t.unit), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-slate-900 mb-2"
+  }, t.title), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-500"
+  }, t.desc)), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col gap-8 w-full items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-4 bg-white p-4 rounded-xl shadow border border-amber-100 mb-4"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "font-bold text-slate-500"
+  }, t.row, ": ", rows), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "3",
+    max: "10",
+    value: rows,
+    onChange: e => setRows(Number(e.target.value)),
+    className: "w-32 accent-amber-500"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-8 rounded-3xl shadow-xl border border-amber-100 overflow-x-auto w-full flex justify-center min-h-[300px]"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center gap-2"
+  }, triangle.map((row, n) => /*#__PURE__*/React.createElement("div", {
+    key: n,
+    className: "flex gap-2"
+  }, row.map((val, r) => {
+    const isHover = hoverCell && hoverCell.n === n && hoverCell.r === r;
+    return /*#__PURE__*/React.createElement("div", {
+      key: r,
+      onMouseEnter: () => setHoverCell({
+        n,
+        r
+      }),
+      onMouseLeave: () => setHoverCell(null),
+      className: `w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-lg font-bold font-mono transition-all cursor-pointer border-2
+                                                        ${isHover ? "bg-amber-500 text-white border-amber-600 scale-125 shadow-lg z-10" : "bg-amber-50 text-slate-600 border-amber-100 hover:bg-amber-100"}`
+    }, val);
+  }))))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white p-6 rounded-2xl shadow-lg border border-amber-100 w-full max-w-md text-center h-[180px] flex flex-col justify-center"
+  }, hoverCell ? /*#__PURE__*/React.createElement("div", {
+    className: "animate-fade-in space-y-2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-sm font-bold text-slate-400 uppercase"
+  }, "Combination"), /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-extrabold text-amber-600 font-mono"
+  }, hoverCell.n, "C", hoverCell.r), /*#__PURE__*/React.createElement("div", {
+    className: "text-xl font-bold text-slate-700"
+  }, "= ", triangle[hoverCell.n][hoverCell.r]), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs text-slate-400 font-mono mt-2"
+  }, "Row ", hoverCell.n, ", Item ", hoverCell.r, " (0-indexed)")) : /*#__PURE__*/React.createElement("div", {
+    className: "text-slate-400 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-regular fa-hand-pointer text-3xl mb-2 opacity-50"
+  }), /*#__PURE__*/React.createElement("div", null, t.highlight)))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小三常識：動物分類 | Animal Classification</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: radial-gradient(circle at center, #fde047 0%, #ca8a04 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Animal Classes",
+    zh: "動物分類",
+    ja: "動物の分類",
+    ko: "동물 분류",
+    es: "Clases de Animales",
+    de: "Tierklassen",
+    fi: "Eläinluokat",
+    fr: "Classes d'animaux",
+    ar: "فئات الحيوانات",
+    it: "Classi di Animali"
+  },
+  instruction: {
+    en: "Sort the animals correctly!",
+    zh: "將動物正確分類！",
+    ja: "動物を正しく分類しましょう！",
+    ko: "동물을 올바르게 분류하세요!",
+    es: "¡Clasifica los animales correctamente!",
+    de: "Sortiere die Tiere richtig!",
+    fi: "Lajittele eläimet oikein!",
+    fr: "Triez les animaux correctement !",
+    ar: "صنف الحيوانات بشكل صحيح!",
+    it: "Ordina gli animali correttamente!"
+  },
+  mammal: {
+    en: "Mammal",
+    zh: "哺乳類",
+    ja: "哺乳類",
+    ko: "포유류",
+    es: "Mamífero",
+    de: "Säugetier",
+    fi: "Nisäkäs",
+    fr: "Mammifère",
+    ar: "ثدييات",
+    it: "Mammifero"
+  },
+  bird: {
+    en: "Bird",
+    zh: "鳥類",
+    ja: "鳥類",
+    ko: "조류",
+    es: "Ave",
+    de: "Vogel",
+    fi: "Lintu",
+    fr: "Oiseau",
+    ar: "طائر",
+    it: "Uccello"
+  },
+  fish: {
+    en: "Fish",
+    zh: "魚類",
+    ja: "魚類",
+    ko: "어류",
+    es: "Pez",
+    de: "Fisch",
+    fi: "Kala",
+    fr: "Poisson",
+    ar: "سمكة",
+    it: "Pesce"
+  },
+  insect: {
+    en: "Insect",
+    zh: "昆蟲類",
+    ja: "昆虫",
+    ko: "곤충",
+    es: "Insecto",
+    de: "Insekt",
+    fi: "Hyönteinen",
+    fr: "Insecte",
+    ar: "حشرة",
+    it: "Insetto"
+  },
+  reptile: {
+    en: "Reptile",
+    zh: "爬行類",
+    ja: "爬虫類",
+    ko: "파충류",
+    es: "Reptil",
+    de: "Reptil",
+    fi: "Matelija",
+    fr: "Reptile",
+    ar: "زاحف",
+    it: "Rettile"
+  },
+  desc_mammal: {
+    en: "Hair/Milk",
+    zh: "有毛/飲奶",
+    ja: "毛/乳",
+    ko: "털/젖",
+    es: "Pelo/Leche",
+    de: "Haare/Milch",
+    fi: "Karvat/Maito",
+    fr: "Poils/Lait",
+    ar: "شعر/حليب",
+    it: "Pelo/Latte"
+  },
+  desc_bird: {
+    en: "Feathers/Eggs",
+    zh: "有羽毛/生蛋",
+    ja: "羽/卵",
+    ko: "깃털/알",
+    es: "Plumas/Huevos",
+    de: "Federn/Eier",
+    fi: "Höyhenet/Munat",
+    fr: "Plumes/Oeufs",
+    ar: "ريش/بيض",
+    it: "Piume/Uova"
+  },
+  desc_fish: {
+    en: "Scales/Water",
+    zh: "有鱗/水中生活",
+    ja: "鱗/水",
+    ko: "비늘/물",
+    es: "Escamas/Agua",
+    de: "Schuppen/Wasser",
+    fi: "Suomut/Vesi",
+    fr: "Écailles/Eau",
+    ar: "قشور/ماء",
+    it: "Squame/Acqua"
+  },
+  desc_insect: {
+    en: "6 Legs",
+    zh: "六條腿",
+    ja: "6本の足",
+    ko: "다리 6개",
+    es: "6 Patas",
+    de: "6 Beine",
+    fi: "6 jalkaa",
+    fr: "6 pattes",
+    ar: "6 أرجل",
+    it: "6 Zampe"
+  },
+  desc_reptile: {
+    en: "Scales/Land",
+    zh: "有鱗/陸上爬行",
+    ja: "鱗/陸",
+    ko: "비늘/육지",
+    es: "Escamas/Tierra",
+    de: "Schuppen/Land",
+    fi: "Suomut/Maa",
+    fr: "Écailles/Terre",
+    ar: "قشور/أرض",
+    it: "Squame/Terra"
+  },
+  dog: {
+    en: "Dog",
+    zh: "狗",
+    ja: "犬",
+    ko: "개",
+    es: "Perro",
+    de: "Hund",
+    fi: "Koira",
+    fr: "Chien",
+    ar: "كلب",
+    it: "Cane"
+  },
+  cat: {
+    en: "Cat",
+    zh: "貓",
+    ja: "猫",
+    ko: "고양이",
+    es: "Gato",
+    de: "Katze",
+    fi: "Kissa",
+    fr: "Chat",
+    ar: "قطة",
+    it: "Gatto"
+  },
+  human: {
+    en: "Human",
+    zh: "人類",
+    ja: "人間",
+    ko: "인간",
+    es: "Humano",
+    de: "Mensch",
+    fi: "Ihminen",
+    fr: "Humain",
+    ar: "إنسان",
+    it: "Umano"
+  },
+  whale: {
+    en: "Whale",
+    zh: "鯨魚",
+    ja: "クジラ",
+    ko: "고래",
+    es: "Ballena",
+    de: "Wal",
+    fi: "Valas",
+    fr: "Baleine",
+    ar: "حوت",
+    it: "Balena"
+  },
+  eagle: {
+    en: "Eagle",
+    zh: "老鷹",
+    ja: "鷲",
+    ko: "독수리",
+    es: "Águila",
+    de: "Adler",
+    fi: "Kotka",
+    fr: "Aigle",
+    ar: "نسر",
+    it: "Aquila"
+  },
+  penguin: {
+    en: "Penguin",
+    zh: "企鵝",
+    ja: "ペンギン",
+    ko: "펭귄",
+    es: "Pingüino",
+    de: "Pinguin",
+    fi: "Pingviini",
+    fr: "Manchot",
+    ar: "بطريق",
+    it: "Pinguino"
+  },
+  chicken: {
+    en: "Chicken",
+    zh: "雞",
+    ja: "鶏",
+    ko: "닭",
+    es: "Pollo",
+    de: "Huhn",
+    fi: "Kana",
+    fr: "Poulet",
+    ar: "دجاجة",
+    it: "Pollo"
+  },
+  goldfish: {
+    en: "Goldfish",
+    zh: "金魚",
+    ja: "金魚",
+    ko: "금붕어",
+    es: "Pez de colores",
+    de: "Goldfisch",
+    fi: "Kultakala",
+    fr: "Poisson rouge",
+    ar: "سمكة ذهبية",
+    it: "Pesce rosso"
+  },
+  shark: {
+    en: "Shark",
+    zh: "鯊魚",
+    ja: "サメ",
+    ko: "상어",
+    es: "Tiburón",
+    de: "Hai",
+    fi: "Hai",
+    fr: "Requin",
+    ar: "قرش",
+    it: "Squalo"
+  },
+  ant: {
+    en: "Ant",
+    zh: "螞蟻",
+    ja: "アリ",
+    ko: "개미",
+    es: "Hormiga",
+    de: "Ameise",
+    fi: "Muurahainen",
+    fr: "Fourmi",
+    ar: "نملة",
+    it: "Formica"
+  },
+  butterfly: {
+    en: "Butterfly",
+    zh: "蝴蝶",
+    ja: "蝶",
+    ko: "나비",
+    es: "Mariposa",
+    de: "Schmetterling",
+    fi: "Perhonen",
+    fr: "Papillon",
+    ar: "فراشة",
+    it: "Farfalla"
+  },
+  bee: {
+    en: "Bee",
+    zh: "蜜蜂",
+    ja: "蜂",
+    ko: "벌",
+    es: "Abeja",
+    de: "Biene",
+    fi: "Mehiläinen",
+    fr: "Abeille",
+    ar: "نحلة",
+    it: "Ape"
+  },
+  snake: {
+    en: "Snake",
+    zh: "蛇",
+    ja: "蛇",
+    ko: "뱀",
+    es: "Serpiente",
+    de: "Schlange",
+    fi: "Käärme",
+    fr: "Serpent",
+    ar: "ثعبان",
+    it: "Serpente"
+  },
+  turtle: {
+    en: "Turtle",
+    zh: "烏龜",
+    ja: "亀",
+    ko: "거북이",
+    es: "Tortuga",
+    de: "Schildkröte",
+    fi: "Kilpikonna",
+    fr: "Tortue",
+    ar: "سلحفاة",
+    it: "Tartaruga"
+  },
+  lizard: {
+    en: "Lizard",
+    zh: "蜥蜴",
+    ja: "トカゲ",
+    ko: "도마뱀",
+    es: "Lagarto",
+    de: "Eidechse",
+    fi: "Lisko",
+    fr: "Lézard",
+    ar: "سحلية",
+    it: "Lucertola"
+  },
+  correct: {
+    en: "Correct!",
+    zh: "答對了！",
+    ja: "正解！",
+    ko: "정답입니다!",
+    es: "¡Correcto!",
+    de: "Richtig!",
+    fi: "Oikein!",
+    fr: "Correct !",
+    ar: "صحيح!",
+    it: "Corretto!"
+  },
+  wrong: {
+    en: "Try Again",
+    zh: "再試一次",
+    ja: "もう一度",
+    ko: "다시 시도하세요",
+    es: "Inténtalo de nuevo",
+    de: "Versuch es nochmal",
+    fi: "Yritä uudelleen",
+    fr: "Réessayez",
+    ar: "حاول مرة أخرى",
+    it: "Riprova"
+  },
+  completed: {
+    en: "Zoologist!",
+    zh: "動物學家！",
+    ja: "動物学者！",
+    ko: "동물학자!",
+    es: "¡Zoólogo!",
+    de: "Zoologe!",
+    fi: "Eläintieteilijä!",
+    fr: "Zoologiste !",
+    ar: "عالم حيوان!",
+    it: "Zoologo!"
+  },
+  reset: {
+    en: "Play Again",
+    zh: "再玩一次",
+    ja: "もう一度プレイ",
+    ko: "다시 하기",
+    es: "Jugar de Nuevo",
+    de: "Nochmal spielen",
+    fi: "Pelaa uudelleen",
+    fr: "Rejouer",
+    ar: "العب مرة أخرى",
+    it: "Gioca di Nuovo"
+  }
+};
+const categories = [{
+  id: "mammal",
+  color: "bg-orange-200 border-orange-400",
+  bg: "bg-orange-500",
+  icon: "🦁"
+}, {
+  id: "bird",
+  color: "bg-sky-200 border-sky-400",
+  bg: "bg-sky-500",
+  icon: "🦅"
+}, {
+  id: "fish",
+  color: "bg-blue-200 border-blue-400",
+  bg: "bg-blue-500",
+  icon: "🐟"
+}, {
+  id: "insect",
+  color: "bg-green-200 border-green-400",
+  bg: "bg-green-500",
+  icon: "🐞"
+}, {
+  id: "reptile",
+  color: "bg-emerald-200 border-emerald-400",
+  bg: "bg-emerald-500",
+  icon: "🦎"
+}];
+const animals = [{
+  id: "dog",
+  type: "mammal",
+  icon: "🐶"
+}, {
+  id: "whale",
+  type: "mammal",
+  icon: "🐳"
+}, {
+  id: "human",
+  type: "mammal",
+  icon: "🧑"
+}, {
+  id: "eagle",
+  type: "bird",
+  icon: "🦅"
+}, {
+  id: "penguin",
+  type: "bird",
+  icon: "🐧"
+}, {
+  id: "shark",
+  type: "fish",
+  icon: "🦈"
+}, {
+  id: "goldfish",
+  type: "fish",
+  icon: "🐠"
+}, {
+  id: "ant",
+  type: "insect",
+  icon: "🐜"
+}, {
+  id: "butterfly",
+  type: "insect",
+  icon: "🦋"
+}, {
+  id: "snake",
+  type: "reptile",
+  icon: "🐍"
+}, {
+  id: "turtle",
+  type: "reptile",
+  icon: "🐢"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [queue, setQueue] = useState([]);
+  const [current, setCurrent] = useState(null);
+  const [feedback, setFeedback] = useState(null);
+  const [score, setScore] = useState(0);
+  const getText = key => t[key][lang] || t[key]["en"];
+  useEffect(() => {
+    initGame();
+  }, []);
+  const initGame = () => {
+    const q = [...animals].sort(() => Math.random() - 0.5);
+    setQueue(q);
+    setCurrent(q[0]);
+    setScore(0);
+    setFeedback(null);
+  };
+  const handleSort = catId => {
+    if (feedback) return;
+    if (current.type === catId) {
+      setFeedback("correct");
+      setScore(s => s + 10);
+      setTimeout(() => {
+        setFeedback(null);
+        const nextIdx = queue.indexOf(current) + 1;
+        if (nextIdx < queue.length) setCurrent(queue[nextIdx]);else setCurrent(null);
+      }, 800);
+    } else {
+      setFeedback("wrong");
+      setScore(s => Math.max(0, s - 5));
+      setTimeout(() => setFeedback(null), 800);
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 flex flex-col items-center select-none font-sans overflow-hidden"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-amber-900 mb-2 mt-8 drop-shadow-sm bg-white/50 px-6 py-2 rounded-full"
+  }, "🐾 ", getText("title")), current ? /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-6xl flex flex-col items-center flex-1 justify-center relative"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "relative mb-6 z-20"
+  }, /*#__PURE__*/React.createElement(motion.div, {
+    key: current.id,
+    initial: {
+      scale: 0,
+      rotate: -10
+    },
+    animate: {
+      scale: 1,
+      rotate: 0
+    },
+    exit: {
+      scale: 0,
+      opacity: 0
+    },
+    className: "bg-white p-10 rounded-[2.5rem] shadow-2xl border-8 border-amber-200 flex flex-col items-center justify-center w-64 h-64"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-8xl mb-4"
+  }, current.icon), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-black text-slate-700 leading-tight"
+  }, getText(current.id))), feedback && /*#__PURE__*/React.createElement("div", {
+    className: `absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 px-6 py-3 rounded-2xl font-black text-3xl shadow-xl whitespace-nowrap ${feedback === "correct" ? "bg-green-500 text-white" : "bg-red-500 text-white"}`
+  }, getText(feedback))), /*#__PURE__*/React.createElement("p", {
+    className: "font-bold text-amber-900 mb-6 bg-white/60 px-6 py-1 rounded-full text-lg"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-wrap gap-4 w-full justify-center"
+  }, categories.map(cat => /*#__PURE__*/React.createElement("button", {
+    key: cat.id,
+    onClick: () => handleSort(cat.id),
+    className: `flex-1 min-w-[140px] ${cat.color} border-b-8 rounded-2xl p-4 flex flex-col items-center shadow-lg active:scale-95 transition-all hover:brightness-110`
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl mb-2 bg-white/50 p-2 rounded-full shadow-sm"
+  }, cat.icon), /*#__PURE__*/React.createElement("div", {
+    className: "font-black text-lg md:text-xl text-slate-800"
+  }, getText(cat.id)), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold opacity-80 mt-1 bg-white/60 px-2 py-1 rounded w-full"
+  }, getText(`desc_${cat.id}`)))))) : /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/90 p-12 rounded-3xl shadow-xl text-center mt-20"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-8xl mb-4"
+  }, "🏆"), /*#__PURE__*/React.createElement("h2", {
+    className: "text-4xl font-black text-amber-800 mb-6"
+  }, getText("completed")), /*#__PURE__*/React.createElement("button", {
+    onClick: initGame,
+    className: "bg-amber-600 text-white px-10 py-4 rounded-full font-black text-2xl hover:bg-amber-700 shadow-xl"
+  }, getText("reset"), " 🔄")));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

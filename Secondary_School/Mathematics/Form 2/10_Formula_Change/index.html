@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Subject Changer | S2 Math</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <script
+      id="MathJax-script"
+      async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+    ></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+      }
+    </style>
+  </head>
+  <body class="bg-slate-50 text-slate-800 min-h-screen">
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const App = () => {
+  // We will simulate the state of the equation.
+  // Level 1: y = mx + c. Target x.
+  // States:
+  // 0: y = mx + c
+  // 1: y - c = mx
+  // 2: (y - c) / m = x (Solved)
+
+  // Level 2: A = 1/2 bh. Target h.
+  // States:
+  // 0: A = 1/2 bh
+  // 1: 2A = bh
+  // 2: 2A/b = h (Solved)
+
+  const levels = [{
+    id: 1,
+    target: "x",
+    initialLatex: "y = mx + c",
+    steps: [{
+      latex: "y = mx + c",
+      hint: "Isolate the term with x. Move +c first."
+    }, {
+      latex: "y - c = mx",
+      hint: "Now get x purely alone. Remove m."
+    }, {
+      latex: "\\frac{y - c}{m} = x",
+      hint: "Solved!"
+    }],
+    ops: [{
+      label: "- c",
+      action: 1
+    },
+    // Valid from step 0
+    {
+      label: "/ m",
+      action: 2
+    },
+    // Valid from step 1
+    {
+      label: "+ c",
+      action: -1
+    },
+    // Invalid
+    {
+      label: "× m",
+      action: -1
+    }]
+  }, {
+    id: 2,
+    target: "h",
+    initialLatex: "A = \\frac{1}{2}bh",
+    steps: [{
+      latex: "A = \\frac{1}{2}bh",
+      hint: "Remove the fraction first."
+    }, {
+      latex: "2A = bh",
+      hint: "Isolate h."
+    }, {
+      latex: "\\frac{2A}{b} = h",
+      hint: "Solved!"
+    }],
+    ops: [{
+      label: "× 2",
+      action: 1
+    }, {
+      label: "/ b",
+      action: 2
+    }, {
+      label: "- b",
+      action: -1
+    }, {
+      label: "× b",
+      action: -1
+    }]
+  }];
+  const [levelIdx, setLevelIdx] = useState(0);
+  const [step, setStep] = useState(0);
+  const [shake, setShake] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const currentLevel = levels[levelIdx];
+  const currentStepData = currentLevel.steps[step];
+  useEffect(() => {
+    if (window.MathJax) {
+      window.MathJax.typesetPromise();
+    }
+  }, [step, levelIdx, success]);
+  const handleOp = targetStep => {
+    // Logic: must provide correct *next* step index.
+    // current step is `step`. operation targetStep is logic.
+    // Simplified: each op maps to a potential NEXT step index.
+    // If action == step + 1, it matches.
+
+    if (targetStep === step + 1) {
+      setStep(targetStep);
+      if (targetStep === currentLevel.steps.length - 1) {
+        setSuccess(true);
+      }
+    } else {
+      setShake(true);
+      setTimeout(() => setShake(false), 500);
+    }
+  };
+  const nextLevel = () => {
+    if (levelIdx < levels.length - 1) {
+      setLevelIdx(l => l + 1);
+      setStep(0);
+      setSuccess(false);
+    } else {
+      alert("All levels completed!");
+      setLevelIdx(0);
+      setStep(0);
+      setSuccess(false);
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "p-8 max-w-4xl mx-auto min-h-screen flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("header", {
+    className: "mb-8 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-slate-500 font-bold uppercase text-xs tracking-widest mb-2"
+  }, "Unit 4: Algebra & Estimation"), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-slate-900"
+  }, "Subject Changer"), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-500"
+  }, "Perform operations to change the subject of a formula.")), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-2xl bg-white p-12 rounded-3xl shadow-xl border border-slate-200 flex flex-col items-center relative overflow-hidden"
+  }, success && /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 bg-emerald-500/10 z-0 animate-pulse"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "z-10 w-full text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-sm font-bold text-slate-400 mb-2 uppercase tracking-wide"
+  }, "Level ", levelIdx + 1, ": Make", " ", /*#__PURE__*/React.createElement("span", {
+    className: "text-rose-500 text-lg mx-1 font-serif italic"
+  }, currentLevel.target), " ", "the subject"), /*#__PURE__*/React.createElement("div", {
+    className: `my-12 text-4xl text-slate-800 transition-transform duration-300 ${shake ? "translate-x-[10px] text-red-500" : ""}`
+  }, `$$ ${currentStepData.latex} $$`), /*#__PURE__*/React.createElement("div", {
+    className: "text-emerald-600 font-bold text-sm mb-8 min-h-[20px]"
+  }, step > 0 && step < currentLevel.steps.length - 1 && "Good! Next step?", success && "Excellent! You isolated the variable.", !success && step === 0 && "Start by performing an operation on both sides."), !success && /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 gap-4 max-w-sm mx-auto"
+  }, currentLevel.ops.map((op, i) => /*#__PURE__*/React.createElement("button", {
+    key: i,
+    onClick: () => handleOp(op.action),
+    className: "px-6 py-4 bg-slate-100 hover:bg-blue-100 text-slate-700 hover:text-blue-700 font-bold rounded-xl border-2 border-slate-200 hover:border-blue-400 transition text-xl shadow-sm"
+  }, op.label))), success && /*#__PURE__*/React.createElement("button", {
+    onClick: nextLevel,
+    className: "px-8 py-4 bg-emerald-500 text-white font-bold rounded-xl shadow-lg hover:bg-emerald-600 transition animate-bounce"
+  }, "Next Formula", " ", /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-arrow-right ml-2"
+  })))), /*#__PURE__*/React.createElement("div", {
+    className: "mt-8 text-center text-slate-400 text-sm max-w-md"
+  }, "Remember: What you do to one side, you must do to the other to keep the equation balanced."));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

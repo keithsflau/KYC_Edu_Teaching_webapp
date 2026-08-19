@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小六數學：概率入門 | Intro to Probability</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+      .perspective-1000 {
+        perspective: 1000px;
+      }
+      .preserve-3d {
+        transform-style: preserve-3d;
+      }
+      .backface-hidden {
+        backface-visibility: hidden;
+      }
+      .rotate-x-180 {
+        transform: rotateX(180deg);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect,
+  useRef
+} = React;
+const {
+  motion,
+  useAnimation
+} = window.Motion;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Coin Flip Probability",
+    zh: "擲硬幣概率",
+    ja: "コイン投げ確率",
+    ko: "동전 던지기 확률",
+    es: "Probabilidad de Lanzamiento de Moneda",
+    de: "Münzwurf-Wahrscheinlichkeit",
+    fi: "Kolikonheiton todennäköisyys",
+    fr: "Probabilité de pile ou face",
+    ar: "احتمالية رمي العملة",
+    it: "Probabilità Lancio Moneta"
+  },
+  flip: {
+    en: "FLIP",
+    zh: "投擲",
+    ja: "投げる",
+    ko: "던지기",
+    es: "LANZAR",
+    de: "WERFEN",
+    fi: "HEITÄ",
+    fr: "LANCER",
+    ar: "رمي",
+    it: "LANCIA"
+  },
+  flipping: {
+    en: "Flipping...",
+    zh: "投擲中...",
+    ja: "投げています...",
+    ko: "던지는 중...",
+    es: "Lanzando...",
+    de: "Werfen...",
+    fi: "Heittää...",
+    fr: "Lancement...",
+    ar: "جاري الرمي...",
+    it: "Lancio..."
+  },
+  heads: {
+    en: "Heads",
+    zh: "公 (洋紫荊)",
+    ja: "表",
+    ko: "앞면",
+    es: "Cara",
+    de: "Kopf",
+    fi: "Kruuna",
+    fr: "Face",
+    ar: "وجه",
+    it: "Testa"
+  },
+  tails: {
+    en: "Tails",
+    zh: "字 (10元)",
+    ja: "裏",
+    ko: "뒷면",
+    es: "Cruz",
+    de: "Zahl",
+    fi: "Klaava",
+    fr: "Pile",
+    ar: "ذيل",
+    it: "Croce"
+  },
+  stats: {
+    en: "Statistics",
+    zh: "統計",
+    ja: "統計",
+    ko: "통계",
+    es: "Estadísticas",
+    de: "Statistiken",
+    fi: "Tilastot",
+    fr: "Statistiques",
+    ar: "إحصائيات",
+    it: "Statistiche"
+  },
+  total: {
+    en: "Total Flips",
+    zh: "總次數",
+    ja: "合計回数",
+    ko: "총 횟수",
+    es: "Lanzamientos Totales",
+    de: "Gesamtwürfe",
+    fi: "Heittoja yhteensä",
+    fr: "Total lancers",
+    ar: "إجمالي الرميات",
+    it: "Lanci Totali"
+  },
+  history: {
+    en: "History",
+    zh: "歷史記錄",
+    ja: "履歴",
+    ko: "기록",
+    es: "Historial",
+    de: "Verlauf",
+    fi: "Historia",
+    fr: "Historique",
+    ar: "تاريخ",
+    it: "Cronologia"
+  },
+  theory: {
+    en: "Theoretical Probability: 50%",
+    zh: "理論概率: 50%",
+    ja: "理論的確率: 50%",
+    ko: "이론적 확률: 50%",
+    es: "Probabilidad Teórica: 50%",
+    de: "Theoretische Wahrscheinlichkeit: 50%",
+    fi: "Teoreettinen todennäköisyys: 50%",
+    fr: "Probabilité théorique: 50%",
+    ar: "الاحتمال النظري: 50%",
+    it: "Probabilità Teorica: 50%"
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [isFlipping, setIsFlipping] = useState(false);
+  const [result, setResult] = useState(null); // 'heads' or 'tails'
+  const [history, setHistory] = useState([]);
+  const controls = useAnimation();
+  const flipCoin = async () => {
+    if (isFlipping) return;
+    setIsFlipping(true);
+    setResult(null);
+
+    // Determine outcome
+    const outcome = Math.random() > 0.5 ? "heads" : "tails";
+
+    // Animate
+    await controls.start({
+      rotateX: [0, 720 + (outcome === "tails" ? 180 : 0)],
+      y: [0, -200, 0],
+      scale: [1, 1.5, 1],
+      transition: {
+        duration: 1,
+        ease: "easeInOut"
+      }
+    });
+
+    // Reset rotation but keep visual outcome (using mod 360 logic internally in css ideally, but here we snap)
+    // For simplicity in this react-motion setup, we will just set the final state visually.
+    // Actually, we need to reset the animation controls carefully or just rely on the 'outcome' state rendering.
+
+    setResult(outcome);
+    setHistory(prev => [outcome, ...prev]);
+
+    // Reset rotation for next flip slightly?
+    controls.set({
+      rotateX: 0,
+      y: 0,
+      scale: 1
+    });
+    setIsFlipping(false);
+  };
+  const headCount = history.filter(h => h === "heads").length;
+  const totalCount = history.length;
+  const headPct = totalCount === 0 ? 0 : Math.round(headCount / totalCount * 100);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4 font-sans bg-slate-900 text-white"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-4xl flex justify-between items-center mb-8"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-black text-amber-400 drop-shadow-[0_0_15px_rgba(251,191,36,0.5)]"
+  }, "🪙 ", getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "flex bg-slate-800/80 p-1.5 rounded-xl border border-white/10 flex-wrap justify-end gap-1 max-w-[50%]"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-amber-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white hover:bg-white/5"}`
+  }, l)))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-8 rounded-3xl flex flex-col items-center justify-center min-h-[400px]"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "relative w-48 h-48 perspective-1000 mb-12"
+  }, /*#__PURE__*/React.createElement(motion.div, {
+    className: "w-full h-full relative preserve-3d",
+    animate: controls
+  }, /*#__PURE__*/React.createElement("div", {
+    className: `absolute inset-0 backface-hidden rounded-full border-4 border-amber-600 bg-amber-400 shadow-[0_0_30px_rgba(251,191,36,0.5)] flex items-center justify-center`
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-32 h-32 rounded-full border-2 border-amber-600/50 flex items-center justify-center"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-5xl font-black text-amber-700/80"
+  }, "Face"))), /*#__PURE__*/React.createElement("div", {
+    className: `absolute inset-0 backface-hidden rounded-full border-4 border-slate-400 bg-slate-200 shadow-[0_0_30px_rgba(148,163,184,0.5)] flex items-center justify-center rotate-x-180`,
+    style: {
+      transform: "rotateX(180deg)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-32 h-32 rounded-full border-2 border-slate-400/50 flex items-center justify-center"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-5xl font-black text-slate-500/80"
+  }, "$10")))), !isFlipping && result && /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      opacity: 0,
+      y: 20
+    },
+    animate: {
+      opacity: 1,
+      y: 0
+    },
+    className: `absolute -bottom-16 left-0 right-0 text-center text-2xl font-black ${result === "heads" ? "text-amber-400" : "text-slate-200"}`
+  }, getText(result, lang))), /*#__PURE__*/React.createElement("button", {
+    onClick: flipCoin,
+    disabled: isFlipping,
+    className: "px-8 py-4 bg-amber-500 hover:bg-amber-400 text-slate-900 rounded-full font-black text-xl shadow-lg transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+  }, isFlipping ? getText("flipping", lang) : getText("flip", lang))), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 rounded-3xl"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-slate-400 font-bold uppercase mb-4"
+  }, getText("stats", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 gap-4 mb-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-amber-500/10 p-4 rounded-xl border border-amber-500/30 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-amber-400 font-bold text-sm uppercase mb-1"
+  }, getText("heads", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-black text-white"
+  }, headCount), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs text-amber-400/70 font-mono mt-1"
+  }, headPct, "%")), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-500/10 p-4 rounded-xl border border-slate-500/30 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-slate-300 font-bold text-sm uppercase mb-1"
+  }, getText("tails", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-black text-white"
+  }, totalCount - headCount), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs text-slate-300/70 font-mono mt-1"
+  }, totalCount > 0 ? 100 - headPct : 0, "%"))), /*#__PURE__*/React.createElement("div", {
+    className: "h-4 bg-slate-700 rounded-full overflow-hidden flex relative"
+  }, /*#__PURE__*/React.createElement(motion.div, {
+    className: "h-full bg-amber-500",
+    initial: {
+      width: "50%"
+    },
+    animate: {
+      width: `${headPct}%`
+    },
+    transition: {
+      duration: 0.5
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute left-1/2 top-0 bottom-0 w-0.5 bg-white/50 -translate-x-1/2"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "text-center text-xs text-slate-500 mt-2 font-mono"
+  }, getText("theory", lang))), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 rounded-3xl flex-1 max-h-[300px] overflow-hidden flex flex-col"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-slate-400 font-bold uppercase mb-4"
+  }, getText("history", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 overflow-y-auto pr-2 custom-scrollbar"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-wrap gap-2 content-start"
+  }, history.map((h, i) => /*#__PURE__*/React.createElement("div", {
+    key: totalCount - i,
+    className: `w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shadow-sm border border-black/20 ${h === "heads" ? "bg-amber-400 text-amber-900 border-amber-500" : "bg-slate-300 text-slate-700 border-slate-400"}`
+  }, h === "heads" ? "H" : "T"))))))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>常識科：食物網大師 | Food Web Master</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #022c22;
+        color: white;
+        overflow: hidden;
+      }
+      .glass-card {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useRef,
+  useEffect
+} = React;
+const {
+  motion,
+  useMotionValue,
+  useTransform
+} = window.Motion;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Ecosystem Builder",
+    zh: "生態系統建造者"
+  },
+  instruction: {
+    en: "Drag nodes to move. Drag from the DOT to connect Prey → Predator.",
+    zh: "拖動生物。從圓點拖出線條連接 獵物 → 捕食者。"
+  },
+  reset: {
+    en: "Reset",
+    zh: "重置"
+  },
+  check: {
+    en: "Check",
+    zh: "檢查"
+  },
+  clear: {
+    en: "Clear All",
+    zh: "全部清除"
+  },
+  correct: {
+    en: "Perfect Balance!",
+    zh: "完美的生態平衡！"
+  },
+  wrong: {
+    en: "Some connections seem unnatural...",
+    zh: "有些連接似乎不合乎自然..."
+  },
+  grass: {
+    en: "Grass",
+    zh: "草"
+  },
+  rabbit: {
+    en: "Rabbit",
+    zh: "兔子"
+  },
+  fox: {
+    en: "Fox",
+    zh: "狐狸"
+  },
+  hawk: {
+    en: "Hawk",
+    zh: "鷹"
+  },
+  snake: {
+    en: "Snake",
+    zh: "蛇"
+  },
+  frog: {
+    en: "Frog",
+    zh: "青蛙"
+  },
+  insect: {
+    en: "Insect",
+    zh: "昆蟲"
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+
+// Data
+const initialNodes = [{
+  id: "grass",
+  x: 400,
+  y: 500,
+  icon: "🌱",
+  color: "bg-green-500"
+}, {
+  id: "rabbit",
+  x: 200,
+  y: 350,
+  icon: "🐇",
+  color: "bg-stone-300"
+}, {
+  id: "insect",
+  x: 600,
+  y: 350,
+  icon: "🐞",
+  color: "bg-red-400"
+}, {
+  id: "frog",
+  x: 500,
+  y: 250,
+  icon: "🐸",
+  color: "bg-emerald-500"
+}, {
+  id: "snake",
+  x: 700,
+  y: 150,
+  icon: "🐍",
+  color: "bg-lime-600"
+}, {
+  id: "fox",
+  x: 300,
+  y: 150,
+  icon: "🦊",
+  color: "bg-orange-500"
+}, {
+  id: "hawk",
+  x: 500,
+  y: 50,
+  icon: "🦅",
+  color: "bg-amber-700"
+}];
+const validLinks = ["grass-rabbit", "grass-insect", "insect-frog", "rabbit-fox", "rabbit-hawk", "frog-snake", "frog-hawk",
+// sometimes hawks eat frogs
+"snake-hawk", "snake-mongoose",
+// no mongoose
+// Let's stick to standard chains
+"grass->insect", "grass->rabbit", "insect->frog", "frog->snake", "snake->hawk", "rabbit->fox", "rabbit->hawk", "rabbit->snake" // large snakes eat rabbits
+];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [nodes, setNodes] = useState(initialNodes);
+  const [links, setLinks] = useState([]); // {source, target}
+  const [tempLink, setTempLink] = useState(null); // {source, x, y}
+  const [message, setMessage] = useState(null);
+  const containerRef = useRef(null);
+
+  // Movement Handler
+  const handleDragEnd = (id, info) => {
+    // Update node position
+    setNodes(prev => prev.map(n => {
+      if (n.id === id) {
+        return {
+          ...n,
+          x: n.x + info.offset.x,
+          y: n.y + info.offset.y
+        };
+      }
+      return n;
+    }));
+    // Framer motion drag just moves visual, we need to sync state for lines
+    // Actually, better to use dragListener={false} and custom logic, OR
+    // use onDrag to force update. But onDrag causes re-renders.
+    // Optimization: Nodes track their own position via MotionValues and we assume React state is eventually consistent?
+    // Easier: Just update state onDragEnd and let lines re-render.
+    // While dragging, lines might lag if we don't update state.
+    // Let's Try: onDrag -> setNodes.
+    // React might be fast enough.
+  };
+
+  // Linking Logic
+  const startLink = (e, nodeId) => {
+    e.stopPropagation();
+    const rect = containerRef.current.getBoundingClientRect();
+    setTempLink({
+      source: nodeId,
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    });
+  };
+  const updateLink = e => {
+    if (tempLink) {
+      const rect = containerRef.current.getBoundingClientRect();
+      setTempLink(prev => ({
+        ...prev,
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      }));
+    }
+  };
+  const endLink = (e, targetId) => {
+    if (tempLink) {
+      if (targetId && targetId !== tempLink.source) {
+        // check if link exists
+        const exists = links.find(l => l.source === tempLink.source && l.target === targetId);
+        if (!exists) {
+          setLinks(prev => [...prev, {
+            source: tempLink.source,
+            target: targetId
+          }]);
+        }
+      }
+      setTempLink(null);
+    }
+  };
+  const removeLink = index => {
+    setLinks(prev => prev.filter((_, i) => i !== index));
+  };
+  const check = () => {
+    // Validation
+    // Let's refine validLinks to be simple strings "source->target"
+    const userLinks = links.map(l => `${l.source}->${l.target}`);
+    let allCorrect = true;
+    let correctCount = 0;
+    userLinks.forEach(ul => {
+      if (!validLinks.includes(ul)) {
+        // Check if it's biologically plausible but maybe not in my list?
+        // Simple logic for now.
+        allCorrect = false;
+      } else {
+        correctCount++;
+      }
+    });
+    if (userLinks.length === 0) setMessage("incomplete");else if (allCorrect && correctCount >= 5) setMessage("correct");else setMessage("wrong");
+    setTimeout(() => setMessage(null), 3000);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4 select-none",
+    onPointerMove: updateLink,
+    onPointerUp: () => setTempLink(null)
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-6xl flex justify-between items-center mb-6 z-10 pointer-events-none"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "pointer-events-auto"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-black text-emerald-400 drop-shadow-lg"
+  }, getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "text-emerald-200 font-bold opacity-80 mt-1"
+  }, getText("instruction", lang))), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4 pointer-events-auto"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLinks([]),
+    className: "bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg font-bold transition-all text-sm"
+  }, getText("clear", lang)), /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }))), /*#__PURE__*/React.createElement("div", {
+    ref: containerRef,
+    className: "relative w-full max-w-6xl flex-1 bg-gradient-to-b from-[#064e3b] to-[#022c22] rounded-3xl border-4 border-[#059669] shadow-2xl overflow-hidden"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 opacity-20 pointer-events-none bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9IiNmZmZmZmYiLz48L3N2Zz4=')]"
+  }), nodes.map(node => /*#__PURE__*/React.createElement(Node, {
+    key: node.id,
+    node: node,
+    lang: lang,
+    getText: getText,
+    onDrag: (x, y) => {
+      // Real-time update for line render
+      setNodes(prev => prev.map(n => n.id === node.id ? {
+        ...n,
+        x,
+        y
+      } : n));
+    },
+    onConnectStart: e => startLink(e, node.id),
+    onConnectEnd: e => endLink(e, node.id)
+  })), /*#__PURE__*/React.createElement("svg", {
+    className: "absolute inset-0 w-full h-full pointer-events-none z-0"
+  }, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("marker", {
+    id: "arrow",
+    markerWidth: "6",
+    markerHeight: "6",
+    refX: "20",
+    refY: "3",
+    orient: "auto",
+    markerUnits: "strokeWidth"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M0,0 L0,6 L9,3 z",
+    fill: "#34d399"
+  }))), links.map((link, i) => {
+    const src = nodes.find(n => n.id === link.source);
+    const tgt = nodes.find(n => n.id === link.target);
+    if (!src || !tgt) return null;
+    return /*#__PURE__*/React.createElement("g", {
+      key: i,
+      className: "pointer-events-auto cursor-pointer group",
+      onClick: () => removeLink(i)
+    }, /*#__PURE__*/React.createElement("line", {
+      x1: src.x + 40,
+      y1: src.y + 40 // Center offset (node size 80/2)
+      ,
+      x2: tgt.x + 40,
+      y2: tgt.y + 40,
+      stroke: "#34d399",
+      strokeWidth: "3",
+      markerEnd: "url(#arrow)",
+      className: "opacity-60 group-hover:opacity-100 group-hover:stroke-red-400 transition-all"
+    }), /*#__PURE__*/React.createElement("line", {
+      x1: src.x + 40,
+      y1: src.y + 40,
+      x2: tgt.x + 40,
+      y2: tgt.y + 40,
+      stroke: "transparent",
+      strokeWidth: "15"
+    }));
+  }), tempLink && (() => {
+    const src = nodes.find(n => n.id === tempLink.source);
+    return /*#__PURE__*/React.createElement("line", {
+      x1: src.x + 40,
+      y1: src.y + 40,
+      x2: tempLink.x,
+      y2: tempLink.y,
+      stroke: "#fbbf24",
+      strokeWidth: "3",
+      strokeDasharray: "5,5"
+    });
+  })())), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-8 z-20"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: check,
+    className: "bg-emerald-500 hover:bg-emerald-400 text-white font-black text-xl px-12 py-4 rounded-full shadow-lg shadow-emerald-500/30 transition-transform active:scale-95"
+  }, getText("check", lang))), message && /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+  }, /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      scale: 0.5,
+      opacity: 0
+    },
+    animate: {
+      scale: 1,
+      opacity: 1
+    },
+    className: `px-12 py-8 rounded-3xl text-4xl font-black shadow-2xl text-center border-4 ${message === "correct" ? "bg-emerald-600 border-emerald-400 text-white" : "bg-red-600 border-red-400 text-white"}`
+  }, getText(message, lang))));
+}
+function Node({
+  node,
+  lang,
+  getText,
+  onDrag,
+  onConnectStart,
+  onConnectEnd
+}) {
+  return /*#__PURE__*/React.createElement(motion.div, {
+    drag: true,
+    dragMomentum: false,
+    onDrag: (_, info) => {
+      // We need absolute position relative to container
+      // But Framer drag applies transform: translate
+      // We need to capture the visual position.
+      // Actually, strictly updating state onDrag works best for lines.
+      // But to get the correct X/Y, we must know the initial X/Y + delta.
+      onDrag(node.x + info.delta.x, node.y + info.delta.y);
+      // Wait, onDrag gives delta per frame.
+      // If we update state, the component re-renders with new x/y.
+      // So we rely on parent state for position.
+    }
+    // Wait, if we drive position by prop 'node.x/y', we should use layout or style.
+    // style={{ x: node.x, y: node.y }} // No, x/y in style is translate.
+    ,
+    style: {
+      left: node.x,
+      top: node.y,
+      position: "absolute"
+    },
+    className: `w-20 h-20 rounded-2xl ${node.color} shadow-lg cursor-grab active:cursor-grabbing flex flex-col items-center justify-center z-10 hover:scale-105 transition-transform`,
+    onPointerUp: e => {
+      e.stopPropagation();
+      onConnectEnd(e);
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl select-none pointer-events-none"
+  }, node.icon), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold text-white bg-black/30 px-2 rounded-full mt-1 pointer-events-none"
+  }, getText(node.id, lang)), /*#__PURE__*/React.createElement("div", {
+    className: "absolute -right-2 -bottom-2 w-8 h-8 bg-white rounded-full border-4 border-emerald-500 cursor-crosshair hover:scale-125 transition-transform flex items-center justify-center text-emerald-600 font-bold text-xs",
+    onPointerDown: onConnectStart
+  }, "+"));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

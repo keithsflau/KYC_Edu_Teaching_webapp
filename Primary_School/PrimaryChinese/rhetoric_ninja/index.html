@@ -1,0 +1,972 @@
+﻿<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>修辭忍者 - Rhetoric Ninja</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    #game-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    #game-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      cursor: crosshair;
+      touch-action: none;
+    }
+
+    .flash-overlay {
+      position: absolute;
+      inset: 0;
+      background: white;
+      opacity: 0.8;
+      z-index: 50;
+      pointer-events: none;
+      animation: pulse 0.2s;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.8; }
+      50% { opacity: 0.4; }
+    }
+
+    .game-title {
+      position: absolute;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      background: linear-gradient(to right, #fbbf24, #f97316);
+      color: white;
+      padding: 12px 32px;
+      border-radius: 8px;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+
+    .game-title h1 {
+      font-size: 24px;
+      font-weight: bold;
+      margin: 0;
+    }
+
+    .instructions-panel {
+      position: absolute;
+      top: 80px;
+      left: 16px;
+      z-index: 10;
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 16px 24px;
+      border-radius: 8px;
+      max-width: 320px;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+
+    .instructions-panel h2 {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 12px;
+      color: #fbbf24;
+    }
+
+    .instructions-panel .instruction-item {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .instructions-panel .instruction-item span:first-child {
+      margin-right: 8px;
+    }
+
+    .instructions-panel .instruction-item .green {
+      color: #4ade80;
+      font-weight: bold;
+    }
+
+    .instructions-panel .instruction-item .orange {
+      color: #fb923c;
+      font-weight: bold;
+    }
+
+    .instructions-panel .instruction-item .red {
+      color: #f87171;
+      font-weight: bold;
+    }
+
+    .instructions-panel .instruction-note {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(107, 114, 128, 0.6);
+      font-size: 12px;
+      color: rgba(209, 213, 219, 1);
+    }
+
+    .score-panel {
+      position: absolute;
+      top: 80px;
+      right: 16px;
+      z-index: 10;
+      background: rgba(0, 0, 0, 0.6);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 8px;
+    }
+
+    .score-panel div {
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .game-over-screen {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+    }
+
+    .game-over-content {
+      background: white;
+      border-radius: 8px;
+      padding: 32px;
+      text-align: center;
+      max-width: 448px;
+    }
+
+    .game-over-content h2 {
+      font-size: 36px;
+      font-weight: bold;
+      margin-bottom: 16px;
+      color: #dc2626;
+    }
+
+    .game-over-content p {
+      font-size: 24px;
+      margin-bottom: 24px;
+    }
+
+    .btn {
+      font-weight: bold;
+      padding: 12px 32px;
+      border-radius: 8px;
+      font-size: 20px;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .btn-green {
+      background: #22c55e;
+      color: white;
+    }
+
+    .btn-green:hover {
+      background: #16a34a;
+    }
+
+    .btn-red {
+      background: rgba(239, 68, 68, 0.8);
+      color: white;
+    }
+
+    .btn-red:hover {
+      background: rgba(239, 68, 68, 1);
+    }
+
+    .btn-black {
+      background: rgba(0, 0, 0, 0.6);
+      color: white;
+    }
+
+    .btn-black:hover {
+      background: rgba(0, 0, 0, 0.8);
+    }
+
+    .control-buttons {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      z-index: 10;
+      display: flex;
+      gap: 8px;
+    }
+
+    .control-buttons button {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-weight: bold;
+    }
+
+    footer {
+      text-align: center;
+      padding: 16px;
+      color: #64748b;
+      font-size: 12px;
+      font-family: system-ui, sans-serif;
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background: rgba(255, 255, 255, 0.9);
+    }
+
+    footer p {
+      font-style: italic;
+      margin-bottom: 4px;
+    }
+
+    footer p:last-of-type {
+      font-size: 11px;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid #cbd5e1;
+      font-style: normal;
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <!-- Flash effect overlay -->
+    <div id="flash-overlay" class="flash-overlay" style="display: none;"></div>
+
+    <!-- Canvas -->
+    <canvas id="game-canvas"></canvas>
+
+    <!-- Game Title -->
+    <div class="game-title">
+      <h1>修辭忍者</h1>
+    </div>
+
+    <!-- Instructions Panel -->
+    <div class="instructions-panel">
+      <h2>遊戲說明</h2>
+      <div class="instruction-item">
+        <span style="color: #4ade80;">✓</span>
+        <span>切開<strong class="green">綠色</strong>卷軸（比喻）得分</span>
+      </div>
+      <div class="instruction-item">
+        <span style="color: #fb923c;">○</span>
+        <span><strong class="orange">橙色</strong>卷軸（普通句子）無影響</span>
+      </div>
+      <div class="instruction-item">
+        <span style="color: #f87171;">✗</span>
+        <span>避開<strong class="red">紅色</strong>炸彈（錯誤句子）</span>
+      </div>
+      <div class="instruction-note">
+        <p>用滑鼠或手指劃過螢幕來切開卷軸</p>
+      </div>
+    </div>
+
+    <!-- Score and Lives -->
+    <div class="score-panel">
+      <div>分數: <span id="score">0</span></div>
+      <div>生命: <span id="lives">❤️❤️❤️</span></div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="game-over-screen" class="game-over-screen" style="display: none;">
+      <div class="game-over-content">
+        <h2>遊戲結束!</h2>
+        <p>最終分數: <span id="final-score">0</span></p>
+        <button class="btn btn-green" onclick="startGame()">重新開始</button>
+      </div>
+    </div>
+
+    <!-- Control Buttons -->
+    <div class="control-buttons" id="control-buttons">
+      <button class="btn btn-red" onclick="resetGame()" title="重設遊戲">重設</button>
+      <button class="btn btn-black" id="pause-btn" onclick="togglePause()">暫停</button>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+      <p>
+        But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his understanding. Jeremiah 10:12
+      </p>
+      <p>
+        「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+      </p>
+      <p>
+        @ 2025 Primary Chinese Learning Resources | Prepared by SF Lau
+      </p>
+    </footer>
+  </div>
+
+  <script>
+    // Scroll class for physics and rendering
+    class Scroll {
+      constructor(x, y, text, isMetaphor, isBomb = false, difficulty = 1) {
+        this.x = x
+        this.y = y
+        this.text = text
+        this.isMetaphor = isMetaphor
+        this.isBomb = isBomb
+        // Slower base speed, adjusted by difficulty
+        const baseSpeed = 0.08
+        this.velocityX = (Math.random() - 0.5) * baseSpeed * difficulty
+        // Reduced upward velocity, adjusted by difficulty
+        const baseUpward = -2.5
+        this.velocityY = baseUpward - Math.random() * 0.8
+        this.velocityY *= difficulty
+        // Slower gravity
+        this.gravity = 0.01 * difficulty
+        this.width = 120
+        this.height = 80
+        this.sliced = false
+        this.splitParts = []
+        this.opacity = 1
+      }
+
+      update(canvasHeight) {
+        if (this.sliced) {
+          this.splitParts.forEach(part => {
+            part.velocityY += this.gravity
+            part.y += part.velocityY
+            part.x += part.velocityX
+            part.opacity -= 0.02
+          })
+          return
+        }
+
+        this.velocityY += this.gravity
+        this.x += this.velocityX
+        
+        // Prevent scrolling above top of screen
+        const newY = this.y + this.velocityY
+        if (newY < this.height / 2) {
+          // Bounce back or stop at top
+          this.velocityY = Math.max(0, this.velocityY)
+          this.y = this.height / 2
+        } else {
+          this.y = newY
+        }
+      }
+
+      getBounds() {
+        return {
+          x: this.x - this.width / 2,
+          y: this.y - this.height / 2,
+          width: this.width,
+          height: this.height
+        }
+      }
+
+      slice() {
+        if (this.sliced) return false
+        this.sliced = true
+        
+        this.splitParts = [
+          {
+            x: this.x,
+            y: this.y,
+            velocityX: -0.1,
+            velocityY: -0.1,
+            opacity: 1
+          },
+          {
+            x: this.x,
+            y: this.y,
+            velocityX: 0.1,
+            velocityY: -0.1,
+            opacity: 1
+          }
+        ]
+        return true
+      }
+
+      isOffScreen(canvasHeight) {
+        return this.y > canvasHeight + 100 || this.x < -100 || this.x > window.innerWidth + 100
+      }
+    }
+
+    // Blade trail point
+    class TrailPoint {
+      constructor(x, y) {
+        this.x = x
+        this.y = y
+        this.life = 1.0
+      }
+
+      update() {
+        this.life -= 0.05
+      }
+
+      isDead() {
+        return this.life <= 0
+      }
+    }
+
+    // Game state
+    const gameState = {
+      score: 0,
+      lives: 3,
+      gameOver: false,
+      isPaused: false,
+      flashEffect: false
+    }
+
+    // Game objects
+    const scrolls = []
+    const trail = []
+    let lastMousePos = { x: 0, y: 0 }
+    let isMouseDown = false
+    let spawnTimer = null
+    let animationFrame = null
+
+    // DOM elements
+    const canvas = document.getElementById('game-canvas')
+    const ctx = canvas.getContext('2d')
+    const scoreEl = document.getElementById('score')
+    const livesEl = document.getElementById('lives')
+    const gameOverScreen = document.getElementById('game-over-screen')
+    const finalScoreEl = document.getElementById('final-score')
+    const flashOverlay = document.getElementById('flash-overlay')
+    const pauseBtn = document.getElementById('pause-btn')
+    const controlButtons = document.getElementById('control-buttons')
+
+    // Rhetorical device data - 110 sentences each
+    const metaphors = [
+      '月亮像個大玉盤', '時間是金錢', '她的笑容如陽光般燦爛', '知識是海洋', '生活是一場旅程',
+      '書本是知識的鑰匙', '友誼是一座橋樑', '夢想是翅膀', '記憶是時光的河流', '希望是黑暗中的明燈',
+      '老師是園丁', '學生是花朵', '知識是寶藏', '書本是階梯', '時間是流水',
+      '青春是朝陽', '困難是磨刀石', '失敗是成功之母', '書本是良師益友', '知識是力量',
+      '友誼是陽光', '家庭是港灣', '學校是樂園', '老師是蠟燭', '知識是鑰匙',
+      '書本是朋友', '時間是生命', '青春是資本', '夢想是動力', '努力是階梯',
+      '知識是財富', '書本是寶庫', '老師是明燈', '學校是搖籃', '友誼是橋樑',
+      '家庭是溫暖', '知識是武器', '書本是導師', '時間是黃金', '青春是寶藏',
+      '夢想是方向', '努力是鑰匙', '知識是翅膀', '書本是階梯', '老師是引路人',
+      '學校是花園', '友誼是陽光', '家庭是避風港', '知識是明燈', '書本是良藥',
+      '時間是財富', '青春是資本', '夢想是動力', '努力是階梯', '知識是力量',
+      '書本是朋友', '老師是園丁', '學校是樂園', '友誼是橋樑', '家庭是港灣',
+      '知識是鑰匙', '書本是寶庫', '時間是流水', '青春是朝陽', '夢想是翅膀',
+      '努力是磨刀石', '知識是武器', '書本是導師', '老師是明燈', '學校是搖籃',
+      '友誼是陽光', '家庭是溫暖', '知識是財富', '書本是階梯', '時間是生命',
+      '青春是寶藏', '夢想是方向', '努力是鑰匙', '知識是翅膀', '書本是良師',
+      '老師是引路人', '學校是花園', '友誼是橋樑', '家庭是避風港', '知識是明燈',
+      '書本是良藥', '時間是黃金', '青春是資本', '夢想是動力', '努力是階梯',
+      '知識是力量', '書本是朋友', '老師是園丁', '學校是樂園', '友誼是陽光',
+      '家庭是港灣', '知識是鑰匙', '書本是寶庫', '時間是流水', '青春是朝陽',
+      '夢想是翅膀', '努力是磨刀石', '知識是武器', '書本是導師', '老師是明燈',
+      '學校是搖籃', '友誼是橋樑', '家庭是溫暖', '知識是財富', '書本是階梯',
+      '時間是生命', '青春是寶藏', '夢想是方向', '努力是鑰匙', '知識是翅膀',
+      '書本是良師', '老師是引路人', '學校是花園', '友誼是陽光', '家庭是避風港',
+      '知識是明燈', '書本是良藥', '時間是黃金', '青春是資本', '夢想是動力'
+    ]
+
+    const regularSentences = [
+      '今天天氣很好', '我喜歡讀書', '學校在市中心', '他正在做作業', '我們一起去公園',
+      '這本書很有趣', '她會彈鋼琴', '明天要考試', '我們吃午飯吧', '他跑得很快',
+      '我愛我的家人', '學校很漂亮', '今天很開心', '我喜歡運動', '他會說英語',
+      '我們一起學習', '這道題很難', '她畫畫很好', '明天是週末', '我們去圖書館',
+      '我喜歡音樂', '他會游泳', '今天下雨了', '我們一起玩', '她很聰明',
+      '我愛看書', '學校很大', '今天很冷', '我喜歡畫畫', '他會騎單車',
+      '我們一起吃飯', '這首歌很好聽', '她會跳舞', '明天要上學', '我們去公園',
+      '我喜歡動物', '他會唱歌', '今天很熱', '我們一起學習', '她很友善',
+      '我愛學習', '學校很新', '今天很晴朗', '我喜歡遊戲', '他會打籃球',
+      '我們一起聊天', '這部電影很好看', '她會彈吉他', '明天要開會', '我們去博物館',
+      '我喜歡旅行', '他會開車', '今天很涼爽', '我們一起散步', '她很活潑',
+      '我愛閱讀', '學校很乾淨', '今天很溫暖', '我喜歡攝影', '他會下棋',
+      '我們一起購物', '這本書很厚', '她會寫字', '明天要考試', '我們去咖啡店',
+      '我喜歡烹飪', '他會修理', '今天很潮濕', '我們一起看電影', '她很勤奮',
+      '我愛寫作', '學校很安靜', '今天很乾燥', '我喜歡園藝', '他會種花',
+      '我們一起做飯', '這道菜很香', '她會縫紉', '明天要出門', '我們去海邊',
+      '我喜歡釣魚', '他會划船', '今天很舒適', '我們一起野餐', '她很溫柔',
+      '我愛大自然', '學校很寬敞', '今天很寧靜', '我喜歡露營', '他會生火',
+      '我們一起爬山', '這座山很高', '她會拍照', '明天要遠足', '我們去森林',
+      '我喜歡觀察', '他會識別', '今天很清新', '我們一起探索', '她很好奇',
+      '我愛科學', '學校很現代', '今天很明亮', '我喜歡實驗', '他會研究',
+      '我們一起討論', '這個問題很深', '她會思考', '明天要報告', '我們去實驗室',
+      '我喜歡數學', '他會計算', '今天很清晰', '我們一起解題', '她很專注',
+      '我愛歷史', '學校很古老', '今天很特別', '我喜歡故事', '他會講述',
+      '我們一起閱讀', '這個故事很長', '她會記憶', '明天要考試', '我們去圖書館',
+      '我喜歡語言', '他會翻譯', '今天很豐富', '我們一起學習', '她很流利',
+      '我愛文學', '學校很文雅', '今天很優美', '我喜歡詩歌', '他會創作',
+      '我們一起欣賞', '這首詩很美', '她會朗誦', '明天要表演', '我們去劇院',
+      '我喜歡藝術', '他會設計', '今天很創意', '我們一起創作', '她很靈感',
+      '我愛音樂', '學校很和諧', '今天很動聽', '我喜歡演奏', '他會指揮',
+      '我們一起練習', '這首曲子很優美', '她會欣賞', '明天要演出', '我們去音樂廳'
+    ]
+
+    const faultySentences = [
+      '月亮很圓很圓', '我喜歡我喜歡', '今天今天很好', '書本書本知識', '跑步跑步很快',
+      '吃飯吃飯很香', '睡覺睡覺很甜', '讀書讀書很好', '寫字寫字很工整', '畫畫畫畫很美',
+      '唱歌唱歌很好聽', '跳舞跳舞很優美', '游泳游泳很快', '跑步跑步很累', '跳高跳高很高',
+      '打球打球很開心', '看書看書很有趣', '寫作業寫作業很認真', '上學上學很準時', '回家回家很晚',
+      '吃飯吃飯很飽', '睡覺睡覺很香', '起床起床很早', '刷牙刷牙很乾淨', '洗臉洗臉很清爽',
+      '穿衣服穿衣服很整齊', '穿鞋子穿鞋子很合腳', '背書包背書包很重', '走路走路很快', '跑步跑步很慢',
+      '說話說話很大聲', '聽話聽話很認真', '看電視看電視很專注', '玩遊戲玩遊戲很投入', '做作業做作業很仔細',
+      '寫字寫字很工整', '畫畫畫畫很漂亮', '唱歌唱歌很動聽', '跳舞跳舞很優美', '彈琴彈琴很熟練',
+      '游泳游泳很輕鬆', '跑步跑步很累', '跳高跳高很高', '打球打球很開心', '看書看書很有趣',
+      '寫作業寫作業很認真', '上學上學很準時', '回家回家很晚', '吃飯吃飯很飽', '睡覺睡覺很香',
+      '起床起床很早', '刷牙刷牙很乾淨', '洗臉洗臉很清爽', '穿衣服穿衣服很整齊', '穿鞋子穿鞋子很合腳',
+      '背書包背書包很重', '走路走路很快', '跑步跑步很慢', '說話說話很大聲', '聽話聽話很認真',
+      '看電視看電視很專注', '玩遊戲玩遊戲很投入', '做作業做作業很仔細', '寫字寫字很工整', '畫畫畫畫很漂亮',
+      '唱歌唱歌很動聽', '跳舞跳舞很優美', '彈琴彈琴很熟練', '游泳游泳很輕鬆', '跑步跑步很累',
+      '跳高跳高很高', '打球打球很開心', '看書看書很有趣', '寫作業寫作業很認真', '上學上學很準時',
+      '回家回家很晚', '吃飯吃飯很飽', '睡覺睡覺很香', '起床起床很早', '刷牙刷牙很乾淨',
+      '洗臉洗臉很清爽', '穿衣服穿衣服很整齊', '穿鞋子穿鞋子很合腳', '背書包背書包很重', '走路走路很快',
+      '跑步跑步很慢', '說話說話很大聲', '聽話聽話很認真', '看電視看電視很專注', '玩遊戲玩遊戲很投入',
+      '做作業做作業很仔細', '寫字寫字很工整', '畫畫畫畫很漂亮', '唱歌唱歌很動聽', '跳舞跳舞很優美',
+      '彈琴彈琴很熟練', '游泳游泳很輕鬆', '跑步跑步很累', '跳高跳高很高', '打球打球很開心',
+      '看書看書很有趣', '寫作業寫作業很認真', '上學上學很準時', '回家回家很晚', '吃飯吃飯很飽',
+      '睡覺睡覺很香', '起床起床很早', '刷牙刷牙很乾淨', '洗臉洗臉很清爽', '穿衣服穿衣服很整齊',
+      '穿鞋子穿鞋子很合腳', '背書包背書包很重', '走路走路很快', '跑步跑步很慢', '說話說話很大聲',
+      '聽話聽話很認真', '看電視看電視很專注', '玩遊戲玩遊戲很投入', '做作業做作業很仔細', '寫字寫字很工整',
+      '畫畫畫畫很漂亮', '唱歌唱歌很動聽', '跳舞跳舞很優美', '彈琴彈琴很熟練', '游泳游泳很輕鬆',
+      '跑步跑步很累', '跳高跳高很高', '打球打球很開心', '看書看書很有趣', '寫作業寫作業很認真'
+    ]
+
+    function getDifficulty() {
+      // Difficulty increases with score: base 1.0, increases by 0.1 every 50 points, max 3.0
+      return Math.min(1.0 + Math.floor(gameState.score / 50) * 0.1, 3.0)
+    }
+
+    function getSpawnInterval() {
+      // Spawn faster as difficulty increases: base 1500ms, decreases by 100ms every 50 points, min 500ms
+      return Math.max(1500 - Math.floor(gameState.score / 50) * 100, 500)
+    }
+
+    function spawnScroll() {
+      if (gameState.gameOver || gameState.isPaused) return
+
+      const spawnX = Math.random() * canvas.width
+      const spawnY = canvas.height - 50
+
+      const difficulty = getDifficulty()
+      const rand = Math.random()
+      let text, isMetaphor, isBomb
+
+      // 50% 比喻（綠色）, 20% 普通句子（橙色）, 30% 錯誤句子（紅色炸彈）
+      if (rand < 0.5) {
+        text = metaphors[Math.floor(Math.random() * metaphors.length)]
+        isMetaphor = true
+        isBomb = false
+      } else if (rand < 0.7) {
+        text = regularSentences[Math.floor(Math.random() * regularSentences.length)]
+        isMetaphor = false
+        isBomb = false
+      } else {
+        text = faultySentences[Math.floor(Math.random() * faultySentences.length)]
+        isMetaphor = false
+        isBomb = true
+      }
+
+      scrolls.push(new Scroll(spawnX, spawnY, text, isMetaphor, isBomb, difficulty))
+    }
+
+    function lineIntersectsLine(x1, y1, x2, y2, x3, y3, x4, y4) {
+      const denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
+      if (Math.abs(denom) < 0.0001) return false
+
+      const t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denom
+      const u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / denom
+
+      return t >= 0 && t <= 1 && u >= 0 && u <= 1
+    }
+
+    function lineIntersectsRect(x1, y1, x2, y2, rect) {
+      const { x, y, width, height } = rect
+      
+      const edges = [
+        { x1: x, y1: y, x2: x + width, y2: y },
+        { x1: x + width, y1: y, x2: x + width, y2: y + height },
+        { x1: x + width, y1: y + height, x2: x, y2: y + height },
+        { x1: x, y1: y + height, x2: x, y2: y }
+      ]
+
+      for (const edge of edges) {
+        if (lineIntersectsLine(x1, y1, x2, y2, edge.x1, edge.y1, edge.x2, edge.y2)) {
+          return true
+        }
+      }
+
+      if (x1 >= x && x1 <= x + width && y1 >= y && y1 <= y + height &&
+          x2 >= x && x2 <= x + width && y2 >= y && y2 <= y + height) {
+        return true
+      }
+
+      return false
+    }
+
+    function handleMouseMove(e) {
+      if (gameState.gameOver || gameState.isPaused) return
+
+      const rect = canvas.getBoundingClientRect()
+      const x = e.clientX - rect.left
+      const y = e.clientY - rect.top
+
+      if (isMouseDown) {
+        trail.push(new TrailPoint(x, y))
+
+        const lastPos = lastMousePos
+        scrolls.forEach(scroll => {
+          if (!scroll.sliced) {
+            const bounds = scroll.getBounds()
+            if (lineIntersectsRect(lastPos.x, lastPos.y, x, y, bounds)) {
+              if (scroll.slice()) {
+                if (scroll.isBomb) {
+                  gameState.lives--
+                  if (gameState.lives <= 0) {
+                    gameState.gameOver = true
+                    gameOverScreen.style.display = 'flex'
+                    finalScoreEl.textContent = gameState.score
+                    controlButtons.style.display = 'none'
+                  }
+                  updateLives()
+                  showFlash()
+                } else if (scroll.isMetaphor) {
+                  gameState.score += 10
+                  updateScore()
+                }
+              }
+            }
+          }
+        })
+      }
+
+      lastMousePos = { x, y }
+    }
+
+    function handleMouseDown(e) {
+      if (gameState.gameOver || gameState.isPaused) return
+      isMouseDown = true
+      
+      const rect = canvas.getBoundingClientRect()
+      const x = e.clientX - rect.left
+      const y = e.clientY - rect.top
+      
+      lastMousePos = { x, y }
+      trail.push(new TrailPoint(x, y))
+    }
+
+    function handleMouseUp() {
+      isMouseDown = false
+    }
+
+    function handleTouchMove(e) {
+      e.preventDefault()
+      if (gameState.gameOver || gameState.isPaused) return
+
+      const rect = canvas.getBoundingClientRect()
+      const touch = e.touches[0]
+      const x = touch.clientX - rect.left
+      const y = touch.clientY - rect.top
+
+      if (isMouseDown) {
+        trail.push(new TrailPoint(x, y))
+
+        const lastPos = lastMousePos
+        scrolls.forEach(scroll => {
+          if (!scroll.sliced) {
+            const bounds = scroll.getBounds()
+            if (lineIntersectsRect(lastPos.x, lastPos.y, x, y, bounds)) {
+              if (scroll.slice()) {
+                if (scroll.isBomb) {
+                  gameState.lives--
+                  if (gameState.lives <= 0) {
+                    gameState.gameOver = true
+                    gameOverScreen.style.display = 'flex'
+                    finalScoreEl.textContent = gameState.score
+                    controlButtons.style.display = 'none'
+                  }
+                  updateLives()
+                  showFlash()
+                } else if (scroll.isMetaphor) {
+                  gameState.score += 10
+                  updateScore()
+                }
+              }
+            }
+          }
+        })
+      }
+
+      lastMousePos = { x, y }
+    }
+
+    function handleTouchStart(e) {
+      e.preventDefault()
+      if (gameState.gameOver || gameState.isPaused) return
+      isMouseDown = true
+      
+      const rect = canvas.getBoundingClientRect()
+      const touch = e.touches[0]
+      const x = touch.clientX - rect.left
+      const y = touch.clientY - rect.top
+      
+      lastMousePos = { x, y }
+      trail.push(new TrailPoint(x, y))
+    }
+
+    function handleTouchEnd(e) {
+      e.preventDefault()
+      isMouseDown = false
+    }
+
+    function drawScroll(scroll) {
+      if (scroll.sliced && scroll.splitParts.length > 0) {
+        scroll.splitParts.forEach(part => {
+          ctx.save()
+          ctx.globalAlpha = part.opacity
+          ctx.translate(part.x, part.y)
+          
+          ctx.fillStyle = scroll.isBomb ? '#ff4444' : (scroll.isMetaphor ? '#4CAF50' : '#FFA500')
+          ctx.fillRect(-scroll.width / 4, -scroll.height / 2, scroll.width / 2, scroll.height)
+          
+          ctx.strokeStyle = '#8B4513'
+          ctx.lineWidth = 2
+          ctx.strokeRect(-scroll.width / 4, -scroll.height / 2, scroll.width / 2, scroll.height)
+          
+          ctx.restore()
+        })
+        return
+      }
+
+      if (scroll.sliced) return
+
+      ctx.save()
+      ctx.translate(scroll.x, scroll.y)
+
+      const gradient = ctx.createLinearGradient(-scroll.width / 2, 0, scroll.width / 2, 0)
+      if (scroll.isBomb) {
+        gradient.addColorStop(0, '#ff6666')
+        gradient.addColorStop(1, '#ff4444')
+      } else if (scroll.isMetaphor) {
+        gradient.addColorStop(0, '#66ff66')
+        gradient.addColorStop(1, '#4CAF50')
+      } else {
+        gradient.addColorStop(0, '#ffcc99')
+        gradient.addColorStop(1, '#FFA500')
+      }
+      
+      ctx.fillStyle = gradient
+      ctx.fillRect(-scroll.width / 2, -scroll.height / 2, scroll.width, scroll.height)
+
+      ctx.strokeStyle = '#8B4513'
+      ctx.lineWidth = 3
+      ctx.strokeRect(-scroll.width / 2, -scroll.height / 2, scroll.width, scroll.height)
+
+      ctx.fillStyle = '#8B4513'
+      ctx.fillRect(-scroll.width / 2 - 5, -scroll.height / 2, 5, scroll.height)
+      ctx.fillRect(scroll.width / 2, -scroll.height / 2, 5, scroll.height)
+
+      ctx.fillStyle = '#000'
+      ctx.font = 'bold 14px "Microsoft YaHei", sans-serif'
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      
+      const maxWidth = scroll.width - 20
+      const words = scroll.text.split('')
+      let line = ''
+      let y = -scroll.height / 2 + 15
+      
+      for (let i = 0; i < words.length; i++) {
+        const testLine = line + words[i]
+        const metrics = ctx.measureText(testLine)
+        if (metrics.width > maxWidth && i > 0) {
+          ctx.fillText(line, 0, y)
+          line = words[i]
+          y += 18
+        } else {
+          line = testLine
+        }
+      }
+      ctx.fillText(line, 0, y)
+
+      ctx.restore()
+    }
+
+    function drawTrail() {
+      if (trail.length < 2) return
+
+      ctx.save()
+      ctx.strokeStyle = '#ffff00'
+      ctx.lineCap = 'round'
+      ctx.lineJoin = 'round'
+
+      for (let i = 0; i < trail.length - 1; i++) {
+        const point = trail[i]
+        const nextPoint = trail[i + 1]
+        
+        ctx.globalAlpha = point.life
+        ctx.lineWidth = 8 * point.life
+        ctx.beginPath()
+        ctx.moveTo(point.x, point.y)
+        ctx.lineTo(nextPoint.x, nextPoint.y)
+        ctx.stroke()
+
+        ctx.shadowBlur = 15
+        ctx.shadowColor = '#ffff00'
+        ctx.stroke()
+        ctx.shadowBlur = 0
+      }
+
+      ctx.restore()
+    }
+
+    function gameLoop() {
+      canvas.width = window.innerWidth
+      canvas.height = window.innerHeight
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+      const bgGradient = ctx.createLinearGradient(0, 0, 0, canvas.height)
+      bgGradient.addColorStop(0, '#87CEEB')
+      bgGradient.addColorStop(1, '#E0F6FF')
+      ctx.fillStyle = bgGradient
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+      if (!gameState.isPaused && !gameState.gameOver) {
+        scrolls.forEach(scroll => scroll.update(canvas.height))
+
+        for (let i = scrolls.length - 1; i >= 0; i--) {
+          const scroll = scrolls[i]
+          if (scroll.sliced) {
+            const allPartsDead = scroll.splitParts.every(part => part.opacity <= 0)
+            if (allPartsDead) {
+              scrolls.splice(i, 1)
+            }
+          } else if (scroll.isOffScreen(canvas.height)) {
+            scrolls.splice(i, 1)
+          }
+        }
+
+        trail.forEach(point => point.update())
+        for (let i = trail.length - 1; i >= 0; i--) {
+          if (trail[i].isDead()) {
+            trail.splice(i, 1)
+          }
+        }
+      }
+
+      drawTrail()
+      scrolls.forEach(scroll => drawScroll(scroll))
+
+      animationFrame = requestAnimationFrame(gameLoop)
+    }
+
+    function updateScore() {
+      scoreEl.textContent = gameState.score
+    }
+
+    function updateLives() {
+      livesEl.textContent = '❤️'.repeat(gameState.lives)
+    }
+
+    function showFlash() {
+      gameState.flashEffect = true
+      flashOverlay.style.display = 'block'
+      setTimeout(() => {
+        flashOverlay.style.display = 'none'
+        gameState.flashEffect = false
+      }, 200)
+    }
+
+    function resetGame() {
+      if (spawnTimer) {
+        clearInterval(spawnTimer)
+        spawnTimer = null
+      }
+
+      gameState.score = 0
+      gameState.lives = 3
+      gameState.gameOver = false
+      gameState.isPaused = false
+      gameState.flashEffect = false
+      
+      scrolls.length = 0
+      trail.length = 0
+      isMouseDown = false
+      lastMousePos = { x: 0, y: 0 }
+
+      updateScore()
+      updateLives()
+      gameOverScreen.style.display = 'none'
+      controlButtons.style.display = 'flex'
+      pauseBtn.textContent = '暫停'
+
+      startSpawning()
+    }
+
+    function startSpawning() {
+      if (spawnTimer) {
+        clearInterval(spawnTimer)
+      }
+      const interval = getSpawnInterval()
+      spawnTimer = setInterval(() => {
+        spawnScroll()
+        // Update interval dynamically based on score
+        const newInterval = getSpawnInterval()
+        if (newInterval !== interval) {
+          clearInterval(spawnTimer)
+          startSpawning()
+        }
+      }, interval)
+    }
+
+    function startGame() {
+      resetGame()
+    }
+
+    function togglePause() {
+      gameState.isPaused = !gameState.isPaused
+      pauseBtn.textContent = gameState.isPaused ? '繼續' : '暫停'
+    }
+
+    // Initialize game
+    function init() {
+      canvas.width = window.innerWidth
+      canvas.height = window.innerHeight
+
+      canvas.addEventListener('mousemove', handleMouseMove)
+      canvas.addEventListener('mousedown', handleMouseDown)
+      canvas.addEventListener('mouseup', handleMouseUp)
+      canvas.addEventListener('touchmove', handleTouchMove, { passive: false })
+      canvas.addEventListener('touchstart', handleTouchStart, { passive: false })
+      canvas.addEventListener('touchend', handleTouchEnd, { passive: false })
+
+      gameLoop()
+      startSpawning()
+
+      // Handle window resize
+      window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth
+        canvas.height = window.innerHeight
+      })
+    }
+
+    // Start the game when page loads
+    init()
+  </script>
+
+</body>
+</html>
+

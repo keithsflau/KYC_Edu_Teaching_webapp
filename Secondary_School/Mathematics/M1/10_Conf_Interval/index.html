@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Confidence Intervals | M1 Statistics</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <script
+      type="text/javascript"
+      id="MathJax-script"
+      async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+    ></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+      }
+      .glass {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <div id="root" class="flex-grow flex flex-col"></div>
+    <script>
+const {
+  useState,
+  useEffect,
+  useMemo
+} = React;
+const translations = {
+  en: {
+    unit: "Module 1: Statistics",
+    title: "Confidence Intervals",
+    desc: "Estimate population mean from sample data.",
+    sampleMean: "Sample Mean (x̄)",
+    popSD: "Population SD (σ)",
+    sampleSize: "Sample Size (n)",
+    confLevel: "Confidence Level",
+    marginError: "Margin of Error",
+    interval: "Confidence Interval",
+    interpretation: "Interpretation",
+    langBtn: "中文"
+  },
+  zh: {
+    unit: "單元一：統計學",
+    title: "置信區間",
+    desc: "從樣本數據估計總體平均值。",
+    sampleMean: "樣本平均值 (x̄)",
+    popSD: "總體標準差 (σ)",
+    sampleSize: "樣本大小 (n)",
+    confLevel: "置信水平",
+    marginError: "誤差範圍",
+    interval: "置信區間",
+    interpretation: "解釋",
+    langBtn: "English"
+  }
+};
+
+// Z-values for common confidence levels
+const zValues = {
+  90: 1.645,
+  95: 1.96,
+  99: 2.576
+};
+const App = () => {
+  const [lang, setLang] = useState("en");
+  const t = translations[lang];
+  const [xbar, setXbar] = useState(75);
+  const [sigma, setSigma] = useState(10);
+  const [n, setN] = useState(100);
+  const [conf, setConf] = useState(95);
+  const z = zValues[conf] || 1.96;
+  const standardError = sigma / Math.sqrt(n);
+  const marginOfError = z * standardError;
+  const lower = xbar - marginOfError;
+  const upper = xbar + marginOfError;
+
+  // Visualization
+  const w = 500,
+    h = 150;
+  const rangeVal = marginOfError * 3;
+  const toX = val => w / 2 + (val - xbar) / rangeVal * (w / 2 - 50);
+  useEffect(() => {
+    if (window.MathJax) window.MathJax.typesetPromise();
+  }, [xbar, sigma, n, conf, lang]);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "flex-grow flex flex-col items-center justify-center p-8 select-none"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-4 right-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLang(l => l === "en" ? "zh" : "en"),
+    className: "px-3 py-1 bg-slate-800 border border-slate-600 rounded-full text-xs font-bold text-emerald-400 hover:bg-slate-700 hover:text-white transition flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "fa-solid fa-language"
+  }), t.langBtn)), /*#__PURE__*/React.createElement("header", {
+    className: "mb-8 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-cyan-500 font-bold uppercase tracking-widest text-xs mb-2"
+  }, t.unit), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-extrabold text-white mb-2"
+  }, t.title), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-400 font-mono text-lg"
+  }, t.desc)), /*#__PURE__*/React.createElement("div", {
+    className: "glass p-6 rounded-3xl w-full max-w-4xl mb-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "text-xs font-bold text-slate-400 block mb-2 uppercase"
+  }, t.sampleMean), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: xbar,
+    onChange: e => setXbar(Number(e.target.value)),
+    className: "w-full p-3 bg-slate-800 border border-slate-600 rounded-xl font-mono text-center text-white focus:border-cyan-400 outline-none"
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "text-xs font-bold text-slate-400 block mb-2 uppercase"
+  }, t.popSD), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    min: "0.1",
+    step: "0.1",
+    value: sigma,
+    onChange: e => setSigma(Number(e.target.value)),
+    className: "w-full p-3 bg-slate-800 border border-slate-600 rounded-xl font-mono text-center text-white focus:border-cyan-400 outline-none"
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "text-xs font-bold text-slate-400 block mb-2 uppercase"
+  }, t.sampleSize), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    min: "1",
+    value: n,
+    onChange: e => setN(Math.max(1, Number(e.target.value))),
+    className: "w-full p-3 bg-slate-800 border border-slate-600 rounded-xl font-mono text-center text-white focus:border-cyan-400 outline-none"
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "text-xs font-bold text-slate-400 block mb-2 uppercase"
+  }, t.confLevel), /*#__PURE__*/React.createElement("select", {
+    value: conf,
+    onChange: e => setConf(Number(e.target.value)),
+    className: "w-full p-3 bg-slate-800 border border-slate-600 rounded-xl font-mono text-center text-white focus:border-cyan-400 outline-none"
+  }, /*#__PURE__*/React.createElement("option", {
+    value: "90"
+  }, "90%"), /*#__PURE__*/React.createElement("option", {
+    value: "95"
+  }, "95%"), /*#__PURE__*/React.createElement("option", {
+    value: "99"
+  }, "99%")))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-900 p-4 rounded-xl mb-6 border border-slate-800"
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: w,
+    height: h,
+    className: "mx-auto overflow-visible"
+  }, /*#__PURE__*/React.createElement("line", {
+    x1: "30",
+    y1: h / 2,
+    x2: w - 30,
+    y2: h / 2,
+    stroke: "#475569",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: toX(lower),
+    y: h / 2 - 20,
+    width: toX(upper) - toX(lower),
+    height: "40",
+    fill: "rgba(6, 182, 212, 0.2)",
+    stroke: "#06b6d4",
+    strokeWidth: "2",
+    rx: "4"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: toX(xbar),
+    cy: h / 2,
+    r: "6",
+    fill: "#06b6d4",
+    stroke: "#0f172a",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: toX(lower),
+    y1: h / 2 - 25,
+    x2: toX(lower),
+    y2: h / 2 + 25,
+    stroke: "#22d3ee",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: toX(upper),
+    y1: h / 2 - 25,
+    x2: toX(upper),
+    y2: h / 2 + 25,
+    stroke: "#22d3ee",
+    strokeWidth: "2"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: toX(lower),
+    y: h / 2 + 45,
+    textAnchor: "middle",
+    className: "text-xs fill-cyan-400 font-mono font-bold"
+  }, lower.toFixed(2)), /*#__PURE__*/React.createElement("text", {
+    x: toX(xbar),
+    y: h / 2 - 30,
+    textAnchor: "middle",
+    className: "text-xs fill-cyan-400 font-mono font-bold"
+  }, "x̄ = ", xbar), /*#__PURE__*/React.createElement("text", {
+    x: toX(upper),
+    y: h / 2 + 45,
+    textAnchor: "middle",
+    className: "text-xs fill-cyan-400 font-mono font-bold"
+  }, upper.toFixed(2)))), /*#__PURE__*/React.createElement("div", {
+    className: "bg-cyan-900/20 p-4 rounded-xl mb-6 text-center border border-cyan-500/30"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xl font-mono text-cyan-100"
+  }, `\\[ \\bar{x} \\pm z_{\\alpha/2} \\cdot \\frac{\\sigma}{\\sqrt{n}} = ${xbar} \\pm ${z} \\cdot \\frac{${sigma}}{\\sqrt{${n}}} = ${xbar} \\pm ${marginOfError.toFixed(2)} \\]`)), /*#__PURE__*/React.createElement("div", {
+    className: "grid md:grid-cols-2 gap-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass p-4 rounded-xl text-center border-t-2 border-amber-500"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold text-amber-500 uppercase mb-2"
+  }, t.marginError), /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-bold text-white font-mono"
+  }, "± ", marginOfError.toFixed(2))), /*#__PURE__*/React.createElement("div", {
+    className: "glass p-4 rounded-xl text-center border-t-2 border-emerald-500"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold text-emerald-500 uppercase mb-2"
+  }, conf, "% ", t.interval), /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl font-bold text-white font-mono"
+  }, "(", lower.toFixed(2), ", ", upper.toFixed(2), ")")))));
+};
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

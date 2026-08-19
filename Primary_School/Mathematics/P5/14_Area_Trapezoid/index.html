@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小五數學：梯形面積 | Area of Trapezoid</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Area of Trapezoid",
+    zh: "梯形面積",
+    ja: "台形の面積",
+    ko: "사다리꼴의 넓이",
+    es: "Área del Trapecio",
+    de: "Fläche des Trapezes",
+    fi: "Puolisuunnikkaan pinta-ala",
+    fr: "Aire du trapèze",
+    ar: "مساحة شبه المنحرف",
+    it: "Area del Trapezio"
+  },
+  top: {
+    en: "Top",
+    zh: "上底",
+    ja: "上底",
+    ko: "윗변",
+    es: "Superior",
+    de: "Oben",
+    fi: "Ylä",
+    fr: "Haut",
+    ar: "أعلى",
+    it: "Superiore"
+  },
+  bottom: {
+    en: "Bottom",
+    zh: "下底",
+    ja: "下底",
+    ko: "아랫변",
+    es: "Inferior",
+    de: "Unten",
+    fi: "Ala",
+    fr: "Bas",
+    ar: "أسفل",
+    it: "Inferiore"
+  },
+  height: {
+    en: "Height",
+    zh: "高",
+    ja: "高さ",
+    ko: "높이",
+    es: "Altura",
+    de: "Höhe",
+    fi: "Korkeus",
+    fr: "Hauteur",
+    ar: "الارتفاع",
+    it: "Altezza"
+  },
+  area: {
+    en: "Area",
+    zh: "面積",
+    ja: "面積",
+    ko: "넓이",
+    es: "Área",
+    de: "Fläche",
+    fi: "Pinta-ala",
+    fr: "Aire",
+    ar: "المساحة",
+    it: "Area"
+  },
+  proof: {
+    en: "Proof: Duplicate & Rotate",
+    zh: "證明：複製並旋轉",
+    ja: "証明：複製して回転",
+    ko: "증명: 복제 및 회전",
+    es: "Prueba: Duplicar y Rotar",
+    de: "Beweis: Duplizieren & Drehen",
+    fi: "Todistus: Kopioi ja kierrä",
+    fr: "Preuve : Dupliquer et Pivoter",
+    ar: "برهان: نسخ وتدوير",
+    it: "Prova: Duplica e Ruota"
+  },
+  formula: {
+    en: "(Top + Bottom) × Height ÷ 2",
+    zh: "(上底 + 下底) × 高 ÷ 2",
+    ja: "(上底 + 下底) × 高さ ÷ 2",
+    ko: "(윗변 + 아랫변) × 높이 ÷ 2",
+    es: "(Sup + Inf) × Altura ÷ 2",
+    de: "(Oben + Unten) × Höhe ÷ 2",
+    fi: "(Ylä + Ala) × Korkeus ÷ 2",
+    fr: "(Haut + Bas) × H ÷ 2",
+    ar: "(أعلى + أسفل) × الارتفاع ÷ 2",
+    it: "(Sup + Inf) × H ÷ 2"
+  },
+  paraText: {
+    en: "Forms a large Parallelogram!",
+    zh: "形成一個大平行四邊形！",
+    ja: "大きな平行四辺形になります！",
+    ko: "큰 평행사변형을 형성합니다!",
+    es: "¡Forma un gran paralelogramo!",
+    de: "Bildet ein großes Parallelogramm!",
+    fi: "Muodostaa suuren suunnikkaan!",
+    fr: "Forme un grand parallélogramme !",
+    ar: "يشكل متوازي أضلاع كبير!",
+    it: "Forma un grande parallelogramma!"
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [top, setTop] = useState(6);
+  const [bottom, setBottom] = useState(10);
+  const [height, setHeight] = useState(5);
+  const [showProof, setShowProof] = useState(false);
+  const area = (top + bottom) * height / 2;
+  const U = 35;
+  const CX = 400;
+  const CY = 300;
+
+  // Shape Geometry (Isosceles Trapezoid centered)
+  const H_px = height * U;
+  const T_px = top * U;
+  const B_px = bottom * U;
+
+  // Vertices relative to center (0,0)
+  // TL: (-T/2, -H/2)
+  // TR: (T/2, -H/2)
+  // BR: (B/2, H/2)
+  // BL: (-B/2, H/2)
+
+  const pathStr = `M ${-T_px / 2} ${-H_px / 2} L ${T_px / 2} ${-H_px / 2} L ${B_px / 2} ${H_px / 2} L ${-B_px / 2} ${H_px / 2} Z`;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4 font-sans bg-slate-900 text-white"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-5xl flex justify-between items-center mb-10"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-black text-pink-400 drop-shadow-[0_0_15px_rgba(244,114,182,0.5)]"
+  }, "📐 ", getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "flex bg-slate-800/80 p-1.5 rounded-xl border border-white/10 flex-wrap justify-end gap-1 max-w-[50%]"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-pink-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white hover:bg-white/5"}`
+  }, l)))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-6xl flex flex-col lg:flex-row gap-8 items-start"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 w-full glass-panel rounded-3xl overflow-hidden relative min-h-[400px] flex items-center justify-center border-4 border-slate-700/50"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 opacity-20 pointer-events-none",
+    style: {
+      backgroundImage: "linear-gradient(#475569 1px, transparent 1px), linear-gradient(90deg, #475569 1px, transparent 1px)",
+      backgroundSize: `${U}px ${U}px`
+    }
+  }), /*#__PURE__*/React.createElement("svg", {
+    width: "100%",
+    height: "500",
+    viewBox: "0 0 800 600",
+    className: "overflow-visible"
+  }, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("linearGradient", {
+    id: "trapGrad",
+    x1: "0",
+    y1: "0",
+    x2: "0",
+    y2: "1"
+  }, /*#__PURE__*/React.createElement("stop", {
+    offset: "0%",
+    stopColor: "#ec4899",
+    stopOpacity: "0.6"
+  }), /*#__PURE__*/React.createElement("stop", {
+    offset: "100%",
+    stopColor: "#be185d",
+    stopOpacity: "0.8"
+  })), /*#__PURE__*/React.createElement("linearGradient", {
+    id: "trapGradDuplicate",
+    x1: "0",
+    y1: "0",
+    x2: "0",
+    y2: "1"
+  }, /*#__PURE__*/React.createElement("stop", {
+    offset: "0%",
+    stopColor: "#fbbf24",
+    stopOpacity: "0.6"
+  }), /*#__PURE__*/React.createElement("stop", {
+    offset: "100%",
+    stopColor: "#d97706",
+    stopOpacity: "0.8"
+  }))), /*#__PURE__*/React.createElement("g", {
+    transform: `translate(${CX}, ${CY})`
+  }, /*#__PURE__*/React.createElement("path", {
+    d: pathStr,
+    fill: "url(#trapGrad)",
+    stroke: "#fbcfe8",
+    strokeWidth: "3"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: 0,
+    y: -H_px / 2 - 10,
+    textAnchor: "middle",
+    fill: "#fbcfe8",
+    fontWeight: "bold"
+  }, top), /*#__PURE__*/React.createElement("text", {
+    x: 0,
+    y: H_px / 2 + 25,
+    textAnchor: "middle",
+    fill: "#fbcfe8",
+    fontWeight: "bold"
+  }, bottom), /*#__PURE__*/React.createElement("line", {
+    x1: 0,
+    y1: -H_px / 2,
+    x2: 0,
+    y2: H_px / 2,
+    stroke: "white",
+    strokeDasharray: "5,5"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: 5,
+    y: 0,
+    fill: "white",
+    fontWeight: "bold"
+  }, "h=", height), /*#__PURE__*/React.createElement(AnimatePresence, null, showProof && /*#__PURE__*/React.createElement(motion.g, {
+    initial: {
+      rotate: 0,
+      x: 0,
+      opacity: 0
+    },
+    animate: {
+      rotate: 180,
+      x: (T_px + B_px) / 2,
+      // Translating to align side-by-side
+      opacity: 1
+    },
+    exit: {
+      rotate: 0,
+      x: 0,
+      opacity: 0
+    },
+    transition: {
+      duration: 1.5,
+      type: "spring",
+      bounce: 0.2
+    }
+  }, /*#__PURE__*/React.createElement("path", {
+    d: pathStr,
+    fill: "url(#trapGradDuplicate)",
+    stroke: "#fcd34d",
+    strokeWidth: "3",
+    strokeDasharray: "5,5"
+  })))), showProof && /*#__PURE__*/React.createElement(motion.text, {
+    initial: {
+      opacity: 0
+    },
+    animate: {
+      opacity: 1
+    },
+    transition: {
+      delay: 1
+    },
+    x: "400",
+    y: "550",
+    textAnchor: "middle",
+    fill: "#fcd34d",
+    fontSize: "18",
+    fontWeight: "bold"
+  }, getText("paraText", lang)))), /*#__PURE__*/React.createElement("div", {
+    className: "w-full lg:w-80 flex flex-col gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 rounded-3xl flex flex-col gap-6"
+  }, /*#__PURE__*/React.createElement(ControlSlider, {
+    label: getText("top", lang),
+    val: top,
+    set: setTop,
+    min: 2,
+    max: 10,
+    color: "accent-pink-400",
+    text: "text-pink-300"
+  }), /*#__PURE__*/React.createElement(ControlSlider, {
+    label: getText("bottom", lang),
+    val: bottom,
+    set: setBottom,
+    min: 4,
+    max: 14,
+    color: "accent-fuchsia-400",
+    text: "text-fuchsia-300"
+  }), /*#__PURE__*/React.createElement(ControlSlider, {
+    label: getText("height", lang),
+    val: height,
+    set: setHeight,
+    min: 2,
+    max: 10,
+    color: "accent-rose-400",
+    text: "text-rose-300"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "h-px bg-white/10 my-2"
+  }), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setShowProof(!showProof),
+    className: `py-3 rounded-xl font-bold text-lg transition-all border border-white/10 ${showProof ? "bg-amber-500/80 text-white shadow-[0_0_20px_rgba(245,158,11,0.3)]" : "bg-slate-700/50 text-slate-300 hover:bg-slate-600/50"}`
+  }, getText("proof", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-950/50 p-4 rounded-xl border border-white/5 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-slate-400 text-xs font-bold uppercase tracking-widest mb-2"
+  }, getText("formula", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-black text-white"
+  }, area), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs text-slate-500 mt-1 font-mono"
+  }, "((", top, "+", bottom, ")×", height, ")÷2"))))));
+}
+const ControlSlider = ({
+  label,
+  val,
+  set,
+  min,
+  max,
+  color,
+  text
+}) => /*#__PURE__*/React.createElement("div", {
+  className: "flex flex-col gap-2"
+}, /*#__PURE__*/React.createElement("div", {
+  className: `flex justify-between font-bold ${text}`
+}, /*#__PURE__*/React.createElement("label", null, label), /*#__PURE__*/React.createElement("span", null, val)), /*#__PURE__*/React.createElement("input", {
+  type: "range",
+  min: min,
+  max: max,
+  value: val,
+  onChange: e => set(Number(e.target.value)),
+  className: `w-full ${color}`
+}));
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

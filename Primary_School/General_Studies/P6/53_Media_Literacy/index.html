@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - Media Literacy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: #fdf2f8;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Fake News Detectives",
+    zh: "假新聞偵探",
+    ja: "フェイクニュース探偵",
+    ko: "가짜 뉴스 탐정",
+    es: "Detectives de noticias falsas",
+    de: "Fake-News-Detektive",
+    fi: "Valeuutisten etsivät",
+    fr: "Détectives de fausses nouvelles",
+    ar: "محققو الأخبار المزيفة",
+    it: "Detective di Fake News"
+  },
+  instruction: {
+    en: "Is this Headline Real or Fake?",
+    zh: "這個標題是真的還是假的？",
+    ja: "この見出しは本当ですか、それとも偽物ですか？",
+    ko: "이 헤드라인은 진짜인가요 가짜인가요?",
+    es: "¿Es este titular real o falso?",
+    de: "Ist diese Schlagzeile echt oder gefälscht?",
+    fi: "Onko tämä otsikko totta vai tarua?",
+    fr: "Ce titre est-il réel ou faux ?",
+    ar: "هل هذا العنوان حقيقي أم مزيف؟",
+    it: "Questo titolo è vero o falso?"
+  },
+  real: {
+    en: "Real",
+    zh: "真",
+    ja: "本物",
+    ko: "진짜"
+  },
+  fake: {
+    en: "Fake",
+    zh: "假",
+    ja: "偽物",
+    ko: "가짜"
+  },
+  correct: {
+    en: "Correct!",
+    zh: "正確！",
+    ja: "正解！",
+    ko: "정답!"
+  },
+  wrong: {
+    en: "Look closer...",
+    zh: "再仔細看...",
+    ja: "よく見て...",
+    ko: "자세히 보세요..."
+  }
+};
+const headlines = [{
+  id: 1,
+  text: "Scientists Discover New Species of Dolphin.",
+  type: "real"
+}, {
+  id: 2,
+  text: "YOU WON'T BELIEVE THIS! ALIENS LANDED IN CENTRAL!",
+  type: "fake"
+},
+// Caps, clickbait
+{
+  id: 3,
+  text: "Local School Wins Robotics Competition.",
+  type: "real"
+}, {
+  id: 4,
+  text: "EAT THIS ONE FRUIT TO LIVE FOREVER!!!",
+  type: "fake"
+},
+// Exaggeration, !!!
+{
+  id: 5,
+  text: "Typhoon Signal No. 8 Expected Tomorrow.",
+  type: "real"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [idx, setIdx] = useState(0);
+  const [feedback, setFeedback] = useState(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+  const current = headlines[idx];
+  const check = ans => {
+    if (feedback) return;
+    if (ans === current.type) {
+      setFeedback("correct");
+      setTimeout(() => {
+        setFeedback(null);
+        setIdx((idx + 1) % headlines.length);
+      }, 1000);
+    } else {
+      setFeedback("wrong");
+      setTimeout(() => setFeedback(null), 800);
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-bold mb-8 text-pink-700"
+  }, getText("title")), /*#__PURE__*/React.createElement("p", {
+    className: "mb-8 font-bold text-slate-500"
+  }, getText("instruction")), /*#__PURE__*/React.createElement(motion.div, {
+    key: current.id,
+    initial: {
+      y: 20,
+      opacity: 0
+    },
+    animate: {
+      y: 0,
+      opacity: 1
+    },
+    className: "w-full max-w-lg bg-white p-8 rounded-xl shadow-xl border-l-8 border-pink-400 mb-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "font-serif text-2xl font-bold text-slate-800 leading-relaxed"
+  }, "\"", current.text, "\"")), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-8 w-full max-w-md"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => check("real"),
+    className: "flex-1 py-4 bg-green-100 text-green-800 rounded-xl font-bold text-xl hover:bg-green-200 border-b-4 border-green-300 active:scale-95"
+  }, "✅ ", getText("real")), /*#__PURE__*/React.createElement("button", {
+    onClick: () => check("fake"),
+    className: "flex-1 py-4 bg-red-100 text-red-800 rounded-xl font-bold text-xl hover:bg-red-200 border-b-4 border-red-300 active:scale-95"
+  }, "🚫 ", getText("fake"))), feedback && /*#__PURE__*/React.createElement("div", {
+    className: `mt-8 text-3xl font-black ${feedback === "correct" ? "text-green-500" : "text-red-500"} animate-bounce`
+  }, getText(feedback)));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小五數學：百分數入門 | Percentage Intro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Outfit", "Noto Sans TC", sans-serif;
+        background: #0f172a;
+        color: white;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(16, 185, 129, 0.15); /* Emerald 500 alpha */
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(52, 211, 153, 0.2);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect,
+  useRef
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector
+} = window.MathI18n || {
+  LanguageSelector: () => null
+};
+const t = {
+  title: {
+    en: "Introduction to Percentage",
+    zh: "百分數入門",
+    ja: "パーセンテージ入門",
+    ko: "백분율 입문",
+    es: "Introducción a los Porcentajes",
+    de: "Einführung in Prozentrechnung",
+    fi: "Prosenttilaskennan alkeet",
+    fr: "Introduction aux pourcentages",
+    ar: "مقدمة في النسب المئوية",
+    it: "Introduzione alle percentuali"
+  },
+  percentage: {
+    en: "Percentage",
+    zh: "百分數",
+    ja: "パーセンテージ",
+    ko: "백분율",
+    es: "Porcentaje",
+    de: "Prozentsatz",
+    fi: "Prosenttiosuus",
+    fr: "Pourcentage",
+    ar: "النسبة المئوية",
+    it: "Percentuale"
+  },
+  fraction: {
+    en: "Fraction",
+    zh: "分數",
+    ja: "分数",
+    ko: "분수",
+    es: "Fracción",
+    de: "Bruch",
+    fi: "Murtoluku",
+    fr: "Fraction",
+    ar: "الكسر",
+    it: "Frazione"
+  },
+  instruction: {
+    en: "Click or Drag to Select",
+    zh: "點擊或拖曳選擇",
+    ja: "クリックまたはドラッグ",
+    ko: "클릭 또는 드래그",
+    es: "Haz clic o arrastra",
+    de: "Klicken oder Ziehen",
+    fi: "Napsauta tai vedä",
+    fr: "Cliquez ou faites glisser",
+    ar: "انقر أو اسحب",
+    it: "Clicca o trascina"
+  },
+  clear: {
+    en: "Clear All",
+    zh: "全部清除",
+    ja: "すべてクリア",
+    ko: "모두 지우기",
+    es: "Borrar Todo",
+    de: "Alles löschen",
+    fi: "Tyhjennä kaikki",
+    fr: "Tout effacer",
+    ar: "مسح الكل",
+    it: "Cancella tutto"
+  },
+  meaning: {
+    en: '% means "per 100"',
+    zh: "% 意思是「每 100 個中佔多少」",
+    ja: "% は「100個あたりの割合」を意味します",
+    ko: '%는 "100개 중"을 의미합니다',
+    es: '% significa "por 100"',
+    de: '% bedeutet "pro 100"',
+    fi: '% tarkoittaa "sataa kohti"',
+    fr: '% signifie "pour 100"',
+    ar: '% تعني "لكل 100"',
+    it: '% significa "per 100"'
+  }
+};
+const getText = (key, lang) => t[key]?.[lang] || t[key]?.["en"] || key;
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [selected, setSelected] = useState(new Set());
+  const [isDragging, setIsDragging] = useState(false);
+  const isDrawModeRef = useRef(true);
+  const toggleCell = idx => {
+    const next = new Set(selected);
+    if (next.has(idx)) next.delete(idx);else next.add(idx);
+    setSelected(next);
+  };
+  const handleMouseDown = idx => {
+    setIsDragging(true);
+    const has = selected.has(idx);
+    isDrawModeRef.current = !has;
+    const next = new Set(selected);
+    if (has) next.delete(idx);else next.add(idx);
+    setSelected(next);
+  };
+  const handleMouseEnter = idx => {
+    if (!isDragging) return;
+    const next = new Set(selected);
+    if (isDrawModeRef.current) next.add(idx);else next.delete(idx);
+    setSelected(next);
+  };
+  const handleMouseUp = () => setIsDragging(false);
+  useEffect(() => {
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => window.removeEventListener("mouseup", handleMouseUp);
+  }, []);
+  const count = selected.size;
+  const total = 100;
+  const percentage = Math.round(count / total * 100);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center p-4 select-none"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-5xl flex justify-between items-center mb-10"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "text-3xl md:text-5xl font-black text-emerald-400 drop-shadow-[0_0_15px_rgba(52,211,153,0.5)]"
+  }, "% ", getText("title", lang)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-800/80 p-1.5 rounded-xl border border-white/10 flex flex-wrap justify-end gap-1 max-w-[50%]"
+  }, ["zh", "en", "ja", "ko", "es", "de", "fi", "fr", "ar", "it"].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    className: `px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-all ${lang === l ? "bg-emerald-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white hover:bg-white/5"}`
+  }, l)))), /*#__PURE__*/React.createElement("main", {
+    className: "w-full max-w-5xl grid lg:grid-cols-2 gap-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-8 rounded-3xl flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between w-full mb-4 px-2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-sm font-bold text-slate-400 flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-base"
+  }, "📊"), " ", getText("instruction", lang)), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setSelected(new Set()),
+    className: "text-xs font-bold text-rose-400 hover:text-rose-300 flex items-center gap-1 transition-colors"
+  }, /*#__PURE__*/React.createElement("span", null, "🧹"), " ", getText("clear", lang))), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-10 gap-1 bg-slate-900/50 p-2 rounded-xl border border-white/10 shadow-2xl touch-none",
+    style: {
+      width: "fit-content"
+    }
+  }, Array.from({
+    length: 100
+  }).map((_, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    onMouseDown: () => handleMouseDown(i),
+    onMouseEnter: () => handleMouseEnter(i),
+    className: `w-6 h-6 sm:w-8 sm:h-8 rounded-sm cursor-pointer transition-all duration-100 ${selected.has(i) ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)] scale-105" : "bg-slate-700/30 hover:bg-slate-600/50"}`
+  })))), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col gap-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-8 rounded-3xl flex items-center justify-between"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "p-4 bg-emerald-500/20 rounded-2xl text-emerald-400 text-3xl font-black"
+  }, "%"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h2", {
+    className: "text-2xl font-bold text-white"
+  }, getText("percentage", lang)), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-400 text-sm"
+  }, getText("meaning", lang)))), /*#__PURE__*/React.createElement("div", {
+    className: "text-6xl font-black text-emerald-400 drop-shadow-[0_0_10px_rgba(52,211,153,0.5)]"
+  }, percentage, "%")), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-8 rounded-3xl flex items-center justify-between"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "p-4 bg-indigo-500/20 rounded-2xl text-indigo-400"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-black"
+  }, "1/x")), /*#__PURE__*/React.createElement("h2", {
+    className: "text-2xl font-bold text-white"
+  }, getText("fraction", lang))), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center text-4xl font-black font-mono"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-emerald-400"
+  }, count), /*#__PURE__*/React.createElement("div", {
+    className: "w-16 h-1 bg-slate-500 my-1 rounded-full"
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "text-slate-400"
+  }, "100"))), /*#__PURE__*/React.createElement("div", {
+    className: "glass-panel p-6 rounded-3xl"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "h-4 w-full bg-slate-800 rounded-full overflow-hidden border border-white/5 relative"
+  }, /*#__PURE__*/React.createElement(motion.div, {
+    className: "h-full bg-gradient-to-r from-emerald-500 to-cyan-500",
+    initial: {
+      width: 0
+    },
+    animate: {
+      width: `${percentage}%`
+    }
+  }))))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>

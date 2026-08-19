@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>General Studies - Netiquette</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: #fafafa;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Netiquette Quiz",
+    zh: "網絡禮儀問答",
+    ja: "ネチケットクイズ",
+    ko: "네티켓 퀴즈",
+    es: "Cuestionario de Etiqueta en la Red",
+    de: "Netiquette-Quiz",
+    fi: "Netikettivisa",
+    fr: "Quiz sur la nétiquette",
+    ar: "مسابقة آداب الإنترنت",
+    it: "Quiz sulla Netiquette"
+  },
+  instruction: {
+    en: "Is this behavior Polite or Rude?",
+    zh: "這行為是有禮還是無禮？",
+    ja: "この行動は丁寧ですか、それとも失礼ですか？",
+    ko: "이 행동은 공손한가요, 무례한가요?",
+    es: "¿Este comportamiento es educado o grosero?",
+    de: "Ist dieses Verhalten höflich oder unhöflich?",
+    fi: "Onko tämä käytös kohteliasta vai epäkohteliasta?",
+    fr: "Ce comportement est-il poli ou impoli ?",
+    ar: "هل هذا السلوك مؤدب أم وقح؟",
+    it: "Questo comportamento è Educato o Maleducato?"
+  },
+  polite: {
+    en: "Polite / Good",
+    zh: "有禮 / 好",
+    ja: "丁寧 / 良い",
+    ko: "공손함 / 좋음",
+    es: "Educado / Bueno",
+    de: "Höflich / Gut",
+    fi: "Kohteliasta / Hyvä",
+    fr: "Poli / Bon",
+    ar: "مؤدب / جيد",
+    it: "Educato / Buono"
+  },
+  rude: {
+    en: "Rude / Bad",
+    zh: "無禮 / 壞",
+    ja: "失礼 / 悪い",
+    ko: "무례함 / 나쁨",
+    es: "Grosero / Malo",
+    de: "Unhöflich / Schlecht",
+    fi: "Epäkohteliasta / Huono",
+    fr: "Impoli / Mauvais",
+    ar: "وقح / سيء",
+    it: "Maleducato / Cattivo"
+  },
+  q1: {
+    en: "Typing in ALL CAPS.",
+    zh: "使用全大寫字母打字。",
+    ja: "すべて大文字で入力する。",
+    ko: "모두 대문자로 입력하기.",
+    es: "Escribir todo en MAYÚSCULAS.",
+    de: "Alles in GROSSBUCHSTABEN schreiben.",
+    fi: "Kirjoittaminen ISOILLA KIRJAIMILLA.",
+    fr: "Écrire TOUT EN MAJUSCULES.",
+    ar: "الكتابة بأحرف كبيرة.",
+    it: "Scrivere TUTTO MAIUSCOLO."
+  },
+  q2: {
+    en: "Asking before posting a friend's photo.",
+    zh: "發佈朋友照片前先詢問。",
+    ja: "友達の写真を投稿する前に尋ねる。",
+    ko: "친구의 사진을 게시하기 전에 물어보기.",
+    es: "Preguntar antes de publicar la foto de un amigo.",
+    de: "Vor dem Posten eines Fotos eines Freundes fragen.",
+    fi: "Kysyminen ennen ystävän kuvan julkaisemista.",
+    fr: "Demander avant de publier la photo d'un ami.",
+    ar: "السؤال قبل نشر صورة صديق.",
+    it: "Chiedere prima di pubblicare la foto di un amico."
+  },
+  q3: {
+    en: "Leaving mean comments.",
+    zh: "留下刻薄的評論。",
+    ja: "意地悪なコメントを残す。",
+    ko: "비열한 댓글 남기기.",
+    es: "Dejar comentarios mezquinos.",
+    de: "Gemeine Kommentare hinterlassen.",
+    fi: "Ilkeiden kommenttien jättäminen.",
+    fr: "Laisser des commentaires méchants.",
+    ar: "ترك تعليقات لئيمة.",
+    it: "Lasciare commenti cattivi."
+  },
+  q4: {
+    en: "Saying 'Thank you' online.",
+    zh: "在網上說「謝謝」。",
+    ja: "オンラインで「ありがとう」と言う。",
+    ko: "온라인에서 '고맙습니다'라고 말하기.",
+    es: "Decir 'Gracias' en línea.",
+    de: "Online 'Danke' sagen.",
+    fi: "Sano 'Kiitos' verkossa.",
+    fr: "Dire 'Merci' en ligne.",
+    ar: "قول 'شكرا' عبر الإنترنت.",
+    it: "Dire 'Grazie' online."
+  },
+  correct: {
+    en: "Correct!",
+    zh: "正確！",
+    ja: "正解！",
+    ko: "정답!",
+    es: "¡Correcto!",
+    de: "Richtig!",
+    fi: "Oikein!",
+    fr: "Correct !",
+    ar: "صحيح!",
+    it: "Corretto!"
+  },
+  wrong: {
+    en: "Try Again",
+    zh: "再試一次",
+    ja: "もう一度",
+    ko: "다시 시도",
+    es: "Intentar de nuevo",
+    de: "Versuch es nochmal",
+    fi: "Yritä uudelleen",
+    fr: "Réessayez",
+    ar: "حاول مرة أخرى",
+    it: "Riprova"
+  }
+};
+const questions = [{
+  id: "q1",
+  type: "rude",
+  icon: "😠"
+}, {
+  id: "q2",
+  type: "polite",
+  icon: "🤝"
+}, {
+  id: "q3",
+  type: "rude",
+  icon: "💔"
+}, {
+  id: "q4",
+  type: "polite",
+  icon: "🙏"
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [index, setIndex] = useState(0);
+  const [feedback, setFeedback] = useState(null);
+  const getText = key => t[key][lang] || t[key]["en"];
+  const currentQ = questions[index];
+  const handleAnswer = ans => {
+    if (feedback) return;
+    if (ans === currentQ.type) {
+      setFeedback("correct");
+      setTimeout(() => {
+        setFeedback(null);
+        setIndex(i => (i + 1) % questions.length);
+      }, 1000);
+    } else {
+      setFeedback("wrong");
+      setTimeout(() => setFeedback(null), 500);
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col items-center justify-center p-4"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl font-bold mb-8 text-indigo-800"
+  }, getText("title")), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-lg bg-white p-8 rounded-3xl shadow-2xl text-center border-4 border-indigo-100"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-8xl mb-8 animate-bounce-slow"
+  }, currentQ.icon), /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-bold text-slate-800 mb-8 min-h-[4rem]"
+  }, getText(currentQ.id)), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => handleAnswer("polite"),
+    className: "flex-1 bg-green-100 hover:bg-green-200 text-green-800 py-4 rounded-xl font-bold text-lg border-2 border-green-300 transition-colors"
+  }, "👍 ", getText("polite")), /*#__PURE__*/React.createElement("button", {
+    onClick: () => handleAnswer("rude"),
+    className: "flex-1 bg-red-100 hover:bg-red-200 text-red-800 py-4 rounded-xl font-bold text-lg border-2 border-red-300 transition-colors"
+  }, "👎 ", getText("rude"))), feedback && /*#__PURE__*/React.createElement("div", {
+    className: `mt-6 p-4 rounded-xl font-black text-2xl ${feedback === "correct" ? "bg-green-500 text-white" : "bg-red-500 text-white"}`
+  }, getText(feedback))));
+}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  
+      
+      <!-- Footer -->
+      <footer class="text-center py-4 text-slate-500 text-sm">
+        <p class="italic mb-1">
+          But God made the earth by his power; he founded the world by his wisdom and stretched out the heavens by his
+          understanding. Jeremiah 10:12
+        </p>
+        <p class="text-xs mb-1 mt-2">
+          「耶和華用能力創造大地，用智慧建立世界，用聰明鋪張穹蒼。」 耶利米書 10:12
+        </p>
+        <p class="text-xs mt-2 pt-2 border-t border-slate-300">
+          @ 2025 Education Engineering Portfolio | Generated by Gemini Pro 3.0 | Prepared by SF Lau
+        </p>
+      </footer>
+</body>
+</html>

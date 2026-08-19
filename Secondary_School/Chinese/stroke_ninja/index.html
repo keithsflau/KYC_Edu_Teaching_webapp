@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <title>筆順忍者 Stroke Ninja 2.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #0f172a;
+            overflow: hidden;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        #game-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .ui-overlay {
+            position: absolute;
+            pointer-events: none;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+            box-sizing: border-box;
+            z-index: 10;
+        }
+
+        .hud-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .score-box {
+            text-align: left;
+            text-shadow: 0 0 10px rgba(59, 130, 246, 0.8);
+        }
+
+        .lives-box {
+            text-align: right;
+            font-size: 2rem;
+            color: #ef4444;
+            text-shadow: 0 0 10px rgba(239, 68, 68, 0.8);
+        }
+
+        .combo-box {
+            position: absolute;
+            top: 20%;
+            left: 20px;
+            transform: rotate(-10deg);
+            opacity: 0;
+            transition: transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .combo-box.active {
+            opacity: 1;
+            transform: rotate(-10deg) scale(1.2);
+        }
+
+        .menu-screen {
+            position: absolute;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+            backdrop-filter: blur(8px);
+        }
+
+        .title {
+            font-size: 5rem;
+            font-weight: 900;
+            background: linear-gradient(to right, #a855f7, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(168, 85, 247, 0.5);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .btn-start {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            padding: 1rem 4rem;
+            font-size: 2rem;
+            border-radius: 9999px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+            transition: all 0.2s;
+            pointer-events: auto;
+            font-weight: bold;
+        }
+
+        .btn-start:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 40px rgba(59, 130, 246, 0.8);
+        }
+
+        .shake {
+            animation: shake 0.5s cubic-bezier(.36, .07, .19, .97) both;
+        }
+
+        @keyframes shake {
+
+            10%,
+            90% {
+                transform: translate3d(-1px, 0, 0);
+            }
+
+            20%,
+            80% {
+                transform: translate3d(2px, 0, 0);
+            }
+
+            30%,
+            50%,
+            70% {
+                transform: translate3d(-4px, 0, 0);
+            }
+
+            40%,
+            60% {
+                transform: translate3d(4px, 0, 0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="game-container" class="relative w-full h-screen overflow-hidden">
+        <canvas id="game-canvas"></canvas>
+
+        <!-- HUD -->
+        <div class="ui-overlay" id="hud" style="display: none;">
+            <div class="hud-top">
+                <div class="score-box">
+                    <div class="text-blue-400 text-sm font-bold tracking-wider">SCORE</div>
+                    <div class="text-white text-5xl font-black" id="score-display">0</div>
+                </div>
+                <div class="lives-box" id="lives-display">
+                    ❤❤❤
+                </div>
+            </div>
+            <div id="combo-display"
+                class="combo-box text-yellow-400 font-black text-6xl drop-shadow-[0_0_15px_rgba(250,204,21,0.8)]">
+                <span id="combo-count">0</span> <span class="text-3xl">COMBO!</span>
+            </div>
+        </div>
+
+        <!-- Start Menu -->
+        <div id="start-menu" class="menu-screen">
+            <h1 class="title">筆順忍者<br><span class="text-2xl tracking-[1em] text-white/80">STROKE NINJA</span></h1>
+            <p class="text-gray-400 mb-8 text-xl">依筆順切開漢字 • 切勿失手</p>
+            <button class="btn-start" onclick="startGame()">開始修行</button>
+        </div>
+
+        <!-- Game Over Menu -->
+        <div id="game-over-menu" class="menu-screen" style="display: none;">
+            <h1 class="text-6xl font-black text-red-500 mb-2 drop-shadow-[0_0_30px_rgba(239,68,68,0.6)]">修煉結束</h1>
+            <p class="text-gray-300 mb-8 text-2xl">只差一點點！</p>
+            <div class="bg-slate-800/80 p-6 rounded-2xl mb-8 text-center min-w-[300px] border border-slate-700">
+                <div class="text-sm text-gray-400 mb-1">最終得分</div>
+                <div class="text-5xl font-black text-white mb-4" id="final-score">0</div>
+                <div class="text-sm text-gray-400 mb-1">最高連擊</div>
+                <div class="text-3xl font-bold text-yellow-400" id="final-combo">0</div>
+            </div>
+            <button class="btn-start" onclick="resetGame()">再次挑戰</button>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * STROKE NINJA 2.0 - GAME ENGINE
+         * Features: Physics loop, Particle System, Stroke Analysis, Dynamic Difficulty
+         */
+
+        // --- Constants & Config ---
+        const GRAVITY = 800; // px/s^2
+        const DRAG = 0.5; // Air resistance
+        const GAME_WIDTH = window.innerWidth;
+        const GAME_HEIGHT = window.innerHeight;
+        const SPAWN_INTERVAL_START = 2000;
+        const TRAIL_LIFETIME = 0.15; // seconds
+
+        const PALETTE = {
+            bg: '#0f172a',
+            trail: '#3b82f6', // bright blue
+            trailCore: '#ffffff',
+            text: '#f8fafc',
+            highlight: '#a855f7', // purple
+            correct: '#22c55e', // green
+            wrong: '#ef4444', // red
+            gold: '#fbbf24'
+        };
+
+        const CHAR_DATA = {
+            '一': { strokes: [{ d: 'H' }], pinyin: 'yī' },
+            '二': { strokes: [{ d: 'H' }, { d: 'H' }], pinyin: 'èr' },
+            '三': { strokes: [{ d: 'H' }, { d: 'H' }, { d: 'H' }], pinyin: 'sān' },
+            '十': { strokes: [{ d: 'H' }, { d: 'V' }], pinyin: 'shí' },
+            '人': { strokes: [{ d: 'D' }, { d: 'D' }], pinyin: 'rén' },
+            '大': { strokes: [{ d: 'H' }, { d: 'D' }, { d: 'D' }], pinyin: 'dà' },
+            '口': { strokes: [{ d: 'V' }, { d: 'H' }, { d: 'H' }], pinyin: 'kǒu' }, // Simplifying box stroke for gameplay feel
+            '山': { strokes: [{ d: 'V' }, { d: 'V' }, { d: 'H' }], pinyin: 'shān' }, // Simplified vertical stroke order logic
+            '木': { strokes: [{ d: 'H' }, { d: 'V' }, { d: 'D' }, { d: 'D' }], pinyin: 'mù' },
+            '水': { strokes: [{ d: 'V' }, { d: 'D' }, { d: 'D' }, { d: 'D' }], pinyin: 'shuǐ' }, // Simplified
+            '火': { strokes: [{ d: 'D' }, { d: 'D' }, { d: 'D' }, { d: 'D' }], pinyin: 'huǒ' }  // Simplified visual logic
+        };
+
+        // --- Game State ---
+        let canvas, ctx;
+        let lastTime = 0;
+        let score = 0;
+        let lives = 3;
+        let combo = 0;
+        let maxCombo = 0;
+        let isGameOver = false;
+        let isPlaying = false;
+        let difficultyMultiplier = 1;
+
+        let entities = []; // Flying characters
+        let particles = []; // Visual effects
+        let inputPoints = []; // Mouse/Touch trail
+
+        // --- Classes ---
+
+        class Entity {
+            constructor(char) {
+                this.char = char;
+                this.data = CHAR_DATA[char];
+                this.strokesCompleted = 0;
+                this.totalStrokes = this.data.strokes.length;
+
+                // Physics
+                this.radius = 60;
+                this.x = Math.random() * (GAME_WIDTH - 200) + 100;
+                this.y = GAME_HEIGHT + this.radius;
+                this.vx = (Math.random() - 0.5) * 300; // Random horizontal drift
+                this.vy = -(Math.random() * 400 + 750); // Initial launch velocity
+                this.rotation = Math.random() * Math.PI * 2;
+                this.rotationSpeed = (Math.random() - 0.5) * 2;
+
+                this.isDead = false;
+                this.isSliced = false;
+                this.scale = 1;
+                this.shake = 0;
+            }
+
+            update(dt) {
+                // Apply physics
+                this.x += this.vx * dt;
+                this.y += this.vy * dt;
+                this.vy += GRAVITY * dt;
+                this.rotation += this.rotationSpeed * dt;
+
+                // Check boundaries
+                if (this.y > GAME_HEIGHT + 100 && !this.isSliced) {
+                    this.isDead = true;
+                    loseLife();
+                }
+
+                // Shake effect decay
+                if (this.shake > 0) this.shake -= dt * 10;
+            }
+
+            draw(ctx) {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+
+                // Shake offset
+                if (this.shake > 0) {
+                    const offset = Math.sin(Date.now() / 20) * this.shake * 10;
+                    ctx.translate(offset, 0);
+                }
+
+                // Draw Background Orb
+                ctx.beginPath();
+                ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+
+                // Progress visual: Fill up like water
+                const progress = this.strokesCompleted / this.totalStrokes;
+                const grad = ctx.createLinearGradient(0, this.radius, 0, -this.radius);
+                grad.addColorStop(0, '#a855f7');
+                grad.addColorStop(progress, '#a855f7');
+                grad.addColorStop(progress, '#1e293b');
+                grad.addColorStop(1, '#1e293b');
+
+                ctx.fillStyle = grad;
+                ctx.fill();
+                ctx.lineWidth = 4;
+                ctx.strokeStyle = '#f8fafc';
+                ctx.stroke();
+
+                // Draw Character
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 80px "Noto Sans TC"';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(this.char, 0, 5); // visually centered
+
+                // Draw Hint (Next Stroke)
+                if (!this.isSliced) {
+                    const nextStroke = this.data.strokes[this.strokesCompleted];
+                    if (nextStroke) {
+                        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+                        ctx.font = '20px Arial';
+                        // Simplified hint arrow could go here
+                        // ctx.fillText(nextStroke.d, 0, -40); 
+                    }
+                }
+
+                ctx.restore();
+            }
+
+            hit(strokeDir) {
+                const expected = this.data.strokes[this.strokesCompleted];
+
+                // Check if stroke direction matches expected (H, V, D)
+                // Simplified Logic: H=Horizontal, V=Vertical, D=Diagonal
+                let isCorrect = false;
+                if (expected.d === 'H' && Math.abs(strokeDir.dx) > Math.abs(strokeDir.dy)) isCorrect = true;
+                else if (expected.d === 'V' && Math.abs(strokeDir.dy) > Math.abs(strokeDir.dx)) isCorrect = true;
+                else if (expected.d === 'D') isCorrect = true; // Diagonal is lenient for now
+
+                if (isCorrect) {
+                    this.strokesCompleted++;
+                    this.shake = 0.5; // Visual feedback
+                    spawnParticles(this.x, this.y, 10, PALETTE.highlight);
+                    playAudio('hit');
+
+                    if (this.strokesCompleted >= this.totalStrokes) {
+                        this.isSliced = true;
+                        this.isDead = true; // Remove next frame (or handle slice animation)
+                        addScore(100);
+                        spawnParticles(this.x, this.y, 30, PALETTE.gold);
+                        spawnFloatingText(this.x, this.y, "+100");
+                        // Create sliced halves effect here (advanced)
+                    } else {
+                        addScore(10);
+                        spawnFloatingText(this.x, this.y, "Good!");
+                    }
+                } else {
+                    // Wrong stroke
+                    this.shake = 1.0;
+                    spawnParticles(this.x, this.y, 5, PALETTE.wrong);
+                    combo = 0;
+                    updateUI();
+                }
+            }
+        }
+
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 200 + 100;
+                this.vx = Math.cos(angle) * speed;
+                this.vy = Math.sin(angle) * speed;
+                this.life = 1.0; // 1 second
+                this.decay = Math.random() * 2 + 1;
+                this.size = Math.random() * 5 + 2;
+            }
+            update(dt) {
+                this.x += this.vx * dt;
+                this.y += this.vy * dt;
+                this.vy += GRAVITY * 0.5 * dt; // Light gravity
+                this.life -= this.decay * dt;
+            }
+            draw(ctx) {
+                ctx.globalAlpha = Math.max(0, this.life);
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        class FloatingText {
+            constructor(x, y, text) {
+                this.x = x;
+                this.y = y;
+                this.text = text;
+                this.life = 1.0;
+                this.vy = -100;
+            }
+            update(dt) {
+                this.y += this.vy * dt;
+                this.life -= dt;
+            }
+            draw(ctx) {
+                ctx.globalAlpha = Math.max(0, this.life);
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 30px Arial';
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 3;
+                ctx.strokeText(this.text, this.x, this.y);
+                ctx.fillText(this.text, this.x, this.y);
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        // --- Main Engine ---
+
+        function init() {
+            canvas = document.getElementById('game-canvas');
+            ctx = canvas.getContext('2d');
+            resize();
+            window.addEventListener('resize', resize);
+
+            // Input Handling
+            canvas.addEventListener('mousedown', startStroke);
+            canvas.addEventListener('mousemove', moveStroke);
+            document.addEventListener('mouseup', endStroke);
+            canvas.addEventListener('touchstart', (e) => startStroke(e.touches[0]));
+            canvas.addEventListener('touchmove', (e) => moveStroke(e.touches[0]));
+            document.addEventListener('touchend', endStroke);
+
+            requestAnimationFrame(loop);
+        }
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        function startGame() {
+            score = 0;
+            lives = 3;
+            combo = 0;
+            difficultyMultiplier = 1;
+            entities = [];
+            particles = [];
+            isGameOver = false;
+            isPlaying = true;
+
+            document.getElementById('start-menu').style.display = 'none';
+            document.getElementById('game-over-menu').style.display = 'none';
+            document.getElementById('hud').style.display = 'block';
+            updateUI();
+
+            spawnLoop();
+        }
+
+        function spawnLoop() {
+            if (!isPlaying) return;
+
+            // Increase difficulty
+            difficultyMultiplier += 0.05;
+
+            // Spawn Entity
+            const chars = Object.keys(CHAR_DATA);
+            const char = chars[Math.floor(Math.random() * chars.length)];
+            entities.push(new Entity(char));
+
+            // Calculate next spawn time based on difficulty
+            const nextSpawn = Math.max(500, SPAWN_INTERVAL_START / difficultyMultiplier);
+            setTimeout(spawnLoop, nextSpawn);
+        }
+
+        function loseLife() {
+            lives--;
+            combo = 0;
+            updateUI();
+            document.getElementById('game-container').classList.add('shake');
+            setTimeout(() => document.getElementById('game-container').classList.remove('shake'), 500);
+
+            if (lives <= 0) {
+                gameOver();
+            }
+        }
+
+        function gameOver() {
+            isPlaying = false;
+            isGameOver = true;
+            document.getElementById('hud').style.display = 'none';
+            document.getElementById('game-over-menu').style.display = 'flex';
+            document.getElementById('final-score').textContent = score;
+            document.getElementById('final-combo').textContent = maxCombo;
+        }
+
+        function resetGame() {
+            startGame();
+        }
+
+        function addScore(points) {
+            // Combo multiplier logic
+            combo++;
+            if (combo > maxCombo) maxCombo = combo;
+
+            // Toggle combo display
+            const comboEl = document.getElementById('combo-display');
+            if (combo > 1) {
+                comboEl.classList.add('active');
+                document.getElementById('combo-count').textContent = combo;
+            } else {
+                comboEl.classList.remove('active');
+            }
+
+            score += points * Math.min(combo, 5); // Cap multiplier at 5x
+            updateUI();
+        }
+
+        function updateUI() {
+            document.getElementById('score-display').textContent = score;
+            document.getElementById('lives-display').textContent = '❤'.repeat(lives);
+        }
+
+        function loop(timestamp) {
+            const dt = (timestamp - lastTime) / 1000;
+            lastTime = timestamp;
+
+            if (isPlaying) {
+                ctx.fillStyle = PALETTE.bg;
+                ctx.fillRect(0, 0, canvas.width, canvas.height); // Clear screen
+
+                // Draw Background Grid/Effect (Optional Juice)
+                ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                for (let i = 0; i < canvas.width; i += 100) { ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); }
+                for (let i = 0; i < canvas.height; i += 100) { ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); }
+                ctx.stroke();
+
+                // Update & Draw Entities
+                entities = entities.filter(e => !e.isDead);
+                entities.forEach(e => {
+                    e.update(dt);
+                    e.draw(ctx);
+                });
+
+                // Update & Draw Particles
+                particles = particles.filter(p => p.life > 0);
+                particles.forEach(p => {
+                    p.update(dt);
+                    p.draw(ctx);
+                });
+
+                // Draw Player Trail
+                if (inputPoints.length > 1) {
+                    ctx.beginPath();
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+                    for (let i = 0; i < inputPoints.length - 1; i++) {
+                        const p1 = inputPoints[i];
+                        const p2 = inputPoints[i + 1];
+                        const age = (Date.now() - p1.t) / 1000;
+
+                        if (age > TRAIL_LIFETIME) continue;
+
+                        ctx.lineWidth = (1 - age / TRAIL_LIFETIME) * 15;
+                        ctx.strokeStyle = PALETTE.trail;
+                        ctx.globalAlpha = 1 - age / TRAIL_LIFETIME;
+
+                        ctx.beginPath();
+                        ctx.moveTo(p1.x, p1.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.stroke();
+
+                        // Core glow
+                        ctx.lineWidth = (1 - age / TRAIL_LIFETIME) * 5;
+                        ctx.strokeStyle = PALETTE.trailCore;
+                        ctx.stroke();
+                    }
+                    ctx.globalAlpha = 1;
+                }
+
+                // Clean old input points
+                const now = Date.now();
+                inputPoints = inputPoints.filter(p => (now - p.t) < TRAIL_LIFETIME * 1000);
+            }
+
+            requestAnimationFrame(loop);
+        }
+
+        // --- Input Handling & Slice Detection ---
+
+        function startStroke(e) {
+            inputPoints = [{ x: e.clientX, y: e.clientY, t: Date.now() }];
+        }
+
+        function moveStroke(e) {
+            if (inputPoints.length === 0) return;
+
+            const x = e.clientX;
+            const y = e.clientY;
+            inputPoints.push({ x, y, t: Date.now() });
+
+            // Check collisions with entities
+            checkCollisions(inputPoints[inputPoints.length - 2], inputPoints[inputPoints.length - 1]);
+        }
+
+        function endStroke() {
+            inputPoints = []; // Should fade out naturally, but for logic reset immediately
+        }
+
+        function checkCollisions(p1, p2) {
+            if (!p1 || !p2) return;
+
+            entities.forEach(e => {
+                if (e.isSliced) return;
+
+                // Simple circle collision for endpoint
+                const dx = e.x - p2.x;
+                const dy = e.y - p2.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < e.radius) {
+                    // Analyze stroke direction
+                    const strokeDx = p2.x - p1.x;
+                    const strokeDy = p2.y - p1.y;
+                    // Only count significant moves
+                    if (Math.sqrt(strokeDx * strokeDx + strokeDy * strokeDy) > 10) {
+                        e.hit({ dx: strokeDx, dy: strokeDy });
+                    }
+                }
+            });
+        }
+
+        // --- Utils ---
+
+        function spawnParticles(x, y, count, color) {
+            for (let i = 0; i < count; i++) {
+                particles.push(new Particle(x, y, color));
+            }
+        }
+
+        function spawnFloatingText(x, y, text) {
+            particles.push(new FloatingText(x, y, text)); // Treating text as particle for update loop convenience
+        }
+
+        // Placeholder audio
+        function playAudio(type) {
+            // console.log("Audio: ", type);
+        }
+
+        // Start
+        init();
+
+    </script>
+
+</body>
+
+</html>
+

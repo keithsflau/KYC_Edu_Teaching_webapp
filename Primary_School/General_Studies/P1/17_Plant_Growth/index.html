@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小一常識：植物生長日記 | Plant Growth</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+const {
+  useState,
+  useEffect
+} = React;
+const {
+  motion,
+  AnimatePresence
+} = window.Motion;
+const {
+  LanguageSelector,
+  get
+} = window.MathI18n;
+const t = {
+  title: {
+    en: "Plant Growth Diary",
+    zh: "植物生長日記",
+    ja: "植物成長日記",
+    ko: "식물 성장 일기",
+    es: "Diario de crecimiento de plantas",
+    de: "Pflanzenwachstums-Tagebuch",
+    fi: "Kasvien kasvupäiväkirja",
+    fr: "Journal de croissance des plantes",
+    ar: "مذكرات نمو النبات",
+    it: "Diario di crescita delle piante"
+  },
+  instruction: {
+    en: "Put the stages in the correct order!",
+    zh: "按正確順序排列生長過程！",
+    ja: "正しい順序に並べてください！",
+    ko: "단계를 올바른 순서로 놓으세요!",
+    es: "¡Pon las etapas en el orden correcto!",
+    de: "Bringe die Stadien in die richtige Reihenfolge!",
+    fi: "Laita vaiheet oikeaan järjestykseen!",
+    fr: "Mettez les étapes dans le bon ordre !",
+    ar: "ضع المراحل بالترتيب الصحيح!",
+    it: "Metti le fasi nell'ordine corretto!"
+  },
+  stage1: {
+    en: "Seed",
+    zh: "種子",
+    es: "Semilla",
+    de: "Samen",
+    fi: "Siemen",
+    fr: "Graine",
+    ar: "بذرة",
+    it: "Seme"
+  },
+  stage2: {
+    en: "Sprout",
+    zh: "發芽",
+    es: "Brote",
+    de: "Spross",
+    fi: "Itu",
+    fr: "Germe",
+    ar: "برعم",
+    it: "Germoglio"
+  },
+  stage3: {
+    en: "Leaves",
+    zh: "長葉",
+    es: "Hojas",
+    de: "Blätter",
+    fi: "Lehdet",
+    fr: "Feuilles",
+    ar: "أوراق",
+    it: "Foglie"
+  },
+  stage4: {
+    en: "Flower",
+    zh: "開花",
+    es: "Flor",
+    de: "Blume",
+    fi: "Kukka",
+    fr: "Fleur",
+    ar: "زهرة",
+    it: "Fiore"
+  },
+  stage5: {
+    en: "Fruit",
+    zh: "結果",
+    es: "Fruta",
+    de: "Frucht",
+    fi: "Hedelmä",
+    fr: "Fruit",
+    ar: "فاكهة",
+    it: "Frutto"
+  },
+  check: {
+    en: "Check",
+    zh: "檢查",
+    es: "Comprobar",
+    de: "Prüfen",
+    fi: "Tarkista",
+    fr: "Vérifier",
+    ar: "تحقق",
+    it: "Controlla"
+  },
+  reset: {
+    en: "Reset",
+    zh: "重置",
+    es: "Reiniciar",
+    de: "Zurücksetzen",
+    fi: "Nollaa",
+    fr: "Réinitialiser",
+    ar: "إعادة تعيين",
+    it: "Reimposta"
+  },
+  correct: {
+    en: "Correct! The plant grew well!",
+    zh: "答對了！植物長得很好！",
+    es: "¡Correcto! ¡La planta creció bien!",
+    de: "Richtig! Die Pflanze ist gut gewachsen!",
+    fi: "Oikein! Kasvi kasvoi hyvin!",
+    fr: "Correct ! La plante a bien poussé !",
+    ar: "صحيح! نمت النبتة بشكل جيد!",
+    it: "Corretto! La pianta è cresciuta bene!"
+  },
+  wrong: {
+    en: "Something is wrong. Try again!",
+    zh: "次序不對，再試一次！",
+    es: "Algo está mal. ¡Inténtalo de nuevo!",
+    de: "Etwas stimmt nicht. Versuche es noch einmal!",
+    fi: "Jokin on pielessä. Yritä uudelleen!",
+    fr: "Quelque chose ne va pas. Réessayez !",
+    ar: "هناك خطأ ما. حاول مرة أخرى!",
+    it: "Qualcosa non va. Riprova!"
+  },
+  incomplete: {
+    en: "Put all stages in the slots first!",
+    zh: "請先把所有階段放進格子！",
+    es: "¡Pon todas las etapas en las casillas primero!",
+    de: "Lege zuerst alle Stadien in die Felder!",
+    fi: "Laita ensin kaikki vaiheet paikoilleen!",
+    fr: "Placez d'abord toutes les étapes dans les cases !",
+    ar: "ضع كل المراحل في الخانات أولا!",
+    it: "Metti prima tutte le fasi negli spazi!"
+  }
+};
+const stages = [{
+  id: 1,
+  icon: "🟤",
+  label: "stage1",
+  correctPos: 0
+}, {
+  id: 2,
+  icon: "🌱",
+  label: "stage2",
+  correctPos: 1
+}, {
+  id: 3,
+  icon: "🌿",
+  label: "stage3",
+  correctPos: 2
+}, {
+  id: 4,
+  icon: "🌼",
+  label: "stage4",
+  correctPos: 3
+}, {
+  id: 5,
+  icon: "🍓",
+  label: "stage5",
+  correctPos: 4
+}];
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [slots, setSlots] = useState([null, null, null, null, null]);
+  const [available, setAvailable] = useState([]);
+  const [status, setStatus] = useState(null); // 'correct', 'wrong'
+
+  const getText = key => t[key][lang] || t[key]["en"];
+  useEffect(() => {
+    reset();
+  }, []);
+  const reset = () => {
+    setSlots([null, null, null, null, null]);
+    setAvailable([...stages].sort(() => Math.random() - 0.5));
+    setStatus(null);
+  };
+  const handleSelect = stage => {
+    // Find first empty slot
+    const firstEmpty = slots.findIndex(s => s === null);
+    if (firstEmpty !== -1) {
+      const newSlots = [...slots];
+      newSlots[firstEmpty] = stage;
+      setSlots(newSlots);
+      setAvailable(available.filter(s => s.id !== stage.id));
+      setStatus(null);
+    }
+  };
+  const handleRemove = index => {
+    const stage = slots[index];
+    if (!stage) return;
+    const newSlots = [...slots];
+    newSlots[index] = null;
+    setSlots(newSlots);
+    setAvailable([...available, stage]);
+    setStatus(null);
+  };
+  const checkOrder = () => {
+    const isFilled = slots.every(s => s !== null);
+    if (!isFilled) {
+      setStatus("incomplete");
+      return;
+    }
+    const isCorrect = slots.every((s, i) => s.id === stages[i].id);
+    if (isCorrect) setStatus("correct");else setStatus("wrong");
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen p-4 flex flex-col items-center"
+  }, /*#__PURE__*/React.createElement(LanguageSelector, {
+    lang: lang,
+    setLang: setLang
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-4xl md:text-5xl font-black text-green-800 mb-4 mt-8 drop-shadow-sm"
+  }, "🌻 ", getText("title")), /*#__PURE__*/React.createElement("p", {
+    className: "font-bold text-green-700 mb-8"
+  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-2 md:gap-4 mb-8 overflow-x-auto p-4 w-full justify-center"
+  }, slots.map((s, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "flex items-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    onClick: () => handleRemove(i),
+    className: `w-16 h-24 md:w-24 md:h-32 bg-white rounded-xl border-4 flex flex-col items-center justify-center shadow-inner cursor-pointer ${status === "correct" ? "border-green-500 bg-green-50" : "border-slate-300"}`
+  }, s ? /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      scale: 0
+    },
+    animate: {
+      scale: 1
+    },
+    className: "text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl mb-1"
+  }, s.icon), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold text-slate-500"
+  }, getText(s.label))) : /*#__PURE__*/React.createElement("div", {
+    className: "text-slate-300 font-bold text-xl"
+  }, i + 1)), i < 4 && /*#__PURE__*/React.createElement("div", {
+    className: "text-green-300 text-2xl mx-1 font-black"
+  }, "➜")))), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-4 mb-8"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: checkOrder,
+    className: "bg-green-600 text-white px-8 py-3 rounded-full font-bold shadow-lg hover:bg-green-700"
+  }, getText("check"), " ✅"), /*#__PURE__*/React.createElement("button", {
+    onClick: reset,
+    className: "bg-white text-slate-500 px-8 py-3 rounded-full font-bold shadow-lg hover:bg-gray-100"
+  }, getText("reset"), " 🔄")), status && /*#__PURE__*/React.createElement(motion.div, {
+    initial: {
+      scale: 0
+    },
+    animate: {
+      scale: 1
+    },
+    className: `text-2xl font-black mb-6 ${status === "correct" ? "text-green-600" : status === "incomplete" ? "text-amber-600" : "text-red-500"}`
+  }, getText(status)), /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/80 p-6 rounded-3xl shadow-xl w-full max-w-3xl flex flex-wrap gap-4 justify-center min-h-[120px]"
+  }, available.map(s => /*#__PURE__*/React.createElement(motion.button, {
+    key: s.id,
+    layoutId: s.id,
+    onClick: () => handleSelect(s),
+    className: "w-20 h-24 bg-green-50 rounded-xl border-2 border-green-200 flex flex-col items-center justify-center hover:scale-105 active:scale-95 shadow-md"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl mb-1"
+  }, s.icon), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-bold text-green-800"
+  }, getText(s.label))))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+  </body>
+</html>
