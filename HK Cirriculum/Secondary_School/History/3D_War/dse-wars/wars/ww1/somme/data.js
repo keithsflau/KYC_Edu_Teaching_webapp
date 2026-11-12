@@ -33,8 +33,8 @@ window.BATTLE_DATA = (function () {
       "titleCard": {
           "zh": "索姆河戰役",
           "en": "THE SOMME · 1916年7月",
-          "narr_zh": "協約國發動索姆河攻勢，首日陣亡逾兩萬人。",
-          "narr_en": "Allied offensive on the Somme — over 20,000 British dead on day one."
+          "narr_zh": "英軍在索姆河發動攻勢。首日陣亡約19,240人，傷亡合計約57,470人。",
+          "narr_en": "British dead on the first day were about 19,240; total British casualties were about 57,470."
       },
       "outroCam": {
           "lng": 2.7,
@@ -45,9 +45,9 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       },
       "nextBattle": {
-          "href": "../tannenberg/",
-          "title_zh": "坦能堡戰役",
-          "title_en": "TANNENBERG 1914"
+          "href": "../../interwar/abyssinia/",
+          "title_zh": "阿比西尼亞與國聯",
+          "title_en": "ABYSSINIA 1935"
       }
   };
   const factions = {
@@ -180,7 +180,7 @@ window.BATTLE_DATA = (function () {
       }
   ];
   const notes =   {
-      "summary": "索姆河戰役 — DSE 西史小戰役地圖。",
+      "summary": "索姆河戰役 — 課題地圖。兵力與路線為示意。",
       "caveats": [
           "本圖僅覆蓋該戰役核心區域；戰線與兵力為教學示意。",
           "衛星影像為現代地形。"
@@ -188,7 +188,7 @@ window.BATTLE_DATA = (function () {
       "sources": "DSE 課程、Britannica、BBC History。"
   };
   const analysis =   {
-      "military": "協約國發動索姆河攻勢以分散凡爾登壓力；首日英軍傷亡創紀錄，坦克首次投入實戰。",
+      "military": "協約國發動索姆河攻勢以分散凡爾登壓力。1916年7月1日英軍陣亡約19,240人，死、傷、失蹤與被俘合計約57,470人。坦克在9月才首次投入這場攻勢。",
       "leaders": "英軍司令黑格堅持大規模攻勢；德軍將領以機槍防線堅守。法軍霞飛、索姆河前線將領協同作戰。首日慘重傷亡使黑格備受批評，但坦克首戰為後續裝甲戰術奠基。",
       "nationalPower": "英國動員帝國兵力；德軍防線堅固。工業國家以人力與火力互耗。",
       "impact": "成為一戰無謂犧牲的象徵；推動軍事技術革新（坦克）與對戰爭的反思。"
@@ -208,8 +208,8 @@ window.BATTLE_DATA = (function () {
           "dateLabel": "1916年7月1日",
           "title_zh": "七一攻勢",
           "title_en": "First Day on the Somme",
-          "narration_zh": "英軍在索姆河發動大攻勢，首日陣亡逾兩萬。",
-          "narration_en": "British offensive opens — over 20,000 dead on day one.",
+          "narration_zh": "英軍在索姆河發動大攻勢。首日陣亡約19,240人，傷亡合計約57,470人，兩者不是同一個數字。",
+          "narration_en": "The British attack opens. About 19,240 were killed; total casualties were about 57,470.",
           "focus": [
               "ap_somme"
           ],
@@ -328,11 +328,33 @@ window.BATTLE_DATA = (function () {
           "forces_en": ""
       }
   ];
-  const outro =   {
+    const sourceTask = {
+    "cite": "英軍官方對1916年7月1日損失的統計",
+    "excerpt": "陣亡約19,240人；死、傷、失蹤與被俘合計約57,470人。",
+    "ask": "哪一種說法對得上這組數字？",
+    "options": [
+      {
+        "t": "首日陣亡逾二萬，所以傷亡合計也就是二萬多人。",
+        "ok": false,
+        "why": "陣亡是死亡。傷亡合計把傷者、失蹤與被俘都算進去，約57,470。"
+      },
+      {
+        "t": "首日英軍陣亡約19,240人，傷亡合計約57,470人。",
+        "ok": true,
+        "why": "兩個數字都要保留，不能用其中一個代替另一個。"
+      },
+      {
+        "t": "57,470人全部在7月1日陣亡。",
+        "ok": false,
+        "why": "57,470是傷亡合計，不是陣亡人數。"
+      }
+    ]
+  };
+const outro =   {
       "title_zh": "索姆河戰役",
       "title_en": "THE SOMME",
-      "narration_zh": "本戰役為 DSE 西史重要考點。",
-      "narration_en": "A key DSE Western History topic.",
+      "narration_zh": "7月1日英軍陣亡約19,240人，傷亡合計約57,470人。",
+      "narration_en": "On 1 July about 19,240 British soldiers were killed; total casualties were about 57,470.",
       "cam": {
           "lng": 2.7,
           "lat": 49.9,
@@ -342,5 +364,5 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       }
   };
-  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };
+  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, sourceTask, END_DAY };
 })();

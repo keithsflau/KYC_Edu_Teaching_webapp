@@ -2,79 +2,176 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>14_Esterification</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="../../../../common/babel-react-classic.js"></script>
-  <script src="../../../../common/learn-from-zero.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
-  <style>
-    body { font-family: "IBM Plex Sans", system-ui, sans-serif; background-color: #f8fafc; color: #0f172a; min-height: 100vh; }
-  </style>
-  <!-- NCS i18n fleet kit (auto-injected) -->
-  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
-  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
-  <style data-ncs-kit="fleet-bridge">
-    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
-    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
-      display: none !important;
-    }
-  </style>
-  <script data-ncs-kit="fleet-init">
-  (function () {
-    function hideLegacyToggles() {
-      document.body.classList.add("ncs-fleet-mounted");
-      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
-        var label = (btn.textContent || "").trim();
-        if (label === "EN" || label === "\u4E2D") {
-          btn.classList.add("ncs-hide-when-ncs-fleet");
-        }
-      });
-      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
-        el.classList.add("ncs-hide-when-ncs-fleet");
-      });
-    }
-    function boot() {
-      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
-      window.NcsI18n.init({
-        chromePath: "../../../../_shared/ncs-chrome.json",
-        target: document.body
-      }).then(hideLegacyToggles);
-    }
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", boot);
-    } else {
-      boot();
-    }
-  })();
-  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>酯化與除水 | Esterification</title>
+  <link rel="stylesheet" href="../../lesson.css" />
 </head>
-<body>
-  <div id="root"></div>
-  <script type="text/babel" data-presets="react-classic">
-    const { useState } = React;
-    
-    function App() {
-      return (
-        <div className="max-w-4xl mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-4">14 Esterification</h1>
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 mb-8 text-center">
-            <div className="w-full h-64 bg-slate-100 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 mb-4">
-              <span className="text-slate-400 font-medium">[ Interactive Canvas Placeholder ]</span>
-            </div>
-            <p className="text-slate-500">This interactive lab is currently under development.</p>
-          </div>
-          <LearnFromZero />
-        </div>
-      );
-    }
-    
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+<body data-chem-silent="1">
+  <section class="chem-learn" data-chem-entry="1">
+    <h2>學習目標</h2>
+    <ul>
+      <li>寫出酯化是可逆反應：羧酸 + 醇 ⇌ 酯 + 水。</li>
+      <li>知道平衡時正反應和逆反應仍在進行，只是速率相等。</li>
+      <li>判斷移走水或加入水之後，酯的平衡量會增加還是減少。</li>
+    </ul>
+    <h2>常見錯因</h2>
+    <ul>
+      <li>把平衡看成反應停止。</li>
+      <li>移走水卻說酯會減少。</li>
+      <li>加入水卻說酯會增加。</li>
+    </ul>
+    <p id="chem-feedback" role="status">先選一個平衡情況，再判斷酯的量。</p>
+  </section>
+  <main>
+    <div class="panel">
+      <h1>酯化與除水</h1>
+      <p class="muted">只討論可逆和水平衡位置的影響。本頁沒有實驗做法。</p>
+      <h2>操作</h2>
+      <canvas id="plot" width="640" height="200" aria-label="酯化平衡示意"></canvas>
+      <p class="muted">平衡情況</p>
+      <div class="row" id="scenes">
+        <button type="button" class="on" data-scene="balance">已達平衡</button>
+        <button type="button" class="alt" data-scene="remove">把水移走</button>
+        <button type="button" class="alt" data-scene="add">加入水</button>
+      </div>
+      <p class="muted">酯的量會怎樣</p>
+      <div class="row" id="outcomes">
+        <button type="button" class="alt" data-out="up">酯的平衡量增加</button>
+        <button type="button" class="alt" data-out="down">酯的平衡量減少</button>
+        <button type="button" class="alt" data-out="same">量不變，正逆反應仍在進行</button>
+        <button type="button" class="alt" data-out="stop">反應停止，所以量不變</button>
+      </div>
+      <div class="row">
+        <button type="button" id="check">核對</button>
+      </div>
+      <p><a href="../index.html">返回中五</a></p>
+    </div>
+  </main>
+  <script src="../../lesson-kit.js"></script>
+  <script>
+    (function () {
+      var scene = "balance";
+      var outcome = "";
+      var done = { balance: false, remove: false, add: false };
+      var labels = {
+        balance: "已達平衡",
+        remove: "把水移走",
+        add: "加入水"
+      };
+
+      function mark(container, btn) {
+        var buttons = container.querySelectorAll("button");
+        var i;
+        for (i = 0; i < buttons.length; i++) buttons[i].className = "alt";
+        if (btn) btn.className = "on";
+      }
+
+      function say(msg, kind) {
+        if (window.ChemLesson) ChemLesson.say(msg, kind);
+      }
+
+      function box(g, x, y, w, h, title, sub, fade) {
+        g.fillStyle = fade ? "#1e293b" : "#134e4a";
+        g.fillRect(x, y, w, h);
+        g.strokeStyle = fade ? "#475569" : "#5eead4";
+        g.strokeRect(x, y, w, h);
+        g.fillStyle = fade ? "#94a3b8" : "#f8fafc";
+        g.font = "18px sans-serif";
+        g.fillText(title, x + 16, y + 36);
+        g.font = "14px sans-serif";
+        g.fillText(sub, x + 16, y + 64);
+      }
+
+      function arrow(g, x1, x2, y, strong) {
+        g.strokeStyle = strong ? "#facc15" : "#64748b";
+        g.fillStyle = g.strokeStyle;
+        g.lineWidth = strong ? 3 : 1.5;
+        g.beginPath();
+        g.moveTo(x1, y);
+        g.lineTo(x2, y);
+        g.stroke();
+        g.beginPath();
+        g.moveTo(x2, y);
+        g.lineTo(x2 - 8, y - 5);
+        g.lineTo(x2 - 8, y + 5);
+        g.fill();
+      }
+
+      function paint() {
+        var canvas = document.getElementById("plot");
+        var g = canvas.getContext("2d");
+        var waterNote = "生成物";
+        g.fillStyle = "#0f172a";
+        g.fillRect(0, 0, canvas.width, canvas.height);
+        if (scene === "remove") waterNote = "水被移走";
+        if (scene === "add") waterNote = "水增加了";
+        if (scene === "balance") waterNote = "正逆都在進行";
+        box(g, 28, 48, 180, 90, "羧酸 + 醇", "反應物", false);
+        box(g, 430, 48, 180, 90, "酯 + 水", waterNote, scene === "remove");
+        arrow(g, 230, 400, scene === "add" ? 78 : 72, scene !== "add");
+        arrow(g, 400, 230, scene === "add" ? 112 : 108, scene === "add" || scene === "balance");
+        g.fillStyle = "#e2e8f0";
+        g.font = "15px sans-serif";
+        g.fillText(labels[scene], 250, 170);
+      }
+
+      function why(picked) {
+        if (scene === "remove") {
+          if (picked === "up") return "";
+          if (picked === "down") return "錯因：水是生成物。把生成物移走，平衡向生成酯的方向移動，酯的平衡量增加，不是減少。";
+          if (picked === "same") return "錯因：移走水之後要重新達平衡。系統會再生成酯和水，酯的平衡量會增加，不是維持原量。";
+          return "錯因：移走水不是把反應停住。正反應會繼續生成酯，直到新的平衡。";
+        }
+        if (scene === "add") {
+          if (picked === "down") return "";
+          if (picked === "up") return "錯因：水是生成物。加入生成物，平衡向逆反應移動，酯被水解，酯的平衡量減少。";
+          if (picked === "same") return "錯因：加入水改變了平衡位置。逆反應相對佔優，酯的平衡量會減少。";
+          return "錯因：加入水不是使反應停止。平衡會向水解方向移動，酯減少。";
+        }
+        if (picked === "same") return "";
+        if (picked === "stop") return "錯因：平衡不是反應停止。正反應仍生成酯和水，逆反應仍把酯水解，兩邊速率相等，所以酯的量看起來不變。";
+        if (picked === "up") return "錯因：已經達平衡時，若沒有移走水或加入水，酯的量不會再增加。正逆反應仍在進行，但速率相等。";
+        return "錯因：已經達平衡時，酯的量不會自行減少。量不變是因為正逆反應速率相等，不是因為反應停了。";
+      }
+
+      document.getElementById("scenes").onclick = function (e) {
+        var btn = e.target.closest ? e.target.closest("button") : null;
+        if (!btn) return;
+        scene = btn.getAttribute("data-scene");
+        outcome = "";
+        mark(document.getElementById("scenes"), btn);
+        mark(document.getElementById("outcomes"), null);
+        paint();
+      };
+      document.getElementById("outcomes").onclick = function (e) {
+        var btn = e.target.closest ? e.target.closest("button") : null;
+        if (!btn) return;
+        outcome = btn.getAttribute("data-out");
+        mark(document.getElementById("outcomes"), btn);
+      };
+      document.getElementById("check").onclick = function () {
+        var reason;
+        var msg;
+        if (!outcome) {
+          say("錯因：先選酯的量會怎樣。", "no");
+          return;
+        }
+        reason = why(outcome);
+        if (reason) {
+          say(reason, "no");
+          return;
+        }
+        done[scene] = true;
+        msg = "正確。" + labels[scene] + "時，";
+        if (scene === "remove") msg += "水是生成物，移走後酯的平衡量增加。";
+        else if (scene === "add") msg += "加入生成物水，酯的平衡量減少。";
+        else msg += "正反應和逆反應仍在進行，速率相等，酯的量不變。";
+        if (done.balance && done.remove && done.add) msg += " 三種情況都判斷對過。";
+        say(msg, "ok");
+      };
+      paint();
+    })();
   </script>
-<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+  <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 </body>
 </html>

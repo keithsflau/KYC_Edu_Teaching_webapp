@@ -237,6 +237,188 @@
             box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.1);
             z-index: 25;
         }
+
+        body.dilemma-on,
+        body.dilemma-on #dilemma-board,
+        body.dilemma-on #dilemma-panel,
+        body.dilemma-on #dilemma-reason {
+            user-select: text;
+            -webkit-user-select: text;
+        }
+
+        #dilemma-board {
+            display: none;
+            position: absolute;
+            z-index: 15;
+            top: 84px;
+            left: 16px;
+            right: 366px;
+            bottom: 150px;
+            overflow: auto;
+            padding: 4px 8px 16px 4px;
+        }
+
+        #dilemma-board.is-open {
+            display: block;
+        }
+
+        .dilemma-card,
+        .choice-card {
+            background: rgba(255, 255, 255, 0.96);
+            border: 3px solid #000;
+            border-radius: 16px;
+            padding: 14px 16px;
+            margin-bottom: 12px;
+            box-shadow: 4px 4px 0 #000;
+        }
+
+        .choice-card.selected {
+            background: #fffbeb;
+            box-shadow: 4px 4px 0 #b45309;
+        }
+
+        .dilemma-kicker {
+            margin: 8px 0 0;
+            font-size: 0.78rem;
+            font-weight: 900;
+            color: #92400e;
+        }
+
+        .dilemma-kicker.tone-case,
+        .dilemma-kicker.tone-act {
+            margin-top: 0;
+            color: #1d4ed8;
+        }
+
+        .dilemma-kicker.tone-counter {
+            color: #be123c;
+        }
+
+        .dilemma-title {
+            margin: 2px 0 8px;
+            font-size: 1.45rem;
+            font-weight: 900;
+            color: #0f172a;
+            line-height: 1.35;
+        }
+
+        .dilemma-lead {
+            margin: 0 0 8px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #9a3412;
+            line-height: 1.6;
+        }
+
+        .choice-label {
+            margin: 2px 0 0;
+            font-size: 1.15rem;
+            font-weight: 900;
+            color: #0f172a;
+            line-height: 1.45;
+        }
+
+        .dilemma-body {
+            margin: 4px 0 0;
+            font-size: 1rem;
+            line-height: 1.65;
+            font-weight: 500;
+            color: #1e293b;
+        }
+
+        .pick-btn,
+        #dilemma-submit {
+            font-family: inherit;
+            cursor: pointer;
+            border: 3px solid #000;
+            border-radius: 999px;
+            font-weight: 900;
+        }
+
+        .pick-btn {
+            margin-top: 12px;
+            background: #fde68a;
+            padding: 8px 16px;
+        }
+
+        .choice-card.selected .pick-btn {
+            background: #ea580c;
+            color: #fff;
+        }
+
+        #dilemma-panel {
+            display: none;
+        }
+
+        #dilemma-panel.is-open {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+            overflow: auto;
+        }
+
+        #dilemma-picked {
+            font-size: 0.95rem;
+            font-weight: 900;
+            color: #0f172a;
+            line-height: 1.5;
+        }
+
+        #dilemma-reason-label {
+            display: block;
+            margin: 10px 0 4px;
+            font-size: 0.78rem;
+            font-weight: 900;
+            color: #64748b;
+        }
+
+        #dilemma-reason {
+            box-sizing: border-box;
+            width: 100%;
+            min-height: 120px;
+            flex: 1;
+            border: 2px solid #334155;
+            border-radius: 10px;
+            padding: 10px;
+            font-family: inherit;
+            font-size: 1rem;
+            line-height: 1.6;
+            resize: vertical;
+            background: #fff;
+            color: #0f172a;
+        }
+
+        .dilemma-tip {
+            margin: 8px 0 0;
+            font-size: 0.82rem;
+            line-height: 1.55;
+            font-weight: 700;
+            color: #9a3412;
+        }
+
+        #dilemma-error {
+            min-height: 3rem;
+            margin: 8px 0 0;
+            font-size: 0.88rem;
+            line-height: 1.5;
+            font-weight: 700;
+            color: #b91c1c;
+        }
+
+        #dilemma-submit {
+            margin-top: 8px;
+            background: #facc15;
+            color: #000;
+            border-radius: 12px;
+            padding: 12px;
+            box-shadow: 3px 3px 0 #000;
+        }
+
+        #dilemma-submit:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
     </style>
     <!-- NCS i18n fleet kit (auto-injected) -->
     <link rel="stylesheet" href="../../../common/ncs-i18n.css" />
@@ -281,6 +463,7 @@
 
     <div id="game-container">
         <div class="level-badge"><span id="ui-level-prefix">LEVEL</span> <span id="level-display">1</span></div>
+        <div id="dilemma-board"></div>
 
         <!-- The Crane -->
         <div id="crane">
@@ -303,7 +486,15 @@
             <div id="block-pool" class="block-pool">
                 <!-- Pool Items -->
             </div>
-            <div class="bg-white p-4 rounded-xl border-2 border-slate-200">
+            <div id="dilemma-panel">
+                <div id="dilemma-picked">尚未選擇</div>
+                <label id="dilemma-reason-label" for="dilemma-reason">一句理由</label>
+                <textarea id="dilemma-reason" rows="5" maxlength="120" placeholder="例如：我選這一邊，因為某人會遇上某個後果。"></textarea>
+                <p id="dilemma-tip" class="dilemma-tip"></p>
+                <p id="dilemma-error" role="alert"></p>
+                <button type="button" id="dilemma-submit" onclick="submitDilemma()">交這一句</button>
+            </div>
+            <div id="stability-panel" class="bg-white p-4 rounded-xl border-2 border-slate-200">
                 <div id="ui-stability-label" class="text-xs font-bold text-slate-400 mb-1">穩定度 (STABILITY)</div>
                 <div class="w-full h-4 bg-slate-200 rounded-full overflow-hidden">
                     <div id="stability-bar" class="w-full h-full bg-green-500 transition-all"></div>
@@ -470,11 +661,12 @@
             el = document.getElementById("ui-win-title");
             if (el) el.textContent = ui("winTitle");
             el = document.getElementById("ui-win-subtitle");
-            if (el) el.textContent = ui("winSubtitle");
+            if (el && !state.dilemmaLocked) el.textContent = ui("winSubtitle");
             el = document.getElementById("ui-win-next");
             if (el) el.textContent = ui("winNext");
             el = document.getElementById("architect-msg");
             if (el && !el.dataset.liveMsg) el.textContent = ui("architectStart");
+            refreshSidebarForLevel();
         }
 
         function wireI18n() {
@@ -572,10 +764,10 @@
                 blocks: [
                     { id: 1, type: "intro", text: "引言：強健的體魄是成功的基石，運動至關重要。" },
                     { id: 2, type: "point", text: "論點：恆常運動能增強心肺功能，預防疾病。" },
-                    { id: 3, type: "evidence", text: "數據：研究顯示每週運動三次的人患病率較低。" },
+                    { id: 3, type: "evidence", text: "例子：恆常步行、游泳或打球，有助維持體能。" },
                     { id: 4, type: "reasoning", text: "論證：身體健康才能有精力應付學業和工作。" },
                     { id: 5, type: "point", text: "論點：運動能幫助釋放壓力，保持心理健康。" },
-                    { id: 6, type: "conclusion", text: "結語：我們應在此忙碌的生活中抽空運動。" }
+                    { id: 6, type: "conclusion", text: "結語：我們應在忙碌的生活裡抽空運動。" }
                 ],
                 solution: [1, 2, 3, 4, 5, 6]
             },
@@ -583,27 +775,41 @@
             {
                 title: "學業與興趣",
                 blocks: [
-                    { id: 1, type: "intro", text: "引言：許多學生如果在學業和興趣之間掙扎，其實兩者可並存。" },
+                    { id: 1, type: "intro", text: "引言：許多學生在學業和興趣之間掙扎，其實兩者可以並存。" },
                     { id: 2, type: "point", text: "論點：發展興趣能調劑身心，反而有助學業。" },
-                    { id: 3, type: "evidence", text: "例子：愛因斯坦熱愛小提琴，這啟發了他的科學思考。" },
+                    { id: 3, type: "evidence", text: "例子：有同學溫習過後練琴或運動，精神恢復，再回到課業。" },
                     { id: 4, type: "reasoning", text: "論證：適當的放鬆能提高學習效率。" },
                     { id: 5, type: "point", text: "論點：興趣能培養專注力和堅毅精神。" },
                     { id: 6, type: "conclusion", text: "結語：只要分配得宜，學業與興趣可以雙贏。" }
                 ],
                 solution: [1, 2, 3, 4, 5, 6]
             },
-            // Level 8
+            // Level 8 誠信：兩難，不是口號排序
             {
-                title: "誠信的重要",
-                blocks: [
-                    { id: 1, type: "intro", text: "引言：誠信是立身處世之本，比金錢更珍貴。" },
-                    { id: 2, type: "point", text: "論點：誠實的人能贏得他人的信任和尊重。" },
-                    { id: 3, type: "evidence", text: "故事：曾子殺豬教子的故事展現了守信的價值。" },
-                    { id: 4, type: "reasoning", text: "論證：失去誠信，就如同大廈失去地基，無法立足。" },
-                    { id: 5, type: "point", text: "論點：社會運作需要建立在互信的基礎之上。" },
-                    { id: 6, type: "conclusion", text: "結語：我們必須時刻堅守誠信原則。" }
-                ],
-                solution: [1, 2, 3, 4, 5, 6]
+                title: "誠信：告發還是沉默",
+                mode: "dilemma",
+                scenario: "中三班長阿明在小測時，看見同桌好友阿傑把筆記藏在桌下偷看。交卷後，老師說這份卷會計入平時分，並問有沒有人看見不公平的事。阿明若現在說出來，阿傑會被記過，兩人的友誼很可能破裂。他若保持沉默，誠實作答的同學就要和作弊的人拿同一個平時分。",
+                people: ["阿明", "阿傑"],
+                stakes: ["記過", "友誼", "平時分", "作弊", "吃虧", "公平", "破裂"],
+                slogans: ["立身處世", "誠信是金", "言而有信", "人無信不立", "一諾千金", "誠實為上", "失去地基"],
+                choices: [
+                    {
+                        id: "speak",
+                        label: "現在告訴老師",
+                        result: "說出來之後，平時分可以按有沒有作弊分開看待，但阿傑會被記過，阿明和他的友誼很可能破裂。",
+                        counter: "他們會說：朋友犯錯，可以事後再勸，不必馬上告訴老師。一次小測就讓阿傑被記過，友誼很可能保不住，他以後也不敢再信任阿明。",
+                        marks: ["告訴老師", "向老師說", "說出來", "揭發", "告發", "舉報"],
+                        align: "你選的是「現在告訴老師」。請用自己的句子寫明這個做法，以及它帶來的後果。"
+                    },
+                    {
+                        id: "silent",
+                        label: "保持沉默，放學後才勸阿傑",
+                        result: "保持沉默的話，友誼暫時保住，放學後仍可勸阿傑，但這次偷看得來的平時分仍然算數，誠實作答的同學一樣吃虧。",
+                        counter: "他們會說：試卷已經交了，阿傑偷看得來的平時分仍會計入。事後才勸，改變不了這次不公，誠實作答的同學只會白白吃虧。",
+                        marks: ["沉默", "不告訴", "別告訴", "不說出", "放學後", "私下勸"],
+                        align: "你選的是「保持沉默，放學後才勸阿傑」。請用自己的句子寫明這個做法，以及它帶來的後果。"
+                    }
+                ]
             },
             // Level 9
             {
@@ -611,25 +817,39 @@
                 blocks: [
                     { id: 1, type: "intro", text: "引言：互聯網普及帶來了便利，也衍生了網絡欺凌問題。" },
                     { id: 2, type: "point", text: "論點：網絡語言暴力對受害者造成嚴重的心理傷害。" },
-                    { id: 3, type: "evidence", text: "新聞：不少年輕人因受網絡攻擊而患上抑鬱症。" },
+                    { id: 3, type: "evidence", text: "例子：長期被惡意留言攻擊的人，往往感到害怕，不願再上學。" },
                     { id: 4, type: "reasoning", text: "論證：躲在螢幕後的惡意攻擊比肢體暴力更難防範。" },
                     { id: 5, type: "point", text: "論點：我們要學會負責任地使用社交網絡。" },
                     { id: 6, type: "conclusion", text: "結語：杜絕網絡欺凌，共建友善網上環境。" }
                 ],
                 solution: [1, 2, 3, 4, 5, 6]
             },
-            // Level 10
+            // Level 10 尊重：兩難，不是口號排序
             {
-                title: "尊重他人",
-                blocks: [
-                    { id: 1, type: "intro", text: "引言：尊重是人與人相處的潤滑劑。" },
-                    { id: 2, type: "point", text: "論點：懂得尊重他人，才能獲得他人的尊重。" },
-                    { id: 3, type: "evidence", text: "名言：敬人者人恆敬之。" },
-                    { id: 4, type: "reasoning", text: "論證：尊重意味著接納不同的意見和包容差異。" },
-                    { id: 5, type: "point", text: "論點：互相尊重的社會能減少衝突和紛爭。" },
-                    { id: 6, type: "conclusion", text: "結語：讓我們從禮貌待人開始學習尊重。" }
-                ],
-                solution: [1, 2, 3, 4, 5, 6]
+                title: "尊重：當眾糾正還是私下說明",
+                mode: "dilemma",
+                scenario: "小組匯報只剩半分鐘。新同學阿琳普通話不流利，把實驗結論說成相反的意思。組員阿凱知道，立刻當眾補上正確結論，小組分數較安全，但阿琳會在全班面前被否定。他若等匯報結束才私下告訴她，阿琳不必當眾難堪，可是全班聽到的結論是錯的，小組可能因此失分。",
+                people: ["阿琳", "阿凱"],
+                stakes: ["結論", "分數", "失分", "難堪", "否定", "全班", "開口", "當眾"],
+                slogans: ["敬人者人恆敬之", "潤滑劑", "己所不欲", "禮貌待人"],
+                choices: [
+                    {
+                        id: "aloud",
+                        label: "立刻當眾補上正確結論",
+                        result: "當眾補上正確結論後，匯報內容被改對，小組分數較安全，但阿琳會覺得自己在全班面前被否定。",
+                        counter: "他們會說：匯報後再解釋也來得及。當眾訂正等於向全班宣佈阿琳說錯了，她以後可能不敢再開口。",
+                        marks: ["當眾", "補上", "糾正", "指出"],
+                        align: "你選的是「立刻當眾補上正確結論」。請用自己的句子寫明這個做法，以及它帶來的後果。"
+                    },
+                    {
+                        id: "aside",
+                        label: "匯報結束後，只私下告訴阿琳",
+                        result: "私下才告訴阿琳的話，她就不會當眾難堪，但全班聽到的結論仍然是錯的，小組也可能失分。",
+                        counter: "他們會說：尊重不是把錯誤包起來。錯的結論留在匯報裡，全班都聽錯，小組也可能失分，阿琳還失去當場改過的機會。",
+                        marks: ["私下", "不當眾", "事後"],
+                        align: "你選的是「匯報結束後，只私下告訴阿琳」。請用自己的句子寫明這個做法，以及它帶來的後果。"
+                    }
+                ]
             },
             // Level 11
             {
@@ -638,24 +858,38 @@
                     { id: 1, type: "intro", text: "引言：人生不如意事十常八九，關鍵在於如何面對。" },
                     { id: 2, type: "point", text: "論點：挫折是成長的養分，能磨練意志。" },
                     { id: 3, type: "evidence", text: "例子：愛迪生發明電燈前經歷了無數次失敗。" },
-                    { id: 4, type: "reasoning", text: "論證：失敗為成功之母，從錯誤中學習比順境更多。" },
+                    { id: 4, type: "reasoning", text: "論證：從錯誤裡學到的，往往比在順境裡學到的更多。" },
                     { id: 5, type: "point", text: "論點：戰勝挫折能帶來巨大的成就感和自信。" },
                     { id: 6, type: "conclusion", text: "結語：勇於面對挫折，便能邁向成功。" }
                 ],
                 solution: [1, 2, 3, 4, 5, 6]
             },
-            // Level 12
+            // Level 12 團結：兩難，不是口號排序
             {
-                title: "合作的力量",
-                blocks: [
-                    { id: 1, type: "intro", text: "引言：俗語說「團結就是力量」，合作在現代社會尤為重要。" },
-                    { id: 2, type: "point", text: "論點：團隊合作能集思廣益，解決複雜問題。" },
-                    { id: 3, type: "evidence", text: "例子：許多偉大的科研成果都是團隊共同努力的結晶。" },
-                    { id: 4, type: "reasoning", text: "論證：三個臭皮匠，勝過一個諸葛亮。" },
-                    { id: 5, type: "point", text: "論點：分工合作能提高工作效率。" },
-                    { id: 6, type: "conclusion", text: "結語：學會與人合作，能創造更大的價值。" }
-                ],
-                solution: [1, 2, 3, 4, 5, 6]
+                title: "團結：跟多數還是要求改答案",
+                mode: "dilemma",
+                scenario: "班際問答比賽剩下最後一題，時間只剩二十秒。隊長依照多數人的意見，決定寫上光合作用。隊員阿晴對過筆記，認為正確答案是呼吸作用。她若要求隊伍改成呼吸作用，大家要在二十秒內重新確認，說不清就可能超時作廢。她若跟著多數，隊伍趕得及交卷，但答案錯了就全隊失分。",
+                people: ["阿晴", "隊長"],
+                stakes: ["光合作用", "呼吸作用", "二十秒", "失分", "超時", "作廢"],
+                slogans: ["團結就是力量", "三個臭皮匠", "勝過一個諸葛亮", "眾志成城", "衆志成城", "集思廣益", "分工合作"],
+                choices: [
+                    {
+                        id: "revise",
+                        label: "用剩下的二十秒要求改成呼吸作用",
+                        result: "阿晴若堅持改成呼吸作用，有機會得分，但二十秒內說不清，全隊可能超時，答案作廢。",
+                        counter: "他們會說：比賽中突然推翻多數，是不信任隊友。二十秒內阿晴硬要更換答案，可能連原先的光合作用也交不出。",
+                        marks: ["改成呼吸", "改答案", "堅持改"],
+                        align: "你選的是「用剩下的二十秒要求改成呼吸作用」。請用自己的句子寫明這個做法，以及它帶來的後果。"
+                    },
+                    {
+                        id: "conform",
+                        label: "跟著多數，寫上光合作用",
+                        result: "隊長跟著多數寫上光合作用，隊伍趕得及在二十秒內交卷，但這個答案是錯的話，全隊一起失分。",
+                        counter: "他們會說：明知那一條是錯的，仍舊跟著走，只是把錯誤一起承擔。阿晴手上的筆記寫的是呼吸作用，全隊不該一起失分。",
+                        marks: ["光合作用", "跟著多數", "照寫"],
+                        align: "你選的是「跟著多數，寫上光合作用」。請用自己的句子寫明這個做法，以及它帶來的後果。"
+                    }
+                ]
             },
             // Level 13
             {
@@ -676,7 +910,7 @@
                 blocks: [
                     { id: 1, type: "intro", text: "引言：守時是一種美德，也反映了一個人的素養。" },
                     { id: 2, type: "point", text: "論點：準時是對他人時間的尊重。" },
-                    { id: 3, type: "evidence", text: "例子：遲到會各會議延誤，浪費大家的時間。" },
+                    { id: 3, type: "evidence", text: "例子：遲到會令會議延誤，浪費大家的時間。" },
                     { id: 4, type: "reasoning", text: "論證：守信守時能建立良好的個人信譽。" },
                     { id: 5, type: "point", text: "論點：養成準時習慣有助於規劃生活，提高效率。" },
                     { id: 6, type: "conclusion", text: "結語：做個守時的人，利人又利己。" }
@@ -701,7 +935,7 @@
                 title: "科技的兩面",
                 blocks: [
                     { id: 1, type: "intro", text: "引言：科技日新月異，徹底改變了人類的生活模式。" },
-                    { id: 2, type: "point", text: "優點：科技提高了生產力和生活品質。" },
+                    { id: 2, type: "point", text: "優點：科技提高了生產力和生活質素。" },
                     { id: 3, type: "evidence", text: "例子：互聯網縮短了人與人的距離，醫療科技延長壽命。" },
                     { id: 4, type: "point", text: "隱憂：科技發展也帶來了私隱和倫理問題。" },
                     { id: 5, type: "evidence", text: "例子：人工智能可能會取代部分人類的工作。" },
@@ -742,7 +976,7 @@
                     { id: 1, type: "intro", text: "引言：傳統節日承載著豐富的文化內涵。" },
                     { id: 2, type: "point", text: "論點：節日慶祝活動能凝聚家庭和社區。" },
                     { id: 3, type: "evidence", text: "例子：中秋節一家團圓賞月，增進親情。" },
-                    { id: 4, type: "reasoning", text: "論證：這些儀式感讓現代人不要忘記根源。" },
+                    { id: 4, type: "reasoning", text: "論證：這些儀式能提醒現代人記着自己的根源。" },
                     { id: 5, type: "point", text: "論點：傳統節日是文化傳承的重要載體。" },
                     { id: 6, type: "conclusion", text: "結語：我們應重視並傳承優秀的節日文化。" }
                 ],
@@ -754,7 +988,7 @@
                 blocks: [
                     { id: 1, type: "intro", text: "引言：在這知識爆炸的時代，學習不應止於校園。" },
                     { id: 2, type: "point", text: "論點：終身學習能讓我們適應快速變化的社會。" },
-                    { id: 3, type: "evidence", text: "現象：許多新興行業需要不斷學習新技能才能勝任。" },
+                    { id: 3, type: "evidence", text: "現象：許多新興行業要求從業者不斷學習新技能，才能勝任工作。" },
                     { id: 4, type: "reasoning", text: "論證：學無止境，持續進修能提升個人競爭力。" },
                     { id: 5, type: "point", text: "論點：學習新事物能豐富精神生活，保持年輕心態。" },
                     { id: 6, type: "conclusion", text: "結語：活到老，學到老，讓生命不斷增值。" }
@@ -767,12 +1001,276 @@
             levelIdx: 0,
             placedBlocks: [],
             stability: 100,
-            isAnimating: false
+            isAnimating: false,
+            dilemmaChoice: null,
+            dilemmaLocked: false
         };
+
+        var DILEMMA_LEAD = "兩邊都可以選，沒有唯一標準答案。請看具體事例和反方，再用自己的一句話寫出你接受哪一個後果。";
+        var DILEMMA_TIP = "句中要出現左方那個人的名字，以及這一邊帶來的後果。不要把口號排成句子。";
+        var DILEMMA_HINT = "先在左方選一邊。再用自己的一句話寫理由：要有事例裡的人，以及這個做法的後果，不要寫口號。";
+        var DILEMMA_PICK = "請先選一邊。";
+        var DILEMMA_EMPTY = "請用一句話寫下理由。";
+        var DILEMMA_COPY = "請用自己的一句話，不要整段抄左方或提示的文字。";
+        var DILEMMA_ONE = "請只寫一句，不要分成兩句。";
+        var DILEMMA_SLOGAN = "不要用口號代替理由。請直接寫這件事裡的人，以及你選了之後會發生的後果。";
+        var DILEMMA_JUNK = "請寫一句完整的理由，不要重複同一組字。";
+        var DILEMMA_SHORT = "這句太短。請寫成完整的一句，說明誰會遇上甚麼後果。";
+        var DILEMMA_LONG = "請收成一句，不要寫成一段。";
+        var DILEMMA_MISS = "這一句還沒有同時寫到事例裡的人，和他會遇上的具體後果。請看左方，把這兩樣寫進自己的句子。";
+        var DILEMMA_LINK = "請用「因為」「如果」或「會」把人和後果連成一句原因，不要只把詞語排在一起。";
+        var DILEMMA_LINKS = ["因為", "所以", "如果", "若", "會", "便", "讓", "被", "因此", "於是", "才能", "否則", "導致", "以免", "的話"];
 
         function init() {
             loadLevel(state.levelIdx);
             showArchitect(ui("welcome"), 3000);
+        }
+
+        function refreshSidebarForLevel() {
+            var level = LEVELS[state.levelIdx];
+            var title = document.getElementById("ui-sidebar-title");
+            var hint = document.getElementById("ui-sidebar-hint");
+            if (!title || !hint) return;
+            if (level && level.mode === "dilemma") {
+                title.textContent = "你的立場";
+                hint.textContent = DILEMMA_HINT;
+                return;
+            }
+            title.textContent = ui("sidebarTitle");
+            hint.textContent = ui("sidebarHint");
+        }
+
+        function setDilemmaOpen(open) {
+            var board = document.getElementById("dilemma-board");
+            var panel = document.getElementById("dilemma-panel");
+            if (board) board.classList.toggle("is-open", open);
+            if (panel) panel.classList.toggle("is-open", open);
+            document.body.classList.toggle("dilemma-on", open);
+            document.getElementById("crane").style.display = open ? "none" : "";
+            document.getElementById("building-site").style.display = open ? "none" : "flex";
+            document.getElementById("block-pool").style.display = open ? "none" : "";
+            document.getElementById("stability-panel").style.display = open ? "none" : "";
+        }
+
+        function foldText(value) {
+            return (value || "").replace(/\s+/g, "").replace(/[，。！？、；：,.!?;:「」『』（）()“”‘’"']/g, "");
+        }
+
+        function isNearCopy(folded, source) {
+            var base = foldText(source);
+            if (!base || base.length < 8) return false;
+            if (folded === base) return true;
+            return folded.indexOf(base) !== -1 && (folded.length - base.length) < 12;
+        }
+
+        function hasAny(text, list) {
+            if (!list) return false;
+            for (var i = 0; i < list.length; i++) {
+                if (list[i] && text.indexOf(list[i]) !== -1) return true;
+            }
+            return false;
+        }
+
+        function hasMark(text, mark) {
+            var from = 0;
+            while (from < text.length) {
+                var at = text.indexOf(mark, from);
+                if (at === -1) return false;
+                var slice = text.slice(Math.max(0, at - 4), at);
+                if (!/[不沒別未]/.test(slice)) return true;
+                from = at + mark.length;
+            }
+            return false;
+        }
+
+        function hasAnyMark(text, marks) {
+            if (!marks) return false;
+            for (var i = 0; i < marks.length; i++) {
+                if (hasMark(text, marks[i])) return true;
+            }
+            return false;
+        }
+
+        function findDilemmaChoice(level) {
+            if (!level || !level.choices) return null;
+            for (var i = 0; i < level.choices.length; i++) {
+                if (level.choices[i].id === state.dilemmaChoice) return level.choices[i];
+            }
+            return null;
+        }
+
+        function dilemmaSources(level) {
+            var list = [level.scenario, DILEMMA_LEAD, DILEMMA_TIP, DILEMMA_HINT, DILEMMA_MISS, DILEMMA_LINK, DILEMMA_SLOGAN, DILEMMA_COPY, DILEMMA_SHORT, DILEMMA_LONG, DILEMMA_ONE, DILEMMA_EMPTY, DILEMMA_PICK, DILEMMA_JUNK];
+            for (var i = 0; i < level.choices.length; i++) {
+                var choice = level.choices[i];
+                list.push(choice.label, choice.result, choice.counter, choice.align);
+            }
+            return list;
+        }
+
+        function dilemmaError(level, raw) {
+            if (!state.dilemmaChoice) return DILEMMA_PICK;
+            var text = (raw || "").replace(/\s+/g, "");
+            if (!text) return DILEMMA_EMPTY;
+            var folded = foldText(text);
+            var sources = dilemmaSources(level);
+            for (var i = 0; i < sources.length; i++) {
+                if (folded && isNearCopy(folded, sources[i])) return DILEMMA_COPY;
+            }
+            var ends = text.match(/[。！？]/g);
+            if (ends && ends.length > 1) return DILEMMA_ONE;
+            for (var s = 0; s < level.slogans.length; s++) {
+                if (text.indexOf(level.slogans[s]) !== -1) return DILEMMA_SLOGAN;
+            }
+            if (/(.{2,8})\1{2,}/.test(folded)) return DILEMMA_JUNK;
+            if (folded.length < 22) return DILEMMA_SHORT;
+            if (folded.length > 80) return DILEMMA_LONG;
+            if (!hasAny(text, level.people) || !hasAny(text, level.stakes)) return DILEMMA_MISS;
+            if (!hasAny(text, DILEMMA_LINKS)) return DILEMMA_LINK;
+            var choice = findDilemmaChoice(level);
+            if (!choice) return DILEMMA_PICK;
+            if (!hasAnyMark(text, choice.marks)) return choice.align;
+            return "";
+        }
+
+        function makeKicker(text, tone) {
+            var p = document.createElement("p");
+            p.className = "dilemma-kicker" + (tone ? (" " + tone) : "");
+            p.textContent = text;
+            return p;
+        }
+
+        function renderChoiceCard(choice) {
+            var card = document.createElement("section");
+            card.className = "choice-card";
+            card.id = "choice-" + choice.id;
+            card.appendChild(makeKicker("做法", "tone-act"));
+            var label = document.createElement("p");
+            label.className = "choice-label";
+            label.textContent = choice.label;
+            card.appendChild(label);
+            card.appendChild(makeKicker("選了之後", ""));
+            var result = document.createElement("p");
+            result.className = "dilemma-body";
+            result.textContent = choice.result;
+            card.appendChild(result);
+            card.appendChild(makeKicker("反方", "tone-counter"));
+            var counter = document.createElement("p");
+            counter.className = "dilemma-body";
+            counter.textContent = choice.counter;
+            card.appendChild(counter);
+            var btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "pick-btn";
+            btn.textContent = "選這一邊";
+            btn.setAttribute("aria-pressed", "false");
+            btn.addEventListener("click", function () {
+                selectDilemmaChoice(choice.id);
+            });
+            card.appendChild(btn);
+            return card;
+        }
+
+        function renderDilemmaBoard(level) {
+            var board = document.getElementById("dilemma-board");
+            board.innerHTML = "";
+            var scenario = document.createElement("section");
+            scenario.className = "dilemma-card";
+            scenario.appendChild(makeKicker("具體事例", "tone-case"));
+            var title = document.createElement("h2");
+            title.className = "dilemma-title";
+            title.textContent = level.title;
+            scenario.appendChild(title);
+            var lead = document.createElement("p");
+            lead.className = "dilemma-lead";
+            lead.textContent = DILEMMA_LEAD;
+            scenario.appendChild(lead);
+            var body = document.createElement("p");
+            body.className = "dilemma-body";
+            body.textContent = level.scenario;
+            scenario.appendChild(body);
+            board.appendChild(scenario);
+            for (var i = 0; i < level.choices.length; i++) {
+                board.appendChild(renderChoiceCard(level.choices[i]));
+            }
+            board.scrollTop = 0;
+        }
+
+        function selectDilemmaChoice(id) {
+            if (state.dilemmaLocked) return;
+            var level = LEVELS[state.levelIdx];
+            if (!level || level.mode !== "dilemma") return;
+            state.dilemmaChoice = id;
+            var chosen = null;
+            for (var i = 0; i < level.choices.length; i++) {
+                var choice = level.choices[i];
+                var card = document.getElementById("choice-" + choice.id);
+                var on = choice.id === id;
+                if (card) {
+                    card.classList.toggle("selected", on);
+                    var btn = card.querySelector(".pick-btn");
+                    if (btn) {
+                        btn.textContent = on ? "已選這一邊" : "選這一邊";
+                        btn.setAttribute("aria-pressed", on ? "true" : "false");
+                    }
+                }
+                if (on) chosen = choice;
+            }
+            var picked = document.getElementById("dilemma-picked");
+            if (picked) picked.textContent = chosen ? ("已選：" + chosen.label) : "尚未選擇";
+            var err = document.getElementById("dilemma-error");
+            if (err) err.textContent = "";
+        }
+
+        function mountDilemma(level) {
+            state.dilemmaChoice = null;
+            state.dilemmaLocked = false;
+            setDilemmaOpen(true);
+            refreshSidebarForLevel();
+            var reason = document.getElementById("dilemma-reason");
+            if (reason) {
+                reason.value = "";
+                reason.placeholder = "例如：我選這一邊，因為某人會遇上某個後果。";
+            }
+            var tip = document.getElementById("dilemma-tip");
+            if (tip) tip.textContent = DILEMMA_TIP;
+            var err = document.getElementById("dilemma-error");
+            if (err) err.textContent = "";
+            var picked = document.getElementById("dilemma-picked");
+            if (picked) picked.textContent = "尚未選擇";
+            var submitBtn = document.getElementById("dilemma-submit");
+            if (submitBtn) submitBtn.disabled = false;
+            renderDilemmaBoard(level);
+            showArchitect("這關不是排列口號。請看具體事例和反方，選一邊，並寫一句扣住後果的理由。", 4200);
+        }
+
+        function submitDilemma() {
+            if (state.dilemmaLocked) return;
+            var level = LEVELS[state.levelIdx];
+            if (!level || level.mode !== "dilemma") return;
+            var reasonEl = document.getElementById("dilemma-reason");
+            var message = dilemmaError(level, reasonEl ? reasonEl.value : "");
+            var err = document.getElementById("dilemma-error");
+            if (message) {
+                if (err) err.textContent = message;
+                showArchitect(message, 3200);
+                return;
+            }
+            state.dilemmaLocked = true;
+            var submitBtn = document.getElementById("dilemma-submit");
+            if (submitBtn) submitBtn.disabled = true;
+            if (err) err.textContent = "";
+            var chosen = findDilemmaChoice(level);
+            var winSub = document.getElementById("ui-win-subtitle");
+            if (winSub) {
+                winSub.textContent = chosen
+                    ? ("你選了「" + chosen.label + "」，這一句扣住了事例，不是口號。")
+                    : "這一句扣住了事例，不是口號。";
+            }
+            showArchitect("這句扣住了事例和後果，不是口號。", 1800);
+            setTimeout(function () {
+                document.getElementById("win-screen").style.display = "flex";
+            }, 700);
         }
 
         function loadLevel(idx) {
@@ -782,15 +1280,34 @@
                 return;
             }
 
+            state.levelIdx = idx;
             state.placedBlocks = [];
             state.stability = 100;
+            state.isAnimating = false;
+            state.dilemmaChoice = null;
+            state.dilemmaLocked = false;
             updateStability(0);
 
             const level = LEVELS[idx];
             document.getElementById('level-display').textContent = idx + 1;
-            document.getElementById('building-site').innerHTML = ''; // Clear site
+            document.getElementById('building-site').innerHTML = '';
+            document.getElementById('win-screen').style.display = 'none';
+            var winSub = document.getElementById('ui-win-subtitle');
+            if (winSub) winSub.textContent = ui("winSubtitle");
 
-            // Shuffle pool
+            if (level.mode === "dilemma") {
+                mountDilemma(level);
+                return;
+            }
+            mountStructure(level);
+        }
+
+        function mountStructure(level) {
+            setDilemmaOpen(false);
+            var board = document.getElementById("dilemma-board");
+            if (board) board.innerHTML = "";
+            refreshSidebarForLevel();
+
             const pool = document.getElementById('block-pool');
             pool.innerHTML = '';
             const shuffled = [...level.blocks].sort(() => Math.random() - 0.5);
@@ -808,8 +1325,6 @@
                 item.onclick = () => spawnBlock(b, item);
                 pool.appendChild(item);
             });
-
-            document.getElementById('win-screen').style.display = 'none';
         }
 
         function spawnBlock(blockData, uiItem) {

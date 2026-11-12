@@ -133,7 +133,7 @@
         opts: ["3 m/s² east 向東", "48 m/s² east", "0.33 m/s² east", "3 m/s² west 向西"], a: "3 m/s² east 向東",
         hint: "a = F/m = 12/4 = 3 m/s², same direction as F_net. 加速度方向與淨力相同。" },
       { id: "g3", level: 1, q: "The SI unit of force is the newton (N). 1 N is defined as…", qZh: "力的 SI 單位是牛頓(N)。1 N 定義為…",
-        opts: ["The force giving 1 kg an acceleration of 1 m/s² 使 1 kg 獲 1 m/s² 加速度的力", "The weight of 1 kg on Earth 地球上 1 kg 的重量", "1 joule per metre 每米一焦耳", "1 kg·m/s 動量"], a: "The force giving 1 kg an acceleration of 1 m/s² 使 1 kg 獲 1 m/s² 加速度的力",
+        opts: ["The force giving 1 kg an acceleration of 1 m/s² 使 1 kg 獲 1 m/s² 加速度的力", "The weight of 1 kg on Earth 地球上 1 kg 的重量", "1 pascal (N/m²) 帕斯卡", "1 kg·m/s 動量"], a: "The force giving 1 kg an acceleration of 1 m/s² 使 1 kg 獲 1 m/s² 加速度的力",
         hint: "From F = ma with m = 1 kg, a = 1 m/s² → F = 1 N. 由 F=ma 推得。" },
       { id: "g4", level: 2, q: "A student pushes a wall. The wall pushes back on the student. These forces are…", qZh: "學生推牆,牆對學生有反作用力。這對力…",
         opts: ["An action–reaction pair on different bodies 作用於不同物體的相互作用力", "Both on the student 都作用於學生", "A balanced pair on the wall cancelling out 在牆上互相抵消的平衡力", "Always unequal in size 大小一定不等"], a: "An action–reaction pair on different bodies 作用於不同物體的相互作用力",
@@ -166,10 +166,12 @@
         hint: "Rocket pushes gas back; gas pushes rocket forward — different bodies. 相互作用力作用於不同物體。" }
     ];
 
+    function phyBeep(ok){try{var c=phyBeep.c||(phyBeep.c=new (window.AudioContext||window.webkitAudioContext)());if(c.state==="suspended")c.resume();var o=c.createOscillator(),g=c.createGain();o.type="sine";o.frequency.value=ok?880:220;g.gain.setValueAtTime(0.0001,c.currentTime);g.gain.exponentialRampToValueAtTime(0.06,c.currentTime+0.02);g.gain.exponentialRampToValueAtTime(0.0001,c.currentTime+0.16);o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+0.17);}catch(e){}}
     function LearnExtra() {
       const [m, setM] = useState(2);
       const [F, setF] = useState(10);
       const [running, setRunning] = useState(true);
+      const [showA, setShowA] = useState(false);
       const cv = useRef(null);
       const st = useRef({ x: 80, v: 0, t: 0 });
       const a = F / m;
@@ -198,7 +200,7 @@
         }
         raf = requestAnimationFrame(frame);
         return () => cancelAnimationFrame(raf);
-      }, [F, m, a, running]);
+      }, [F, m, a, running, showA]);
 
       function draw() {
         const c = cv.current;
@@ -236,8 +238,12 @@
         ctx.fill();
         ctx.fillText("F = " + F + " N", bx + bw + 16, by - bh / 2 - 12);
         ctx.fillStyle = "#94a3b8";
-        ctx.fillText("a = F/m = " + a.toFixed(2) + " m/s²", 28, 28);
-        ctx.fillText("v ≈ " + st.current.v.toFixed(2) + " m/s (model)", 28, 48);
+        if (showA) {
+          ctx.fillText("a = F/m = " + a.toFixed(2) + " m/s²", 28, 28);
+          ctx.fillText("v ≈ " + st.current.v.toFixed(2) + " m/s（與 F 同向）", 28, 48);
+        } else {
+          ctx.fillText("先拖動力或質量，再核對 a", 28, 28);
+        }
       }
 
       return (
@@ -247,15 +253,16 @@
           <div className="grid sm:grid-cols-2 gap-3">
             <label className="text-sm font-semibold bg-white border border-slate-200 rounded-xl p-3">
               Net force F · {F} N
-              <input type="range" min="0" max="30" value={F} onChange={e => setF(+e.target.value)} className="w-full mt-2" />
+              <input type="range" min="0" max="30" value={F} onChange={e => { setF(+e.target.value); setShowA(false); }} className="w-full mt-2" />
             </label>
             <label className="text-sm font-semibold bg-white border border-slate-200 rounded-xl p-3">
               Mass m · {m} kg
-              <input type="range" min="1" max="10" value={m} onChange={e => setM(+e.target.value)} className="w-full mt-2" />
+              <input type="range" min="1" max="10" value={m} onChange={e => { setM(+e.target.value); setShowA(false); }} className="w-full mt-2" />
             </label>
           </div>
           <div className="flex flex-wrap gap-2 items-center">
-            <span className="px-3 py-1.5 rounded-full bg-orange-100 text-orange-900 font-bold text-sm">a = {a.toFixed(2)} m/s²</span>
+            <button type="button" onClick={() => { setShowA(true); phyBeep(true); }} className="px-3 py-2 rounded-xl text-sm font-bold text-white min-h-[44px]" style={{background: ACCENT}}>核對 Check</button>
+            {showA && <span className="px-3 py-1.5 rounded-full bg-orange-100 text-orange-900 font-bold text-sm">a = {a.toFixed(2)} m/s²（與淨力同向）</span>}
             <button type="button" onClick={() => setRunning(r => !r)} className="px-3 py-2 rounded-xl text-sm font-semibold bg-slate-800 text-white min-h-[44px]">{running ? "⏸ Pause" : "▶ Play"}</button>
             <button type="button" onClick={() => { st.current = { x: 80, v: 0, t: 0 }; }} className="px-3 py-2 rounded-xl text-sm font-semibold bg-white border border-slate-200 min-h-[44px]">↺ Reset</button>
           </div>

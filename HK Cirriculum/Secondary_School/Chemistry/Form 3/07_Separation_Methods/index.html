@@ -2,79 +2,204 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>07_Separation_Methods</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="../../../../common/babel-react-classic.js"></script>
-  <script src="../../../../common/learn-from-zero.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>分離方法 | Separation methods</title>
+  <link rel="stylesheet" href="../../lesson.css" />
   <style>
-    body { font-family: "IBM Plex Sans", system-ui, sans-serif; background-color: #f8fafc; color: #0f172a; min-height: 100vh; }
+    .scene { background: #ecfeff; border: 1px solid #a5f3fc; border-radius: 12px; padding: 12px 14px; margin-top: 10px; }
+    .prompt { font-size: 1.15rem; font-weight: 800; margin: 8px 0; }
+    #chem-feedback.ok { background: #ecfdf5; color: #065f46; }
+    #chem-feedback.no { background: #fef2f2; color: #991b1b; }
   </style>
-  <!-- NCS i18n fleet kit (auto-injected) -->
-  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
-  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
-  <style data-ncs-kit="fleet-bridge">
-    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
-    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
-      display: none !important;
-    }
-  </style>
-  <script data-ncs-kit="fleet-init">
-  (function () {
-    function hideLegacyToggles() {
-      document.body.classList.add("ncs-fleet-mounted");
-      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
-        var label = (btn.textContent || "").trim();
-        if (label === "EN" || label === "\u4E2D") {
-          btn.classList.add("ncs-hide-when-ncs-fleet");
-        }
-      });
-      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
-        el.classList.add("ncs-hide-when-ncs-fleet");
-      });
-    }
-    function boot() {
-      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
-      window.NcsI18n.init({
-        chromePath: "../../../../_shared/ncs-chrome.json",
-        target: document.body
-      }).then(hideLegacyToggles);
-    }
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", boot);
-    } else {
-      boot();
-    }
-  })();
-  </script>
 </head>
 <body>
-  <div id="root"></div>
-  <script type="text/babel" data-presets="react-classic">
-    const { useState } = React;
-    
-    function App() {
-      return (
-        <div className="max-w-4xl mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-4">07 Separation Methods</h1>
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 mb-8 text-center">
-            <div className="w-full h-64 bg-slate-100 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 mb-4">
-              <span className="text-slate-400 font-medium">[ Interactive Canvas Placeholder ]</span>
-            </div>
-            <p className="text-slate-500">This interactive lab is currently under development.</p>
-          </div>
-          <LearnFromZero />
-        </div>
-      );
+  <section class="chem-learn" data-chem-entry="1">
+    <h2>學習目標</h2>
+    <ul>
+      <li>按溶解、分層、沸點和色素移動選擇分離方法。</li>
+      <li>分辨過濾、蒸發、蒸餾、分液和紙色層法。</li>
+      <li>只選方法，不使用溫度、溶劑名稱或用量。</li>
+    </ul>
+    <p id="chem-feedback" role="status">先看混合物要留下甚麼，再選一種方法。</p>
+  </section>
+  <main data-chem-silent>
+    <div class="panel">
+      <h1>分離方法</h1>
+      <p class="muted">只做一件事：為這個混合物選一種分離方法。</p>
+      <p class="muted" id="progress">第 1 / 5 題</p>
+      <p class="prompt" id="mix"></p>
+      <p id="want"></p>
+      <div class="scene" id="scene"></div>
+      <div class="row" id="choices">
+        <button type="button" data-method="filter">過濾</button>
+        <button type="button" data-method="evaporate">蒸發</button>
+        <button type="button" data-method="distill">蒸餾</button>
+        <button type="button" data-method="separate">分液</button>
+        <button type="button" data-method="chrom">紙色層法</button>
+      </div>
+      <p class="row"><button type="button" class="alt" id="again">重新開始</button></p>
+      <p class="row"><a href="../index.html">返回中三</a></p>
+    </div>
+  </main>
+  <script src="../../lesson-kit.js"></script>
+  <script>
+    var items = [
+      {
+        mix: "泥沙和水",
+        want: "要分開泥沙和水，兩樣都留下。",
+        scene: "杯底有沉下的泥沙，上方是水。泥沙不溶於水。",
+        answer: "filter",
+        why: {
+          filter: "泥沙和水：正確。泥沙不溶於水，過濾時留在濾紙上，水可以通過，兩樣都能留下。",
+          evaporate: "泥沙和水：蒸發會把水趕走進空氣，水不能留下。要兩樣都留下，用過濾。",
+          distill: "泥沙和水：蒸餾是把液體變成蒸氣再冷凝來收集液體。泥沙已經不溶，用過濾即可。",
+          separate: "泥沙和水：分液用於兩種互不混溶、分成兩層的液體。泥沙是固體，不是另一層液體。",
+          chrom: "泥沙和水：紙色層法分開溶在同一溶劑裡的不同色素。泥沙不溶，也不是要分開的色素。"
+        }
+      },
+      {
+        mix: "食鹽水",
+        want: "要得到食鹽固體。",
+        scene: "食鹽已經溶解，杯子裡看不見固體顆粒。",
+        answer: "evaporate",
+        why: {
+          evaporate: "食鹽水取鹽：正確。食鹽溶於水，把水蒸發後食鹽留下。這裡不寫加熱時間。",
+          filter: "食鹽水取鹽：食鹽已經溶解，能穿過濾紙，過濾得不到食鹽固體。",
+          distill: "食鹽水取鹽：蒸餾用來收集冷凝後的液體。要的是食鹽固體時，應把水蒸發掉。",
+          separate: "食鹽水取鹽：食鹽水是均一溶液，不會分成兩層，分液不能取出食鹽。",
+          chrom: "食鹽水取鹽：紙色層法分開不同色素。食鹽水裡沒有要分開的色素。"
+        }
+      },
+      {
+        mix: "食鹽水",
+        want: "要得到水。",
+        scene: "鹽已溶解。要收集的是水，不是鹽。",
+        answer: "distill",
+        why: {
+          distill: "食鹽水取水：正確。水變成蒸氣再冷凝，就可以收集水；溶解的鹽不會跟著蒸氣過去。這裡不寫溫度或裝置步驟。",
+          filter: "食鹽水取水：鹽已溶解，過濾後鹽仍在水裡，得不到不含鹽的水。",
+          evaporate: "食鹽水取水：蒸發把水趕走進空氣，收集不到液態水。",
+          separate: "食鹽水取水：食鹽水不會分成兩層，不能用分液。",
+          chrom: "食鹽水取水：紙色層法不能用來收集水。"
+        }
+      },
+      {
+        mix: "油和水",
+        want: "要分開這兩層液體。",
+        scene: "油浮在水上，中間有清晰分界面。兩種液體互不混溶。",
+        answer: "separate",
+        why: {
+          separate: "油和水：正確。兩種互不混溶的液體分成兩層，用分液把它們分開。這裡不寫放出液體的操作。",
+          filter: "油和水：兩種都是液體，都會穿過濾紙，過濾分不開它們。",
+          evaporate: "油和水：蒸發會把較易揮發的液體趕進空氣，不能靠這個性質分開兩層。它們已經互不混溶。",
+          distill: "油和水：兩種液體已經分成兩層，用分液即可，不必靠沸點把它們蒸開。",
+          chrom: "油和水：紙色層法用於少量溶解的色素，不是分開一整層油和水。"
+        }
+      },
+      {
+        mix: "黑墨水",
+        want: "要分開墨水裡的幾種色素。",
+        scene: "幾種色素都溶在同一種液體裡，看起來是一杯黑色溶液。",
+        answer: "chrom",
+        why: {
+          chrom: "黑墨水：正確。不同色素在紙上移動的快慢不同，所以能分開。這裡不提供溶劑名稱或用量。",
+          filter: "黑墨水：色素已經溶解，都能穿過濾紙，過濾分不開它們。",
+          evaporate: "黑墨水：蒸發只會留下混在一起的色素，不會把它們彼此分開。",
+          distill: "黑墨水：蒸餾按沸點分開液體，不能把幾種溶解的色素逐一分開。",
+          separate: "黑墨水：墨水是均一溶液，不會分成幾層液體，不能用分液。"
+        }
+      }
+    ];
+    var index = 0;
+    var finished = false;
+    var audioCtx = null;
+
+    function ensureAudio() {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      if (!audioCtx) audioCtx = new AC();
+      if (audioCtx.state === "suspended") audioCtx.resume();
+      return audioCtx;
     }
-    
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+
+    function tones(freqs, dur) {
+      var c = ensureAudio();
+      if (!c) return;
+      var t = c.currentTime + 0.02;
+      var note = dur || 0.1;
+      var gap = note + 0.04;
+      for (var n = 0; n < freqs.length; n++) {
+        var start = t + n * gap;
+        var o = c.createOscillator();
+        var g = c.createGain();
+        o.type = "sine";
+        o.frequency.setValueAtTime(freqs[n], start);
+        g.gain.setValueAtTime(0.0001, start);
+        g.gain.exponentialRampToValueAtTime(0.04, start + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, start + note);
+        o.connect(g);
+        g.connect(c.destination);
+        o.start(start);
+        o.stop(start + note + 0.02);
+      }
+    }
+
+    function say(msg, kind) {
+      var el = document.getElementById("chem-feedback");
+      el.textContent = msg;
+      el.classList.remove("ok");
+      el.classList.remove("no");
+      if (kind === "ok") {
+        el.classList.add("ok");
+        tones([523.25, 659.25], 0.09);
+      } else if (kind === "no") {
+        el.classList.add("no");
+        tones([146.83], 0.22);
+      } else if (kind === "done") {
+        el.classList.add("ok");
+        tones([523.25, 659.25, 783.99], 0.1);
+      }
+      el.scrollIntoView({ block: "center" });
+    }
+
+    function render() {
+      var item = items[index];
+      document.getElementById("progress").textContent = "第 " + (index + 1) + " / " + items.length + " 題";
+      document.getElementById("mix").textContent = item.mix;
+      document.getElementById("want").textContent = item.want;
+      document.getElementById("scene").textContent = item.scene;
+    }
+
+    document.getElementById("choices").onclick = function (e) {
+      var btn = e.target.closest ? e.target.closest("button") : null;
+      if (!btn || finished) return;
+      var key = btn.getAttribute("data-method");
+      var item = items[index];
+      if (key === item.answer) {
+        if (index === items.length - 1) {
+          finished = true;
+          say(item.why[key] + " 五題都完成了。", "done");
+        } else {
+          say(item.why[key] + " 請做下一題。", "ok");
+          index += 1;
+          render();
+        }
+      } else {
+        say(item.why[key], "no");
+      }
+    };
+
+    document.getElementById("again").onclick = function () {
+      index = 0;
+      finished = false;
+      render();
+      var el = document.getElementById("chem-feedback");
+      el.classList.remove("ok");
+      el.classList.remove("no");
+      el.textContent = "再看混合物要留下甚麼，然後選一種方法。";
+    };
+
+    render();
   </script>
-<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 </body>
 </html>

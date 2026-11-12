@@ -233,13 +233,13 @@ window.BATTLE_DATA = (function () {
           "衛星影像為現代地形，非歷史時期地貌。",
           "河川、海域水面為教學示意，按史實位置裁切顯示。"
       ],
-      "sources": "DSE 中史課程、中國通史、維基百科（交叉查證）。"
+      "sources": "《宋史·瀛國公紀》《宋史·張世傑傳》《宋史·陸秀夫傳》《元史·張弘範傳》《資治通鑑後編》及元明記載中的崖山海戰。不以網絡百科為唯一依據。"
   };
   const analysis =   {
-      "military": "元軍以張弘範率水師圍困崖山，南宋張世傑率艦隊護衛少帝趙昺；元軍以小艦火攻，宋军大舰因连锁而难以机动，全军覆没。",
-      "leaders": "南宋末年，元軍壓境，張世傑率艦隊護衛少帝趙昺退守崖山，以海上陣法企圖固守。元將張弘範水陸夾攻，宋軍補給斷絕、士氣低落。陸秀夫背負趙昺投海殉國，文天祥此前兵敗被俘、堅拒招降，象徵宋室最後氣節；崖山覆滅後南宋滅亡，元朝統一中國。",
-      "nationalPower": "南宋只剩东南一隅，兵少粮尽；元朝已统一北方，水军与蒙古骑兵协同，掌握海战主动。",
-      "impact": "南宋水師全軍覆沒，陸秀夫背帝昺投海，元朝徹底統一天下。"
+      "military": "1279年張弘範以水師圍崖山，張世傑以船艦結陣護衛趙昺。元軍切斷淡水並南北夾擊，宋軍大潰。這不是赤壁式火攻。張世傑曾率餘艦突圍。",
+      "leaders": "張世傑率船隊護衛趙昺退守崖山，船艦連成陣。張弘範圍困並切斷淡水，宋軍大潰。陸秀夫負帝投海。張世傑曾突圍，後來遇風而死。這不是赤壁式火攻。文天祥在此之前已經被俘。",
+      "nationalPower": "南宋殘餘船隊退到崖山，淡水和糧食都缺。元軍水師已經完成包圍，掌握海戰的主動。",
+      "impact": "陸秀夫負趙昺投海，南宋朝廷終結。張世傑曾突圍，其後在海上遇風而死。失敗不是赤壁式火攻。"
   };
   const storyboard =   [
       {
@@ -291,9 +291,9 @@ window.BATTLE_DATA = (function () {
               "orbit": 0.65
           },
           "dateLabel": "1279年2月",
-          "title_zh": "斷糧與围困",
+          "title_zh": "斷糧與圍困",
           "title_en": "Blockade and Starvation",
-          "narration_zh": "元軍切断宋军淡水与补给，宋军以海为家，形势日蹙。",
+          "narration_zh": "元軍切斷宋軍的淡水和補給，宋軍困在海上，形勢日緊。",
           "narration_en": "Yuan forces cut fresh water and supplies — the Song fleet weakens daily.",
           "focus": [
               "song_yamen"
@@ -318,9 +318,9 @@ window.BATTLE_DATA = (function () {
               "orbit": 0.65
           },
           "dateLabel": "1279年3月19日",
-          "title_zh": "海戰決戰",
+          "title_zh": "南北夾擊",
           "title_en": "Naval Decisive Battle",
-          "narration_zh": "元军以小船火攻，宋大舰相连难以转向，全军溃败。",
+          "narration_zh": "元軍從南北夾擊。宋軍大艦以繩索相連，難以散開，陣勢崩潰。這不是赤壁式火攻。張世傑其後曾突圍。",
           "narration_en": "Yuan fire-ships attack chained Song vessels — the Song fleet is destroyed.",
           "focus": [
               "yuan_yamen",
@@ -348,7 +348,7 @@ window.BATTLE_DATA = (function () {
           "dateLabel": "1279年3月19日",
           "title_zh": "陸秀夫負帝投海",
           "title_en": "Lu Xiufu's Final Act",
-          "narration_zh": "陸秀夫背負八歲帝昺投海殉國，楊太后亦投海，南宋滅亡。",
+          "narration_zh": "陸秀夫背負八歲帝昺投海殉國，楊太後亦投海，南宋滅亡。",
           "narration_en": "Lu Xiufu carries the eight-year-old emperor into the sea — the Song dynasty ends.",
           "focus": [
               "song_yamen"
@@ -382,7 +382,7 @@ window.BATTLE_DATA = (function () {
           "dateLabel": "1279年",
           "title_zh": "元朝一統",
           "title_en": "Yuan Unification Complete",
-          "narration_zh": "崖山海戰後，元朝徹底統一中國，宋亡。",
+          "narration_zh": "陸秀夫負帝投海。張世傑曾突圍，其後遇風而死。",
           "narration_en": "After Yamen, the Yuan completes unification of China.",
           "focus": [],
           "side": "yuan",
@@ -395,8 +395,8 @@ window.BATTLE_DATA = (function () {
   const outro =   {
       "title_zh": "崖山海戰",
       "title_en": "BATTLE OF YAMEN",
-      "narration_zh": "本戰役為 DSE 中史重要考點：南宋水師全軍覆沒，陸秀夫背帝昺投海，元朝徹底統一天下",
-      "narration_en": "A key HKDSE Chinese History topic.",
+      "narration_zh": "1279年崖山戰後，陸秀夫負帝投海。張世傑曾突圍，其後遇風而死。",
+      "narration_en": "After Yamen in 1279, Lu Xiufu entered the sea with the emperor. Zhang Shijie broke out and later died in a storm.",
       "cam": {
           "lng": 113.05,
           "lat": 22.28,
@@ -406,5 +406,19 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       }
   };
-  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };
+  const lesson =   {
+      "junior": "初中：看1279年崖山被圍、陸秀夫負帝投海，以及張世傑曾突圍。",
+      "senior": "高中：不要把崖山失敗寫成赤壁式火攻，並分開史實和「宋室氣節」的評價。",
+      "fact": "1279年，元將張弘範以水師圍崖山。張世傑以千餘艘船結陣，護衛趙昺，船艦用繩索相連，方便固守，也難以散開。元軍切斷宋軍淡水，再從南北夾擊，宋軍大潰。這不是赤壁那種火燒敵艦。陸秀夫背負趙昺投海。張世傑曾率餘艦突圍，其後在海上遇風溺死。",
+      "sources": "《宋史·瀛國公紀》《宋史·張世傑傳》《宋史·陸秀夫傳》《元史·張弘範傳》《資治通鑑後編》及元明記載中的崖山海戰。不以網絡百科為唯一依據。",
+      "evaluation": "宋軍敗，是因為被圍、缺淡水、連艦難以機動，又被元軍夾擊。把它寫成赤壁式火攻，或說全軍在火攻中覆沒、張世傑沒有突圍，都和記載不合。陸秀夫投海在後世常被評價為氣節，那是評價，不是戰術本身。",
+      "judgment": {
+          "ask": "哪一則說法更能解釋崖山宋軍的失敗？",
+          "a": "元軍像赤壁一樣用火船燒掉連在一起的宋艦，宋軍因此全軍覆沒，張世傑也死在火攻裡。",
+          "b": "宋艦被圍、缺乏淡水，連艦難以散開，元軍南北夾擊後宋陣崩潰；張世傑曾突圍。",
+          "better": "b",
+          "why": "崖山不是赤壁式火攻。淡水斷絕、結陣被圍和夾擊更能說明潰敗。張世傑曾突圍，不是死在火攻當場。"
+      }
+  };
+  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, lesson, END_DAY };
 })();

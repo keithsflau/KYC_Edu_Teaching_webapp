@@ -30,6 +30,7 @@
     body { font-family: "IBM Plex Sans", system-ui, sans-serif; background: radial-gradient(ellipse 80% 50% at 10% -10%, #0d948822, transparent 55%), #f8fafc; color: #0f172a; min-height: 100vh; }
     input[type="range"] { accent-color: #0d9488; }
     button, a { -webkit-tap-highlight-color: transparent; }
+    canvas.sim { width: 100%; border-radius: 12px; display: block; }
   </style>
 <!-- NCS i18n fleet kit (auto-injected) -->
   <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
@@ -81,6 +82,7 @@
   </script>
   <script type="text/babel" data-presets="react-classic">
     const { useState, useEffect } = React;
+    const { useLang, LangSwitcher, appTabs } = window.NcsI18n;
     const APP_ID = "f4_bio_osmosis";
     const ACCENT = "#0d9488";
 
@@ -122,7 +124,135 @@
         },
         startTrialLocal: () => { if (window.HkcSubscribe) HkcSubscribe.setLocalEntitlement("trial", 14); }
       };
-    })();
+    });
+
+const TFZ_STEPS = [
+      { id: "A1", title: "Water potential (ψ)", titleZh: "水勢 (ψ)",
+        body: "Water moves from regions of HIGHER water potential to LOWER water potential. Pure water has the highest ψ. Adding SOLUTE lowers ψ because fewer water molecules are 'free' to move.",
+        bodyZh: "水從水勢較高處移向較低處。純水水勢最高；加溶質會降低水勢，因自由水分子減少。",
+        q: "Adding salt to water generally…", qZh: "向水中加鹽通常…",
+        opts: ["Lowers water potential 降低水勢", "Raises water potential 提高水勢", "Has no effect 無影響", "Stops diffusion 停止擴散"], a: "Lowers water potential 降低水勢",
+        why: "Solute binds water — less free water = lower ψ." },
+      { id: "A2", title: "Osmosis definition", titleZh: "滲透定義",
+        body: "OSMOSIS is the net movement of WATER molecules through a partially permeable membrane from higher ψ to lower ψ. It is passive — no ATP needed. Only WATER moves, not the solute.",
+        bodyZh: "滲透是水分子穿過半透膜、從高水勢到低水勢的淨移動。屬被動，不需 ATP。只有水移動，溶質不過膜。",
+        q: "Osmosis involves movement of…", qZh: "滲透涉及…的移動",
+        opts: ["Water only 只有水", "Solute only 只有溶質", "Both equally 兩者均等", "Ions against gradient 逆梯度離子"], a: "Water only 只有水",
+        why: "Membrane blocks most solutes; water passes." },
+      { id: "A3", title: "Turgid, plasmolysed, lysed", titleZh: "充盈、質壁分離、溶血",
+        body: "Plant cell in pure water → water enters → TURGID (firm). Plant in salty solution → water leaves → PLASMOLYSIS (membrane pulls away). Animal cell (no wall) in pure water → swells and LYSES (bursts).",
+        bodyZh: "植物在純水中→水進入→充盈。在鹽水中→水離開→質壁分離。動物細胞在純水中→膨脹溶血。",
+        q: "A red blood cell in distilled water will…", qZh: "紅血球在蒸餾水中會…",
+        opts: ["Swell and burst (lyse) 膨脹破裂", "Shrink only 只收縮", "Stay unchanged 不變", "Become plasmolysed 質壁分離"], a: "Swell and burst (lyse) 膨脹破裂",
+        why: "No cell wall → cannot resist osmotic inflow." },
+      { id: "A4", title: "Isotonic equilibrium", titleZh: "等滲平衡",
+        body: "When external ψ equals cell ψ, there is NO NET osmosis — the cell neither gains nor loses mass. This is an ISOTONIC solution. Medical saline (~0.9% NaCl) matches blood cells.",
+        bodyZh: "當外部水勢等於細胞水勢，無淨滲透——細胞質量不變。此為等滲溶液。生理鹽水（~0.9% NaCl）匹配血細胞。",
+        q: "An isotonic solution means…", qZh: "等滲溶液指…",
+        opts: ["No net water movement 無淨水移動", "Water always enters 水一定進入", "Water always leaves 水一定離開", "Only active transport 只有主動運輸"], a: "No net water movement 無淨水移動",
+        why: "Equal ψ on both sides → balanced." },
+      { id: "A5", title: "Root hairs & soil", titleZh: "根毛與土壤",
+        body: "Root hair cells absorb water from moist soil by OSMOSIS because soil water ψ > root cell ψ. Mineral ions enter by active transport, which can lower cell ψ and help draw more water.",
+        bodyZh: "根毛從濕潤土壤以滲透吸水，因土壤水勢 > 根細胞水勢。礦物離子以主動運輸進入，可降低細胞水勢助吸水。",
+        q: "Root hairs absorb water mainly by…", qZh: "根毛主要藉…吸水",
+        opts: ["Osmosis 滲透", "Active transport of water 水的主動運輸", "Wind 風", "Photosynthesis 光合作用"], a: "Osmosis 滲透",
+        why: "Passive water flow down ψ gradient." },
+      { id: "A6", title: "Ready for the sandbox", titleZh: "準備進入沙盒",
+        body: "Use the Osmosis Sandbox: slide external solute concentration and predict whether water enters, leaves, or balances. Watch the cell shape change — Sample-style instant feedback!",
+        bodyZh: "使用滲透沙盒：調節外部溶質濃度，預測水進、出或平衡，觀察細胞形狀變化——Sample 式即時回饋！",
+        q: "In the lab, increasing external solute makes the cell…", qZh: "實驗中增加外部溶質使細胞…",
+        opts: ["Lose water / shrink 失水收縮", "Always burst 一定破裂", "Ignore osmosis 忽略滲透", "Gain mass always 一定增重"], a: "Lose water / shrink 失水收縮",
+        why: "Hypertonic outside → water exits cell." }
+    ];
+
+    function LearnFromZero({ steps, onComplete }) {
+      const [i, setI] = useState(0);
+      const [picked, setPicked] = useState(null);
+      const step = steps[i];
+      const last = i === steps.length - 1;
+      function pick(opt) { if (picked) return; setPicked(opt); }
+      function next() {
+        if (last) { onComplete(); return; }
+        setI(i + 1); setPicked(null);
+      }
+      return (
+        <section className="bg-white border border-slate-200 shadow-sm rounded-2xl p-4 sm:p-6">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-black uppercase tracking-widest" style={{color: ACCENT}}>Learn From Zero · 由零開始學</p>
+            <p className="text-xs text-slate-500">{step.id} / A{steps.length}</p>
+          </div>
+          <div className="flex gap-1.5 mb-4">
+            {steps.map((s, k) => (
+              <div key={s.id} className="h-1.5 flex-1 rounded-full" style={{background: k <= i ? ACCENT : "#e2e8f0"}} />
+            ))}
+          </div>
+          <h2 className="text-xl font-bold">{step.title}</h2>
+          <p className="text-sm font-semibold text-slate-500 mt-0.5">{step.titleZh}</p>
+          <p className="text-sm mt-3 text-slate-700 leading-relaxed">{step.body}</p>
+          <p className="text-sm mt-2 text-slate-500 leading-relaxed">{step.bodyZh}</p>
+          <div className="mt-4 p-3 rounded-xl bg-indigo-50 border border-indigo-200">
+            <p className="text-sm font-bold">{step.q}</p>
+            <p className="text-xs text-slate-500 mb-2">{step.qZh}</p>
+            <div className="grid gap-2">
+              {step.opts.map(o => {
+                let cls = "text-left px-3 py-2.5 rounded-xl text-sm border min-h-[44px] ";
+                if (!picked) cls += "bg-white border-slate-200 hover:bg-slate-50";
+                else if (o === step.a) cls += "bg-emerald-50 border-emerald-300 text-emerald-800 font-semibold";
+                else if (o === picked) cls += "bg-rose-50 border-rose-300 text-rose-800";
+                else cls += "bg-white border-slate-200 opacity-60";
+                return <button key={o} type="button" className={cls} onClick={() => pick(o)}>{o}</button>;
+              })}
+            </div>
+            {picked && (
+              <div className="mt-3 text-sm p-3 rounded-lg bg-white/70 border border-slate-200">
+                <p className="font-semibold">{picked === step.a ? "✓ Correct · 正確" : "✗ Not quite — see why · 再想想"}</p>
+                <p className="mt-1 text-slate-600">{step.why}</p>
+                {picked === step.a && (
+                  <button type="button" onClick={next} className="mt-3 px-4 py-2.5 rounded-xl font-semibold text-white min-h-[44px]" style={{background: ACCENT}}>
+                    {last ? "Unlock the Lab → 解鎖實驗室" : "Next step →"}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </section>
+      );
+    }
+
+function OsmosisSim() {
+      const [ext, setExt] = useState(0.15);
+      const [cellType, setCellType] = useState("plant");
+      const internal = 0.1;
+      const diff = ext - internal;
+      let state, stateZh, color, waterDir;
+      if (Math.abs(diff) < 0.02) { state = "Isotonic — no net movement"; stateZh = "等滲——無淨移動"; color = "#64748b"; waterDir = "↔"; }
+      else if (diff > 0) { state = cellType === "plant" ? "Plasmolysed — water leaves" : "Shrunk / crenated"; stateZh = cellType === "plant" ? "質壁分離——水離開" : "收縮皺縮"; color = "#dc2626"; waterDir = "← out"; }
+      else { state = cellType === "plant" ? "Turgid — water enters" : "Swollen — may lyse!"; stateZh = cellType === "plant" ? "充盈——水進入" : "膨脹——可能溶血！"; color = "#059669"; waterDir = "→ in"; }
+      return (
+        <div className="space-y-4">
+          <div className="flex flex-wrap gap-2">
+            {["plant", "animal"].map(t => (
+              <button key={t} type="button" onClick={() => setCellType(t)} className={"px-3 py-2 rounded-xl font-bold min-h-[44px] capitalize " + (cellType === t ? "text-white" : "bg-slate-100")} style={cellType === t ? {background: ACCENT} : {}}>{t === "plant" ? "Plant cell 植物" : "Animal cell 動物"}</button>
+            ))}
+          </div>
+          <label className="text-sm font-semibold block">External solute (relative) · 外部溶質 {ext.toFixed(2)}</label>
+          <input type="range" min="0" max="0.5" step="0.01" value={ext} onChange={e => setExt(+e.target.value)} className="w-full" />
+          <div className="flex justify-center py-6">
+            <div className="relative">
+              {cellType === "plant" && <div className="w-40 h-48 border-4 border-emerald-700 rounded-lg flex items-center justify-center" style={{background: "#ecfdf5"}}>
+                <div className="rounded-full border-2 border-teal-400 transition-all duration-500" style={{width: diff > 0.02 ? "60%" : "85%", height: diff > 0.02 ? "60%" : "85%", background: "rgba(13,148,136,0.2)"}} />
+              </div>}
+              {cellType === "animal" && <div className="w-36 h-36 rounded-full border-2 border-rose-400 flex items-center justify-center transition-all duration-500" style={{background: "rgba(244,63,94,0.15)", transform: diff < -0.02 ? "scale(1.15)" : diff > 0.02 ? "scale(0.85)" : "scale(1)"}}>
+                <span className="text-2xl">🩸</span>
+              </div>}
+              <p className="text-center text-2xl font-bold mt-2" style={{color}}>{waterDir}</p>
+            </div>
+          </div>
+          <p className="text-sm p-4 rounded-xl border font-semibold" style={{background: color + "18", borderColor: color + "44", color}}>{state}<br /><span className="font-normal opacity-80">{stateZh}</span></p>
+          <p className="text-xs text-slate-500 text-center">Sample pattern: slider → live cell response · 滑桿即時細胞反應</p>
+        </div>
+      );
+    }
 
         const GUIDED = [
       { id: "g1", level: 1, q: "Osmosis is the net movement of…", qZh: "滲透作用是…的淨移動",
@@ -186,7 +316,7 @@
       );
     }
 
-    function Drill({ bank, label, onNeedUpgrade, onDone }) {
+    function Drill({ bank, label, onNeedUpgrade, onDone, isZh, t }) {
       const [qi, setQi] = useState(0);
       const [fb, setFb] = useState(null);
       const [score, setScore] = useState(0);
@@ -228,15 +358,14 @@
             <span>{label} · Q {qi + 1}/{bank.length} · Lv {item.level}</span>
             <span>Score {score}</span>
           </div>
-          <h2 className="text-lg font-bold mb-1">{item.q}</h2>
-          {item.qZh ? <p className="text-sm mb-4 opacity-80" style={{color: ACCENT}}>{item.qZh}</p> : <div className="mb-4" />}
+          <h2 className="text-lg font-bold mb-1">{t(item.qZh, item.q)}</h2>
           <div className="grid gap-2">
             {item.opts.map(o => (
               <button key={o} type="button" disabled={fb && fb.ok} onClick={() => pick(o)}
                 className={"text-left px-4 py-3 rounded-xl min-h-[48px] disabled:opacity-50 bg-slate-50 hover:bg-slate-100 border border-slate-200"}>{o}</button>
             ))}
           </div>
-          <button type="button" className="text-sm mt-3 font-semibold min-h-[44px]" style={{color: ACCENT}} onClick={() => setHint(true)}>Hint · 提示</button>
+          <button type="button" className="text-sm mt-3 font-semibold min-h-[44px]" style={{color: ACCENT}} onClick={() => setHint(true)}>{t("提示", "Hint")}</button>
           {hint && <p className={"text-sm mt-1 p-3 rounded-xl " + (false ? "bg-amber-950/50 text-amber-100 border border-amber-800/40" : "bg-amber-50 text-amber-900 border border-amber-200")}>{item.hint}</p>}
           {fb && (
             <div className={"mt-4 p-3 rounded-xl text-sm " + (fb.ok ? (false ? "bg-emerald-900/40 text-emerald-200" : "bg-emerald-50 text-emerald-800") : (false ? "bg-rose-900/40 text-rose-200" : "bg-rose-50 text-rose-800"))}>
@@ -250,35 +379,40 @@
     }
 
     function App() {
+      const { isZh, t } = useLang();
       const [mode, setMode] = useState("learn");
       const [progress, setProgress] = useState(() => HKC.loadProgress(APP_ID));
       const [pay, setPay] = useState(false);
       const [payReason, setPayReason] = useState("");
       const [doneMsg, setDoneMsg] = useState(null);
+      const [tfzDone, setTfzDone] = useState(() => { try { return !!localStorage.getItem("hkc_tfz_" + APP_ID); } catch (e) { return false; } });
 
       function refresh() { setProgress(HKC.loadProgress(APP_ID)); }
       useEffect(() => { refresh(); }, [mode]);
 
-      const tabs = [
-        { id: "learn", label: "Learn · 學習" },
-        { id: "guided", label: "Guided · 引導" },
-        { id: "exam", label: "Exam · 測驗" },
-        { id: "review", label: "Review · 錯題" }
-      ];
+      function completeTfz() {
+        try { localStorage.setItem("hkc_tfz_" + APP_ID, "1"); } catch (e) {}
+        setTfzDone(true); setMode("lab");
+      }
+
+      const tabs = appTabs(["learn", "lab", "guided", "exam", "review"], isZh, { labLocked: !tfzDone });
 
       return (
-        <div className="max-w-3xl mx-auto p-4 sm:p-8">
-          <a href="../index.html" className="text-sm hover:underline font-semibold" style={{color: ACCENT}}>← Hub</a>
+        <div className="max-w-5xl mx-auto p-4 sm:p-8">
+          <div className="flex flex-wrap justify-between items-center gap-2">
+            <a href="../index.html" className="text-sm hover:underline font-semibold" style={{color: ACCENT}}>{t("← 返回目錄", "← Back to hub")}</a>
+            <LangSwitcher />
+          </div>
           <header className="mt-4 mb-4">
-            <p className="text-xs uppercase tracking-widest font-bold" style={{color: ACCENT}}>F4 Biology · I.c Osmosis lab</p>
-            <h1 className="text-2xl sm:text-3xl font-bold mt-1">Osmosis Sandbox</h1>
-            <p className="text-slate-500 mt-1">滲透沙盒 · Learn → Guided → Exam → Review · 12 items</p>
+            <p className="text-xs uppercase tracking-widest font-bold" style={{color: ACCENT}}>{t("中四生物 · I.c 滲透實驗", "F4 Biology · I.c Osmosis lab")}</p>
+            <h1 className="text-2xl sm:text-3xl font-bold mt-1">{t("滲透沙盒", "Osmosis Sandbox")}</h1>
+            <p className="text-slate-500 mt-1">{t("學習 → 實驗 → 引導 → 測驗 → 複習", "Learn → Lab → Guided → Exam → Review")}</p>
           </header>
 
           <div className={"text-sm border border-dashed rounded-lg px-3 py-2 mb-3 flex flex-wrap justify-between gap-2 items-center " + (false ? "border-slate-600 bg-slate-900/80" : "border-slate-300 bg-white/80")}>
-            <span>{HKC.isPaid() ? (HKC.getEntitlement().tier + " · unlimited") : ("Free · " + HKC.remainingFree() + "/" + HKC.FREE_DAILY_CAP + " today")} · Best {progress.bestScore}</span>
+            <span>{HKC.isPaid() ? (HKC.getEntitlement().tier + " · " + t("無限", "unlimited")) : (t("免費", "Free") + " · " + HKC.remainingFree() + "/" + HKC.FREE_DAILY_CAP + " " + t("今日", "today"))} · {t("最佳", "Best")} {progress.bestScore}</span>
             {!HKC.isPaid() && (
-              <button type="button" className="px-3 py-1.5 rounded-md text-xs font-semibold text-white min-h-[36px]" style={{background: ACCENT}} onClick={() => setPay(true)}>Upgrade</button>
+              <button type="button" className="px-3 py-1.5 rounded-md text-xs font-semibold text-white min-h-[36px]" style={{background: ACCENT}} onClick={() => setPay(true)}>{t("升級", "Upgrade")}</button>
             )}
           </div>
 
@@ -294,43 +428,45 @@
 
           {mode === "learn" && (
             <section className={"bg-white border border-slate-200 shadow-sm rounded-2xl p-4 sm:p-5 space-y-3"}>
-              <h2 className="font-bold text-lg">Key ideas</h2>
+              <h2 className="font-bold text-lg">{t("重點概念", "Key ideas")}</h2>
               <ul className={"text-sm space-y-2 list-disc list-inside " + (false ? "text-slate-300" : "text-slate-600")}>
-                <li>Model: bag / cell in solutions of different concentrations.</li><li>Predict mass / volume change from water potential difference.</li><li>Plasmolysis vs turgid: wall pressure ideas at syllabus depth.</li>
+                <li>{t("模型：不同濃度溶液中的袋/細胞。", "Model: bag / cell in solutions of different concentrations.")}</li>
+                <li>{t("從水勢差預測質量/體積變化。", "Predict mass / volume change from water potential difference.")}</li>
+                <li>{t("質壁分離 vs 膨壓：課程深度的細胞壁壓力概念。", "Plasmolysis vs turgid: wall pressure ideas at syllabus depth.")}</li>
               </ul>
               <LearnExtra />
               <button type="button" className="mt-2 px-4 py-2.5 rounded-xl font-semibold min-h-[48px] text-white" style={{background: ACCENT}} onClick={() => setMode("guided")}>
-                Start guided practice →
+                {t("開始引導練習 →", "Start guided practice →")}
               </button>
             </section>
           )}
 
           {mode === "guided" && !doneMsg && (
-            <Drill bank={GUIDED} label="Guided" onNeedUpgrade={r => { setPayReason(r); setPay(true); }}
+            <Drill bank={GUIDED} label={t("引導", "Guided")} isZh={isZh} t={t} onNeedUpgrade={r => { setPayReason(r); setPay(true); }}
               onDone={(s, n) => { setDoneMsg({ s, n, next: "exam" }); refresh(); }} />
           )}
           {mode === "exam" && !doneMsg && (
-            <Drill bank={EXAM} label="Exam" onNeedUpgrade={r => { setPayReason(r); setPay(true); }}
+            <Drill bank={EXAM} label={t("測驗", "Exam")} isZh={isZh} t={t} onNeedUpgrade={r => { setPayReason(r); setPay(true); }}
               onDone={(s, n) => { setDoneMsg({ s, n, next: "review" }); refresh(); }} />
           )}
           {doneMsg && (mode === "guided" || mode === "exam") && (
             <section className={"bg-white border border-slate-200 shadow-sm rounded-2xl p-6 text-center"}>
-              <h2 className="text-2xl font-bold">Complete</h2>
+              <h2 className="text-2xl font-bold">{t("完成", "Complete")}</h2>
               <p className="mt-2">{doneMsg.s} / {doneMsg.n}</p>
               <button type="button" className="mt-4 px-4 py-2 rounded-xl font-semibold min-h-[48px] text-white" style={{background: ACCENT}}
-                onClick={() => { setDoneMsg(null); setMode(doneMsg.next); }}>Continue →</button>
+                onClick={() => { setDoneMsg(null); setMode(doneMsg.next); }}>{t("繼續 →", "Continue →")}</button>
             </section>
           )}
           {mode === "review" && (
             <section className={"bg-white border border-slate-200 shadow-sm rounded-2xl p-4 sm:p-5 space-y-3"}>
-              <h2 className="font-bold text-lg">Wrong-answer book · 錯題簿</h2>
-              {(progress.wrongBook || []).length === 0 && <p className={"text-sm " + (false ? "text-slate-400" : "text-slate-500")}>No wrong answers yet · 暫無錯題</p>}
+              <h2 className="font-bold text-lg">{t("錯題簿", "Wrong-answer book")}</h2>
+              {(progress.wrongBook || []).length === 0 && <p className={"text-sm " + (false ? "text-slate-400" : "text-slate-500")}>{t("暫無錯題", "No wrong answers yet")}</p>}
               {(progress.wrongBook || []).map(w => (
                 <div key={w.id} className={"rounded-xl p-3 text-sm " + (false ? "border border-slate-700" : "border border-slate-200")}>
                   <p className="font-semibold">{w.prompt}</p>
                   <p className="mt-1 opacity-80" style={{color: ACCENT}}>{w.hint}</p>
-                  {HKC.isPaid() && <p className="mt-1 text-emerald-500">Answer unlocked</p>}
-                  <button type="button" className={"text-xs underline mt-2 " + (false ? "text-slate-400" : "text-slate-500")} onClick={() => { HKC.removeWrong(APP_ID, w.id); refresh(); }}>Mark resolved</button>
+                  {HKC.isPaid() && <p className="mt-1 text-emerald-500">{t("已解鎖答案", "Answer unlocked")}</p>}
+                  <button type="button" className={"text-xs underline mt-2 " + (false ? "text-slate-400" : "text-slate-500")} onClick={() => { HKC.removeWrong(APP_ID, w.id); refresh(); }}>{t("標記已掌握", "Mark resolved")}</button>
                 </div>
               ))}
             </section>
@@ -342,5 +478,7 @@
     ReactDOM.createRoot(document.getElementById("root")).render(<App />);
   </script>
 <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+<script src="../../kit/tone.js"></script>
+<script src="../../kit/form-banner.js"></script>
 </body>
 </html>

@@ -1,63 +1,95 @@
 ﻿<!DOCTYPE html>
-
-<html lang="en">
-
+<html lang="zh-HK">
 <head>
-
   <meta charset="UTF-8" />
-
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <title>Parity Non-Conservation</title>
-
-  <script src="https://cdn.tailwindcss.com"></script>
-
-<!-- NCS i18n fleet kit (auto-injected) -->
-  <link rel="stylesheet" href="../../../../../common/ncs-i18n.css" />
-  <script src="../../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
-  <style data-ncs-kit="fleet-bridge">
-    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
-    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
-      display: none !important;
-    }
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>宇稱不守恆 | Parity</title>
+  <style>
+    body { margin: 0; font-family: "Segoe UI", "Noto Sans HK", sans-serif; background: #0f172a; color: #e2e8f0; }
+    main { max-width: 720px; margin: 0 auto; padding: 1.2rem; }
+    a { color: #93c5fd; }
+    .stage { position: relative; height: 320px; background: #020617; border-radius: 16px; touch-action: none; }
+    .spin { position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%); text-align: center; }
+    .det { position: absolute; left: 50%; width: 92px; margin-left: -46px; height: 36px; border-radius: 8px; background: #38bdf8; color: #082f49; font-weight: 700; cursor: grab; text-align: center; line-height: 36px; }
+    button { min-height: 44px; border: 0; border-radius: 10px; background: #4f46e5; color: #fff; font-weight: 700; padding: 0 1rem; margin-top: 0.8rem; }
   </style>
-  <script data-ncs-kit="fleet-init">
-  (function () {
-    function hideLegacyToggles() {
-      document.body.classList.add("ncs-fleet-mounted");
-      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
-        var label = (btn.textContent || "").trim();
-        if (label === "EN" || label === "\u4E2D") {
-          btn.classList.add("ncs-hide-when-ncs-fleet");
+</head>
+<body>
+  <main>
+    <p><a href="../index.html">← 放射與能源</a> · <a href="../../../Form%206/index.html">中六</a></p>
+    <h1>吳健雄實驗（延伸）· Parity</h1>
+    <p>鈷-60 的核自旋指向上方。把探測器拖到自旋的同一端，或相反的一端，再核對 β 電子偏向哪一側。計數在核對前不顯示。</p>
+    <div class="stage" id="stage">
+      <div class="spin">核自旋 ↑<br />Co-60</div>
+      <div class="det" id="det">探測器</div>
+    </div>
+    <button id="check" type="button">核對 Check</button>
+    <p id="out">先拖動探測器。</p>
+  </main>
+  <script>
+    (function () {
+      var stage = document.getElementById("stage");
+      var det = document.getElementById("det");
+      var out = document.getElementById("out");
+      var y = 24;
+      var revealed = false;
+
+      function place() {
+        det.style.top = y + "px";
+        if (!revealed) out.textContent = "先拖動探測器到上端或下端，再核對。";
+      }
+
+      function beep(ok) {
+        try {
+          var c = beep.c || (beep.c = new (window.AudioContext || window.webkitAudioContext)());
+          if (c.state === "suspended") c.resume();
+          var o = c.createOscillator(), g = c.createGain();
+          o.frequency.value = ok ? 880 : 220;
+          g.gain.setValueAtTime(0.0001, c.currentTime);
+          g.gain.exponentialRampToValueAtTime(0.06, c.currentTime + 0.02);
+          g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + 0.16);
+          o.connect(g); g.connect(c.destination);
+          o.start(); o.stop(c.currentTime + 0.17);
+        } catch (e) {}
+      }
+
+      function drag(clientY) {
+        var rect = stage.getBoundingClientRect();
+        y = clientY - rect.top - 18;
+        if (y < 8) y = 8;
+        if (y > rect.height - 44) y = rect.height - 44;
+        revealed = false;
+        place();
+      }
+
+      stage.addEventListener("pointerdown", function (e) {
+        stage.setPointerCapture(e.pointerId);
+        drag(e.clientY);
+      });
+      stage.addEventListener("pointermove", function (e) {
+        if (e.buttons) drag(e.clientY);
+      });
+      document.getElementById("check").addEventListener("click", function () {
+        revealed = true;
+        var rect = stage.getBoundingClientRect();
+        var opposite = y > rect.height * 0.55;
+        var along = y < rect.height * 0.28;
+        if (!opposite && !along) {
+          out.textContent = "請把探測器拖到清楚的上端或下端，再核對。";
+          beep(false);
+          return;
+        }
+        if (opposite) {
+          out.textContent = "下端（與自旋相反）計數較多。β 電子傾向與核自旋相反的方向發射，鏡像對稱不成立。";
+          beep(true);
+        } else {
+          out.textContent = "上端（沿自旋）計數較少。較多電子走向與自旋相反的一端。";
+          beep(false);
         }
       });
-      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
-        el.classList.add("ncs-hide-when-ncs-fleet");
-      });
-    }
-    function boot() {
-      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
-      window.NcsI18n.init({
-        chromePath: "../../../../../_shared/ncs-chrome.json",
-        target: document.body
-      }).then(hideLegacyToggles);
-    }
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", boot);
-    } else {
-      boot();
-    }
-  })();
+      place();
+    })();
   </script>
-</head>
-
-<body class="min-h-screen flex items-center justify-center bg-slate-900 text-slate-100 p-8">
-
-  <p class="text-center">Parity Non-Conservation — interactive lab coming soon.</p>
-
   <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
-
 </body>
-
 </html>
-

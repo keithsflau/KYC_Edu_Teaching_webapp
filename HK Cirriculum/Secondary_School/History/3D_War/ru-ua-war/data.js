@@ -274,7 +274,7 @@ window.BATTLE_DATA = (function () {
     title_zh:"俄烏戰爭", title_en:"Russia's War on Ukraine",
     introCam:{ lng:31.50, lat:48.80, dist:3400, az:0, el:52 },
     titleCard:{ zh:"俄烏戰爭", en:"RUSSIA'S WAR ON UKRAINE · 2022–2026",
-      narr_zh:"2022年2月24日起 · 全面入侵與四年抵抗", narr_en:"Full-scale invasion · four years of resistance" },
+      narr_zh:"全面入侵始於2022年2月24日。至2026年6月為第五年", narr_en:"Full-scale invasion from 24 February 2022 · fifth year by June 2026" },
     nextBattle:{ href:"../dse-wars/", title_zh:"DSE 西方史戰役地圖", title_en:"HKDSE Western History War Maps" },
   };
 
@@ -375,17 +375,39 @@ window.BATTLE_DATA = (function () {
       focus:["ru_donbas","ua_93"], side:"both" },
 
     { day:END_DAY, hold:10, cam:{lng:32.50,lat:48.50,dist:2600,az:0,el:48,orbit:0.5},
-      dateLabel:"2026年6月", title_zh:"戰爭第四年", title_en:"The Fourth Year of War",
-      narration_zh:"戰爭進入第四年。烏克蘭仍堅守，但代價巨大；和平尚遠。",
-      narration_en:"The war enters its fourth year. Ukraine endures — at enormous cost — and peace remains distant.",
+      dateLabel:"2026年6月", title_zh:"戰爭第五年", title_en:"The Fifth Year of War",
+      narration_zh:"全面入侵始於2022年2月24日。至2026年6月已進入第五年。烏克蘭仍在作戰，傷亡與破壞持續。",
+      narration_en:"The full-scale invasion began on 24 February 2022. By June 2026 the war is in its fifth year.",
       commanders:[{zh:"瑟爾斯基",en:"Gen. Syrskyi"}], focus:["ua_gen"], side:"ua" },
   ];
 
-  const outro = {
+    const sourceTask = {
+    "cite": "俄羅斯總統2022年2月24日的電視講話",
+    "excerpt": "他把當日開始的軍事行動稱作「特別軍事行動」。",
+    "ask": "對照同日北、東、南同時進攻，這句用詞的立場是什麼？2026年6月又是第幾年？",
+    "options": [
+      {
+        "t": "用詞承認這是對全國的全面入侵，而且2026年6月仍是第四年。",
+        "ok": false,
+        "why": "「特別軍事行動」把範圍說小。全面入侵始於2022年2月24日，到2026年6月已是第五年。"
+      },
+      {
+        "t": "用詞把戰爭說成有限度行動；地圖上的多軸進攻是全面入侵。2026年6月是第五年。",
+        "ok": true,
+        "why": "由2022年2月24日計到2023年2月是第一年結束。2026年2月24日進入第五年，6月仍在第五年。"
+      },
+      {
+        "t": "戰爭在2024年2月才開始，所以2026年6月是第三年。",
+        "ok": false,
+        "why": "全面入侵的日期是2022年2月24日。"
+      }
+    ]
+  };
+const outro = {
     title_zh:"俄烏戰爭 2022–2026", title_en:"Russia's War on Ukraine",
-    narration_zh:"戰爭仍在繼續。謹記每一位在這場侵略中犧牲的軍民。",
-    narration_en:"The war continues. Remember every soldier and civilian lost to this invasion.",
+    narration_zh:"全面入侵始於2022年2月24日。2026年6月是第五年。",
+    narration_en:"The full-scale invasion began on 24 February 2022. June 2026 is the fifth year.",
   };
 
-  return { meta, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };
+  return { meta, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, sourceTask, END_DAY };
 })();

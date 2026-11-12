@@ -2,79 +2,179 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>22_Alloys</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="../../../../common/babel-react-classic.js"></script>
-  <script src="../../../../common/learn-from-zero.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>合金 | Alloys</title>
+  <link rel="stylesheet" href="../../lesson.css" />
   <style>
-    body { font-family: "IBM Plex Sans", system-ui, sans-serif; background-color: #f8fafc; color: #0f172a; min-height: 100vh; }
+    .panel h2 { font-size: 1.05rem; margin: 1rem 0 .35rem; }
+    a { color: #0f766e; font-weight: 700; text-decoration: none; }
   </style>
-  <!-- NCS i18n fleet kit (auto-injected) -->
-  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
-  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
-  <style data-ncs-kit="fleet-bridge">
-    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
-    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
-      display: none !important;
-    }
-  </style>
-  <script data-ncs-kit="fleet-init">
-  (function () {
-    function hideLegacyToggles() {
-      document.body.classList.add("ncs-fleet-mounted");
-      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
-        var label = (btn.textContent || "").trim();
-        if (label === "EN" || label === "\u4E2D") {
-          btn.classList.add("ncs-hide-when-ncs-fleet");
-        }
-      });
-      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
-        el.classList.add("ncs-hide-when-ncs-fleet");
-      });
-    }
-    function boot() {
-      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
-      window.NcsI18n.init({
-        chromePath: "../../../../_shared/ncs-chrome.json",
-        target: document.body
-      }).then(hideLegacyToggles);
-    }
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", boot);
-    } else {
-      boot();
-    }
-  })();
-  </script>
 </head>
 <body>
-  <div id="root"></div>
-  <script type="text/babel" data-presets="react-classic">
-    const { useState } = React;
-    
-    function App() {
-      return (
-        <div className="max-w-4xl mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-4">22 Alloys</h1>
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 mb-8 text-center">
-            <div className="w-full h-64 bg-slate-100 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 mb-4">
-              <span className="text-slate-400 font-medium">[ Interactive Canvas Placeholder ]</span>
-            </div>
-            <p className="text-slate-500">This interactive lab is currently under development.</p>
-          </div>
-          <LearnFromZero />
-        </div>
-      );
+  <section class="chem-learn" data-chem-entry="1">
+    <h2>學習目標</h2>
+    <ul>
+      <li>把合金看成混合物，而不是固定化學式的化合物。</li>
+      <li>用不同原子大小解釋合金通常較硬。</li>
+      <li>按用途分辨黃銅、青銅、鋼、不鏽鋼、焊料和硬鋁。</li>
+    </ul>
+    <p class="muted">DSE 課題三　金屬，並連到選修課題十四　物料化學。</p>
+    <p id="chem-feedback" role="status">先比較純金屬和合金的排列，再按用途選合金。</p>
+  </section>
+  <main>
+    <p><a href="../index.html">返回中六目錄</a></p>
+    <div class="panel">
+      <h1>合金的性質和用途</h1>
+      <p class="muted">只比較組成和性質。沒有熔煉、鑄造、淬火或焊接的步驟。</p>
+      <h2>操作</h2>
+      <div class="row">
+        <button type="button" id="pure" class="on">純金屬排列</button>
+        <button type="button" id="mix" class="alt">合金排列</button>
+      </div>
+      <canvas id="plot" width="640" height="280" aria-label="金屬層排列"></canvas>
+      <p id="scene"></p>
+      <div class="row" id="picks"></div>
+      <div class="row">
+        <button type="button" id="next" class="alt">下一個用途</button>
+      </div>
+      <p>導電性和熔點：</p>
+      <div class="row">
+        <button type="button" id="cond-up" class="alt">導電性通常更高</button>
+        <button type="button" id="cond-down" class="alt">導電性通常更低</button>
+      </div>
+      <div class="row">
+        <button type="button" id="melt-up" class="alt">熔點一定更高</button>
+        <button type="button" id="melt-down" class="alt">熔點不一定更高</button>
+      </div>
+      <p class="num" id="score"></p>
+      <h2>錯因</h2>
+      <ul>
+        <li>合金是混合物，沒有一條像純物質那樣固定的化學式。</li>
+        <li>合金通常較硬，是因為不同大小的原子妨礙層與層滑動，不是因為它變成了離子化合物。</li>
+        <li>黃銅是銅和鋅，青銅是銅和錫。不要把鋅和錫對調。</li>
+        <li>不鏽鋼仍然含鐵，另外含鉻，常常再含鎳。鉻幫助抵抗鏽蝕，這是性質，不是塗層做法。</li>
+        <li>焊料的熔點低於組成金屬。合金不是一律更硬又更高熔點。導電性通常也下降。</li>
+      </ul>
+    </div>
+  </main>
+  <script src="../../lesson-kit.js"></script>
+  <script>
+    var alloys = {
+      duralumin: { name: "硬鋁", mix: "鋁為主，加入銅，也可含鎂", note: "密度仍低，同時比純鋁硬。" },
+      stainless: { name: "不鏽鋼", mix: "鐵為主，加入鉻，常常再加鎳", note: "仍然含鐵。鉻有助抵抗鏽蝕。" },
+      solder: { name: "焊料", mix: "以錫為主的混合物", note: "熔點低於組成金屬。本課不講怎樣加熱。" },
+      brass: { name: "黃銅", mix: "銅和鋅", note: "比純銅硬，色澤偏金黃。" },
+      bronze: { name: "青銅", mix: "銅和錫", note: "比純銅硬。不要把它和黃銅對調。" },
+      steel: { name: "鋼", mix: "鐵和少量碳", note: "碳原子妨礙鐵的層滑動，所以比純鐵硬。" }
+    };
+    var scenes = [
+      { q: "要做輕、同時比純鋁硬的飛機外殼。", ans: "duralumin" },
+      { q: "要做減慢生鏽的餐具，主要金屬仍然是鐵。", ans: "stainless" },
+      { q: "哪種合金的熔點低於組成金屬，性質上適合接合導線？不要找加熱方法。", ans: "solder" },
+      { q: "要做金黃色的水龍頭。", ans: "brass" },
+      { q: "要做戶外銅像，希望比純銅硬。", ans: "bronze" },
+      { q: "要做建築用的鐵樑，比純鐵硬。", ans: "steel" }
+    ];
+    var order = ["duralumin", "stainless", "solder", "brass", "bronze", "steel"];
+    var scene = 0;
+    var solved = {};
+    var alloyView = false;
+    var canvas = document.getElementById("plot");
+    var ctx = canvas.getContext("2d");
+
+    function countSolved() {
+      var n = 0;
+      var k;
+      for (k in solved) if (solved[k]) n += 1;
+      return n;
     }
-    
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+
+    function draw() {
+      var w = canvas.width;
+      var h = canvas.height;
+      ctx.fillStyle = "#0f172a";
+      ctx.fillRect(0, 0, w, h);
+      var r;
+      var c;
+      for (r = 0; r < 4; r++) {
+        for (c = 0; c < 8; c++) {
+          var big = alloyView && ((r + c) % 4 === 0);
+          var rad = big ? 16 : 11;
+          var shift = alloyView && ((r * 3 + c) % 5 === 0) ? 7 : 0;
+          var cx = 48 + c * 72 + shift;
+          var cy = 42 + r * 52;
+          ctx.beginPath();
+          ctx.fillStyle = big ? "#fbbf24" : "#34d399";
+          ctx.arc(cx, cy, rad, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      ctx.fillStyle = "#e2e8f0";
+      ctx.font = "15px sans-serif";
+      ctx.fillText(alloyView ? "不同大小的原子令層不容易滑動，所以通常較硬" : "原子大小相同，層較容易滑動", 24, h - 16);
+    }
+
+    function showScene() {
+      document.getElementById("scene").textContent = "用途 " + (scene + 1) + "／" + scenes.length + "：" + scenes[scene].q;
+      document.getElementById("score").textContent = "已配對 " + countSolved() + "／" + scenes.length;
+    }
+
+    function choose(id) {
+      var item = scenes[scene];
+      var picked = alloys[id];
+      var right = alloys[item.ans];
+      if (id === item.ans) {
+        solved[item.ans] = true;
+        showScene();
+        ChemLesson.say("正確。" + right.name + "：" + right.mix + "。" + right.note, "ok");
+      } else {
+        ChemLesson.say(picked.name + "的組成是" + picked.mix + "。這個用途對應" + right.name + "，組成是" + right.mix + "。", "no");
+      }
+    }
+
+    var picks = document.getElementById("picks");
+    order.forEach(function (id) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = alloys[id].name;
+      btn.onclick = function () { choose(id); };
+      picks.appendChild(btn);
+    });
+
+    document.getElementById("pure").onclick = function () {
+      alloyView = false;
+      document.getElementById("pure").className = "on";
+      document.getElementById("mix").className = "alt";
+      draw();
+      ChemLesson.say("純金屬的原子大小相同，層與層較易滑動，所以較軟。");
+    };
+    document.getElementById("mix").onclick = function () {
+      alloyView = true;
+      document.getElementById("pure").className = "alt";
+      document.getElementById("mix").className = "on";
+      draw();
+      ChemLesson.say("合金裡不同大小的原子妨礙滑動，所以通常比主要的純金屬硬。");
+    };
+    document.getElementById("next").onclick = function () {
+      scene = (scene + 1) % scenes.length;
+      showScene();
+      ChemLesson.say("下一個用途。先看主要金屬和題目要的性質。");
+    };
+    document.getElementById("cond-up").onclick = function () {
+      ChemLesson.say("通常不是更高。晶格被其他原子擾亂，導電性通常低於該種純金屬。", "no");
+    };
+    document.getElementById("cond-down").onclick = function () {
+      ChemLesson.say("正確。合金的導電性通常低於主要的純金屬。", "ok");
+    };
+    document.getElementById("melt-up").onclick = function () {
+      ChemLesson.say("不一定。焊料的熔點就低於組成金屬。硬度上升和熔點上升是兩件事。", "no");
+    };
+    document.getElementById("melt-down").onclick = function () {
+      ChemLesson.say("正確。熔點不一定更高。焊料就是熔點較低的例子。", "ok");
+    };
+    draw();
+    showScene();
   </script>
-<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+  <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 </body>
 </html>

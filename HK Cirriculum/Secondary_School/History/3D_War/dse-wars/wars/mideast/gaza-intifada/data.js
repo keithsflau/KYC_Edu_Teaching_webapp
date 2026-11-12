@@ -163,7 +163,7 @@ window.BATTLE_DATA = (function () {
       }
   ];
   const notes =   {
-      "summary": "加沙與因提法達 — DSE 西史小戰役地圖。",
+      "summary": "加沙與因提法達 — 課題地圖。兵力與路線為示意。",
       "caveats": [
           "本圖僅覆蓋該戰役核心區域；戰線與兵力為教學示意。",
           "衛星影像為現代地形。"
@@ -301,11 +301,33 @@ window.BATTLE_DATA = (function () {
           "forces_en": ""
       }
   ];
-  const outro =   {
+    const sourceTask = {
+    "cite": "1987年12月加沙事件的新聞記載",
+    "excerpt": "一輛以色列車輛在加沙地帶撞死巴勒斯坦工人之後，喪禮變成大範圍抗議。",
+    "ask": "第一次因提法達的直接起因，這則記載指向什麼？",
+    "options": [
+      {
+        "t": "1967年6月7日的戈蘭攻勢。",
+        "ok": false,
+        "why": "那是二十年以前的另一場戰爭。"
+      },
+      {
+        "t": "1987年12月這次傷亡之後，抗議擴及佔領區。",
+        "ok": true,
+        "why": "起義有更長的占領背景，但記載裡的直接起因是這次事件。"
+      },
+      {
+        "t": "1993年奧斯陸協議剛剛簽署。",
+        "ok": false,
+        "why": "奧斯陸在1993年。它是起義后期的外交結果，不是1987年的起點。"
+      }
+    ]
+  };
+const outro =   {
       "title_zh": "加沙與因提法達",
       "title_en": "GAZA & INTIFADA",
-      "narration_zh": "本戰役為 DSE 西史重要考點。",
-      "narration_en": "A key DSE Western History topic.",
+      "narration_zh": "1987年12月加沙的傷亡之後，抗議擴及佔領區。1993年才有奧斯陸原則宣言。",
+      "narration_en": "Protests spread after the December 1987 deaths in Gaza. The Oslo Declaration of Principles came in 1993.",
       "cam": {
           "lng": 34.47,
           "lat": 31.5,
@@ -315,5 +337,5 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       }
   };
-  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };
+  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, sourceTask, END_DAY };
 })();

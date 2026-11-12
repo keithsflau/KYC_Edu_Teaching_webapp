@@ -1,335 +1,663 @@
-<!DOCTYPE html>
-<html lang="zh-HK">
-  <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>小一常識：好市民迷宮 | Good Citizen</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
-    <script src="../../common/i18n.js"></script>
-    <link
-      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
-      rel="stylesheet"
-    />
-    <style>
-      body {
-        font-family: "Fredoka", "Noto Sans TC", sans-serif;
-        background: linear-gradient(135deg, #ddd6fe 0%, #a78bfa 100%);
-      }
-    </style>
-<!-- NCS i18n fleet kit (auto-injected) -->
-  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
-  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
-  <style data-ncs-kit="fleet-bridge">
-    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
-    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
-      display: none !important;
-    }
-  </style>
-  <script data-ncs-kit="fleet-init">
-  (function () {
-    function hideLegacyToggles() {
-      document.body.classList.add("ncs-fleet-mounted");
-      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
-        var label = (btn.textContent || "").trim();
-        if (label === "EN" || label === "\u4E2D") {
-          btn.classList.add("ncs-hide-when-ncs-fleet");
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小一常識：好市民迷宮 | Good Citizen</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="../../common/i18n.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fredoka:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Fredoka", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #ddd6fe 0%, #a78bfa 100%);
+      }
+    </style>
+    <!-- NCS i18n fleet kit (auto-injected) -->
+    <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
+    <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+    <style data-ncs-kit="fleet-bridge">
+      body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+      body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
+        display: none !important;
+      }
+    </style>
+    <script data-ncs-kit="fleet-init">
+      (function () {
+        function hideLegacyToggles() {
+          document.body.classList.add("ncs-fleet-mounted");
+          document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
+            var label = (btn.textContent || "").trim();
+            if (label === "EN" || label === "\u4E2D") {
+              btn.classList.add("ncs-hide-when-ncs-fleet");
+            }
+          });
+          document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
+            el.classList.add("ncs-hide-when-ncs-fleet");
+          });
         }
-      });
-      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
-        el.classList.add("ncs-hide-when-ncs-fleet");
-      });
-    }
-    function boot() {
-      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
-      window.NcsI18n.init({
-        chromePath: "../../../../_shared/ncs-chrome.json",
-        target: document.body
-      }).then(hideLegacyToggles);
-    }
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", boot);
-    } else {
-      boot();
-    }
-  })();
-  </script>
-</head>
-  <body>
-    <div id="root"></div>
-    <script>
-const {
-  useState,
-  useEffect
-} = React;
-const {
-  motion,
-  AnimatePresence
-} = window.Motion;
-const {
-  LanguageSelector,
-  get
-} = window.MathI18n;
-const t = {
-  title: {
-    en: "Good Citizen Maze",
-    zh: "好市民迷宮",
-    ja: "良い市民迷路",
-    ko: "모범 시민 미로",
-    es: "Laberinto del buen ciudadano",
-    de: "Labyrinth des guten Bürgers",
-    fi: "Hyvän kansalaisen sokkelo",
-    fr: "Labyrinthe du bon citoyen",
-    ar: "متاهة المواطن الصالح",
-    it: "Labirinto del buon cittadino"
-  },
-  instruction: {
-    en: "Collect Good Deeds (Green) and avoid Bad Deeds (Red)!",
-    zh: "收集好行為 (綠色)，避開壞行為 (紅色)！",
-    ja: "良い行い（緑）を集めて、悪い行い（赤）を避けよう！",
-    ko: "선행(녹색)을 모으고 나쁜 행동(빨간색)을 피하세요!",
-    es: "¡Recoge buenas acciones (verde) y evita las malas acciones (rojo)!",
-    de: "Sammle gute Taten (Grün) und vermeide schlechte Taten (Rot)!",
-    fi: "Kerää hyviä tekoja (vihreä) ja vältä pahoja tekoja (punainen)!",
-    fr: "Collectez les bonnes actions (vert) et évitez les mauvaises actions (rouge) !",
-    ar: "اجمع الأعمال الصالحة (الأخضر) وتجنب الأعمال السيئة (الأحمر)!",
-    it: "Raccogli le buone azioni (verde) ed evita le cattive azioni (rosso)!"
-  },
-  win: {
-    en: "You are a Super Citizen!",
-    zh: "你是超級好市民！",
-    es: "¡Eres un súper ciudadano!",
-    de: "Du bist ein Superbürger!",
-    fi: "Olet superkansalainen!",
-    fr: "Vous êtes un super citoyen !",
-    ar: "أنت مواطن خارق!",
-    it: "Sei un super cittadino!"
-  },
-  lose: {
-    en: "Oh no! Be careful!",
-    zh: "哎呀！要小心！",
-    es: "¡Oh no! ¡Ten cuidado!",
-    de: "Oh nein! Sei vorsichtig!",
-    fi: "Voi ei! Ole varovainen!",
-    fr: "Oh non ! Faites attention !",
-    ar: "أوه لا! كن حذرا!",
-    it: "Oh no! Stai attento!"
-  },
-  restart: {
-    en: "Try Again",
-    zh: "再試一次",
-    es: "Inténtalo de nuevo",
-    de: "Versuch es noch einmal",
-    fi: "Yritä uudelleen",
-    fr: "Réessayez",
-    ar: "حاول مرة أخرى",
-    it: "Riprova"
-  },
-  score: {
-    en: "Score",
-    zh: "分數",
-    es: "Puntuación",
-    de: "Punktzahl",
-    fi: "Pisteet",
-    fr: "Score",
-    ar: "نتيجة",
-    it: "Punteggio"
-  }
-};
-
-// 10x10 Grid
-const GRID_W = 10;
-const GRID_H = 10;
-
-// Items
-const items = [{
-  x: 2,
-  y: 1,
-  type: "bad",
-  icon: "🗑️"
-},
-// Littering
-{
-  x: 5,
-  y: 2,
-  type: "good",
-  icon: "🤝"
-},
-// Helping
-{
-  x: 8,
-  y: 3,
-  type: "bad",
-  icon: "👊"
-},
-// Fighting
-{
-  x: 3,
-  y: 5,
-  type: "good",
-  icon: "🧹"
-},
-// Cleaning
-{
-  x: 6,
-  y: 6,
-  type: "bad",
-  icon: "🗣️"
-},
-// Shouting
-{
-  x: 1,
-  y: 7,
-  type: "good",
-  icon: "👵"
-},
-// Respect
-{
-  x: 7,
-  y: 8,
-  type: "good",
-  icon: "🚶"
-},
-// Queueing
-{
-  x: 9,
-  y: 9,
-  type: "goal",
-  icon: "🏫"
-}];
-
-// Walls for Maze effect (simplified)
-const walls = ["1,1", "1,2", "3,1", "3,3", "3,4", "5,5", "5,6", "7,1", "7,2", "8,5", "2,6", "4,8", "6,8"];
-function App() {
-  const [lang, setLang] = useState("zh");
-  const [pos, setPos] = useState({
-    x: 0,
-    y: 0
-  });
-  const [score, setScore] = useState(0);
-  const [collected, setCollected] = useState([]);
-  const [status, setStatus] = useState("playing"); // playing, win, lose
-
-  const getText = key => t[key][lang] || t[key]["en"];
-  const move = (dx, dy) => {
-    if (status !== "playing") return;
-    const nx = pos.x + dx;
-    const ny = pos.y + dy;
-
-    // Bounds
-    if (nx < 0 || nx >= GRID_W || ny < 0 || ny >= GRID_H) return;
-    // Walls
-    if (walls.includes(`${nx},${ny}`)) return;
-    setPos({
-      x: nx,
-      y: ny
-    });
-    checkItem(nx, ny);
-  };
-  const checkItem = (x, y) => {
-    const item = items.find(i => i.x === x && i.y === y);
-    if (item) {
-      if (item.type === "goal") {
-        setStatus("win");
-      } else if (!collected.includes(`${x},${y}`)) {
-        if (item.type === "good") {
-          setScore(s => s + 100);
-          setCollected(prev => [...prev, `${x},${y}`]);
-        } else if (item.type === "bad") {
-          setScore(s => Math.max(0, s - 50));
-          // Shake effect?
-          // Simple "Lose" condition for strictness? Let's just deduct score.
-        }
-      }
-    }
-  };
-  const restart = () => {
-    setPos({
-      x: 0,
-      y: 0
-    });
-    setScore(0);
-    setCollected([]);
-    setStatus("playing");
-  };
-  return /*#__PURE__*/React.createElement("div", {
-    className: "min-h-screen p-4 flex flex-col items-center"
-  }, /*#__PURE__*/React.createElement(LanguageSelector, {
-    lang: lang,
-    setLang: setLang
-  }), /*#__PURE__*/React.createElement("h1", {
-    className: "text-4xl font-black text-purple-900 mb-2 mt-4 drop-shadow-sm text-center"
-  }, "🏙️ ", getText("title")), /*#__PURE__*/React.createElement("p", {
-    className: "font-bold text-purple-800 mb-4 text-center text-sm md:text-base"
-  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
-    className: "font-black text-2xl text-white bg-purple-500 px-6 py-2 rounded-full mb-4 shadow"
-  }, getText("score"), ": ", score), /*#__PURE__*/React.createElement("div", {
-    className: "relative bg-white p-2 rounded-xl shadow-2xl border-4 border-purple-300"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "grid gap-1",
-    style: {
-      gridTemplateColumns: `repeat(${GRID_W}, minmax(0, 1fr))`,
-      width: "min(90vw, 400px)",
-      height: "min(90vw, 400px)"
-    }
-  }, Array.from({
-    length: GRID_H * GRID_W
-  }).map((_, i) => {
-    const x = i % GRID_W;
-    const y = Math.floor(i / GRID_W);
-    const isWall = walls.includes(`${x},${y}`);
-    const item = items.find(it => it.x === x && it.y === y);
-    const isCollected = collected.includes(`${x},${y}`);
-    return /*#__PURE__*/React.createElement("div", {
-      key: i,
-      className: `rounded-md flex items-center justify-center text-xl md:text-2xl ${isWall ? "bg-slate-800" : "bg-purple-50"}`
-    }, item && !isCollected && item.type !== "goal" && /*#__PURE__*/React.createElement("span", null, item.icon), item && item.type === "goal" && /*#__PURE__*/React.createElement("span", null, item.icon));
-  })), /*#__PURE__*/React.createElement(motion.div, {
-    className: "absolute top-2 left-2 w-[calc(100%-16px)] h-[calc(100%-16px)] pointer-events-none"
-  }, /*#__PURE__*/React.createElement(motion.div, {
-    className: "absolute text-2xl md:text-3xl flex items-center justify-center z-10",
-    animate: {
-      left: `${pos.x / GRID_W * 100}%`,
-      top: `${pos.y / GRID_H * 100}%`,
-      width: `${100 / GRID_W}%`,
-      height: `${100 / GRID_H}%`
-    },
-    transition: {
-      type: "spring",
-      stiffness: 300,
-      damping: 30
-    }
-  }, "🧒")), status === "win" && /*#__PURE__*/React.createElement("div", {
-    className: "absolute inset-0 bg-white/90 flex flex-col items-center justify-center rounded-xl z-20"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "text-6xl mb-4"
-  }, "🏆"), /*#__PURE__*/React.createElement("h2", {
-    className: "text-2xl font-black text-purple-800 mb-4"
-  }, getText("win")), /*#__PURE__*/React.createElement("button", {
-    onClick: restart,
-    className: "bg-purple-500 text-white px-6 py-2 rounded-full font-bold shadow"
-  }, getText("restart")))), /*#__PURE__*/React.createElement("div", {
-    className: "grid grid-cols-3 gap-2 mt-8 w-48"
-  }, /*#__PURE__*/React.createElement("div", null), /*#__PURE__*/React.createElement("button", {
-    onClick: () => move(0, -1),
-    className: "bg-purple-500 text-white p-4 rounded-xl shadow-lg active:bg-purple-600 text-2xl"
-  }, "⬆️"), /*#__PURE__*/React.createElement("div", null), /*#__PURE__*/React.createElement("button", {
-    onClick: () => move(-1, 0),
-    className: "bg-purple-500 text-white p-4 rounded-xl shadow-lg active:bg-purple-600 text-2xl"
-  }, "⬅️"), /*#__PURE__*/React.createElement("div", {
-    className: "flex items-center justify-center font-bold text-purple-300"
-  }, "KEYS"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => move(1, 0),
-    className: "bg-purple-500 text-white p-4 rounded-xl shadow-lg active:bg-purple-600 text-2xl"
-  }, "➡️"), /*#__PURE__*/React.createElement("div", null), /*#__PURE__*/React.createElement("button", {
-    onClick: () => move(0, 1),
-    className: "bg-purple-500 text-white p-4 rounded-xl shadow-lg active:bg-purple-600 text-2xl"
-  }, "⬇️"), /*#__PURE__*/React.createElement("div", null)));
-}
-ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
-</script>
-  <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
-</body>
-</html>
+        function boot() {
+          if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+          window.NcsI18n.init({
+            chromePath: "../../../../_shared/ncs-chrome.json",
+            target: document.body
+          }).then(hideLegacyToggles);
+        }
+        if (document.readyState === "loading") {
+          document.addEventListener("DOMContentLoaded", boot);
+        } else {
+          boot();
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      const { useState, useEffect } = React;
+      const { motion } = window.Motion;
+      const { LanguageSelector } = window.MathI18n;
+      const h = React.createElement;
+
+      function L(zh, en, ja, ko, es, de, fi, fr, ar, it) {
+        return { zh: zh, en: en, ja: ja, ko: ko, es: es, de: de, fi: fi, fr: fr, ar: ar, it: it };
+      }
+
+      function tx(pack, lang) {
+        if (!pack) return "";
+        return pack[lang] || pack.en || pack.zh || "";
+      }
+
+      function shuffle(list) {
+        const next = list.slice();
+        for (let i = next.length - 1; i > 0; i -= 1) {
+          const j = Math.floor(Math.random() * (i + 1));
+          const hold = next[i];
+          next[i] = next[j];
+          next[j] = hold;
+        }
+        return next;
+      }
+
+      const GRID_W = 10;
+      const GRID_H = 10;
+      const walls = ["1,1", "1,2", "3,1", "3,3", "3,4", "5,5", "5,6", "7,1", "7,2", "8,5", "2,6", "4,8", "6,8"];
+      const GOAL = { x: 9, y: 9, icon: "🏫" };
+
+      const ui = {
+        title: L(
+          "好市民迷宮",
+          "Good Citizen Maze",
+          "よい市民の迷路",
+          "모범 시민 미로",
+          "Laberinto del buen ciudadano",
+          "Labyrinth des guten Bürgers",
+          "Hyvän kansalaisen sokkelo",
+          "Labyrinthe du bon citoyen",
+          "متاهة المواطن الصالح",
+          "Labirinto del buon cittadino"
+        ),
+        instruction: L(
+          "走到每個圖示，讀一句話：誰受到影響，下一步可以做什麼。",
+          "Walk to each picture and read one sentence: who is affected, and what you can do next.",
+          "マークまで歩き、一文を読もう。だれが影響を受けるか、次に何ができるか。",
+          "그림까지 걸어가 한 문장을 읽으세요. 누가 영향을 받는지, 다음에 무엇을 할 수 있는지.",
+          "Camina hasta cada dibujo y lee una frase: quién se ve afectado y qué puedes hacer después.",
+          "Geh zu jedem Bild und lies einen Satz: Wer ist betroffen, und was kannst du als Nächstes tun?",
+          "Kävele jokaisen kuvan luo ja lue yksi lause: kehen asia vaikuttaa ja mitä voit tehdä seuraavaksi.",
+          "Va jusqu'à chaque image et lis une phrase : qui est touché, et que peux-tu faire ensuite ?",
+          "امشِ إلى كل صورة واقرأ جملة: من يتأثر، وماذا يمكنك أن تفعل بعد ذلك.",
+          "Cammina fino a ogni disegno e leggi una frase: chi viene toccato e cosa puoi fare dopo."
+        ),
+        progress: L("已選", "Chosen", "選んだ数", "고름", "Elegidas", "Gewählt", "Valittu", "Choisies", "تم الاختيار", "Scelte"),
+        oneLine: L("一句話", "One sentence", "一文", "한 문장", "Una frase", "Ein Satz", "Yksi lause", "Une phrase", "جملة واحدة", "Una frase"),
+        hint: L(
+          "走到圖示，就會看見一句話。",
+          "Walk to a picture. You will see one sentence.",
+          "マークまで歩くと、一文が見えます。",
+          "그림까지 걸어가면 한 문장이 보입니다.",
+          "Camina hasta un dibujo y verás una frase.",
+          "Geh zu einem Bild. Dann siehst du einen Satz.",
+          "Kävele kuvan luo, niin näet yhden lauseen.",
+          "Va jusqu'à une image. Tu verras une phrase.",
+          "امشِ إلى صورة، فترى جملة واحدة.",
+          "Cammina fino a un disegno e vedrai una frase."
+        ),
+        again: L(
+          "再看這句話：誰受到影響？下一步可以做什麼？",
+          "Read the sentence again: who is affected, and what can you do next?",
+          "もう一度読もう。だれが影響を受ける？次に何ができる？",
+          "문장을 다시 보세요. 누가 영향을 받나요? 다음에 무엇을 할 수 있나요?",
+          "Vuelve a leer la frase: ¿quién se ve afectado? ¿qué puedes hacer después?",
+          "Lies den Satz noch einmal: Wer ist betroffen? Was kannst du als Nächstes tun?",
+          "Lue lause uudelleen: kehen asia vaikuttaa? Mitä voit tehdä seuraavaksi?",
+          "Relis la phrase : qui est touché ? Que peux-tu faire ensuite ?",
+          "اقرأ الجملة مرة أخرى: من يتأثر؟ ماذا يمكنك أن تفعل بعد ذلك؟",
+          "Leggi di nuovo la frase: chi viene toccato? Cosa puoi fare dopo?"
+        ),
+        remain: L(
+          "還有圖示未選。走回去，先讀那一句話，再選下一步。",
+          "Some pictures are still not chosen. Walk back, read the sentence, then choose the next step.",
+          "まだ選んでいないマークがあります。戻って文を読み、次の行動を選ぼう。",
+          "아직 고르지 않은 그림이 있습니다. 돌아가 문장을 읽고 다음 행동을 고르세요.",
+          "Aún hay dibujos sin elegir. Vuelve, lee la frase y elige el siguiente paso.",
+          "Einige Bilder sind noch nicht gewählt. Geh zurück, lies den Satz und wähle den nächsten Schritt.",
+          "Joitakin kuvia ei ole vielä valittu. Palaa, lue lause ja valitse seuraava teko.",
+          "Il reste des images sans choix. Retourne lire la phrase, puis choisis la suite.",
+          "ما زالت هناك صور لم تخترها. ارجع واقرأ الجملة ثم اختر الخطوة التالية.",
+          "Ci sono ancora disegni senza scelta. Torna, leggi la frase e scegli il passo successivo."
+        ),
+        arrived: L(
+          "下面是路上的每一句話。",
+          "Here is every sentence from the path.",
+          "道のりで読んだ文です。",
+          "길에서 읽은 문장입니다.",
+          "Estas son todas las frases del camino.",
+          "Das sind alle Sätze vom Weg.",
+          "Tässä ovat kaikki polun lauseet.",
+          "Voici chaque phrase du chemin.",
+          "هذه كل جملة من الطريق.",
+          "Ecco ogni frase del percorso."
+        ),
+        doneLead: L(
+          "每句都寫着誰受到影響，以及下一步可以做什麼。",
+          "Each sentence says who is affected and what you can do next.",
+          "どの文も、だれが影響を受けるか、次に何ができるかを書いています。",
+          "각 문장은 누가 영향을 받는지, 다음에 무엇을 할 수 있는지를 말합니다.",
+          "Cada frase dice quién se ve afectado y qué puedes hacer después.",
+          "Jeder Satz sagt, wer betroffen ist und was du als Nächstes tun kannst.",
+          "Jokainen lause kertoo, kehen asia vaikuttaa ja mitä voit tehdä seuraavaksi.",
+          "Chaque phrase dit qui est touché et ce que tu peux faire ensuite.",
+          "كل جملة تقول من يتأثر وماذا يمكنك أن تفعل بعد ذلك.",
+          "Ogni frase dice chi viene toccato e cosa puoi fare dopo."
+        ),
+        restart: L("再走一次", "Walk again", "もう一度歩く", "다시 걷기", "Caminar otra vez", "Noch einmal gehen", "Kävele uudelleen", "Marcher encore", "امشِ مرة أخرى", "Cammina di nuovo")
+      };
+
+      const situations = [
+        {
+          id: "litter",
+          x: 2,
+          y: 1,
+          icon: "🗑️",
+          line: L(
+            "後面的同學會受到影響，因為他們可能踩到地上的垃圾，下一步可以把垃圾放進垃圾桶。",
+            "The children behind are affected, because they may step on the rubbish, so next you can put the rubbish in the bin.",
+            "後ろの友だちが影響を受けます。ゴミを踏むかもしれないので、次はゴミ箱に入れられます。",
+            "뒤에 오는 친구가 영향을 받습니다. 쓰레기를 밟을 수 있으니, 다음에는 쓰레기통에 넣을 수 있습니다.",
+            "Los compañeros de detrás se ven afectados, porque pueden pisar la basura, así que después puedes echarla a la papelera.",
+            "Die Kinder dahinter sind betroffen, weil sie auf den Abfall treten können, also kannst du ihn als Nächstes in den Mülleimer tun.",
+            "Roskat haittaavat takana tulevia lapsia, koska he voivat astua niihin, joten seuraavaksi voit laittaa roskat roska-astiaan.",
+            "Les camarades derrière sont touchés, parce qu'ils peuvent marcher sur les déchets, donc ensuite tu peux les mettre à la poubelle.",
+            "التلاميذ خلفك يتأثرون، لأنهم قد يدوسون على النفايات، فالخطوة التالية أن تضعها في سلة المهملات.",
+            "I compagni dietro sono toccati, perché possono calpestare i rifiuti, quindi il passo successivo è metterli nel cestino."
+          ),
+          choices: [
+            {
+              id: "bin",
+              ok: true,
+              text: L(
+                "拾起，放進垃圾桶",
+                "Pick it up and put it in the bin",
+                "拾ってゴミ箱に入れる",
+                "주워서 쓰레기통에 넣기",
+                "Recogerla y echarla a la papelera",
+                "Aufheben und in den Mülleimer tun",
+                "Poimi ja laita roska-astiaan",
+                "Ramasser et mettre à la poubelle",
+                "التقطها وضعها في السلة",
+                "Raccoglilo e mettilo nel cestino"
+              )
+            },
+            {
+              id: "skip",
+              ok: false,
+              text: L(
+                "走開，當作沒看見",
+                "Walk away and pretend not to see it",
+                "見なかったことにして立ち去る",
+                "못 본 척하고 가기",
+                "Irse y hacer como que no la ves",
+                "Weggehen und so tun, als sähe man es nicht",
+                "Kävele pois ja teeskentele, ettet nähnyt",
+                "Partir et faire comme si on n'avait rien vu",
+                "ابتعد وتظاهر أنك لم ترها",
+                "Allontanati e fai finta di non aver visto"
+              )
+            }
+          ]
+        },
+        {
+          id: "help",
+          x: 5,
+          y: 2,
+          icon: "🤝",
+          line: L(
+            "掉了筆的同學會受到影響，因為他一個人拾不完，下一步可以幫他拾起。",
+            "The classmate who dropped the pens is affected, because he cannot pick them all up alone, so next you can help him pick them up.",
+            "ペンを落とした友だちが影響を受けます。一人では拾い切れないので、次は拾うのを手伝えます。",
+            "펜을 떨어뜨린 친구가 영향을 받습니다. 혼자 다 주울 수 없으니, 다음에는 주워 줄 수 있습니다.",
+            "El compañero al que se le cayeron los bolígrafos se ve afectado, porque no puede recogerlos solo, así que después puedes ayudarle.",
+            "Der Mitschüler, dem die Stifte herunterfielen, ist betroffen, weil er sie allein nicht schafft, also kannst du ihm als Nächstes helfen.",
+            "Kynien putoaminen haittaa luokkatoveria, koska hän ei saa niitä yksin kasaan, joten seuraavaksi voit auttaa häntä.",
+            "Le camarade qui a fait tomber ses stylos est touché, parce qu'il ne peut pas tout ramasser seul, donc ensuite tu peux l'aider.",
+            "الزميلك الذي سقطت أقلامه يتأثر، لأنه لا يستطيع جمعها وحده، فالخطوة التالية أن تساعده.",
+            "Il compagno a cui sono cadute le penne è toccato, perché da solo non riesce a raccoglierle, quindi il passo successivo è aiutarlo."
+          ),
+          choices: [
+            {
+              id: "pick",
+              ok: true,
+              text: L("幫他拾起", "Help him pick them up", "拾うのを手伝う", "주워 주기", "Ayudarle a recogerlos", "Ihm beim Aufheben helfen", "Auta häntä keräämään", "L'aider à les ramasser", "ساعده في جمعها", "Aiutarlo a raccoglierle")
+            },
+            {
+              id: "watch",
+              ok: false,
+              text: L("只站着看", "Just stand and watch", "ただ立って見ている", "그냥 서서 보기", "Quedarse mirando", "Nur dastehen und zusehen", "Seiso vain katsomassa", "Rester là à regarder", "قف فقط تشاهد", "Restare solo a guardare")
+            }
+          ]
+        },
+        {
+          id: "push",
+          x: 8,
+          y: 3,
+          icon: "👊",
+          line: L(
+            "推撞的人和旁邊的人會受到影響，因為會痛、也會害怕，下一步可以分開並告訴老師。",
+            "The children who are pushing and the people nearby are affected, because someone can get hurt and others feel scared, so next you can separate them and tell the teacher.",
+            "押し合っている人と近くの人が影響を受けます。けがをしたり怖がったりするので、次は引き離して先生に伝えられます。",
+            "서로 미는 사람과 옆 사람이 영향을 받습니다. 다칠 수 있고 무서워할 수 있으니, 다음에는 말리고 선생님께 말할 수 있습니다.",
+            "Quienes se empujan y las personas de al lado se ven afectadas, porque alguien puede hacerse daño y otros se asustan, así que después puedes separarlos y avisar a tu docente.",
+            "Die schubsenden Kinder und die Leute daneben sind betroffen, weil jemand sich wehtun kann und andere Angst haben, also kannst du sie als Nächstes trennen und der Lehrkraft Bescheid sagen.",
+            "Töniminen haittaa töniviä lapsia ja lähellä olevia, koska joku voi satuttaa itsensä ja toisia pelottaa, joten seuraavaksi voit erottaa heidät ja kertoa opettajalle.",
+            "Les enfants qui se poussent et les gens à côté sont touchés, parce que quelqu'un peut avoir mal et les autres ont peur, donc ensuite tu peux les séparer et prévenir l'enseignant.",
+            "الطفلان المتدافعان ومن حولهما يتأثرون، لأن أحدهم قد يتألم والآخرون يخافون، فالخطوة التالية أن تبعدهما وتخبر المعلم.",
+            "I bambini che si spingono e le persone vicine sono toccati, perché qualcuno può farsi male e gli altri hanno paura, quindi il passo successivo è separarli e dirlo all'insegnante."
+          ),
+          choices: [
+            {
+              id: "tell",
+              ok: true,
+              text: L("分開，並告訴老師", "Separate them and tell the teacher", "引き離して先生に伝える", "말리고 선생님께 말하기", "Separarlos y avisar a tu docente", "Trennen und der Lehrkraft Bescheid sagen", "Erota heidät ja kerro opettajalle", "Les séparer et prévenir l'enseignant", "أبعدهما وأخبر المعلم", "Separarli e dirlo all'insegnante")
+            },
+            {
+              id: "join",
+              ok: false,
+              text: L("加入，一起推", "Join in and push too", "加わって一緒に押す", "끼어들어 함께 밀기", "Unirte y empujar también", "Mitmachen und auch schubsen", "Mene mukaan tönimään", "Se joindre à eux et pousser aussi", "انضم إليهما وادفع معهما", "Unirsi e spingere anche tu")
+            }
+          ]
+        },
+        {
+          id: "clean",
+          x: 3,
+          y: 5,
+          icon: "🧹",
+          line: L(
+            "坐在附近的同學會受到影響，因為地上的紙屑讓他們不舒服，下一步可以用掃把掃乾淨。",
+            "The children sitting nearby are affected, because the paper scraps on the floor make them uncomfortable, so next you can sweep the scraps up with a broom.",
+            "近くに座る友だちが影響を受けます。床の紙くずが嫌だから、次はほうきで掃けます。",
+            "가까이 앉은 친구가 영향을 받습니다. 바닥의 종이 조각이 불편하니, 다음에는 빗자루로 쓸 수 있습니다.",
+            "Los compañeros sentados cerca se ven afectados, porque los papeles del suelo les molestan, así que después puedes barrerlos.",
+            "Die Kinder, die in der Nähe sitzen, sind betroffen, weil die Papierschnipsel sie stören, also kannst du sie als Nächstes mit dem Besen fegen.",
+            "Paperisilppu haittaa lähellä istuvia lapsia, joten seuraavaksi voit lakaista sen harjalla.",
+            "Les camarades assis à côté sont touchés, parce que les bouts de papier les gênent, donc ensuite tu peux les balayer.",
+            "التلاميذ الجالسون بالقرب يتأثرون، لأن قصاصات الورق تزعجهم، فالخطوة التالية أن تكنسها بالمكنسة.",
+            "I compagni seduti vicino sono toccati, perché i pezzetti di carta danno fastidio, quindi il passo successivo è spazzarli con la scopa."
+          ),
+          choices: [
+            {
+              id: "sweep",
+              ok: true,
+              text: L("用掃把掃乾淨", "Sweep them up with a broom", "ほうきで掃く", "빗자루로 쓸기", "Barrer con la escoba", "Mit dem Besen fegen", "Lakaise harjalla", "Balayer avec le balai", "اكنس بالمكنسة", "Spazzare con la scopa")
+            },
+            {
+              id: "kick",
+              ok: false,
+              text: L("把紙屑踢到桌底", "Kick the scraps under the desk", "紙くずを机の下へ蹴る", "종이 조각을 책상 아래로 차기", "Empujar los papeles bajo la mesa", "Die Schnipsel unter den Tisch kicken", "Potki paperit pöydän alle", "Envoyer les papiers sous la table", "اركل الورق تحت الطاولة", "Calciare la carta sotto il banco")
+            }
+          ]
+        },
+        {
+          id: "loud",
+          x: 6,
+          y: 6,
+          icon: "🗣️",
+          line: L(
+            "正在看書的人會受到影響，因為圖書館裡有人大聲說話，下一步可以放輕聲音。",
+            "The people who are reading are affected, because someone is speaking loudly in the library, so next you can lower your voice.",
+            "本を読んでいる人が影響を受けます。図書館で大声の人がいるので、次は声を小さくできます。",
+            "책을 읽는 사람이 영향을 받습니다. 도서관에서 큰 소리로 말하니, 다음에는 목소리를 낮출 수 있습니다.",
+            "Las personas que leen se ven afectadas, porque alguien habla alto en la biblioteca, así que después puedes bajar la voz.",
+            "Die Lesenden sind betroffen, weil in der Bibliothek jemand laut spricht, also kannst du als Nächstes leiser sprechen.",
+            "Kova puhe haittaa kirjaston lukijoita, joten seuraavaksi voit hiljentää ääntäsi.",
+            "Les personnes qui lisent sont touchées, parce que quelqu'un parle fort à la bibliothèque, donc ensuite tu peux baisser la voix.",
+            "الذين يقرؤون يتأثرون، لأن شخصا يتكلم بصوت عال في المكتبة، فالخطوة التالية أن تخفض صوتك.",
+            "Le persone che leggono sono toccate, perché in biblioteca qualcuno parla forte, quindi il passo successivo è abbassare la voce."
+          ),
+          choices: [
+            {
+              id: "soft",
+              ok: true,
+              text: L("放輕聲音", "Lower your voice", "声を小さくする", "목소리 낮추기", "Bajar la voz", "Leiser sprechen", "Hiljennä ääntäsi", "Baisser la voix", "اخفض صوتك", "Abbassare la voce")
+            },
+            {
+              id: "louder",
+              ok: false,
+              text: L("叫得更大聲", "Shout even louder", "もっと大きな声で叫ぶ", "더 크게 소리치기", "Gritar más fuerte", "Noch lauter rufen", "Huuda kovempaa", "Crier encore plus fort", "اصرخ بصوت أعلى", "Gridare ancora più forte")
+            }
+          ]
+        },
+        {
+          id: "elder",
+          x: 1,
+          y: 7,
+          icon: "👵",
+          line: L(
+            "提着重物的婆婆會受到影響，因為她走得很吃力，下一步可以讓路，並問她要不要幫忙。",
+            "The elderly woman carrying a heavy load is affected, because she is struggling to walk, so next you can make way and ask if she wants help.",
+            "重い荷物を持つおばあさんが影響を受けます。歩くのがつらそうなので、次は道をゆずり、手伝いましょうかと聞けます。",
+            "무거운 짐을 든 할머니가 영향을 받습니다. 힘겹게 걷고 있으니, 다음에는 길을 양보하고 도움이 필요한지 물을 수 있습니다.",
+            "La señora mayor que carga algo pesado se ve afectada, porque camina con dificultad, así que después puedes dejarle paso y preguntar si quiere ayuda.",
+            "Die ältere Frau mit der schweren Last ist betroffen, weil sie mühsam geht, also kannst du als Nächstes Platz machen und fragen, ob sie Hilfe möchte.",
+            "Raskas taakka haittaa mummoa, koska hän kävelee vaivalloisesti, joten seuraavaksi voit väistää ja kysyä, haluaako hän apua.",
+            "La dame âgée qui porte une charge lourde est touchée, parce qu'elle marche avec peine, donc ensuite tu peux lui laisser le passage et lui demander si elle veut de l'aide.",
+            "الجدة التي تحمل حملا ثقيلا تتأثر، لأنها تمشي بصعوبة، فالخطوة التالية أن تفسح لها الطريق وتسألها إن كانت تريد مساعدة.",
+            "La signora anziana che porta un carico pesante è toccata, perché cammina a fatica, quindi il passo successivo è lasciarle spazio e chiedere se vuole aiuto."
+          ),
+          choices: [
+            {
+              id: "ask",
+              ok: true,
+              text: L(
+                "讓路，並問她要不要幫忙",
+                "Make way and ask if she wants help",
+                "道をゆずり、手伝うか聞く",
+                "길을 양보하고 도울지 묻기",
+                "Dejarle paso y preguntar si quiere ayuda",
+                "Platz machen und fragen, ob sie Hilfe möchte",
+                "Väistä ja kysy, haluaako hän apua",
+                "Lui laisser le passage et demander si elle veut de l'aide",
+                "افسح الطريق واسأل إن كانت تريد مساعدة",
+                "Lasciarle spazio e chiedere se vuole aiuto"
+              )
+            },
+            {
+              id: "run",
+              ok: false,
+              text: L("從她身旁跑過", "Run past her", "横を走り抜ける", "옆을 뛰어 지나가기", "Pasar corriendo a su lado", "An ihr vorbeirennen", "Juokse hänen ohitseen", "Courir à côté d'elle", "اركض من جانبها", "Correrle accanto")
+            }
+          ]
+        },
+        {
+          id: "queue",
+          x: 7,
+          y: 8,
+          icon: "🚶",
+          line: L(
+            "排在後面的人會受到影響，因為有人插隊就要等更久，下一步可以排在隊伍最後。",
+            "The people waiting behind are affected, because someone pushing in makes them wait longer, so next you can stand at the end of the line.",
+            "後ろで待っている人が影響を受けます。割り込むともっと待つので、次は列の最後に並べます。",
+            "뒤에서 기다리는 사람이 영향을 받습니다. 새치기하면 더 오래 기다리니, 다음에는 줄의 맨 뒤에 설 수 있습니다.",
+            "Las personas que esperan detrás se ven afectadas, porque si alguien se cuela esperan más, así que después puedes ponerte al final de la fila.",
+            "Die wartenden Menschen dahinter sind betroffen, weil Vordrängeln sie länger warten lässt, also kannst du dich als Nächstes hinten anstellen.",
+            "Etuilu haittaa jonossa takana odottavia, koska he joutuvat odottamaan kauemmin, joten seuraavaksi voit mennä jonon viimeiseksi.",
+            "Les personnes qui attendent derrière sont touchées, parce que quelqu'un qui resquille les fait attendre plus, donc ensuite tu peux te mettre à la fin de la file.",
+            "الناس المنتظرون في الخلف يتأثرون، لأن تجاوز الدور يطيل انتظارهم، فالخطوة التالية أن تقف في آخر الصف.",
+            "Le persone in attesa dietro sono toccate, perché chi passa avanti le fa aspettare di più, quindi il passo successivo è mettersi in fondo alla fila."
+          ),
+          choices: [
+            {
+              id: "end",
+              ok: true,
+              text: L("排在隊伍最後", "Stand at the end of the line", "列の最後に並ぶ", "줄의 맨 뒤에 서기", "Ponerte al final de la fila", "Sich hinten anstellen", "Mene jonon viimeiseksi", "Se mettre à la fin de la file", "قف في آخر الصف", "Mettersi in fondo alla fila")
+            },
+            {
+              id: "cut",
+              ok: false,
+              text: L("擠到最前面", "Push to the very front", "一番前に割り込む", "맨 앞으로 밀고 들어가기", "Colarte hasta el principio", "Nach ganz vorn drängeln", "Tunkeudu jonon kärkeen", "Se faufiler tout devant", "زاحم إلى المقدمة", "Spingersi fino all'inizio")
+            }
+          ]
+        }
+      ];
+
+      function App() {
+        const [lang, setLang] = useState("zh");
+        const [pos, setPos] = useState({ x: 0, y: 0 });
+        const [resolved, setResolved] = useState({});
+        const [pendingId, setPendingId] = useState(null);
+        const [choiceOrder, setChoiceOrder] = useState([]);
+        const [missed, setMissed] = useState(false);
+        const [notice, setNotice] = useState("");
+        const [status, setStatus] = useState("playing");
+        const seen = Object.keys(resolved).length;
+        const pending = situations.find(function (item) { return item.id === pendingId; });
+        const standing = situations.find(function (item) { return item.x === pos.x && item.y === pos.y; });
+
+        useEffect(function () {
+          if (!pendingId) return;
+          const node = document.getElementById("citizen-line");
+          if (node && node.scrollIntoView) node.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, [pendingId]);
+
+        useEffect(function () {
+          if (status !== "done") return;
+          const node = document.getElementById("citizen-recap");
+          if (node && node.scrollIntoView) node.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, [status]);
+
+        function move(dx, dy) {
+          if (status !== "playing" || pendingId) return;
+          const nx = pos.x + dx;
+          const ny = pos.y + dy;
+          if (nx < 0 || nx >= GRID_W || ny < 0 || ny >= GRID_H) return;
+          if (walls.indexOf(nx + "," + ny) !== -1) return;
+          if (nx === GOAL.x && ny === GOAL.y) {
+            if (Object.keys(resolved).length < situations.length) {
+              setNotice("remain");
+              return;
+            }
+            setNotice("");
+            setPos({ x: nx, y: ny });
+            setStatus("done");
+            return;
+          }
+          setNotice("");
+          setPos({ x: nx, y: ny });
+          const item = situations.find(function (spot) { return spot.x === nx && spot.y === ny; });
+          if (item && !resolved[item.id]) {
+            setPendingId(item.id);
+            setChoiceOrder(shuffle(item.choices));
+            setMissed(false);
+          } else {
+            setPendingId(null);
+            setChoiceOrder([]);
+            setMissed(false);
+          }
+        }
+
+        function choose(choice) {
+          if (!pendingId) return;
+          if (choice.ok) {
+            if (window.GsSfx) window.GsSfx.playCorrect();
+            setResolved(function (prev) {
+              const next = Object.assign({}, prev);
+              next[pendingId] = true;
+              return next;
+            });
+            setPendingId(null);
+            setChoiceOrder([]);
+            setMissed(false);
+          } else {
+            if (window.GsSfx) window.GsSfx.playWrong();
+            setMissed(true);
+          }
+        }
+
+        function restart() {
+          setPos({ x: 0, y: 0 });
+          setResolved({});
+          setPendingId(null);
+          setChoiceOrder([]);
+          setMissed(false);
+          setNotice("");
+          setStatus("playing");
+        }
+
+        function sentenceCard(item, withChoices) {
+          return h(
+            "div",
+            { id: "citizen-line", className: "w-full max-w-xl bg-white rounded-2xl shadow p-4 mb-4" },
+            h("div", { className: "text-3xl mb-2", "aria-hidden": "true" }, item.icon),
+            h("p", { className: "text-xs font-bold text-purple-500 mb-1" }, tx(ui.oneLine, lang)),
+            h(
+              "p",
+              { className: "text-lg md:text-xl font-bold text-purple-950 leading-relaxed", role: "status" },
+              tx(item.line, lang)
+            ),
+            withChoices && missed
+              ? h("p", { className: "mt-3 text-purple-800 leading-relaxed" }, tx(ui.again, lang))
+              : null,
+            withChoices
+              ? h(
+                  "div",
+                  { className: "mt-4 grid gap-2" },
+                  choiceOrder.map(function (choice) {
+                    return h(
+                      "button",
+                      {
+                        key: choice.id,
+                        type: "button",
+                        onClick: function () { choose(choice); },
+                        className: "w-full text-left rounded-2xl border-2 border-purple-300 bg-purple-50 px-4 py-3 font-bold text-purple-900"
+                      },
+                      tx(choice.text, lang)
+                    );
+                  })
+                )
+              : null
+          );
+        }
+
+        const cells = [];
+        for (let i = 0; i < GRID_H * GRID_W; i += 1) {
+          const x = i % GRID_W;
+          const y = Math.floor(i / GRID_W);
+          const isWall = walls.indexOf(x + "," + y) !== -1;
+          const item = situations.find(function (spot) { return spot.x === x && spot.y === y; });
+          const isGoal = x === GOAL.x && y === GOAL.y;
+          const icon = isGoal ? GOAL.icon : item ? item.icon : "";
+          cells.push(
+            h(
+              "div",
+              {
+                key: i,
+                className: "rounded-md flex items-center justify-center text-xl " + (isWall ? "bg-slate-800" : "bg-purple-50")
+              },
+              h("span", { className: item && resolved[item.id] ? "opacity-40" : "" }, icon)
+            )
+          );
+        }
+
+        const btn = "bg-purple-500 text-white p-4 rounded-xl shadow-lg text-2xl";
+        const board = h(
+          "div",
+          { className: "relative bg-white p-2 rounded-xl shadow-2xl border-4 border-purple-300" },
+          h(
+            "div",
+            {
+              className: "grid gap-1",
+              style: {
+                gridTemplateColumns: "repeat(" + GRID_W + ", minmax(0, 1fr))",
+                width: "min(86vw, 380px)",
+                height: "min(86vw, 380px)"
+              }
+            },
+            cells
+          ),
+          h(
+            motion.div,
+            { className: "absolute top-2 left-2 w-[calc(100%-16px)] h-[calc(100%-16px)] pointer-events-none" },
+            h(
+              motion.div,
+              {
+                className: "absolute text-2xl flex items-center justify-center",
+                animate: {
+                  left: (pos.x / GRID_W) * 100 + "%",
+                  top: (pos.y / GRID_H) * 100 + "%",
+                  width: 100 / GRID_W + "%",
+                  height: 100 / GRID_H + "%"
+                },
+                transition: { type: "spring", stiffness: 300, damping: 30 }
+              },
+              "🧒"
+            )
+          )
+        );
+
+        const dpad = h(
+          "div",
+          { className: "grid grid-cols-3 gap-2 mt-6 w-48" + (pendingId ? " opacity-40 pointer-events-none" : "") },
+          h("div", null),
+          h("button", { type: "button", onClick: function () { move(0, -1); }, className: btn, "aria-label": "up" }, "⬆️"),
+          h("div", null),
+          h("button", { type: "button", onClick: function () { move(-1, 0); }, className: btn, "aria-label": "left" }, "⬅️"),
+          h("div", null),
+          h("button", { type: "button", onClick: function () { move(1, 0); }, className: btn, "aria-label": "right" }, "➡️"),
+          h("div", null),
+          h("button", { type: "button", onClick: function () { move(0, 1); }, className: btn, "aria-label": "down" }, "⬇️"),
+          h("div", null)
+        );
+
+        let middle = h("p", { className: "mb-4 text-center font-bold text-purple-900" }, tx(ui.hint, lang));
+        if (pending) middle = sentenceCard(pending, true);
+        else if (standing && resolved[standing.id]) middle = sentenceCard(standing, false);
+        else if (notice === "remain") {
+          middle = h("p", { className: "mb-4 text-center font-bold text-purple-950 max-w-xl leading-relaxed" }, tx(ui.remain, lang));
+        }
+
+        const recap = h(
+          "div",
+          { id: "citizen-recap", className: "w-full max-w-xl bg-white rounded-2xl shadow p-5" },
+          h("p", { className: "font-bold text-purple-950 text-lg mb-2 leading-relaxed" }, tx(ui.arrived, lang)),
+          h("p", { className: "text-purple-800 mb-4 leading-relaxed" }, tx(ui.doneLead, lang)),
+          h(
+            "ol",
+            { className: "list-decimal pl-5 space-y-3 text-slate-800" },
+            situations.map(function (item) {
+              return h("li", { key: item.id, className: "leading-relaxed" }, tx(item.line, lang));
+            })
+          ),
+          h(
+            "button",
+            { type: "button", onClick: restart, className: "mt-6 bg-purple-500 text-white px-6 py-3 rounded-full font-bold" },
+            tx(ui.restart, lang)
+          )
+        );
+
+        return h(
+          "div",
+          { className: "min-h-screen p-4 flex flex-col items-center" },
+          h(LanguageSelector, { lang: lang, setLang: setLang }),
+          h("h1", { className: "text-3xl md:text-4xl font-black text-purple-900 mb-2 mt-4 text-center" }, tx(ui.title, lang)),
+          h("p", { className: "font-bold text-purple-800 mb-4 text-center max-w-xl leading-relaxed" }, tx(ui.instruction, lang)),
+          h(
+            "div",
+            { className: "font-black text-lg text-white bg-purple-500 px-5 py-2 rounded-full mb-4" },
+            tx(ui.progress, lang) + " " + seen + "/" + situations.length
+          ),
+          status === "done" ? recap : h("div", { className: "w-full flex flex-col items-center" }, middle, board, dpad)
+        );
+      }
+
+      ReactDOM.createRoot(document.getElementById("root")).render(h(App));
+    </script>
+    <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+    <script src="../../common/gs-sfx.js"></script>
+  </body>
+</html>

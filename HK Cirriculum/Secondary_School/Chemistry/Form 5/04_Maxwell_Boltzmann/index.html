@@ -2,79 +2,225 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>04_Maxwell_Boltzmann</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="../../../../common/babel-react-classic.js"></script>
-  <script src="../../../../common/learn-from-zero.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
-  <style>
-    body { font-family: "IBM Plex Sans", system-ui, sans-serif; background-color: #f8fafc; color: #0f172a; min-height: 100vh; }
-  </style>
-  <!-- NCS i18n fleet kit (auto-injected) -->
-  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
-  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
-  <style data-ncs-kit="fleet-bridge">
-    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
-    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
-      display: none !important;
-    }
-  </style>
-  <script data-ncs-kit="fleet-init">
-  (function () {
-    function hideLegacyToggles() {
-      document.body.classList.add("ncs-fleet-mounted");
-      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
-        var label = (btn.textContent || "").trim();
-        if (label === "EN" || label === "\u4E2D") {
-          btn.classList.add("ncs-hide-when-ncs-fleet");
-        }
-      });
-      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
-        el.classList.add("ncs-hide-when-ncs-fleet");
-      });
-    }
-    function boot() {
-      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
-      window.NcsI18n.init({
-        chromePath: "../../../../_shared/ncs-chrome.json",
-        target: document.body
-      }).then(hideLegacyToggles);
-    }
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", boot);
-    } else {
-      boot();
-    }
-  })();
-  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>麥克斯韋—玻爾茲曼分佈 | Maxwell–Boltzmann</title>
+  <link rel="stylesheet" href="../../lesson.css" />
 </head>
-<body>
-  <div id="root"></div>
-  <script type="text/babel" data-presets="react-classic">
-    const { useState } = React;
-    
-    function App() {
-      return (
-        <div className="max-w-4xl mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-4">04 Maxwell Boltzmann</h1>
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 mb-8 text-center">
-            <div className="w-full h-64 bg-slate-100 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 mb-4">
-              <span className="text-slate-400 font-medium">[ Interactive Canvas Placeholder ]</span>
-            </div>
-            <p className="text-slate-500">This interactive lab is currently under development.</p>
-          </div>
-          <LearnFromZero />
-        </div>
-      );
-    }
-    
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+<body data-chem-silent="1">
+  <section class="chem-learn" data-chem-entry="1">
+    <h2>學習目標</h2>
+    <ul>
+      <li>描述能量分佈：中等能量的粒子最多，能量很高的粒子很少。</li>
+      <li>比較升溫後的曲線：峰變矮變闊，活化能右邊的面積變大。</li>
+      <li>知道只升溫不會把活化能的位置降低。</li>
+    </ul>
+    <h2>常見錯因</h2>
+    <ul>
+      <li>把升溫說成整條曲線向上平移。</li>
+      <li>以為升溫會降低活化能。</li>
+      <li>把高溫和低溫的峰形對調。</li>
+    </ul>
+    <p id="chem-feedback" role="status">先看兩條曲線，再判斷高溫時的形狀和比例。</p>
+  </section>
+  <main>
+    <div class="panel">
+      <h1>麥克斯韋—玻爾茲曼分佈</h1>
+      <p class="muted">實線是目前選中的溫度，虛線是另一溫度。垂直線是活化能，位置不變。本頁只比較能量分佈，沒有實驗做法。</p>
+      <h2>操作</h2>
+      <canvas id="plot" width="640" height="240" aria-label="兩種溫度的能量分佈"></canvas>
+      <p class="muted">顯示哪一條為實線</p>
+      <div class="row" id="temps">
+        <button type="button" class="on" data-temp="high">高溫</button>
+        <button type="button" class="alt" data-temp="low">低溫</button>
+      </div>
+      <p class="muted">高溫曲線相比低溫</p>
+      <div class="row" id="shapes">
+        <button type="button" class="alt" data-shape="wide">峰較矮、分佈較闊</button>
+        <button type="button" class="alt" data-shape="narrow">峰較高、分佈較窄</button>
+        <button type="button" class="alt" data-shape="same">兩條曲線重疊</button>
+      </div>
+      <p class="muted">能量達到或超過活化能的粒子比例</p>
+      <div class="row" id="fractions">
+        <button type="button" class="alt" data-fraction="more">高溫較多</button>
+        <button type="button" class="alt" data-fraction="less">高溫較少</button>
+        <button type="button" class="alt" data-fraction="same">兩邊一樣</button>
+      </div>
+      <div class="row">
+        <button type="button" id="check">核對</button>
+      </div>
+      <p><a href="../index.html">返回中五</a></p>
+    </div>
+  </main>
+  <script src="../../lesson-kit.js"></script>
+  <script>
+    (function () {
+      var temp = "high";
+      var shape = "";
+      var fraction = "";
+      var T = { low: 0.32, high: 0.62 };
+      var EA = 1.05;
+      var EMAX = 2.3;
+
+      function density(e, t) {
+        if (e <= 0) return 0;
+        var norm = 0.5 * Math.sqrt(Math.PI) * Math.pow(t, 1.5);
+        return Math.sqrt(e) * Math.exp(-e / t) / norm;
+      }
+
+      function build(t) {
+        var pts = [];
+        var peak = 0;
+        var i;
+        for (i = 0; i <= 100; i++) {
+          var y = density((i / 100) * EMAX, t);
+          if (y > peak) peak = y;
+          pts.push(y);
+        }
+        return { pts: pts, peak: peak };
+      }
+
+      function mark(container, btn) {
+        var buttons = container.querySelectorAll("button");
+        var i;
+        for (i = 0; i < buttons.length; i++) buttons[i].className = "alt";
+        if (btn) btn.className = "on";
+      }
+
+      function say(msg, kind) {
+        if (window.ChemLesson) ChemLesson.say(msg, kind);
+      }
+
+      function xOf(e) {
+        return 56 + (e / EMAX) * 540;
+      }
+
+      function yOf(y, scale) {
+        return 196 - (y / scale) * 150;
+      }
+
+      function drawCurve(g, pts, scale, color, dashed) {
+        var i;
+        var e;
+        g.beginPath();
+        for (i = 0; i < pts.length; i++) {
+          e = (i / (pts.length - 1)) * EMAX;
+          if (i === 0) g.moveTo(xOf(e), yOf(pts[i], scale));
+          else g.lineTo(xOf(e), yOf(pts[i], scale));
+        }
+        g.strokeStyle = color;
+        g.lineWidth = 2.5;
+        g.setLineDash(dashed ? [6, 5] : []);
+        g.stroke();
+        g.setLineDash([]);
+      }
+
+      function paint() {
+        var canvas = document.getElementById("plot");
+        var g = canvas.getContext("2d");
+        var low = build(T.low);
+        var high = build(T.high);
+        var scale = low.peak || 1;
+        var selected = temp === "high" ? high : low;
+        var i;
+        var e;
+        var x;
+        var y;
+        g.fillStyle = "#0f172a";
+        g.fillRect(0, 0, canvas.width, canvas.height);
+        g.strokeStyle = "#334155";
+        g.lineWidth = 1;
+        g.beginPath();
+        g.moveTo(48, 200);
+        g.lineTo(610, 200);
+        g.moveTo(48, 200);
+        g.lineTo(48, 28);
+        g.stroke();
+        g.fillStyle = "rgba(94,234,212,0.22)";
+        g.beginPath();
+        g.moveTo(xOf(EA), 200);
+        for (i = 0; i < selected.pts.length; i++) {
+          e = (i / (selected.pts.length - 1)) * EMAX;
+          if (e < EA) continue;
+          g.lineTo(xOf(e), yOf(selected.pts[i], scale));
+        }
+        g.lineTo(xOf(EMAX), 200);
+        g.closePath();
+        g.fill();
+        drawCurve(g, low.pts, scale, "#5eead4", temp !== "low");
+        drawCurve(g, high.pts, scale, "#fb923c", temp !== "high");
+        x = xOf(EA);
+        g.strokeStyle = "#facc15";
+        g.lineWidth = 1.5;
+        g.setLineDash([3, 4]);
+        g.beginPath();
+        g.moveTo(x, 36);
+        g.lineTo(x, 200);
+        g.stroke();
+        g.setLineDash([]);
+        g.fillStyle = "#e2e8f0";
+        g.font = "14px sans-serif";
+        g.fillText("能量", 560, 222);
+        g.fillText("粒子數目", 8, 22);
+        g.fillStyle = "#5eead4";
+        g.fillText(temp === "low" ? "低溫（實線）" : "低溫", 70, 48);
+        g.fillStyle = "#fb923c";
+        g.fillText(temp === "high" ? "高溫（實線）" : "高溫", 210, 48);
+        g.fillStyle = "#facc15";
+        g.fillText("活化能", x + 8, 52);
+      }
+
+      function shapeWhy(picked) {
+        if (picked === "wide") return "";
+        if (picked === "narrow") return "錯因：峰較高、分佈較窄是低溫的樣子。升溫後粒子能量更分散，峰變矮，尾巴向高能量延伸。";
+        return "錯因：溫度改變能量分佈。粒子數目不變時，曲線下的總面積大致不變，但形狀會改變，兩條曲線不會重疊。";
+      }
+
+      function fractionWhy(picked) {
+        if (picked === "more") return "";
+        if (picked === "less") return "錯因：升溫沒有把活化能降低。高溫有更多粒子的能量達到這條線，活化能右邊的面積較大，反應通常較快。";
+        return "錯因：活化能的位置不變，不代表超過活化能的粒子比例不變。高溫曲線在活化能右邊的面積較大。";
+      }
+
+      document.getElementById("temps").onclick = function (e) {
+        var btn = e.target.closest ? e.target.closest("button") : null;
+        if (!btn) return;
+        temp = btn.getAttribute("data-temp");
+        mark(document.getElementById("temps"), btn);
+        paint();
+      };
+      document.getElementById("shapes").onclick = function (e) {
+        var btn = e.target.closest ? e.target.closest("button") : null;
+        if (!btn) return;
+        shape = btn.getAttribute("data-shape");
+        mark(document.getElementById("shapes"), btn);
+      };
+      document.getElementById("fractions").onclick = function (e) {
+        var btn = e.target.closest ? e.target.closest("button") : null;
+        if (!btn) return;
+        fraction = btn.getAttribute("data-fraction");
+        mark(document.getElementById("fractions"), btn);
+      };
+      document.getElementById("check").onclick = function () {
+        var why;
+        if (!shape || !fraction) {
+          say("錯因：先選曲線形狀，再選高能量粒子的比例。", "no");
+          return;
+        }
+        why = shapeWhy(shape);
+        if (why) {
+          say(why, "no");
+          return;
+        }
+        why = fractionWhy(fraction);
+        if (why) {
+          say(why, "no");
+          return;
+        }
+        say("正確。高溫的峰較矮較闊，活化能右邊的面積較大。活化能的位置沒有降低。", "ok");
+      };
+      paint();
+    })();
   </script>
-<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+  <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 </body>
 </html>

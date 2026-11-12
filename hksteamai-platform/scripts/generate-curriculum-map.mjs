@@ -19,9 +19,9 @@ const OUT = path.join(PLATFORM, "data", "curriculum-map.json");
 const FREE = path.join(PLATFORM, "data", "free-demo-catalog.json");
 
 const DISCLAIMER = {
-  en: "Grade / Key Stage / IB / Singapore labels are approximate equivalences for discovery only. They are not official accreditation, syllabus endorsement, or a claim that content matches another jurisdiction’s exam board.",
+  en: "Grade labels are read or estimated from folder paths for browsing only. They are not accreditation or syllabus endorsement by the Hong Kong Education Bureau, the Curriculum Development Institute, or any exam board.",
   "zh-HK":
-    "年級／Key Stage／IB／新加坡等標籤僅供對照搜尋，屬粗略對應，並非官方認證、課程認可，亦不代表內容等同其他地區考試局大綱。",
+    "年級標籤由資料夾路徑讀出或估計，只供瀏覽。並非教育局、課程發展處或其他考試局的認可或大綱背書。",
 };
 
 /** System metadata for region switcher UI */

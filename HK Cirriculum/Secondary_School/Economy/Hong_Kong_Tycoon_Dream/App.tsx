@@ -15,7 +15,9 @@ export default function App() {
     handlePayTax,
     handleJailDecision,
     drawCard,
-    addLog,
+    resolveChoice,
+    answerOpportunity,
+    passBuy,
     startGame
   } = useGame();
 
@@ -47,19 +49,15 @@ export default function App() {
                       </div>
                   </div>
                   
-                  <div className="text-xs text-slate-400 mt-8">
-                      準備好成為香港首富了嗎？
-                  </div>
+                  <ul className="text-left text-xs text-slate-600 space-y-2 leading-relaxed">
+                      <li>薪俸稅按淨入息計算，並有免稅額。差餉按應課差餉租值計算。畫面裡的金額是遊戲示範，不是稅務局的真實稅單。</li>
+                      <li>中電和煤氣的收費是遊戲規則，不是香港規管下的真實電費或煤氣費。</li>
+                      <li>買地之後要回答機會成本。獅子山精神要自己選擇：堅毅、公共責任，或拒絕可疑的穩賺。時運高低是另一格遊戲運氣，可能飲茶、派糖或中獎，兩格不會抽同一池。</li>
+                  </ul>
               </div>
           </div>
       );
   }
-
-  // Handle the "Pass" action for buying property
-  const handlePass = () => {
-      addLog(`${state.players[state.currentPlayerIndex].name} 決定不購買此物業。`);
-      nextTurn(); 
-  };
 
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col lg:flex-row items-center justify-center p-2 lg:p-8 gap-8">
@@ -91,8 +89,10 @@ export default function App() {
                 if (state.pendingAction?.type === 'PAY_TAX') handlePayTax();
             }}
             onDraw={drawCard}
-            onPass={handlePass}
+            onPass={passBuy}
             onJailAction={handleJailDecision}
+            onOpportunity={answerOpportunity}
+            onChoice={resolveChoice}
         />
         
         {/* Player List Stats */}

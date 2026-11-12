@@ -45,20 +45,20 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       },
       "nextBattle": {
-          "href": "../marne/",
-          "title_zh": "馬恩河戰役",
-          "title_en": "MARNE 1914"
+          "href": "../tannenberg/",
+          "title_zh": "坦能堡戰役",
+          "title_en": "TANNENBERG 1914"
       }
   };
   const factions = {
     "cp": {
       main: 0x5c4033, glow: 0x8b6914, dim: 0x3a2820,
-      css: "#5c4033", label_zh: "同盟國", label_en: "Central Powers",
+      css: "#5c4033", label_zh: "青年波斯尼亞", label_en: "Young Bosnia",
       emblem: "circle", maxStrength: 120000, textLight: "#e8dcc8"
     },
     "ap": {
       main: 0x1e5a8a, glow: 0x42a5f5, dim: 0x0d3d7a,
-      css: "#1e5a8a", label_zh: "協約國", label_en: "Allied Powers",
+      css: "#1e5a8a", label_zh: "奧匈帝國", label_en: "Austria-Hungary",
       emblem: "shield", maxStrength: 130000, textLight: "#cfe0ff"
     },
   };
@@ -148,7 +148,7 @@ window.BATTLE_DATA = (function () {
       }
   ];
   const notes =   {
-      "summary": "薩拉熱窩暗殺 — DSE 西史小戰役地圖。",
+      "summary": "薩拉熱窩暗殺 — 事件地圖。皇儲屬奧匈，普林西普屬青年波斯尼亞。",
       "caveats": [
           "本圖僅覆蓋該戰役核心區域；戰線與兵力為教學示意。",
           "衛星影像為現代地形。"
@@ -158,7 +158,7 @@ window.BATTLE_DATA = (function () {
   const analysis =   {
       "military": "奧匈皇儲斐迪南大公在波斯尼亞巡視，塞族民族主義組織「青年波斯尼亞」策劃暗殺；普林西普於拉丁橋開槍，直接觸發七月危機與大國動員。",
       "leaders": "斐迪南大公（奧匈皇儲）：其遇刺成為奧匈對塞宣戰的藉口。奧匈外相貝希托德、德皇威廉二世推動強硬路線。塞爾維亞首相帕希奇面對最後通牒；俄皇尼古拉二世動員支援斯拉夫同胞，牽動同盟連鎖。",
-      "nationalPower": "奧匈帝國藉此向塞爾維亞施壓；俄國保護斯拉夫同胞，德國支持奧匈，法國與俄國同盟，英國受條約牽制。",
+      "nationalPower": "奧匈帝國藉此向塞爾維亞施壓；俄國保護斯拉夫同胞，德國支持奧匈，法國與俄國同盟，英國在七月危機沒有總動員，8月4日才因德國入侵比利時宣戰。",
       "impact": "一連串同盟條款把地方暗殺升級為世界大戰；民族主義與帝國競爭的結構性矛盾一次爆發。"
   };
   const storyboard =   [
@@ -265,14 +265,14 @@ window.BATTLE_DATA = (function () {
           "dateLabel": "1914年7月",
           "title_zh": "七月危機",
           "title_en": "July Crisis",
-          "narration_zh": "奧匈向塞爾維亞發出最後通牒，俄、德、法、英相繼動員。",
-          "narration_en": "Austria-Hungary issues an ultimatum to Serbia; the great powers mobilise.",
+          "narration_zh": "奧匈於7月23日向塞爾維亞發出最後通牒。俄國7月30日總動員，德、法隨之動員。英國在七月危機並未總動員，8月4日才因比利時中立宣戰。",
+          "narration_en": "Austria-Hungary ultimatum on 23 July. Russia mobilises on 30 July; Germany and France follow. Britain does not order general mobilisation during the July Crisis.",
           "focus": [],
           "side": "both",
           "commanders": [],
           "assets": [],
-          "forces_zh": "歐洲列強進入戰爭動員",
-          "forces_en": "European powers mobilise for war"
+          "forces_zh": "俄、德、法總動員；英國在七月並未總動員",
+          "forces_en": "Russia, Germany and France mobilise; Britain does not"
       },
       {
           "day": 85,
@@ -298,11 +298,33 @@ window.BATTLE_DATA = (function () {
           "forces_en": ""
       }
   ];
-  const outro =   {
+    const sourceTask = {
+    "cite": "加夫里洛·普林西普在受審時的說法，1914年",
+    "excerpt": "普林西普說，他開槍是為了南斯拉夫的統一，針對的是奧匈的統治。",
+    "ask": "這句話顯示他站在哪一方？",
+    "options": [
+      {
+        "t": "他代表協約國政府執行暗殺。",
+        "ok": false,
+        "why": "1914年6月協約國政府沒有派他。他屬於青年波斯尼亞，不是協約國的人。"
+      },
+      {
+        "t": "他以塞族民族主義者的立場，反對奧匈對波斯尼亞的統治。",
+        "ok": true,
+        "why": "受審時他把動機說成民族統一。奧匈皇儲一方是奧匈帝國，後來與德國同屬同盟國；普林西普本人不是同盟國。"
+      },
+      {
+        "t": "他是同盟國派來製造開戰藉口的人。",
+        "ok": false,
+        "why": "同盟國是奧匈與德國這一邊。把刺客標成同盟國，會把加害者與被害者的國家歸錯。"
+      }
+    ]
+  };
+const outro =   {
       "title_zh": "薩拉熱窩暗殺",
       "title_en": "SARAJEVO",
-      "narration_zh": "本戰役為 DSE 西史重要考點。",
-      "narration_en": "A key DSE Western History topic.",
+      "narration_zh": "1914年6月28日的槍擊是導火線。英國在七月危機沒有總動員。",
+      "narration_en": "The 28 June shots were the spark. Britain did not mobilise during the July Crisis.",
       "cam": {
           "lng": 18.41,
           "lat": 43.86,
@@ -312,5 +334,5 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       }
   };
-  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };
+  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, sourceTask, END_DAY };
 })();

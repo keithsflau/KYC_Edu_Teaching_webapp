@@ -218,12 +218,12 @@ window.BATTLE_DATA = (function () {
           "衛星影像為現代地形，非歷史時期地貌。",
           "河川、海域水面為教學示意，按史實位置裁切顯示。"
       ],
-      "sources": "DSE 中史課程、中國通史、維基百科（交叉查證）。"
+      "sources": "《中國人民解放軍戰史》平津戰役章、傅作義與解放軍代表談判的通行記載、天津攻城戰鬥總結。不以網絡百科為唯一依據。"
   };
   const analysis =   {
-      "military": "平津战役：东北野战军入关与华北部队合力，先围张家口、新保安，再围天津；傅作义困守北平，经谈判接受改编，北平和平解放。",
+      "military": "平津戰役：東北野戰軍入關與華北部隊合力，先圍張家口、新保安，再圍天津；傅作義困守北平，經談判接受改編，北平和平解放。",
       "leaders": "平津戰役中，東北野戰軍入關與華北軍區合力圍困北平、天津。林彪指揮先攻天津，全殲守軍，形成對北平合圍之勢。華北剿總司令傅作義在軍事壓力與政治爭取下接受和平改編，北平和平解放，保全古城與數十萬市民，國軍華北主力不戰而降。",
-      "nationalPower": "解放军以围而不攻争取和平；傅作义保全古城与文物，避免战火破坏北平。",
+      "nationalPower": "解放軍以圍而不攻爭取和平；傅作義保全古城與文物，避免戰火破壞北平。",
       "impact": "傅作義接受改編，和平解放北平，解放軍確立華北絕對優勢。"
   };
   const storyboard =   [
@@ -239,9 +239,9 @@ window.BATTLE_DATA = (function () {
               "orbit": 0.65
           },
           "dateLabel": "1948年11月",
-          "title_zh": "平津战役开始",
+          "title_zh": "平津戰役開始",
           "title_en": "Pingjin Campaign Opens",
-          "narration_zh": "东北野战军入关，与华北部队合力分割包围平津地区。",
+          "narration_zh": "東北野戰軍入關，與華北部隊合力分割包圍平津地區。",
           "narration_en": "Northeast Field Army enters the pass — Pingjin is encircled.",
           "focus": [
               "pla_pingjin"
@@ -253,7 +253,7 @@ window.BATTLE_DATA = (function () {
                   "en": "Lin Biao"
               },
               {
-                  "zh": "聂荣臻",
+                  "zh": "聶榮臻",
                   "en": "Nie Rongzhen"
               }
           ],
@@ -273,9 +273,9 @@ window.BATTLE_DATA = (function () {
               "orbit": 0.65
           },
           "dateLabel": "1948年12月",
-          "title_zh": "新保安、张家口",
+          "title_zh": "新保安、張家口",
           "title_en": "Xinbao'an and Zhangjiakou",
-          "narration_zh": "解放军先攻新保安，歼灭郭景云三十五军，张家口守军突围被歼。",
+          "narration_zh": "解放軍先攻新保安，殲滅郭景雲三十五軍，張家口守軍突圍被殲。",
           "narration_en": "Guo Jingyun's 35th Army is destroyed at Xinbao'an — Zhangjiakou falls.",
           "focus": [
               "pla_pingjin"
@@ -298,9 +298,9 @@ window.BATTLE_DATA = (function () {
               "orbit": 0.65
           },
           "dateLabel": "1949年1月",
-          "title_zh": "天津攻坚战",
+          "title_zh": "天津攻堅戰",
           "title_en": "Assault on Tianjin",
-          "narration_zh": "解放军对天津发动总攻，陈长捷部被歼，傅作义退路断绝。",
+          "narration_zh": "解放軍對天津發動總攻，陳長捷部被殲，傅作義退路斷絕。",
           "narration_en": "PLA storm Tianjin — Chen Changjie's garrison is wiped out.",
           "focus": [
               "pla_pingjin",
@@ -309,7 +309,7 @@ window.BATTLE_DATA = (function () {
           "side": "both",
           "commanders": [
               {
-                  "zh": "傅作义",
+                  "zh": "傅作義",
                   "en": "Fu Zuoyi"
               }
           ],
@@ -329,9 +329,9 @@ window.BATTLE_DATA = (function () {
               "orbit": 0.65
           },
           "dateLabel": "1949年1月",
-          "title_zh": "围而不攻北平",
+          "title_zh": "圍而不攻北平",
           "title_en": "Beiping Encircled",
-          "narration_zh": "解放军围而不攻北平，与傅作义谈判，保护古城文物。",
+          "narration_zh": "解放軍圍而不攻北平，與傅作義談判，保護古城文物。",
           "narration_en": "Beiping is besieged but not stormed — talks with Fu Zuoyi protect the ancient capital.",
           "focus": [
               "kmt_pingjin"
@@ -339,7 +339,7 @@ window.BATTLE_DATA = (function () {
           "side": "kmt",
           "commanders": [
               {
-                  "zh": "傅作义",
+                  "zh": "傅作義",
                   "en": "Fu Zuoyi"
               }
           ],
@@ -361,21 +361,21 @@ window.BATTLE_DATA = (function () {
           "dateLabel": "1949年1月31日",
           "title_zh": "北平和平解放",
           "title_en": "Peaceful Liberation of Beiping",
-          "narration_zh": "傅作义接受改编，北平和平解放，华北局势底定。",
+          "narration_zh": "傅作義接受改編，北平和平解放，華北局勢底定。",
           "narration_en": "Fu Zuoyi accepts reorganization — Beiping is liberated without a battle.",
           "focus": [],
           "side": "pla",
           "commanders": [],
           "assets": [],
-          "forces_zh": "改编国军约二十余万",
+          "forces_zh": "改編國軍約二十餘萬",
           "forces_en": "200,000+ troops reorganized"
       }
   ];
   const outro =   {
       "title_zh": "平津戰役",
       "title_en": "PING-JIN CAMPAIGN",
-      "narration_zh": "本戰役為 DSE 中史重要考點：傅作義接受改編，和平解放北平，解放軍確立華北絕對優勢",
-      "narration_en": "A key HKDSE Chinese History topic.",
+      "narration_zh": "1949年1月31日，傅作義部接受改編，北平未經巷戰易手。",
+      "narration_en": "On 31 January 1949 Fu Zuoyi's forces were reorganized and Beiping changed hands without street fighting.",
       "cam": {
           "lng": 116.4,
           "lat": 39.9,
@@ -385,5 +385,19 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       }
   };
-  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };
+  const lesson =   {
+      "junior": "初中：看1948年底至1949年1月平津被分割、北平接受改編。",
+      "senior": "高中：用先打新保安、天津，再談北平，說明傅作義為什麼接受改編。",
+      "fact": "1948年11月起，東北野戰軍入關，與華北部隊把北平、天津、張家口分割。新保安、張家口的國軍被殲後，1949年1月天津被攻克。傅作義部在北平接受改編，1月31日北平易手，城內沒有進行巷戰。",
+      "sources": "《中國人民解放軍戰史》平津戰役章、傅作義與解放軍代表談判的通行記載、天津攻城戰鬥總結。不以網絡百科為唯一依據。",
+      "evaluation": "北平能不巷戰易手，是因為退路已斷、天津已失，談判才有結果。只說「和平」兩字，說明不了軍事包圍怎樣造成這個結局。",
+      "judgment": {
+          "ask": "哪一則說法更能解釋北平為什麼未經巷戰易手？",
+          "a": "因為雙方一開始就只想保護古蹟，所以沒有軍事包圍。",
+          "b": "張家口、新保安和天津先後失利，北平被圍，傅作義才接受改編。",
+          "better": "b",
+          "why": "改編發生在退路被切斷之後。古蹟得以保存是結果，包圍和天津失守更能解釋他為什麼接受改編。"
+      }
+  };
+  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, lesson, END_DAY };
 })();

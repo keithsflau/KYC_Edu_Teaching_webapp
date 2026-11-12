@@ -30,6 +30,7 @@
     body { font-family: "IBM Plex Sans", system-ui, sans-serif; background: radial-gradient(ellipse 80% 50% at 10% -10%, #dc262622, transparent 55%), #f8fafc; color: #0f172a; min-height: 100vh; }
     input[type="range"] { accent-color: #dc2626; }
     button, a { -webkit-tap-highlight-color: transparent; }
+    canvas.sim { width: 100%; border-radius: 12px; display: block; }
   </style>
 <!-- NCS i18n fleet kit (auto-injected) -->
   <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
@@ -81,6 +82,7 @@
   </script>
   <script type="text/babel" data-presets="react-classic">
     const { useState, useEffect } = React;
+    const { useLang, LangSwitcher, appTabs } = window.NcsI18n;
     const APP_ID = "f4_bio_cardiac";
     const ACCENT = "#dc2626";
 
@@ -122,7 +124,153 @@
         },
         startTrialLocal: () => { if (window.HkcSubscribe) HkcSubscribe.setLocalEntitlement("trial", 14); }
       };
-    })();
+    });
+
+const TFZ_STEPS = [
+      { id: "A1", title: "Double circulation", titleZh: "雙循環",
+        body: "Your heart is TWO pumps in one. The RIGHT side sends deoxygenated blood to the LUNGS (pulmonary circuit). The LEFT side sends oxygenated blood to the BODY (systemic circuit). Blood passes through the heart twice per complete circuit.",
+        bodyZh: "心臟是兩個泵合一。右側將缺氧血泵至肺部（肺循環）；左側將含氧血泵至全身（體循環）。血液每完成一個循環經過心臟兩次。",
+        q: "Blood from the body enters the heart via…", qZh: "來自身體的血液經…進入心臟",
+        opts: ["Vena cava 腔靜脈", "Pulmonary vein 肺靜脈", "Aorta 主動脈", "Coronary artery 冠狀動脈"], a: "Vena cava 腔靜脈",
+        why: "Systemic veins return deoxygenated blood to the right atrium." },
+      { id: "A2", title: "Chambers & valves", titleZh: "心腔與瓣膜",
+        body: "Atria (upper) RECEIVE blood; ventricles (lower) PUMP blood out. Atrioventricular (AV) valves sit between atria and ventricles. Semilunar (SL) valves guard exits to arteries. Valves are ONE-WAY — they prevent backflow.",
+        bodyZh: "心房（上）接收血液；心室（下）泵出血液。房室瓣位於心房與心室之間；半月瓣守衛動脈出口。瓣膜單向，防止倒流。",
+        q: "Which valves open during ventricular systole?", qZh: "心室收縮時哪組瓣膜開啟？",
+        opts: ["Semilunar valves 半月瓣", "AV valves only 只有房室瓣", "All valves 全部", "No valves 無"], a: "Semilunar valves 半月瓣",
+        why: "AV valves close so blood is forced into arteries, opening SL valves." },
+      { id: "A3", title: "Diastole — filling phase", titleZh: "舒張期——充盈階段",
+        body: "During DIASTOLE the heart muscle RELAXES. Pressure falls; blood flows passively from atria into ventricles. AV valves are open and semilunar valves are closed, so arterial blood does not flow back into the ventricles. This is ~50% of the cardiac cycle at rest.",
+        bodyZh: "舒張期心肌放鬆，壓力下降，血液被動由心房流入心室。房室瓣開啟，半月瓣關閉，動脈血不會倒流回心室。約佔心動周期一半。",
+        q: "During diastole, ventricles are…", qZh: "舒張期心室…",
+        opts: ["Filling with blood 充盈血液", "Contracting hard 強力收縮", "Closed off completely 完全關閉", "Empty only 只有排空"], a: "Filling with blood 充盈血液",
+        why: "Relaxation = filling. Systole = pumping." },
+      { id: "A4", title: "Atrial then ventricular systole", titleZh: "先心房後心室收縮",
+        body: "ATRIAL SYSTOLE: atria contract briefly to 'top up' ventricles before the main pump. VENTRICULAR SYSTOLE: ventricles contract powerfully — AV valves snap shut (lub, first heart sound) and semilunar valves open, so blood is ejected to the lungs and body. The second heart sound (dub) is the semilunar valves closing at the start of diastole, not opening.",
+        bodyZh: "心房收縮：短暫推剩餘血入心室。心室收縮：房室瓣關閉（lub，第一心音），半月瓣開啟，血液泵至肺／全身。第二心音 dub 是半月瓣關閉（舒張期開始），不是打開。",
+        q: "Atria contract BEFORE ventricles to…", qZh: "心房先於心室收縮是為了…",
+        opts: ["Maximise ventricular fill 盡量充盈心室", "Close semilunar valves 關閉半月瓣", "Stop blood flow 阻止血流", "Reduce heart rate 降心率"], a: "Maximise ventricular fill 盡量充盈心室",
+        why: "Extra fill = stronger stroke volume." },
+      { id: "A5", title: "Left ventricle muscle", titleZh: "左心室肌壁",
+        body: "The LEFT ventricle wall is MUCH THICKER than the right because it must pump blood to the entire body at high pressure. The right ventricle only pumps to the nearby lungs at lower pressure.",
+        bodyZh: "左心室壁遠厚於右心室，因需將血泵至全身高壓；右心室只需泵至邻近的肺部。",
+        q: "Left ventricle wall is thicker because…", qZh: "左心室壁較厚因為…",
+        opts: ["Systemic circulation needs higher pressure 體循環需更高壓", "It receives more blood 接收更多血", "It has more valves 有更多瓣", "It beats faster 跳更快"], a: "Systemic circulation needs higher pressure 體循環需更高壓",
+        why: "Pressure ∝ distance and resistance of the circuit." },
+      { id: "A6", title: "Ready for the lab", titleZh: "準備進入實驗室",
+        body: "In the Cardiac Cycle Simulator (from Sample), press START and watch phases cycle: Diastole → Atrial systole → Ventricular systole. Adjust BPM and predict valve states BEFORE the label appears — exam training!",
+        bodyZh: "在心動周期模擬器（源自 Sample）按 START，觀察舒張→心房收縮→心室收縮。調整 BPM，在標籤出現前預測瓣膜狀態——備試訓練！",
+        q: "The Lab tab unlocks after…", qZh: "實驗分頁在…之後解鎖",
+        opts: ["Completing Learn From Zero 完成由零開始學", "Closing browser 關閉瀏覽器", "Nothing 無需"], a: "Completing Learn From Zero 完成由零開始學",
+        why: "Learn → Lab → Guided → Exam flow." }
+    ];
+
+    function LearnFromZero({ steps, onComplete }) {
+      const [i, setI] = useState(0);
+      const [picked, setPicked] = useState(null);
+      const step = steps[i];
+      const last = i === steps.length - 1;
+      function pick(opt) { if (picked) return; setPicked(opt); }
+      function next() {
+        if (last) { onComplete(); return; }
+        setI(i + 1); setPicked(null);
+      }
+      return (
+        <section className="bg-white border border-slate-200 shadow-sm rounded-2xl p-4 sm:p-6">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-black uppercase tracking-widest" style={{color: ACCENT}}>Learn From Zero · 由零開始學</p>
+            <p className="text-xs text-slate-500">{step.id} / A{steps.length}</p>
+          </div>
+          <div className="flex gap-1.5 mb-4">
+            {steps.map((s, k) => (
+              <div key={s.id} className="h-1.5 flex-1 rounded-full" style={{background: k <= i ? ACCENT : "#e2e8f0"}} />
+            ))}
+          </div>
+          <h2 className="text-xl font-bold">{step.title}</h2>
+          <p className="text-sm font-semibold text-slate-500 mt-0.5">{step.titleZh}</p>
+          <p className="text-sm mt-3 text-slate-700 leading-relaxed">{step.body}</p>
+          <p className="text-sm mt-2 text-slate-500 leading-relaxed">{step.bodyZh}</p>
+          <div className="mt-4 p-3 rounded-xl bg-indigo-50 border border-indigo-200">
+            <p className="text-sm font-bold">{step.q}</p>
+            <p className="text-xs text-slate-500 mb-2">{step.qZh}</p>
+            <div className="grid gap-2">
+              {step.opts.map(o => {
+                let cls = "text-left px-3 py-2.5 rounded-xl text-sm border min-h-[44px] ";
+                if (!picked) cls += "bg-white border-slate-200 hover:bg-slate-50";
+                else if (o === step.a) cls += "bg-emerald-50 border-emerald-300 text-emerald-800 font-semibold";
+                else if (o === picked) cls += "bg-rose-50 border-rose-300 text-rose-800";
+                else cls += "bg-white border-slate-200 opacity-60";
+                return <button key={o} type="button" className={cls} onClick={() => pick(o)}>{o}</button>;
+              })}
+            </div>
+            {picked && (
+              <div className="mt-3 text-sm p-3 rounded-lg bg-white/70 border border-slate-200">
+                <p className="font-semibold">{picked === step.a ? "✓ Correct · 正確" : "✗ Not quite — see why · 再想想"}</p>
+                <p className="mt-1 text-slate-600">{step.why}</p>
+                {picked === step.a && (
+                  <button type="button" onClick={next} className="mt-3 px-4 py-2.5 rounded-xl font-semibold text-white min-h-[44px]" style={{background: ACCENT}}>
+                    {last ? "Unlock the Lab → 解鎖實驗室" : "Next step →"}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </section>
+      );
+    }
+
+function CardiacSim() {
+      const [phase, setPhase] = useState(0);
+      const [active, setActive] = useState(false);
+      const [bpm, setBpm] = useState(72);
+      const phases = [
+        { name: "Diastole", zh: "舒張期", desc: "Heart relaxes. Blood flows into atria then ventricles.", av: "OPEN", sl: "CLOSED", color: "#3b82f6" },
+        { name: "Atrial systole", zh: "心房收縮", desc: "Atria contract. Remaining blood pushed into ventricles.", av: "OPEN", sl: "CLOSED", color: "#8b5cf6" },
+        { name: "Ventricular systole", zh: "心室收縮", desc: "Ventricles contract. Blood pumped to lungs and body.", av: "CLOSED", sl: "OPEN", color: "#dc2626" }
+      ];
+      useEffect(() => {
+        if (!active) return;
+        const beatDuration = 60000 / bpm;
+        const ratios = [4, 1, 3];
+        const unit = beatDuration / 8;
+        const duration = unit * ratios[phase];
+        const t = setTimeout(() => setPhase(p => (p + 1) % 3), duration);
+        return () => clearTimeout(t);
+      }, [phase, active, bpm]);
+      const info = phases[phase];
+      return (
+        <div className="space-y-4">
+          <div className="flex flex-wrap gap-2 items-center justify-between">
+            <button type="button" onClick={() => setActive(!active)} className="px-4 py-2.5 rounded-xl font-bold text-white min-h-[48px]" style={{background: active ? "#64748b" : ACCENT}}>
+              {active ? "Pause · 暫停" : "Start heartbeat · 開始心跳"}
+            </button>
+            <label className="text-sm font-semibold flex items-center gap-2">BPM {bpm}
+              <input type="range" min="40" max="120" value={bpm} onChange={e => setBpm(+e.target.value)} className="w-32" />
+            </label>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {phases.map((p, idx) => (
+              <div key={p.name} className={"p-3 rounded-xl border-2 text-center transition-all " + (phase === idx ? "border-rose-400 bg-rose-50 shadow-md scale-[1.02]" : "border-slate-200 bg-slate-50 opacity-70")}>
+                <p className="text-xs font-bold uppercase" style={{color: p.color}}>{p.name}</p>
+                <p className="text-xs text-slate-500">{p.zh}</p>
+              </div>
+            ))}
+          </div>
+          <p className="text-sm p-4 rounded-xl bg-rose-50 border border-rose-100">{info.desc}<br /><span className="text-slate-500">{info.zh}</span></p>
+          <div className="grid grid-cols-2 gap-3">
+            <div className={"p-4 rounded-xl border-2 text-center " + (info.av === "OPEN" ? "border-emerald-400 bg-emerald-50" : "border-slate-200 bg-slate-100")}>
+              <p className="text-xs font-bold text-slate-500">AV Valves · 房室瓣</p>
+              <p className="text-2xl font-black mt-1">{info.av}</p>
+            </div>
+            <div className={"p-4 rounded-xl border-2 text-center " + (info.sl === "OPEN" ? "border-emerald-400 bg-emerald-50" : "border-slate-200 bg-slate-100")}>
+              <p className="text-xs font-bold text-slate-500">Semilunar · 半月瓣</p>
+              <p className="text-2xl font-black mt-1">{info.sl}</p>
+            </div>
+          </div>
+          <p className="text-xs text-slate-500 text-center">Pattern from Sample cardiac-cycle · 源自 Sample 心動周期模擬</p>
+        </div>
+      );
+    }
 
         const GUIDED = [
       { id: "g1", level: 1, q: "Which side of the heart pumps blood to the lungs?", qZh: "心臟哪一側將血液泵至肺部？",
@@ -186,7 +334,7 @@
       );
     }
 
-    function Drill({ bank, label, onNeedUpgrade, onDone }) {
+    function Drill({ bank, label, onNeedUpgrade, onDone, isZh, t }) {
       const [qi, setQi] = useState(0);
       const [fb, setFb] = useState(null);
       const [score, setScore] = useState(0);
@@ -228,15 +376,14 @@
             <span>{label} · Q {qi + 1}/{bank.length} · Lv {item.level}</span>
             <span>Score {score}</span>
           </div>
-          <h2 className="text-lg font-bold mb-1">{item.q}</h2>
-          {item.qZh ? <p className="text-sm mb-4 opacity-80" style={{color: ACCENT}}>{item.qZh}</p> : <div className="mb-4" />}
+          <h2 className="text-lg font-bold mb-1">{t(item.qZh, item.q)}</h2>
           <div className="grid gap-2">
             {item.opts.map(o => (
               <button key={o} type="button" disabled={fb && fb.ok} onClick={() => pick(o)}
                 className={"text-left px-4 py-3 rounded-xl min-h-[48px] disabled:opacity-50 bg-slate-50 hover:bg-slate-100 border border-slate-200"}>{o}</button>
             ))}
           </div>
-          <button type="button" className="text-sm mt-3 font-semibold min-h-[44px]" style={{color: ACCENT}} onClick={() => setHint(true)}>Hint · 提示</button>
+          <button type="button" className="text-sm mt-3 font-semibold min-h-[44px]" style={{color: ACCENT}} onClick={() => setHint(true)}>{t("提示", "Hint")}</button>
           {hint && <p className={"text-sm mt-1 p-3 rounded-xl " + (false ? "bg-amber-950/50 text-amber-100 border border-amber-800/40" : "bg-amber-50 text-amber-900 border border-amber-200")}>{item.hint}</p>}
           {fb && (
             <div className={"mt-4 p-3 rounded-xl text-sm " + (fb.ok ? (false ? "bg-emerald-900/40 text-emerald-200" : "bg-emerald-50 text-emerald-800") : (false ? "bg-rose-900/40 text-rose-200" : "bg-rose-50 text-rose-800"))}>
@@ -250,35 +397,40 @@
     }
 
     function App() {
+      const { isZh, t } = useLang();
       const [mode, setMode] = useState("learn");
       const [progress, setProgress] = useState(() => HKC.loadProgress(APP_ID));
       const [pay, setPay] = useState(false);
       const [payReason, setPayReason] = useState("");
       const [doneMsg, setDoneMsg] = useState(null);
+      const [tfzDone, setTfzDone] = useState(() => { try { return !!localStorage.getItem("hkc_tfz_" + APP_ID); } catch (e) { return false; } });
 
       function refresh() { setProgress(HKC.loadProgress(APP_ID)); }
       useEffect(() => { refresh(); }, [mode]);
 
-      const tabs = [
-        { id: "learn", label: "Learn · 學習" },
-        { id: "guided", label: "Guided · 引導" },
-        { id: "exam", label: "Exam · 測驗" },
-        { id: "review", label: "Review · 錯題" }
-      ];
+      function completeTfz() {
+        try { localStorage.setItem("hkc_tfz_" + APP_ID, "1"); } catch (e) {}
+        setTfzDone(true); setMode("lab");
+      }
+
+      const tabs = appTabs(["learn", "lab", "guided", "exam", "review"], isZh, { labLocked: !tfzDone });
 
       return (
-        <div className="max-w-3xl mx-auto p-4 sm:p-8">
-          <a href="../index.html" className="text-sm hover:underline font-semibold" style={{color: ACCENT}}>← Hub</a>
+        <div className="max-w-5xl mx-auto p-4 sm:p-8">
+          <div className="flex flex-wrap justify-between items-center gap-2">
+            <a href="../index.html" className="text-sm hover:underline font-semibold" style={{color: ACCENT}}>{t("← 返回目錄", "← Back to hub")}</a>
+            <LangSwitcher />
+          </div>
           <header className="mt-4 mb-4">
-            <p className="text-xs uppercase tracking-widest font-bold" style={{color: ACCENT}}>F4 Biology · III.b Circulation</p>
-            <h1 className="text-2xl sm:text-3xl font-bold mt-1">Heart & Double Circulation</h1>
-            <p className="text-slate-500 mt-1">心臟與雙循環 · Learn → Guided → Exam → Review · 12 items</p>
+            <p className="text-xs uppercase tracking-widest font-bold" style={{color: ACCENT}}>{t("中四生物 · III.b 循環系統", "F4 Biology · III.b Circulation")}</p>
+            <h1 className="text-2xl sm:text-3xl font-bold mt-1">{t("心臟與雙循環", "Heart & Double Circulation")}</h1>
+            <p className="text-slate-500 mt-1">{t("學習 → 實驗 → 引導 → 測驗 → 複習", "Learn → Lab → Guided → Exam → Review")}</p>
           </header>
 
           <div className={"text-sm border border-dashed rounded-lg px-3 py-2 mb-3 flex flex-wrap justify-between gap-2 items-center " + (false ? "border-slate-600 bg-slate-900/80" : "border-slate-300 bg-white/80")}>
-            <span>{HKC.isPaid() ? (HKC.getEntitlement().tier + " · unlimited") : ("Free · " + HKC.remainingFree() + "/" + HKC.FREE_DAILY_CAP + " today")} · Best {progress.bestScore}</span>
+            <span>{HKC.isPaid() ? (HKC.getEntitlement().tier + " · " + t("無限", "unlimited")) : (t("免費", "Free") + " · " + HKC.remainingFree() + "/" + HKC.FREE_DAILY_CAP + " " + t("今日", "today"))} · {t("最佳", "Best")} {progress.bestScore}</span>
             {!HKC.isPaid() && (
-              <button type="button" className="px-3 py-1.5 rounded-md text-xs font-semibold text-white min-h-[36px]" style={{background: ACCENT}} onClick={() => setPay(true)}>Upgrade</button>
+              <button type="button" className="px-3 py-1.5 rounded-md text-xs font-semibold text-white min-h-[36px]" style={{background: ACCENT}} onClick={() => setPay(true)}>{t("升級", "Upgrade")}</button>
             )}
           </div>
 
@@ -292,45 +444,48 @@
             ))}
           </nav>
 
-          {mode === "learn" && (
-            <section className={"bg-white border border-slate-200 shadow-sm rounded-2xl p-4 sm:p-5 space-y-3"}>
-              <h2 className="font-bold text-lg">Key ideas</h2>
-              <ul className={"text-sm space-y-2 list-disc list-inside " + (false ? "text-slate-300" : "text-slate-600")}>
-                <li>Double circulation: pulmonary + systemic pathways.</li><li>Valves prevent backflow; atria then ventricles contract in sequence.</li><li>Arteries vs veins: wall thickness / pressure / valves in veins.</li>
-              </ul>
-              <LearnExtra />
-              <button type="button" className="mt-2 px-4 py-2.5 rounded-xl font-semibold min-h-[48px] text-white" style={{background: ACCENT}} onClick={() => setMode("guided")}>
-                Start guided practice →
-              </button>
+          {mode === "learn" && <LearnFromZero steps={TFZ_STEPS} onComplete={completeTfz} />}
+
+          {mode === "lab" && !tfzDone && (
+            <section className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 text-center">
+              <h2 className="text-xl font-bold">{t("請先完成 A1–A6 學習", "Finish Learn From Zero first")}</h2>
+              <p className="text-sm text-slate-500 mt-2">{t("先學模型，後做實驗。", "We teach the model before you play.")}</p>
+              <button type="button" className="mt-4 px-4 py-2.5 rounded-xl font-semibold text-white min-h-[48px]" style={{background: ACCENT}} onClick={() => setMode("learn")}>{t("前往學習 →", "Go to Learn →")}</button>
+            </section>
+          )}
+          {mode === "lab" && tfzDone && (
+            <section className="bg-white border border-slate-200 shadow-sm rounded-2xl p-4 sm:p-5">
+              <h2 className="font-bold text-lg mb-3">{t("心動周期模擬器", "Cardiac Cycle Simulator")}</h2>
+              <CardiacSim />
             </section>
           )}
 
           {mode === "guided" && !doneMsg && (
-            <Drill bank={GUIDED} label="Guided" onNeedUpgrade={r => { setPayReason(r); setPay(true); }}
+            <Drill bank={GUIDED} label={t("引導", "Guided")} isZh={isZh} t={t} onNeedUpgrade={r => { setPayReason(r); setPay(true); }}
               onDone={(s, n) => { setDoneMsg({ s, n, next: "exam" }); refresh(); }} />
           )}
           {mode === "exam" && !doneMsg && (
-            <Drill bank={EXAM} label="Exam" onNeedUpgrade={r => { setPayReason(r); setPay(true); }}
+            <Drill bank={EXAM} label={t("測驗", "Exam")} isZh={isZh} t={t} onNeedUpgrade={r => { setPayReason(r); setPay(true); }}
               onDone={(s, n) => { setDoneMsg({ s, n, next: "review" }); refresh(); }} />
           )}
           {doneMsg && (mode === "guided" || mode === "exam") && (
             <section className={"bg-white border border-slate-200 shadow-sm rounded-2xl p-6 text-center"}>
-              <h2 className="text-2xl font-bold">Complete</h2>
+              <h2 className="text-2xl font-bold">{t("完成", "Complete")}</h2>
               <p className="mt-2">{doneMsg.s} / {doneMsg.n}</p>
               <button type="button" className="mt-4 px-4 py-2 rounded-xl font-semibold min-h-[48px] text-white" style={{background: ACCENT}}
-                onClick={() => { setDoneMsg(null); setMode(doneMsg.next); }}>Continue →</button>
+                onClick={() => { setDoneMsg(null); setMode(doneMsg.next); }}>{t("繼續 →", "Continue →")}</button>
             </section>
           )}
           {mode === "review" && (
             <section className={"bg-white border border-slate-200 shadow-sm rounded-2xl p-4 sm:p-5 space-y-3"}>
-              <h2 className="font-bold text-lg">Wrong-answer book · 錯題簿</h2>
-              {(progress.wrongBook || []).length === 0 && <p className={"text-sm " + (false ? "text-slate-400" : "text-slate-500")}>No wrong answers yet · 暫無錯題</p>}
+              <h2 className="font-bold text-lg">{t("錯題簿", "Wrong-answer book")}</h2>
+              {(progress.wrongBook || []).length === 0 && <p className={"text-sm " + (false ? "text-slate-400" : "text-slate-500")}>{t("暫無錯題", "No wrong answers yet")}</p>}
               {(progress.wrongBook || []).map(w => (
                 <div key={w.id} className={"rounded-xl p-3 text-sm " + (false ? "border border-slate-700" : "border border-slate-200")}>
                   <p className="font-semibold">{w.prompt}</p>
                   <p className="mt-1 opacity-80" style={{color: ACCENT}}>{w.hint}</p>
                   {HKC.isPaid() && <p className="mt-1 text-emerald-500">Answer unlocked</p>}
-                  <button type="button" className={"text-xs underline mt-2 " + (false ? "text-slate-400" : "text-slate-500")} onClick={() => { HKC.removeWrong(APP_ID, w.id); refresh(); }}>Mark resolved</button>
+                  <button type="button" className={"text-xs underline mt-2 " + (false ? "text-slate-400" : "text-slate-500")} onClick={() => { HKC.removeWrong(APP_ID, w.id); refresh(); }}>{t("標記已掌握", "Mark resolved")}</button>
                 </div>
               ))}
             </section>
@@ -342,5 +497,7 @@
     ReactDOM.createRoot(document.getElementById("root")).render(<App />);
   </script>
 <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+<script src="../../kit/tone.js"></script>
+<script src="../../kit/form-banner.js"></script>
 </body>
 </html>

@@ -30,7 +30,7 @@ const dict = {
     allGrades: "All grades",
     allSubjects: "All subjects",
     disclaimer:
-      "Grade / Key Stage / IB / Singapore labels are approximate equivalences for discovery only. They are not official accreditation, syllabus endorsement, or a claim that content matches another jurisdiction’s exam board.",
+      "Grade labels are read or estimated from folder paths for browsing only. They are not accreditation or syllabus endorsement by the Hong Kong Education Bureau, the Curriculum Development Institute, or any exam board.",
     pricingTitle: "Simple family plans",
     pricingLead: "Start with free demos. Upgrade when you are ready.",
     freePlan: "Free",
@@ -65,9 +65,23 @@ const dict = {
     libraryEmpty:
       "Curriculum map not generated yet — showing free demos. Run curriculum generate when ready.",
     libraryTitle: "Module library",
-    libraryLead: "Browse by primary or secondary, then subject. Free demos open for everyone.",
+    libraryLead:
+      "Choose primary or secondary, then a subject, then a grade. Modules for the same subject and grade stay in one group. A year with no grade folder in the path is marked as a suggested grade, not curriculum-authority approval.",
     libraryPrimaryTab: "Primary",
     librarySecondaryTab: "Secondary",
+    libraryBackLevel: "Primary or secondary",
+    libraryLevelPrimaryLead:
+      "Primary subjects. Open a subject, then a grade, to see that group of modules.",
+    libraryLevelSecondaryLead:
+      "Secondary subjects. Open a subject, then a grade, to see that group of modules.",
+    librarySuggestedGrade: "Suggested grade",
+    librarySuggestedGradeNote:
+      "Suggested grade: the path has no P1–P6 or Form 1–6 folder, so this year is only an estimate. It is not Curriculum Development Institute approval.",
+    librarySuggestedGradeMixed:
+      "Modules marked “Suggested grade” have no grade folder in the path. That year is only an estimate, not Curriculum Development Institute approval.",
+    libraryGradeHonesty:
+      "Grade labels come from folder paths and are for browsing only. They are not approval by the Education Bureau or the Curriculum Development Institute.",
+    libraryGradeEmpty: "No modules in this subject for that grade.",
     libraryAllSubjects: "All subjects",
     libraryEnterSubject: "Enter subject",
     libraryModuleCount: "{count} modules",
@@ -147,7 +161,7 @@ const dict = {
     allGrades: "全部年級",
     allSubjects: "全部科目",
     disclaimer:
-      "年級／Key Stage／IB／新加坡等標籤僅供對照搜尋，屬粗略對應，並非官方認證、課程認可，亦不代表內容等同其他地區考試局大綱。",
+      "年級標籤由資料夾路徑讀出或估計，只供瀏覽。並非教育局、課程發展處或其他考試局的認可或大綱背書。",
     pricingTitle: "家庭計劃一覽",
     pricingLead: "先用免費示範，準備好再升級。",
     freePlan: "免費",
@@ -181,9 +195,21 @@ const dict = {
     portalError: "無法開啟帳單管理。",
     libraryEmpty: "課程地圖尚未產生 — 暫時顯示免費示範。就緒後請執行 curriculum generate。",
     libraryTitle: "課程模組庫",
-    libraryLead: "先選小學或中學，再按科目瀏覽。免費示範人人可玩。",
+    libraryLead:
+      "先選小學或中學，再選科目，然後按年級查看。同一科、同一年級的模組放在同一組。路徑裡沒有年級資料夾的，會標成建議年級，並非課程處認可。",
     libraryPrimaryTab: "小學",
     librarySecondaryTab: "中學",
+    libraryBackLevel: "小學或中學",
+    libraryLevelPrimaryLead: "小學科目。進入科目後再選年級，就會看到該科該年級的一組模組。",
+    libraryLevelSecondaryLead: "中學科目。進入科目後再選年級，就會看到該科該年級的一組模組。",
+    librarySuggestedGrade: "建議年級",
+    librarySuggestedGradeNote:
+      "建議年級：路徑裡沒有小一至中六的年級資料夾，此年級只是估計，並非課程發展處認可。",
+    librarySuggestedGradeMixed:
+      "標有「建議年級」的模組，路徑裡沒有年級資料夾，該年級只是估計，並非課程發展處認可。",
+    libraryGradeHonesty:
+      "年級標籤來自資料夾路徑，只供瀏覽，並非教育局或課程發展處認可。",
+    libraryGradeEmpty: "這個科目沒有這個年級的模組。",
     libraryAllSubjects: "全部科目",
     libraryEnterSubject: "進入科目",
     libraryModuleCount: "{count} 個模組",

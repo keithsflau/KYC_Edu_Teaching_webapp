@@ -70,6 +70,17 @@
   </script>
 </head>
 <body class="text-slate-800">
+<section class="chem-learn" data-chem-entry="1">
+  <h2>學習目標</h2>
+  <ul>
+    <li>濃度增加時，同一體積的粒子變多，碰撞次數上升。</li>
+    <li>溫度升高時，粒子更快，更多碰撞超過閾值。</li>
+    <li>讀出粒子數、碰撞次數和有效碰撞比例。</li>
+  </ul>
+  <p id="chem-feedback" role="status">調校畫面後，這裡顯示回饋。</p>
+</section>
+<script src="../../lesson-kit.js"></script>
+
   <!-- SUBSCRIBE_GATE: Marketing owns tiers. Free core must work offline. -->
   <div id="root"></div>
   <script>
@@ -79,8 +90,10 @@
       premiumFeatures: ["progress_sync", "parent_dashboard", "unlimited_mocks"]
     };
   </script>
+  <script src="../../chem-model.js"></script>
   <script type="text/babel" data-presets="react-classic">
-    const { useState, useEffect } = React;
+    const { useState, useEffect, useRef } = React;
+    const { useLang, LangSwitcher, appTabs } = window.NcsI18n;
     const APP_ID = "f5_chem_rates";
     const ACCENT = "#7c3aed";
 
@@ -165,7 +178,96 @@
         hint: "Catalyst affects kinetics not K. 催化劑影響動力學非 K。" }
     ];
 
-    function LearnExtra(){const [t,setT]=useState(20);const rate=Math.round(5*Math.exp((t-20)/25));return (<div className="mt-3 space-y-2"><label className="text-sm font-semibold">Temperature °C {t}</label><input type="range" min="5" max="60" value={t} onChange={e=>setT(+e.target.value)} className="w-full" /><p className="text-sm p-3 rounded-xl bg-violet-50 border border-violet-100">Relative collision success (model): {rate}</p></div>);}
+    function LearnExtra() {
+      const canvasRef = useRef(null);
+      const [conc, setConc] = useState(4);
+      const [temp, setTemp] = useState(25);
+      const [stats, setStats] = useState({ perS: 0, success: 0, n: 24, speed: "1.45" });
+      useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas || !window.ChemModel) return;
+        const ctx = canvas.getContext("2d");
+        const setup = ChemModel.collisionSetup(conc, temp);
+        const W = canvas.width, H = canvas.height;
+        const particles = [];
+        for (let i = 0; i < setup.n; i++) {
+          const ang = Math.random() * Math.PI * 2;
+          particles.push({
+            x: 16 + Math.random() * (W - 32),
+            y: 16 + Math.random() * (H - 32),
+            vx: Math.cos(ang) * setup.speed,
+            vy: Math.sin(ang) * setup.speed,
+            kind: i % 2
+          });
+        }
+        let acc = { hits: 0, ok: 0 };
+        let elapsed = 0;
+        let last = performance.now();
+        let raf = 0;
+        const loop = (now) => {
+          const dt = Math.min(0.033, (now - last) / 1000);
+          last = now;
+          elapsed += dt;
+          ctx.fillStyle = "#0f172a";
+          ctx.fillRect(0, 0, W, H);
+          particles.forEach((p) => {
+            p.x += p.vx; p.y += p.vy;
+            if (p.x < 8) { p.x = 8; p.vx = Math.abs(p.vx); }
+            if (p.x > W - 8) { p.x = W - 8; p.vx = -Math.abs(p.vx); }
+            if (p.y < 8) { p.y = 8; p.vy = Math.abs(p.vy); }
+            if (p.y > H - 8) { p.y = H - 8; p.vy = -Math.abs(p.vy); }
+          });
+          for (let i = 0; i < particles.length; i++) {
+            for (let j = i + 1; j < particles.length; j++) {
+              const a = particles[i], b = particles[j];
+              if (a.kind === b.kind) continue;
+              const dx = a.x - b.x, dy = a.y - b.y;
+              const dist = Math.sqrt(dx * dx + dy * dy);
+              if (dist < 14 && dist > 0) {
+                const rel = Math.hypot(a.vx - b.vx, a.vy - b.vy);
+                acc.hits += 1;
+                if (rel >= setup.ea) acc.ok += 1;
+                const nx = dx / dist, ny = dy / dist, overlap = 14 - dist;
+                a.x += nx * overlap / 2; a.y += ny * overlap / 2;
+                b.x -= nx * overlap / 2; b.y -= ny * overlap / 2;
+                a.vx += nx * 0.2; a.vy += ny * 0.2;
+                b.vx -= nx * 0.2; b.vy -= ny * 0.2;
+              }
+            }
+          }
+          particles.forEach((p) => {
+            ctx.beginPath();
+            ctx.fillStyle = p.kind ? "#f59e0b" : "#38bdf8";
+            ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
+            ctx.fill();
+          });
+          if (elapsed > 0.5) {
+            setStats({
+              perS: Math.round(acc.hits / elapsed),
+              success: acc.hits ? Math.round((100 * acc.ok) / acc.hits) : 0,
+              n: setup.n,
+              speed: setup.speed.toFixed(2)
+            });
+            acc = { hits: 0, ok: 0 };
+            elapsed = 0;
+          }
+          raf = requestAnimationFrame(loop);
+        };
+        raf = requestAnimationFrame(loop);
+        return () => cancelAnimationFrame(raf);
+      }, [conc, temp]);
+      const setup = window.ChemModel ? ChemModel.collisionSetup(conc, temp) : { n: conc * 6, speed: 1, ea: 1.5, note: "" };
+      return (
+        <div className="mt-3 space-y-2">
+          <canvas ref={canvasRef} width={640} height={280} aria-label="粒子碰撞模型" className="w-full rounded-xl bg-slate-900" />
+          <label className="text-sm font-semibold">濃度檔 {conc}（粒子數 {setup.n}）</label>
+          <input type="range" min="2" max="8" step="1" value={conc} onChange={e => { const v = +e.target.value; setConc(v); if (window.ChemLesson) ChemLesson.say("濃度檔 " + v + "：粒子數變成 " + (window.ChemModel ? ChemModel.collisionSetup(v, temp).n : v * 6) + "。碰撞次數應上升。"); }} className="w-full" />
+          <label className="text-sm font-semibold">溫度 {temp} °C（速率 {Number(setup.speed).toFixed(2)}）</label>
+          <input type="range" min="10" max="70" step="1" value={temp} onChange={e => { const v = +e.target.value; setTemp(v); const s = window.ChemModel ? ChemModel.collisionSetup(conc, v) : { speed: 1, ea: 1.5 }; if (window.ChemLesson) ChemLesson.say("溫度 " + v + " °C：粒子速率 " + Number(s.speed).toFixed(2) + "。相對速率達到 " + s.ea + " 才算有效碰撞。"); }} className="w-full" />
+          <p className="text-sm p-3 rounded-xl bg-violet-50 border border-violet-100">粒子數 {stats.n}。最近取樣約每秒 {stats.perS} 次不同顏色碰撞，其中約 {stats.success}% 達到速率閾值。{setup.note}</p>
+        </div>
+      );
+    }
 
     function UpgradeCTA({ reason, onClose, onTrial }) {
       return (
@@ -186,7 +288,7 @@
       );
     }
 
-    function Drill({ bank, label, onNeedUpgrade, onDone }) {
+    function Drill({ bank, label, onNeedUpgrade, onDone, isZh, t }) {
       const [qi, setQi] = useState(0);
       const [fb, setFb] = useState(null);
       const [score, setScore] = useState(0);
@@ -228,15 +330,14 @@
             <span>{label} · Q {qi + 1}/{bank.length} · Lv {item.level}</span>
             <span>Score {score}</span>
           </div>
-          <h2 className="text-lg font-bold mb-1">{item.q}</h2>
-          {item.qZh ? <p className="text-sm mb-4 opacity-80" style={{color: ACCENT}}>{item.qZh}</p> : <div className="mb-4" />}
+          <h2 className="text-lg font-bold mb-1">{t(item.qZh, item.q)}</h2>
           <div className="grid gap-2">
             {item.opts.map(o => (
               <button key={o} type="button" disabled={fb && fb.ok} onClick={() => pick(o)}
                 className={"text-left px-4 py-3 rounded-xl min-h-[48px] disabled:opacity-50 bg-slate-50 hover:bg-slate-100 border border-slate-200"}>{o}</button>
             ))}
           </div>
-          <button type="button" className="text-sm mt-3 font-semibold min-h-[44px]" style={{color: ACCENT}} onClick={() => setHint(true)}>Hint · 提示</button>
+          <button type="button" className="text-sm mt-3 font-semibold min-h-[44px]" style={{color: ACCENT}} onClick={() => setHint(true)}>{t("提示", "Hint")}</button>
           {hint && <p className={"text-sm mt-1 p-3 rounded-xl " + (false ? "bg-amber-950/50 text-amber-100 border border-amber-800/40" : "bg-amber-50 text-amber-900 border border-amber-200")}>{item.hint}</p>}
           {fb && (
             <div className={"mt-4 p-3 rounded-xl text-sm " + (fb.ok ? (false ? "bg-emerald-900/40 text-emerald-200" : "bg-emerald-50 text-emerald-800") : (false ? "bg-rose-900/40 text-rose-200" : "bg-rose-50 text-rose-800"))}>
@@ -250,6 +351,7 @@
     }
 
     function App() {
+      const { isZh, t } = useLang();
       const [mode, setMode] = useState("learn");
       const [progress, setProgress] = useState(() => HKC.loadProgress(APP_ID));
       const [pay, setPay] = useState(false);
@@ -259,26 +361,24 @@
       function refresh() { setProgress(HKC.loadProgress(APP_ID)); }
       useEffect(() => { refresh(); }, [mode]);
 
-      const tabs = [
-        { id: "learn", label: "Learn · 學習" },
-        { id: "guided", label: "Guided · 引導" },
-        { id: "exam", label: "Exam · 測驗" },
-        { id: "review", label: "Review · 錯題" }
-      ];
+      const tabs = appTabs(["learn", "guided", "exam", "review"], isZh);
 
       return (
         <div className="max-w-3xl mx-auto p-4 sm:p-8">
-          <a href="../../index.html" className="text-sm hover:underline font-semibold" style={{color: ACCENT}}>← Hub</a>
+          <div className="flex flex-wrap justify-between items-center gap-2">
+            <a href="../../index.html" className="text-sm hover:underline font-semibold" style={{color: ACCENT}}>{t("← 返回目錄", "← Back to hub")}</a>
+            <LangSwitcher />
+          </div>
           <header className="mt-4 mb-4">
-            <p className="text-xs uppercase tracking-widest font-bold" style={{color: ACCENT}}>F5 Chemistry · Rate of reaction</p>
-            <h1 className="text-2xl sm:text-3xl font-bold mt-1">Rate & Collision Theory</h1>
-            <p className="text-slate-500 mt-1">反應速率與碰撞理論 · Learn → Guided → Exam → Review · 12 items</p>
+            <p className="text-xs uppercase tracking-widest font-bold" style={{color: ACCENT}}>{t("中五化學 · 反應速率", "F5 Chemistry · Rate of reaction")}</p>
+            <h1 className="text-2xl sm:text-3xl font-bold mt-1">{t("反應速率與碰撞理論", "Rate & Collision Theory")}</h1>
+            <p className="text-slate-500 mt-1">{t("學習 → 引導 → 測驗 → 複習 · 12 題", "Learn → Guided → Exam → Review · 12 items")}</p>
           </header>
 
           <div className={"text-sm border border-dashed rounded-lg px-3 py-2 mb-3 flex flex-wrap justify-between gap-2 items-center " + (false ? "border-slate-600 bg-slate-900/80" : "border-slate-300 bg-white/80")}>
-            <span>{HKC.isPaid() ? (HKC.getEntitlement().tier + " · unlimited") : ("Free · " + HKC.remainingFree() + "/" + HKC.FREE_DAILY_CAP + " today")} · Best {progress.bestScore}</span>
+            <span>{HKC.isPaid() ? (HKC.getEntitlement().tier + " · " + t("無限", "unlimited")) : (t("免費", "Free") + " · " + HKC.remainingFree() + "/" + HKC.FREE_DAILY_CAP + " " + t("今日", "today"))} · {t("最佳", "Best")} {progress.bestScore}</span>
             {!HKC.isPaid() && (
-              <button type="button" className="px-3 py-1.5 rounded-md text-xs font-semibold text-white min-h-[36px]" style={{background: ACCENT}} onClick={() => setPay(true)}>Upgrade</button>
+              <button type="button" className="px-3 py-1.5 rounded-md text-xs font-semibold text-white min-h-[36px]" style={{background: ACCENT}} onClick={() => setPay(true)}>{t("升級", "Upgrade")}</button>
             )}
           </div>
 
@@ -294,43 +394,45 @@
 
           {mode === "learn" && (
             <section className={"bg-white border border-slate-200 shadow-sm rounded-2xl p-4 sm:p-5 space-y-3"}>
-              <h2 className="font-bold text-lg">Key ideas</h2>
+              <h2 className="font-bold text-lg">{t("重點概念", "Key ideas")}</h2>
               <ul className={"text-sm space-y-2 list-disc list-inside " + (false ? "text-slate-300" : "text-slate-600")}>
-                <li>Rate depends on successful collisions (energy + orientation).</li><li>Factors: concentration, T, surface area, catalyst.</li><li>Catalyst provides alternative path with lower Ea.</li>
+                <li>{t("速率取決於有效碰撞（能量與取向）。", "Rate depends on successful collisions (energy + orientation).")}</li>
+                <li>{t("因素：濃度、溫度、表面積、催化劑。", "Factors: concentration, T, surface area, catalyst.")}</li>
+                <li>{t("催化劑提供較低活化能的替代途徑。", "Catalyst provides alternative path with lower Ea.")}</li>
               </ul>
               <LearnExtra />
               <button type="button" className="mt-2 px-4 py-2.5 rounded-xl font-semibold min-h-[48px] text-white" style={{background: ACCENT}} onClick={() => setMode("guided")}>
-                Start guided practice →
+                {t("開始引導練習 →", "Start guided practice →")}
               </button>
             </section>
           )}
 
           {mode === "guided" && !doneMsg && (
-            <Drill bank={GUIDED} label="Guided" onNeedUpgrade={r => { setPayReason(r); setPay(true); }}
+            <Drill bank={GUIDED} label={t("引導", "Guided")} isZh={isZh} t={t} onNeedUpgrade={r => { setPayReason(r); setPay(true); }}
               onDone={(s, n) => { setDoneMsg({ s, n, next: "exam" }); refresh(); }} />
           )}
           {mode === "exam" && !doneMsg && (
-            <Drill bank={EXAM} label="Exam" onNeedUpgrade={r => { setPayReason(r); setPay(true); }}
+            <Drill bank={EXAM} label={t("測驗", "Exam")} isZh={isZh} t={t} onNeedUpgrade={r => { setPayReason(r); setPay(true); }}
               onDone={(s, n) => { setDoneMsg({ s, n, next: "review" }); refresh(); }} />
           )}
           {doneMsg && (mode === "guided" || mode === "exam") && (
             <section className={"bg-white border border-slate-200 shadow-sm rounded-2xl p-6 text-center"}>
-              <h2 className="text-2xl font-bold">Complete</h2>
+              <h2 className="text-2xl font-bold">{t("完成", "Complete")}</h2>
               <p className="mt-2">{doneMsg.s} / {doneMsg.n}</p>
               <button type="button" className="mt-4 px-4 py-2 rounded-xl font-semibold min-h-[48px] text-white" style={{background: ACCENT}}
-                onClick={() => { setDoneMsg(null); setMode(doneMsg.next); }}>Continue →</button>
+                onClick={() => { setDoneMsg(null); setMode(doneMsg.next); }}>{t("繼續 →", "Continue →")}</button>
             </section>
           )}
           {mode === "review" && (
             <section className={"bg-white border border-slate-200 shadow-sm rounded-2xl p-4 sm:p-5 space-y-3"}>
-              <h2 className="font-bold text-lg">Wrong-answer book · 錯題簿</h2>
-              {(progress.wrongBook || []).length === 0 && <p className={"text-sm " + (false ? "text-slate-400" : "text-slate-500")}>No wrong answers yet · 暫無錯題</p>}
+              <h2 className="font-bold text-lg">{t("錯題簿", "Wrong-answer book")}</h2>
+              {(progress.wrongBook || []).length === 0 && <p className={"text-sm " + (false ? "text-slate-400" : "text-slate-500")}>{t("暫無錯題", "No wrong answers yet")}</p>}
               {(progress.wrongBook || []).map(w => (
                 <div key={w.id} className={"rounded-xl p-3 text-sm " + (false ? "border border-slate-700" : "border border-slate-200")}>
                   <p className="font-semibold">{w.prompt}</p>
                   <p className="mt-1 opacity-80" style={{color: ACCENT}}>{w.hint}</p>
-                  {HKC.isPaid() && <p className="mt-1 text-emerald-500">Answer unlocked</p>}
-                  <button type="button" className={"text-xs underline mt-2 " + (false ? "text-slate-400" : "text-slate-500")} onClick={() => { HKC.removeWrong(APP_ID, w.id); refresh(); }}>Mark resolved</button>
+                  {HKC.isPaid() && <p className="mt-1 text-emerald-500">{t("已解鎖答案", "Answer unlocked")}</p>}
+                  <button type="button" className={"text-xs underline mt-2 " + (false ? "text-slate-400" : "text-slate-500")} onClick={() => { HKC.removeWrong(APP_ID, w.id); refresh(); }}>{t("標記已掌握", "Mark resolved")}</button>
                 </div>
               ))}
             </section>

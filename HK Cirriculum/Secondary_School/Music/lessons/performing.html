@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>初中音樂 · 演奏</title>
+    <style>
+      :root { color-scheme: light; --ink: #1c1917; --muted: #57534e; --accent: #1d4ed8; }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Microsoft JhengHei", "PingFang HK", sans-serif;
+        color: var(--ink);
+        background: #f8fafc;
+      }
+      .wrap { max-width: 880px; margin: 0 auto; padding: 24px 18px 56px; }
+      a { color: var(--accent); }
+      .back { color: var(--muted); text-decoration: none; }
+      h1 { margin: 12px 0 8px; }
+      .lead, p { line-height: 1.7; color: var(--muted); }
+      .panel { margin-top: 16px; padding: 18px; background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; }
+      .keys, .row { display: flex; flex-wrap: wrap; gap: 8px; }
+      button, .tool {
+        font: inherit;
+        border-radius: 10px;
+        border: 1px solid #cbd5e1;
+        background: #fff;
+        padding: 12px 14px;
+        cursor: pointer;
+        color: var(--ink);
+        text-decoration: none;
+      }
+      button.black { background: #1e293b; color: #fff; }
+      button.on { outline: 3px solid #93c5fd; }
+      button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+      #status { color: var(--accent); font-weight: 700; }
+      .tools { display: grid; gap: 10px; }
+      .tool { display: block; }
+      .tool strong { display: block; color: var(--ink); }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <a class="back" href="../index.html">← 返回初中音樂</a>
+      <p>初中 · 演奏</p>
+      <h1>鍵盤與音階</h1>
+      <p class="lead">按鍵就聽見該音。C 大調沒有升降號。G 大調只有一個升號：F♯。移調是整段移高或移低同一個音程，速度不變。</p>
+      <p id="status">按鍵即可發聲。</p>
+      <section class="panel">
+        <div class="keys" id="keys"></div>
+        <div class="row" style="margin-top: 14px">
+          <button class="primary" id="play-scale-c" type="button">奏 C 大調</button>
+          <button class="primary" id="play-scale-g" type="button">奏 G 大調</button>
+        </div>
+      </section>
+      <section class="panel tools">
+        <a class="tool" href="../apps/mp3-transposer/dist/index.html">
+          <strong>移調練習</strong>
+          下載檔是 WAV，按鈕寫 Transposed WAV。
+        </a>
+        <a class="tool" href="../apps/mpeg_transposer/dist/index.html">
+          <strong>調性判斷</strong>
+          大調與小調分開顯示。分析失敗寫未能判斷，不會標成 C。
+        </a>
+      </section>
+    </div>
+    <script>
+      const KEYS = [
+        ["C4", 60, false], ["D4", 62, false], ["E4", 64, false], ["F4", 65, false],
+        ["F♯4", 66, true], ["G4", 67, false], ["A4", 69, false], ["B♭4", 70, true],
+        ["B4", 71, false], ["C5", 72, false],
+      ];
+      const SCALES = {
+        C: [60, 62, 64, 65, 67, 69, 71, 72],
+        G: [67, 69, 71, 72, 74, 76, 78, 79],
+      };
+      let audioCtx = null;
+      let active = [];
+      const box = document.getElementById("keys");
+      KEYS.forEach(([name, midi, black]) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = black ? "black" : "";
+        button.id = "key-" + midi;
+        button.textContent = name;
+        button.addEventListener("click", () => playOne(midi, name));
+        box.appendChild(button);
+      });
+
+      function hz(midi) { return 440 * 2 ** ((midi - 69) / 12); }
+      async function context() {
+        if (!audioCtx) audioCtx = new AudioContext();
+        if (audioCtx.state !== "running") await audioCtx.resume();
+        if (audioCtx.state !== "running") throw new Error("blocked");
+        return audioCtx;
+      }
+      function tone(ac, midi, when, dur) {
+        const osc = ac.createOscillator();
+        const gain = ac.createGain();
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(hz(midi), when);
+        gain.gain.setValueAtTime(0.0001, when);
+        gain.gain.exponentialRampToValueAtTime(0.25, when + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, when + dur);
+        osc.connect(gain);
+        gain.connect(ac.destination);
+        osc.start(when);
+        osc.stop(when + dur + 0.02);
+        active.push(osc);
+      }
+      async function playOne(midi, name) {
+        active.forEach((node) => { try { node.stop(); } catch (e) {} });
+        active = [];
+        try {
+          const ac = await context();
+          tone(ac, midi, ac.currentTime, 0.7);
+          document.getElementById("status").textContent = "正在演奏 " + name;
+        } catch (e) {
+          document.getElementById("status").textContent = "瀏覽器未允許發聲";
+        }
+      }
+      async function playScale(id) {
+        const notes = SCALES[id];
+        try {
+          const ac = await context();
+          notes.forEach((midi, index) => tone(ac, midi, ac.currentTime + index * 0.38, 0.32));
+          document.getElementById("status").textContent = id === "C" ? "正在演奏 C 大調" : "正在演奏 G 大調（有 F♯）";
+        } catch (e) {
+          document.getElementById("status").textContent = "瀏覽器未允許發聲";
+        }
+      }
+      document.getElementById("play-scale-c").addEventListener("click", () => playScale("C"));
+      document.getElementById("play-scale-g").addEventListener("click", () => playScale("G"));
+    </script>
+  </body>
+</html>

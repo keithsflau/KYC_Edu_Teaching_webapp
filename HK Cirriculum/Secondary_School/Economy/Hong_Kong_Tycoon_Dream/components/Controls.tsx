@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { GameState, SpaceType, ColorGroup } from '../types';
 import { JAIL_FINE } from '../constants';
+import { UTILITY_RULE_TEXT } from '../logic/rules';
 
 interface Props {
   state: GameState;
@@ -13,9 +14,11 @@ interface Props {
   onPass: () => void;
   onUpgrade: (spaceId: number) => void;
   onJailAction: (action: 'PAY' | 'CARD') => void;
+  onOpportunity: (optionId: string) => void;
+  onChoice: (optionId: string) => void;
 }
 
-export const Controls: React.FC<Props> = ({ state, onRoll, onEndTurn, onBuy, onPay, onDraw, onPass, onUpgrade, onJailAction }) => {
+export const Controls: React.FC<Props> = ({ state, onRoll, onEndTurn, onBuy, onPay, onDraw, onPass, onUpgrade, onJailAction, onOpportunity, onChoice }) => {
   const currentPlayer = state.players[state.currentPlayerIndex];
   const space = state.spaces[currentPlayer.position];
   const [showProperties, setShowProperties] = useState(false);
@@ -86,9 +89,20 @@ export const Controls: React.FC<Props> = ({ state, onRoll, onEndTurn, onBuy, onP
               </button>
             )}
 
+            {state.gamePhase === 'GAME_OVER' && (
+              <div className="text-center text-yellow-300 font-bold">遊戲結束。請看紀錄中的勝者。</div>
+            )}
+
+            {state.decisionNote && (
+              <div className="text-xs bg-amber-950/70 border border-amber-600 text-amber-50 rounded-lg p-3 leading-relaxed">
+                {state.decisionNote}
+              </div>
+            )}
+
             {state.gamePhase === 'ACTION' && state.pendingAction?.type === 'JAIL_DECISION' && (
               <div className="space-y-2">
-                <div className="text-center text-orange-400 font-bold text-sm">你在赤柱監獄中，請選擇：</div>
+                <div className="text-center text-orange-300 font-bold text-sm">你在赤柱監獄中，請選擇：</div>
+                <p className="text-xs text-slate-300 leading-relaxed">罰金付不出時會破產，現金不會變成負數。</p>
                 <button 
                   onClick={onRoll}
                   className="w-full py-3 bg-blue-600 rounded-lg font-bold hover:bg-blue-500 shadow-md"
@@ -98,10 +112,11 @@ export const Controls: React.FC<Props> = ({ state, onRoll, onEndTurn, onBuy, onP
                 
                 <button 
                   onClick={() => onJailAction('PAY')}
-                  disabled={currentPlayer.money < JAIL_FINE}
-                  className="w-full py-3 bg-red-600 rounded-lg font-bold hover:bg-red-500 shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-3 bg-red-600 rounded-lg font-bold hover:bg-red-500 shadow-md"
                 >
-                  支付罰金 ${JAIL_FINE}
+                  {currentPlayer.money < JAIL_FINE
+                    ? `付不出 $${JAIL_FINE} 罰金（將破產）`
+                    : `支付罰金 $${JAIL_FINE}`}
                 </button>
                 
                 <button 
@@ -115,32 +130,85 @@ export const Controls: React.FC<Props> = ({ state, onRoll, onEndTurn, onBuy, onP
             )}
 
             {state.gamePhase === 'ACTION' && state.pendingAction?.type === 'BUY_PROPERTY' && (
-              <div className="flex gap-3">
+              <div className="space-y-2">
+                {space.type === SpaceType.UTILITY && (
+                  <p className="text-xs text-amber-100 bg-amber-950/50 border border-amber-700 rounded-lg p-2 leading-relaxed">{UTILITY_RULE_TEXT}</p>
+                )}
+                <div className="flex gap-3">
                   <button onClick={onBuy} className="flex-1 py-3 bg-blue-600 rounded-lg font-bold hover:bg-blue-500 shadow-md">
                     購買 (${space.price})
                   </button>
                   <button onClick={onPass} className="flex-1 py-3 bg-slate-600 rounded-lg font-bold hover:bg-slate-500 shadow-md">
                     放棄
                   </button>
+                </div>
+              </div>
+            )}
+
+            {state.gamePhase === 'ACTION' && state.pendingAction?.type === 'OPPORTUNITY_COST' && (
+              <div className="space-y-2">
+                <div className="text-sm font-bold text-amber-200">買地之後：機會成本</div>
+                {space.type === SpaceType.UTILITY && (
+                  <p className="text-xs text-amber-100 leading-relaxed">{UTILITY_RULE_TEXT}</p>
+                )}
+                <p className="text-xs text-slate-200 leading-relaxed">{state.pendingAction.data.prompt}</p>
+                {state.pendingAction.data.options.map((opt: { id: string; label: string }) => (
+                  <button key={opt.id} onClick={() => onOpportunity(opt.id)} className="w-full text-left py-2 px-3 bg-slate-700 rounded-lg text-sm hover:bg-slate-600">
+                    {opt.label}
+                  </button>
+                ))}
               </div>
             )}
 
             {state.gamePhase === 'ACTION' && state.pendingAction?.type === 'PAY_RENT' && (
-              <button onClick={onPay} className="w-full py-3 bg-red-600 rounded-lg font-bold animate-pulse hover:bg-red-500 shadow-md">
-                支付租金 ${state.pendingAction.data.amount}
-              </button>
+              <div className="space-y-2">
+                {state.pendingAction.data.utilityText && (
+                  <p className="text-xs text-amber-100 bg-amber-950/50 border border-amber-700 rounded-lg p-2 leading-relaxed">{state.pendingAction.data.utilityText}</p>
+                )}
+                <button onClick={onPay} className="w-full py-3 bg-red-600 rounded-lg font-bold animate-pulse hover:bg-red-500 shadow-md">
+                  支付租金 ${state.pendingAction.data.amount}
+                </button>
+              </div>
             )}
 
             {state.gamePhase === 'ACTION' && state.pendingAction?.type === 'PAY_TAX' && (
-              <button onClick={onPay} className="w-full py-3 bg-orange-600 rounded-lg font-bold hover:bg-orange-500 shadow-md">
-                繳交稅款 ${state.pendingAction.data.amount}
-              </button>
+              <div className="space-y-2">
+                <div className="text-sm font-bold text-amber-200">{state.pendingAction.data.name}</div>
+                <p className="text-xs text-slate-200 leading-relaxed">{state.pendingAction.data.explanation}</p>
+                <ul className="text-xs text-amber-100 space-y-1">
+                  {(state.pendingAction.data.lines || []).map((line: string) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ul>
+                <button onClick={onPay} className="w-full py-3 bg-orange-600 rounded-lg font-bold hover:bg-orange-500 shadow-md">
+                  {state.pendingAction.data.amount === 0 ? '確認本期不用繳付' : `按上面的計算繳交 $${state.pendingAction.data.amount}`}
+                </button>
+              </div>
             )}
 
             {state.gamePhase === 'ACTION' && state.pendingAction?.type === 'CARD_EFFECT' && (
-              <button onClick={onDraw} className="w-full py-3 bg-purple-600 rounded-lg font-bold hover:bg-purple-500 shadow-md">
-                抽取卡牌
-              </button>
+              <div className="space-y-2">
+                <p className="text-xs text-slate-200 leading-relaxed">
+                  {state.pendingAction.data?.type === SpaceType.COMMUNITY
+                    ? '獅子山精神要自己選擇：堅毅、公共責任，或拒絕可疑的穩賺。'
+                    : '時運高低是遊戲運氣，抽完直接加減遊戲現金。'}
+                </p>
+                <button onClick={onDraw} className="w-full py-3 bg-purple-600 rounded-lg font-bold hover:bg-purple-500 shadow-md">
+                  {state.pendingAction.data?.type === SpaceType.COMMUNITY ? '抽取獅子山精神' : '抽取時運高低'}
+                </button>
+              </div>
+            )}
+
+            {state.gamePhase === 'ACTION' && state.pendingAction?.type === 'CARD_CHOICE' && (
+              <div className="space-y-2">
+                <div className="text-sm font-bold text-purple-200">{state.pendingAction.data.event.title}</div>
+                <p className="text-xs text-slate-200 leading-relaxed">{state.pendingAction.data.event.prompt}</p>
+                {state.pendingAction.data.event.options.map((opt: { id: string; label: string }) => (
+                  <button key={opt.id} onClick={() => onChoice(opt.id)} className="w-full text-left py-2 px-3 bg-slate-700 rounded-lg text-sm hover:bg-slate-600">
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
             )}
 
             {state.gamePhase === 'END_TURN' && (

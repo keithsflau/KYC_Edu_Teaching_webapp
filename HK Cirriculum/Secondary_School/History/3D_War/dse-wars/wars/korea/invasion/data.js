@@ -11,11 +11,11 @@ window.BATTLE_DATA = (function () {
           "un"
       ],
       "geo": {
-          "minLng": 125.75,
-          "maxLng": 129.25,
-          "minLat": 36,
-          "maxLat": 39,
-          "Z": 9
+          "minLng": 125.35,
+          "maxLng": 129.55,
+          "minLat": 34.8,
+          "maxLat": 38.85,
+          "Z": 8
       },
       "startDate": [
           1950,
@@ -53,7 +53,7 @@ window.BATTLE_DATA = (function () {
   const factions = {
     "nk": {
       main: 0x8b0000, glow: 0xdc143c, dim: 0x5a0000,
-      css: "#8b0000", label_zh: "北韓／志願軍", label_en: "North Korea / PVA",
+      css: "#8b0000", label_zh: "北韓人民軍", label_en: "Korean People's Army",
       emblem: "circle", maxStrength: 100000, textLight: "#ffd9d2"
     },
     "un": {
@@ -78,6 +78,20 @@ window.BATTLE_DATA = (function () {
               "type": "city",
               "lng": 126.98,
               "lat": 37.57
+          },
+          {
+              "name_en": "Munsan",
+              "name_zh": "汶山",
+              "type": "town",
+              "lng": 126.79,
+              "lat": 37.85
+          },
+          {
+              "name_en": "Daegu",
+              "name_zh": "大邱",
+              "type": "city",
+              "lng": 128.6,
+              "lat": 35.87
           },
           {
               "name_en": "Pusan",
@@ -204,7 +218,7 @@ window.BATTLE_DATA = (function () {
       }
   ];
   const notes =   {
-      "summary": "北韓南侵 — DSE 西史小戰役地圖。",
+      "summary": "北韓南侵 — 課題地圖。兵力與路線為示意。",
       "caveats": [
           "本圖僅覆蓋該戰役核心區域；戰線與兵力為教學示意。",
           "衛星影像為現代地形。"
@@ -213,7 +227,7 @@ window.BATTLE_DATA = (function () {
   };
   const analysis =   {
       "military": "1950年6月北韓大舉越過三八線南侵；韓軍潰敗，聯合國軍介入，戰火延燒至釜山防線。",
-      "leaders": "北韓金日成在蘇聯支持下南侵；李承晚政府南撤。聯合國安理會授權（蘇聯缺席）；麥克阿瑟奉命仁川以後扭轉戰局。斯大林、毛澤東後期介入，使戰爭國際化。",
+      "leaders": "北韓金日成在蘇聯支持下南侵；李承晚政府南撤。聯合國安理會授權（蘇聯缺席）；麥克阿瑟奉命仁川以後扭轉戰局。中國人民志願軍要到1950年10月才入朝。6月南下的是北韓人民軍。",
       "nationalPower": "北韓蘇聯裝備坦克部隊；美國主導聯合國軍，麥克阿瑟任司令。",
       "impact": "冷戰第一場熱戰；半島分裂固化，至今影響東北亞。"
   };
@@ -359,11 +373,33 @@ window.BATTLE_DATA = (function () {
           "forces_en": ""
       }
   ];
-  const outro =   {
+    const sourceTask = {
+    "cite": "聯合國安理會1950年6月25日與27日的決議",
+    "excerpt": "決議指稱北韓武裝攻擊大韓民國，並建議會員國協助擊退這次攻擊。",
+    "ask": "6月的決議針對誰？",
+    "options": [
+      {
+        "t": "已經入朝的中國人民志願軍。",
+        "ok": false,
+        "why": "志願軍在1950年10月才渡鴨綠江。6月的圖例不能寫志願軍。"
+      },
+      {
+        "t": "越過三八線的北韓人民軍。",
+        "ok": true,
+        "why": "6月25日開始的是北韓南侵。汶山在開城方向，釜山是南端的橋頭堡，兩地都應在圖內。"
+      },
+      {
+        "t": "蘇聯紅軍越過三八線。",
+        "ok": false,
+        "why": "蘇聯沒有在6月派地面部隊越過三八線。蘇聯當時缺席安理會。"
+      }
+    ]
+  };
+const outro =   {
       "title_zh": "北韓南侵",
       "title_en": "NORTH KOREAN INVASION",
-      "narration_zh": "本戰役為 DSE 西史重要考點。",
-      "narration_en": "A key DSE Western History topic.",
+      "narration_zh": "1950年6月南下的是北韓人民軍。志願軍10月才入朝。汶山與釜山都在這張圖上。",
+      "narration_en": "In June 1950 the army moving south was the KPA. Chinese volunteers entered in October. Munsan and Pusan are both on this map.",
       "cam": {
           "lng": 127,
           "lat": 37.5,
@@ -373,5 +409,5 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       }
   };
-  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };
+  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, sourceTask, END_DAY };
 })();

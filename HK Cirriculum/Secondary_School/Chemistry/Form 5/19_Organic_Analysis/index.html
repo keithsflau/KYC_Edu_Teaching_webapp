@@ -2,79 +2,190 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>19_Organic_Analysis</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="../../../../common/babel-react-classic.js"></script>
-  <script src="../../../../common/learn-from-zero.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
-  <style>
-    body { font-family: "IBM Plex Sans", system-ui, sans-serif; background-color: #f8fafc; color: #0f172a; min-height: 100vh; }
-  </style>
-  <!-- NCS i18n fleet kit (auto-injected) -->
-  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
-  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
-  <style data-ncs-kit="fleet-bridge">
-    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
-    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
-      display: none !important;
-    }
-  </style>
-  <script data-ncs-kit="fleet-init">
-  (function () {
-    function hideLegacyToggles() {
-      document.body.classList.add("ncs-fleet-mounted");
-      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
-        var label = (btn.textContent || "").trim();
-        if (label === "EN" || label === "\u4E2D") {
-          btn.classList.add("ncs-hide-when-ncs-fleet");
-        }
-      });
-      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
-        el.classList.add("ncs-hide-when-ncs-fleet");
-      });
-    }
-    function boot() {
-      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
-      window.NcsI18n.init({
-        chromePath: "../../../../_shared/ncs-chrome.json",
-        target: document.body
-      }).then(hideLegacyToggles);
-    }
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", boot);
-    } else {
-      boot();
-    }
-  })();
-  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>有機分析 | Organic analysis</title>
+  <link rel="stylesheet" href="../../lesson.css" />
 </head>
-<body>
-  <div id="root"></div>
-  <script type="text/babel" data-presets="react-classic">
-    const { useState } = React;
-    
-    function App() {
-      return (
-        <div className="max-w-4xl mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-4">19 Organic Analysis</h1>
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 mb-8 text-center">
-            <div className="w-full h-64 bg-slate-100 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 mb-4">
-              <span className="text-slate-400 font-medium">[ Interactive Canvas Placeholder ]</span>
-            </div>
-            <p className="text-slate-500">This interactive lab is currently under development.</p>
-          </div>
-          <LearnFromZero />
-        </div>
-      );
-    }
-    
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+<body data-chem-silent="1">
+  <section class="chem-learn" data-chem-entry="1">
+    <h2>學習目標</h2>
+    <ul>
+      <li>由觀察推論官能基類別，而不是背實驗配方。</li>
+      <li>把溴水褪色、碳酸氫鹽氣泡、銀鏡、氯化鐵變紫分開。</li>
+      <li>用「有沒有銀鏡」分開醛和可被氧化的醇。</li>
+    </ul>
+    <h2>常見錯因</h2>
+    <ul>
+      <li>把溴水褪色說成羧酸。</li>
+      <li>有銀鏡卻選成酮。</li>
+      <li>氯化鐵變紫卻選成醇。</li>
+    </ul>
+    <p id="chem-feedback" role="status">讀一項觀察，選出對應的類別。</p>
+  </section>
+  <main>
+    <div class="panel">
+      <h1>有機分析</h1>
+      <p class="muted">只把觀察對應類別。本頁不寫試劑做法。</p>
+      <h2>操作</h2>
+      <canvas id="plot" width="640" height="150" aria-label="觀察結果"></canvas>
+      <p id="progress" class="muted"></p>
+      <div class="row" id="choices">
+        <button type="button" class="alt" data-choice="烯">烯</button>
+        <button type="button" class="alt" data-choice="羧酸">羧酸</button>
+        <button type="button" class="alt" data-choice="醛">醛</button>
+        <button type="button" class="alt" data-choice="酚">酚</button>
+        <button type="button" class="alt" data-choice="醇">可氧化的醇</button>
+        <button type="button" class="alt" data-choice="酮">酮</button>
+      </div>
+      <div class="row">
+        <button type="button" id="check">核對</button>
+      </div>
+      <p><a href="../index.html">返回中五</a></p>
+    </div>
+  </main>
+  <script src="../../lesson-kit.js"></script>
+  <script>
+    (function () {
+      var index = 0;
+      var picked = "";
+      var done = [false, false, false, false, false];
+      var items = [
+        {
+          obs: "溴水的棕色褪去",
+          answer: "烯",
+          ok: "這個觀察指向碳碳雙鍵。",
+          wrong: {
+            "羧酸": "錯因：羧酸的課堂觀察是與碳酸氫鹽放出氣體，不是溴水褪色。溴水褪色在這裡指向碳碳雙鍵。",
+            "醛": "錯因：醛的觀察是銀鏡，或者酸化重鉻酸鹽由橙變綠。溴水褪色指向烯。",
+            "酚": "錯因：酚的課堂觀察是氯化鐵變紫。這裡用溴水褪色指出碳碳雙鍵。",
+            "醇": "錯因：醇不會靠溴水褪色來辨認。這個觀察指向烯。",
+            "酮": "錯因：酮沒有碳碳雙鍵這個檢驗。溴水褪色指向烯。"
+          }
+        },
+        {
+          obs: "與碳酸氫鹽接觸後有氣泡",
+          answer: "羧酸",
+          ok: "氣泡表示有二氧化碳，對應羧基。",
+          wrong: {
+            "烯": "錯因：烯使溴水褪色，不會因為碳酸氫鹽而放出這種氣泡。",
+            "醛": "錯因：醛看銀鏡。與碳酸氫鹽有氣泡是羧酸的觀察。",
+            "酚": "錯因：酚的酸性不足以和碳酸氫鹽放出氣體。有氣泡的是羧酸。",
+            "醇": "錯因：醇沒有羧基，不會和碳酸氫鹽放出二氧化碳。",
+            "酮": "錯因：酮沒有羧基。氣泡來自羧酸。"
+          }
+        },
+        {
+          obs: "出現銀鏡",
+          answer: "醛",
+          ok: "銀鏡這個觀察指向醛。酮不會有這個觀察。",
+          wrong: {
+            "烯": "錯因：烯的觀察是溴水褪色，不是銀鏡。",
+            "羧酸": "錯因：羧酸看的是碳酸氫鹽有沒有氣泡，不是銀鏡。",
+            "酚": "錯因：酚看氯化鐵會不會變紫。銀鏡指向醛。",
+            "醇": "錯因：可氧化的醇沒有銀鏡。有銀鏡才把觀察歸給醛。",
+            "酮": "錯因：酮不會出現銀鏡。銀鏡用來把醛和酮分開。"
+          }
+        },
+        {
+          obs: "氯化鐵溶液呈紫色",
+          answer: "酚",
+          ok: "紫色表示有酚羥基。",
+          wrong: {
+            "烯": "錯因：烯看溴水褪色。氯化鐵變紫指向酚羥基。",
+            "羧酸": "錯因：羧酸看碳酸氫鹽的氣泡。變紫不是羧基的觀察。",
+            "醛": "錯因：醛看銀鏡。氯化鐵變紫指向酚。",
+            "醇": "錯因：一般的醇羥基不會使氯化鐵變紫。紫色表示酚羥基。",
+            "酮": "錯因：酮沒有這個紫色觀察。氯化鐵變紫指向酚。"
+          }
+        },
+        {
+          obs: "酸化重鉻酸鹽由橙變綠，同時沒有銀鏡",
+          answer: "醇",
+          ok: "顏色由橙變綠表示被氧化了；沒有銀鏡，所以不是醛，而是可被氧化的醇。",
+          wrong: {
+            "烯": "錯因：烯的觀察是溴水褪色，不是重鉻酸鹽由橙變綠。",
+            "羧酸": "錯因：羧酸用碳酸氫鹽的氣泡來辨認，不是這個顏色變化。",
+            "醛": "錯因：醛也會使酸化重鉻酸鹽由橙變綠，但醛會有銀鏡。這一項沒有銀鏡，所以是可被氧化的醇。",
+            "酚": "錯因：酚的觀察是氯化鐵變紫。橙變綠而沒有銀鏡，對應可被氧化的醇。",
+            "酮": "錯因：酮通常不會使酸化重鉻酸鹽由橙變綠。顏色變了，表示它被氧化，而且沒有銀鏡，所以不是酮。"
+          }
+        }
+      ];
+
+      function say(msg, kind) {
+        if (window.ChemLesson) ChemLesson.say(msg, kind);
+      }
+
+      function countDone() {
+        var n = 0;
+        var i;
+        for (i = 0; i < done.length; i++) if (done[i]) n += 1;
+        return n;
+      }
+
+      function paint() {
+        var canvas = document.getElementById("plot");
+        var g = canvas.getContext("2d");
+        var text = items[index].obs;
+        g.fillStyle = "#0f172a";
+        g.fillRect(0, 0, canvas.width, canvas.height);
+        g.fillStyle = "#94a3b8";
+        g.font = "16px sans-serif";
+        g.fillText("觀察", 28, 40);
+        g.fillStyle = "#f8fafc";
+        g.font = "22px sans-serif";
+        g.fillText(text, 28, 92);
+        document.getElementById("progress").textContent = "第 " + (index + 1) + " / " + items.length + " 題 · 已答對 " + countDone() + " / " + items.length;
+      }
+
+      function clearChoice() {
+        var buttons = document.getElementById("choices").querySelectorAll("button");
+        var i;
+        picked = "";
+        for (i = 0; i < buttons.length; i++) buttons[i].className = "alt";
+      }
+
+      document.getElementById("choices").onclick = function (e) {
+        var btn = e.target.closest ? e.target.closest("button") : null;
+        var buttons;
+        var i;
+        if (!btn) return;
+        picked = btn.getAttribute("data-choice");
+        buttons = document.getElementById("choices").querySelectorAll("button");
+        for (i = 0; i < buttons.length; i++) buttons[i].className = "alt";
+        btn.className = "on";
+      };
+      document.getElementById("check").onclick = function () {
+        var item = items[index];
+        var i;
+        if (!picked) {
+          say("錯因：先選一個化合物類別。", "no");
+          return;
+        }
+        if (picked !== item.answer) {
+          say(item.wrong[picked], "no");
+          return;
+        }
+        done[index] = true;
+        var shown = item.answer === "醇" ? "可被氧化的醇" : item.answer;
+        if (countDone() === items.length) {
+          say("正確。這個觀察對應" + shown + "。" + item.ok + " 五項觀察都判斷對過。", "ok");
+          paint();
+          return;
+        }
+        say("正確。這個觀察對應" + shown + "。" + item.ok, "ok");
+        for (i = 1; i <= items.length; i++) {
+          if (!done[(index + i) % items.length]) {
+            index = (index + i) % items.length;
+            clearChoice();
+            paint();
+            return;
+          }
+        }
+      };
+      paint();
+    })();
   </script>
-<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+  <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 </body>
 </html>

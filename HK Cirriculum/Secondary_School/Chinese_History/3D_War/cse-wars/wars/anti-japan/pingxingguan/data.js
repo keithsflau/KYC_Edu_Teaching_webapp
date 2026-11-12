@@ -196,12 +196,12 @@ window.BATTLE_DATA = (function () {
           "衛星影像為現代地形，非歷史時期地貌。",
           "河川、海域水面為教學示意，按史實位置裁切顯示。"
       ],
-      "sources": "DSE 中史課程、中國通史、維基百科（交叉查證）。"
+      "sources": "八路軍一一五師平型關戰鬥報告的通行整理、日本第五師團作戰記載的對照研究，以及《抗日戰爭史》軍事科學院本相關章節。不以網絡百科為唯一依據。"
   };
   const analysis =   {
-      "military": "国共合作下，八路军一一五师在平型关伏击日军第五师团辎重部队；利用山地伏击，击毁车辆，歼敌千余人。",
-      "leaders": "平型關戰役為八路軍對日作戰首勝，林彪指揮一一五師利用山地伏擊，截擊日軍補給部隊。日軍第五師團一部在狹谷遭突襲，裝備與輜重損失慘重，打破日軍不可戰勝神話。此戰提升全國抗戰信心，亦確立共產黨軍隊在華北的作戰聲望，為日後游擊戰與根據地擴展鋪路。",
-      "nationalPower": "日军沿平绥路推进，骄横轻敌；八路军熟悉地形，林彪指挥伏击战术得当。",
+      "military": "國共合作下，八路軍一一五師在平型關伏擊日軍第五師團辎重部隊；利用山地伏擊，擊毁車辆，殲敵千餘人。",
+      "leaders": "林彪率一一五師在平型關伏擊日軍第五師團的輜重部隊，利用狹路擊毀車輛、斃傷日軍一部。這是一次伏擊戰的結果。",
+      "nationalPower": "日軍沿平绥路推進，骄横轻敵；八路軍熟悉地形，林彪指揮伏擊戰術得当。",
       "impact": "國共合作下首場勝仗，打破日軍不敗神話，提振全國士氣。"
   };
   const storyboard =   [
@@ -217,9 +217,9 @@ window.BATTLE_DATA = (function () {
               "orbit": 0.65
           },
           "dateLabel": "1937年9月",
-          "title_zh": "平绥路战事",
+          "title_zh": "平绥路戰事",
           "title_en": "Fighting on the Peiping–Suiyuan Line",
-          "narration_zh": "日军第五师团沿平绥路西进，威胁山西。",
+          "narration_zh": "日軍第五師團沿平绥路西進，威脅山西。",
           "narration_en": "Japanese 5th Division advances west on the Peiping–Suiyuan railway.",
           "focus": [
               "japan_pxg"
@@ -247,9 +247,9 @@ window.BATTLE_DATA = (function () {
               "orbit": 0.65
           },
           "dateLabel": "1937年9月24日",
-          "title_zh": "八路军设伏",
+          "title_zh": "八路軍設伏",
           "title_en": "Eighth Route Ambush",
-          "narration_zh": "林彪率一一五师在平型关乔沟设伏，待敌辎重部队进入。",
+          "narration_zh": "林彪率一一五師在平型關乔沟設伏，待敵辎重部隊進入。",
           "narration_en": "Lin Biao's 115th Division sets an ambush at Pingxingguan Pass.",
           "focus": [
               "era_pxg"
@@ -261,7 +261,7 @@ window.BATTLE_DATA = (function () {
                   "en": "Lin Biao"
               },
               {
-                  "zh": "聂荣臻",
+                  "zh": "聶榮臻",
                   "en": "Nie Rongzhen"
               }
           ],
@@ -281,9 +281,9 @@ window.BATTLE_DATA = (function () {
               "orbit": 0.65
           },
           "dateLabel": "1937年9月25日",
-          "title_zh": "平型关大捷",
+          "title_zh": "平型關大捷",
           "title_en": "Victory at Pingxingguan",
-          "narration_zh": "八路军伏击日军辎重部队，击毁车辆数百，歼敌一千余人。",
+          "narration_zh": "八路軍伏擊日軍辎重部隊，擊毁車辆数百，殲敵一千餘人。",
           "narration_en": "Ambush destroys hundreds of vehicles — over 1,000 Japanese killed.",
           "focus": [
               "era_pxg",
@@ -292,7 +292,7 @@ window.BATTLE_DATA = (function () {
           "side": "both",
           "commanders": [],
           "assets": [],
-          "forces_zh": "歼敌千余人",
+          "forces_zh": "殲敵千餘人",
           "forces_en": "1,000+ enemy killed"
       },
       {
@@ -307,9 +307,9 @@ window.BATTLE_DATA = (function () {
               "orbit": 0.65
           },
           "dateLabel": "1937年9月",
-          "title_zh": "全国振奋",
+          "title_zh": "全國振奮",
           "title_en": "Nationwide Morale Boost",
-          "narration_zh": "平型关大捷消息传开，打破日军不可战胜神话，鼓舞抗战士气。",
+          "narration_zh": "平型關大捷消息传開，打破日軍不可戰勝神話，鼓舞抗戰士氣。",
           "narration_en": "News of victory shatters the myth of Japanese invincibility.",
           "focus": [
               "era_pxg"
@@ -332,9 +332,9 @@ window.BATTLE_DATA = (function () {
               "orbit": 0.65
           },
           "dateLabel": "1937年",
-          "title_zh": "国共合作首战",
+          "title_zh": "國共合作首戰",
           "title_en": "First CCP–GMD Victory",
-          "narration_zh": "平型关为国共合作抗日首场大胜，具有重要政治与军事意义。",
+          "narration_zh": "平型關為國共合作抗日首场大勝，具有重要政治與軍事意義。",
           "narration_en": "Pingxingguan is the first major victory of the United Front against Japan.",
           "focus": [],
           "side": "eighth_route",
@@ -347,8 +347,8 @@ window.BATTLE_DATA = (function () {
   const outro =   {
       "title_zh": "平型關大捷",
       "title_en": "PINGXINGGUAN VICTORY",
-      "narration_zh": "本戰役為 DSE 中史重要考點：國共合作下首場勝仗，打破日軍不敗神話，提振全國士氣",
-      "narration_en": "A key HKDSE Chinese History topic.",
+      "narration_zh": "1937年9月25日，一一五師在平型關伏擊日軍輜重部隊。",
+      "narration_en": "On 25 September 1937 the 115th Division ambushed a Japanese supply column at Pingxingguan.",
       "cam": {
           "lng": 113.95,
           "lat": 39.35,
@@ -358,5 +358,19 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       }
   };
-  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };
+  const lesson =   {
+      "junior": "初中：看1937年9月25日平型關伏擊日軍輜重部隊。",
+      "senior": "高中：用伏擊對象和地形解釋戰果，口號放在評價。",
+      "fact": "1937年9月，日軍第五師團沿平綏路西進。9月25日，八路軍一一五師在平型關喬溝伏擊其輜重和汽車隊，擊毀一批車輛，斃傷日軍一部。這是八路軍出師後的一次伏擊戰。",
+      "sources": "八路軍一一五師平型關戰鬥報告的通行整理、日本第五師團作戰記載的對照研究，以及《抗日戰爭史》軍事科學院本相關章節。不以網絡百科為唯一依據。",
+      "evaluation": "伏擊能得手，是因為道路狹窄、打的是輜重隊，不是因為一句「不敗神話」本身。全國士氣受震動，是這一仗的政治效果，屬於評價。",
+      "judgment": {
+          "ask": "哪一則說法更能解釋平型關這次戰鬥的結果？",
+          "a": "因為提出了打破不敗神話的口號，所以日軍主力師團當日被全殲。",
+          "b": "一一五師利用山地狹路伏擊日軍輜重和汽車隊，所以打的是補給部隊而不是整個師團。",
+          "better": "b",
+          "why": "戰果來自殺傷和車輛損失的對象是輜重隊。口號說明不了誰在路上、地形如何。"
+      }
+  };
+  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, lesson, END_DAY };
 })();

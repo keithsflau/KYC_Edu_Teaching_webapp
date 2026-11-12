@@ -310,9 +310,13 @@ function groundY(lng,lat){
 function vec(lng,lat,yOff){ const p=project(lng,lat); return new THREE.Vector3(p.X, groundY(lng,lat)+(yOff||0), p.Z); }
 
 /* ===================== TILE LOADING / COMPOSITING ================= */
-function loadImg(src){ return new Promise((res,rej)=>{ const im=new Image();
+function loadImg(src, tries){ tries=tries||0; return new Promise((res,rej)=>{ const im=new Image();
   im.crossOrigin="anonymous";
-  im.onload=()=>res(im); im.onerror=()=>rej(new Error("地形瓦片載入失敗 / tile failed to load: "+src)); im.src=src; }); }
+  const url=tries?src+(src.indexOf("?")>=0?"&":"?")+"retry="+tries:src;
+  im.onload=()=>res(im);
+  im.onerror=()=>{ if(tries<2){ setTimeout(()=>loadImg(src, tries+1).then(res, rej), 500*(tries+1)); return; }
+    rej(new Error("地形瓦片載入失敗 / tile failed to load: "+src)); };
+  im.src=url; }); }
 
 async function loadTiles(){
   const g=CFG.GEO, z=g.Z;
@@ -1134,7 +1138,8 @@ let lastNarr={zh:"",en:""};       // remembered so the toggle can re-render the 
 function setNarr(zh,en){ lastNarr={zh:zh||"",en:en||""};
   $("cap-narr").innerHTML = narrLang==="zh" ? `<span class="nz">${lastNarr.zh}</span>`
     : narrLang==="en" ? `<span class="ne">${lastNarr.en||lastNarr.zh}</span>`
-    : `<span class="nz">${lastNarr.zh}</span>`+(lastNarr.en?`<span class="ne">${lastNarr.en}</span>`:""); }
+    : `<span class="nz">${lastNarr.zh}</span>`+(lastNarr.en?`<span class="ne">${lastNarr.en}</span>`:"");
+  if(window.__lessonSpeak) window.__lessonSpeak(lastNarr.zh); }
 function cycleNarrLang(){ narrLang = narrLang==="both"?"zh":narrLang==="zh"?"en":"both";
   const b=$("lang-btn"); if(b) b.textContent = narrLang==="both"?"中／EN":narrLang==="zh"?"中文":"EN";
   setNarr(lastNarr.zh,lastNarr.en); }
@@ -1261,12 +1266,25 @@ const ANALYSIS_SECTIONS=[
   { key:"nationalPower", zh:"國力對比", en:"National Power", sub:"工業、人口、資源與後勤實力" },
   { key:"impact", zh:"後續影響", en:"Impact", sub:"對本戰役結果及日後勢力格局的影響" },
 ];
+const LESSON_SECTIONS=[
+  { key:"fact", zh:"史實", en:"Record", sub:"時間、地點、經過與結果。這裡不寫評價。" },
+  { key:"sources", zh:"史料", en:"Sources", sub:"史書、實錄或檔案所記。不是口號，也不是網絡百科獨佔的出處。" },
+  { key:"evaluation", zh:"評價", en:"Judgement", sub:"後人對勝敗原因的解釋。評價不是史實本身。" },
+];
 function wireAnalysisPanel(){
-  const a=D.analysis||{}, dock=$("analysis-dock"), panes=$("analysis-panes"), btn=$("analysis-btn");
+  const L=D.lesson||{};
+  const useLesson=!!(L.fact||L.sources||L.evaluation);
+  const a=useLesson?{fact:L.fact,sources:L.sources,evaluation:L.evaluation}:(D.analysis||{});
+  const sections=useLesson?LESSON_SECTIONS:ANALYSIS_SECTIONS;
+  const dock=$("analysis-dock"), panes=$("analysis-panes"), btn=$("analysis-btn");
   if(!dock||!panes) return;
-  const active=new Set(["military","leaders"]);
+  const tabs=dock.querySelector(".ad-tabs");
+  if(useLesson && tabs){
+    tabs.innerHTML=sections.map(s=>`<button type="button" class="ad-tab on" data-k="${s.key}">${s.zh}</button>`).join("");
+  }
+  const active=new Set(useLesson?["fact","sources","evaluation"]:["military","leaders"]);
   function render(){
-    const html=ANALYSIS_SECTIONS.filter(s=>active.has(s.key)&&a[s.key])
+    const html=sections.filter(s=>active.has(s.key)&&a[s.key])
       .map(s=>`<section class="apane" data-k="${s.key}"><h4>${s.zh} · ${s.en}</h4><div class="sub" style="font-family:var(--mono);font-size:9px;color:var(--accent);opacity:.85;margin-bottom:5px">${s.sub}</div><p>${a[s.key]}</p></section>`).join("");
     panes.innerHTML=html||`<p class="ap-empty">點選上方標籤開啟各項分析<br><span style="opacity:.7">Toggle tabs above</span></p>`;
     dock.querySelectorAll(".ad-tab").forEach(t=>{
@@ -1285,16 +1303,122 @@ function wireAnalysisPanel(){
   render();
 }
 let kickMusic=()=>{};
-function wireUI(){
-  const n=D.notes, a=D.analysis||{};
-  let body=`<p>${n.summary}</p>`;
-  if(a.military||a.leaders||a.nationalPower||a.impact){
-    body+=`<h5>戰役分析 · BATTLE ANALYSIS</h5><p style="font-size:11px;margin-bottom:8px">請按左上角 <b>📊 戰役分析</b> 按鈕，以開關各項分析面板。</p>`;
+function ensureLessonChrome(){
+  if(!document.getElementById("lesson-audio-style")){
+    const st=document.createElement("style");
+    st.id="lesson-audio-style";
+    st.textContent="#sound-btn,#judge-btn{margin-top:7px;margin-right:6px;font-family:var(--mono);font-size:9.5px;color:var(--accent);background:rgba(216,192,138,.12);border:1px solid var(--accent);border-radius:6px;padding:4px 10px;cursor:pointer}#judge{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9;width:min(620px,92vw);max-height:78vh;display:none;flex-direction:column;overflow:hidden}#judge.open{display:flex}#judge .choice{display:block;width:100%;text-align:left;margin:8px 0;padding:10px 12px;border-radius:8px;border:1px solid var(--panel-edge);background:rgba(255,255,255,.04);color:var(--ink);cursor:pointer;font-family:var(--cjk);font-size:13px;line-height:1.55}#judge .choice:hover{border-color:var(--accent)}#judge-result{margin-top:10px;color:#f0e4c4}.lesson-tag{display:block;margin-top:6px;font-size:11px;line-height:1.45;color:var(--accent)}";
+    document.head.appendChild(st);
   }
-  body+=`<h5>考據與呈現說明 · Caveats</h5><ul>`+
-    n.caveats.map(c=>`<li>${c}</li>`).join("")+`</ul><h5>主要來源 · Sources</h5><p>${n.sources}</p>`;
+  const title=document.getElementById("title");
+  if(title && !document.getElementById("sound-btn")){
+    const b=document.createElement("button");
+    b.id="sound-btn"; b.type="button"; b.textContent="聲效：關";
+    title.appendChild(b);
+  }
+  if(title && !document.getElementById("judge-btn")){
+    const b=document.createElement("button");
+    b.id="judge-btn"; b.type="button"; b.textContent="勝敗判斷";
+    title.appendChild(b);
+  }
+  if(!document.getElementById("judge")){
+    const d=document.createElement("div");
+    d.id="judge"; d.className="panel";
+    d.innerHTML='<div class="nhd"><span>勝敗判斷</span><button id="judge-close" type="button">✕</button></div><div id="judge-body" class="nbody"></div>';
+    document.body.appendChild(d);
+  }
+  const L=D.lesson;
+  if(title && L && L.junior && !title.querySelector(".lesson-tag")){
+    const tag=document.createElement("div");
+    tag.className="lesson-tag";
+    tag.textContent="初中 "+L.junior.replace(/^初中：/,"")+"　高中 "+(L.senior||"").replace(/^高中：/,"");
+    title.appendChild(tag);
+  }
+}
+function wireLessonAudio(){
+  const btn=document.getElementById("sound-btn");
+  if(!btn) return;
+  let mode=0, ctx, master, lastSpoken="";
+  const labels=["聲效：關","聲效：配樂","聲效：配樂＋旁白"];
+  function ensure(){
+    if(ctx) return;
+    const AC=window.AudioContext||window.webkitAudioContext;
+    if(!AC) return;
+    ctx=new AC();
+    master=ctx.createGain();
+    master.gain.value=0;
+    master.connect(ctx.destination);
+    [196,247,294,330,392].forEach((freq,i)=>{
+      const o=ctx.createOscillator();
+      o.type=i%2?"triangle":"sine";
+      o.frequency.value=freq;
+      const g=ctx.createGain();
+      g.gain.value=0.015/(i+1);
+      o.connect(g); g.connect(master); o.start();
+    });
+  }
+  function apply(){
+    btn.textContent=labels[mode];
+    if(mode===0){
+      if(master&&ctx){ master.gain.cancelScheduledValues(ctx.currentTime); master.gain.linearRampToValueAtTime(0, ctx.currentTime+0.12); }
+      if(window.speechSynthesis) speechSynthesis.cancel();
+      return;
+    }
+    ensure();
+    if(ctx&&ctx.state==="suspended") ctx.resume();
+    const audible=mode>0 && Director.playing;
+    if(master&&ctx){ master.gain.cancelScheduledValues(ctx.currentTime); master.gain.linearRampToValueAtTime(audible?0.9:0, ctx.currentTime+0.08); }
+    if(!audible || mode<2){ if(window.speechSynthesis) speechSynthesis.cancel(); lastSpoken=""; }
+    if(audible && mode===2) window.__lessonSpeak(lastNarr.zh);
+  }
+  window.__lessonSpeak=function(text){
+    if(mode<2 || !text || text===lastSpoken || !window.speechSynthesis) return;
+    lastSpoken=text;
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang="zh-HK"; u.rate=0.95;
+    speechSynthesis.speak(u);
+  };
+  btn.onclick=()=>{ mode=(mode+1)%3; apply(); };
+  kickMusic=()=>{ if(mode>0) apply(); };
+}
+function wireJudgment(){
+  const J=D.lesson&&D.lesson.judgment;
+  const btn=document.getElementById("judge-btn");
+  const box=document.getElementById("judge");
+  if(!J||!btn||!box){ if(btn) btn.style.display="none"; return; }
+  const body=document.getElementById("judge-body");
+  body.innerHTML=`<p>${J.ask}</p><button type="button" class="choice" data-k="a">甲　${J.a}</button><button type="button" class="choice" data-k="b">乙　${J.b}</button><p id="judge-result"></p>`;
+  body.querySelectorAll(".choice").forEach(el=>{
+    el.onclick=()=>{
+      const pick=el.dataset.k;
+      const result=document.getElementById("judge-result");
+      result.textContent=(pick===J.better?"這一則更能解釋勝敗。":"另一則更能解釋勝敗。")+J.why;
+    };
+  });
+  btn.onclick=()=>box.classList.toggle("open");
+  const close=document.getElementById("judge-close");
+  if(close) close.onclick=()=>box.classList.remove("open");
+}
+function wireUI(){
+  ensureLessonChrome();
+  const n=D.notes, L=D.lesson||{};
+  let body=`<p>${n.summary}</p>`;
+  if(L.fact) body+=`<h5>史實</h5><p>${L.fact}</p>`;
+  if(L.sources) body+=`<h5>史料</h5><p>${L.sources}</p>`;
+  if(L.evaluation) body+=`<h5>評價</h5><p>${L.evaluation}</p><p>評價用來解釋勝敗，不能拿來代替上面的史實。</p>`;
+  if(L.junior||L.senior) body+=`<h5>程度</h5><p>${L.junior||""}</p><p>${L.senior||""}</p>`;
+  body+=`<h5>考據與呈現說明</h5><ul>`+
+    n.caveats.map(c=>`<li>${c}</li>`).join("")+`</ul>`;
+  if(!L.sources) body+=`<h5>主要來源</h5><p>${n.sources}</p>`;
   $("notes-body").innerHTML=body;
+  const notesBtn=$("notes-btn");
+  if(notesBtn && L.fact) notesBtn.textContent="史實／史料／評價";
+  const analysisBtn=$("analysis-btn");
+  if(analysisBtn && L.fact) analysisBtn.textContent="史實・史料・評價";
   wireAnalysisPanel();
+  wireLessonAudio();
+  wireJudgment();
   const np=$("notes");
   $("notes-btn").onclick=()=>np.classList.toggle("open");
   $("notes-close").onclick=()=>np.classList.remove("open");
@@ -1310,8 +1434,8 @@ function wireUI(){
     musicBtn.onclick=()=>{ soundOn=!soundOn; bgm.muted=!soundOn; syncMusic(); paintMusic(); };
     kickMusic=syncMusic;
   } else if(musicBtn) musicBtn.style.display="none";
-  $("play").onclick=()=>{ Director.togglePlay(); syncMusic(); };
-  $("resume").onclick=()=>{ Director.resume(); syncMusic(); };
+  $("play").onclick=()=>{ Director.togglePlay(); syncMusic(); kickMusic(); };
+  $("resume").onclick=()=>{ Director.resume(); syncMusic(); kickMusic(); };
   document.querySelectorAll("#speed-btns .spd").forEach(btn=>{
     btn.onclick=()=>{ playSpeed=+btn.dataset.spd||1;
       document.querySelectorAll("#speed-btns .spd").forEach(b=>b.classList.toggle("active",b===btn)); };

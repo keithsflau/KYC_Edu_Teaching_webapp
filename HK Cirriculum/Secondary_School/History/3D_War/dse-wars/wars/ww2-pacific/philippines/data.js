@@ -185,7 +185,7 @@ window.BATTLE_DATA = (function () {
       }
   ];
   const notes =   {
-      "summary": "菲律賓戰役 — DSE 西史小戰役地圖。",
+      "summary": "菲律賓戰役 — 課題地圖。兵力與路線為示意。",
       "caveats": [
           "本圖僅覆蓋該戰役核心區域；戰線與兵力為教學示意。",
           "衛星影像為現代地形。"
@@ -341,11 +341,33 @@ window.BATTLE_DATA = (function () {
           "forces_en": ""
       }
   ];
-  const outro =   {
+    const sourceTask = {
+    "cite": "麥克阿瑟離開菲律賓時的聲明，1942年3月",
+    "excerpt": "他說：「我還會回來。」",
+    "ask": "這句話的立場是什麼？",
+    "options": [
+      {
+        "t": "宣布巴丹守軍已經獲救。",
+        "ok": false,
+        "why": "巴丹在1942年4月投降，死亡行軍發生在這句話之後。"
+      },
+      {
+        "t": "把當下的撤退說成暫時的，並承諾重返。",
+        "ok": true,
+        "why": "立場是不承認菲律賓戰役就此結束。重返是1944年至1945年的事。"
+      },
+      {
+        "t": "承認日本可以永久占有菲律賓。",
+        "ok": false,
+        "why": "句子的方向是回來，不是承認占領合法。"
+      }
+    ]
+  };
+const outro =   {
       "title_zh": "菲律賓戰役",
       "title_en": "PHILIPPINES",
-      "narration_zh": "本戰役為 DSE 西史重要考點。",
-      "narration_en": "A key DSE Western History topic.",
+      "narration_zh": "巴丹守軍於1942年4月投降，死亡行軍發生在投降之後。",
+      "narration_en": "Bataan surrendered in April 1942. The death march followed the surrender.",
       "cam": {
           "lng": 120.98,
           "lat": 14.6,
@@ -355,5 +377,5 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       }
   };
-  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };
+  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, sourceTask, END_DAY };
 })();

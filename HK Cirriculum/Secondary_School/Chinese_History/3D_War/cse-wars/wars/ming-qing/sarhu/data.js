@@ -33,7 +33,7 @@ window.BATTLE_DATA = (function () {
       "titleCard": {
           "zh": "薩爾滸之戰",
           "en": "BATTLE OF SARHU · 1619年",
-          "narr_zh": "努爾哈赤以「五大恨」起兵，在薩爾滸殲滅明軍四路。",
+          "narr_zh": "努爾哈赤於1618年以七大恨告天。薩爾滸之戰在1619年，明軍三路先後戰敗，不是一日三路皆敗。",
           "narr_en": "Nurhaci defeats the Ming's four-column army at Sarhu."
       },
       "outroCam": {
@@ -203,13 +203,13 @@ window.BATTLE_DATA = (function () {
           "衛星影像為現代地形，非歷史時期地貌。",
           "河川、海域水面為教學示意，按史實位置裁切顯示。"
       ],
-      "sources": "DSE 中史課程、中國通史、維基百科（交叉查證）。"
+      "sources": "《明史·楊鎬傳》《明神宗實錄》萬曆四十七年、《清太祖武皇帝實錄》《滿洲實錄》薩爾滸前後記載。七大恨見1618年告天文。不以網絡百科為唯一依據。"
   };
   const analysis =   {
-      "military": "后金努尔哈赤以“五大臣、十固山”体制，在萨尔浒以“凭几而战”分路反击；明军四路进击互不协同，一日之内三战三败。",
-      "leaders": "努爾哈赤以「七大恨」起兵，集中八旗精銳，在薩爾滸以各個擊破戰術對抗明軍分路進擊。明軍遼東經略楊鎬指揮不統，杜松、馬林等部先後被殲，明軍慘敗。此戰後金勢力坐大，明朝喪失遼東主動權，為日後清軍入關奠定基礎。",
-      "nationalPower": "明军多路冒进、指挥混乱；后金全民皆兵、以逸待劳，熟悉辽东地形。",
-      "impact": "後金（清）大敗明軍，掌握遼東戰略主動權，敲響明亡喪鐘。"
+      "military": "努爾哈赤以八旗集中一路迎擊。明軍四路不能同時到達。夏曆三月初一至初四，三路先後戰敗，不是一日三路皆敗。通行表述是「憑爾幾路來，我只一路去」。",
+      "leaders": "努爾哈赤於1618年以七大恨告天。次年薩爾滸之戰，後金以八旗集中一路。杜松、馬林、劉綎三路在夏曆三月初一至初四先後戰敗，李如柏未決戰而退。不是一日三路皆敗。",
+      "nationalPower": "明軍分路冒進，指揮不能協同。後金以八旗集中兵力，熟悉遼東地形。",
+      "impact": "後金以八旗集中一路，明軍三路先後戰敗，遼東的軍事主動轉到後金。"
   };
   const storyboard =   [
       {
@@ -253,10 +253,10 @@ window.BATTLE_DATA = (function () {
               "el": 46,
               "orbit": 0.65
           },
-          "dateLabel": "1619年3月1日",
+          "dateLabel": "夏曆三月初一",
           "title_zh": "薩爾滸初戰",
           "title_en": "First Clash at Sarhu",
-          "narration_zh": "後金努爾哈赤以「憑幾而戰」分路反擊，先破明軍西路。",
+          "narration_zh": "夏曆萬曆四十七年三月初一（公曆1619年4月14日），後金以八旗集中兵力，先破杜松西路。通行表述是「憑爾幾路來，我只一路去」。",
           "narration_en": "Nurhaci counter-attacks in detail — the western Ming column is destroyed.",
           "focus": [
               "jin_sarhu"
@@ -283,10 +283,10 @@ window.BATTLE_DATA = (function () {
               "el": 46,
               "orbit": 0.65
           },
-          "dateLabel": "1619年3月1–2日",
-          "title_zh": "三戰三敗",
-          "title_en": "Three Defeats in Two Days",
-          "narration_zh": "後金連續擊破明軍三路，明軍損失殆盡，僅一路倖免。",
+          "dateLabel": "夏曆三月初二至初四",
+          "title_zh": "三路先後敗",
+          "title_en": "Three Columns, Successive Days",
+          "narration_zh": "夏曆三月初二（公曆1619年4月15日）馬林北路敗，三月初四（公曆4月17日）劉綎東路敗。李如柏南路未決戰而退。不是一日三路皆敗。公曆與夏曆分寫。",
           "narration_en": "Three Ming columns are annihilated in two days — only one escapes.",
           "focus": [
               "ming_sarhu",
@@ -342,7 +342,7 @@ window.BATTLE_DATA = (function () {
           "dateLabel": "1619年後",
           "title_zh": "明亡前奏",
           "title_en": "Prelude to Ming Fall",
-          "narration_zh": "薩爾滸之戰敲響明亡喪鐘，後金（清）勢力迅速擴張。",
+          "narration_zh": "三路先後戰敗後，後金取得遼東的軍事主動。南路沒有決戰。",
           "narration_en": "Sarhu sounds the knell of the Ming — the Later Jin expands rapidly.",
           "focus": [],
           "side": "eastern_jin",
@@ -355,8 +355,8 @@ window.BATTLE_DATA = (function () {
   const outro =   {
       "title_zh": "薩爾滸之戰",
       "title_en": "BATTLE OF SARHU",
-      "narration_zh": "本戰役為 DSE 中史重要考點：後金（清）大敗明軍，掌握遼東戰略主動權，敲響明亡喪鐘",
-      "narration_en": "A key HKDSE Chinese History topic.",
+      "narration_zh": "三月初一至初四，明軍三路先後戰敗，南路退走。不是一日三路皆敗。",
+      "narration_en": "Three Ming columns were defeated on successive days from the 1st to the 4th of the third lunar month, not all on one day.",
       "cam": {
           "lng": 124.1,
           "lat": 41.9,
@@ -366,5 +366,19 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       }
   };
-  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };
+  const lesson =   {
+      "junior": "初中：看明軍四路分進、後金八旗集中一路，三路先後戰敗。",
+      "senior": "高中：用七大恨、夏曆與公曆分寫，不用「一日三路皆敗」。",
+      "fact": "努爾哈赤在1618年以七大恨告天。薩爾滸戰事在次年。明軍由楊鎬分四路進攻，後金以八旗集中兵力。夏曆萬曆四十七年三月初一（公曆1619年4月14日）杜松西路敗於薩爾滸；三月初二（公曆4月15日）馬林北路敗；三月初四（公曆4月17日）劉綎東路敗。李如柏南路未決戰而退。不是一日三路皆敗。通行表述是「憑爾幾路來，我只一路去」。公曆與夏曆必須分開寫，不能把三月初一寫成公曆3月1日。",
+      "sources": "《明史·楊鎬傳》《明神宗實錄》萬曆四十七年、《清太祖武皇帝實錄》《滿洲實錄》薩爾滸前後記載。七大恨見1618年告天文。不以網絡百科為唯一依據。",
+      "evaluation": "後金能勝，是因為八旗集中在一路，明軍四路路程不一、不能同時到達。杜松冒進先敗，其餘兩路接著敗，南路退走。說成一日三路皆敗，或編成「五大臣、十固山」而不是八旗，都解釋不了這個打法。",
+      "judgment": {
+          "ask": "哪一則說法更能解釋薩爾滸的勝敗？",
+          "a": "公曆1619年3月1日，明軍一日之內三路皆敗。",
+          "b": "後金以八旗集中一路，夏曆三月初一至初四先後擊破三路。這就是「憑爾幾路來，我只一路去」。",
+          "better": "b",
+          "why": "告天的是七大恨，在1618年。三路敗在連續數日，不是同一日。編制是八旗。公曆應寫4月14日至17日，不能和夏曆三月混成公曆3月。"
+      }
+  };
+  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, lesson, END_DAY };
 })();

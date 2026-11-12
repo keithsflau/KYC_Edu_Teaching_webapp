@@ -21,8 +21,8 @@ function buildCatalog(ctx) {
       lng, lat, dist,
       narr_zh: o.narr_zh,
       narr_en: o.narr_en,
-      outro_zh: o.outro_zh || `本戰役為 DSE 中史重要考點：${o.impact || ""}`,
-      outro_en: o.outro_en || "A key HKDSE Chinese History topic.",
+      outro_zh: o.outro_zh || `${title_zh}的導覽到此為止。勝敗原因見評價與勝敗判斷。`,
+      outro_en: o.outro_en || "The tour ends. Use the judgement question for why the battle turned out as it did.",
       noteSummary: o.noteSummary || `${title_zh} — DSE 中史互動戰役地圖（教學示意）。`,
       analysisImpact: o.impact,
       points: o.points || [],
@@ -43,11 +43,11 @@ function buildCatalog(ctx) {
       title_zh: "秦漢",
       title_en: "QIN & HAN",
       period: "前3世紀—前1世紀",
-      intro: "秦漢之際兩場 DSE 核心戰役：垓下之戰終結楚漢相爭，漠北之戰奠定漢朝北疆與絲路安全。",
+      intro: "秦漢兩場戰役：垓下結束楚漢之爭；前119年漠北之戰擊破匈奴主力。河西與西域都護不是這一戰的直接結果。",
       warAnalysis: {
         military: "秦末群雄並起，劉邦以靈活戰略與關中根基勝出；漢初以騎射改革與大規模遠征反擊匈奴。",
         nationalPower: "楚漢之爭考驗關中農業與巴蜀後勤；武帝時期國力鼎盛，方支撐漠北遠征。",
-        impact: "漢朝取代秦朝統治模式，奠定兩千年帝制框架；北擊匈奴保障絲綢之路，塑造漢民族認同。",
+        impact: "垓下之後劉邦稱帝。前119年匈奴單于部遠徙。河西走廊在前121年，西域都護在前60年。",
       },
       battles: [
         {
@@ -96,7 +96,7 @@ function buildCatalog(ctx) {
               dist: 780,
               narr_zh: "漢武帝遣衛青、霍去病深入漠北，決戰匈奴主力。",
               narr_en: "Emperor Wu sends Wei Qing and Huo Qubing deep into the northern steppe.",
-              impact: "漢武帝遣衛青、霍去病擊潰匈奴，保障絲綢之路及邊疆穩定",
+              impact: "前119年衛青、霍去病擊破匈奴主力，單于部遠徙。河西走廊與西域都護不是此戰的直接結果",
               points: [
                 { name_zh: "漠北", name_en: "Mobei Steppe", type: "region", lng: 110, lat: 43 },
                 { name_zh: "狼居胥山", name_en: "Langjuxu", type: "peak", lng: 112.5, lat: 44.2, h: 1 },
@@ -110,7 +110,7 @@ function buildCatalog(ctx) {
               hotspots: [{ a: 35, b: 85, lng: 110, lat: 43, kind: "firefight", i: 0.9 }],
               storyboard: [
                 { day: 20, hold: 9, cam: cam(108, 41, 720), dateLabel: "前119年春", title_zh: "出擊漠北", title_en: "March into Mobei", narration_zh: "漢軍分路出擊，直搗匈奴王庭。", narration_en: "Han columns strike deep into Xiongnu territory.", focus: ["han_mobei"], side: "han" },
-                { day: 70, hold: 10, cam: cam(110, 43, 680), dateLabel: "前119年夏", title_zh: "大破匈奴", title_en: "Crushing victory", narration_zh: "匈奴單于北遁，漠南無王庭，邊疆得以安寧。", narration_en: "The Xiongnu are shattered — the northern frontier is secured.", focus: ["han_mobei", "xiongnu_mobei"], side: "both" },
+                { day: 70, hold: 10, cam: cam(110, 43, 680), dateLabel: "前119年夏", title_zh: "大破匈奴", title_en: "Crushing victory", narration_zh: "匈奴單于部遠徙。河西與西域都護不是前119年此戰的直接結果。", narration_en: "The Xiongnu are shattered — the northern frontier is secured.", focus: ["han_mobei", "xiongnu_mobei"], side: "both" },
               ],
             });
           })(),
@@ -167,13 +167,13 @@ function buildCatalog(ctx) {
           slug: "chibi",
           title_zh: "赤壁之戰",
           title_en: "RED CLIFFS 208",
-          blurb: "孫劉聯軍火攻大破曹操",
+          blurb: "周瑜、黃蓋火攻，曹操北撤",
           places: "赤壁 · 長江中游",
           data: (() => {
             const F = redBlue("sun_liu", "cao", "孫劉聯軍", "曹操", "Sun–Liu Alliance", "Cao Cao");
             return mk("cse-chibi", "赤壁之戰", "BATTLE OF RED CLIFFS", "208年", 113.9, 29.7, [2.5, 2.0, 10], F, ["sun_liu", "cao"], [208, 1, 1], {
               dist: 640,
-              narr_zh: "曹操南下，周瑜、諸葛亮以火攻大破曹軍水師。",
+              narr_zh: "曹操南下，周瑜採黃蓋之議火攻，曹軍水師受挫。諸葛亮定計不是史實。",
               narr_en: "The Sun–Liu alliance defeats Cao Cao's fleet with fire ships.",
               impact: "孫劉聯軍大敗曹操，阻斷曹操南下，奠定三國鼎立局面",
               points: [
@@ -185,11 +185,11 @@ function buildCatalog(ctx) {
                 { id: "sunliu_chibi", faction: "sun_liu", kind: "infantry", crest: "anchor", cf: true, name_zh: "吳蜀聯軍水師", name_en: "Allied Fleet", track: [{ d: 1, lng: 114.2, lat: 30.2, s: 50000, st: "hold" }, { d: 50, lng: 113.9, lat: 29.7, s: 65000, st: "attack" }, { d: 100, lng: 113.9, lat: 29.7, s: 60000, st: "hold" }] },
                 { id: "cao_chibi", faction: "cao", kind: "infantry", crest: "eagle", cf: true, name_zh: "曹軍水師", name_en: "Cao Fleet", track: [{ d: 1, lng: 113.5, lat: 29.9, s: 200000, st: "attack" }, { d: 55, lng: 113.9, lat: 29.7, s: 80000, st: "retreat" }, { d: 100, lng: 113.2, lat: 30.5, s: 40000, st: "retreat" }] },
               ],
-              arrows: [{ d: 45, f: "sun_liu", from: [114.2, 30.2], to: [113.9, 29.7], label: "火攻連環船", kind: "attack" }],
+              arrows: [{ d: 45, f: "sun_liu", from: [114.2, 30.2], to: [113.9, 29.7], label: "黃蓋火攻", kind: "attack" }],
               hotspots: [{ a: 40, b: 80, lng: 113.9, lat: 29.7, kind: "naval", i: 1.2 }],
               storyboard: [
                 { day: 20, hold: 9, cam: cam(113.7, 29.85, 600), dateLabel: "208年冬", title_zh: "曹操南下", title_en: "Cao Cao advances south", narration_zh: "曹軍順江而下，聲勢浩大。", narration_en: "Cao Cao's army moves down the Yangtze.", focus: ["cao_chibi"], side: "cao" },
-                { day: 55, hold: 10, cam: cam(113.9, 29.7, 550), dateLabel: "208年冬", title_zh: "火燒連環船", title_en: "Fire attack on the fleet", narration_zh: "東南風起，火攻大破曹軍，三國鼎立之勢成形。", narration_en: "Fire ships destroy Cao's fleet — the Three Kingdoms era begins.", focus: ["sunliu_chibi", "cao_chibi"], side: "both" },
+                { day: 55, hold: 10, cam: cam(113.9, 29.7, 550), dateLabel: "208年冬", title_zh: "黃蓋火攻", title_en: "Fire attack on the fleet", narration_zh: "周瑜、黃蓋一線實施火攻，曹軍北撤。鼎立要到220至229年才確立。", narration_en: "Fire ships destroy Cao's fleet — the Three Kingdoms era begins.", focus: ["sunliu_chibi", "cao_chibi"], side: "both" },
               ],
             });
           })(),
@@ -220,7 +220,7 @@ function buildCatalog(ctx) {
               hotspots: [{ a: 45, b: 85, lng: 117.28, lat: 31.86, kind: "firefight", i: 1 }],
               storyboard: [
                 { day: 25, hold: 9, cam: cam(117.4, 32.1, 580), dateLabel: "383年", title_zh: "苻堅南下", title_en: "Fu Jian advances", narration_zh: "前秦號稱百萬之師，直逼東晉。", narration_en: "Former Qin claims a million men marching south.", focus: ["qin_feishui"], side: "former_qin" },
-                { day: 70, hold: 10, cam: cam(117.28, 31.86, 540), dateLabel: "383年11月", title_zh: "淝水大敗", title_en: "Rout at Feishui", narration_zh: "「風聲鶴唳，草木皆兵」——前秦潰敗，南北對峙延續。", narration_en: "Former Qin collapses — north–south division continues.", focus: ["jin_feishui", "qin_feishui"], side: "both" },
+                { day: 70, hold: 10, cam: cam(117.28, 31.86, 540), dateLabel: "383年11月", title_zh: "淝水大敗", title_en: "Rout at Feishui", narration_zh: "草木皆兵在戰前的八公山；潰退時是風聲鶴唳。陣亡的是苻融，不是張淵。百萬是號稱。", narration_en: "Former Qin collapses — north–south division continues.", focus: ["jin_feishui", "qin_feishui"], side: "both" },
               ],
             });
           })(),
@@ -244,15 +244,16 @@ function buildCatalog(ctx) {
           title_zh: "安史之亂",
           title_en: "AN LUSHAN REBELLION",
           blurb: "安祿山叛亂，盛唐轉衰",
-          places: "范陽 · 潼關 · 長安",
+          places: "范陽 · 洛陽 · 長安",
           data: (() => {
             const F = redBlue("tang", "rebel", "唐軍", "安史叛軍", "Tang Army", "An–Shi Rebels");
-            return mk("cse-anshi", "安史之亂", "AN LUSHAN REBELLION", "755–763年", 108.94, 34.26, [4.0, 3.2, 9], F, ["tang", "rebel"], [755, 12, 16], {
+            return mk("cse-anshi", "安史之亂", "AN LUSHAN REBELLION", "755–763年", 112.65, 37.1, [9.2, 7.2, 7], F, ["tang", "rebel"], [755, 12, 16], {
               dist: 720,
-              narr_zh: "安祿山自范陽起兵，攻陷洛陽、長安，唐室西逃。",
+              narr_zh: "安祿山以討楊國忠為名，自范陽起兵，其後攻陷洛陽、長安。",
               narr_en: "An Lushan rebels from Fanyang and captures Luoyang and Chang'an.",
               impact: "唐朝由盛轉衰的絕對轉捩點，直接引發後期的藩鎮割據",
               points: [
+                { name_zh: "范陽", name_en: "Fanyang", type: "city", lng: 116.2, lat: 39.7 },
                 { name_zh: "長安", name_en: "Chang'an", type: "city", lng: 108.94, lat: 34.26 },
                 { name_zh: "潼關", name_en: "Tong Pass", type: "fort", lng: 110.24, lat: 34.54 },
                 { name_zh: "洛陽", name_en: "Luoyang", type: "city", lng: 112.45, lat: 34.62 },
@@ -267,7 +268,7 @@ function buildCatalog(ctx) {
               ],
               hotspots: [{ a: 20, b: 95, lng: 108.94, lat: 34.26, kind: "firefight", i: 1 }],
               storyboard: [
-                { day: 25, hold: 9, cam: cam(112.45, 34.62, 650), dateLabel: "755年", title_zh: "范陽起兵", title_en: "Rebellion begins", narration_zh: "安祿山以「清君側」為名起兵，迅速攻陷洛陽。", narration_en: "An Lushan rises and captures Luoyang.", focus: ["rebel_anshi"], side: "rebel" },
+                { day: 25, hold: 9, cam: cam(116.2, 39.7, 700), dateLabel: "755年", title_zh: "范陽起兵", title_en: "Rebellion begins", narration_zh: "安祿山以討楊國忠為名，自范陽起兵。", narration_en: "An Lushan rises and captures Luoyang.", focus: ["rebel_anshi"], side: "rebel" },
                 { day: 90, hold: 10, cam: cam(108.94, 34.26, 600), dateLabel: "763年", title_zh: "亂平藩興", title_en: "Rebellion ends, warlords rise", narration_zh: "叛亂雖平，中央權威大損，藩鎮割據加劇。", narration_en: "Rebellion suppressed — but Tang central power never recovers.", focus: ["tang_anshi"], side: "tang" },
               ],
             });
@@ -313,7 +314,7 @@ function buildCatalog(ctx) {
               hotspots: [{ a: 35, b: 95, lng: 113.05, lat: 22.28, kind: "naval", i: 1.1 }],
               storyboard: [
                 { day: 30, hold: 9, cam: cam(113.2, 22.38, 540), dateLabel: "1279年", title_zh: "崖山圍困", title_en: "Siege at Yamen", narration_zh: "南宋流亡朝廷退守崖山，元軍水陸夾擊。", narration_en: "The Song court is trapped at Yamen.", focus: ["song_yamen", "yuan_yamen"], side: "both" },
-                { day: 85, hold: 10, cam: cam(113.05, 22.28, 500), dateLabel: "1279年3月19日", title_zh: "宋亡", title_en: "Fall of Song", narration_zh: "陸秀夫背帝昺投海，南宋滅亡，元朝統一天下。", narration_en: "Lu Xiufu leaps into the sea with the boy emperor — Song falls.", focus: ["song_yamen"], side: "song" },
+                { day: 85, hold: 10, cam: cam(113.05, 22.28, 500), dateLabel: "1279年3月19日", title_zh: "宋亡", title_en: "Fall of Song", narration_zh: "陸秀夫負帝投海。張世傑曾突圍，其後遇風而死。", narration_en: "Lu Xiufu leaps into the sea with the boy emperor — Song falls.", focus: ["song_yamen"], side: "song" },
               ],
             });
           })(),
@@ -373,7 +374,7 @@ function buildCatalog(ctx) {
             const F = redBlue("ming", "jin", "明軍", "後金", "Ming Army", "Later Jin");
             return mk("cse-sarhu", "薩爾滸之戰", "BATTLE OF SARHU", "1619年", 124.1, 41.9, [2.5, 2.0, 10], F, ["ming", "jin"], [1619, 3, 1], {
               dist: 650,
-              narr_zh: "努爾哈赤以「五大恨」起兵，在薩爾滸殲滅明軍四路。",
+              narr_zh: "努爾哈赤於1618年以七大恨告天。薩爾滸之戰在1619年，明軍三路先後戰敗，不是一日三路皆敗。",
               narr_en: "Nurhaci defeats the Ming's four-column army at Sarhu.",
               impact: "後金（清）大敗明軍，掌握遼東戰略主動權，敲響明亡喪鐘",
               points: [
@@ -465,7 +466,7 @@ function buildCatalog(ctx) {
               hotspots: [{ a: 25, b: 90, lng: 122.12, lat: 37.51, kind: "naval", i: 1.2 }],
               storyboard: [
                 { day: 25, hold: 9, cam: cam(122.18, 37.5, 520), dateLabel: "1895年1月", title_zh: "威海圍困", title_en: "Siege of Weihaiwei", narration_zh: "日軍佔領威海陸上炮台，轟擊港內艦船。", narration_en: "Japanese guns on shore bombard the harbour.", focus: ["beiyang_wh", "japan_wh"], side: "both" },
-                { day: 80, hold: 10, cam: cam(122.12, 37.51, 480), dateLabel: "1895年2月", title_zh: "北洋覆沒", title_en: "Fleet destroyed", narration_zh: "丁汝昌殉國，北洋水師全軍覆沒，洋務運動失敗。", narration_en: "Admiral Ding dies — the Self-Strengthening Movement ends in defeat.", focus: ["beiyang_wh"], side: "beiyang" },
+                { day: 80, hold: 10, cam: cam(122.12, 37.51, 480), dateLabel: "1895年2月", title_zh: "北洋覆沒", title_en: "Fleet destroyed", narration_zh: "丁汝昌死，北洋殘艦在威海衛向日軍投降。", narration_en: "Admiral Ding dies — the Self-Strengthening Movement ends in defeat.", focus: ["beiyang_wh"], side: "beiyang" },
               ],
             });
           })(),
@@ -510,7 +511,7 @@ function buildCatalog(ctx) {
               hotspots: [{ a: 10, b: 95, lng: 121.47, lat: 31.23, kind: "firefight", i: 1.2 }],
               storyboard: [
                 { day: 15, hold: 9, cam: cam(121.47, 31.28, 540), dateLabel: "1937年8月13日", title_zh: "八一三開戰", title_en: "Battle begins", narration_zh: "國軍主動進攻日軍據點，淞滬會戰爆發。", narration_en: "KMT forces attack Japanese positions — Shanghai campaign begins.", focus: ["kmt_songhu", "japan_songhu"], side: "both" },
-                { day: 85, hold: 10, cam: cam(121.47, 31.23, 500), dateLabel: "1937年11月", title_zh: "三月亡華破滅", title_en: "Quick victory denied", narration_zh: "雖上海失守，但粉碎日軍速戰速決企圖。", narration_en: "Shanghai falls — but Japan's quick-victory plan is shattered.", focus: ["kmt_songhu"], side: "kmt" },
+                { day: 85, hold: 10, cam: cam(121.47, 31.23, 500), dateLabel: "1937年11月", title_zh: "撤出上海", title_en: "Quick victory denied", narration_zh: "上海失守後，日軍仍繼續進攻。長期相持的通說在武漢會戰之後。", narration_en: "Shanghai falls — but Japan's quick-victory plan is shattered.", focus: ["kmt_songhu"], side: "kmt" },
               ],
             });
           })(),
@@ -541,7 +542,7 @@ function buildCatalog(ctx) {
               hotspots: [{ a: 30, b: 70, lng: 113.95, lat: 39.35, kind: "firefight", i: 1 }],
               storyboard: [
                 { day: 20, hold: 9, cam: cam(113.85, 39.38, 560), dateLabel: "1937年9月", title_zh: "山地設伏", title_en: "Ambush prepared", narration_zh: "八路軍利用平型關險要地形設伏。", narration_en: "The Eighth Route Army prepares an ambush.", focus: ["era_pxg"], side: "eighth_route" },
-                { day: 50, hold: 10, cam: cam(113.95, 39.35, 520), dateLabel: "1937年9月25日", title_zh: "平型關大捷", title_en: "Victory at Pingxingguan", narration_zh: "殲滅日軍千餘人，打破日軍不敗神話。", narration_en: "A morale-boosting victory — Japan's invincibility myth is broken.", focus: ["era_pxg", "japan_pxg"], side: "both" },
+                { day: 50, hold: 10, cam: cam(113.95, 39.35, 520), dateLabel: "1937年9月25日", title_zh: "平型關大捷", title_en: "Victory at Pingxingguan", narration_zh: "八路軍在平型關伏擊日軍輜重部隊，斃傷日軍一部。", narration_en: "A morale-boosting victory — Japan's invincibility myth is broken.", focus: ["era_pxg", "japan_pxg"], side: "both" },
               ],
             });
           })(),
@@ -572,7 +573,7 @@ function buildCatalog(ctx) {
               hotspots: [{ a: 35, b: 85, lng: 117.73, lat: 34.56, kind: "firefight", i: 1.1 }],
               storyboard: [
                 { day: 25, hold: 9, cam: cam(117.8, 34.52, 550), dateLabel: "1938年3月", title_zh: "日軍南下", title_en: "Japanese advance", narration_zh: "磯谷師團沿津浦線南下，直逼台兒莊。", narration_en: "Japanese forces push south toward Tai'erzhuang.", focus: ["japan_tezz"], side: "japan" },
-                { day: 70, hold: 10, cam: cam(117.73, 34.56, 510), dateLabel: "1938年4月", title_zh: "台兒莊大捷", title_en: "Great victory", narration_zh: "國軍合圍殲敵，抗戰正面戰場最大勝利。", narration_en: "Encirclement destroys Japanese forces — the greatest KMT victory.", focus: ["kmt_tezz", "japan_tezz"], side: "both" },
+                { day: 70, hold: 10, cam: cam(117.73, 34.56, 510), dateLabel: "1938年4月", title_zh: "台兒莊大捷", title_en: "Great victory", narration_zh: "國軍在台兒莊附近合擊，日軍這一股兵力退走。", narration_en: "Encirclement destroys Japanese forces — the greatest KMT victory.", focus: ["kmt_tezz", "japan_tezz"], side: "both" },
               ],
             });
           })(),
@@ -668,7 +669,7 @@ function buildCatalog(ctx) {
               dist: 740,
               narr_zh: "以徐州為中心，解放軍殲滅國軍主力五十萬。",
               narr_en: "The PLA destroys half a million KMT troops around Xuzhou.",
-              impact: "規模最大、最慘烈的一役。國軍主力被殲，長江以北盡歸共產黨",
+              impact: "徐蚌地區的國軍主力被分段圍殲。孫元良兵團在西撤時潰散，本人脫走。",
               points: [
                 { name_zh: "徐州", name_en: "Xuzhou", type: "city", lng: 117.2, lat: 34.25 },
                 { name_zh: "雙堆集", name_en: "Shuangduiji", type: "town", lng: 116.98, lat: 33.42 },
@@ -682,7 +683,7 @@ function buildCatalog(ctx) {
               hotspots: [{ a: 25, b: 95, lng: 117.2, lat: 34.25, kind: "firefight", i: 1.2 }],
               storyboard: [
                 { day: 20, hold: 9, cam: cam(117.2, 34.35, 660), dateLabel: "1948年11月", title_zh: "徐蚌大戰", title_en: "Battle for Xuzhou", narration_zh: "國軍黃維、杜聿明集團被圍。", narration_en: "KMT army groups are encircled.", focus: ["kmt_huaihai"], side: "kmt" },
-                { day: 90, hold: 10, cam: cam(117.2, 34.25, 620), dateLabel: "1949年1月", title_zh: "淮海勝利", title_en: "Huaihai victory", narration_zh: "國軍主力被殲，長江以北盡歸解放軍。", narration_en: "KMT main forces destroyed — north of the Yangtze falls.", focus: ["pla_huaihai", "kmt_huaihai"], side: "both" },
+                { day: 90, hold: 10, cam: cam(117.2, 34.25, 620), dateLabel: "1949年1月", title_zh: "淮海勝利", title_en: "Huaihai victory", narration_zh: "陳官莊的杜聿明、邱清泉等部被殲。孫元良兵團在西撤時潰散，本人脫走。", narration_en: "Du Yuming and Qiu Qingquan's forces are destroyed at Chenguanzhuang.", focus: ["pla_huaihai", "kmt_huaihai"], side: "both" },
               ],
             });
           })(),
@@ -747,7 +748,7 @@ function buildCatalog(ctx) {
               hotspots: [{ a: 20, b: 70, lng: 118.78, lat: 32.06, kind: "landing", i: 1 }],
               storyboard: [
                 { day: 20, hold: 9, cam: cam(118.5, 32.12, 620), dateLabel: "1949年4月20日", title_zh: "渡江作戰", title_en: "Crossing the Yangtze", narration_zh: "解放軍在西起湖口、東至江陰千里戰線強渡長江。", narration_en: "PLA forces cross the Yangtze along a thousand-mile front.", focus: ["pla_crossing"], side: "pla" },
-                { day: 60, hold: 10, cam: cam(118.78, 32.06, 580), dateLabel: "1949年4月23日", title_zh: "南京解放", title_en: "Nanjing liberated", narration_zh: "解放軍佔領南京，中華民國政府在大陸統治終結。", narration_en: "Nanjing falls — ROC rule on the mainland ends.", focus: ["pla_crossing", "kmt_crossing"], side: "both" },
+                { day: 60, hold: 10, cam: cam(118.78, 32.06, 580), dateLabel: "1949年4月23日", title_zh: "南京解放", title_en: "Nanjing liberated", narration_zh: "1949年4月23日解放軍進入南京。", narration_en: "Nanjing falls — ROC rule on the mainland ends.", focus: ["pla_crossing", "kmt_crossing"], side: "both" },
               ],
             });
           })(),

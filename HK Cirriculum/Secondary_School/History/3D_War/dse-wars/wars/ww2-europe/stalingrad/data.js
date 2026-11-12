@@ -45,9 +45,9 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       },
       "nextBattle": {
-          "href": "../normandy/",
-          "title_zh": "諾曼第登陸",
-          "title_en": "NORMANDY D-DAY"
+          "href": "../el-alamein/",
+          "title_zh": "阿拉曼戰役",
+          "title_en": "EL ALAMEIN 1942"
       }
   };
   const factions = {
@@ -194,7 +194,7 @@ window.BATTLE_DATA = (function () {
       }
   ];
   const notes =   {
-      "summary": "斯大林格勒戰役 — DSE 西史小戰役地圖。",
+      "summary": "斯大林格勒戰役 — 課題地圖。兵力與路線為示意。",
       "caveats": [
           "本圖僅覆蓋該戰役核心區域；戰線與兵力為教學示意。",
           "衛星影像為現代地形。"
@@ -204,8 +204,8 @@ window.BATTLE_DATA = (function () {
   const analysis =   {
       "military": "德軍1942年夏攻向伏爾加河與高加索；斯大林格勒巷戰慘烈，蘇軍天王星行動反包圍德軍第六集團軍。",
       "leaders": "希特勒堅持攻占斯大林格勒；保盧斯率第六集團軍被圍。蘇軍朱可夫、瓦西列夫斯基策劃「天王星行動」合圍。史達林以城市名義激勵抵抗。德軍覆滅標誌東線戰略轉折，朱可夫聲望達頂峰。",
-      "nationalPower": "蘇聯全民动员、寒冬與補給線優勢；德軍過度延伸、空運補給失敗。",
-      "impact": "二戰東線轉折點；德軍從此戰略防守，士氣與同盟信心逆轉。"
+      "nationalPower": "蘇聯全民動員、寒冬與補給線優勢；德軍過度延伸、空運補給失敗。",
+      "impact": "第六集團軍覆滅是東線轉折，德國與其盟友的信心受挫。1943年7月德軍仍發動堡壘行動，在庫爾斯克進攻。"
   };
   const storyboard =   [
       {
@@ -313,7 +313,7 @@ window.BATTLE_DATA = (function () {
           "dateLabel": "1942年11月19日",
           "title_zh": "天王星行動",
           "title_en": "Operation Uranus",
-          "narration_zh": "蘇軍從南北两翼包圍德軍，切斷第六集團軍退路。",
+          "narration_zh": "蘇軍從南北兩翼包圍德軍，切斷第六集團軍退路。",
           "narration_en": "Soviet pincers encircle the 6th Army.",
           "focus": [
               "al_red"
@@ -337,11 +337,11 @@ window.BATTLE_DATA = (function () {
               "el": 46,
               "orbit": 0.65
           },
-          "dateLabel": "1943年1月",
-          "title_zh": "德軍投降",
-          "title_en": "German Surrender",
-          "narration_zh": "保盧斯率殘部投降，東線戰略逆轉。",
-          "narration_en": "Paulus surrenders — the Eastern Front turns.",
+          "dateLabel": "1943年2月2日",
+          "title_zh": "第六集團軍投降",
+          "title_en": "Sixth Army Surrenders",
+          "narration_zh": "保盧斯殘部於2月2日投降。這是東線轉折，但1943年7月德軍仍在庫爾斯克發動堡壘行動。",
+          "narration_en": "The last of the Sixth Army surrenders on 2 February. The front turns, but Germany still attacks at Kursk in July 1943.",
           "focus": [
               "ax_6th"
           ],
@@ -352,11 +352,33 @@ window.BATTLE_DATA = (function () {
           "forces_en": "300,000 Germans trapped"
       }
   ];
-  const outro =   {
+    const sourceTask = {
+    "cite": "德軍第六集團軍投降與之後的戰局，1943年",
+    "excerpt": "第六集團軍於1943年2月2日停止抵抗。同年7月5日，德軍在庫爾斯克發動堡壘行動。",
+    "ask": "哪一項判斷對得上這兩個日期？",
+    "options": [
+      {
+        "t": "2月之後德軍在東線只剩防守，沒有再發動大規模進攻。",
+        "ok": false,
+        "why": "堡壘行動是1943年7月的進攻。不能把斯大林格勒投降寫成德軍自此只有防守。"
+      },
+      {
+        "t": "斯大林格勒是轉折，但德軍在1943年夏天仍能組織進攻。",
+        "ok": true,
+        "why": "第六集團軍覆滅改變了力量對比；庫爾斯克說明進攻尚未結束。"
+      },
+      {
+        "t": "堡壘行動發生在第六集團軍投降之前。",
+        "ok": false,
+        "why": "投降在2月，堡壘行動在7月。"
+      }
+    ]
+  };
+const outro =   {
       "title_zh": "斯大林格勒戰役",
       "title_en": "STALINGRAD",
-      "narration_zh": "本戰役為 DSE 西史重要考點。",
-      "narration_en": "A key DSE Western History topic.",
+      "narration_zh": "第六集團軍於1943年2月2日投降。1943年7月德軍仍發動堡壘行動。",
+      "narration_en": "The Sixth Army surrendered on 2 February 1943. Germany still launched Operation Citadel in July.",
       "cam": {
           "lng": 44.52,
           "lat": 48.71,
@@ -366,5 +388,5 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       }
   };
-  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };
+  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, sourceTask, END_DAY };
 })();

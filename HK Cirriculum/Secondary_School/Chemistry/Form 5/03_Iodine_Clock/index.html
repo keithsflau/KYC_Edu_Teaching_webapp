@@ -2,79 +2,187 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>03_Iodine_Clock</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="../../../../common/babel-react-classic.js"></script>
-  <script src="../../../../common/learn-from-zero.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
-  <style>
-    body { font-family: "IBM Plex Sans", system-ui, sans-serif; background-color: #f8fafc; color: #0f172a; min-height: 100vh; }
-  </style>
-  <!-- NCS i18n fleet kit (auto-injected) -->
-  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
-  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
-  <style data-ncs-kit="fleet-bridge">
-    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
-    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
-      display: none !important;
-    }
-  </style>
-  <script data-ncs-kit="fleet-init">
-  (function () {
-    function hideLegacyToggles() {
-      document.body.classList.add("ncs-fleet-mounted");
-      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
-        var label = (btn.textContent || "").trim();
-        if (label === "EN" || label === "\u4E2D") {
-          btn.classList.add("ncs-hide-when-ncs-fleet");
-        }
-      });
-      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
-        el.classList.add("ncs-hide-when-ncs-fleet");
-      });
-    }
-    function boot() {
-      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
-      window.NcsI18n.init({
-        chromePath: "../../../../_shared/ncs-chrome.json",
-        target: document.body
-      }).then(hideLegacyToggles);
-    }
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", boot);
-    } else {
-      boot();
-    }
-  })();
-  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>碘鐘 | Iodine clock</title>
+  <link rel="stylesheet" href="../../lesson.css" />
 </head>
-<body>
-  <div id="root"></div>
-  <script type="text/babel" data-presets="react-classic">
-    const { useState } = React;
-    
-    function App() {
-      return (
-        <div className="max-w-4xl mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-4">03 Iodine Clock</h1>
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 mb-8 text-center">
-            <div className="w-full h-64 bg-slate-100 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 mb-4">
-              <span className="text-slate-400 font-medium">[ Interactive Canvas Placeholder ]</span>
-            </div>
-            <p className="text-slate-500">This interactive lab is currently under development.</p>
-          </div>
-          <LearnFromZero />
-        </div>
-      );
-    }
-    
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+<body data-chem-silent="1">
+  <section class="chem-learn" data-chem-entry="1">
+    <h2>學習目標</h2>
+    <ul>
+      <li>用相對變色時間比較碘鐘的快慢。</li>
+      <li>濃度加倍或溫度上升時，相對變色時間縮短。</li>
+      <li>這是比較模型，沒有試劑配方或加熱步驟。</li>
+    </ul>
+    <h2>常見錯因</h2>
+    <ul>
+      <li>以為濃度愈高，變色時間愈長。</li>
+      <li>把變色時間和速率當成同方向變化。</li>
+      <li>以為升溫只改變顏色深淺。</li>
+    </ul>
+    <p id="chem-feedback" role="status">調相對濃度和模型溫度，再判斷變色時間怎樣變。</p>
+  </section>
+  <main>
+    <div class="panel">
+      <h1>碘鐘比較模型</h1>
+      <p class="muted">碘鐘用突然變色的時間比較速率。時間愈短，相對速率愈快。數字是模型單位，不是某一次實驗的秒數，也不提供配方或用量。</p>
+      <h2>操作</h2>
+      <canvas id="plot" width="640" height="160" aria-label="相對變色時間"></canvas>
+      <label for="conc">相對濃度 = <span id="conc-v">1.0</span></label>
+      <input id="conc" type="range" min="0.5" max="2" step="0.1" value="1" />
+      <label for="temp">模型溫度 = <span id="temp-v">20</span> °C</label>
+      <input id="temp" type="range" min="10" max="40" step="5" value="20" />
+      <p class="num" id="out"></p>
+      <p class="muted">把現在的濃度加倍，相對變色時間會？</p>
+      <div class="row">
+        <button type="button" id="conc-shorter">變短</button>
+        <button type="button" class="alt" id="conc-longer">變長</button>
+        <button type="button" class="alt" id="conc-same">不變</button>
+      </div>
+      <p class="muted">濃度不變，模型溫度再升 10°C，相對變色時間會？</p>
+      <div class="row">
+        <button type="button" id="temp-shorter">變短</button>
+        <button type="button" class="alt" id="temp-longer">變長</button>
+        <button type="button" class="alt" id="temp-same">不變</button>
+      </div>
+      <p><a href="../index.html">返回中五</a></p>
+    </div>
+  </main>
+  <script src="../../lesson-kit.js"></script>
+  <script>
+    (function () {
+      var ctx = null;
+      var finished = false;
+      var got = { conc: false, temp: false };
+
+      function ac() {
+        var Ctor = window.AudioContext || window.webkitAudioContext;
+        if (!Ctor) return null;
+        if (!ctx) ctx = new Ctor();
+        if (ctx.state === "suspended") ctx.resume();
+        return ctx;
+      }
+
+      function tone(freq, delay, dur) {
+        var c = ac();
+        if (!c) return;
+        var start = c.currentTime + delay;
+        var o = c.createOscillator();
+        var g = c.createGain();
+        o.type = "sine";
+        o.frequency.setValueAtTime(freq, start);
+        g.gain.setValueAtTime(0.0001, start);
+        g.gain.exponentialRampToValueAtTime(0.04, start + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+        o.connect(g);
+        g.connect(c.destination);
+        o.start(start);
+        o.stop(start + dur + 0.02);
+      }
+
+      function playOk() {
+        tone(523.25, 0, 0.12);
+        tone(659.25, 0.14, 0.16);
+      }
+
+      function playNo() {
+        tone(196, 0, 0.22);
+      }
+
+      function playDone() {
+        tone(523.25, 0, 0.1);
+        tone(659.25, 0.12, 0.1);
+        tone(783.99, 0.24, 0.2);
+      }
+
+      function say(msg, kind) {
+        var el = document.getElementById("chem-feedback");
+        if (el) el.textContent = msg;
+        if (kind === "ok") playOk();
+        else if (kind === "no") playNo();
+        else if (kind === "done") playDone();
+      }
+
+      function clockTime(conc, temp) {
+        var rate = conc * Math.pow(1.08, (temp - 20) / 5);
+        return 20 / rate;
+      }
+
+      var concEl = document.getElementById("conc");
+      var tempEl = document.getElementById("temp");
+      var canvas = document.getElementById("plot");
+      var g = canvas.getContext("2d");
+
+      function paint() {
+        var conc = Number(concEl.value);
+        var temp = Number(tempEl.value);
+        var time = clockTime(conc, temp);
+        var rate = 20 / time;
+        document.getElementById("conc-v").textContent = conc.toFixed(1);
+        document.getElementById("temp-v").textContent = String(temp);
+        document.getElementById("out").textContent = "相對速率 " + rate.toFixed(2) + "　相對變色時間 " + time.toFixed(1) + "（模型單位）";
+        var w = canvas.width;
+        var h = canvas.height;
+        g.fillStyle = "#0f172a";
+        g.fillRect(0, 0, w, h);
+        var maxT = clockTime(0.5, 10);
+        var bar = (w - 80) * time / maxT;
+        g.fillStyle = "#38bdf8";
+        g.fillRect(40, 64, Math.max(6, bar), 32);
+        g.fillStyle = "#e2e8f0";
+        g.font = "16px sans-serif";
+        g.fillText("橫條代表相對變色時間", 40, 36);
+        g.fillText(time.toFixed(1), 40, 128);
+      }
+
+      function respond(msg) {
+        if (got.conc && got.temp && !finished) {
+          finished = true;
+          say(msg + " 兩項判斷都對過。", "done");
+          return;
+        }
+        say(msg, "ok");
+      }
+
+      function judge(kind, choice) {
+        var conc = Number(concEl.value);
+        var temp = Number(tempEl.value);
+        var before = clockTime(conc, temp);
+        var after = kind === "conc" ? clockTime(conc * 2, temp) : clockTime(conc, temp + 10);
+        var expect = after + 0.05 < before ? "shorter" : (before + 0.05 < after ? "longer" : "same");
+        var change = kind === "conc"
+          ? "濃度由 " + conc.toFixed(1) + " 加倍到 " + (conc * 2).toFixed(1)
+          : "溫度由 " + temp + "°C 再升 10°C";
+        var nums = change + "，相對時間由 " + before.toFixed(1) + " 變為 " + after.toFixed(1) + "。";
+        if (choice === expect) {
+          got[kind] = true;
+          respond("正確。" + nums + (kind === "conc"
+            ? "濃度高，碰撞多，變色時間短。"
+            : "升溫讓更多碰撞越過所需能量，變色時間短。"));
+          return;
+        }
+        if (choice === "longer") {
+          say("錯因：" + (kind === "conc"
+            ? "濃度高不會讓變色等更久。"
+            : "升溫不會拖慢碘鐘。") + nums + "時間與速率相反。", "no");
+          return;
+        }
+        say("錯因：" + (kind === "conc"
+          ? "濃度改變會改變速率，時間不會不變。"
+          : "溫度會改變速率，不是只改顏色深淺。") + nums, "no");
+      }
+
+      document.getElementById("conc-shorter").onclick = function () { judge("conc", "shorter"); };
+      document.getElementById("conc-longer").onclick = function () { judge("conc", "longer"); };
+      document.getElementById("conc-same").onclick = function () { judge("conc", "same"); };
+      document.getElementById("temp-shorter").onclick = function () { judge("temp", "shorter"); };
+      document.getElementById("temp-longer").onclick = function () { judge("temp", "longer"); };
+      document.getElementById("temp-same").onclick = function () { judge("temp", "same"); };
+      concEl.oninput = paint;
+      tempEl.oninput = paint;
+      paint();
+    })();
   </script>
-<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+  <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 </body>
 </html>

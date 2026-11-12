@@ -229,11 +229,11 @@ window.BATTLE_DATA = (function () {
           "衛星影像為現代地形，非歷史時期地貌。",
           "河川、海域水面為教學示意，按史實位置裁切顯示。"
       ],
-      "sources": "DSE 中史課程、中國通史、維基百科（交叉查證）。"
+      "sources": "《晉書·謝玄傳》《晉書·謝安傳》《晉書·苻堅載記》《資治通鑑》卷一〇五。草木皆兵與風聲鶴唳在上述記載中的先後不同。不以網絡百科為唯一依據。"
   };
   const analysis =   {
       "military": "前秦苻堅率大軍南征，東晉謝玄率北府兵在淝水對峙；前秦軍後退失控，晉軍乘勢追擊，前秦全線潰敗。",
-      "leaders": "前秦苻堅自恃「投鞭斷流」之眾，率百萬大軍南征東晉，卻在前線指揮混亂、民族部隊離心下迅速潰敗。東晉謝玄、謝琰率北府兵以精銳擊其懈怠之師，淝水一戰前秦主力瓦解。苻堅敗逃後北方再度分裂，東晉政權得以延續，南北對峙格局延續數百年。",
+      "leaders": "前秦苻堅以南征東晉，號稱百萬，百萬是自稱不是清點實數。戰前他在八公山把草木看成晉兵。接戰時秦軍後退失控，苻融陣亡，不是張淵。潰退時的說法是風聲鶴唳。東晉謝玄等率北府兵追擊，前秦前鋒瓦解。",
       "nationalPower": "前秦雖統一北方，但民族融合不足、降卒不穩；東晉據長江天險，北府兵精銳且士氣高昂。",
       "impact": "東晉擊敗前秦，維持南北對峙，阻延了北方政權統一天下。"
   };
@@ -252,7 +252,7 @@ window.BATTLE_DATA = (function () {
           "dateLabel": "383年",
           "title_zh": "苻堅南征",
           "title_en": "Fu Jian Invades South",
-          "narration_zh": "前秦苻堅自長安率百萬大軍南下，號稱投鞭斷流。",
+          "narration_zh": "前秦苻堅自長安南下，號稱戎卒百萬、投鞭斷流。百萬是當時的說法，不是點算後的實數。",
           "narration_en": "Former Qin ruler Fu Jian advances south with a vast army from Chang'an.",
           "focus": [
               "qin_feishui"
@@ -280,9 +280,9 @@ window.BATTLE_DATA = (function () {
               "orbit": 0.65
           },
           "dateLabel": "383年11月",
-          "title_zh": "淝水對峙",
-          "title_en": "Standoff at the Fei",
-          "narration_zh": "晉軍北府兵在淝水列陣，與前秦隔河對峙。",
+          "title_zh": "八公山",
+          "title_en": "Bagong Mountain",
+          "narration_zh": "戰前，苻堅在壽陽城頭望八公山，把山上草木看成晉兵。草木皆兵發生在交戰之前，不是潰退的時候。",
           "narration_en": "Eastern Jin Beifu troops face Former Qin across the Fei River.",
           "focus": [
               "jin_feishui",
@@ -311,10 +311,10 @@ window.BATTLE_DATA = (function () {
               "orbit": 0.65
           },
           "dateLabel": "383年11月",
-          "title_zh": "草木皆兵",
-          "title_en": "Every Bush a Soldier",
-          "narration_zh": "前秦後退時陣腳大亂，風吹草動皆被視為晉軍追兵，全軍潰散。",
-          "narration_en": "Former Qin retreat turns to rout — every rustle seems an ambush.",
+          "title_zh": "淝水接戰",
+          "title_en": "Fighting at the Fei",
+          "narration_zh": "秦軍在淝水應晉軍之請稍退，陣腳大亂，前鋒統帥苻融陣亡。",
+          "narration_en": "The Qin army falls back, the line breaks, and Fu Rong is killed.",
           "focus": [
               "qin_feishui"
           ],
@@ -338,7 +338,7 @@ window.BATTLE_DATA = (function () {
           "dateLabel": "383年",
           "title_zh": "北府兵追擊",
           "title_en": "Beifu Pursuit",
-          "narration_zh": "謝玄、謝石率北府兵追擊，前秦名將張淵陣亡，北方統一夢碎。",
+          "narration_zh": "謝玄、謝石率北府兵追擊。陣亡的是苻融，不是張淵。潰退時士卒風聲鶴唳，以為追兵。",
           "narration_en": "Xie Xuan's Beifu army pursues — Former Qin's dream of unification shatters.",
           "focus": [
               "jin_feishui"
@@ -368,7 +368,7 @@ window.BATTLE_DATA = (function () {
           "dateLabel": "383年後",
           "title_zh": "南北分立",
           "title_en": "North–South Division",
-          "narration_zh": "前秦迅速瓦解，東晉國祚延續，南北對峙局面再定。",
+          "narration_zh": "383年淝水戰後，前秦前鋒瓦解，苻堅逃回北方，東晉仍保有江南。",
           "narration_en": "Former Qin collapses; the Jin survives — north and south remain divided.",
           "focus": [],
           "side": "eastern_jin",
@@ -381,8 +381,8 @@ window.BATTLE_DATA = (function () {
   const outro =   {
       "title_zh": "淝水之戰",
       "title_en": "BATTLE OF FEISHUI",
-      "narration_zh": "本戰役為 DSE 中史重要考點：東晉擊敗前秦，維持南北對峙，阻延了北方政權統一天下",
-      "narration_en": "A key HKDSE Chinese History topic.",
+      "narration_zh": "383年淝水之戰，苻融陣亡，前秦前鋒瓦解，苻堅北逃。",
+      "narration_en": "At the Fei River in 383, Fu Rong was killed and the Former Qin vanguard collapsed.",
       "cam": {
           "lng": 117.28,
           "lat": 31.86,
@@ -392,5 +392,19 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       }
   };
-  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };
+  const lesson =   {
+      "junior": "初中：分清八公山的草木皆兵在戰前，潰退時是風聲鶴唳。",
+      "senior": "高中：核對陣亡的是苻融，並把「百萬」標成號稱，再解釋為什麼前秦陣腳會亂。",
+      "fact": "383年，前秦苻堅南征，號稱戎卒百萬。百萬是當時的說法，不是點算後的實數。戰前，苻堅在壽陽城頭望八公山，把山上草木看成晉兵，這就是「草木皆兵」，發生在交戰之前。其後秦軍在淝水應晉軍之請稍退，陣腳大亂，前鋒統帥苻融陣亡。晉軍北府兵渡河追擊。潰退時士卒風聲鶴唳，以為追兵，那不是草木皆兵。陣亡的是苻融，不是張淵。",
+      "sources": "《晉書·謝玄傳》《晉書·謝安傳》《晉書·苻堅載記》《資治通鑑》卷一〇五。草木皆兵與風聲鶴唳在上述記載中的先後不同。不以網絡百科為唯一依據。",
+      "evaluation": "前秦號稱雖大，前線指揮不齊，後退令一下就亂。東晉北府兵人數少，但趁亂追擊。用「百萬實數」解釋不了陣腳為什麼在接戰時崩潰。草木皆兵在戰前的八公山，潰退時是風聲鶴唳。",
+      "judgment": {
+          "ask": "哪一則說法更能解釋淝水的勝敗？",
+          "a": "前秦實有百萬大軍，尚未接戰就因人數太多自行潰散。",
+          "b": "百萬是號稱。戰前在八公山已有草木皆兵；接戰時秦軍後退失控，苻融陣亡，晉軍追擊。",
+          "better": "b",
+          "why": "草木皆兵在戰前的八公山，風聲鶴唳才在潰退時。陣亡的前秦大將是苻融。百萬必須標明是號稱，不能當成清點人數。"
+      }
+  };
+  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, lesson, END_DAY };
 })();

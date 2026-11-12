@@ -35,6 +35,12 @@ export interface BoardSpace {
   ownerId?: number;
   houses: number; // 5 = hotel
   isMortgaged: boolean;
+  /** Residential rateable value used for the game's rates bill. */
+  rateableValue?: number;
+  /** Short label shown on the square. */
+  blurb?: string;
+  badge?: string;
+  taxKind?: 'SALARIES' | 'RATES';
 }
 
 export interface Player {
@@ -66,10 +72,11 @@ export interface GameState {
   log: string[];
   pendingAction: PendingAction | null;
   rentPayment: RentPayment | null;
+  decisionNote: string | null;
 }
 
 export interface PendingAction {
-  type: 'BUY_PROPERTY' | 'PAY_RENT' | 'PAY_TAX' | 'CARD_EFFECT' | 'JAIL_DECISION';
+  type: 'BUY_PROPERTY' | 'PAY_RENT' | 'PAY_TAX' | 'CARD_EFFECT' | 'CARD_CHOICE' | 'JAIL_DECISION' | 'OPPORTUNITY_COST';
   data?: any;
 }
 

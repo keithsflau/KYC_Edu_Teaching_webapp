@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>蒸發｜小四常識</title>
+<style>
+  :root { --accent: #0369a1; --soft: #f0f9ff; }
+  body { margin: 0; font-family: "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", sans-serif; background: var(--soft); color: #1e293b; }
+  main { max-width: 40rem; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+  a { color: var(--accent); font-weight: 700; text-decoration: none; }
+  .meta { margin: 0.8rem 0 0; color: var(--accent); font-weight: 800; letter-spacing: 0.04em; }
+  h1 { margin: 0.2rem 0 0; font-size: 2rem; }
+  h2 { margin: 0; font-size: 1.15rem; }
+  .card { background: #fff; border-radius: 1rem; padding: 1.1rem 1.2rem; margin-top: 1rem; box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06); }
+  ul { margin: 0.6rem 0 0; padding-left: 1.2rem; line-height: 1.7; }
+  p { line-height: 1.7; }
+  button.choice { display: block; width: 100%; text-align: left; margin-top: 0.7rem; padding: 0.9rem 1rem; border-radius: 0.9rem; border: 2px solid #bae6fd; background: #fff; font: inherit; font-size: 1.05rem; line-height: 1.5; cursor: pointer; }
+  button.choice:hover:not(:disabled) { border-color: var(--accent); }
+  button.choice:disabled { cursor: default; opacity: 0.72; }
+  button.choice.bad { border-color: #e11d48; background: #fff1f2; }
+  button.choice.good { border-color: #059669; background: #ecfdf5; opacity: 1; }
+  #feedback { min-height: 4.8rem; font-weight: 700; line-height: 1.7; }
+  #feedback.bad { color: #be123c; }
+  #feedback.good { color: #047857; }
+</style>
+</head>
+<body>
+<main>
+  <p><a href="../../index.html">← 返回常識科</a></p>
+  <p class="meta">小四 · 科學與科技</p>
+  <h1>蒸發</h1>
+  <section class="card">
+    <h2>學習目標</h2>
+    <ul>
+      <li>知道蒸發是液體表面慢慢變成氣體，不必到達沸點。</li>
+      <li>明白溫度高、液面大、空氣流動快，蒸發會較快。</li>
+      <li>能判斷哪一種情況蒸發最快。</li>
+    </ul>
+  </section>
+  <section class="card">
+    <h2>一項操作</h2>
+    <p>三個容器裝著同樣多的水。選出蒸發最快的一個。</p>
+    <div id="choices">
+      <button type="button" class="choice" data-ok="0" data-why="答錯了。蓋子擋住水蒸氣離開，陰涼處溫度較低，窄口的液面又小，蒸發會變慢。">加蓋、放在陰涼處的窄口水杯</button>
+      <button type="button" class="choice" data-ok="1" data-why="答對了。淺碟液面大，陽光令溫度升高，風又加快空氣流動，所以蒸發最快。">沒有蓋、口很寬、放在有風和陽光下的淺碟</button>
+      <button type="button" class="choice" data-ok="0" data-why="答錯了。冰箱溫度低，細瓶口又減少液面接觸空氣。水分子較難離開液面，蒸發最慢。">瓶口很小、放進冰箱的水瓶</button>
+    </div>
+    <p id="feedback">選一個容器。</p>
+  </section>
+</main>
+<script>
+(function () {
+  var box = document.getElementById("choices");
+  var feedback = document.getElementById("feedback");
+  var done = false;
+  var ctx = null;
+  function tone(ok) {
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    if (!ctx) ctx = new AC();
+    if (ctx.state === "suspended") ctx.resume();
+    var t = ctx.currentTime;
+    var notes = ok
+      ? [{ f: 466.16, at: 0, d: 0.1 }, { f: 587.33, at: 0.09, d: 0.12 }]
+      : [{ f: 155.56, at: 0, d: 0.16 }];
+    notes.forEach(function (n) {
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.type = ok ? "sine" : "triangle";
+      osc.frequency.setValueAtTime(n.f, t + n.at);
+      gain.gain.setValueAtTime(0.0001, t + n.at);
+      gain.gain.exponentialRampToValueAtTime(0.05, t + n.at + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + n.at + n.d);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(t + n.at);
+      osc.stop(t + n.at + n.d + 0.02);
+    });
+  }
+  box.addEventListener("click", function (event) {
+    var btn = event.target.closest("button");
+    if (!btn || done) return;
+    var ok = btn.getAttribute("data-ok") === "1";
+    tone(ok);
+    feedback.textContent = btn.getAttribute("data-why");
+    feedback.className = ok ? "good" : "bad";
+    if (ok) {
+      done = true;
+      box.querySelectorAll("button").forEach(function (b) { b.disabled = true; });
+      btn.classList.add("good");
+    } else {
+      box.querySelectorAll("button").forEach(function (b) { b.classList.remove("bad"); });
+      btn.classList.add("bad");
+    }
+  });
+})();
+</script>
+</body>
+</html>

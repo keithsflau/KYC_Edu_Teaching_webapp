@@ -4,157 +4,320 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Circuit Constructor · 電路構造器 | S2 Junior Science</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="../../../../common/babel-react-classic.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet" />
-  <script src="../../../../common/junior-science-lger.js"></script>
-  <style>body { font-family: "Outfit", sans-serif; background: #f0f9ff; }</style>
-  <!-- NCS i18n fleet kit (auto-injected) -->
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: #f0f9ff; color: #0f172a; line-height: 1.5; }
+    .wrap { max-width: 64rem; margin: 0 auto; padding: 1rem 1.25rem 2rem; min-height: 100vh; }
+    a { color: #f59e0b; font-weight: 600; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .unit { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #f59e0b; margin: 0.5rem 0 0; }
+    h1 { font-size: 1.75rem; margin: 0.25rem 0; }
+    .sub { font-size: 0.875rem; color: #64748b; margin: 0.25rem 0 1rem; }
+    .top { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.75rem; align-items: flex-start; margin-bottom: 1rem; }
+    .tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
+    .tab { border: 1px solid #e2e8f0; background: #fff; border-radius: 0.5rem; padding: 0.5rem 0.9rem; font-weight: 600; cursor: pointer; min-height: 44px; }
+    .tab.active { background: #f59e0b; color: #fff; border-color: #f59e0b; }
+    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 1rem; padding: 1.25rem; box-shadow: 0 1px 2px rgba(15,23,42,0.04); }
+    .card h2 { margin: 0 0 0.75rem; font-size: 1.125rem; color: #f59e0b; }
+    .card p { margin: 0 0 0.75rem; color: #334155; }
+    .opts { display: grid; gap: 0.5rem; margin: 0.75rem 0; }
+    .opt { text-align: left; border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 0.75rem; padding: 0.75rem 1rem; cursor: pointer; min-height: 48px; font-size: 1rem; }
+    .opt:hover { background: #f1f5f9; }
+    .opt.correct { background: #ecfdf5; border-color: #6ee7b7; }
+    .opt.wrong { background: #fff1f2; border-color: #fda4af; }
+    .opt.dim { opacity: 0.5; }
+    .btn { display: inline-block; border: none; border-radius: 0.75rem; background: #f59e0b; color: #fff; font-weight: 700; padding: 0.65rem 1.25rem; cursor: pointer; min-height: 48px; font-size: 1rem; }
+    .btn.secondary { background: #e2e8f0; color: #334155; }
+    .btn.on { background: #10b981; color: #fff; }
+    .why { font-size: 0.875rem; color: #475569; margin-top: 0.5rem; }
+    .progress { font-size: 0.75rem; font-weight: 700; color: #64748b; margin-bottom: 0.5rem; }
+    .bar { display: flex; gap: 4px; margin-bottom: 1rem; }
+    .bar span { flex: 1; height: 6px; border-radius: 999px; background: #e2e8f0; }
+    .bar span.on { background: #f59e0b; }
+    ul.summary { margin: 0; padding-left: 1.25rem; color: #334155; }
+    ul.summary li { margin: 0.35rem 0; }
+    .lock-msg { text-align: center; padding: 1.5rem; }
+    .circuit-svg { width: 100%; max-width: 28rem; margin: 0 auto; display: block; }
+    .lab-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 0.75rem 0; }
+    .lab-row .btn { flex: 1; min-width: 120px; }
+    .status { text-align: center; font-weight: 700; color: #f59e0b; margin-top: 0.5rem; }
+    footer { text-align: center; padding: 1rem; font-size: 0.8rem; opacity: 0.7; border-top: 1px solid #e2e8f0; margin-top: 2rem; }
+    .noscript-box { max-width: 32rem; margin: 2rem auto; padding: 1.5rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 1rem; }
+  </style>
   <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
   <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
-  <style data-ncs-kit="fleet-bridge">
-    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
-    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
-      display: none !important;
-    }
-  </style>
   <script data-ncs-kit="fleet-init">
   (function () {
-    function hideLegacyToggles() {
-      document.body.classList.add("ncs-fleet-mounted");
-      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
-        var label = (btn.textContent || "").trim();
-        if (label === "EN" || label === "\u4E2D") {
-          btn.classList.add("ncs-hide-when-ncs-fleet");
-        }
-      });
-      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
-        el.classList.add("ncs-hide-when-ncs-fleet");
-      });
-    }
     function boot() {
       if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
-      window.NcsI18n.init({
-        chromePath: "../../../../_shared/ncs-chrome.json",
-        target: document.body
-      }).then(hideLegacyToggles);
+      window.NcsI18n.init({ chromePath: "../../../../_shared/ncs-chrome.json", target: document.body });
     }
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", boot);
-    } else {
-      boot();
-    }
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
+    else boot();
   })();
   </script>
 </head>
 <body>
-  <div id="root"></div>
-  <script type="text/babel" data-presets="react-classic">
-    const { useState, useEffect, useRef } = React;
-    const ACCENT = "#f59e0b";
-    const { Shell } = window.JSLGER;
+<aside id="js-goals" aria-label="學習目標"><h2>學習目標</h2><ul><li>說明串聯是同一回路，並聯各有支路。</li><li>知道用導線直接跨接電池是短路，模型不讓你這樣做。</li></ul></aside>
+<script src="../../shared/task-audio.js"></script>
 
-const LEARN = [
-  { titleEn: "Circuit Constructor — Step 1", titleZh: "電路構造器 — 步驟 1",
-    bodyEn: "In Section 8.1, you have studied the flow of electricity in a circuit.",
-    bodyZh: "In Section 8.1, you have studied the flow of electricity in a circuit.",
-    qEn: "Which statement matches the teaching slides on Circuit Constructor?", qZh: "下列哪項符合「電路構造器」教學簡報內容？",
-    opts: ["In Section 8.1, you have studied the flow of electricity in a circuit.", "Science ignores evidence from experiments.", "Measurements are never needed in science."], a: "In Section 8.1, you have studied the flow of electricity in a circuit.",
-    why: "Aligned to scicent teaching PowerPoint. 對應課本教學簡報。" },
-  { titleEn: "Circuit Constructor — Step 2", titleZh: "電路構造器 — 步驟 2",
-    bodyEn: "Basic ideas of an electric current",
-    bodyZh: "Basic ideas of an electric current",
-    qEn: "Which statement matches the teaching slides on Circuit Constructor?", qZh: "下列哪項符合「電路構造器」教學簡報內容？",
-    opts: ["Basic ideas of an electric current", "Science ignores evidence from experiments.", "Measurements are never needed in science."], a: "Basic ideas of an electric current",
-    why: "Aligned to scicent teaching PowerPoint. 對應課本教學簡報。" },
-  { titleEn: "Circuit Constructor — Step 3", titleZh: "電路構造器 — 步驟 3",
-    bodyEn: "Each atom has a nucleus surrounded by tiny electrons.",
-    bodyZh: "Each atom has a nucleus surrounded by tiny electrons.",
-    qEn: "Which statement matches the teaching slides on Circuit Constructor?", qZh: "下列哪項符合「電路構造器」教學簡報內容？",
-    opts: ["Each atom has a nucleus surrounded by tiny electrons.", "Science ignores evidence from experiments.", "Measurements are never needed in science."], a: "Each atom has a nucleus surrounded by tiny electrons.",
-    why: "Aligned to scicent teaching PowerPoint. 對應課本教學簡報。" },
-  { titleEn: "Ready for the Circuit Constructor lab", titleZh: "準備進入電路構造器實驗",
-    bodyEn: "Complete Learn, then use the interactive lab.",
-    bodyZh: "完成學習後，使用互動實驗室。",
-    qEn: "The Experiment tab unlocks after…", qZh: "實驗分頁在…之後解鎖",
-    opts: ["Learn section 學習部分", "Closing browser 關閉瀏覽器", "Nothing 無需"], a: "Learn section 學習部分",
-    why: "LGER flow: Learn → Guided → Experiment → Review." },
-  { titleEn: "Ready for the Circuit Constructor lab", titleZh: "準備進入電路構造器實驗",
-    bodyEn: "Complete Learn, then use the interactive lab.",
-    bodyZh: "完成學習後，使用互動實驗室。",
-    qEn: "The Experiment tab unlocks after…", qZh: "實驗分頁在…之後解鎖",
-    opts: ["Learn section 學習部分", "Closing browser 關閉瀏覽器", "Nothing 無需"], a: "Learn section 學習部分",
-    why: "LGER flow: Learn → Guided → Experiment → Review." },
-  { titleEn: "Ready for the Circuit Constructor lab", titleZh: "準備進入電路構造器實驗",
-    bodyEn: "Complete Learn, then use the interactive lab.",
-    bodyZh: "完成學習後，使用互動實驗室。",
-    qEn: "The Experiment tab unlocks after…", qZh: "實驗分頁在…之後解鎖",
-    opts: ["Learn section 學習部分", "Closing browser 關閉瀏覽器", "Nothing 無需"], a: "Learn section 學習部分",
-    why: "LGER flow: Learn → Guided → Experiment → Review." },
-];
-const GUIDED = [
-  { qEn: "Which statement matches the teaching slides on Circuit Constructor?", qZh: "下列哪項符合「電路構造器」教學簡報內容？",
-    opts: ["In Section 8.1, you have studied the flow of electricity in a circuit.", "Science ignores evidence from experiments.", "Measurements are never needed in science."], a: "In Section 8.1, you have studied the flow of electricity in a circuit.",
-    hint: "Aligned to scicent teaching PowerPoint. 對應課本教學簡報。" },
-  { qEn: "Which statement matches the teaching slides on Circuit Constructor?", qZh: "下列哪項符合「電路構造器」教學簡報內容？",
-    opts: ["Basic ideas of an electric current", "Science ignores evidence from experiments.", "Measurements are never needed in science."], a: "Basic ideas of an electric current",
-    hint: "Aligned to scicent teaching PowerPoint. 對應課本教學簡報。" },
-  { qEn: "Which statement matches the teaching slides on Circuit Constructor?", qZh: "下列哪項符合「電路構造器」教學簡報內容？",
-    opts: ["Each atom has a nucleus surrounded by tiny electrons.", "Science ignores evidence from experiments.", "Measurements are never needed in science."], a: "Each atom has a nucleus surrounded by tiny electrons.",
-    hint: "Aligned to scicent teaching PowerPoint. 對應課本教學簡報。" },
-];
-const SUMMARY = [
-  { en: "In Section 8.1, you have studied the flow of electricity in a circuit.", zh: "In Section 8.1, you have studied the flow of electricity in a circuit." },
-  { en: "Basic ideas of an electric current", zh: "Basic ideas of an electric current" },
-  { en: "Each atom has a nucleus surrounded by tiny electrons.", zh: "Each atom has a nucleus surrounded by tiny electrons." },
-  { en: "In metals, some of the electrons can escape from the atoms and move freely. They are called free electrons.", zh: "In metals, some of the electrons can escape from the atoms and move freely. They are called free electrons." },
-];
-const REVIEW = [
-  { qEn: "Which statement matches the teaching slides on Circuit Constructor?", qZh: "下列哪項符合「電路構造器」教學簡報內容？",
-    opts: ["In Section 8.1, you have studied the flow of electricity in a circuit.", "Science ignores evidence from experiments.", "Measurements are never needed in science."], a: "In Section 8.1, you have studied the flow of electricity in a circuit." },
-  { qEn: "Which statement matches the teaching slides on Circuit Constructor?", qZh: "下列哪項符合「電路構造器」教學簡報內容？",
-    opts: ["Basic ideas of an electric current", "Science ignores evidence from experiments.", "Measurements are never needed in science."], a: "Basic ideas of an electric current" },
-  { qEn: "Which statement matches the teaching slides on Circuit Constructor?", qZh: "下列哪項符合「電路構造器」教學簡報內容？",
-    opts: ["Each atom has a nucleus surrounded by tiny electrons.", "Science ignores evidence from experiments.", "Measurements are never needed in science."], a: "Each atom has a nucleus surrounded by tiny electrons." },
-];
-
-
-function ExperimentLab({ isZh, accent }) {
-  const [sw1, setSw1] = useState(false);
-  const [sw2, setSw2] = useState(false);
-  const t = window.JSLGER.t;
-  const lit = sw1 && sw2;
-  return (
-    <div className="space-y-4">
-      <p className="text-sm text-slate-600">{t("串聯電路：兩個開關都閉合燈才亮。", "Series circuit: both switches must close for the bulb to light.", isZh)}</p>
-      <div className="flex gap-4 items-center justify-center py-6">
-        <button type="button" onClick={() => setSw1(!sw1)} className={"px-4 py-3 rounded-xl font-bold min-h-[48px] " + (sw1 ? "bg-emerald-500 text-white" : "bg-slate-200")}>{t("開關 1", "Switch 1")}</button>
-        <i className={"fa-solid fa-lightbulb text-6xl " + (lit ? "text-yellow-400" : "text-slate-300")} />
-        <button type="button" onClick={() => setSw2(!sw2)} className={"px-4 py-3 rounded-xl font-bold min-h-[48px] " + (sw2 ? "bg-emerald-500 text-white" : "bg-slate-200")}>{t("開關 2", "Switch 2")}</button>
+  <div class="wrap" id="app">
+    <header class="top">
+      <div>
+        <a href="../index.html" id="back-link">← Back</a>
+        <p class="unit" id="unit-label">Form 2 · Electricity</p>
+        <h1 id="title-label">Circuit Constructor</h1>
+        <p class="sub" id="flow-label">LGER: Learn → Guided → Experiment → Review</p>
       </div>
-      <p className="font-bold text-center" style={{ color: accent }}>{lit ? t("燈亮！", "Bulb ON!", isZh) : t("燈滅", "Bulb OFF", isZh)}</p>
+    </header>
+    <nav class="tabs" id="tabs" aria-label="LGER sections">
+      <button type="button" class="tab active" data-mode="learn">Learn</button>
+      <button type="button" class="tab" data-mode="guided">Guided</button>
+      <button type="button" class="tab" data-mode="experiment">Experiment 🔒</button>
+      <button type="button" class="tab" data-mode="review">Review</button>
+    </nav>
+    <main id="panel">
+      <section class="card">
+        <p class="progress">Learn From Zero · 1 / 6</p>
+        <h2>Electric current</h2>
+        <p>An electric current is the flow of electric charge. In metal wires, free electrons move when a complete circuit connects a power source.</p>
+      </section>
+    </main>
+  </div>
+  <noscript>
+    <div class="noscript-box">
+      <h1>Circuit Constructor · 電路構造器</h1>
+      <p>Enable JavaScript to use the interactive lesson.</p>
     </div>
-  );
-}
+  </noscript>
+  <footer>@HKSTEAMAI All Copy-Right Reserved.</footer>
+  <script>
+(function () {
+  "use strict";
+  var ACCENT = "#f59e0b";
+  var APP_ID = "s2_circuit";
+  var isZh = false;
+  var mode = "learn";
+  var learnIdx = 0, learnPicked = null, learnDone = false;
+  try { learnDone = localStorage.getItem("hkc_js_lger_" + APP_ID) === "1"; } catch (e) {}
+  var guidedIdx = 0, guidedPicked = null, guidedOk = false;
+  var reviewIdx = 0, reviewPicked = null, reviewCorrect = 0, reviewDone = false;
+  var labMode = "series", sw1 = true, sw2 = true, sw3 = true;
 
-    function App() {
-      return (
-        <Shell
-          meta={{ appId: "s2_circuit", titleEn: "Circuit Constructor", titleZh: "電路構造器", unit: "Form 2 · Electricity" }}
-          accent={ACCENT}
-          learnSteps={LEARN}
-          guidedBank={GUIDED}
-          reviewSummary={SUMMARY}
-          reviewQuiz={REVIEW}
-          experiment={p => <ExperimentLab {...p} />}
-        />
-      );
+  function t(zh, en) { return isZh ? zh : en; }
+  function esc(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+  function optText(o) { return typeof o === "string" ? o : t(o.zh, o.en); }
+  function isCorrect(opt, a, idx) {
+    if (typeof a === "number") return idx === a;
+    return opt === a || optText(opt) === a;
+  }
+
+  var LEARN = [
+    { titleEn:"Electric current", titleZh:"電流", bodyEn:"An electric current is the flow of electric charge. In metal wires, free electrons move when a complete circuit connects a power source.", bodyZh:"電流是電荷的流動。金屬導線中，自由電子在完整電路連接電源時會移動。", qEn:"Current flows only when the circuit is…", qZh:"電流只在電路…時流動", opts:["Complete (closed loop) 完整（閉合）","Open at one point 有一處斷開","Without a cell 沒有電池","Made of plastic only 只有塑膠"], a:"Complete (closed loop) 完整（閉合）", whyEn:"Open circuit → no current.", whyZh:"斷路 → 無電流。" },
+    { titleEn:"Circuit components", titleZh:"電路元件", bodyEn:"Cell/battery (energy source), connecting wires, switch (open/close), bulb or buzzer (load). Symbols are used in circuit diagrams.", bodyZh:"電池（能源）、導線、開關（開/合）、燈泡或蜂鳴器（負載）。電路圖使用標準符號。", qEn:"Which component opens or closes a circuit?", qZh:"哪個元件可開合電路？", opts:["Switch 開關","Bulb only 只有燈泡","Wire only 只有導線","Cell only 只有電池"], a:"Switch 開關", whyEn:"Switch controls flow.", whyZh:"開關控制通斷。" },
+    { titleEn:"Series circuits", titleZh:"串聯電路", bodyEn:"In series, components are in one loop. One open switch stops the whole circuit — all bulbs go off.", bodyZh:"串聯電路中元件在同一回路。一個開關斷開會令整條電路停止——所有燈泡熄滅。", qEn:"Two bulbs in series with one switch open:", qZh:"兩燈串聯，一個開關斷開：", opts:["Both bulbs off 兩燈都滅","One on one off 一亮一滅","Both on 兩燈都亮","Bulbs explode 燈泡爆炸"], a:"Both bulbs off 兩燈都滅", whyEn:"Single loop broken.", whyZh:"回路斷開。" },
+    { titleEn:"Parallel circuits", titleZh:"並聯電路", bodyEn:"In parallel, each branch has its own path. One branch open may not affect others — useful in home wiring (HK flats).", bodyZh:"並聯電路中各支路有獨立路徑。一條支路斷開可能不影響其他——家居電路（香港單位）常用並聯。", qEn:"Home lights are usually wired in parallel so…", qZh:"家居電燈通常並聯，以便…", opts:["One light off, others stay on 一盞滅，其他仍亮","All must turn off together 全部一起滅","No switches needed 不需開關","Only one bulb allowed 只能一盞燈"], a:"One light off, others stay on 一盞滅，其他仍亮", whyEn:"Independent branches.", whyZh:"獨立支路。" },
+    { titleEn:"Conductors and insulators", titleZh:"導體和絕緣體", bodyEn:"Metals conduct electricity (free electrons). Plastic/rubber insulate — used for wire coating and plug casings for safety.", bodyZh:"金屬導電（有自由電子）。塑膠/橡膠絕緣——用於電線外皮和插頭外殼以保安全。", qEn:"Plastic wire coating is…", qZh:"電線塑膠外皮是…", opts:["Insulator 絕緣體","Conductor 導體","Battery 電池","Switch 開關"], a:"Insulator 絕緣體", whyEn:"Prevents shock.", whyZh:"防止觸電。" },
+    { titleEn:"Ready for the lab", titleZh:"準備進入實驗", bodyEn:"Build series and parallel circuits with switches and observe which bulbs light.", bodyZh:"用開關組裝串聯和並聯電路，觀察哪些燈泡會亮。", qEn:"The Experiment tab unlocks after…", qZh:"實驗分頁在…之後解鎖", opts:["Learn section 學習部分","Closing browser 關閉瀏覽器","Nothing 無需"], a:"Learn section 學習部分", whyEn:"LGER flow: Learn → Guided → Experiment → Review.", whyZh:"LGER 流程：學習 → 引導 → 實驗 → 複習。" }
+  ];
+  var GUIDED = [
+    { qEn:"Symbol for cell in diagram:", qZh:"電路圖中電池符號：", opts:["Long and short parallel lines 一長一短平行線","Circle with cross 圓加叉","Zigzag line 鋸齒線","Triangle only 只有三角形"], a:"Long and short parallel lines 一長一短平行線", hintEn:"Cell symbol.", hintZh:"電池符號。" },
+    { qEn:"More bulbs in series (same cell) → each bulb…", qZh:"同一電池下串聯更多燈泡，每盞燈…", opts:["Dimmer 較暗","Brighter 較亮","Same brightness 一樣亮","No change 不變"], a:"Dimmer 較暗", hintEn:"Share voltage.", hintZh:"分擔電壓。" },
+    { qEn:"Current path in parallel:", qZh:"並聯電路中電流：", opts:["Splits into branches 分成支路","Stops at first bulb 在第一盞燈停止","Only in switch 只在開關","Cannot flow 不能流動"], a:"Splits into branches 分成支路", hintEn:"Multiple paths.", hintZh:"多條路徑。" },
+    { qEn:"Safe wiring uses insulator to…", qZh:"安全布線用絕緣體來…", opts:["Prevent contact with live conductor 避免接觸帶電導體","Increase current 增大電流","Store charge 儲存電荷","Make bulbs brighter 使燈更亮"], a:"Prevent contact with live conductor 避免接觸帶電導體", hintEn:"Safety first.", hintZh:"安全至上。" }
+  ];
+  var SUMMARY = [
+    { en:"Current flows in a complete circuit; electrons move in metal conductors.", zh:"電流在完整電路中流動；電子在金屬導體中移動。" },
+    { en:"Series: one loop — one break stops all. Parallel: independent branches.", zh:"串聯：同一回路——一處斷開全部停止。並聯：獨立支路。" },
+    { en:"Cell, wire, switch, bulb/buzzer are basic components with standard symbols.", zh:"電池、導線、開關、燈泡/蜂鳴器是基本元件，有標準符號。" },
+    { en:"Insulators (plastic/rubber) protect users from live conductors.", zh:"絕緣體（塑膠/橡膠）保護使用者免受帶電導體傷害。" }
+  ];
+  var REVIEW = [
+    { qEn:"Open switch means circuit is…", qZh:"開關斷開（open）時，電路…", opts:["Open / incomplete 斷開/不完整","Complete 完整","Short circuited 短路","Parallel only 只有並聯"], a:"Open / incomplete 斷開/不完整" },
+    { qEn:"HK home lighting is mainly…", qZh:"香港家居照明主要是…", opts:["Parallel 並聯","Series only 只有串聯","No circuit 無電路","One bulb loop 單燈回路"], a:"Parallel 並聯" },
+    { qEn:"Copper wire is used because it…", qZh:"用銅線因為它…", opts:["Conducts electricity 導電","Insulates 絕緣","Emits light 發光","Stores charge 儲電"], a:"Conducts electricity 導電" },
+    { qEn:"Two switches in series both closed → circuit…", qZh:"兩開關串聯都閉合 → 電路…", opts:["Complete if rest OK 其餘正常則完整","Always open 總是斷","Parallel 並聯","No current ever 永無電流"], a:"Complete if rest OK 其餘正常則完整" },
+    { qEn:"Load in a circuit is e.g.…", qZh:"電路中的負載例如…", opts:["Bulb or buzzer 燈泡或蜂鳴器","Cell only 只有電池","Insulator 絕緣體","Air gap 空氣間隙"], a:"Bulb or buzzer 燈泡或蜂鳴器" }
+  ];
+
+  function wireColor(on) { return on ? ACCENT : "#cbd5e1"; }
+  function circuitSvg() {
+    var seriesLit = sw1 && sw2, parLit1 = sw1, parLit2 = sw3;
+    var lit1 = labMode === "series" ? seriesLit : parLit1;
+    var lit2 = parLit2;
+    var c1 = lit1 ? "#fde047" : "#e2e8f0";
+    var endX = labMode === "series" ? 160 : 170;
+    var loopOn = labMode === "series" ? (sw1 && sw2) : true;
+    var s = '<svg class="circuit-svg" viewBox="0 0 200 100">';
+    s += '<rect x="10" y="40" width="30" height="20" fill="#fef3c7" stroke="#92400e" stroke-width="1" rx="2"/><text x="25" y="54" font-size="8" text-anchor="middle">cell</text>';
+    s += '<line x1="40" y1="50" x2="70" y2="50" stroke="' + wireColor(true) + '" stroke-width="2"/>';
+    s += '<line x1="70" y1="50" x2="70" y2="20" stroke="' + wireColor(sw1) + '" stroke-width="2"/><text x="70" y="15" font-size="7" text-anchor="middle">S1</text>';
+    if (labMode === "series") {
+      s += '<line x1="70" y1="20" x2="130" y2="20" stroke="' + wireColor(sw1 && sw2) + '" stroke-width="2"/>';
+      s += '<circle cx="100" cy="20" r="8" fill="' + c1 + '" stroke="#64748b"/>';
+      s += '<line x1="130" y1="20" x2="130" y2="50" stroke="' + wireColor(sw1 && sw2) + '" stroke-width="2"/><text x="130" y="15" font-size="7" text-anchor="middle">S2</text>';
+      s += '<line x1="130" y1="50" x2="160" y2="50" stroke="' + wireColor(sw1 && sw2) + '" stroke-width="2"/>';
+    } else {
+      s += '<line x1="70" y1="20" x2="100" y2="20" stroke="' + wireColor(sw1) + '" stroke-width="2"/>';
+      s += '<circle cx="85" cy="20" r="7" fill="' + c1 + '" stroke="#64748b"/>';
+      s += '<line x1="100" y1="20" x2="100" y2="50" stroke="' + wireColor(true) + '" stroke-width="2"/>';
+      s += '<line x1="70" y1="50" x2="100" y2="50" stroke="' + wireColor(true) + '" stroke-width="2"/>';
+      s += '<line x1="100" y1="50" x2="130" y2="50" stroke="' + wireColor(sw3) + '" stroke-width="2"/>';
+      s += '<circle cx="145" cy="50" r="7" fill="' + (lit2 ? "#fde047" : "#e2e8f0") + '" stroke="#64748b"/><text x="120" y="45" font-size="7">S2</text>';
+      s += '<line x1="152" y1="50" x2="170" y2="50" stroke="' + wireColor(sw3) + '" stroke-width="2"/>';
     }
-    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+    s += '<line x1="' + endX + '" y1="50" x2="' + endX + '" y2="80" stroke="' + wireColor(loopOn) + '" stroke-width="2"/>';
+    s += '<line x1="40" y1="80" x2="' + endX + '" y2="80" stroke="' + wireColor(loopOn) + '" stroke-width="2"/>';
+    s += '<line x1="40" y1="50" x2="40" y2="80" stroke="' + wireColor(loopOn) + '" stroke-width="2"/></svg>';
+    return s;
+  }
+
+  function updateChrome() {
+    document.getElementById("back-link").textContent = "← " + t("返回", "Back");
+    document.getElementById("unit-label").textContent = t("中二 · 電學", "Form 2 · Electricity");
+    document.getElementById("title-label").textContent = t("電路構造器", "Circuit Constructor");
+    document.getElementById("flow-label").textContent = t("學習 → 引導 → 實驗 → 複習", "LGER: Learn → Guided → Experiment → Review");
+    var tabs = document.getElementById("tabs").querySelectorAll(".tab");
+    var labels = [t("學習","Learn"), t("引導","Guided"), learnDone ? t("實驗","Experiment") : t("實驗 🔒","Experiment 🔒"), t("複習","Review")];
+    for (var i = 0; i < tabs.length; i++) {
+      tabs[i].textContent = labels[i];
+      tabs[i].classList.toggle("active", tabs[i].dataset.mode === mode);
+    }
+  }
+
+  function renderLearn() {
+    var step = LEARN[learnIdx], last = learnIdx >= LEARN.length - 1;
+    var html = '<section class="card"><p class="progress">' + esc(t("由零開始學","Learn From Zero")) + " · " + (learnIdx+1) + " / " + LEARN.length + '</p>';
+    html += '<div class="bar">'; for (var b = 0; b < LEARN.length; b++) html += '<span class="' + (b <= learnIdx ? "on" : "") + '"></span>'; html += '</div>';
+    html += "<h2>" + esc(t(step.titleZh, step.titleEn)) + "</h2><p>" + esc(t(step.bodyZh, step.bodyEn)) + "</p>";
+    html += "<p><strong>" + esc(t(step.qZh, step.qEn)) + "</strong></p><div class=\"opts\">";
+    step.opts.forEach(function (o, i) {
+      var cls = "opt", ok = isCorrect(o, step.a, i);
+      if (learnPicked !== null) { if (ok) cls += " correct"; else if (learnPicked === i) cls += " wrong"; else cls += " dim"; }
+      html += '<button type="button" class="' + cls + '" data-opt="' + i + '">' + esc(o) + "</button>";
+    });
+    html += "</div>";
+    if (learnPicked !== null) {
+      var correct = isCorrect(step.opts[learnPicked], step.a, learnPicked);
+      html += '<p class="why">' + esc(correct ? t("✓ 正確","✓ Correct") : t("✗ 再想想","✗ Try again")) + " — " + esc(t(step.whyZh, step.whyEn)) + "</p>";
+      if (correct) html += '<button type="button" class="btn" id="learn-next">' + esc(last ? t("開始實驗 →","Start Experiment →") : t("下一步 →","Next →")) + "</button>";
+    }
+    html += "</section>";
+    document.getElementById("panel").innerHTML = html;
+    document.getElementById("panel").querySelectorAll(".opt").forEach(function (btn) {
+      btn.addEventListener("click", function () { if (learnPicked !== null) return; learnPicked = +btn.dataset.opt; renderLearn(); });
+    });
+    var nb = document.getElementById("learn-next");
+    if (nb) nb.addEventListener("click", function () {
+      if (last) { try { localStorage.setItem("hkc_js_lger_" + APP_ID, "1"); } catch (e) {} learnDone = true; mode = "experiment"; learnIdx = 0; learnPicked = null; }
+      else { learnIdx++; learnPicked = null; }
+      updateChrome(); render();
+    });
+  }
+
+  function renderGuided() {
+    var item = GUIDED[guidedIdx];
+    var html = '<section class="card"><p class="progress">' + esc(t("引導練習","Guided Practice")) + " · " + (guidedIdx+1) + "/" + GUIDED.length + "</p>";
+    html += "<p><strong>" + esc(t(item.qZh, item.qEn)) + "</strong></p><div class=\"opts\">";
+    item.opts.forEach(function (o, i) {
+      var cls = "opt", ok = isCorrect(o, item.a, i);
+      if (guidedPicked !== null) { if (ok) cls += " correct"; else if (guidedPicked === i) cls += " wrong"; else cls += " dim"; }
+      html += '<button type="button" class="' + cls + '" data-opt="' + i + '">' + esc(o) + "</button>";
+    });
+    html += "</div>";
+    if (guidedPicked !== null) {
+      guidedOk = isCorrect(item.opts[guidedPicked], item.a, guidedPicked);
+      html += '<p class="why">' + esc(t(item.hintZh, item.hintEn)) + "</p>";
+      if (guidedOk) html += '<button type="button" class="btn" id="guided-next">' + esc(guidedIdx+1 >= GUIDED.length ? t("前往複習 →","Go to Review →") : t("下一題 →","Next →")) + "</button>";
+    }
+    html += "</section>";
+    document.getElementById("panel").innerHTML = html;
+    document.getElementById("panel").querySelectorAll(".opt").forEach(function (btn) {
+      btn.addEventListener("click", function () { if (guidedPicked !== null) return; guidedPicked = +btn.dataset.opt; renderGuided(); });
+    });
+    var nb = document.getElementById("guided-next");
+    if (nb) nb.addEventListener("click", function () {
+      if (guidedIdx+1 >= GUIDED.length) { mode = "review"; guidedIdx = 0; guidedPicked = null; }
+      else { guidedIdx++; guidedPicked = null; }
+      updateChrome(); render();
+    });
+  }
+
+  function renderExperiment() {
+    if (!learnDone) {
+      document.getElementById("panel").innerHTML = '<section class="card lock-msg"><h2>' + esc(t("請先完成學習部分","Complete Learn first")) + '</h2><button type="button" class="btn" id="go-learn">' + esc(t("前往學習 →","Go to Learn →")) + "</button></section>";
+      document.getElementById("go-learn").addEventListener("click", function () { mode = "learn"; updateChrome(); render(); });
+      return;
+    }
+    var seriesLit = sw1 && sw2, status;
+    if (labMode === "series") status = seriesLit ? t("串聯：燈亮","Series: bulb ON") : t("串聯：燈滅（回路斷）","Series: OFF (open loop)");
+    else status = t("並聯：上支路 " + (sw1?"亮":"滅") + "，下支路 " + (sw3?"亮":"滅"), "Parallel: top " + (sw1?"ON":"OFF") + ", bottom " + (sw3?"ON":"OFF"));
+    var html = '<section class="card"><h2>' + esc(t("動手探究","Hands-on task")) + '</h2>';
+    html += '<p>' + esc(t("切換串聯/並聯，控制開關，觀察燈泡。","Toggle series/parallel, control switches, observe bulbs.")) + '</p>';
+    html += '<div class="lab-row"><button type="button" class="btn' + (labMode==="series"?"":" secondary") + '" id="mode-series">' + esc(t("串聯","Series")) + '</button>';
+    html += '<button type="button" class="btn' + (labMode==="parallel"?"":" secondary") + '" id="mode-parallel">' + esc(t("並聯","Parallel")) + '</button></div>';
+    html += circuitSvg();
+    html += '<div class="lab-row"><button type="button" class="btn' + (sw1?" on":"") + '" id="sw1">' + esc(t("開關 1","Switch 1")) + '</button>';
+    html += '<button type="button" class="btn' + ((labMode==="series"?sw2:sw3)?" on":"") + '" id="sw2">' + esc(t("開關 2","Switch 2")) + '</button></div>';
+    html += '<p class="status">' + esc(status) + '</p></section>';
+    document.getElementById("panel").innerHTML = html;
+    document.getElementById("mode-series").onclick = function () { labMode = "series"; renderExperiment(); };
+    document.getElementById("mode-parallel").onclick = function () { labMode = "parallel"; renderExperiment(); };
+    document.getElementById("sw1").onclick = function () { sw1 = !sw1; renderExperiment(); };
+    document.getElementById("sw2").onclick = function () { if (labMode === "series") sw2 = !sw2; else sw3 = !sw3; renderExperiment(); };
+  }
+
+  function renderReview() {
+    if (reviewDone) {
+      document.getElementById("panel").innerHTML = '<section class="card" style="text-align:center"><h2>' + esc(t("複習完成！","Review Complete!")) + '</h2><p>' + reviewCorrect + " / " + REVIEW.length + " " + esc(t("題正確","correct")) + "</p></section>";
+      return;
+    }
+    var item = REVIEW[reviewIdx];
+    var html = '<section class="card"><h2>' + esc(t("重點摘要","Key Summary")) + '</h2><ul class="summary">';
+    SUMMARY.forEach(function (s) { html += "<li>" + esc(t(s.zh, s.en)) + "</li>"; });
+    html += '</ul><hr style="border:none;border-top:1px solid #e2e8f0;margin:1.25rem 0"/><h2>' + esc(t("自我測驗","Self-Check Quiz")) + " (" + (reviewIdx+1) + "/" + REVIEW.length + ")</h2>";
+    html += "<p><strong>" + esc(t(item.qZh, item.qEn)) + "</strong></p><div class=\"opts\">";
+    item.opts.forEach(function (o, i) {
+      var cls = "opt", ok = isCorrect(o, item.a, i);
+      if (reviewPicked !== null) { if (ok) cls += " correct"; else if (reviewPicked === i) cls += " wrong"; else cls += " dim"; }
+      html += '<button type="button" class="' + cls + '" data-opt="' + i + '">' + esc(o) + "</button>";
+    });
+    html += "</div>";
+    if (reviewPicked !== null) html += '<button type="button" class="btn" id="review-next">' + esc(reviewIdx+1 >= REVIEW.length ? t("查看成績","See Results") : t("下一題","Next")) + "</button>";
+    html += "</section>";
+    document.getElementById("panel").innerHTML = html;
+    document.getElementById("panel").querySelectorAll(".opt").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        if (reviewPicked !== null) return;
+        reviewPicked = +btn.dataset.opt;
+        if (isCorrect(item.opts[reviewPicked], item.a, reviewPicked)) reviewCorrect++;
+        renderReview();
+      });
+    });
+    var nb = document.getElementById("review-next");
+    if (nb) nb.addEventListener("click", function () {
+      if (reviewIdx+1 >= REVIEW.length) reviewDone = true; else { reviewIdx++; reviewPicked = null; }
+      renderReview();
+    });
+  }
+
+  function render() {
+    if (mode === "learn") renderLearn();
+    else if (mode === "guided") renderGuided();
+    else if (mode === "experiment") renderExperiment();
+    else renderReview();
+  }
+
+  if (window.NcsI18n) {
+    window.NcsI18n.onChange(function () { isZh = window.NcsI18n.isZh(); updateChrome(); render(); });
+  }
+  document.getElementById("tabs").addEventListener("click", function (e) {
+    var btn = e.target.closest(".tab"); if (!btn) return;
+    mode = btn.dataset.mode; updateChrome(); render();
+  });
+  if (window.NcsI18n) isZh = window.NcsI18n.isZh();
+  updateChrome(); render();
+})();
   </script>
 </body>
 </html>

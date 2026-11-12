@@ -35,7 +35,7 @@ module.exports = function ({ cam }) {
         S(1, 18.41, 43.86, 520, { date: "1914年6月28日", zh: "斐迪南抵達薩拉熱窩", en: "Archduke Arrives", nz: "奧匈皇儲斐迪南大公夫婦抵達波斯尼亞首府，當地塞族情緒高漲。", ne: "Archduke Franz Ferdinand arrives in Sarajevo amid Serb nationalist tension.", focus: ["ap_sarajevo"], side: "ap", commanders: [{ zh: "斐迪南大公", en: "Franz Ferdinand" }] }),
         S(20, 18.43, 43.86, 480, { date: "1914年6月28日 上午", zh: "第一次刺殺未遂", en: "First Attempt Fails", nz: "炸彈襲擊車隊失敗，斐迪南改道前往醫院探視傷者。", ne: "A bomb attack fails; the royal party reroutes to visit the wounded.", focus: ["ap_sarajevo"], side: "ap", assets: ["artillery"] }),
         S(40, 18.43, 43.86, 450, { date: "1914年6月28日 下午", zh: "拉丁橋開槍", en: "Shots at Latin Bridge", nz: "普林西普在拉丁橋近距離開槍，皇儲夫婦當場身亡。", ne: "Gavrilo Princip fires at Latin Bridge — the royal couple is killed.", focus: ["ap_sarajevo"], side: "cp", commanders: [{ zh: "普林西普", en: "Gavrilo Princip" }], assets: ["artillery"] }),
-        S(60, 18.41, 43.86, 600, { date: "1914年7月", zh: "七月危機", en: "July Crisis", nz: "奧匈向塞爾維亞發出最後通牒，俄、德、法、英相繼動員。", ne: "Austria-Hungary issues an ultimatum to Serbia; the great powers mobilise.", side: "both", fz: "歐洲列強進入戰爭動員", fe: "European powers mobilise for war" }),
+        S(60, 18.41, 43.86, 600, { date: "1914年7月", zh: "七月危機", en: "July Crisis", nz: "奧匈發出最後通牒。俄國7月30日總動員，德、法隨之動員。英國在七月危機並未總動員。", ne: "Austria-Hungary issues an ultimatum to Serbia; the great powers mobilise.", side: "both", fz: "歐洲列強進入戰爭動員", fe: "European powers mobilise for war" }),
         S(85, 18.41, 43.86, 700, { date: "1914年8月", zh: "導火線的後果", en: "Aftermath", nz: "一樁地方暗殺引發連鎖同盟義務，第一次世界大戰全面爆發。", ne: "A local assassination triggers alliance obligations — World War I begins.", side: "both" }),
       ],
     },
@@ -78,7 +78,7 @@ module.exports = function ({ cam }) {
         "成為一戰無謂犧牲的象徵；推動軍事技術革新（坦克）與對戰爭的反思。"
       ),
       storyboard: [
-        S(1, 2.65, 50.0, 650, { date: "1916年7月1日", zh: "七一攻勢", en: "First Day on the Somme", nz: "英軍在索姆河發動大攻勢，首日陣亡逾兩萬。", ne: "British offensive opens — over 20,000 dead on day one.", focus: ["ap_somme"], side: "ap", commanders: [{ zh: "黑格", en: "Haig" }], assets: ["artillery"] }),
+        S(1, 2.65, 50.0, 650, { date: "1916年7月1日", zh: "七一攻勢", en: "First Day on the Somme", nz: "英軍發動索姆河攻勢。首日陣亡約19,240人，傷亡合計約57,470人。", ne: "About 19,240 British dead and about 57,470 total British casualties on the first day.", focus: ["ap_somme"], side: "ap", commanders: [{ zh: "黑格", en: "Haig" }], assets: ["artillery"] }),
         S(25, 2.68, 50.05, 600, { date: "1916年7月", zh: "蒂耶普瓦勒血戰", en: "Thiepval Bloodbath", nz: "德軍機槍火力造成協約國重大傷亡。", ne: "German machine-gun fire inflicts heavy Allied losses.", focus: ["ap_somme", "cp_somme"], side: "both", assets: ["artillery"] }),
         S(50, 2.7, 49.9, 580, { date: "1916年9月", zh: "坦克首戰", en: "Tanks Debut", nz: "英軍首次投入坦克，突破部分德軍防線。", ne: "British tanks debut, breaking some German lines.", focus: ["ap_somme"], side: "ap", assets: ["artillery"] }),
         S(75, 2.7, 49.9, 620, { date: "1916年11月", zh: "攻勢收束", en: "Offensive Winds Down", nz: "攻勢在泥濘中停滯，僅推進數英里。", ne: "The offensive stalls in mud — gains measured in miles.", side: "both" }),
@@ -108,8 +108,8 @@ module.exports = function ({ cam }) {
         "遠征失敗，澳紐軍團（ANZAC）傷亡沉重；推動鄂圖曼民族主義與凱末爾崛起。"
       ),
       storyboard: [
-        S(1, 26.5, 40.5, 620, { date: "1915年4月25日", zh: "海軍炮擊", en: "Naval Bombardment", nz: "協約國艦隊炮轟加里波利半島，準備登陸。", ne: "Allied fleet bombards the Gallipoli peninsula before landings.", assets: ["navy", "artillery"], fz: "英法澳紐聯軍", fe: "British, French, ANZAC forces" }),
-        S(20, 26.28, 40.24, 580, { date: "1915年4月25日", zh: "安zac 灣登陸", en: "Landings at Anzac Cove", nz: "澳紐軍團在安zac 灣登陸，遭鄂圖曼軍猛烈抵抗。", ne: "ANZAC troops land at Anzac Cove — fierce Ottoman resistance.", focus: ["ap_gallipoli", "cp_ottoman"], side: "both", commanders: [{ zh: "凱末爾", en: "Atatürk" }], assets: ["landing", "navy"] }),
+        S(1, 26.5, 40.5, 620, { date: "1915年3月18日", zh: "海峽強航失敗", en: "Naval Attack Fails", nz: "協約國艦隊強航達達尼爾海峽失敗。海軍失敗是3月18日，不是4月25日。", ne: "The naval attack fails on 18 March 1915, not on 25 April.", assets: ["navy", "artillery"], fz: "英法澳紐聯軍", fe: "British, French, ANZAC forces" }),
+        S(20, 26.28, 40.24, 580, { date: "1915年4月25日", zh: "安扎克灣登陸", en: "Landings at Anzac Cove", nz: "澳紐軍團在安扎克灣登陸，遭鄂圖曼軍猛烈抵抗。", ne: "ANZAC troops land at Anzac Cove — fierce Ottoman resistance.", focus: ["ap_gallipoli", "cp_ottoman"], side: "both", commanders: [{ zh: "凱末爾", en: "Atatürk" }], assets: ["landing", "navy"] }),
         S(40, 26.22, 40.32, 560, { date: "1915年8月", zh: "蘇弗拉灣攻勢", en: "Suvla Bay Offensive", nz: "協約國增兵蘇弗拉灣，仍無法突破。", ne: "Allied reinforcements at Suvla Bay fail to break through.", focus: ["ap_gallipoli"], side: "ap", assets: ["landing"] }),
         S(65, 26.35, 40.35, 600, { date: "1915年秋冬", zh: "僵持與疾病", en: "Stalemate and Disease", nz: "戰壕僵持，痢疾與傷寒奪走大量士兵生命。", ne: "Trench stalemate — dysentery and typhus take many lives.", side: "both" }),
         S(85, 26.41, 40.41, 700, { date: "1916年1月", zh: "秘密撤離", en: "Secret Evacuation", nz: "協約國在夜間秘密撤離半島，遠征以失敗告終。", ne: "Allied forces evacuate by night — the campaign ends in failure.", focus: ["ap_gallipoli"], side: "ap" }),
@@ -142,7 +142,7 @@ module.exports = function ({ cam }) {
       storyboard: [
         S(1, 3.0, 50.5, 700, { date: "1940年5月", zh: "德軍突破", en: "German Breakthrough", nz: "德軍裝甲部隊穿越阿登，直插英吉利海峽。", ne: "German armour breaks through the Ardennes to the Channel.", focus: ["ax_panzer"], side: "axis", commanders: [{ zh: "倫德施泰特", en: "von Rundstedt" }], assets: ["air"] }),
         S(25, 2.9, 51.0, 650, { date: "1940年5月下旬", zh: "聯軍被圍", en: "Allies Encircled", nz: "英法比聯軍被困敦克爾克與周邊「口袋」。", ne: "Anglo-French-Belgian forces trapped in the Dunkirk pocket.", focus: ["al_bef"], side: "allies", commanders: [{ zh: "戈特", en: "Gort" }] }),
-        S(45, 2.35, 51.05, 580, { date: "1940年5月26日", zh: "发电机行動", en: "Operation Dynamo", nz: "英國啟動敦克爾克撤離，民船與軍艦協力運兵。", ne: "Operation Dynamo — civilian boats join naval evacuation.", assets: ["navy", "landing"], fz: "撤離 33.8 萬人", fe: "338,000 evacuated" }),
+        S(45, 2.35, 51.05, 580, { date: "1940年5月26日", zh: "發電機行動", en: "Operation Dynamo", nz: "英國啟動敦克爾克撤離，民船與軍艦協力運兵。", ne: "Operation Dynamo — civilian boats join naval evacuation.", assets: ["navy", "landing"], fz: "撤離 33.8 萬人", fe: "338,000 evacuated" }),
         S(70, 2.35, 51.05, 520, { date: "1940年6月4日", zh: "海灘撤離", en: "Beach Evacuation", nz: "士兵在空襲下登船撤往英國，裝備大量遺棄。", ne: "Troops embark under air attack — much equipment abandoned.", focus: ["al_bef"], side: "allies", assets: ["navy", "air"] }),
         S(95, 2.35, 51.05, 700, { date: "1940年6月", zh: "奇蹟與代價", en: "Miracle and Cost", nz: "英軍主力保存，但法國即將投降。", ne: "The BEF is saved — but France is about to fall.", side: "allies" }),
       ],
@@ -151,14 +151,14 @@ module.exports = function ({ cam }) {
       END_DAY: 100,
       analysis: A(
         "德軍1942年夏攻向伏爾加河與高加索；斯大林格勒巷戰慘烈，蘇軍天王星行動反包圍德軍第六集團軍。",
-        "蘇聯全民动员、寒冬與補給線優勢；德軍過度延伸、空運補給失敗。",
-        "二戰東線轉折點；德軍從此戰略防守，士氣與同盟信心逆轉。"
+        "蘇聯全民動員、寒冬與補給線優勢；德軍過度延伸、空運補給失敗。",
+        "第六集團軍覆滅是東線轉折。1943年7月德軍仍發動堡壘行動，在庫爾斯克進攻。"
       ),
       storyboard: [
         S(1, 44.5, 48.5, 700, { date: "1942年8月", zh: "德軍東進", en: "German Drive East", nz: "德軍第六集團軍向伏爾加河與斯大林格勒推進。", ne: "German 6th Army advances toward the Volga and Stalingrad.", focus: ["ax_6th"], side: "axis", commanders: [{ zh: "保盧斯", en: "Paulus" }], assets: ["air", "artillery"] }),
         S(25, 44.0, 48.7, 600, { date: "1942年9月", zh: "進入城市", en: "Into the City", nz: "德軍攻入斯大林格勒市區，逐屋巷戰。", ne: "Germans enter the city — brutal house-to-house fighting.", focus: ["ax_6th", "al_red"], side: "both", assets: ["artillery"] }),
         S(45, 44.0, 48.7, 550, { date: "1942年10–11月", zh: "崔可夫死守", en: "Chuikov Holds", nz: "蘇軍第62集團軍在廢墟中頑抗，「擁抱敵人」戰術。", ne: "Soviet 62nd Army holds the ruins — \"hugging\" tactics.", focus: ["al_red"], side: "allies", commanders: [{ zh: "崔可夫", en: "Chuikov" }] }),
-        S(65, 44.5, 48.5, 620, { date: "1942年11月19日", zh: "天王星行動", en: "Operation Uranus", nz: "蘇軍從南北两翼包圍德軍，切斷第六集團軍退路。", ne: "Soviet pincers encircle the 6th Army.", focus: ["al_red"], side: "allies", assets: ["artillery"] }),
+        S(65, 44.5, 48.5, 620, { date: "1942年11月19日", zh: "天王星行動", en: "Operation Uranus", nz: "蘇軍從南北兩翼包圍德軍，切斷第六集團軍退路。", ne: "Soviet pincers encircle the 6th Army.", focus: ["al_red"], side: "allies", assets: ["artillery"] }),
         S(85, 44.0, 48.7, 580, { date: "1943年1月", zh: "德軍投降", en: "German Surrender", nz: "保盧斯率殘部投降，東線戰略逆轉。", ne: "Paulus surrenders — the Eastern Front turns.", focus: ["ax_6th"], side: "axis", fz: "德軍 30 萬被圍", fe: "300,000 Germans trapped" }),
       ],
     },
@@ -282,7 +282,7 @@ module.exports = function ({ cam }) {
       ),
       storyboard: [
         S(1, 133.0, 34.5, 650, { date: "1945年8月6日 凌晨", zh: "B-29 出擊", en: "B-29 Mission", nz: "恩奧拉·蓋號 B-29 載「小男孩」飛向廣島。", ne: "Enola Gay carries \"Little Boy\" toward Hiroshima.", focus: ["us_b29"], side: "us", commanders: [{ zh: "蒂貝茨", en: "Tibbets" }], assets: ["air"] }),
-        S(20, 132.46, 34.39, 500, { date: "1945年8月6日 8:15", zh: "廣島核爆", en: "Hiroshima", nz: "原子彈在廣島上空引爆，約十四萬人喪生。", ne: "\"Little Boy\" detonates — ~140,000 dead.", focus: ["us_b29"], side: "us", assets: ["nuclear", "air"] }),
+        S(20, 132.46, 34.39, 500, { date: "1945年8月6日 8:15", zh: "廣島核爆", en: "Hiroshima", nz: "原子彈在廣島上空引爆。約十四萬是至1945年底的累計死難，不是引爆瞬間的人數。", ne: "\"Little Boy\" detonates — ~140,000 dead.", focus: ["us_b29"], side: "us", assets: ["nuclear", "air"] }),
         S(45, 129.87, 32.75, 550, { date: "1945年8月9日", zh: "長崎核爆", en: "Nagasaki", nz: "第二枚原子彈「胖子」摧毀長崎。", ne: "\"Fat Man\" destroys Nagasaki.", assets: ["nuclear", "air"] }),
         S(70, 139.69, 35.69, 800, { date: "1945年8月14–15日", zh: "天皇詔書", en: "Imperial Rescript", nz: "天皇宣布接受《波茨坦公告》，戰爭結束。", ne: "Emperor announces acceptance of the Potsdam Declaration.", side: "jp", commanders: [{ zh: "裕仁", en: "Hirohito" }] }),
         S(95, 132.46, 34.39, 750, { date: "1945年9月", zh: "核時代來臨", en: "Nuclear Age", nz: "太平洋戰爭結束，人類進入核威懾時代。", ne: "The Pacific War ends — humanity enters the nuclear age.", side: "both" }),
@@ -356,7 +356,7 @@ module.exports = function ({ cam }) {
       END_DAY: 100,
       analysis: A(
         "以色列建國次日，阿拉伯聯軍入侵；以軍在特拉維夫、耶路撒冷等地抵抗，最終停火線劃定。",
-        "以色列全民动员與海外猶太支持；阿拉伯國家政治分裂、軍事協調不足。",
+        "以色列全民動員與海外猶太支持；阿拉伯國家政治分裂、軍事協調不足。",
         "第一次中東戰爭確立以色列生存；巴勒斯坦難民問題與以阿敵對開端。"
       ),
       storyboard: [
@@ -375,9 +375,9 @@ module.exports = function ({ cam }) {
         "以色列大幅擴張；巴勒斯坦占領問題、定居點與以阿關係長期惡化。"
       ),
       storyboard: [
-        S(1, 34.78, 32.09, 700, { date: "1967年6月5日", zh: "焦土作戰", en: "Operation Focus", nz: "以軍空軍先發制人，摧毀埃及等國機場上戰機。", ne: "Israeli Air Force destroys Arab aircraft on the ground.", focus: ["isr_67"], side: "isr", commanders: [{ zh: "戴揚", en: "Dayan" }], assets: ["air"], fz: "以軍空軍 200+ 架", fe: "200+ Israeli aircraft" }),
+        S(1, 34.78, 32.09, 700, { date: "1967年6月5日", zh: "聚焦行動", en: "Operation Focus", nz: "以軍空軍先發制人，摧毀埃及等國機場上戰機。", ne: "Israeli Air Force destroys Arab aircraft on the ground.", focus: ["isr_67"], side: "isr", commanders: [{ zh: "戴揚", en: "Dayan" }], assets: ["air"], fz: "以軍空軍 200+ 架", fe: "200+ Israeli aircraft" }),
         S(25, 33.0, 30.0, 650, { date: "1967年6月5–6日", zh: "西奈進攻", en: "Sinai Offensive", nz: "以軍坦克突破埃及防線，向蘇伊士運河推進。", ne: "Israeli armour breaks through toward the Suez Canal.", focus: ["isr_67", "ar_67"], side: "both", assets: ["artillery"] }),
-        S(50, 35.75, 33.05, 600, { date: "1967年6月7日", zh: "戈蘭高地", en: "Golan Heights", nz: "以軍攻占敘利亞戈蘭高地。", ne: "Israel captures the Syrian Golan Heights.", focus: ["isr_67"], side: "isr" }),
+        S(50, 35.75, 33.05, 600, { date: "1967年6月9–10日", zh: "戈蘭高地", en: "Golan Heights", nz: "戈蘭攻勢在6月9日開始，6月10日結束。", ne: "The Golan offensive runs on 9–10 June.", focus: ["isr_67"], side: "isr" }),
         S(75, 35.21, 31.77, 580, { date: "1967年6月7–10日", zh: "耶路撒冷與西岸", en: "Jerusalem & West Bank", nz: "以軍占領東耶路撒冷及約旦河西岸。", ne: "East Jerusalem and the West Bank fall to Israel.", focus: ["isr_67"], side: "isr" }),
         S(95, 34.78, 32.09, 750, { date: "1967年6月10日", zh: "六日戰爭結束", en: "War Ends in Six Days", nz: "以色列大獲全勝，版圖劇變。", ne: "Israel wins decisively — borders transformed.", side: "isr" }),
       ],

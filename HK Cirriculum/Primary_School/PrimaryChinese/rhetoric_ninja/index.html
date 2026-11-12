@@ -1,352 +1,74 @@
 ﻿<!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-HK">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>修辭忍者 - Rhetoric Ninja</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
-      width: 100vw;
-      height: 100vh;
-    }
-
-    #game-container {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-    }
-
-    #game-canvas {
-      position: absolute;
-      top: 0;
-      left: 0;
-      cursor: crosshair;
-      touch-action: none;
-    }
-
-    .flash-overlay {
-      position: absolute;
-      inset: 0;
-      background: white;
-      opacity: 0.8;
-      z-index: 50;
-      pointer-events: none;
-      animation: pulse 0.2s;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 0.8; }
-      50% { opacity: 0.4; }
-    }
-
-    .game-title {
-      position: absolute;
-      top: 16px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 10;
-      background: linear-gradient(to right, #fbbf24, #f97316);
-      color: white;
-      padding: 12px 32px;
-      border-radius: 8px;
-      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    }
-
-    .game-title h1 {
-      font-size: 24px;
-      font-weight: bold;
-      margin: 0;
-    }
-
-    .instructions-panel {
-      position: absolute;
-      top: 80px;
-      left: 16px;
-      z-index: 10;
-      background: rgba(0, 0, 0, 0.7);
-      color: white;
-      padding: 16px 24px;
-      border-radius: 8px;
-      max-width: 320px;
-      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    }
-
-    .instructions-panel h2 {
-      font-size: 20px;
-      font-weight: bold;
-      margin-bottom: 12px;
-      color: #fbbf24;
-    }
-
-    .instructions-panel .instruction-item {
-      display: flex;
-      align-items: flex-start;
-      margin-bottom: 8px;
-      font-size: 14px;
-    }
-
-    .instructions-panel .instruction-item span:first-child {
-      margin-right: 8px;
-    }
-
-    .instructions-panel .instruction-item .green {
-      color: #4ade80;
-      font-weight: bold;
-    }
-
-    .instructions-panel .instruction-item .orange {
-      color: #fb923c;
-      font-weight: bold;
-    }
-
-    .instructions-panel .instruction-item .red {
-      color: #f87171;
-      font-weight: bold;
-    }
-
-    .instructions-panel .instruction-note {
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px solid rgba(107, 114, 128, 0.6);
-      font-size: 12px;
-      color: rgba(209, 213, 219, 1);
-    }
-
-    .score-panel {
-      position: absolute;
-      top: 80px;
-      right: 16px;
-      z-index: 10;
-      background: rgba(0, 0, 0, 0.6);
-      color: white;
-      padding: 8px 16px;
-      border-radius: 8px;
-    }
-
-    .score-panel div {
-      font-size: 18px;
-      font-weight: bold;
-    }
-
-    .game-over-screen {
-      position: absolute;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.7);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 50;
-    }
-
-    .game-over-content {
-      background: white;
-      border-radius: 8px;
-      padding: 32px;
-      text-align: center;
-      max-width: 448px;
-    }
-
-    .game-over-content h2 {
-      font-size: 36px;
-      font-weight: bold;
-      margin-bottom: 16px;
-      color: #dc2626;
-    }
-
-    .game-over-content p {
-      font-size: 24px;
-      margin-bottom: 24px;
-    }
-
-    .btn {
-      font-weight: bold;
-      padding: 12px 32px;
-      border-radius: 8px;
-      font-size: 20px;
-      border: none;
-      cursor: pointer;
-      transition: background-color 0.2s;
-    }
-
-    .btn-green {
-      background: #22c55e;
-      color: white;
-    }
-
-    .btn-green:hover {
-      background: #16a34a;
-    }
-
-    .btn-red {
-      background: rgba(239, 68, 68, 0.8);
-      color: white;
-    }
-
-    .btn-red:hover {
-      background: rgba(239, 68, 68, 1);
-    }
-
-    .btn-black {
-      background: rgba(0, 0, 0, 0.6);
-      color: white;
-    }
-
-    .btn-black:hover {
-      background: rgba(0, 0, 0, 0.8);
-    }
-
-    .control-buttons {
-      position: absolute;
-      top: 16px;
-      right: 16px;
-      z-index: 10;
-      display: flex;
-      gap: 8px;
-    }
-
-    .control-buttons button {
-      padding: 8px 16px;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      transition: all 0.2s;
-      font-weight: bold;
-    }
-
-    footer {
-      text-align: center;
-      padding: 16px;
-      color: #64748b;
-      font-size: 12px;
-      font-family: system-ui, sans-serif;
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      z-index: 100;
-      background: rgba(255, 255, 255, 0.9);
-    }
-
-    footer p {
-      font-style: italic;
-      margin-bottom: 4px;
-    }
-
-    footer p:last-of-type {
-      font-size: 11px;
-      margin-top: 8px;
-      padding-top: 8px;
-      border-top: 1px solid #cbd5e1;
-      font-style: normal;
-    }
-  </style>
-      <!-- NCS i18n fleet kit (auto-injected) -->
-  <link rel="stylesheet" href="../../../common/ncs-i18n.css" />
-  <script src="../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
-  <style data-ncs-kit="fleet-bridge">
-    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
-    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
-      display: none !important;
-    }
-  </style>
-  <script data-ncs-kit="fleet-init">
-  (function () {
-    function hideLegacyToggles() {
-      document.body.classList.add("ncs-fleet-mounted");
-      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
-        var label = (btn.textContent || "").trim();
-        if (label === "EN" || label === "\u4E2D") {
-          btn.classList.add("ncs-hide-when-ncs-fleet");
-        }
-      });
-      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
-        el.classList.add("ncs-hide-when-ncs-fleet");
-      });
-    }
-    function boot() {
-      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
-      window.NcsI18n.init({
-        chromePath: "../../../_shared/ncs-chrome.json",
-        target: document.body
-      }).then(hideLegacyToggles);
-    }
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", boot);
-    } else {
-      boot();
-    }
-  })();
-  </script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小三｜句子｜找出比喻</title>
+<link rel="stylesheet" href="../shared/lesson.css">
 </head>
 <body>
-  <div id="game-container">
-    <!-- Flash effect overlay -->
-    <div id="flash-overlay" class="flash-overlay" style="display: none;"></div>
-
-    <!-- Canvas -->
-    <canvas id="game-canvas"></canvas>
-
-    <!-- Game Title -->
-    <div class="game-title">
-      <h1>修辭忍者</h1>
-    </div>
-
-    <!-- Instructions Panel -->
-    <div class="instructions-panel">
-      <h2>遊戲說明</h2>
-      <div class="instruction-item">
-        <span style="color: #4ade80;">✓</span>
-        <span>切開<strong class="green">綠色</strong>卷軸（比喻）得分</span>
-      </div>
-      <div class="instruction-item">
-        <span style="color: #fb923c;">○</span>
-        <span><strong class="orange">橙色</strong>卷軸（普通句子）無影響</span>
-      </div>
-      <div class="instruction-item">
-        <span style="color: #f87171;">✗</span>
-        <span>避開<strong class="red">紅色</strong>炸彈（錯誤句子）</span>
-      </div>
-      <div class="instruction-note">
-        <p>用滑鼠或手指劃過螢幕來切開卷軸</p>
-      </div>
-    </div>
-
-    <!-- Score and Lives -->
-    <div class="score-panel">
-      <div>分數: <span id="score">0</span></div>
-      <div>生命: <span id="lives">❤️❤️❤️</span></div>
-    </div>
-
-    <!-- Game Over Screen -->
-    <div id="game-over-screen" class="game-over-screen" style="display: none;">
-      <div class="game-over-content">
-        <h2>遊戲結束!</h2>
-        <p>最終分數: <span id="final-score">0</span></p>
-        <button class="btn btn-green" onclick="startGame()">重新開始</button>
-      </div>
-    </div>
-
-    <!-- Control Buttons -->
-    <div class="control-buttons" id="control-buttons">
-      <button class="btn btn-red" onclick="resetGame()" title="重設遊戲">重設</button>
-      <button class="btn btn-black" id="pause-btn" onclick="togglePause()">暫停</button>
-    </div>
-
-    <!-- Footer -->
-    </div>
-
-  <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+<div class="wrap">
+<a class="back" href="../index.html">返回中國語文</a>
+<p class="meta">小三 · 句子</p>
+<h1>找出比喻</h1>
+<section class="objective">
+<h2>學習目標</h2>
+<p>能指出哪一句把一件東西比作另一件，並說明用來比較的那一點是否說得通。</p>
+</section>
+<section class="objective">
+<h2>怎樣做</h2>
+<p>先看句子有沒有用另一樣東西來比較。有「像」，仍要檢查兩樣東西是不是比得通。選了之後才會聽到聲音。</p>
+</section>
+<section class="objective">
+<h2>答錯時</h2>
+<p>答錯會聽到較低的一聲，並寫出這句是直接描述，還是比喻的兩樣東西對不上。請再選一次。</p>
+</section>
+<main id="app"></main>
+</div>
+<script src="../shared/sfx.js"></script>
+<script>
+window.LESSON = {
+  done: "你已能分出比喻和直接描述，也能指出把不能比較的東西硬放在一起。",
+  items: [
+    {
+      type: "choice",
+      prompt: "哪一句用了比喻？",
+      options: [
+        { text: "他的眼睛很亮。", ok: false, why: "這句直接說亮，沒有把眼睛比作另一樣東西。" },
+        { text: "他的眼睛亮得像星星。", ok: true, because: "「像」把眼睛的光比作星星。眼睛是本體，星星是喻體。" },
+        { text: "他有兩隻眼睛。", ok: false, why: "這句只說數量，沒有比喻。" }
+      ]
+    },
+    {
+      type: "choice",
+      prompt: "哪一句沒有用比喻？",
+      options: [
+        { text: "風像一把刀子割在臉上。", ok: false, why: "這句把風比作刀子，用了比喻。" },
+        { text: "風很大。", ok: true, because: "這句直接說風大，沒有用另一樣東西來比。" },
+        { text: "雲像棉花糖。", ok: false, why: "這句把雲比作棉花糖，用了比喻。" }
+      ]
+    },
+    {
+      type: "choice",
+      prompt: "「弟弟的臉圓得像皮球。」皮球是用來比甚麼？",
+      options: [
+        { text: "弟弟跑得很快", ok: false, why: "句中沒有寫跑步。皮球是用來比臉的形狀。" },
+        { text: "臉的圓", ok: true, because: "本體是臉的形狀，喻體是皮球的圓。" },
+        { text: "皮球的重量", ok: false, why: "句子比的是圓，不是比哪一個更重。" }
+      ]
+    },
+    {
+      type: "choice",
+      prompt: "哪一句的比喻說不通？",
+      options: [
+        { text: "雨點像珠子，一顆一顆落下。", ok: false, why: "珠子又圓又亮，可以用來比雨點。" },
+        { text: "這首歌甜得像一塊糖。", ok: false, why: "糖的甜可以用來比好聽、愉快的感覺，說得通。" },
+        { text: "他的聲音大得像一張桌子。", ok: true, because: "桌子沒有大小聲這一種特點，不能用來比聲音。" }
+      ]
+    }
+  ]
+};
+</script>
+<script src="../shared/engine.js"></script>
 </body>
 </html>
-

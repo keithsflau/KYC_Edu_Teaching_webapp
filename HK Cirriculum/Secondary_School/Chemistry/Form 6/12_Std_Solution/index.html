@@ -3,18 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>12_Std_Solution</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="../../../../common/babel-react-classic.js"></script>
-  <script src="../../../../common/learn-from-zero.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
-  <style>
-    body { font-family: "IBM Plex Sans", system-ui, sans-serif; background-color: #f8fafc; color: #0f172a; min-height: 100vh; }
-  </style>
-  <!-- NCS i18n fleet kit (auto-injected) -->
+  <title>標準溶液計算 | Standard solution</title>
+  <link rel="stylesheet" href="../../lesson.css" />
   <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
   <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
   <style data-ncs-kit="fleet-bridge">
@@ -53,28 +43,188 @@
   </script>
 </head>
 <body>
-  <div id="root"></div>
-  <script type="text/babel" data-presets="react-classic">
-    const { useState } = React;
-    
-    function App() {
-      return (
-        <div className="max-w-4xl mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-4">12 Std Solution</h1>
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 mb-8 text-center">
-            <div className="w-full h-64 bg-slate-100 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 mb-4">
-              <span className="text-slate-400 font-medium">[ Interactive Canvas Placeholder ]</span>
-            </div>
-            <p className="text-slate-500">This interactive lab is currently under development.</p>
-          </div>
-          <LearnFromZero />
-        </div>
-      );
+  <section class="chem-learn" data-chem-entry="1">
+    <h2>學習目標</h2>
+    <ul>
+      <li>用 n = m / Mr，以及 c = n / V，計算溶液濃度。V 先換算成 dm³。</li>
+      <li>判斷哪種固體適合作基準物。</li>
+      <li>判斷體積讀數和溶質轉移誤差會令濃度偏高還是偏低。</li>
+    </ul>
+    <h2>操作</h2>
+    <ul>
+      <li>調質量、選擇體積和固體，讀畫面上的 n 和 c。</li>
+      <li>把滑桿設成 2.65 g、250 cm³、無水碳酸鈉，再按核對。</li>
+      <li>選一個誤差，判斷濃度偏高或偏低。沒有溶解、加熱或配製步驟。</li>
+    </ul>
+    <h2>錯因</h2>
+    <ul>
+      <li>液面低於刻度仍當成正確體積：實際體積偏小，濃度偏高。</li>
+      <li>固體沒有全部轉移：溶質偏少，濃度偏低。</li>
+      <li>十水碳酸鈉誤用無水的 Mr 106：摩爾數算大了，濃度偏高。</li>
+    </ul>
+    <p id="chem-feedback" role="status">調質量和體積。基準例子是 2.65 g 無水碳酸鈉配成 250 cm³。</p>
+  </section>
+  <main>
+    <div class="panel">
+      <p class="muted"><a href="../index.html">← 中六化學</a></p>
+      <h1>標準溶液計算</h1>
+      <p class="muted">c = 1000m / (Mr × V)。m 的單位是 g，V 的單位是 cm³，Mr 用 g/mol。無水碳酸鈉的課堂 Mr 取 106。</p>
+      <label for="mass">質量 m = <span id="mass-v">2.65</span> g</label>
+      <input id="mass" type="range" min="1" max="10.6" step="0.01" value="2.65" />
+      <p class="muted">體積</p>
+      <div class="row" id="vols"></div>
+      <p class="muted">固體</p>
+      <div class="row" id="solids"></div>
+      <p class="num" id="out"></p>
+      <canvas id="bar" width="640" height="180" aria-label="濃度示意"></canvas>
+      <div class="row">
+        <button type="button" id="ref">核對 2.65 g、250 cm³、Mr 106</button>
+        <button type="button" class="alt" id="wrong-mr">若把十水合物誤用 Mr 106</button>
+      </div>
+      <h2>誤差方向</h2>
+      <div class="row" id="errors"></div>
+      <div class="row">
+        <button type="button" id="high">濃度會偏高</button>
+        <button type="button" class="alt" id="low">濃度會偏低</button>
+      </div>
+    </div>
+  </main>
+  <script src="../../lesson-kit.js"></script>
+  <script>
+    var SOLIDS = [
+      { id: "anhy", name: "無水碳酸鈉", mr: 106, trust: true, note: "組成固定、不易吸濕，可作基準物。" },
+      { id: "hydrate", name: "十水碳酸鈉", mr: 286, trust: false, note: "Mr 約 286。它會風化，組成不一定固定，不適合作基準物。" },
+      { id: "naoh", name: "氫氧化鈉", mr: 40, trust: false, note: "會吸濕，也會吸收二氧化碳，稱得的質量不能當成純 NaOH。" }
+    ];
+    var ERRORS = [
+      { id: "below", text: "液面低於刻度，仍當成正確體積", high: true, why: "實際溶液體積偏小，溶質相同，濃度偏高。" },
+      { id: "above", text: "液面高於刻度", high: false, why: "實際溶液體積偏大，濃度偏低。" },
+      { id: "left", text: "燒杯裡的固體沒有全部算進溶液", high: false, why: "溶質偏少，濃度偏低。" },
+      { id: "naoh", text: "已吸濕並吸收了二氧化碳的氫氧化鈉，仍把讀數全當成 NaOH", high: false, why: "讀數有一部分不是 NaOH，實際濃度偏低。氫氧化鈉不是基準物。" },
+      { id: "hydrate", text: "固體是十水碳酸鈉，計算卻用無水的 Mr 106", high: true, why: "十水合物的 Mr 約 286。用 106 會把摩爾數算大，濃度偏高。" }
+    ];
+    var VOLS = [100, 250, 500, 1000];
+    var vol = 250;
+    var solidIndex = 0;
+    var errorIndex = 0;
+    var massEl = document.getElementById("mass");
+    var canvas = document.getElementById("bar");
+    var ctx = canvas.getContext("2d");
+
+    function molarity(mass, mr, volCm3) {
+      return (mass / mr) * (1000 / volCm3);
     }
-    
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+
+    function solid() {
+      return SOLIDS[solidIndex];
+    }
+
+    function paint() {
+      var mass = Number(massEl.value);
+      var s = solid();
+      document.getElementById("mass-v").textContent = mass.toFixed(2);
+      var out = document.getElementById("out");
+      var c = null;
+      if (s.id === "naoh") {
+        out.textContent = "不把這個讀數換成濃度。" + s.note;
+      } else {
+        var n = mass / s.mr;
+        c = molarity(mass, s.mr, vol);
+        out.textContent = "n = " + n.toFixed(4) + " mol，V = " + (vol / 1000).toFixed(3) + " dm³，c = " + c.toFixed(4) + " mol/dm³。 " + s.note;
+      }
+      var w = canvas.width;
+      var h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = "#0f172a";
+      ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = "#94a3b8";
+      ctx.font = "14px sans-serif";
+      ctx.fillText(s.id === "naoh" ? "氫氧化鈉：不畫假濃度" : "濃度示意（棒長不是滴定終點）", 16, 28);
+      if (c !== null) {
+        var width = Math.max(8, Math.min(w - 80, (c / 0.4) * (w - 80)));
+        ctx.fillStyle = "#34d399";
+        ctx.fillRect(40, 70, width, 36);
+        ctx.fillStyle = "#e2e8f0";
+        ctx.fillText(c.toFixed(4) + " mol/dm³", 40, 132);
+      }
+    }
+
+    VOLS.forEach(function (v) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = v + " cm³";
+      btn.className = v === 250 ? "on" : "alt";
+      btn.onclick = function () {
+        vol = v;
+        VOLS.forEach(function (other, i) {
+          document.getElementById("vols").children[i].className = VOLS[i] === v ? "on" : "alt";
+        });
+        paint();
+        ChemLesson.say("體積改成 " + v + " cm³，即 " + (v / 1000).toFixed(3) + " dm³。");
+      };
+      document.getElementById("vols").appendChild(btn);
+    });
+
+    SOLIDS.forEach(function (s, index) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = s.name;
+      btn.className = index === 0 ? "on" : "alt";
+      btn.onclick = function () {
+        solidIndex = index;
+        for (var i = 0; i < SOLIDS.length; i++) document.getElementById("solids").children[i].className = i === index ? "on" : "alt";
+        paint();
+        ChemLesson.say(s.name + "。" + s.note);
+      };
+      document.getElementById("solids").appendChild(btn);
+    });
+
+    ERRORS.forEach(function (item, index) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = item.text;
+      btn.className = index === 0 ? "on" : "alt";
+      btn.onclick = function () {
+        errorIndex = index;
+        for (var i = 0; i < ERRORS.length; i++) document.getElementById("errors").children[i].className = i === index ? "on" : "alt";
+        ChemLesson.say("已選這個誤差。判斷濃度偏高還是偏低。");
+      };
+      document.getElementById("errors").appendChild(btn);
+    });
+
+    massEl.oninput = paint;
+
+    document.getElementById("ref").onclick = function () {
+      var mass = Number(massEl.value);
+      var ok = solid().id === "anhy" && vol === 250 && Math.abs(mass - 2.65) < 0.001;
+      if (!ok) {
+        ChemLesson.say("這一格要同時是無水碳酸鈉、2.65 g 和 250 cm³。", "no");
+        return;
+      }
+      ChemLesson.say("正確。n = 2.65 / 106 = 0.0250 mol，V = 0.250 dm³，c = 0.100 mol/dm³。", "ok");
+    };
+
+    document.getElementById("wrong-mr").onclick = function () {
+      if (solid().id !== "hydrate") {
+        ChemLesson.say("先選十水碳酸鈉，再看用錯 Mr 的後果。", "no");
+        return;
+      }
+      var mass = Number(massEl.value);
+      var right = molarity(mass, 286, vol);
+      var wrong = molarity(mass, 106, vol);
+      ChemLesson.say("用 Mr 286 時 c = " + right.toFixed(4) + " mol/dm³；誤用 106 時 c = " + wrong.toFixed(4) + " mol/dm³。錯因：摩爾質量用小了，摩爾數變大，濃度偏高。");
+    };
+
+    function judge(highChosen) {
+      var item = ERRORS[errorIndex];
+      if (highChosen === item.high) ChemLesson.say("正確。" + item.why, "ok");
+      else ChemLesson.say("方向反了。" + item.why, "no");
+    }
+
+    document.getElementById("high").onclick = function () { judge(true); };
+    document.getElementById("low").onclick = function () { judge(false); };
+    paint();
   </script>
-<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+  <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 </body>
 </html>

@@ -217,12 +217,12 @@ window.BATTLE_DATA = (function () {
           "衛星影像為現代地形，非歷史時期地貌。",
           "河川、海域水面為教學示意，按史實位置裁切顯示。"
       ],
-      "sources": "DSE 中史課程、中國通史、維基百科（交叉查證）。"
+      "sources": "八路軍總部百團大戰戰役總結的通行文本、日本華北方面軍反掃蕩記錄的對照，以及軍事科學院《中國抗日戰爭史》。不以網絡百科為唯一依據。"
   };
   const analysis =   {
-      "military": "彭德怀指挥八路军一二〇、一二九、晋察冀等部，在华北发动百团大战；破袭正太、同蒲等铁路与公路，摧毁日军据点。",
+      "military": "彭德懷指揮八路軍一二〇、一二九、晋察冀等部，在華北發動百團大戰；破襲正太、同蒲等铁路與公路，摧毁日軍據點。",
       "leaders": "百團大戰由八路軍總司令彭德懷發動，集中一百餘個團破襲華北日軍交通線、礦廠與據點，以破壞戰削弱敵佔區控制。日軍調集重兵報復掃蕩，根據地承受巨大壓力。此戰展示共軍組織動員能力，亦引發日軍加強對華北「治安戰」，改變敵後戰場態勢。",
-      "nationalPower": "日军占领区交通线漫长；八路军得民众支持，熟悉地形，擅长破袭战。",
+      "nationalPower": "日軍佔領區交通線漫長；八路軍得民眾支持，熟悉地形，擅長破襲戰。",
       "impact": "中共八路軍在敵後戰場發動的最大規模破壞攻勢。"
   };
   const storyboard =   [
@@ -238,9 +238,9 @@ window.BATTLE_DATA = (function () {
               "orbit": 0.65
           },
           "dateLabel": "1940年8月",
-          "title_zh": "破袭令下",
+          "title_zh": "破襲令下",
           "title_en": "Offensive Order Issued",
-          "narration_zh": "彭德怀下令发动百团大战，破袭华北日占区交通线。",
+          "narration_zh": "彭德懷下令發動百團大戰，破襲華北日佔區交通線。",
           "narration_en": "Peng Dehuai orders the Hundred Regiments Offensive against North China rail lines.",
           "focus": [
               "era_hr"
@@ -248,12 +248,12 @@ window.BATTLE_DATA = (function () {
           "side": "eighth_route",
           "commanders": [
               {
-                  "zh": "彭德怀",
+                  "zh": "彭德懷",
                   "en": "Peng Dehuai"
               }
           ],
           "assets": [],
-          "forces_zh": "八路军约四十团",
+          "forces_zh": "八路軍約四十團",
           "forces_en": "~400 regiments"
       },
       {
@@ -268,9 +268,9 @@ window.BATTLE_DATA = (function () {
               "orbit": 0.65
           },
           "dateLabel": "1940年8月20日",
-          "title_zh": "正太路破袭",
+          "title_zh": "正太路破襲",
           "title_en": "Zhengding–Taiyuan Line Cut",
-          "narration_zh": "八路军同时破袭正太铁路，摧毁桥梁、隧道与车站。",
+          "narration_zh": "八路軍同時破襲正太铁路，摧毁桥梁、隧道與車站。",
           "narration_en": "Forces simultaneously strike the Zhengding–Taiyuan railway.",
           "focus": [
               "era_hr"
@@ -293,9 +293,9 @@ window.BATTLE_DATA = (function () {
               "orbit": 0.65
           },
           "dateLabel": "1940年8–9月",
-          "title_zh": "据点拔除",
+          "title_zh": "據點拔除",
           "title_en": "Strongpoints Destroyed",
-          "narration_zh": "八路军攻克日军据点，破坏公路，缴获大批物资。",
+          "narration_zh": "八路軍攻克日軍據點，破壞公路，繳獲大批物资。",
           "narration_en": "Japanese strongpoints fall — roads are cut, supplies captured.",
           "focus": [
               "era_hr",
@@ -319,9 +319,9 @@ window.BATTLE_DATA = (function () {
               "orbit": 0.65
           },
           "dateLabel": "1940年10月",
-          "title_zh": "日军反扫荡",
+          "title_zh": "日軍反掃蕩",
           "title_en": "Japanese Counter-sweep",
-          "narration_zh": "日军集中兵力反扫荡，八路军转入反“扫荡”作战。",
+          "narration_zh": "日軍集中兵力反掃蕩，八路軍轉入反“掃蕩”作戰。",
           "narration_en": "Japan launches counter-sweeps — the Eighth Route Army shifts to defence.",
           "focus": [
               "japan_hr"
@@ -344,9 +344,9 @@ window.BATTLE_DATA = (function () {
               "orbit": 0.65
           },
           "dateLabel": "1940年12月",
-          "title_zh": "敌后最大攻势",
+          "title_zh": "敵後最大攻勢",
           "title_en": "Largest Rear-area Offensive",
-          "narration_zh": "百团大战为八路军在敌后发动的最大规模破袭攻势，沉重打击日占交通。",
+          "narration_zh": "百團大戰為八路軍在敵後發動的最大規模破襲攻勢，沉重打擊日佔交通。",
           "narration_en": "The largest CCP offensive in the rear — Japanese supply lines are badly hurt.",
           "focus": [],
           "side": "eighth_route",
@@ -359,8 +359,8 @@ window.BATTLE_DATA = (function () {
   const outro =   {
       "title_zh": "百團大戰",
       "title_en": "HUNDRED REGIMENTS OFFENSIVE",
-      "narration_zh": "本戰役為 DSE 中史重要考點：中共八路軍在敵後戰場發動的最大規模破壞攻勢",
-      "narration_en": "A key HKDSE Chinese History topic.",
+      "narration_zh": "1940年8月至12月，八路軍破襲華北交通線，日軍其後反掃蕩。",
+      "narration_en": "From August to December 1940 the Eighth Route Army cut North China railways, and Japan then counterattacked.",
       "cam": {
           "lng": 113.58,
           "lat": 37.87,
@@ -370,5 +370,19 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       }
   };
-  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };
+  const lesson =   {
+      "junior": "初中：看1940年8月起八路軍破襲華北交通線。",
+      "senior": "高中：把破襲戰果和日軍隨後的反掃蕩分開，不把規模口號當原因。",
+      "fact": "1940年8月20日，彭德懷指揮八路軍在華北同時破襲正太路等交通線和據點，戰役持續到當年年底。日軍其後集中兵力反掃蕩，八路軍轉入反掃蕩作戰。",
+      "sources": "八路軍總部百團大戰戰役總結的通行文本、日本華北方面軍反掃蕩記錄的對照，以及軍事科學院《中國抗日戰爭史》。不以網絡百科為唯一依據。",
+      "evaluation": "交通線長、據點分散，所以破襲能在多處同時動手。日軍接著加強掃蕩，根據地壓力變大。說它是敵後最大攻勢，是規模上的比較，不能代替破襲對象和日軍反應。",
+      "judgment": {
+          "ask": "哪一則說法更能解釋百團大戰的戰場結果？",
+          "a": "因為稱為最大攻勢，所以日軍交通線永久斷絕，沒有反擊。",
+          "b": "八路軍同時破壞鐵路和據點，日軍隨後集中兵力掃蕩，八路軍轉入防守。",
+          "better": "b",
+          "why": "戰役包含破襲和反掃蕩兩段。只重複規模口號，說明不了日軍為什麼能反擊。"
+      }
+  };
+  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, lesson, END_DAY };
 })();

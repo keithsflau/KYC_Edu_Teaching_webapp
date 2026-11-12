@@ -38,7 +38,7 @@ const canvasState = {
 
 // Vocabulary Data
 const vocabulary = [
-    { word: '濫竽充數', pinyin: 'laam6 wu1 cung1 sou3', meaning: '比喻沒有真才實學的人混在行家裡面充數，或以次充好' },
+    { word: '濫竽充數', pinyin: 'laam6 jyu1 cung1 sou3', meaning: '比喻沒有真才實學的人混在行家裡面充數，或以次充好' },
     { word: '戰國', pinyin: 'zin3 gwok3', meaning: '中國歷史上的一個時期（公元前475年-公元前221年）' },
     { word: '齊國', pinyin: 'cai4 gwok3', meaning: '戰國時期的一個諸侯國' },
     { word: '宣王', pinyin: 'syun1 wong4', meaning: '齊國的國君' },
@@ -55,7 +55,7 @@ const vocabulary = [
     { word: '獨奏', pinyin: 'duk6 zau3', meaning: '一個人單獨演奏' },
     { word: '召來', pinyin: 'ziu6 loi4', meaning: '叫人過來' },
     { word: '露出馬腳', pinyin: 'lou6 ceot1 maa5 goek3', meaning: '比喻暴露了真相或缺點' },
-    { word: '一旦', pinyin: 'jat1 daan6', meaning: '一但，如果' },
+    { word: '一旦', pinyin: 'jat1 daan6', meaning: '假如，要是' },
     { word: '偷偷地', pinyin: 'tau1 tau1 dei6', meaning: '暗中，秘密地' },
     { word: '溜走', pinyin: 'lau6 zau2', meaning: '偷偷跑掉' }
 ];

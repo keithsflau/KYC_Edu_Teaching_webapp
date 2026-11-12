@@ -2,48 +2,127 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8" />
-  <meta http-equiv="refresh" content="0;url=../../../../Secondary_School/Mathematics/Form%201/41_Fraction_Pizza_Share/index.html" />
-  <title>Fraction Pizza Share | 分數薄餅</title>
-  <!-- NCS i18n fleet kit (auto-injected) -->
-  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
-  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
-  <style data-ncs-kit="fleet-bridge">
-    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
-    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
-      display: none !important;
-    }
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>小三數學：分數薄餅 | Fraction Pizza Share</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="../../common/i18n.js"></script>
+  <script src="../../common/sfx.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Fredoka:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    body { font-family: "Fredoka", "Noto Sans TC", sans-serif; background: linear-gradient(160deg, #fff7ed 0%, #ffedd5 45%, #fde68a 100%); }
   </style>
-  <script data-ncs-kit="fleet-init">
-  (function () {
-    function hideLegacyToggles() {
-      document.body.classList.add("ncs-fleet-mounted");
-      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
-        var label = (btn.textContent || "").trim();
-        if (label === "EN" || label === "\u4E2D") {
-          btn.classList.add("ncs-hide-when-ncs-fleet");
-        }
-      });
-      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
-        el.classList.add("ncs-hide-when-ncs-fleet");
-      });
-    }
-    function boot() {
-      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
-      window.NcsI18n.init({
-        chromePath: "../../../../_shared/ncs-chrome.json",
-        target: document.body
-      }).then(hideLegacyToggles);
-    }
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", boot);
-    } else {
-      boot();
-    }
-  })();
-  </script>
 </head>
 <body>
-  <p><a href="../../../../Secondary_School/Mathematics/Form%201/41_Fraction_Pizza_Share/index.html">Fraction Pizza Share Lab →</a></p>
+  <div id="root"></div>
+  <script>
+const { useState, useEffect } = React;
+const { LanguageSelector } = window.MathI18n || { LanguageSelector: function () { return null; } };
+const DENOMS = [2, 3, 4, 6, 8];
+
+function slicePath(index, parts) {
+  const r = 86;
+  const a0 = (index / parts) * Math.PI * 2 - Math.PI / 2;
+  const a1 = ((index + 1) / parts) * Math.PI * 2 - Math.PI / 2;
+  const large = a1 - a0 > Math.PI ? 1 : 0;
+  const x0 = 100 + r * Math.cos(a0);
+  const y0 = 100 + r * Math.sin(a0);
+  const x1 = 100 + r * Math.cos(a1);
+  const y1 = 100 + r * Math.sin(a1);
+  return "M100,100 L" + x0.toFixed(2) + "," + y0.toFixed(2) + " A" + r + "," + r + " 0 " + large + " 1 " + x1.toFixed(2) + "," + y1.toFixed(2) + " Z";
+}
+
+function sameFraction(guessN, guessD, num, den) {
+  const n = Number(String(guessN).trim());
+  const d = Number(String(guessD).trim());
+  if (!Number.isInteger(n) || !Number.isInteger(d) || d <= 0 || n < 0) return false;
+  return n * den === num * d;
+}
+
+function App() {
+  const [lang, setLang] = useState("zh");
+  const [parts, setParts] = useState(4);
+  const [eaten, setEaten] = useState(1);
+  const [guessN, setGuessN] = useState("");
+  const [guessD, setGuessD] = useState("");
+  const [mark, setMark] = useState(null);
+
+  const deal = () => {
+    const d = DENOMS[Math.floor(Math.random() * DENOMS.length)];
+    const n = 1 + Math.floor(Math.random() * d);
+    setParts(d);
+    setEaten(n);
+    setGuessN("");
+    setGuessD("");
+    setMark(null);
+  };
+
+  useEffect(deal, []);
+
+  const check = () => {
+    const ok = sameFraction(guessN, guessD, eaten, parts);
+    setMark(ok ? "ok" : "bad");
+    if (window.MathSfx) {
+      if (ok) window.MathSfx.ok();
+      else window.MathSfx.wrong();
+    }
+  };
+
+  const zh = lang === "zh";
+  return React.createElement("div", { className: "min-h-screen p-6 flex flex-col items-center" },
+    React.createElement("div", { className: "w-full max-w-3xl flex justify-between items-center mb-4" },
+      React.createElement("a", { href: "../index.html", className: "text-orange-800 font-bold" }, zh ? "← 小三數學" : "← Primary 3"),
+      React.createElement(LanguageSelector, { lang: lang, setLang: setLang })
+    ),
+    React.createElement("h1", { className: "text-4xl md:text-5xl font-black text-orange-900 mb-2 text-center" }, zh ? "分數薄餅" : "Fraction Pizza Share"),
+    React.createElement("p", { className: "text-lg text-orange-800 mb-6 text-center max-w-xl" }, zh ? "薄餅已平均分開，着色的是吃掉的部分。先寫分數，再按核對。" : "The pizza is shared in equal slices. Write the shaded fraction, then check."),
+    React.createElement("div", { className: "bg-white/95 rounded-3xl p-8 shadow-2xl w-full max-w-3xl border-4 border-orange-200" },
+      React.createElement("svg", { viewBox: "0 0 200 200", className: "w-64 h-64 mx-auto mb-6", role: "img", "aria-label": zh ? "已平均分成 " + parts + " 份的薄餅" : "Pizza in " + parts + " equal slices" },
+        [...Array(parts)].map(function (_, i) {
+          return React.createElement("path", {
+            key: i,
+            d: slicePath(i, parts),
+            fill: i < eaten ? "#f97316" : "#ffedd5",
+            stroke: "#9a3412",
+            strokeWidth: "2"
+          });
+        }),
+        React.createElement("circle", { cx: "100", cy: "100", r: "86", fill: "none", stroke: "#9a3412", strokeWidth: "4" })
+      ),
+      React.createElement("p", { className: "text-center text-xl font-bold text-slate-700 mb-6" }, zh ? "着色部分是全張薄餅的幾分之幾？" : "What fraction of the pizza is shaded?"),
+      React.createElement("div", { className: "flex items-center justify-center gap-3 mb-4" },
+        React.createElement("input", {
+          "aria-label": zh ? "分子" : "numerator",
+          inputMode: "numeric",
+          value: guessN,
+          placeholder: zh ? "分子" : "num",
+          onChange: function (e) { setGuessN(e.target.value); setMark(null); },
+          className: "w-24 text-center text-3xl font-black p-2 border-4 border-orange-300 rounded-xl"
+        }),
+        React.createElement("span", { className: "text-4xl font-black text-orange-700" }, "/"),
+        React.createElement("input", {
+          "aria-label": zh ? "分母" : "denominator",
+          inputMode: "numeric",
+          value: guessD,
+          placeholder: zh ? "分母" : "den",
+          onChange: function (e) { setGuessD(e.target.value); setMark(null); },
+          onKeyDown: function (e) { if (e.key === "Enter") check(); },
+          className: "w-24 text-center text-3xl font-black p-2 border-4 border-orange-300 rounded-xl"
+        }),
+        React.createElement("button", { type: "button", onClick: check, className: "px-5 py-3 bg-orange-500 text-white font-black rounded-xl" }, zh ? "核對" : "Check")
+      ),
+      React.createElement("div", { className: "h-16 text-center text-2xl font-black" },
+        mark === "ok" && React.createElement("span", { className: "text-green-600" }, zh ? "答對了：" + eaten + "/" + parts : "Correct: " + eaten + "/" + parts),
+        mark === "bad" && React.createElement("span", { className: "text-red-600" }, zh ? "再試一次" : "Try again")
+      ),
+      React.createElement("button", { type: "button", onClick: deal, className: "block mx-auto mt-2 px-6 py-3 bg-amber-100 text-amber-900 font-bold rounded-full" }, zh ? "下一張薄餅" : "Next pizza")
+    )
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App, null));
+  </script>
   <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 </body>
 </html>

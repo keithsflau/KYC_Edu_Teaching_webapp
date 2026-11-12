@@ -185,7 +185,7 @@ window.BATTLE_DATA = (function () {
       }
   ];
   const notes =   {
-      "summary": "長津湖戰役 — DSE 西史小戰役地圖。",
+      "summary": "長津湖戰役 — 課題地圖。兵力與路線為示意。",
       "caveats": [
           "本圖僅覆蓋該戰役核心區域；戰線與兵力為教學示意。",
           "衛星影像為現代地形。"
@@ -335,11 +335,33 @@ window.BATTLE_DATA = (function () {
           "forces_en": ""
       }
   ];
-  const outro =   {
+    const sourceTask = {
+    "cite": "美軍陸戰一師師長史密斯對「撤退」一詞的回應，1950年12月",
+    "excerpt": "他把部隊向興南移動說成是換一個方向進攻，而不是承認被擊潰。",
+    "ask": "這句話的立場是什麼？",
+    "options": [
+      {
+        "t": "承認陸戰隊在長津湖全軍覆沒。",
+        "ok": false,
+        "why": "部隊突圍到了興南，損失很重，但不是全軍覆沒。"
+      },
+      {
+        "t": "在被志願軍分割包圍時，仍把行動說成有組織的突圍。",
+        "ok": true,
+        "why": "志願軍第9兵團在1950年11月下旬圍攻。史密斯的用詞是指揮部的立場，傷亡則是另一組事實。"
+      },
+      {
+        "t": "宣布中國沒有參戰。",
+        "ok": false,
+        "why": "長津湖的對手是1950年10月入朝的志願軍。"
+      }
+    ]
+  };
+const outro =   {
       "title_zh": "長津湖戰役",
       "title_en": "CHOSIN RESERVOIR",
-      "narration_zh": "本戰役為 DSE 西史重要考點。",
-      "narration_en": "A key DSE Western History topic.",
+      "narration_zh": "1950年11月，志願軍第9兵團在長津湖圍攻美軍陸戰一師。",
+      "narration_en": "In November 1950 the PVA 9th Army attacked the US 1st Marine Division at the Chosin Reservoir.",
       "cam": {
           "lng": 127.15,
           "lat": 40.45,
@@ -349,5 +371,5 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       }
   };
-  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };
+  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, sourceTask, END_DAY };
 })();

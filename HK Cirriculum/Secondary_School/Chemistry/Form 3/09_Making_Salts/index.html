@@ -2,79 +2,199 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>09_Making_Salts</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="../../../../common/babel-react-classic.js"></script>
-  <script src="../../../../common/learn-from-zero.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>鹽的路線 | Making salts</title>
+  <link rel="stylesheet" href="../../lesson.css" />
   <style>
-    body { font-family: "IBM Plex Sans", system-ui, sans-serif; background-color: #f8fafc; color: #0f172a; min-height: 100vh; }
+    .scene { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 12px 14px; margin-top: 10px; }
+    .prompt { font-size: 1.15rem; font-weight: 800; margin: 8px 0; }
+    #chem-feedback.ok { background: #ecfdf5; color: #065f46; }
+    #chem-feedback.no { background: #fef2f2; color: #991b1b; }
   </style>
-  <!-- NCS i18n fleet kit (auto-injected) -->
-  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
-  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
-  <style data-ncs-kit="fleet-bridge">
-    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
-    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
-      display: none !important;
-    }
-  </style>
-  <script data-ncs-kit="fleet-init">
-  (function () {
-    function hideLegacyToggles() {
-      document.body.classList.add("ncs-fleet-mounted");
-      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
-        var label = (btn.textContent || "").trim();
-        if (label === "EN" || label === "\u4E2D") {
-          btn.classList.add("ncs-hide-when-ncs-fleet");
-        }
-      });
-      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
-        el.classList.add("ncs-hide-when-ncs-fleet");
-      });
-    }
-    function boot() {
-      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
-      window.NcsI18n.init({
-        chromePath: "../../../../_shared/ncs-chrome.json",
-        target: document.body
-      }).then(hideLegacyToggles);
-    }
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", boot);
-    } else {
-      boot();
-    }
-  })();
-  </script>
 </head>
 <body>
-  <div id="root"></div>
-  <script type="text/babel" data-presets="react-classic">
-    const { useState } = React;
-    
-    function App() {
-      return (
-        <div className="max-w-4xl mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-4">09 Making Salts</h1>
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 mb-8 text-center">
-            <div className="w-full h-64 bg-slate-100 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 mb-4">
-              <span className="text-slate-400 font-medium">[ Interactive Canvas Placeholder ]</span>
-            </div>
-            <p className="text-slate-500">This interactive lab is currently under development.</p>
-          </div>
-          <LearnFromZero />
-        </div>
-      );
+  <section class="chem-learn" data-chem-entry="1">
+    <h2>學習目標</h2>
+    <ul>
+      <li>可溶鹽按原料分類：酸和可溶鹼、酸和金屬、酸和不溶鹼或碳酸鹽。</li>
+      <li>不溶鹽用沉澱法，由兩種可溶鹽的離子相遇而成。</li>
+      <li>本課只選路線，不提供用量或製備步驟。</li>
+    </ul>
+    <p id="chem-feedback" role="status">看鹽溶不溶，再看原料，然後選路線。</p>
+  </section>
+  <main data-chem-silent>
+    <div class="panel">
+      <h1>鹽的路線</h1>
+      <p class="muted">只做一件事：為這一種鹽選路線。不提供質量、體積、濃度或操作步驟。鉀、鈉、鈣與酸反應太劇烈，不能當成「酸 + 金屬」。</p>
+      <p class="muted" id="progress">第 1 / 5 題</p>
+      <p class="prompt" id="salt"></p>
+      <p id="materials"></p>
+      <div class="scene" id="note"></div>
+      <div class="row" id="routes">
+        <button type="button" data-route="alkali">酸 + 可溶鹼</button>
+        <button type="button" data-route="metal">酸 + 金屬</button>
+        <button type="button" data-route="insoluble">酸 + 不溶鹼或碳酸鹽</button>
+        <button type="button" data-route="ppt">沉澱法</button>
+      </div>
+      <p class="row"><button type="button" class="alt" id="again">重新開始</button></p>
+      <p class="row"><a href="../index.html">返回中三</a></p>
+    </div>
+  </main>
+  <script src="../../lesson-kit.js"></script>
+  <script>
+    var items = [
+      {
+        salt: "氯化鈉（可溶於水）",
+        materials: "原料：稀鹽酸、氫氧化鈉溶液。",
+        note: "氫氧化鈉溶於水。",
+        answer: "alkali",
+        why: {
+          alkali: "氯化鈉：正確。兩種原料都溶於水，酸和可溶鹼得到可溶的氯化鈉。這裡只判斷路線，沒有用量。",
+          metal: "氯化鈉：原料是酸和可溶鹼，不是金屬。鈉與酸反應太劇烈，也不能當作「酸 + 金屬」。",
+          insoluble: "氯化鈉：氫氧化鈉溶於水，不是不溶鹼，也不是碳酸鹽。",
+          ppt: "氯化鈉：氯化鈉可溶於水，不會以沉澱析出。沉澱法用於不溶鹽。"
+        }
+      },
+      {
+        salt: "硫酸銅（可溶於水）",
+        materials: "原料：稀硫酸、氧化銅。",
+        note: "氧化銅不溶於水。銅金屬不與稀硫酸反應。",
+        answer: "insoluble",
+        why: {
+          insoluble: "硫酸銅：正確。氧化銅是不溶於水的鹼性氧化物，和酸得到可溶的硫酸銅。這裡沒有用量或加熱步驟。",
+          alkali: "硫酸銅：氧化銅不溶於水，不是可溶鹼，不能用「酸 + 可溶鹼」。",
+          metal: "硫酸銅：銅不與稀硫酸反應，不能用銅和稀硫酸得到硫酸銅。",
+          ppt: "硫酸銅：硫酸銅可溶於水。沉澱法得到的是不溶鹽，不是硫酸銅。"
+        }
+      },
+      {
+        salt: "氯化鋅（可溶於水）",
+        materials: "原料：鋅、稀鹽酸。",
+        note: "鋅比氫活潑，又不及鉀、鈉、鈣那麼劇烈。",
+        answer: "metal",
+        why: {
+          metal: "氯化鋅：正確。鋅能與稀酸反應，得到可溶的氯化鋅。這裡不寫鋅的質量或酸的體積。",
+          alkali: "氯化鋅：原料是金屬鋅，不是可溶鹼。",
+          insoluble: "氯化鋅：鋅是金屬，不是不溶鹼或碳酸鹽。",
+          ppt: "氯化鋅：氯化鋅可溶於水，不會以沉澱析出。"
+        }
+      },
+      {
+        salt: "碳酸鈣（不溶於水）",
+        materials: "原料：氯化鈣溶液、碳酸鈉溶液。",
+        note: "兩種原料都溶於水，碳酸鈣不溶於水。",
+        answer: "ppt",
+        why: {
+          ppt: "碳酸鈣：正確。鈣離子和碳酸根在溶液中相遇，生成不溶的碳酸鈣。這是沉澱法。這裡不寫混合步驟或濃度。",
+          alkali: "碳酸鈣：原料是兩種鹽溶液，不是酸和可溶鹼。碳酸鈣又不溶於水。",
+          metal: "碳酸鈣：原料裡沒有金屬，不能選「酸 + 金屬」。",
+          insoluble: "碳酸鈣：兩種原料都已經溶於水。不溶鹽是離子相遇後析出，應選沉澱法。"
+        }
+      },
+      {
+        salt: "氯化鎂（可溶於水）",
+        materials: "原料：碳酸鎂、稀鹽酸。",
+        note: "碳酸鎂不溶於水。",
+        answer: "insoluble",
+        why: {
+          insoluble: "氯化鎂：正確。不溶的碳酸鎂和酸得到可溶的氯化鎂。這裡只判斷路線，不寫何時停止，也不寫蒸乾。",
+          alkali: "氯化鎂：碳酸鎂不是可溶鹼，不能選「酸 + 可溶鹼」。",
+          metal: "氯化鎂：原料是碳酸鎂，不是鎂金屬。要按題目給的原料選路線。",
+          ppt: "氯化鎂：氯化鎂可溶於水，不會沉澱出來。"
+        }
+      }
+    ];
+    var index = 0;
+    var finished = false;
+    var audioCtx = null;
+
+    function ensureAudio() {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      if (!audioCtx) audioCtx = new AC();
+      if (audioCtx.state === "suspended") audioCtx.resume();
+      return audioCtx;
     }
-    
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+
+    function tones(freqs, dur) {
+      var c = ensureAudio();
+      if (!c) return;
+      var t = c.currentTime + 0.02;
+      var note = dur || 0.1;
+      var gap = note + 0.04;
+      for (var n = 0; n < freqs.length; n++) {
+        var start = t + n * gap;
+        var o = c.createOscillator();
+        var g = c.createGain();
+        o.type = "sine";
+        o.frequency.setValueAtTime(freqs[n], start);
+        g.gain.setValueAtTime(0.0001, start);
+        g.gain.exponentialRampToValueAtTime(0.04, start + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, start + note);
+        o.connect(g);
+        g.connect(c.destination);
+        o.start(start);
+        o.stop(start + note + 0.02);
+      }
+    }
+
+    function say(msg, kind) {
+      var el = document.getElementById("chem-feedback");
+      el.textContent = msg;
+      el.classList.remove("ok");
+      el.classList.remove("no");
+      if (kind === "ok") {
+        el.classList.add("ok");
+        tones([523.25, 659.25], 0.09);
+      } else if (kind === "no") {
+        el.classList.add("no");
+        tones([146.83], 0.22);
+      } else if (kind === "done") {
+        el.classList.add("ok");
+        tones([523.25, 659.25, 783.99], 0.1);
+      }
+      el.scrollIntoView({ block: "center" });
+    }
+
+    function render() {
+      var item = items[index];
+      document.getElementById("progress").textContent = "第 " + (index + 1) + " / " + items.length + " 題";
+      document.getElementById("salt").textContent = item.salt;
+      document.getElementById("materials").textContent = item.materials;
+      document.getElementById("note").textContent = item.note;
+    }
+
+    document.getElementById("routes").onclick = function (e) {
+      var btn = e.target.closest ? e.target.closest("button") : null;
+      if (!btn || finished) return;
+      var key = btn.getAttribute("data-route");
+      if (!key) return;
+      var item = items[index];
+      if (key === item.answer) {
+        if (index === items.length - 1) {
+          finished = true;
+          say(item.why[key] + " 五題都完成了。", "done");
+        } else {
+          say(item.why[key] + " 請做下一題。", "ok");
+          index += 1;
+          render();
+        }
+      } else {
+        say(item.why[key], "no");
+      }
+    };
+
+    document.getElementById("again").onclick = function () {
+      index = 0;
+      finished = false;
+      render();
+      var el = document.getElementById("chem-feedback");
+      el.classList.remove("ok");
+      el.classList.remove("no");
+      el.textContent = "再看溶解性和原料，然後選路線。";
+    };
+
+    render();
   </script>
-<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 </body>
 </html>

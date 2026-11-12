@@ -31,7 +31,187 @@
   }
 
 
-  function t(zh, en, isZh) { return isZh ? zh : en; }
+  var SHELL_STRINGS = {
+    zh: {
+      learnFromZero: "由零開始學",
+      lgerFlow: "學習 → 引導 → 實驗 → 複習",
+      correctMark: "✓ 正確",
+      tryAgainMark: "✗ 再想想",
+      startExperiment: "開始實驗 →",
+      nextStep: "下一步 →",
+      guidedPractice: "引導練習",
+      goToReview: "前往複習 →",
+      nextQuestion: "下一題 →",
+      keySummary: "重點摘要",
+      selfCheckQuiz: "自我測驗",
+      seeResults: "查看成績",
+      nextQ: "下一題",
+      reviewComplete: "複習完成！",
+      questionsCorrect: "題正確",
+      completeLearnFirst: "請先完成學習部分",
+      goToLearn: "前往學習 →",
+      interactiveLab: "互動實驗室",
+      experimentLocked: "實驗 🔒"
+    },
+    en: {
+      learnFromZero: "Learn From Zero",
+      lgerFlow: "LGER: Learn → Guided → Experiment → Review",
+      correctMark: "✓ Correct",
+      tryAgainMark: "✗ Try again",
+      startExperiment: "Start Experiment →",
+      nextStep: "Next →",
+      guidedPractice: "Guided Practice",
+      goToReview: "Go to Review →",
+      nextQuestion: "Next →",
+      keySummary: "Key Summary",
+      selfCheckQuiz: "Self-Check Quiz",
+      seeResults: "See Results",
+      nextQ: "Next",
+      reviewComplete: "Review Complete!",
+      questionsCorrect: "correct",
+      completeLearnFirst: "Complete Learn first",
+      goToLearn: "Go to Learn →",
+      interactiveLab: "Interactive Lab",
+      experimentLocked: "Experiment 🔒"
+    }
+  };
+
+  function registerShellStrings() {
+    if (window.NcsI18n && window.NcsI18n.registerStrings) {
+      window.NcsI18n.registerStrings(SHELL_STRINGS);
+    }
+  }
+
+  function isNcsFleet() {
+    return !!(window.NcsI18n && window.document &&
+      window.document.body && window.document.body.classList.contains("ncs-fleet-mounted"));
+  }
+
+  function resolveIsZh(fallback) {
+    if (window.NcsI18n) return window.NcsI18n.isZh();
+    return !!fallback;
+  }
+
+  /** zh-Hant → zh; en + NCS five → en (never zh). */
+  function langBucket(isZh) {
+    if (window.NcsI18n && window.NcsI18n.getLang) {
+      return window.NcsI18n.getLang() === "zh-Hant" ? "zh" : "en";
+    }
+    return resolveIsZh(isZh) ? "zh" : "en";
+  }
+
+  function t(zh, en, isZh) {
+    if (typeof zh === "object" && zh !== null) {
+      var bucket = langBucket(isZh);
+      if (zh[bucket]) return zh[bucket];
+      if (bucket !== "zh" && zh.en) return zh.en;
+      if (zh.zh) return zh.zh;
+      return "";
+    }
+    if (window.NcsI18n && window.NcsI18n.getLang) {
+      var code = window.NcsI18n.getLang();
+      if (code === "zh-Hant") return zh || en || "";
+      return en || zh || "";
+    }
+    return resolveIsZh(isZh) ? (zh || en || "") : (en || zh || "");
+  }
+
+  function ui(key, zh, en, isZh) {
+    if (window.NcsI18n && window.NcsI18n.tk) {
+      var fromKey = window.NcsI18n.tk(key);
+      if (fromKey != null && fromKey !== key) return fromKey;
+    }
+    return t(zh, en, isZh);
+  }
+
+  function chromeT(key, zh, en, isZh) {
+    if (window.NcsI18n && window.NcsI18n.t) {
+      var fromChrome = window.NcsI18n.t(key);
+      if (fromChrome != null && fromChrome !== key) return fromChrome;
+    }
+    return t(zh, en, isZh);
+  }
+
+  function readLangState(localIsZh) {
+    if (window.NcsI18n && window.NcsI18n.getLang) {
+      return { isZh: window.NcsI18n.isZh(), lang: window.NcsI18n.getLang() };
+    }
+    return { isZh: !!localIsZh, lang: localIsZh ? "zh-Hant" : "en" };
+  }
+
+  /** Subscribe to NcsI18n + document events; poll until kit loads (defer race). */
+  function useLangSync(localZhState) {
+    var localIsZh = localZhState[0];
+    var setLocalIsZh = localZhState[1];
+    var langStateHook = useState(function () {
+      return readLangState(localIsZh);
+    });
+    var langState = langStateHook[0];
+    var setLangState = langStateHook[1];
+
+    useEffect(function () {
+      registerShellStrings();
+
+      function sync() {
+        registerShellStrings();
+        setLangState(readLangState(localZhState[0]));
+      }
+
+      sync();
+
+      var unsub = null;
+      if (window.NcsI18n && window.NcsI18n.onChange) {
+        unsub = window.NcsI18n.onChange(sync);
+      }
+
+      var onDocChange = function () { sync(); };
+      if (window.document) {
+        window.document.addEventListener("hksteam-ncs-lang-change", onDocChange);
+        window.document.addEventListener("ncs-lang-change", onDocChange);
+      }
+
+      var poll = null;
+      if (!window.NcsI18n) {
+        var attempts = 0;
+        poll = setInterval(function () {
+          if (window.NcsI18n || ++attempts > 120) {
+            clearInterval(poll);
+            poll = null;
+            if (window.NcsI18n) {
+              sync();
+              if (window.NcsI18n.onChange) unsub = window.NcsI18n.onChange(sync);
+            }
+          }
+        }, 50);
+      }
+
+      return function () {
+        if (unsub) unsub();
+        if (poll) clearInterval(poll);
+        if (window.document) {
+          window.document.removeEventListener("hksteam-ncs-lang-change", onDocChange);
+          window.document.removeEventListener("ncs-lang-change", onDocChange);
+        }
+      };
+    }, []);
+
+    useEffect(function () {
+      if (!window.NcsI18n) {
+        setLangState(readLangState(localIsZh));
+      }
+    }, [localIsZh]);
+
+    function setZh(next) {
+      var val = typeof next === "function" ? next(langState.isZh) : next;
+      if (window.NcsI18n && window.NcsI18n.setLang) {
+        window.NcsI18n.setLang(val ? "zh-Hant" : "en");
+        return;
+      }
+      setLocalIsZh(!!val);
+    }
+
+    return { isZh: langState.isZh, lang: langState.lang, setZh: setZh };
+  }
 
 
   function localeOpts(step, isZh) {
@@ -106,7 +286,7 @@
         React.createElement(
           "p",
           { className: "text-xs font-black uppercase tracking-widest", style: { color: accent } },
-          t("由零開始學", "Learn From Zero", isZh)
+          ui("learnFromZero", "由零開始學", "Learn From Zero", isZh)
         ),
         React.createElement("p", { className: "text-xs text-slate-500" },
           (i + 1) + " / " + steps.length)
@@ -150,7 +330,7 @@
           "div",
           { className: "mt-3 text-sm p-3 rounded-lg bg-white/80 border border-slate-200" },
           React.createElement("p", { className: "font-semibold" },
-            (typeof step.a === "number" ? picked === step.a : optEqual(picked, step.a) || picked === step.a) ? t("✓ 正確", "✓ Correct", isZh) : t("✗ 再想想", "✗ Try again", isZh)),
+            (typeof step.a === "number" ? picked === step.a : optEqual(picked, step.a) || picked === step.a) ? ui("correctMark", "✓ 正確", "✓ Correct", isZh) : ui("tryAgainMark", "✗ 再想想", "✗ Try again", isZh)),
           whyText(step, isZh) && React.createElement("p", { className: "mt-1 text-slate-600" }, whyText(step, isZh)),
           (typeof step.a === "number" ? picked === step.a : (optEqual(picked, step.a) || picked === step.a)) && React.createElement(
             "button",
@@ -159,7 +339,7 @@
               className: "mt-3 px-4 py-2.5 rounded-xl font-semibold text-white min-h-[44px]",
               style: { background: accent }
             },
-            last ? t("開始實驗 →", "Start Experiment →", isZh) : t("下一步 →", "Next →", isZh)
+            last ? ui("startExperiment", "開始實驗 →", "Start Experiment →", isZh) : ui("nextStep", "下一步 →", "Next →", isZh)
           )
         )
       ),
@@ -170,7 +350,7 @@
           className: "mt-4 px-4 py-2.5 rounded-xl font-semibold text-white min-h-[44px]",
           style: { background: accent }
         },
-        last ? t("開始實驗 →", "Start Experiment →", isZh) : t("下一步 →", "Next →", isZh)
+        last ? ui("startExperiment", "開始實驗 →", "Start Experiment →", isZh) : ui("nextStep", "下一步 →", "Next →", isZh)
       )
     );
   }
@@ -216,8 +396,8 @@
       React.createElement(
         "div",
         { className: "flex justify-between text-sm mb-3 text-slate-500" },
-        React.createElement("span", null, t("引導練習", "Guided Practice", isZh) + " · " + (qi + 1) + "/" + bank.length),
-        React.createElement("span", null, t("得分", "Score", isZh) + " " + score)
+        React.createElement("span", null, ui("guidedPractice", "引導練習", "Guided Practice", isZh) + " · " + (qi + 1) + "/" + bank.length),
+        React.createElement("span", null, chromeT("score", "得分", "Score", isZh) + " " + score)
       ),
       React.createElement("h2", { className: "text-lg font-bold mb-1" }, t(item.qZh, item.qEn, isZh)),
       React.createElement(
@@ -235,17 +415,17 @@
         "button",
         { type: "button", className: "text-sm mt-3 font-semibold min-h-[44px]", style: { color: accent },
           onClick: function () { setHint(true); } },
-        t("提示", "Hint", isZh)
+        chromeT("hint", "提示", "Hint", isZh)
       ),
       hint && React.createElement("p", { className: "text-sm mt-1 p-3 rounded-xl bg-amber-50 border border-amber-200" }, hintText(item, isZh)),
       fb && React.createElement(
         "div",
         { className: "mt-4 p-3 rounded-xl text-sm " + (fb.ok ? "bg-emerald-50 text-emerald-800" : "bg-rose-50 text-rose-800") },
-        fb.ok ? t("正確！", "Correct!", isZh) : t("再試一次", "Try again", isZh),
+        fb.ok ? chromeT("correct", "正確！", "Correct!", isZh) : chromeT("wrong", "再試一次", "Try again", isZh),
         fb.ok && React.createElement(
           "button",
           { type: "button", className: "block mt-2 underline font-semibold", onClick: next },
-          qi + 1 >= bank.length ? t("前往複習 →", "Go to Review →", isZh) : t("下一題 →", "Next →", isZh)
+          qi + 1 >= bank.length ? ui("goToReview", "前往複習 →", "Go to Review →", isZh) : ui("nextQuestion", "下一題 →", "Next →", isZh)
         )
       )
     );
@@ -287,7 +467,7 @@
         "section",
         { className: "bg-white border border-slate-200 rounded-2xl p-4 sm:p-5" },
         React.createElement("h2", { className: "font-bold text-lg mb-3", style: { color: accent } },
-          t("重點摘要", "Key Summary", isZh)),
+          ui("keySummary", "重點摘要", "Key Summary", isZh)),
         React.createElement(
           "ul",
           { className: "space-y-2 text-sm text-slate-700" },
@@ -302,7 +482,7 @@
         "section",
         { className: "bg-white border border-slate-200 rounded-2xl p-4 sm:p-5" },
         React.createElement("h2", { className: "font-bold text-lg mb-3" },
-          t("自我測驗", "Self-Check Quiz", isZh) + " (" + (qi + 1) + "/" + quiz.length + ")"),
+          ui("selfCheckQuiz", "自我測驗", "Self-Check Quiz", isZh) + " (" + (qi + 1) + "/" + quiz.length + ")"),
         React.createElement("p", { className: "font-semibold mb-3" }, t(item.qZh, item.qEn, isZh)),
         React.createElement(
           "div",
@@ -323,15 +503,15 @@
           { type: "button", onClick: next,
             className: "mt-4 px-4 py-2.5 rounded-xl font-semibold text-white min-h-[44px]",
             style: { background: accent } },
-          qi + 1 >= quiz.length ? t("查看成績", "See Results", isZh) : t("下一題", "Next", isZh)
+          qi + 1 >= quiz.length ? ui("seeResults", "查看成績", "See Results", isZh) : ui("nextQ", "下一題", "Next", isZh)
         )
       ),
       done && React.createElement(
         "section",
         { className: "bg-white border border-slate-200 rounded-2xl p-6 text-center" },
-        React.createElement("h2", { className: "text-2xl font-bold" }, t("複習完成！", "Review Complete!", isZh)),
+        React.createElement("h2", { className: "text-2xl font-bold" }, ui("reviewComplete", "複習完成！", "Review Complete!", isZh)),
         React.createElement("p", { className: "mt-2 text-slate-600" },
-          correct + " / " + quiz.length + " " + t("題正確", "correct", isZh))
+          correct + " / " + quiz.length + " " + ui("questionsCorrect", "題正確", "correct", isZh))
       )
     );
   }
@@ -345,9 +525,12 @@
     var reviewQuiz = _ref.reviewQuiz;
     var experiment = _ref.experiment;
     var backHref = _ref.backHref || "../index.html";
-    var zhState = useState(false);
-    var isZh = zhState[0];
-    var setZh = zhState[1];
+    var zhState = useState(function () {
+      return window.NcsI18n ? window.NcsI18n.isZh() : false;
+    });
+    var langSync = useLangSync(zhState);
+    var isZh = langSync.isZh;
+    var setZh = langSync.setZh;
     var modeState = useState("learn");
     var mode = modeState[0];
     var setMode = modeState[1];
@@ -364,10 +547,10 @@
     }
 
     var tabs = [
-      { id: "learn", label: t("學習", "Learn", isZh) },
-      { id: "guided", label: t("引導", "Guided", isZh) },
-      { id: "experiment", label: learnDone ? t("實驗", "Experiment", isZh) : t("實驗 🔒", "Experiment 🔒", isZh) },
-      { id: "review", label: t("複習", "Review", isZh) }
+      { id: "learn", label: chromeT("learn", "學習", "Learn", isZh) },
+      { id: "guided", label: chromeT("guided", "引導", "Guided", isZh) },
+      { id: "experiment", label: learnDone ? chromeT("experiment", "實驗", "Experiment", isZh) : ui("experimentLocked", "實驗 🔒", "Experiment 🔒", isZh) },
+      { id: "review", label: chromeT("review", "複習", "Review", isZh) }
     ];
 
     return React.createElement(
@@ -380,15 +563,15 @@
           "div",
           null,
           React.createElement("a", { href: backHref, className: "text-sm font-semibold hover:underline", style: { color: accent } },
-            "← " + t("返回", "Back", isZh)),
+            "← " + chromeT("back", "返回", "Back", isZh)),
           React.createElement("p", { className: "text-xs uppercase tracking-widest font-bold mt-2", style: { color: accent } },
             t(meta.unitZh || meta.unit || "", meta.unitEn || meta.unit || "", isZh)),
           React.createElement("h1", { className: "text-2xl sm:text-3xl font-bold mt-1" },
             t(meta.titleZh, meta.titleEn, isZh)),
           React.createElement("p", { className: "text-sm text-slate-500 mt-1" },
-            t("學習 → 引導 → 實驗 → 複習", "LGER: Learn → Guided → Experiment → Review", isZh))
+            ui("lgerFlow", "學習 → 引導 → 實驗 → 複習", "LGER: Learn → Guided → Experiment → Review", isZh))
         ),
-        LangToggle({ zh: isZh, setZh: setZh })
+        !isNcsFleet() && !window.NcsI18n && LangToggle({ zh: isZh, setZh: setZh })
       ),
       React.createElement(
         "nav",
@@ -410,18 +593,18 @@
         "section",
         { className: "bg-white border border-slate-200 rounded-2xl p-6 text-center" },
         React.createElement("h2", { className: "text-xl font-bold" },
-          t("請先完成學習部分", "Complete Learn first", isZh)),
+          ui("completeLearnFirst", "請先完成學習部分", "Complete Learn first", isZh)),
         React.createElement("button", {
           type: "button", onClick: function () { setMode("learn"); },
           className: "mt-4 px-4 py-2.5 rounded-xl font-semibold text-white min-h-[48px]",
           style: { background: accent }
-        }, t("前往學習 →", "Go to Learn →", isZh))
+        }, ui("goToLearn", "前往學習 →", "Go to Learn →", isZh))
       ),
       mode === "experiment" && learnDone && React.createElement(
         "section",
         { className: "bg-white border border-slate-200 shadow-sm rounded-2xl p-4 sm:p-5" },
         React.createElement("h2", { className: "font-bold text-lg mb-3" },
-          t("互動實驗室", "Interactive Lab", isZh)),
+          ui("interactiveLab", "互動實驗室", "Interactive Lab", isZh)),
         experiment({ isZh: isZh, accent: accent })
       ),
       mode === "review" && ReviewPanel({ summary: reviewSummary, quiz: reviewQuiz, accent: accent, isZh: isZh }),
@@ -435,6 +618,18 @@
     GuidedDrill: GuidedDrill,
     ReviewPanel: ReviewPanel,
     Shell: Shell,
-    t: t
+    t: t,
+    ui: ui,
+    chromeT: chromeT,
+    registerShellStrings: registerShellStrings
   };
+
+  registerShellStrings();
+  if (window.NcsI18n && window.NcsI18n.onChange) {
+    window.NcsI18n.onChange(registerShellStrings);
+  }
+  if (window.document) {
+    window.document.addEventListener("hksteam-ncs-lang-change", registerShellStrings);
+    window.document.addEventListener("ncs-lang-change", registerShellStrings);
+  }
 })();

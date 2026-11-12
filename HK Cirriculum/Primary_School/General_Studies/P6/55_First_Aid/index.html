@@ -92,30 +92,42 @@ const t = {
     fr: "Traitez la plaie dans l'ordre !",
     ar: "عالِج الجرح بالترتيب!",
     it: "Tratta la ferita in ordine!"
+  },
+  adult: {
+    en: "Tell an adult",
+    zh: "告訴年長的人"
+  },
+  serious: {
+    en: "Tell an adult about a small wound. If there is a lot of bleeding, a serious injury, or the person is not responding, call 999.",
+    zh: "小傷口要先告訴老師或家長。如果流血很多、傷得很重，或人沒有反應，打 999。"
+  },
+  done_note: {
+    en: "The wound has been handled properly. That does not mean it has healed.",
+    zh: "這表示傷口已妥善處理，不等於已經癒合。"
   },
   clean: {
-    en: "1. Clean (Water)",
-    zh: "1. 清洗 (清水)",
-    ja: "1. 洗浄 (水)",
-    ko: "1. 세척 (물)"
+    en: "Rinse with clean water",
+    zh: "用清水沖洗",
+    ja: "水で洗う",
+    ko: "물로 씻기"
   },
   disinfect: {
-    en: "2. Disinfect",
-    zh: "2. 消毒",
-    ja: "2. 消毒",
-    ko: "2. 소독"
+    en: "Disinfect",
+    zh: "消毒",
+    ja: "消毒",
+    ko: "소독"
   },
   bandage: {
-    en: "3. Bandage",
-    zh: "3. 包紮",
-    ja: "3. 包帯",
-    ko: "3. 붕대"
+    en: "Cover and bandage",
+    zh: "包紮",
+    ja: "包帯",
+    ko: "붕대"
   },
   done: {
-    en: "Healed!",
-    zh: "治癒了！",
-    ja: "治った！",
-    ko: "치유됨!"
+    en: "Cared for properly",
+    zh: "已妥善處理",
+    ja: "応急処置した",
+    ko: "응급 처치함"
   },
   wrong: {
     en: "Wrong Step!",
@@ -124,7 +136,10 @@ const t = {
     ko: "잘못된 단계!"
   }
 };
-const steps = [{
+const steps = [{
+  id: "adult",
+  icon: "🧑"
+}, {
   id: "clean",
   icon: "💧"
 }, {
@@ -137,18 +152,28 @@ const steps = [{
 function App() {
   const [lang, setLang] = useState("zh");
   const [step, setStep] = useState(0); // 0, 1, 2, 3 (done)
-  const [feedback, setFeedback] = useState(null);
+  const [feedback, setFeedback] = useState(null);
+  const [buttonOrder, setButtonOrder] = useState(steps);
+  useEffect(() => {
+    setButtonOrder(steps.slice().sort(() => Math.random() - 0.5));
+  }, []);
   const getText = key => t[key][lang] || t[key]["en"];
-  const perform = (id, idx) => {
-    if (step === 3) return;
-    if (idx === step) {
-      setStep(step + 1);
-      setFeedback(null);
-    } else {
-      setFeedback("wrong");
-      setTimeout(() => setFeedback(null), 500);
-    }
-  };
+  const perform = id => {
+    if (step >= steps.length) return;
+    if (id === steps[step].id) {
+      const next = step + 1;
+      setStep(next);
+      setFeedback(null);
+      if (window.GsSfx) {
+        if (next >= steps.length) GsSfx.playComplete();
+        else GsSfx.playCorrect();
+      }
+    } else {
+      setFeedback("wrong");
+      if (window.GsSfx) GsSfx.playWrong();
+      setTimeout(() => setFeedback(null), 700);
+    }
+  };
   const reset = () => {
     setStep(0);
   };
@@ -161,38 +186,42 @@ function App() {
     className: "text-4xl font-bold mb-8 text-teal-700"
   }, getText("title")), /*#__PURE__*/React.createElement("p", {
     className: "mb-8 font-bold text-slate-500"
-  }, getText("instruction")), /*#__PURE__*/React.createElement("div", {
+  }, getText("instruction")), React.createElement("p", {
+    className: "mb-4 max-w-xl text-center font-bold text-teal-900 bg-white/80 px-4 py-3 rounded-2xl"
+  }, getText("serious")), /*#__PURE__*/React.createElement("div", {
     className: "relative w-64 h-80 bg-orange-100 rounded-3xl border-4 border-orange-200 mb-8 flex items-center justify-center overflow-hidden shadow-lg"
   }, /*#__PURE__*/React.createElement("div", {
     className: "absolute inset-0 bg-red-50/50"
-  }), step < 3 && /*#__PURE__*/React.createElement(motion.div, {
+  }), step < steps.length && /*#__PURE__*/React.createElement(motion.div, {
     className: "w-16 h-2 bg-red-600 rounded-full rotate-45",
     initial: {
       scale: 1
     },
     animate: {
-      opacity: step >= 2 ? 0.2 : 1
+      opacity: step >= 3 ? 0.2 : 1
     } // Fade out when bandaged? No, simple logic:
-  }), step >= 1 && /*#__PURE__*/React.createElement("div", {
+  }), step >= 2 && /*#__PURE__*/React.createElement("div", {
     className: "absolute inset-0 bg-blue-200/30 animate-pulse pointer-events-none"
-  }), " ", step >= 2 && /*#__PURE__*/React.createElement("div", {
-    className: "absolute border-2 border-yellow-400 w-20 h-20 rounded-full animate-ping pointer-events-none"
   }), " ", step >= 3 && /*#__PURE__*/React.createElement("div", {
+    className: "absolute border-2 border-yellow-400 w-20 h-20 rounded-full animate-ping pointer-events-none"
+  }), " ", step >= steps.length && /*#__PURE__*/React.createElement("div", {
     className: "absolute text-8xl"
   }, "🩹"), " "), /*#__PURE__*/React.createElement("div", {
     className: "flex flex-col gap-4 w-full max-w-sm"
-  }, steps.map((s, idx) => /*#__PURE__*/React.createElement("button", {
+  }, buttonOrder.map(s => /*#__PURE__*/React.createElement("button", {
     key: s.id,
-    onClick: () => perform(s.id, idx),
-    disabled: step > idx,
-    className: `p-4 rounded-xl font-bold text-lg flex items-center gap-4 transition-all ${step > idx ? "bg-green-100 text-green-800 opacity-50" : "bg-white hover:bg-teal-50 shadow text-teal-900"}`
+    onClick: () => perform(s.id),
+    disabled: steps.findIndex(x => x.id === s.id) < step,
+    className: `p-4 rounded-xl font-bold text-lg flex items-center gap-4 transition-all ${steps.findIndex(x => x.id === s.id) < step ? "bg-green-100 text-green-800 opacity-50" : "bg-white hover:bg-teal-50 shadow text-teal-900"}`
   }, /*#__PURE__*/React.createElement("span", {
     className: "text-2xl"
-  }, s.icon), " ", getText(s.id), step > idx && /*#__PURE__*/React.createElement("span", null, "✅")))), step === 3 && /*#__PURE__*/React.createElement("div", {
+  }, s.icon), " ", getText(s.id), steps.findIndex(x => x.id === s.id) < step && /*#__PURE__*/React.createElement("span", null, "✅")))), step >= steps.length && /*#__PURE__*/React.createElement("div", {
     className: "mt-8"
   }, /*#__PURE__*/React.createElement("div", {
     className: "text-3xl font-black text-green-600 animate-bounce mb-4"
-  }, getText("done")), /*#__PURE__*/React.createElement("button", {
+  }, getText("done")), React.createElement("p", {
+    className: "text-slate-700 font-bold mb-4 max-w-md"
+  }, getText("done_note")), /*#__PURE__*/React.createElement("button", {
     onClick: reset,
     className: "px-8 py-2 bg-slate-400 text-white rounded-lg"
   }, "Replay")), feedback && /*#__PURE__*/React.createElement("div", {
@@ -206,5 +235,6 @@ root.render(/*#__PURE__*/React.createElement(App, null));
       
       <!-- Footer -->
       <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+<script src="../../common/gs-sfx.js"></script>
 </body>
 </html>

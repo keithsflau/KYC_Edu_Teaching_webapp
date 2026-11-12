@@ -189,7 +189,50 @@
     <script>
 
 
-      const apps = [
+      
+      function strandOf(folder) {
+        var p = String(folder || "");
+        if (/Bar_Chart|Block_Graph|Pictogram|Picture_Graph|Tally|Pie_Chart|Line_Graph|Average_Mean|Statistics|Probability|Sorting_Objects|Data_/.test(p)) return "dh";
+        if (/Percent|Interest|Discount/.test(p)) return "na";
+        if (/Length|Weight|Height|Money|Coin|Time|Clock|Calendar|Days_Week|Capacity|Volume|Area|Perimeter|Ruler|Temperature|Speed|Scale_Map|Scale_Drawing|Measuring|Jug|Duration|Time_Zone|Cylinder|Circle_Circumference|Circle_Area|Circle_Explorer|Prism_Volume/.test(p)) return "me";
+        if (/Shape|Angle|Symmetr|Position|Direction|Coordinate|3D_|_Nets|Tessell|Quadrilateral|Circle_Part|Polygon|Compass|Orientation|Left_Right|Right_Angle/.test(p)) return "ss";
+        return "na";
+      }
+      function regroupStrands(grid) {
+        var strands = [
+          { id: "na", anchor: "arithmetic", title: "數與代數" },
+          { id: "me", anchor: "measures", title: "度量" },
+          { id: "ss", anchor: "shapes", title: "圖形與空間" },
+          { id: "dh", anchor: "data", title: "數據處理" }
+        ];
+        var cards = Array.prototype.filter.call(grid.children, function (el) { return el.tagName === "A"; });
+        if (!cards.length) return;
+        var buckets = { na: [], me: [], ss: [], dh: [] };
+        cards.forEach(function (card) {
+          var href = card.getAttribute("href") || "";
+          var m = href.match(/([^/]+)\/index\.html/);
+          buckets[strandOf(m ? m[1] : "")].push(card);
+        });
+        cards.forEach(function (c) { c.remove(); });
+        grid.className = "block space-y-2";
+        strands.forEach(function (s) {
+          if (!buckets[s.id].length) return;
+          var section = document.createElement("section");
+          section.id = s.anchor;
+          section.className = "mb-8";
+          var h2 = document.createElement("h2");
+          h2.className = "text-2xl font-black text-slate-800 mt-6 mb-4";
+          h2.textContent = s.title;
+          var wrap = document.createElement("div");
+          wrap.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6";
+          buckets[s.id].forEach(function (c) { wrap.appendChild(c); });
+          section.appendChild(h2);
+          section.appendChild(wrap);
+          grid.appendChild(section);
+        });
+      }
+
+const apps = [
 
 
         {
@@ -985,6 +1028,7 @@
 
 
         .join("");
+      regroupStrands(grid);
 
 
     </script>

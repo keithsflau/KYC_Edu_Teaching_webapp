@@ -2,79 +2,211 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>08_Ionic_Equations</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="../../../../common/babel-react-classic.js"></script>
-  <script src="../../../../common/learn-from-zero.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>離子方程式 | Ionic equations</title>
+  <link rel="stylesheet" href="../../lesson.css" />
   <style>
-    body { font-family: "IBM Plex Sans", system-ui, sans-serif; background-color: #f8fafc; color: #0f172a; min-height: 100vh; }
+    .eq { font-size: 1.05rem; font-weight: 800; line-height: 1.6; }
+    #chem-feedback.ok { background: #ecfdf5; color: #065f46; }
+    #chem-feedback.no { background: #fef2f2; color: #991b1b; }
   </style>
-  <!-- NCS i18n fleet kit (auto-injected) -->
-  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
-  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
-  <style data-ncs-kit="fleet-bridge">
-    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
-    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
-      display: none !important;
-    }
-  </style>
-  <script data-ncs-kit="fleet-init">
-  (function () {
-    function hideLegacyToggles() {
-      document.body.classList.add("ncs-fleet-mounted");
-      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
-        var label = (btn.textContent || "").trim();
-        if (label === "EN" || label === "\u4E2D") {
-          btn.classList.add("ncs-hide-when-ncs-fleet");
-        }
-      });
-      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
-        el.classList.add("ncs-hide-when-ncs-fleet");
-      });
-    }
-    function boot() {
-      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
-      window.NcsI18n.init({
-        chromePath: "../../../../_shared/ncs-chrome.json",
-        target: document.body
-      }).then(hideLegacyToggles);
-    }
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", boot);
-    } else {
-      boot();
-    }
-  })();
-  </script>
 </head>
 <body>
-  <div id="root"></div>
-  <script type="text/babel" data-presets="react-classic">
-    const { useState } = React;
-    
-    function App() {
-      return (
-        <div className="max-w-4xl mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-4">08 Ionic Equations</h1>
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 mb-8 text-center">
-            <div className="w-full h-64 bg-slate-100 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 mb-4">
-              <span className="text-slate-400 font-medium">[ Interactive Canvas Placeholder ]</span>
-            </div>
-            <p className="text-slate-500">This interactive lab is currently under development.</p>
-          </div>
-          <LearnFromZero />
-        </div>
-      );
+  <section class="chem-learn" data-chem-entry="1">
+    <h2>學習目標</h2>
+    <ul>
+      <li>旁觀離子在箭嘴兩邊都以相同形式存在。</li>
+      <li>刪去旁觀離子，只留下真正變成新物質的粒子。</li>
+      <li>生成水、氣體或沉澱的粒子不是旁觀離子。</li>
+    </ul>
+    <p id="chem-feedback" role="status">點選旁觀離子的種類，然後按核對。</p>
+  </section>
+  <main data-chem-silent>
+    <div class="panel">
+      <h1>離子方程式</h1>
+      <p class="muted">只做一件事：點選所有旁觀離子，再按核對。點的是種類，不用按係數再點一次。</p>
+      <p class="muted" id="progress">第 1 / 4 題</p>
+      <p class="prompt" id="title"></p>
+      <p class="eq" id="full"></p>
+      <div class="row" id="ions"></div>
+      <div class="row">
+        <button type="button" id="check">核對</button>
+        <button type="button" class="alt" id="again">重新開始</button>
+      </div>
+      <p class="row"><a href="../index.html">返回中三</a></p>
+    </div>
+  </main>
+  <script src="../../lesson-kit.js"></script>
+  <script>
+    var cases = [
+      {
+        title: "稀鹽酸與氫氧化鈉溶液",
+        full: "H⁺(aq) + Cl⁻(aq) + Na⁺(aq) + OH⁻(aq) → Na⁺(aq) + Cl⁻(aq) + H₂O(l)",
+        ok: "正確。旁觀離子是 Na⁺ 和 Cl⁻。離子方程式是 H⁺ + OH⁻ → H₂O，左右電荷都是 0。",
+        ions: [
+          { id: "H", label: "H⁺", spectator: false, ifPick: "H⁺ 和 OH⁻ 結合成水，右邊沒有 H⁺，所以它不是旁觀離子。" },
+          { id: "OH", label: "OH⁻", spectator: false, ifPick: "OH⁻ 變成水的一部分，沒有以 OH⁻ 留在右邊，所以不是旁觀離子。" },
+          { id: "Na", label: "Na⁺", spectator: true, ifSkip: "Na⁺ 在箭嘴兩邊都是 Na⁺(aq)，沒有變成新物質，所以要刪去。" },
+          { id: "Cl", label: "Cl⁻", spectator: true, ifSkip: "Cl⁻ 在箭嘴兩邊都是 Cl⁻(aq)，沒有參與化學變化，所以要刪去。" }
+        ]
+      },
+      {
+        title: "鎂與稀鹽酸",
+        full: "Mg(s) + 2H⁺(aq) + 2Cl⁻(aq) → Mg²⁺(aq) + 2Cl⁻(aq) + H₂(g)",
+        ok: "正確。只有 Cl⁻ 是旁觀離子。離子方程式是 Mg + 2H⁺ → Mg²⁺ + H₂，左右電荷都是 +2。",
+        ions: [
+          { id: "H", label: "H⁺", spectator: false, ifPick: "H⁺ 變成氫氣，在反應中被消耗，不是旁觀離子。" },
+          { id: "Mg2", label: "Mg²⁺", spectator: false, ifPick: "Mg²⁺ 只在右邊出現，它是新生成的離子，不是兩邊都不變的旁觀離子。" },
+          { id: "Cl", label: "Cl⁻", spectator: true, ifSkip: "Cl⁻ 在箭嘴兩邊都是 Cl⁻(aq)，沒有變成新物質，所以要刪去。" }
+        ]
+      },
+      {
+        title: "氯化鈣溶液與碳酸鈉溶液",
+        full: "Ca²⁺(aq) + 2Cl⁻(aq) + 2Na⁺(aq) + CO₃²⁻(aq) → CaCO₃(s) + 2Na⁺(aq) + 2Cl⁻(aq)",
+        ok: "正確。旁觀離子是 Na⁺ 和 Cl⁻。離子方程式是 Ca²⁺ + CO₃²⁻ → CaCO₃，左右電荷都是 0。",
+        ions: [
+          { id: "Ca", label: "Ca²⁺", spectator: false, ifPick: "Ca²⁺ 變成碳酸鈣沉澱，沒有以 Ca²⁺(aq) 留在右邊，所以不是旁觀離子。" },
+          { id: "CO3", label: "CO₃²⁻", spectator: false, ifPick: "CO₃²⁻ 進入沉澱，右邊不再是 CO₃²⁻(aq)，所以不是旁觀離子。" },
+          { id: "Na", label: "Na⁺", spectator: true, ifSkip: "Na⁺ 在兩邊都是 Na⁺(aq)，沒有變成新物質，所以要刪去。" },
+          { id: "Cl", label: "Cl⁻", spectator: true, ifSkip: "Cl⁻ 在兩邊都是 Cl⁻(aq)，沒有進入沉澱，所以要刪去。" }
+        ]
+      },
+      {
+        title: "碳酸鈉溶液與稀鹽酸",
+        full: "2Na⁺(aq) + CO₃²⁻(aq) + 2H⁺(aq) + 2Cl⁻(aq) → 2Na⁺(aq) + 2Cl⁻(aq) + CO₂(g) + H₂O(l)",
+        ok: "正確。旁觀離子是 Na⁺ 和 Cl⁻。離子方程式是 2H⁺ + CO₃²⁻ → CO₂ + H₂O，左右電荷都是 0。",
+        ions: [
+          { id: "H", label: "H⁺", spectator: false, ifPick: "H⁺ 和碳酸根反應，生成二氧化碳和水，右邊沒有 H⁺，所以不是旁觀離子。" },
+          { id: "CO3", label: "CO₃²⁻", spectator: false, ifPick: "CO₃²⁻ 變成二氧化碳和水，沒有以 CO₃²⁻ 留在右邊，所以不是旁觀離子。" },
+          { id: "Na", label: "Na⁺", spectator: true, ifSkip: "Na⁺ 在兩邊都是 Na⁺(aq)，沒有變成新物質，所以要刪去。" },
+          { id: "Cl", label: "Cl⁻", spectator: true, ifSkip: "Cl⁻ 在兩邊都是 Cl⁻(aq)，沒有參與化學變化，所以要刪去。" }
+        ]
+      }
+    ];
+    var index = 0;
+    var finished = false;
+    var audioCtx = null;
+
+    function ensureAudio() {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      if (!audioCtx) audioCtx = new AC();
+      if (audioCtx.state === "suspended") audioCtx.resume();
+      return audioCtx;
     }
-    
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+
+    function tones(freqs, dur) {
+      var c = ensureAudio();
+      if (!c) return;
+      var t = c.currentTime + 0.02;
+      var note = dur || 0.1;
+      var gap = note + 0.04;
+      for (var n = 0; n < freqs.length; n++) {
+        var start = t + n * gap;
+        var o = c.createOscillator();
+        var g = c.createGain();
+        o.type = "sine";
+        o.frequency.setValueAtTime(freqs[n], start);
+        g.gain.setValueAtTime(0.0001, start);
+        g.gain.exponentialRampToValueAtTime(0.04, start + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, start + note);
+        o.connect(g);
+        g.connect(c.destination);
+        o.start(start);
+        o.stop(start + note + 0.02);
+      }
+    }
+
+    function say(msg, kind) {
+      var el = document.getElementById("chem-feedback");
+      el.textContent = msg;
+      el.classList.remove("ok");
+      el.classList.remove("no");
+      if (kind === "ok") {
+        el.classList.add("ok");
+        tones([523.25, 659.25], 0.09);
+      } else if (kind === "no") {
+        el.classList.add("no");
+        tones([146.83], 0.22);
+      } else if (kind === "done") {
+        el.classList.add("ok");
+        tones([523.25, 659.25, 783.99], 0.1);
+      }
+      el.scrollIntoView({ block: "center" });
+    }
+
+    function render() {
+      var item = cases[index];
+      document.getElementById("progress").textContent = "第 " + (index + 1) + " / " + cases.length + " 題";
+      document.getElementById("title").textContent = item.title;
+      document.getElementById("full").textContent = item.full;
+      var box = document.getElementById("ions");
+      box.textContent = "";
+      item.ions.forEach(function (ion) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.setAttribute("data-id", ion.id);
+        b.setAttribute("aria-pressed", "false");
+        b.textContent = ion.label;
+        b.onclick = function () {
+          if (finished) return;
+          var on = !b.classList.contains("on");
+          b.classList.toggle("on", on);
+          b.setAttribute("aria-pressed", on ? "true" : "false");
+        };
+        box.appendChild(b);
+      });
+    }
+
+    function picked() {
+      var ids = {};
+      var buttons = document.querySelectorAll("#ions button");
+      for (var n = 0; n < buttons.length; n++) {
+        if (buttons[n].classList.contains("on")) ids[buttons[n].getAttribute("data-id")] = true;
+      }
+      return ids;
+    }
+
+    document.getElementById("check").onclick = function () {
+      if (finished) return;
+      var item = cases[index];
+      var ids = picked();
+      var extra = null;
+      var missed = null;
+      for (var n = 0; n < item.ions.length; n++) {
+        var ion = item.ions[n];
+        if (ids[ion.id] && !ion.spectator && !extra) extra = ion;
+        if (!ids[ion.id] && ion.spectator && !missed) missed = ion;
+      }
+      if (extra) {
+        say(extra.ifPick, "no");
+        return;
+      }
+      if (missed) {
+        say(missed.ifSkip, "no");
+        return;
+      }
+      if (index === cases.length - 1) {
+        finished = true;
+        say(item.ok + " 四題都完成了。", "done");
+      } else {
+        say(item.ok + " 請做下一題。", "ok");
+        index += 1;
+        render();
+      }
+    };
+
+    document.getElementById("again").onclick = function () {
+      index = 0;
+      finished = false;
+      render();
+      var el = document.getElementById("chem-feedback");
+      el.classList.remove("ok");
+      el.classList.remove("no");
+      el.textContent = "再點選旁觀離子，然後按核對。";
+    };
+
+    render();
   </script>
-<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 </body>
 </html>

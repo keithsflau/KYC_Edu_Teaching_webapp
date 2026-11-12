@@ -14,8 +14,8 @@ window.BATTLE_DATA = (function () {
           "minLng": 19.75,
           "maxLng": 22.25,
           "minLat": 41.6,
-          "maxLat": 43.6,
-          "Z": 10
+          "maxLat": 45.15,
+          "Z": 8
       },
       "startDate": [
           1998,
@@ -167,7 +167,7 @@ window.BATTLE_DATA = (function () {
       }
   ];
   const notes =   {
-      "summary": "科索沃戰爭 — DSE 西史小戰役地圖。",
+      "summary": "科索沃戰爭 — 課題地圖。兵力與路線為示意。",
       "caveats": [
           "本圖僅覆蓋該戰役核心區域；戰線與兵力為教學示意。",
           "衛星影像為現代地形。"
@@ -312,11 +312,33 @@ window.BATTLE_DATA = (function () {
           "forces_en": ""
       }
   ];
-  const outro =   {
+    const sourceTask = {
+    "cite": "北約在1999年3月開始空襲時的聲明",
+    "excerpt": "聲明說空襲是為了停止對科索沃阿爾巴尼亞人的驅逐。安理會沒有通過授權使用武力的決議。",
+    "ask": "這則聲明的立場，和程序上的事實，應當怎樣一併看？",
+    "options": [
+      {
+        "t": "聲明等於安理會已經授權。",
+        "ok": false,
+        "why": "授權決議沒有通過。聲明是北約自己的理由。"
+      },
+      {
+        "t": "北約提出的理由是制止驅逐；使用武力沒有安理會決議。",
+        "ok": true,
+        "why": "兩件事都要留在答案裡：一個是聲明的立場，一個是表決沒有授權。"
+      },
+      {
+        "t": "空襲的對象是1941年的德軍。",
+        "ok": false,
+        "why": "1999年的對象是塞爾維亞軍警與相關目標。"
+      }
+    ]
+  };
+const outro =   {
       "title_zh": "科索沃戰爭",
       "title_en": "KOSOVO WAR",
-      "narration_zh": "本戰役為 DSE 西史重要考點。",
-      "narration_en": "A key DSE Western History topic.",
+      "narration_zh": "1999年北約空襲沒有安理會授權。塞族軍其後撤出科索沃。",
+      "narration_en": "NATO bombed in 1999 without a Security Council authorisation. Serb forces later left Kosovo.",
       "cam": {
           "lng": 21.17,
           "lat": 42.66,
@@ -326,5 +348,5 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       }
   };
-  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };
+  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, sourceTask, END_DAY };
 })();

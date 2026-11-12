@@ -131,6 +131,7 @@
           if (qBox.dataset.done) return;
           qBox.dataset.done = "1";
           const ok = oi === q.ans;
+          if (global.GeoAudio) global.GeoAudio[ok ? "ok" : "no"]();
           if (ok) score++;
           answered++;
           btn.classList.add(ok ? "correct" : "wrong");
@@ -177,6 +178,7 @@
       card.querySelectorAll(".match-select").forEach((s) => {
         if (s.value !== s.dataset.answer) ok = false;
       });
+      if (global.GeoAudio) global.GeoAudio[ok ? "ok" : "no"]();
       fb.innerHTML = ok
         ? '<p class="fb-ok">✓ 全部正確！記住：張裂→海嶺、消亡→海溝造山、保守→斷層。</p>'
         : '<p class="fb-err">部分配對有誤，對照「內容」分頁的邊界表格。</p>';
@@ -196,6 +198,7 @@
       btn.onclick = () => {
         row.querySelectorAll(".btn").forEach((b) => b.classList.remove("is-active"));
         btn.classList.add("is-active");
+        if (global.GeoAudio) global.GeoAudio.tap();
         onSelect(L.id, L);
         info.innerHTML = `<p><strong>${L.name}</strong>（${L.depth}）</p><p>${L.state}</p><p class="note">${L.fact}</p>`;
       };

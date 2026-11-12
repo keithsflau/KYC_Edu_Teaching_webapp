@@ -2,79 +2,348 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>10_IMF</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="../../../../common/babel-react-classic.js"></script>
-  <script src="../../../../common/learn-from-zero.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>分子間力 | 氫鍵、偶極力、范德華力</title>
+  <link rel="stylesheet" href="../../lesson.css" />
   <style>
-    body { font-family: "IBM Plex Sans", system-ui, sans-serif; background-color: #f8fafc; color: #0f172a; min-height: 100vh; }
+    a { color: #0f766e; }
   </style>
-  <!-- NCS i18n fleet kit (auto-injected) -->
-  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
-  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
-  <style data-ncs-kit="fleet-bridge">
-    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
-    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
-      display: none !important;
-    }
-  </style>
-  <script data-ncs-kit="fleet-init">
-  (function () {
-    function hideLegacyToggles() {
-      document.body.classList.add("ncs-fleet-mounted");
-      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
-        var label = (btn.textContent || "").trim();
-        if (label === "EN" || label === "\u4E2D") {
-          btn.classList.add("ncs-hide-when-ncs-fleet");
-        }
-      });
-      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
-        el.classList.add("ncs-hide-when-ncs-fleet");
-      });
-    }
-    function boot() {
-      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
-      window.NcsI18n.init({
-        chromePath: "../../../../_shared/ncs-chrome.json",
-        target: document.body
-      }).then(hideLegacyToggles);
-    }
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", boot);
-    } else {
-      boot();
-    }
-  })();
-  </script>
 </head>
 <body>
-  <div id="root"></div>
-  <script type="text/babel" data-presets="react-classic">
-    const { useState } = React;
-    
-    function App() {
-      return (
-        <div className="max-w-4xl mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-4">10 IMF</h1>
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 mb-8 text-center">
-            <div className="w-full h-64 bg-slate-100 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 mb-4">
-              <span className="text-slate-400 font-medium">[ Interactive Canvas Placeholder ]</span>
-            </div>
-            <p className="text-slate-500">This interactive lab is currently under development.</p>
-          </div>
-          <LearnFromZero />
-        </div>
-      );
+  <section class="chem-learn" data-chem-entry="1">
+    <h2>學習目標</h2>
+    <ul>
+      <li>指出氫鍵要有接在 N、O 或 F 上的氫。</li>
+      <li>分辨氫鍵、偶極力和范德華力哪個是主要分子間力。</li>
+      <li>相似大小時氫鍵較強；分子變大時范德華力增強。</li>
+    </ul>
+    <p id="chem-feedback" role="status">先選一個分子，再判斷它的主要分子間力。</p>
+  </section>
+  <main>
+    <div class="panel">
+      <h1>三種分子間力</h1>
+      <p class="muted">氫鍵、偶極力和范德華力都是分子之間的力，弱於分子裡面的共價鍵。沒有量度沸點的實驗步驟。烷烴沸點用甲烷 −162°C、癸烷約 174°C，和同系列、分餾課同一套數字：碳鏈愈長，沸點愈高。</p>
+      <p class="muted"><a href="../index.html">返回中四化學</a></p>
+      <ul class="muted">
+        <li>氫鍵：氫接在 N、O 或 F，再靠近另一分子的 N、O 或 F。</li>
+        <li>偶極力：極性分子之間，永久偶極的正端吸負端。</li>
+        <li>范德華力：瞬間偶極造成的吸引力，每種分子都有；分子愈大通常愈強。</li>
+      </ul>
+      <p class="muted">選一個分子</p>
+      <div class="row" id="mols"></div>
+      <p id="fact" class="muted">先選一個分子。下面的句子只給結構和沸點，主要分子間力由你判斷。</p>
+      <div class="row" id="forces">
+        <button type="button" data-force="hbond">主要是氫鍵</button>
+        <button type="button" data-force="dipole">主要是偶極力</button>
+        <button type="button" data-force="vdw">主要是范德華力</button>
+      </div>
+      <div class="row">
+        <button type="button" id="hb-weak">氫鍵弱於分子內的共價鍵</button>
+        <button type="button" class="alt" id="hb-strong">氫鍵比 O–H 共價鍵更強</button>
+      </div>
+
+      <p class="muted">同一種力。這些烷烴都沒有接在 N、O、F 上的氫，也都是非極性。拖動碳數，再判斷力的種類有沒有變。</p>
+      <label for="carbons"><span id="alk-name">甲烷</span>，<span id="alk-c">1</span> 個碳，沸點 <span id="alk-bp">−162</span>°C</label>
+      <input id="carbons" type="range" min="0" max="5" step="1" value="0" />
+      <div class="row" id="alk-judge">
+        <button type="button" data-alk="vdw">仍然是范德華力</button>
+        <button type="button" data-alk="hbond">變成氫鍵</button>
+        <button type="button" data-alk="dipole">變成偶極力</button>
+      </div>
+
+      <p class="muted">水、硫化氫、甲烷分子都不大。先選沸點最高的，再選下一個。</p>
+      <div class="row" id="rank">
+        <button type="button" data-rank="water">水</button>
+        <button type="button" data-rank="h2s">硫化氫</button>
+        <button type="button" data-rank="ch4">甲烷</button>
+        <button type="button" class="alt" id="rank-reset">重新排序</button>
+      </div>
+      <p id="rank-now" class="muted">尚未選擇。先選沸點最高的。</p>
+    </div>
+  </main>
+  <script src="../../lesson-kit.js"></script>
+  <script>
+    var MOLECULES = [
+      {
+        id: "water",
+        name: "水",
+        formula: "H₂O",
+        fact: "有 O–H，氧上有孤電子對。分子有極性，體積小。普通大氣壓下沸點 100°C。",
+        force: "hbond",
+        why: {
+          hbond: "正確。氫接在氧上，鄰近水分子的氧又有孤電子對，所以形成氫鍵。水分子雖小，沸點仍有 100°C。",
+          dipole: "水確有永久偶極，但氫接在氧上，分子之間較強的是氫鍵，不是普通偶極力。所以沸點遠高於硫化氫。",
+          vdw: "范德華力每種分子都有。水如果主要靠它，沸點會很低。100°C 是氫鍵的結果。"
+        }
+      },
+      {
+        id: "ethanol",
+        name: "乙醇",
+        formula: "CH₃CH₂OH",
+        fact: "有 O–H。和甲氧基甲烷分子式都是 C₂H₆O。乙醇沸點約 78°C。",
+        force: "hbond",
+        why: {
+          hbond: "正確。乙醇有 O–H，分子之間能形成氫鍵。同分異構的甲氧基甲烷沒有 O–H，沸點低很多。",
+          dipole: "乙醇有偶極，但 O–H 使主要分子間力成為氫鍵。只說偶極力，解釋不了它為何比甲氧基甲烷高出約 100°C。",
+          vdw: "乙醇不只有范德華力。沒有氫鍵的話，它不會比同大小、沒有 O–H 的甲氧基甲烷高出這麼多。"
+        }
+      },
+      {
+        id: "ether",
+        name: "甲氧基甲烷",
+        formula: "CH₃OCH₃",
+        fact: "氧沒有接氫。分子有極性，分子式和乙醇一樣是 C₂H₆O。沸點約 −24°C。",
+        force: "dipole",
+        why: {
+          hbond: "氧上沒有氫。氫鍵要氫本身接在 N、O 或 F。甲氧基甲烷不能以氫鍵相連，沸點約 −24°C，低於乙醇。",
+          dipole: "正確。它是極性分子，分子之間主要是偶極力，另外有范德華力，但沒有氫鍵。",
+          vdw: "它有范德華力，可是分子有永久偶極，主要分子間力是偶極力，和甲烷那種非極性分子不同。"
+        }
+      },
+      {
+        id: "hcl",
+        name: "氯化氫",
+        formula: "HCl",
+        fact: "氫接在氯上。氯不是 N、O、F。分子有極性。沸點約 −85°C。",
+        force: "dipole",
+        why: {
+          hbond: "氫鍵不把 H–Cl 算進去。氫要接在 N、O 或 F。氯化氫沒有氫鍵，沸點約 −85°C，遠低於水。",
+          dipole: "正確。氯化氫有永久偶極，主要分子間力是偶極力。范德華力同時存在，但較能分開它和甲烷的是偶極力。",
+          vdw: "范德華力確實存在，但氯化氫是極性分子，不能把主要分子間力只寫成范德華力。"
+        }
+      },
+      {
+        id: "h2s",
+        name: "硫化氫",
+        formula: "H₂S",
+        fact: "氫接在硫上。硫不是 N、O、F。分子略有極性，而且比水重。沸點約 −60°C。",
+        force: "dipole",
+        why: {
+          hbond: "硫不是 N、O、F，硫化氫沒有氫鍵。所以雖然比水重，沸點只有約 −60°C，遠低於水的 100°C。",
+          dipole: "正確。硫化氫是極性分子，主要是偶極力，沒有氫鍵。",
+          vdw: "它比甲烷重，范德華力較強，但分子有永久偶極，主要分子間力仍是偶極力。沸點約 −60°C，低於有氫鍵的水。"
+        }
+      },
+      {
+        id: "nh3",
+        name: "氨",
+        formula: "NH₃",
+        fact: "有 N–H，氮上有一對孤電子對。分子有極性。沸點約 −33°C。",
+        force: "hbond",
+        why: {
+          hbond: "正確。氫接在氮上，氮有孤電子對，氨分子之間形成氫鍵。氨比硫化氫輕，沸點卻約 −33°C，高於硫化氫的約 −60°C。水的氫鍵網絡更完整，所以水仍高於氨。",
+          dipole: "氨有偶極，但 N–H 讓主要分子間力成為氫鍵。只寫偶極力會漏掉沸點偏高的原因。",
+          vdw: "氨分子不大。若主要只有范德華力，沸點會更低。約 −33°C 來自氫鍵。"
+        }
+      },
+      {
+        id: "ch4",
+        name: "甲烷",
+        formula: "CH₄",
+        fact: "只有 C–H。分子對稱、非極性，體積小。沸點 −162°C。",
+        force: "vdw",
+        why: {
+          hbond: "C–H 不會形成氫鍵。氫鍵要氫接在 N、O 或 F。甲烷沸點 −162°C，是小分子范德華力的結果。",
+          dipole: "甲烷四個鍵對稱，偶極抵消，沒有永久偶極，所以沒有偶極力。",
+          vdw: "正確。非極性小分子之間主要是范德華力，所以沸點很低，是 −162°C。"
+        }
+      },
+      {
+        id: "c10",
+        name: "癸烷",
+        formula: "C₁₀H₂₂",
+        fact: "直鏈烷烴，非極性，分子比甲烷大很多。沸點約 174°C。",
+        force: "vdw",
+        why: {
+          hbond: "癸烷沒有 N–H、O–H 或 F–H，沒有氫鍵。沸點高是因為分子大，不是因為氫鍵。",
+          dipole: "烷烴沒有永久偶極。碳鏈變長不會變成偶極力。",
+          vdw: "正確。仍然是范德華力。分子大，力變強，沸點約 174°C。這和「相似大小時范德華力最弱」不衝突：癸烷比甲烷大得多。"
+        }
+      }
+    ];
+
+    var ALKANES = [
+      { n: 1, bp: -162, name: "甲烷" },
+      { n: 2, bp: -89, name: "乙烷" },
+      { n: 4, bp: -1, name: "丁烷" },
+      { n: 6, bp: 69, name: "己烷" },
+      { n: 8, bp: 126, name: "辛烷" },
+      { n: 10, bp: 174, name: "癸烷" }
+    ];
+
+    var molId = "";
+    var order = [];
+    var goal = ["water", "h2s", "ch4"];
+
+    function say(msg, kind) {
+      if (window.ChemLesson) window.ChemLesson.say(msg, kind);
     }
-    
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+
+    function buttonOf(target) {
+      var node = target;
+      while (node && node !== document) {
+        if (node.tagName === "BUTTON") return node;
+        node = node.parentNode;
+      }
+      return null;
+    }
+
+    function mol() {
+      for (var i = 0; i < MOLECULES.length; i++) {
+        if (MOLECULES[i].id === molId) return MOLECULES[i];
+      }
+      return null;
+    }
+
+    function alkane() {
+      return ALKANES[Number(document.getElementById("carbons").value)];
+    }
+
+    function paintMols() {
+      var buttons = document.querySelectorAll("#mols button");
+      for (var i = 0; i < buttons.length; i++) {
+        buttons[i].className = buttons[i].getAttribute("data-mol") === molId ? "on" : "";
+      }
+    }
+
+    function paintAlk() {
+      var a = alkane();
+      var sign = a.bp < 0 ? "−" + Math.abs(a.bp) : String(a.bp);
+      document.getElementById("alk-name").textContent = a.name;
+      document.getElementById("alk-c").textContent = String(a.n);
+      document.getElementById("alk-bp").textContent = sign;
+    }
+
+    function paintRank() {
+      var names = { water: "水", h2s: "硫化氫", ch4: "甲烷" };
+      var el = document.getElementById("rank-now");
+      if (!order.length) {
+        el.textContent = "尚未選擇。先選沸點最高的。";
+      } else {
+        var shown = [];
+        for (var i = 0; i < order.length; i++) shown.push(names[order[i]]);
+        el.textContent = order.length === 3 ? "由高至低：" + shown.join(" → ") : "已排：" + shown.join(" → ") + "。再選下一個。";
+      }
+      var buttons = document.querySelectorAll("#rank button[data-rank]");
+      for (var j = 0; j < buttons.length; j++) {
+        var id = buttons[j].getAttribute("data-rank");
+        buttons[j].className = order.indexOf(id) >= 0 ? "on" : "";
+      }
+    }
+
+    function buildMols() {
+      var box = document.getElementById("mols");
+      MOLECULES.forEach(function (m) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.setAttribute("data-mol", m.id);
+        b.textContent = m.name;
+        box.appendChild(b);
+      });
+    }
+
+    function judgeForce(force) {
+      var m = mol();
+      if (!m) {
+        say("先選一個分子。", "no");
+        return;
+      }
+      say(m.why[force], force === m.force ? "ok" : "no");
+    }
+
+    function judgeAlk(kind) {
+      var a = alkane();
+      var bp = a.bp < 0 ? "−" + Math.abs(a.bp) : String(a.bp);
+      if (kind === "vdw") {
+        say("正確。現在是" + a.name + "，" + a.n + " 個碳，沸點 " + bp + "°C。由甲烷 −162°C 到癸烷約 174°C，沸點上升是因為分子變大，范德華力變強，不是換成氫鍵或偶極力。碳鏈愈長，沸點愈高。", "ok");
+        return;
+      }
+      if (kind === "hbond") {
+        say(a.name + "沒有 N–H、O–H 或 F–H。碳數增加到 " + a.n + " 也不會產生氫鍵。沸點 " + bp + "°C 仍來自范德華力。", "no");
+        return;
+      }
+      say(a.name + "仍然是非極性烷烴，沒有永久偶極。鏈變長不會變成偶極力。", "no");
+    }
+
+    function rankFail(step, id) {
+      if (step === 0 && id === "h2s") {
+        return "硫化氫沸點約 −60°C，硫不是 N、O、F，沒有氫鍵。水有氫鍵，沸點 100°C，水更高。";
+      }
+      if (step === 0 && id === "ch4") {
+        return "甲烷沸點 −162°C，只有范德華力，是三者裡最低的，不是最高。";
+      }
+      return "甲烷比硫化氫更低。硫化氫有偶極力，沸點約 −60°C；甲烷只有范德華力，沸點 −162°C。";
+    }
+
+    function rankOk(step) {
+      if (step === 0) return "水最高。氫鍵讓沸點到 100°C，高過較重但沒有氫鍵的硫化氫。";
+      if (step === 1) return "硫化氫排第二。它有偶極力，沒有氫鍵，沸點約 −60°C。";
+      return "甲烷最低。非極性，只有范德華力，沸點 −162°C。三者分子都不大，所以可以這樣比：氫鍵強於偶極力，偶極力強於范德華力。";
+    }
+
+    function onRank(id) {
+      if (order.indexOf(id) >= 0) {
+        say("這個已經排好了。", "no");
+        return;
+      }
+      var step = order.length;
+      if (id !== goal[step]) {
+        say(rankFail(step, id), "no");
+        return;
+      }
+      order.push(id);
+      say(rankOk(step), "ok");
+      paintRank();
+    }
+
+    buildMols();
+    paintAlk();
+    paintRank();
+
+    document.getElementById("mols").onclick = function (e) {
+      var btn = buttonOf(e.target);
+      if (!btn) return;
+      molId = btn.getAttribute("data-mol");
+      paintMols();
+      var m = mol();
+      document.getElementById("fact").textContent = m.name + " " + m.formula + "。" + m.fact;
+      say("看" + m.name + "的結構，再選主要分子間力。");
+    };
+
+    document.getElementById("forces").onclick = function (e) {
+      var btn = buttonOf(e.target);
+      if (!btn) return;
+      judgeForce(btn.getAttribute("data-force"));
+    };
+
+    document.getElementById("hb-weak").onclick = function () {
+      say("正確。O–H 共價鍵把原子連在同一個分子裡。氫鍵是分子和分子之間的力，弱得多。三種分子間力都弱於共價鍵；相似大小時，氫鍵強於偶極力，偶極力強於范德華力。", "ok");
+    };
+
+    document.getElementById("hb-strong").onclick = function () {
+      say("不對。O–H 共價鍵在分子裡面。氫鍵是分子間力，弱得多。氫鍵只是三種分子間力裡通常較強的一種。", "no");
+    };
+
+    document.getElementById("carbons").oninput = paintAlk;
+
+    document.getElementById("alk-judge").onclick = function (e) {
+      var btn = buttonOf(e.target);
+      if (!btn) return;
+      judgeAlk(btn.getAttribute("data-alk"));
+    };
+
+    document.getElementById("rank").onclick = function (e) {
+      var btn = buttonOf(e.target);
+      if (!btn) return;
+      if (btn.id === "rank-reset") {
+        order = [];
+        paintRank();
+        say("次序已清空。先選沸點最高的。");
+        return;
+      }
+      onRank(btn.getAttribute("data-rank"));
+    };
   </script>
-<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+  <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 </body>
 </html>

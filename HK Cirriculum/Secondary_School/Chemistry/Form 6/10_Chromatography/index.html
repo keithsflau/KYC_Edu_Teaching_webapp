@@ -3,16 +3,23 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>10_Chromatography</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="../../../../common/babel-react-classic.js"></script>
-  <script src="../../../../common/learn-from-zero.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <title>紙色層分析 | Paper chromatography</title>
+  <link rel="stylesheet" href="../../lesson.css" />
   <style>
-    body { font-family: "IBM Plex Sans", system-ui, sans-serif; background-color: #f8fafc; color: #0f172a; min-height: 100vh; }
+    body { font-family: "Segoe UI", "Microsoft JhengHei", "PingFang HK", "Noto Sans HK", sans-serif; }
+    a { color: #0f766e; }
+    h1 { font-size: 1.6rem; margin: 0.2rem 0 0.4rem; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+    th, td { border-bottom: 1px solid #e2e8f0; text-align: left; padding: 0.35rem 0.25rem; vertical-align: top; }
+    fieldset { border: 1px solid #e2e8f0; border-radius: 12px; margin: 0 0 10px; }
+    legend { font-weight: 800; padding: 0 6px; }
+    .paper { position: relative; height: 320px; background: linear-gradient(#fff, #f8fafc); border: 1px solid #cbd5e1; border-radius: 12px; overflow: hidden; }
+    .paper .mark { position: absolute; left: 12px; right: 12px; height: 0; border-top: 2px dashed #64748b; }
+    .paper .mark span { position: absolute; top: -1.2rem; right: 0; font-size: 0.8rem; color: #334155; background: #fff; padding: 0 4px; }
+    .spot { position: absolute; width: 18px; height: 18px; border-radius: 99px; left: 50%; margin-left: -9px; }
+    .paper.soaked::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 52px; background: rgba(37, 99, 235, 0.28); }
+    .bar { height: 18px; background: #e2e8f0; border-radius: 99px; position: relative; }
+    .bar i { position: absolute; top: -4px; width: 14px; height: 26px; border-radius: 7px; margin-left: -7px; }
   </style>
   <!-- NCS i18n fleet kit (auto-injected) -->
   <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
@@ -53,28 +60,228 @@
   </script>
 </head>
 <body>
-  <div id="root"></div>
-  <script type="text/babel" data-presets="react-classic">
-    const { useState } = React;
-    
-    function App() {
-      return (
-        <div className="max-w-4xl mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-4">10 Chromatography</h1>
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 mb-8 text-center">
-            <div className="w-full h-64 bg-slate-100 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 mb-4">
-              <span className="text-slate-400 font-medium">[ Interactive Canvas Placeholder ]</span>
-            </div>
-            <p className="text-slate-500">This interactive lab is currently under development.</p>
-          </div>
-          <LearnFromZero />
+  <main>
+    <p><a href="../index.html">← 返回中六化學</a></p>
+    <section class="chem-learn" data-chem-entry="1">
+      <h2>學習目標</h2>
+      <ul>
+        <li>用斑點距離和溶劑前沿距離計算 Rf。</li>
+        <li>知道 Rf 沒有單位，正確量度時不會大於 1。</li>
+        <li>同時看 Rf 和顏色，才把未知斑點和標準比較。</li>
+      </ul>
+      <p id="chem-feedback" role="status">拖動斑點距離，紙上的色點和 Rf 會一起改變。本頁沒有層析缸的組裝步驟。</p>
+    </section>
+
+    <div class="panel">
+      <h1>紙色層分析</h1>
+      <p class="muted">紙色層裡，固定相是附在紙纖維上的水分，流動相是沿紙移動的溶劑。成分在兩相之間分配。越容易留在流動相，斑點升得越高。量度都從原點起算，兩段距離要用同一單位。</p>
+      <p>Rf = 斑點移動的距離 ÷ 溶劑前沿移動的距離。兩段都是長度，所以 Rf 沒有單位。溶劑前沿是溶劑升到的最前位置，斑點不會跑在它前面，因此正確的 Rf 在 0 和 1 之間。</p>
+      <div class="paper" id="paper">
+        <div class="mark" id="front-line"><span>溶劑前沿</span></div>
+        <div class="spot" id="spot" style="background:#2563eb"></div>
+        <div class="mark" id="origin-line"><span>原點</span></div>
+      </div>
+      <label for="front">溶劑前沿距離 <span id="front-out">10.0</span> cm</label>
+      <input id="front" type="range" min="6" max="12" step="0.1" value="10" />
+      <label for="dist">斑點中心距離 <span id="dist-out">4.7</span> cm</label>
+      <input id="dist" type="range" min="0" max="10" step="0.1" value="4.7" />
+      <label for="spot-color">斑點顏色</label>
+      <select id="spot-color">
+        <option value="red">紅色</option>
+        <option value="blue" selected>藍色</option>
+        <option value="yellow">黃色</option>
+        <option value="green">綠色</option>
+      </select>
+      <p class="num" id="rf-out">Rf = 0.47</p>
+      <p id="match">Rf 和顏色都符合標準 B。</p>
+      <label><input id="soaked" type="checkbox" /> 原點低於溶劑液面（錯誤讀圖）</label>
+      <p class="muted">若原點浸在溶劑裡，成分會直接溶進溶劑，沒有沿紙分開，算出的 Rf 沒有意義。這是讀圖時要排除的錯誤，不是組裝方法。</p>
+    </div>
+
+    <div class="panel">
+      <h2>和標準比較</h2>
+      <p class="muted">同一物質只有在相同的紙、溶劑和溫度下，Rf 才可以比較。Rf 接近只是證據之一。顏色也不符時，不能說是同一種染料。無色斑點在考試裡會提到定位劑，本頁不寫定位劑怎樣使用。</p>
+      <div style="overflow:auto">
+        <table>
+          <thead>
+            <tr><th>標準</th><th>顏色</th><th>Rf</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>標準 A</td><td>紅色</td><td>0.22</td></tr>
+            <tr><td>標準 B</td><td>藍色</td><td>0.47</td></tr>
+            <tr><td>標準 C</td><td>黃色</td><td>0.71</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>允許差距設為 0.02。預設斑點在 4.7 cm、前沿 10.0 cm、藍色，所以 Rf = 0.47，對上標準 B。</p>
+    </div>
+
+    <div class="panel">
+      <h2>流動相和固定相</h2>
+      <p class="muted">下面兩個數字只是相對親和力，用來看方向，不是溶劑配方。Rf（模型）= 流動相親和力 ÷（流動相親和力 + 固定相親和力）。</p>
+      <label for="mob">留在流動相的傾向 <span id="mob-out">7</span></label>
+      <input id="mob" type="range" min="1" max="9" step="1" value="7" />
+      <label for="sta">吸附在固定相的傾向 <span id="sta-out">3</span></label>
+      <input id="sta" type="range" min="1" max="9" step="1" value="3" />
+      <div class="bar" id="model-bar"><i id="model-spot" style="background:#0f766e;left:70%"></i></div>
+      <p id="model-text">模型 Rf = 0.70。越容易留在流動相，Rf 越大。</p>
+    </div>
+
+    <div class="panel">
+      <h2>常見錯誤</h2>
+      <ul>
+        <li>從紙的底邊量起，而不是從原點量起。</li>
+        <li>斑點距離和前沿距離用了不同單位，卻沒有先換算。</li>
+        <li>只因 Rf 相同就肯定是同一物質，忽略溶劑和顏色。</li>
+        <li>一張紙上有兩個斑點，表示至少有兩種可分開的成分。</li>
+      </ul>
+    </div>
+
+    <div class="panel">
+      <h2>檢查</h2>
+      <fieldset data-q="q1" data-hint="分子是斑點走的距離，分母是溶劑前沿走的距離。">
+        <legend>1. Rf 的定義是？</legend>
+        <div class="row">
+          <button type="button" data-choice="inv">溶劑距離 ÷ 斑點距離</button>
+          <button type="button" data-choice="ok">斑點距離 ÷ 溶劑前沿距離</button>
+          <button type="button" data-choice="mul">斑點距離 × 溶劑距離</button>
         </div>
-      );
+      </fieldset>
+      <fieldset data-q="q2" data-hint="斑點不能超過溶劑前沿，Rf 也不會是負數。">
+        <legend>2. 正確量度時，哪一個 Rf 合理？</legend>
+        <div class="row">
+          <button type="button" data-choice="big">1.40</button>
+          <button type="button" data-choice="ok">0.62</button>
+          <button type="button" data-choice="neg">−0.20</button>
+        </div>
+      </fieldset>
+      <fieldset data-q="q3" data-hint="成分越留在流動相，升得越高，Rf 越大。">
+        <legend>3. 其他條件相同，成分越容易留在流動相，Rf 會？</legend>
+        <div class="row">
+          <button type="button" data-choice="up">越大</button>
+          <button type="button" data-choice="down">越小</button>
+          <button type="button" data-choice="neg">變成負數</button>
+        </div>
+      </fieldset>
+      <p id="score">尚未作答。</p>
+    </div>
+  </main>
+  <script src="../../lesson-kit.js"></script>
+  <script>
+  (function () {
+    var COLORS = { red: "#dc2626", blue: "#2563eb", yellow: "#eab308", green: "#16a34a" };
+    var NAMES = { red: "紅色", blue: "藍色", yellow: "黃色", green: "綠色" };
+    var STANDARDS = [
+      { name: "標準 A", rf: 0.22, color: "red", colorName: "紅色" },
+      { name: "標準 B", rf: 0.47, color: "blue", colorName: "藍色" },
+      { name: "標準 C", rf: 0.71, color: "yellow", colorName: "黃色" }
+    ];
+
+    function num(id) { return Number(document.getElementById(id).value); }
+    function round(n, d) {
+      var f = Math.pow(10, d);
+      return Math.round(n * f) / f;
     }
-    
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+    function say(msg, kind) {
+      if (window.ChemLesson) window.ChemLesson.say(msg, kind);
+    }
+
+    function renderPaper() {
+      var front = round(num("front"), 1);
+      var distInput = document.getElementById("dist");
+      distInput.max = String(front);
+      var dist = round(num("dist"), 1);
+      if (dist > front) {
+        dist = front;
+        distInput.value = String(front);
+      }
+      var color = document.getElementById("spot-color").value;
+      var soaked = document.getElementById("soaked").checked;
+      document.getElementById("front-out").textContent = front.toFixed(1);
+      document.getElementById("dist-out").textContent = dist.toFixed(1);
+      var rf = front > 0 ? dist / front : 0;
+      var paper = document.getElementById("paper");
+      paper.classList.toggle("soaked", soaked);
+      var h = paper.clientHeight || 320;
+      var originPx = 28;
+      var usable = h - originPx - 28;
+      document.getElementById("origin-line").style.bottom = originPx + "px";
+      document.getElementById("front-line").style.bottom = (originPx + usable) + "px";
+      document.getElementById("spot").style.bottom = (originPx + rf * usable - 9) + "px";
+      document.getElementById("spot").style.background = COLORS[color] || "#2563eb";
+      if (soaked) {
+        document.getElementById("rf-out").textContent = "這次讀圖無效";
+        document.getElementById("match").textContent = "原點浸在溶劑裡，成分沒有沿紙分開。不要用這個位置計算 Rf。";
+        return;
+      }
+      document.getElementById("rf-out").textContent = "Rf = " + rf.toFixed(2);
+      var hits = STANDARDS.filter(function (s) { return Math.abs(s.rf - rf) <= 0.02; });
+      var msg;
+      if (!hits.length) {
+        msg = "Rf = " + dist.toFixed(1) + " / " + front.toFixed(1) + " = " + rf.toFixed(2) + "。和三個標準的差距都大於 0.02，不能對上 A、B 或 C。";
+      } else if (hits.length > 1) {
+        msg = "多於一個標準接近，不能只靠一個數字判斷。";
+      } else if (hits[0].color === color) {
+        msg = "Rf = " + rf.toFixed(2) + "，顏色是" + NAMES[color] + "，和" + hits[0].name + "（" + hits[0].colorName + "，Rf " + hits[0].rf.toFixed(2) + "）相符。";
+      } else {
+        msg = "Rf 接近" + hits[0].name + "（" + hits[0].colorName + "，" + hits[0].rf.toFixed(2) + "），但斑點是" + NAMES[color] + "。顏色不符，不能當成同一種染料。";
+      }
+      document.getElementById("match").textContent = msg;
+    }
+
+    function renderModel() {
+      var mob = num("mob");
+      var sta = num("sta");
+      var rf = mob / (mob + sta);
+      document.getElementById("mob-out").textContent = String(mob);
+      document.getElementById("sta-out").textContent = String(sta);
+      document.getElementById("model-spot").style.left = (rf * 100) + "%";
+      document.getElementById("model-text").textContent = "模型 Rf = " + rf.toFixed(2) + "。越容易留在流動相，Rf 越大；越被固定相吸住，Rf 越小。";
+    }
+
+    ["front", "dist", "spot-color", "soaked"].forEach(function (id) {
+      var el = document.getElementById(id);
+      el.addEventListener("input", renderPaper);
+      el.addEventListener("change", renderPaper);
+    });
+    document.getElementById("soaked").addEventListener("change", function () {
+      renderPaper();
+      if (document.getElementById("soaked").checked) {
+        say("原點浸在溶劑裡時，這張層析圖不能用來算 Rf。", "no");
+      }
+    });
+    ["mob", "sta"].forEach(function (id) {
+      document.getElementById(id).addEventListener("input", renderModel);
+    });
+
+    var KEY = { q1: "ok", q2: "ok", q3: "up" };
+    var picked = {};
+    document.querySelectorAll("[data-choice]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var box = btn.closest("fieldset");
+        var q = box.getAttribute("data-q");
+        picked[q] = btn.getAttribute("data-choice");
+        box.querySelectorAll("[data-choice]").forEach(function (b) {
+          b.classList.toggle("on", b === btn);
+        });
+        var ok = KEY[q] === picked[q];
+        var hint = box.getAttribute("data-hint") || "";
+        say(ok ? "正確。" + hint : "還未對。" + hint, ok ? "ok" : "no");
+        var n = 0;
+        var nOk = 0;
+        Object.keys(KEY).forEach(function (id) {
+          if (!picked[id]) return;
+          n += 1;
+          if (picked[id] === KEY[id]) nOk += 1;
+        });
+        document.getElementById("score").textContent = "已答 " + n + "／3 題，其中 " + nOk + " 題正確。";
+      });
+    });
+
+    renderPaper();
+    renderModel();
+  })();
   </script>
-<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+  <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 </body>
 </html>

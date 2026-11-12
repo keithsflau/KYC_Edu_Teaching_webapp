@@ -57,26 +57,87 @@
 
 <body class="bg-gradient-to-br from-amber-900 to-yellow-900 text-white p-8">
     <div class="max-w-5xl mx-auto">
-        <h1 class="text-5xl font-bold text-center mb-8">📜 古文翻譯拼圖</h1>
+        <h1 id="ui-title" class="text-5xl font-bold text-center mb-8">📜 古文翻譯拼圖</h1>
         <div class="grid md:grid-cols-2 gap-6">
             <div class="bg-slate-800/50 backdrop-blur rounded-2xl p-6">
-                <h2 class="text-2xl font-bold mb-4 text-amber-300">文言文</h2>
+                <h2 id="ui-classical-heading" class="text-2xl font-bold mb-4 text-amber-300">文言文</h2>
                 <p class="text-2xl leading-relaxed font-serif" id="classical"></p>
+                <p class="text-base text-amber-100 mt-4 leading-relaxed" id="gloss"></p>
             </div>
             <div class="bg-slate-800/50 backdrop-blur rounded-2xl p-6">
-                <h2 class="text-2xl font-bold mb-4 text-green-300">白話文 (請排序)</h2>
+                <h2 id="ui-modern-heading" class="text-2xl font-bold mb-4 text-green-300">白話文 (請排序)</h2>
                 <div id="translation-area"
                     class="min-h-[200px] border-2 border-dashed border-green-400 rounded-xl p-4 flex flex-wrap gap-2 content-start">
                 </div>
             </div>
         </div>
         <div class="bg-slate-700/50 backdrop-blur rounded-2xl p-6 mt-6">
-            <h3 class="text-xl font-bold mb-4">詞彙庫</h3>
+            <h3 id="ui-bank-heading" class="text-xl font-bold mb-4">詞彙庫</h3>
             <div id="word-bank" class="flex flex-wrap gap-3"></div>
-        </div><button onclick="check()"
+        </div><button id="ui-check-btn" onclick="check()"
             class="w-full max-w-md mx-auto block bg-gradient-to-r from-green-600 to-emerald-600 py-4 rounded-xl font-bold text-xl mt-6">檢查翻譯</button>
         <div id="feedback" class="text-center text-2xl font-bold mt-4"></div>
     </div>
+    <script>
+        var APP_STRINGS = {
+            zh: { pageTitle: "古文翻譯拼圖", title: "📜 古文翻譯拼圖", classicalHeading: "文言文", modernHeading: "白話文 (請排序)", bankHeading: "詞彙庫", checkBtn: "檢查翻譯", correct: "✅ 正確！", wrong: "❌ 錯誤，再試試！", allDone: "全部完成！" },
+            en: { pageTitle: "Classical Translation Puzzle", title: "📜 Classical Translation Puzzle", classicalHeading: "Classical Chinese", modernHeading: "Modern Chinese (sort)", bankHeading: "Word bank", checkBtn: "Check translation", correct: "✅ Correct!", wrong: "❌ Wrong, try again!", allDone: "All complete!" },
+            ne: { pageTitle: "Classical Translation Puzzle", title: "📜 Classical Translation Puzzle", classicalHeading: "Classical", modernHeading: "Modern (sort)", bankHeading: "Word bank", checkBtn: "Check", correct: "✅ Correct!", wrong: "❌ Wrong!", allDone: "Done!" },
+            ur: { pageTitle: "Classical Translation Puzzle", title: "📜 Classical Translation Puzzle", classicalHeading: "Classical", modernHeading: "Modern (sort)", bankHeading: "Word bank", checkBtn: "Check", correct: "✅ Correct!", wrong: "❌ Wrong!", allDone: "Done!" },
+            tl: { pageTitle: "Classical Translation Puzzle", title: "📜 Classical Translation Puzzle", classicalHeading: "Classical", modernHeading: "Modern (sort)", bankHeading: "Word bank", checkBtn: "Check", correct: "✅ Tama!", wrong: "❌ Mali!", allDone: "Tapos!" },
+            hi: { pageTitle: "Classical Translation Puzzle", title: "📜 Classical Translation Puzzle", classicalHeading: "Classical", modernHeading: "Modern (sort)", bankHeading: "Word bank", checkBtn: "Check", correct: "✅ सही!", wrong: "❌ गलत!", allDone: "पूरा!" }
+        };
+        function uiLangBucket() { if (window.NcsI18n && window.NcsI18n.getLang) { var l = window.NcsI18n.getLang(); return l === "zh-Hant" ? "zh" : l; } return "zh"; }
+        function ui(k) { if (window.NcsI18n && window.NcsI18n.isInitialized && window.NcsI18n.isInitialized()) { var t = window.NcsI18n.t(k); if (t != null && t !== k) return t; } var b = uiLangBucket(); if (APP_STRINGS[b] && APP_STRINGS[b][k]) return APP_STRINGS[b][k]; if (b !== "en" && APP_STRINGS.en && APP_STRINGS.en[k]) return APP_STRINGS.en[k]; return (APP_STRINGS.zh && APP_STRINGS.zh[k]) || k; }
+        function wireI18n() { if (window.NcsI18n && window.NcsI18n.registerStrings) window.NcsI18n.registerStrings(APP_STRINGS); applyUI(); if (window.NcsI18n && window.NcsI18n.onChange) window.NcsI18n.onChange(applyUI); document.addEventListener("hksteam-ncs-lang-change", applyUI); document.addEventListener("ncs-lang-change", applyUI); }
+        function applyUI() { document.title = ui("pageTitle"); document.getElementById("ui-title").textContent = ui("title"); document.getElementById("ui-classical-heading").textContent = ui("classicalHeading"); document.getElementById("ui-modern-heading").textContent = ui("modernHeading"); document.getElementById("ui-bank-heading").textContent = ui("bankHeading"); document.getElementById("ui-check-btn").textContent = ui("checkBtn"); }
+        function whenNcsReady(fn) { var t = 0, timer = setInterval(function () { if ((window.NcsI18n && window.NcsI18n.isInitialized && window.NcsI18n.isInitialized()) || ++t > 120) { clearInterval(timer); fn(); } }, 50); }
+        var PUZZLES = [
+            { classical: "學而時習之，不亦說乎？", words: ["學了", "後", "才", "，", "又", "按時", "溫習", "所學的", "，", "不", "也", "是", "喜悅", "的", "嗎", "？"], correct: "學了，又按時溫習所學的，不也是喜悅的嗎？", note: "「時習」是按時溫習，不是學習後才複習。「說」讀作「悅」，表示喜悅。「之」指所學的內容。" },
+            { classical: "有朋自遠方來，不亦樂乎？", words: ["有", "朋友", "從", "遠方", "來", "，", "不", "也", "是", "快樂", "的", "嗎", "？"], correct: "有朋友從遠方來，不也是快樂的嗎？", note: "「樂」是因為朋友從遠方來而喜悅。喜悅來自原文所說的相見，不是套話。" },
+            { classical: "溫故而知新，可以為師矣。", words: ["溫習", "舊", "知識", "而", "獲得", "新", "領悟", "，", "可以", "做", "老師", "了", "。"], correct: "溫習舊知識而獲得新領悟，可以做老師了。", note: "「溫故」是溫習舊有的所學，「知新」是從中有新的領會。可以為師，是因為做得到這兩件事。" }
+        ];
+        var currentPuzzle = 0, userTranslation = [], tokenSeq = 0;
+        function loadPuzzle() {
+            var puzzle = PUZZLES[currentPuzzle];
+            document.getElementById('classical').textContent = puzzle.classical;
+            document.getElementById('gloss').textContent = puzzle.note || "";
+            var bank = document.getElementById('word-bank'); bank.innerHTML = '';
+            puzzle.words.sort(function () { return Math.random() - 0.5; }).forEach(function (word, i) {
+                var btn = document.createElement('button');
+                btn.className = 'word-box bg-gradient-to-br from-purple-600 to-pink-600 px-4 py-2 rounded-lg font-bold';
+                btn.textContent = word; btn.draggable = true; btn.id = 'word-' + i;
+                btn.onclick = function () { addWord(word, btn); };
+                bank.appendChild(btn);
+            });
+            document.getElementById('translation-area').innerHTML = '';
+            userTranslation = []; tokenSeq = 0; document.getElementById('feedback').innerHTML = '';
+        }
+        function addWord(word, btn) {
+            var token = { id: tokenSeq++, word: word };
+            userTranslation.push(token);
+            var area = document.getElementById('translation-area');
+            var wordEl = document.createElement('div');
+            wordEl.className = 'bg-green-700 px-3 py-1 rounded'; wordEl.textContent = word;
+            wordEl.onclick = function () { userTranslation = userTranslation.filter(function (t) { return t.id !== token.id; }); wordEl.remove(); btn.style.opacity = '1'; };
+            area.appendChild(wordEl); btn.style.opacity = '0.3';
+        }
+        function check() {
+            var puzzle = PUZZLES[currentPuzzle];
+            var userAnswer = userTranslation.map(function (t) { return t.word; }).join('');
+            if (currentPuzzle === 0 && (userAnswer.indexOf("後") !== -1 || userAnswer.indexOf("才") !== -1)) {
+                document.getElementById('feedback').textContent = "「時習」是按時溫習，不是學習後才複習。";
+                return;
+            }
+            if (userAnswer === puzzle.correct) {
+                document.getElementById('feedback').innerHTML = ui("correct");
+                setTimeout(function () { currentPuzzle++; if (currentPuzzle < PUZZLES.length) loadPuzzle(); else alert(ui("allDone")); }, 2000);
+            } else {
+                document.getElementById('feedback').innerHTML = ui("wrong");
+            }
+        }
+        whenNcsReady(function () { wireI18n(); loadPuzzle(); });
+    </script>
     <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 </body>
 

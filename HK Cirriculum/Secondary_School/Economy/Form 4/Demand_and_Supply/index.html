@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>需求與供給</title>
+  <link rel="stylesheet" href="../../shared/lesson.css">
+</head>
+<body data-entry="form4-demand-supply">
+  <div class="wrap">
+    <nav class="nav">
+      <a href="../../index.html">經濟科</a>
+      <a href="../../../index.html">中學</a>
+    </nav>
+    <p class="kicker">中四</p>
+    <h1>需求與供給</h1>
+    <p class="lead">價格變了，是沿曲線移動的需求量或供給量。收入、預期、天氣這類非價格因素變了，整條曲線才移動。其他因素不變時，需求增加會使均衡價格和數量上升；供給減少會使均衡價格上升、數量下降。</p>
+    <div id="stage" class="panel"></div>
+    <p id="caption"></p>
+    <div id="quiz"></div>
+    <footer>@HKSTEAMAI All Copy-Right Reserved.</footer>
+  </div>
+  <script src="../../shared/sfx.js"></script>
+  <script src="../../shared/quiz.js"></script>
+  <script>
+    var svgNS = "http://www.w3.org/2000/svg";
+    var shiftD = 0;
+    var shiftS = 0;
+    var demandLine;
+    var supplyLine;
+    var dot;
+    var mover;
+
+    function svgEl(name) {
+      return document.createElementNS(svgNS, name);
+    }
+
+    function point(d, s) {
+      var k = 210 / 154;
+      var y = (s - d) / (2 * k) + 113;
+      var x = 40 + s + 210 * ((190 - y) / 154);
+      return { x: x, y: y };
+    }
+
+    function place(d, s) {
+      demandLine.setAttribute("x1", 40 + d);
+      demandLine.setAttribute("y1", 36);
+      demandLine.setAttribute("x2", 250 + d);
+      demandLine.setAttribute("y2", 190);
+      supplyLine.setAttribute("x1", 40 + s);
+      supplyLine.setAttribute("y1", 190);
+      supplyLine.setAttribute("x2", 250 + s);
+      supplyLine.setAttribute("y2", 36);
+      var eq = point(d, s);
+      dot.setAttribute("cx", eq.x);
+      dot.setAttribute("cy", eq.y);
+    }
+
+    function animateTo(d, s) {
+      var fromD = shiftD;
+      var fromS = shiftS;
+      var start = performance.now();
+      function frame(now) {
+        var t = Math.min(1, (now - start) / 450);
+        shiftD = fromD + (d - fromD) * t;
+        shiftS = fromS + (s - fromS) * t;
+        place(shiftD, shiftS);
+        if (t < 1) requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    }
+
+    function slideAlongDemand() {
+      var start = performance.now();
+      function at(t) {
+        return { x: 40 + t * 210, y: 36 + t * 154 };
+      }
+      function frame(now) {
+        var p = Math.min(1, (now - start) / 500);
+        var t = 0.78 + (0.32 - 0.78) * p;
+        var pos = at(t);
+        mover.setAttribute("cx", pos.x);
+        mover.setAttribute("cy", pos.y);
+        if (p < 1) requestAnimationFrame(frame);
+      }
+      mover.setAttribute("opacity", "1");
+      requestAnimationFrame(frame);
+    }
+
+    var stage = document.getElementById("stage");
+    var svg = svgEl("svg");
+    svg.setAttribute("viewBox", "0 0 320 230");
+    svg.classList.add("graph");
+    function line(x1, y1, x2, y2, color) {
+      var node = svgEl("line");
+      node.setAttribute("x1", x1);
+      node.setAttribute("y1", y1);
+      node.setAttribute("x2", x2);
+      node.setAttribute("y2", y2);
+      node.setAttribute("stroke", color);
+      node.setAttribute("stroke-width", "3");
+      svg.appendChild(node);
+      return node;
+    }
+    line(36, 16, 36, 200, "#44403c");
+    line(36, 200, 300, 200, "#44403c");
+    demandLine = line(40, 36, 250, 190, "#1d4ed8");
+    supplyLine = line(40, 190, 250, 36, "#c2410c");
+    dot = svgEl("circle");
+    dot.setAttribute("r", "5");
+    dot.setAttribute("fill", "#1c1917");
+    svg.appendChild(dot);
+    mover = svgEl("circle");
+    mover.setAttribute("r", "5");
+    mover.setAttribute("fill", "#1d4ed8");
+    mover.setAttribute("opacity", "0");
+    svg.appendChild(mover);
+    var labelD = svgEl("text");
+    labelD.setAttribute("x", "200");
+    labelD.setAttribute("y", "28");
+    labelD.setAttribute("fill", "#1d4ed8");
+    labelD.textContent = "需求";
+    svg.appendChild(labelD);
+    var labelS = svgEl("text");
+    labelS.setAttribute("x", "200");
+    labelS.setAttribute("y", "214");
+    labelS.setAttribute("fill", "#c2410c");
+    labelS.textContent = "供給";
+    svg.appendChild(labelS);
+    stage.appendChild(svg);
+    place(0, 0);
+
+    window.startChoices(document.getElementById("quiz"), [
+      {
+        title: "打風前的街市葉菜",
+        html: "<p>天文台即將改掛八號風球。市民預料未來一兩天未必能上街，於是在原來菜價下也想多買葉菜。假設菜檔願意賣出的數量暫時不變。</p>",
+        options: [
+          { ok: true, label: "需求增加，曲線向右移；供給不變", why: "正確。改變的是預期，不是價格本身。在原來價格下已經想多買，所以整條需求曲線向右移。" },
+          { ok: false, label: "菜價將會上升，所以需求下降", why: "不對。價格變動才會令需求量沿曲線移動。這裡價格還未變，人們已經想多買，所以是需求增加。" },
+          { ok: false, label: "供給增加，需求不變", why: "不對。多買菜的是市民，那是需求。供給是菜檔在各價格下願意賣出的數量。" }
+        ],
+        onCorrect: function () { animateTo(42, 0); }
+      },
+      {
+        title: "看圖判斷均衡",
+        html: "<p>需求已向右移，供給維持不變。均衡價格和均衡數量會怎樣？黑點是新的均衡。</p>",
+        options: [
+          { ok: true, label: "均衡價格上升，均衡數量上升", why: "正確。需求增加而供給不變，買家搶購，均衡價格和成交量都上升。" },
+          { ok: false, label: "均衡價格上升，均衡數量下降", why: "不對。那是供給減少、需求不變時的典型結果。這題供給沒有減少。" },
+          { ok: false, label: "均衡價格下降，均衡數量上升", why: "不對。需求增加會把均衡價格推高，不是把它壓低。" }
+        ]
+      },
+      {
+        title: "暴雨後的本地菜",
+        html: "<p>暴雨淹了新界菜田。同一個菜價下，菜農能運到街市的葉菜少了。市民的需求不變。先把圖回復到原來的曲線。</p>",
+        onShow: function () { animateTo(0, 0); mover.setAttribute("opacity", "0"); },
+        options: [
+          { ok: true, label: "供給減少，曲線向左移；需求不變", why: "正確。同一價格下願意而且能夠賣出的數量減少，是供給減少，整條供給曲線向左移。" },
+          { ok: false, label: "需求減少，供給不變", why: "不對。少了的是菜田能運出的菜，那是供給。題目沒有說市民不想買。" },
+          { ok: false, label: "只是價格上升，所以沿供給曲線移動", why: "不對。題目比較的是同一個價格下的供應量，所以整條供給曲線移動，不是沿住舊曲線走。" }
+        ],
+        onCorrect: function () { animateTo(0, -42); }
+      },
+      {
+        title: "供給減少之後",
+        html: "<p>供給曲線已向左移，需求不變。均衡會怎樣？</p>",
+        options: [
+          { ok: true, label: "均衡價格上升，均衡數量下降", why: "正確。能賣的菜少了，菜價上升，成交量下降。" },
+          { ok: false, label: "均衡價格上升，均衡數量上升", why: "不對。那是需求增加、供給不變的結果。這題是供給減少。" },
+          { ok: false, label: "均衡價格下降，均衡數量下降", why: "不對。供給減少會推高均衡價格，不會把它壓低。" }
+        ]
+      },
+      {
+        title: "凍奶茶加價",
+        html: "<p>一間茶餐廳把凍奶茶由 $22 加到 $26。天氣、顧客入息和隔壁茶餐廳的價錢都沒有變。</p>",
+        onShow: function () { animateTo(0, 0); },
+        options: [
+          { ok: true, label: "需求量沿需求曲線減少，需求曲線不移動", why: "正確。其他因素不變，只有這杯奶茶的價格上升，顧客買少了，是需求量下降，不是需求下降。" },
+          { ok: false, label: "需求曲線向左移", why: "不對。需求曲線移動是非價格因素改變。這裡變的是商品自己的價格，所以沿曲線移動。" },
+          { ok: false, label: "供給曲線向右移", why: "不對。加價不是生產成本下降，茶餐廳的供給曲線沒有因此向右移。" }
+        ],
+        onCorrect: function () { slideAlongDemand(); },
+        closing: "價格變動是移動上的需求量或供給量；非價格因素才令整條曲線移動。打風前搶買是需求增加，暴雨淹田是供給減少。"
+      }
+    ]);
+  </script>
+</body>
+</html>

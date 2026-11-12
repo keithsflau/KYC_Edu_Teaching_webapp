@@ -61,7 +61,8 @@ function emitData(b) {
   lines.push(`  const analysis = ${JSON.stringify(b.analysis || {}, null, 4).replace(/^/gm, "  ")};`);
   lines.push(`  const storyboard = ${JSON.stringify(b.storyboard, null, 4).replace(/^/gm, "  ")};`);
   lines.push(`  const outro = ${JSON.stringify(b.outro, null, 4).replace(/^/gm, "  ")};`);
-  lines.push("  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };");
+  lines.push(`  const lesson = ${JSON.stringify(b.lesson || null, null, 4).replace(/^/gm, "  ")};`);
+  lines.push("  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, lesson, END_DAY };");
   lines.push("})();");
   lines.push("");
   return lines.join("\n");
@@ -187,14 +188,14 @@ function baseBattle(id, title_zh, title_en, subtitle, geo, factions, factionOrde
         "衛星影像為現代地形，非歷史時期地貌。",
         "河川、海域水面為教學示意，按史實位置裁切顯示。",
       ],
-      sources: "DSE 中史課程、中國通史、維基百科（交叉查證）。",
+      sources: "見本課史料欄所列史書、實錄與檔案，不以網絡百科為唯一依據。",
     },
     storyboard: center.storyboard || [],
     outro: {
       title_zh,
       title_en,
-      narration_zh: center.outro_zh || "本戰役為 DSE 中史重要考點。",
-      narration_en: center.outro_en || "A key HKDSE Chinese History topic.",
+      narration_zh: center.outro_zh || `${title_zh}的導覽到此為止。勝敗原因見評價與勝敗判斷。`,
+      narration_en: center.outro_en || "The tour ends. Use the judgement question for why the battle turned out as it did.",
       cam: cam(center.lng, center.lat, (center.dist || 700) * 1.2, 48),
     },
   };
@@ -256,6 +257,24 @@ function mergeLeaders(battle, warSlug) {
   if (LEADERS[key]) battle.data.analysis.leaders = LEADERS[key];
 }
 
+const LESSONS = require("./lesson-frames-cse.js");
+
+function mergeLesson(battle, warSlug) {
+  const L = LESSONS[`${warSlug}/${battle.slug}`];
+  if (!L) return;
+  battle.data.lesson = {
+    junior: L.junior,
+    senior: L.senior,
+    fact: L.fact,
+    sources: L.sources,
+    evaluation: L.evaluation,
+    judgment: L.judgment,
+  };
+  battle.data.notes.sources = L.sources;
+  battle.data.outro.narration_zh = L.outro_zh;
+  battle.data.outro.narration_en = L.outro_en;
+}
+
 function wireNextBattles() {
   CATALOG.forEach((war, wi) => {
     war.battles.forEach((b, bi) => {
@@ -287,6 +306,7 @@ for (const war of CATALOG) {
     mergeEnrichment(b, war.slug);
     mergeFocusIds(b, war.slug);
     mergeLeaders(b, war.slug);
+    mergeLesson(b, war.slug);
     writeBattle(war.slug, b);
   }
   console.log(`✓ ${war.slug}: ${war.battles.length} battles`);
@@ -297,7 +317,8 @@ const mainCards = CATALOG.map(
       <h2>${w.title_zh}</h2>
       <div class="en">${w.title_en} · ${w.period}</div>
       <p>${w.battles.length} 個 DSE 中史戰役地圖</p>
-      <div class="places">${w.battles.map((b) => b.title_zh.replace(/戰役|之戰|會戰|海戰|大捷/g, "")).join(" · ")}</div>
+      <div class="places">${w.battles.map((b) => (b.title_zh.indexOf("淮海") === 0 ? "淮海" : b.title_zh.replace(/之戰|會戰|海戰|戰役|大捷/g, ""))).join(" · ")}</div>
+      <div class="depth">初中：史實導覽｜高中：史料、評價與勝敗判斷</div>
     </a>`
 ).join("\n");
 

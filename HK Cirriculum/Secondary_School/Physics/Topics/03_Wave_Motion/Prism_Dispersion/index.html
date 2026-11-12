@@ -1,22 +1,26 @@
 ﻿<!DOCTYPE html>
-
 <html lang="en">
-
 <head>
-
   <meta charset="UTF-8" />
-
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <title>Professional Prism Optics Simulator</title>
-
+  <title>Prism Dispersion Lab | HKDSE Wave Motion</title>
   <script src="https://cdn.tailwindcss.com"></script>
-
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;500;700&display=swap" rel="stylesheet" />
-
-<!-- NCS i18n fleet kit (auto-injected) -->
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet" />
+  <style>
+    body { font-family: "Outfit", sans-serif; }
+    input[type=range] { -webkit-appearance: none; background: transparent; width: 100%; }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none; height: 18px; width: 18px; border-radius: 50%;
+      background: #8b5cf6; cursor: pointer; margin-top: -7px;
+    }
+    input[type=range]::-webkit-slider-runnable-track {
+      height: 4px; background: #334155; border-radius: 2px;
+    }
+  </style>
+  <!-- NCS i18n fleet kit (auto-injected) -->
   <link rel="stylesheet" href="../../../../../common/ncs-i18n.css" />
   <script src="../../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <script src="../../../../../common/ncs-vanilla-bridge.js"></script>
   <style data-ncs-kit="fleet-bridge">
     body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
     body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
@@ -52,14 +56,223 @@
   })();
   </script>
 </head>
+<body class="bg-slate-900 text-slate-100 min-h-screen">
+  <header class="border-b border-slate-700 bg-slate-800/80 backdrop-blur sticky top-0 z-10">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-3">
+      <div>
+        <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-violet-400 to-pink-400">Prism Dispersion Lab</h1>
+        <p class="text-slate-400 text-sm">White light → spectrum (Snell's law, n varies with λ)</p>
+      </div>
+      <span class="text-xs font-mono bg-slate-700 px-3 py-1 rounded-full border border-slate-600">HKDSE Wave Motion</span>
+    </div>
+  </header>
 
-<body class="min-h-screen flex items-center justify-center bg-slate-900 text-slate-100 p-8">
+  <main class="max-w-6xl mx-auto p-4 grid lg:grid-cols-3 gap-6">
+    <aside class="space-y-4">
+      <div class="bg-slate-800 rounded-2xl p-5 border border-slate-700">
+        <h2 class="font-semibold mb-4 text-violet-300">Controls</h2>
+        <label class="text-sm text-slate-300 block mb-1">Angle of incidence (θ₁)</label>
+        <input type="range" id="angleSlider" min="20" max="75" value="45" />
+        <p class="text-center font-mono text-violet-400 mt-1"><span id="angleVal">45</span>°</p>
+        <label class="text-sm text-slate-300 block mt-4 mb-1">Prism material</label>
+        <select id="materialSelect" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2 text-sm">
+          <option value="1.52">Crown glass (n ≈ 1.52)</option>
+          <option value="1.66">Flint glass (n ≈ 1.66)</option>
+          <option value="1.33">Water (n ≈ 1.33)</option>
+        </select>
+      </div>
+      <div class="bg-slate-800/60 rounded-2xl p-5 border border-slate-700 text-sm text-slate-400">
+        <h3 class="font-semibold text-white mb-2">Key idea</h3>
+        <p>Different wavelengths refract by different amounts because refractive index <span class="text-yellow-300 font-mono">n(λ)</span> increases as wavelength decreases. Violet bends most; red bends least.</p>
+      </div>
+      <div id="lab-ramp"></div>
+      <div id="lab-challenges"></div>
+    </aside>
 
-  <p class="text-center">Prism Optics Simulator — interactive lab coming soon.</p>
+    <section class="lg:col-span-2 bg-black rounded-2xl border border-slate-700 overflow-hidden relative">
+      <canvas id="prismCanvas" class="w-full block" style="height:420px"></canvas>
+      <div class="absolute top-3 left-3 text-xs bg-black/60 px-2 py-1 rounded text-slate-300">Rainbow order: R O Y G B I V</div>
+    </section>
+  </main>
 
   <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+  <script src="../../../../../common/interactive-lab-kit.js"></script>
+  <script src="../../../../../common/sample-ui-kit.js"></script>
+  <script>
+  (function () {
+    var canvas = document.getElementById('prismCanvas');
+    var ctx = canvas.getContext('2d');
+    var angleSlider = document.getElementById('angleSlider');
+    var angleVal = document.getElementById('angleVal');
+    var materialSelect = document.getElementById('materialSelect');
 
+    var COLORS = [
+      { name: 'Red', wl: 700, rgb: '#ef4444' },
+      { name: 'Orange', wl: 620, rgb: '#f97316' },
+      { name: 'Yellow', wl: 580, rgb: '#eab308' },
+      { name: 'Green', wl: 530, rgb: '#22c55e' },
+      { name: 'Blue', wl: 470, rgb: '#3b82f6' },
+      { name: 'Indigo', wl: 440, rgb: '#6366f1' },
+      { name: 'Violet', wl: 400, rgb: '#a855f7' }
+    ];
+
+    function resize() {
+      canvas.width = canvas.clientWidth;
+      canvas.height = 420;
+      draw();
+    }
+
+    function nAt(wl, nBase) {
+      return nBase + (700 - wl) * 0.00035;
+    }
+
+    function refract(theta1, n1, n2) {
+      var s1 = Math.sin(theta1);
+      var ratio = n1 / n2;
+      var s2sq = ratio * ratio * s1 * s1;
+      if (s2sq > 1) return null;
+      return Math.asin(Math.sqrt(s2sq));
+    }
+
+    function draw() {
+      var w = canvas.width, h = canvas.height;
+      var theta1 = parseFloat(angleSlider.value) * Math.PI / 180;
+      var nBase = parseFloat(materialSelect.value);
+      angleVal.textContent = angleSlider.value;
+
+      ctx.fillStyle = '#020617';
+      ctx.fillRect(0, 0, w, h);
+
+      var apex = { x: w * 0.55, y: h * 0.45 };
+      var prismSize = Math.min(w, h) * 0.22;
+      var p1 = { x: apex.x - prismSize, y: apex.y + prismSize * 0.6 };
+      var p2 = { x: apex.x + prismSize, y: apex.y + prismSize * 0.6 };
+
+      ctx.fillStyle = 'rgba(148,163,184,0.15)';
+      ctx.strokeStyle = 'rgba(148,163,184,0.5)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(apex.x, apex.y);
+      ctx.lineTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      var entryX = w * 0.08;
+      var entryY = h * 0.35;
+      var rayLen = w * 0.35;
+
+      COLORS.forEach(function (c, i) {
+        var n = nAt(c.wl, nBase);
+        var t2 = refract(theta1, 1, n);
+        if (!t2) return;
+        var t3 = refract(t2, n, 1);
+        if (!t3) return;
+
+        ctx.strokeStyle = c.rgb;
+        ctx.lineWidth = 2.5;
+        ctx.shadowColor = c.rgb;
+        ctx.shadowBlur = 6;
+
+        ctx.beginPath();
+        ctx.moveTo(entryX, entryY + i * 3);
+        ctx.lineTo(apex.x - prismSize * 0.3, apex.y + prismSize * 0.2);
+        ctx.stroke();
+
+        var dx = Math.cos(t3) * rayLen;
+        var dy = Math.sin(t3) * rayLen;
+        ctx.beginPath();
+        ctx.moveTo(p2.x - prismSize * 0.1, p1.y - prismSize * 0.05);
+        ctx.lineTo(p2.x - prismSize * 0.1 + dx, p1.y - prismSize * 0.05 + dy * 0.5);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+      });
+
+      ctx.fillStyle = '#fff';
+      ctx.font = '12px Outfit';
+      ctx.fillText('White light in →', entryX, entryY - 10);
+    }
+
+    angleSlider.addEventListener('input', draw);
+    materialSelect.addEventListener('change', draw);
+    window.addEventListener('resize', resize);
+    resize();
+
+    if (window.HKCLabKit) {
+      HKCLabKit.mountLearnFromZero(document.getElementById('lab-ramp'), {
+        accent: '#8b5cf6', dark: true, appId: 'prism_dispersion',
+        steps: [
+          { id: 'R1', titleEn: 'Dispersion', titleZh: '色散',
+            bodyEn: 'White light is a mix of wavelengths. Each colour refracts differently inside the prism.', bodyZh: '白光是多種波長的混合；各色光在棱鏡內折射程度不同。' },
+          { id: 'R2', titleEn: 'Snell\'s law', titleZh: '斯涅爾定律',
+            bodyEn: 'n₁ sin θ₁ = n₂ sin θ₂. Higher n → smaller angle inside the medium.', bodyZh: 'n₁ sin θ₁ = n₂ sin θ₂。折射率越大，折射角越小。' },
+          { id: 'R3', titleEn: 'Violet vs red', titleZh: '紫光與紅光',
+            bodyEn: 'Shorter λ (violet) has higher n and bends more than red.', bodyZh: '波長較短（紫光）折射率較高，偏折比紅光更大。' }
+        ]
+      });
+      HKCLabKit.mountChallenges(document.getElementById('lab-challenges'), {
+        accent: '#8b5cf6', dark: true, storageKey: 'prism_ch_v1',
+        challenges: [
+          { id: 'C1', en: 'Identify ROYGBIV order on exit side', zh: '辨認出射側 ROYGBIV 順序' },
+          { id: 'C2', en: 'Switch to flint glass — wider spread', zh: '改用燧石玻璃 — 色散更闊' },
+          { id: 'C3', en: 'Steepen incidence angle and compare spread', zh: '增大入射角並比較色散' }
+        ]
+      });
+    }
+  })();
+  </script>
+  <script data-ncs-fix6="lang">
+  (function () {
+    var APP_STRINGS = {
+    "zh": {
+        "pageTitle": "棱鏡色散實驗室",
+        "title": "棱鏡色散實驗室",
+        "subtitle": "白光 → 光譜（折射率隨 λ 變化）",
+        "controls": "控制",
+        "angle": "入射角 (θ₁)",
+        "material": "棱鏡材料",
+        "keyIdea": "重點",
+        "keyBody": "不同波長折射程度不同，因折射率 n(λ) 隨波長減小而增大。紫光偏折最大；紅光最小。",
+        "rainbow": "光譜順序：紅橙黃綠藍靛紫"
+    },
+    "en": {
+        "pageTitle": "Prism Dispersion Lab",
+        "title": "Prism Dispersion Lab",
+        "subtitle": "White light → spectrum (Snell's law, n varies with λ)",
+        "controls": "Controls",
+        "angle": "Angle of incidence (θ₁)",
+        "material": "Prism material",
+        "keyIdea": "Key idea",
+        "keyBody": "Different wavelengths refract by different amounts because refractive index n(λ) increases as wavelength decreases. Violet bends most; red bends least.",
+        "rainbow": "Rainbow order: R O Y G B I V"
+    }
+};
+    function applyUI() {
+      var u = function (k) { return window.NcsVanillaBridge.ui(k, APP_STRINGS); };
+      document.title = u("pageTitle");
+      
+      var h1 = document.querySelector("header h1");
+      if (h1) h1.textContent = u("title");
+      var sub = document.querySelector("header p");
+      if (sub) sub.textContent = u("subtitle");
+      var ctrl = document.querySelector("aside h2");
+      if (ctrl) ctrl.textContent = u("controls");
+      var lbls = document.querySelectorAll("aside label.text-sm");
+      if (lbls[0]) lbls[0].textContent = u("angle");
+      if (lbls[1]) lbls[1].textContent = u("material");
+      var keyH = document.querySelector("aside h3.font-semibold");
+      if (keyH) keyH.textContent = u("keyIdea");
+      var keyP = document.querySelector("aside h3 + p");
+      if (keyP) keyP.textContent = u("keyBody");
+      var rb = document.querySelector("section .absolute.top-3");
+      if (rb) rb.textContent = u("rainbow");
+  
+    }
+    window.NcsVanillaBridge.whenNcsReady(function () {
+      window.NcsVanillaBridge.wireVanillaI18n(APP_STRINGS, applyUI);
+    });
+  })();
+  </script>
 </body>
-
 </html>
-

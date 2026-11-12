@@ -2,79 +2,139 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>13_Galvanic_Cell</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="../../../../common/babel-react-classic.js"></script>
-  <script src="../../../../common/learn-from-zero.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>原電池 | Galvanic cell</title>
+  <link rel="stylesheet" href="../../lesson.css" />
   <style>
-    body { font-family: "IBM Plex Sans", system-ui, sans-serif; background-color: #f8fafc; color: #0f172a; min-height: 100vh; }
-  </style>
-  <!-- NCS i18n fleet kit (auto-injected) -->
-  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
-  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
-  <style data-ncs-kit="fleet-bridge">
-    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
-    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
-      display: none !important;
+    .board { display: grid; grid-template-columns: 1fr 1.15fr 1fr; gap: 8px; align-items: stretch; margin-top: 12px; }
+    .pole { text-align: center; border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px; }
+    .metal { width: 52px; height: 86px; margin: 0 auto 6px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; }
+    .zn { background: #64748b; }
+    .cu { background: #c2410c; }
+    .wire, .salt { border-radius: 999px; padding: 8px 10px; margin: 8px 0; text-align: center; font-weight: 700; }
+    .wire { background: #e0f2fe; color: #0c4a6e; }
+    .salt { background: #fef3c7; color: #78350f; }
+    @media (max-width: 640px) {
+      .board { grid-template-columns: 1fr; }
     }
   </style>
-  <script data-ncs-kit="fleet-init">
-  (function () {
-    function hideLegacyToggles() {
-      document.body.classList.add("ncs-fleet-mounted");
-      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
-        var label = (btn.textContent || "").trim();
-        if (label === "EN" || label === "\u4E2D") {
-          btn.classList.add("ncs-hide-when-ncs-fleet");
-        }
-      });
-      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
-        el.classList.add("ncs-hide-when-ncs-fleet");
-      });
-    }
-    function boot() {
-      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
-      window.NcsI18n.init({
-        chromePath: "../../../../_shared/ncs-chrome.json",
-        target: document.body
-      }).then(hideLegacyToggles);
-    }
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", boot);
-    } else {
-      boot();
-    }
-  })();
-  </script>
 </head>
 <body>
-  <div id="root"></div>
-  <script type="text/babel" data-presets="react-classic">
-    const { useState } = React;
-    
-    function App() {
-      return (
-        <div className="max-w-4xl mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-4">13 Galvanic Cell</h1>
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 mb-8 text-center">
-            <div className="w-full h-64 bg-slate-100 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 mb-4">
-              <span className="text-slate-400 font-medium">[ Interactive Canvas Placeholder ]</span>
-            </div>
-            <p className="text-slate-500">This interactive lab is currently under development.</p>
-          </div>
-          <LearnFromZero />
+  <section class="chem-learn" data-chem-entry="1">
+    <h2>學習目標</h2>
+    <ul>
+      <li>判斷電子在外電路由哪一極流到哪一極。</li>
+      <li>說明鹽橋移動的是離子，電子不經過鹽橋。</li>
+      <li>判斷陽離子和陰離子各移向哪一極。</li>
+    </ul>
+    <p id="chem-feedback" role="status">操作：選擇電子流向、鹽橋作用和離子方向。</p>
+  </section>
+  <main>
+    <div class="panel">
+      <h1>原電池</h1>
+      <p class="muted">鋅比銅容易失去電子。左方是鋅極，右方是銅極。本課不提供溶液濃度或裝配步驟。</p>
+      <p class="muted"><strong>操作</strong>：按下面每一組，畫面會顯示你的選擇，答錯會寫出錯因。</p>
+      <div class="board">
+        <div class="pole">
+          <div class="metal zn">Zn</div>
+          <strong>鋅極</strong>
+          <p class="muted">鋅原子失去電子</p>
         </div>
-      );
+        <div>
+          <div class="wire" id="wire-label">外電路：尚未選擇電子流向</div>
+          <div class="salt" id="salt-label">鹽橋：尚未選擇</div>
+        </div>
+        <div class="pole">
+          <div class="metal cu">Cu</div>
+          <strong>銅極</strong>
+          <p class="muted">銅離子接受電子</p>
+        </div>
+      </div>
+      <p class="muted">電子怎樣走？</p>
+      <div class="row">
+        <button type="button" data-part="electron" data-choice="zn-cu">外電路：鋅極到銅極</button>
+        <button type="button" data-part="electron" data-choice="cu-zn">外電路：銅極到鋅極</button>
+        <button type="button" data-part="electron" data-choice="bridge">電子走過鹽橋</button>
+      </div>
+      <p class="muted">鹽橋的作用是什麼？</p>
+      <div class="row">
+        <button type="button" data-part="bridge" data-choice="ions">離子移動，維持電中性</button>
+        <button type="button" data-part="bridge" data-choice="electrons">讓電子從鹽橋流過</button>
+        <button type="button" data-part="bridge" data-choice="none">只固定兩杯，離子不動</button>
+      </div>
+      <p class="muted">鹽橋的離子移向哪邊？</p>
+      <div class="row">
+        <button type="button" data-part="ion" data-choice="to-cu">陽離子向銅極，陰離子向鋅極</button>
+        <button type="button" data-part="ion" data-choice="to-zn">陽離子向鋅極，陰離子向銅極</button>
+      </div>
+    </div>
+  </main>
+  <script src="../../lesson-kit.js"></script>
+  <script>
+    function gradeCell(part, choice) {
+      if (part === "electron" && choice === "zn-cu") {
+        return { ok: true, msg: "正確。鋅在陽極（負極）失去電子，電子經外電路由鋅極流到銅極。銅離子在陰極（正極）接受電子。" };
+      }
+      if (part === "electron" && choice === "cu-zn") {
+        return { ok: false, msg: "錯因：方向反了。原電池的陽極發生氧化，電子由陽極流出。不要把它和電解池混淆。電子經外電路由鋅極流到銅極。" };
+      }
+      if (part === "electron" && choice === "bridge") {
+        return { ok: false, msg: "錯因：電子不經過鹽橋，只走外電路的金屬線。鹽橋裡移動的是離子。" };
+      }
+      if (part === "bridge" && choice === "ions") {
+        return { ok: true, msg: "正確。鹽橋讓離子移動，維持兩邊溶液的電中性，電流才可以持續。電子仍然只走外電路。" };
+      }
+      if (part === "bridge" && choice === "electrons") {
+        return { ok: false, msg: "錯因：鹽橋不是電子通道。電子只經外電路由鋅極流到銅極；鹽橋負責離子，避免兩邊電荷越積越多。" };
+      }
+      if (part === "bridge" && choice === "none") {
+        return { ok: false, msg: "錯因：鹽橋不是只用來固定容器。沒有離子移動時，兩邊電荷很快失衡，原電池不能持續放電。" };
+      }
+      if (part === "ion" && choice === "to-cu") {
+        return { ok: true, msg: "正確。陽離子移向銅極（陰極），陰離子移向鋅極（陽極），用來平衡兩邊的電荷。" };
+      }
+      if (part === "ion" && choice === "to-zn") {
+        return { ok: false, msg: "錯因：方向反了。鋅溶解使陽極區正離子變多，陰離子要移向鋅極；銅離子在陰極被還原，陽離子要移向銅極。" };
+      }
+      return { ok: false, msg: "錯因：請選擇一項。" };
     }
-    
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+
+    function paintCell(part, choice) {
+      if (part === "electron") {
+        var wire = document.getElementById("wire-label");
+        if (choice === "zn-cu") wire.textContent = "外電路：電子由鋅極 → 銅極";
+        else if (choice === "cu-zn") wire.textContent = "外電路：電子由銅極 → 鋅極";
+        else wire.textContent = "外電路：你選了電子走過鹽橋";
+      }
+      if (part === "bridge" || part === "ion") {
+        var salt = document.getElementById("salt-label");
+        if (choice === "ions") salt.textContent = "鹽橋：離子移動，維持電中性";
+        else if (choice === "electrons") salt.textContent = "鹽橋：你選了電子通過";
+        else if (choice === "none") salt.textContent = "鹽橋：你選了離子不動";
+        else if (choice === "to-cu") salt.textContent = "鹽橋：陽離子 → 銅極；陰離子 → 鋅極";
+        else if (choice === "to-zn") salt.textContent = "鹽橋：陽離子 → 鋅極；陰離子 → 銅極";
+      }
+      document.querySelectorAll('[data-part="' + part + '"]').forEach(function (btn) {
+        var on = btn.getAttribute("data-choice") === choice;
+        btn.classList.toggle("on", on);
+        btn.setAttribute("aria-pressed", on ? "true" : "false");
+      });
+    }
+
+    function wireCell() {
+      document.querySelectorAll("[data-part]").forEach(function (btn) {
+        btn.setAttribute("aria-pressed", "false");
+        btn.onclick = function () {
+          var part = btn.getAttribute("data-part");
+          var choice = btn.getAttribute("data-choice");
+          paintCell(part, choice);
+          var result = gradeCell(part, choice);
+          ChemLesson.say(result.msg, result.ok ? "ok" : "no");
+        };
+      });
+    }
+
+    if (typeof document !== "undefined") wireCell();
   </script>
-<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 </body>
 </html>

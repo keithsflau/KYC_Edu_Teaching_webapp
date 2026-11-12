@@ -100,7 +100,7 @@ function hubHtml(war) {
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>${war.title_zh} · 小戰役地圖</title>
+<title>${war.title_zh} · 課題地圖</title>
 <style>
   :root{--ink:#eee6d2;--ink-dim:#b3a98c;--paper:#06080c;--panel:rgba(12,15,21,.82);
     --edge:rgba(210,190,140,.26);--accent:#d8c08a;
@@ -207,7 +207,7 @@ function baseBattle(id, title_zh, title_en, subtitle, geo, factions, factionOrde
       impact: center.analysisImpact || "本戰役對戰爭走向、國際秩序與後世歷史記憶的長遠影響。",
     },
     notes: {
-      summary: center.noteSummary || title_zh + " — DSE 西史小戰役地圖。",
+      summary: center.noteSummary || title_zh + " — 課題地圖。兵力與路線為示意。",
       caveats: ["本圖僅覆蓋該戰役核心區域；戰線與兵力為教學示意。", "衛星影像為現代地形。"],
       sources: "DSE 課程、Britannica、BBC History。",
     },
@@ -215,7 +215,7 @@ function baseBattle(id, title_zh, title_en, subtitle, geo, factions, factionOrde
     outro: {
       title_zh,
       title_en,
-      narration_zh: center.outro_zh || "本戰役為 DSE 西史重要考點。",
+      narration_zh: center.outro_zh || "看過路線之後，用史料題判斷原因或立場。",
       narration_en: center.outro_en || "A key DSE Western History topic.",
       cam: cam(center.lng, center.lat, (center.dist || 700) * 1.2, 48),
     },
@@ -228,7 +228,7 @@ const CATALOG = [
     title_zh: "第一次世界大戰",
     title_en: "WORLD WAR I",
     period: "1914–1918",
-    intro: "一戰拆為六個核心小戰役，每張地圖只覆蓋該戰場約 30–80 公里範圍，方便看清地形與部隊動向。",
+    intro: "一戰拆為六個核心課題，每張地圖只覆蓋該戰場約 30–80 公里範圍，方便看清地形與部隊動向。",
     warAnalysis: {
       military: "一戰以塹壕戰、總動員與新武器（機槍、毒氣、坦克、飛機）為特徵；西線僵持、東線機動、海外戰場牽制資源。",
       nationalPower: "歐洲列強動員全國工業與人口；英國海權、美國後期參戰、俄國革命退出，重塑力量對比。",
@@ -329,7 +329,7 @@ const CATALOG = [
         places: "索姆河 · 阿爾貝",
         data: baseBattle("ww1-somme", "索姆河戰役", "THE SOMME", "1916年7月", geoBox(2.7, 49.9, 1.8, 1.2, 10), WW1_F, [WW1_CP, WW1_AP], [1916, 7, 1], {
           lng: 2.7, lat: 49.9, dist: 650,
-          narr_zh: "協約國發動索姆河攻勢，首日陣亡逾兩萬人。",
+          narr_zh: "英軍發動索姆河攻勢。首日陣亡約19,240人，傷亡合計約57,470人。",
           narr_en: "Allied offensive on the Somme — over 20,000 British dead on day one.",
           points: [
             { name_en: "Somme", name_zh: "索姆河", type: "town", lng: 2.7, lat: 49.9 },
@@ -378,24 +378,24 @@ const CATALOG = [
         title_zh: "加里波利戰役",
         title_en: "GALLIPOLI 1915",
         blurb: "協約國兩棲登陸失敗",
-        places: "加里波利半島 · 安zac 灣",
+        places: "加里波利半島 · 安扎克灣",
         data: baseBattle("ww1-gallipoli", "加里波利戰役", "GALLIPOLI", "1915–1916", geoBox(26.41, 40.41, 1.8, 1.4, 11), WW1_F, [WW1_CP, WW1_AP], [1915, 4, 25], {
           lng: 26.41, lat: 40.41, dist: 620,
           narr_zh: "協約國企圖打通達黑海海峽，遭鄂圖曼軍擊退。",
           narr_en: "Allied landings fail against Ottoman defences on the Gallipoli peninsula.",
           points: [
             { name_en: "Gallipoli", name_zh: "加里波利", type: "fort", lng: 26.41, lat: 40.41 },
-            { name_en: "Anzac Cove", name_zh: "安zac 灣", type: "bay", lng: 26.28, lat: 40.24 },
+            { name_en: "Anzac Cove", name_zh: "安扎克灣", type: "bay", lng: 26.28, lat: 40.24 },
             { name_en: "Suvla Bay", name_zh: "蘇弗拉灣", type: "bay", lng: 26.22, lat: 40.32 },
           ],
           units: [
-            { id: "ap_gallipoli", faction: WW1_AP, kind: "infantry", crest: "anchor", cf: true, name_zh: "安zac 遠征軍", name_en: "ANZAC Corps", track: [{ d: 1, lng: 26.5, lat: 40.5, s: 40000, st: "landing" }, { d: 60, lng: 26.28, lat: 40.24, s: 35000, st: "hold" }, { d: 100, lng: 26.5, lat: 40.5, s: 15000, st: "retreat" }] },
+            { id: "ap_gallipoli", faction: WW1_AP, kind: "infantry", crest: "anchor", cf: true, name_zh: "澳紐軍團", name_en: "ANZAC Corps", track: [{ d: 1, lng: 26.5, lat: 40.5, s: 40000, st: "landing" }, { d: 60, lng: 26.28, lat: 40.24, s: 35000, st: "hold" }, { d: 100, lng: 26.5, lat: 40.5, s: 15000, st: "retreat" }] },
             { id: "cp_ottoman", faction: WW1_CP, kind: "infantry", crest: "crescent", cf: true, name_zh: "鄂圖曼第五集團軍", name_en: "Ottoman 5th Army", track: [{ d: 1, lng: 26.35, lat: 40.35, s: 50000, st: "hold" }, { d: 100, lng: 26.38, lat: 40.38, s: 45000, st: "hold" }] },
           ],
-          arrows: [{ d: 1, f: WW1_AP, from: [26.5, 40.5], to: [26.28, 40.24], label: "安zac 登陸", kind: "landing" }],
+          arrows: [{ d: 1, f: WW1_AP, from: [26.5, 40.5], to: [26.28, 40.24], label: "安扎克灣登陸", kind: "landing" }],
           hotspots: [{ a: 1, b: 90, lng: 26.28, lat: 40.24, kind: "firefight", i: 0.9 }],
           storyboard: [
-            { day: 1, hold: 9, cam: cam(26.28, 40.24, 580), dateLabel: "1915年4月25日", title_zh: "加里波利登陸", title_en: "Landings at Gallipoli", narration_zh: "澳紐軍團在安zac 灣登陸，遭鄂圖曼軍頑強抵抗。", narration_en: "ANZAC troops land at Anzac Cove — fierce Ottoman resistance.", focus: ["ap_gallipoli", "cp_ottoman"], side: "both" },
+            { day: 1, hold: 9, cam: cam(26.28, 40.24, 580), dateLabel: "1915年4月25日", title_zh: "加里波利登陸", title_en: "Landings at Gallipoli", narration_zh: "澳紐軍團在安扎克灣登陸，遭鄂圖曼軍頑強抵抗。", narration_en: "ANZAC troops land at Anzac Cove — fierce Ottoman resistance.", focus: ["ap_gallipoli", "cp_ottoman"], side: "both" },
             { day: 90, hold: 8, cam: cam(26.41, 40.41, 700), dateLabel: "1916年1月", title_zh: "撤離半島", title_en: "Evacuation", narration_zh: "協約國秘密撤離，遠征以失敗告終。", narration_en: "Allied forces evacuate — the campaign ends in failure.", focus: ["ap_gallipoli"], side: "ap" },
           ],
         }),
@@ -477,7 +477,7 @@ const mainCards = CATALOG.map(
   (w) => `    <a class="card" href="wars/${w.slug}/">
       <h2>${w.title_zh}</h2>
       <div class="en">${w.title_en} · ${w.period}</div>
-      <p>${w.battles.length} 個小戰役地圖 · 每圖聚焦單一戰場</p>
+      <p>${w.battles.length} 個課題地圖 · 每圖聚焦單一戰場</p>
       <div class="places">${w.battles.map((b) => b.title_zh.replace(/戰役|戰爭|暗殺/g, "")).join(" · ")}</div>
     </a>`
 ).join("\n");
@@ -490,7 +490,7 @@ main = main.replace(
 );
 main = main.replace(
   "以真實地形衛星影像呈現 DSE 西史課程各大戰的關鍵地點與事件。",
-  "以真實地形衛星影像呈現 DSE 西史課程各小戰役；每張地圖只覆蓋單一戰場核心區域。"
+  "以真實地形衛星影像呈現 DSE 西史課程各課題；每張地圖只覆蓋單一戰場核心區域。"
 );
 fs.writeFileSync(mainIdx, main);
 console.log("✓ main index updated");

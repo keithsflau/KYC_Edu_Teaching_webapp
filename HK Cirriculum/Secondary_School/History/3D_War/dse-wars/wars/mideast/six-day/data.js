@@ -11,11 +11,11 @@ window.BATTLE_DATA = (function () {
           "isr"
       ],
       "geo": {
-          "minLng": 32.75,
-          "maxLng": 36.25,
-          "minLat": 30,
-          "maxLat": 33,
-          "Z": 9
+          "minLng": 31.6,
+          "maxLng": 36.4,
+          "minLat": 29.15,
+          "maxLat": 33.45,
+          "Z": 8
       },
       "startDate": [
           1967,
@@ -192,7 +192,7 @@ window.BATTLE_DATA = (function () {
       }
   ];
   const notes =   {
-      "summary": "六日戰爭 — DSE 西史小戰役地圖。",
+      "summary": "六日戰爭 — 課題地圖。兵力與路線為示意。",
       "caveats": [
           "本圖僅覆蓋該戰役核心區域；戰線與兵力為教學示意。",
           "衛星影像為現代地形。"
@@ -218,10 +218,10 @@ window.BATTLE_DATA = (function () {
               "orbit": 0.65
           },
           "dateLabel": "1967年6月5日",
-          "title_zh": "焦土作戰",
+          "title_zh": "聚焦行動",
           "title_en": "Operation Focus",
-          "narration_zh": "以軍空軍先發制人，摧毀埃及等國機場上戰機。",
-          "narration_en": "Israeli Air Force destroys Arab aircraft on the ground.",
+          "narration_zh": "以軍空軍發動「聚焦行動」（Operation Focus），先發制人摧毀埃及等國機場上的戰機。",
+          "narration_en": "Operation Focus: the Israeli Air Force destroys Arab aircraft on the ground.",
           "focus": [
               "isr_67"
           ],
@@ -270,18 +270,18 @@ window.BATTLE_DATA = (function () {
           "day": 50,
           "hold": 8,
           "cam": {
-              "lng": 35.75,
-              "lat": 33.05,
-              "dist": 600,
+              "lng": 35.21,
+              "lat": 31.77,
+              "dist": 580,
               "az": 200,
               "el": 46,
               "orbit": 0.65
           },
           "dateLabel": "1967年6月7日",
-          "title_zh": "戈蘭高地",
-          "title_en": "Golan Heights",
-          "narration_zh": "以軍攻占敘利亞戈蘭高地。",
-          "narration_en": "Israel captures the Syrian Golan Heights.",
+          "title_zh": "耶路撒冷與西岸",
+          "title_en": "Jerusalem & West Bank",
+          "narration_zh": "約旦戰線在6月7日見分曉，以軍進入耶路撒冷舊城。",
+          "narration_en": "The Jordanian front is decided on 7 June, when Israeli troops enter the Old City.",
           "focus": [
               "isr_67"
           ],
@@ -295,18 +295,18 @@ window.BATTLE_DATA = (function () {
           "day": 75,
           "hold": 8,
           "cam": {
-              "lng": 35.21,
-              "lat": 31.77,
-              "dist": 580,
+              "lng": 35.75,
+              "lat": 33.05,
+              "dist": 600,
               "az": 200,
               "el": 46,
               "orbit": 0.65
           },
-          "dateLabel": "1967年6月7–10日",
-          "title_zh": "耶路撒冷與西岸",
-          "title_en": "Jerusalem & West Bank",
-          "narration_zh": "以軍占領東耶路撒冷及約旦河西岸。",
-          "narration_en": "East Jerusalem and the West Bank fall to Israel.",
+          "dateLabel": "1967年6月9–10日",
+          "title_zh": "戈蘭高地",
+          "title_en": "Golan Heights",
+          "narration_zh": "戈蘭攻勢在6月9日開始，6月10日這一線的戰鬥結束。",
+          "narration_en": "The Golan offensive begins on 9 June and that front is decided on 10 June.",
           "focus": [
               "isr_67"
           ],
@@ -340,11 +340,33 @@ window.BATTLE_DATA = (function () {
           "forces_en": ""
       }
   ];
-  const outro =   {
+    const sourceTask = {
+    "cite": "以色列參謀本部對1967年6月5日空襲的行動名稱",
+    "excerpt": "行動的英文名稱是 Operation Focus，希伯來語意指集中打擊機場上的飛機。",
+    "ask": "這個名稱應當怎樣理解？",
+    "options": [
+      {
+        "t": "焦土政策，把西奈的土地燒光。",
+        "ok": false,
+        "why": "Focus 指集中打擊停在地面的空軍，不是焦土。"
+      },
+      {
+        "t": "先發制人的空中打擊，目標是阿拉伯國家的機場。",
+        "ok": true,
+        "why": "空襲在6月5日。戈蘭攻勢是6月9日至10日，耶路撒冷舊城是6月7日。"
+      },
+      {
+        "t": "6月7日進攻戈蘭的地面作戰。",
+        "ok": false,
+        "why": "6月7日以軍進入耶路撒冷舊城。戈蘭是6月9日才開始。"
+      }
+    ]
+  };
+const outro =   {
       "title_zh": "六日戰爭",
       "title_en": "SIX-DAY WAR",
-      "narration_zh": "本戰役為 DSE 西史重要考點。",
-      "narration_en": "A key DSE Western History topic.",
+      "narration_zh": "聚焦行動在6月5日。耶路撒冷舊城在6月7日。戈蘭攻勢是6月9日至10日。",
+      "narration_en": "Operation Focus was 5 June. The Old City fell on 7 June. The Golan offensive was 9–10 June.",
       "cam": {
           "lng": 34.5,
           "lat": 31.5,
@@ -354,5 +376,5 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       }
   };
-  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };
+  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, sourceTask, END_DAY };
 })();

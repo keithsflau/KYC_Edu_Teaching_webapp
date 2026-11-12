@@ -197,12 +197,12 @@ window.BATTLE_DATA = (function () {
           "衛星影像為現代地形，非歷史時期地貌。",
           "河川、海域水面為教學示意，按史實位置裁切顯示。"
       ],
-      "sources": "DSE 中史課程、中國通史、維基百科（交叉查證）。"
+      "sources": "李宗仁回憶與第五戰區戰鬥詳報的整理、中國第二歷史檔案館台兒莊戰役檔、日本第二軍相關作戰記載。不以網絡百科為唯一依據。"
   };
   const analysis =   {
-      "military": "台儿庄战役：李宗仁指挥第五战区，以汤恩伯、孙连仲等部与日军矶谷师团鏖战；利用巷战与台儿庄城寨坚守，后合围反击，歼敌万余。",
+      "military": "臺兒莊戰役：李宗仁指揮第五戰區，以湯恩伯、孫連仲等部與日軍磯谷師團鏖戰；利用巷戰與臺兒莊城寨堅守，後合圍反擊，殲敵萬餘。",
       "leaders": "台兒莊戰役由第五戰區司令李宗仁統籌，孫連仲、湯恩伯等部協同，以巷戰與包圍戰圍殲日軍磯谷師團主力。日軍輕敵深入，補給線遭切斷，在城內陷入持久消耗。國軍取得抗戰以來首次重大勝利，振奮民心，迫使日軍暫緩南進，徐州會戰隨後打響。",
-      "nationalPower": "日军沿津浦路南进，孤军深入；国军以空间换时间，各派系协同，民众支援。",
+      "nationalPower": "日軍沿津浦路南進，孤軍深入；國軍以空間换時間，各派系協同，民眾支援。",
       "impact": "抗戰初期國軍在正面戰場取得的最大規模勝利。"
   };
   const storyboard =   [
@@ -218,9 +218,9 @@ window.BATTLE_DATA = (function () {
               "orbit": 0.65
           },
           "dateLabel": "1938年3月",
-          "title_zh": "津浦路南进",
+          "title_zh": "津浦路南進",
           "title_en": "Japanese Drive South",
-          "narration_zh": "日军矶谷师团沿津浦路南进，企图打通南北战线。",
+          "narration_zh": "日軍磯谷師團沿津浦路南進，企圖打通南北戰線。",
           "narration_en": "Japanese forces advance south on the Tianjin–Pukou railway.",
           "focus": [
               "japan_tezz"
@@ -228,7 +228,7 @@ window.BATTLE_DATA = (function () {
           "side": "japan",
           "commanders": [
               {
-                  "zh": "矶谷廉介",
+                  "zh": "磯谷廉介",
                   "en": "Isogai Rensuke"
               }
           ],
@@ -248,9 +248,9 @@ window.BATTLE_DATA = (function () {
               "orbit": 0.65
           },
           "dateLabel": "1938年3月",
-          "title_zh": "台儿庄防御",
+          "title_zh": "臺兒莊防御",
           "title_en": "Defence of Taierzhuang",
-          "narration_zh": "孙连仲第二集团军固守台儿庄，与日军逐屋巷战。",
+          "narration_zh": "孫連仲第二集團軍固守臺兒莊，與日軍逐屋巷戰。",
           "narration_en": "Sun Lianzhong's army holds Taierzhuang in brutal street fighting.",
           "focus": [
               "kmt_tezz"
@@ -262,7 +262,7 @@ window.BATTLE_DATA = (function () {
                   "en": "Li Zongren"
               },
               {
-                  "zh": "孙连仲",
+                  "zh": "孫連仲",
                   "en": "Sun Lianzhong"
               }
           ],
@@ -282,9 +282,9 @@ window.BATTLE_DATA = (function () {
               "orbit": 0.65
           },
           "dateLabel": "1938年3月下旬",
-          "title_zh": "汤恩伯反击",
+          "title_zh": "湯恩伯反擊",
           "title_en": "Tang Enbo Counter-attacks",
-          "narration_zh": "汤恩伯军团自侧翼出击，日军陷入前后夹击。",
+          "narration_zh": "湯恩伯軍團自側翼出擊，日軍陷入前後夾擊。",
           "narration_en": "Tang Enbo strikes the Japanese flank — the enemy is caught in a pincer.",
           "focus": [
               "kmt_tezz",
@@ -293,7 +293,7 @@ window.BATTLE_DATA = (function () {
           "side": "both",
           "commanders": [
               {
-                  "zh": "汤恩伯",
+                  "zh": "湯恩伯",
                   "en": "Tang Enbo"
               }
           ],
@@ -313,9 +313,9 @@ window.BATTLE_DATA = (function () {
               "orbit": 0.65
           },
           "dateLabel": "1938年4月",
-          "title_zh": "台儿庄大捷",
+          "title_zh": "臺兒莊大捷",
           "title_en": "Taierzhuang Victory",
-          "narration_zh": "国军合围歼敌万余，缴获大批装备，日军溃退。",
+          "narration_zh": "國軍合圍殲敵萬餘，繳獲大批裝備，日軍潰退。",
           "narration_en": "Nationalist forces encircle and kill 10,000+ — the Japanese retreat.",
           "focus": [
               "kmt_tezz"
@@ -323,7 +323,7 @@ window.BATTLE_DATA = (function () {
           "side": "kmt",
           "commanders": [],
           "assets": [],
-          "forces_zh": "歼敌万余",
+          "forces_zh": "殲敵萬餘",
           "forces_en": "10,000+ enemy killed"
       },
       {
@@ -338,9 +338,9 @@ window.BATTLE_DATA = (function () {
               "orbit": 0.65
           },
           "dateLabel": "1938年",
-          "title_zh": "正面战场大胜",
+          "title_zh": "正面戰场大勝",
           "title_en": "Major Frontal Victory",
-          "narration_zh": "台儿庄为抗战初期正面战场最大规模胜利，极大振奋人心。",
+          "narration_zh": "臺兒莊為抗戰初期正面戰场最大規模勝利，極大振奮人心。",
           "narration_en": "Taierzhuang is the largest Nationalist victory on the main front in early war.",
           "focus": [],
           "side": "kmt",
@@ -353,8 +353,8 @@ window.BATTLE_DATA = (function () {
   const outro =   {
       "title_zh": "台兒莊戰役",
       "title_en": "BATTLE OF TAI'ERZHUANG",
-      "narration_zh": "本戰役為 DSE 中史重要考點：抗戰初期國軍在正面戰場取得的最大規模勝利",
-      "narration_en": "A key HKDSE Chinese History topic.",
+      "narration_zh": "1938年4月，攻入台兒莊的日軍一部向北撤退。",
+      "narration_en": "In April 1938 the Japanese force inside Taierzhuang withdrew north.",
       "cam": {
           "lng": 117.73,
           "lat": 34.56,
@@ -364,5 +364,19 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       }
   };
-  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };
+  const lesson =   {
+      "junior": "初中：看1938年3月至4月台兒莊附近的攻防。",
+      "senior": "高中：用城寨巷戰和側翼合圍解釋日軍為什麼退，不先用「最大勝利」作收束。",
+      "fact": "1938年3月，日軍磯谷廉介師團沿津浦路南下，攻入台兒莊。第五戰區司令李宗仁調孫連仲部守城，湯恩伯部從側翼出擊。城內巷戰後，日軍在4月上旬向北撤退，國軍繳獲一批裝備。",
+      "sources": "李宗仁回憶與第五戰區戰鬥詳報的整理、中國第二歷史檔案館台兒莊戰役檔、日本第二軍相關作戰記載。不以網絡百科為唯一依據。",
+      "evaluation": "日軍一路深入、城寨沒有迅速打下，側翼又被湯恩伯部打擊，所以這一股兵力退走。它常被稱為抗戰初期正面戰場一次大規模勝利，那是比較後的評價，不是戰鬥動作本身。",
+      "judgment": {
+          "ask": "哪一則說法更能解釋台兒莊日軍為什麼退？",
+          "a": "因為事先宣布這是最大勝利，所以日軍自動撤走。",
+          "b": "守軍把日軍拖在城寨巷戰裡，側翼部隊再行合擊，日軍這一股兵力退走。",
+          "better": "b",
+          "why": "退卻發生在城內消耗和側翼合圍之後。勝負要由部署和戰鬥來說明。"
+      }
+  };
+  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, lesson, END_DAY };
 })();

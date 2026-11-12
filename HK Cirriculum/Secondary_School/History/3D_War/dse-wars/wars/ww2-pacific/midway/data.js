@@ -178,7 +178,7 @@ window.BATTLE_DATA = (function () {
       }
   ];
   const notes =   {
-      "summary": "中途島海戰 — DSE 西史小戰役地圖。",
+      "summary": "中途島海戰 — 課題地圖。兵力與路線為示意。",
       "caveats": [
           "本圖僅覆蓋該戰役核心區域；戰線與兵力為教學示意。",
           "衛星影像為現代地形。"
@@ -336,11 +336,33 @@ window.BATTLE_DATA = (function () {
           "forces_en": ""
       }
   ];
-  const outro =   {
+    const sourceTask = {
+    "cite": "美軍在中途島海戰前的情報判斷，1942年5月",
+    "excerpt": "破譯的電文顯示日本下一目標的代號指向中途島。",
+    "ask": "這份情報用來說明什麼原因？",
+    "options": [
+      {
+        "t": "日本公開宣布將於6月4日進攻中途島。",
+        "ok": false,
+        "why": "日本沒有公開日期。美軍是從密碼判斷方向。"
+      },
+      {
+        "t": "美軍能夠預先部署航母，是因為知道攻擊方向。",
+        "ok": true,
+        "why": "中途島的結果和事前判斷目標有關，不單是當日偶然相遇。"
+      },
+      {
+        "t": "情報證明日本只派出一艘航母。",
+        "ok": false,
+        "why": "南雲機動部隊有赤城、加賀、蒼龍、飛龍四艘航母。"
+      }
+    ]
+  };
+const outro =   {
       "title_zh": "中途島海戰",
       "title_en": "MIDWAY",
-      "narration_zh": "本戰役為 DSE 西史重要考點。",
-      "narration_en": "A key DSE Western History topic.",
+      "narration_zh": "1942年6月，日本在中途島損失四艘航母。",
+      "narration_en": "In June 1942 Japan lost four carriers at Midway.",
       "cam": {
           "lng": -177.4,
           "lat": 28.2,
@@ -350,5 +372,5 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       }
   };
-  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };
+  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, sourceTask, END_DAY };
 })();

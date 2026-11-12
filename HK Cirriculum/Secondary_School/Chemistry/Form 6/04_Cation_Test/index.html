@@ -3,18 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>04_Cation_Test</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="../../../../common/babel-react-classic.js"></script>
-  <script src="../../../../common/learn-from-zero.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
-  <style>
-    body { font-family: "IBM Plex Sans", system-ui, sans-serif; background-color: #f8fafc; color: #0f172a; min-height: 100vh; }
-  </style>
-  <!-- NCS i18n fleet kit (auto-injected) -->
+  <title>陽離子紀錄對照 | Cation records</title>
+  <link rel="stylesheet" href="../../lesson.css" />
   <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
   <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
   <style data-ncs-kit="fleet-bridge">
@@ -53,28 +43,162 @@
   </script>
 </head>
 <body>
-  <div id="root"></div>
-  <script type="text/babel" data-presets="react-classic">
-    const { useState } = React;
-    
-    function App() {
-      return (
-        <div className="max-w-4xl mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-4">04 Cation Test</h1>
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 mb-8 text-center">
-            <div className="w-full h-64 bg-slate-100 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 mb-4">
-              <span className="text-slate-400 font-medium">[ Interactive Canvas Placeholder ]</span>
-            </div>
-            <p className="text-slate-500">This interactive lab is currently under development.</p>
-          </div>
-          <LearnFromZero />
-        </div>
-      );
+  <section class="chem-learn" data-chem-entry="1">
+    <h2>學習目標</h2>
+    <ul>
+      <li>用焰色和沉澱紀錄分辨常見陽離子。</li>
+      <li>用過量氫氧離子、過量氨水，以及有沒有黃色碘化物紀錄，分開鋁、鋅、鉛。</li>
+      <li>說出鐵(II)與鐵(III)、鈉與鉀最常見的看錯原因。</li>
+    </ul>
+    <h2>操作</h2>
+    <ul>
+      <li>選一張觀察紀錄，再選陽離子，然後按核對。</li>
+      <li>答錯時讀回饋裡的錯因。點按鈕會有提示音。</li>
+      <li>這一頁只對照紀錄。沒有配製試劑、沒有焰色試驗、沒有加熱。</li>
+    </ul>
+    <h2>錯因</h2>
+    <ul>
+      <li>白色沉澱不能直接當成同一種離子。要看過量後溶不溶。</li>
+      <li>髒綠是鐵(II)，紅棕是鐵(III)。鐵(II)在空氣中會被氧化。</li>
+      <li>鉀的淡紫色會被鈉的金黃色蓋過。</li>
+    </ul>
+    <p id="chem-feedback" role="status">先選紀錄和離子，再按核對。</p>
+  </section>
+  <main>
+    <div class="panel">
+      <p class="muted"><a href="../index.html">← 中六化學</a></p>
+      <h1>陽離子紀錄對照</h1>
+      <p class="muted">圓點只表示紀錄裡的顏色，不是實驗裝置。</p>
+      <div class="row" id="cards"></div>
+      <p id="detail" class="muted"></p>
+      <canvas id="swatch" width="640" height="200" aria-label="觀察顏色示意"></canvas>
+      <div class="row" id="ions"></div>
+      <div class="row">
+        <button type="button" id="check">核對</button>
+      </div>
+    </div>
+  </main>
+  <script src="../../lesson-kit.js"></script>
+  <script>
+    var IONS = ["Na⁺", "K⁺", "Ca²⁺", "Cu²⁺", "Fe²⁺", "Fe³⁺", "Al³⁺", "Zn²⁺", "Pb²⁺", "NH₄⁺"];
+    var CARDS = [
+      { short: "金黃焰色", obs: "焰色紀錄是金黃色。", ion: 0, color: "#eab308", why: "鈉的焰色是金黃色。" },
+      { short: "淡紫焰色", obs: "焰色紀錄在隔鈷玻璃後是淡紫色。", ion: 1, color: "#c4b5fd", why: "鉀是淡紫色。鈉的金黃色會把它蓋過。" },
+      { short: "磚紅焰色", obs: "焰色紀錄是磚紅色。", ion: 2, color: "#c2410c", why: "鈣的焰色是磚紅色。" },
+      { short: "藍綠焰色", obs: "焰色紀錄是藍綠色。", ion: 3, color: "#14b8a6", why: "銅的焰色是藍綠色。這和藍色氫氧化物沉澱是兩項不同紀錄。" },
+      { short: "藍色沉澱", obs: "少量氫氧離子：藍色沉澱；再過量仍然不溶。", ion: 3, color: "#2563eb", why: "銅(II)給出藍色沉澱，過量氫氧離子中不溶。" },
+      { short: "髒綠沉澱", obs: "少量氫氧離子：髒綠色沉澱；過量不溶。", ion: 4, color: "#65a30d", why: "鐵(II)是髒綠色。若變成紅棕，樣品可能已在空氣中被氧化成鐵(III)。" },
+      { short: "紅棕沉澱", obs: "少量氫氧離子：紅棕色沉澱；過量不溶。", ion: 5, color: "#b45309", why: "鐵(III)是紅棕色沉澱。" },
+      { short: "白沉澱·只溶於氫氧離子", obs: "白色沉澱。過量氫氧離子中溶解。過量氨水中不溶。沒有黃色碘化物紀錄。", ion: 6, color: "#f8fafc", why: "沒有黃色碘化物紀錄時，這組溶解情況對應鋁。鉛會另有黃色紀錄。" },
+      { short: "白沉澱·兩種都溶", obs: "白色沉澱。過量氫氧離子和過量氨水中都溶解，得到無色溶液。", ion: 7, color: "#e2e8f0", why: "鋅在兩種過量鹼中都會溶解。" },
+      { short: "白沉澱·有黃紀錄", obs: "白色沉澱溶於過量氫氧離子。另有黃色碘化物沉澱紀錄。", ion: 8, color: "#facc15", why: "黃色碘化物紀錄指向鉛。鋁沒有這個紀錄。" },
+      { short: "白沉澱不溶·磚紅焰色", obs: "白色沉澱在過量氫氧離子中不溶，焰色紀錄是磚紅色。", ion: 2, color: "#fdba74", why: "鈣的氫氧化物沉澱過量不溶，再配合磚紅焰色。若沒有磚紅焰色，課堂上還要考慮鎂。" },
+      { short: "有氨的紀錄", obs: "鹼性紀錄：放出氨，濕潤紅色石蕊變藍。", ion: 9, color: "#67e8f9", why: "銨離子的紀錄是氨。這一頁只讀紀錄，不進行加熱。" }
+    ];
+    var pickedCard = 0;
+    var pickedIon = "";
+    var cardButtons = [];
+    var ionButtons = [];
+    var canvas = document.getElementById("swatch");
+    var ctx = canvas.getContext("2d");
+
+    function missReason(correct, chosen) {
+      var map = {
+        "Fe²⁺|Fe³⁺": "錯因：鐵(II)是髒綠，鐵(III)是紅棕。鐵(II)若在空氣中被氧化，顏色會靠近紅棕。",
+        "Fe³⁺|Fe²⁺": "錯因：紅棕是鐵(III)，髒綠才是鐵(II)。",
+        "Na⁺|K⁺": "錯因：金黃是鈉。鉀是淡紫色，而且容易被鈉的黃色蓋過。",
+        "K⁺|Na⁺": "錯因：淡紫色是鉀，不是鈉的金黃。",
+        "Al³⁺|Zn²⁺": "錯因：兩者都溶於過量氫氧離子。鋅再溶於過量氨水，鋁不溶。",
+        "Zn²⁺|Al³⁺": "錯因：鋅在過量氨水中也溶解；鋁不溶。",
+        "Al³⁺|Pb²⁺": "錯因：兩者都溶於過量氫氧離子、不溶於過量氨水。鉛另有黃色碘化物紀錄，鋁沒有。",
+        "Pb²⁺|Al³⁺": "錯因：黃色碘化物紀錄指向鉛，不是鋁。",
+        "Al³⁺|Ca²⁺": "錯因：鈣的白色沉澱在過量氫氧離子中不溶；鋁會溶。",
+        "Ca²⁺|Al³⁺": "錯因：這張紀錄在過量氫氧離子中不溶，而且焰色磚紅，是鈣。",
+        "Zn²⁺|Pb²⁺": "錯因：鉛有黃色碘化物紀錄；鋅兩種過量都溶，而且沒有這個黃紀錄。",
+        "Pb²⁺|Zn²⁺": "錯因：鋅沒有黃色碘化物紀錄，而且溶於過量氨水。",
+        "Cu²⁺|Fe²⁺": "錯因：藍色沉澱是銅(II)，髒綠是鐵(II)。",
+        "Cu²⁺|Fe³⁺": "錯因：藍色是銅(II)。紅棕是鐵(III)。",
+        "Fe²⁺|Cu²⁺": "錯因：髒綠不是銅的藍色。",
+        "Ca²⁺|K⁺": "錯因：磚紅是鈣，淡紫是鉀。",
+        "K⁺|Ca²⁺": "錯因：淡紫是鉀，磚紅是鈣。",
+        "NH₄⁺|Na⁺": "錯因：沒有顏色沉澱並不等於鈉。這張紀錄的重點是氨。"
+      };
+      return map[correct + "|" + chosen] || "錯因：要同時看顏色、過量後溶不溶，以及焰色。";
     }
-    
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+
+    function paint() {
+      var card = CARDS[pickedCard];
+      var w = canvas.width;
+      var h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = "#0f172a";
+      ctx.fillRect(0, 0, w, h);
+      ctx.beginPath();
+      ctx.arc(110, h / 2, 58, 0, Math.PI * 2);
+      ctx.fillStyle = card.color;
+      ctx.fill();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = "#94a3b8";
+      ctx.stroke();
+      ctx.fillStyle = "#e2e8f0";
+      ctx.font = "18px sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText(card.short, 200, 78);
+      ctx.font = "15px sans-serif";
+      ctx.fillText("你選的離子：" + (pickedIon || "尚未選擇"), 200, 118);
+      document.getElementById("detail").textContent = card.obs;
+    }
+
+    function mark(list, index) {
+      for (var i = 0; i < list.length; i++) list[i].className = i === index ? "on" : "alt";
+    }
+
+    CARDS.forEach(function (card, index) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = card.short;
+      btn.className = index === 0 ? "on" : "alt";
+      btn.onclick = function () {
+        pickedCard = index;
+        mark(cardButtons, index);
+        paint();
+        ChemLesson.say("已選「" + card.short + "」。再選離子，然後核對。");
+      };
+      cardButtons.push(btn);
+      document.getElementById("cards").appendChild(btn);
+    });
+
+    IONS.forEach(function (ion) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = ion;
+      btn.className = "alt";
+      btn.onclick = function () {
+        pickedIon = ion;
+        mark(ionButtons, IONS.indexOf(ion));
+        paint();
+        ChemLesson.say("已選 " + ion + "。按核對。");
+      };
+      ionButtons.push(btn);
+      document.getElementById("ions").appendChild(btn);
+    });
+
+    document.getElementById("check").onclick = function () {
+      var card = CARDS[pickedCard];
+      var correct = IONS[card.ion];
+      if (!pickedIon) {
+        ChemLesson.say("還沒有選擇離子。", "no");
+        return;
+      }
+      if (pickedIon === correct) {
+        ChemLesson.say("正確，是 " + correct + "。" + card.why, "ok");
+      } else {
+        ChemLesson.say("不對。正確是 " + correct + "。" + missReason(correct, pickedIon) + card.why, "no");
+      }
+    };
+
+    paint();
   </script>
-<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+  <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 </body>
 </html>

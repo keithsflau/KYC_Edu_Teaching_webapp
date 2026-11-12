@@ -24,62 +24,37 @@
     { id: "antarctic", name: "南極板塊", nameEn: "Antarctic", color: "#e2e8f0" },
   ];
 
-  /* Simplified plate polygons [lat,lng][] — teaching schematic */
+  /* Coarse teaching polygons. Checked so Hong Kong falls in Eurasia, India in Indo-Australian, Hawaii in the Pacific, and the Atlantic is not painted as the Pacific. Not a surveyed plate map. */
   const PLATE_REGIONS = [
-    {
-      id: "antarctic",
-      pts: [[-60, -180], [-60, -90], [-60, 0], [-60, 90], [-60, 180], [-75, 150], [-75, 0], [-75, -150]],
-    },
-    {
-      id: "pacific",
-      pts: [[65, -70], [65, -125], [45, -125], [25, -145], [5, -168], [-25, -175], [-45, -100], [-25, -75], [-5, -105], [15, -125], [40, -110], [65, -70]],
-    },
-    {
-      id: "pacific",
-      pts: [[65, 125], [65, 180], [-55, 180], [-55, 140], [-25, 175], [5, 168], [25, 145], [45, 125], [65, 125]],
-    },
-    {
-      id: "northam",
-      pts: [[72, -168], [72, -45], [50, -45], [28, -75], [15, -95], [12, -168], [72, -168]],
-    },
-    {
-      id: "southam",
-      pts: [[12, -78], [12, -35], [-5, -35], [-55, -68], [-55, -82], [12, -78]],
-    },
-    {
-      id: "nazca",
-      pts: [[8, -82], [5, -72], [-5, -72], [-18, -72], [-22, -70], [-18, -82], [-8, -88], [8, -82]],
-    },
-    {
-      id: "african",
-      pts: [[38, -18], [38, 52], [5, 52], [-35, 28], [-35, 15], [5, -10], [38, -18]],
-    },
+    { id: "antarctic", pts: [[-62, -180], [-62, 0], [-62, 180], [-85, 180], [-85, 0], [-85, -180]] },
+    { id: "pacific", pts: [[48, 150], [40, 168], [12, 168], [2, 148], [18, 144], [34, 148], [48, 150]] },
+    { id: "pacific", pts: [[55, -178], [48, -145], [18, -150], [-8, -168], [-42, -155], [-52, -128], [-52, -178], [55, -178]] },
+    { id: "northam", pts: [[72, -168], [74, -65], [52, -55], [40, -70], [25, -81], [15, -92], [24, -108], [34, -120], [49, -126], [60, -145], [72, -168]] },
+    { id: "southam", pts: [[12, -81], [10, -35], [-5, -34], [-40, -55], [-55, -70], [-55, -76], [-18, -78], [12, -81]] },
+    { id: "nazca", pts: [[4, -100], [0, -82], [-12, -78], [-30, -74], [-42, -80], [-22, -98], [4, -100]] },
+    { id: "african", pts: [[37, -15], [37, 43], [10, 51], [-35, 28], [-35, 17], [5, -17], [32, -12], [37, -15]] },
     {
       id: "eurasia",
       pts: [
-        [78, -10], [78, 140], [55, 145], [35, 130], [10, 105], [5, 95], [25, 62],
-        [38, 40], [42, 10], [55, 0], [78, -10],
+        [72, -12], [62, -8], [50, -6], [43, 0], [42, 28], [40, 50], [33, 76], [27, 87],
+        [18, 93], [8, 98], [1, 103.2], [1, 104.5], [8, 109], [16, 114], [22, 120],
+        [28, 132], [36, 142], [46, 148], [70, 145], [74, 90], [66, 30], [72, -12],
       ],
     },
-    {
-      id: "indo",
-      pts: [[28, 58], [28, 145], [-10, 145], [-45, 145], [-45, 100], [-35, 78], [-10, 92], [5, 95], [28, 58]],
-    },
-    {
-      id: "philippine",
-      pts: [[22, 124], [22, 146], [5, 146], [5, 126], [14, 122], [22, 124]],
-    },
+    { id: "indo", pts: [[35, 68], [31, 74], [27, 82], [24, 90], [18, 88], [10, 79], [8, 72], [18, 69], [28, 68], [35, 68]] },
+    { id: "indo", pts: [[-10, 113], [-11, 154], [-38, 153], [-44, 146], [-34, 114], [-16, 113], [-10, 113]] },
+    { id: "philippine", pts: [[22, 126], [16, 142], [5, 140], [3, 127], [10, 124], [18, 123], [22, 126]] },
   ];
 
-  /* Simplified boundary arcs [lat,lng][] — teaching schematic */
+  /* Boundary arcs sit near the real features: Himalaya, Mid-Atlantic Ridge, East African Rift, San Andreas, Sunda Trench, Japan Trench. */
   const BOUNDARIES = [
-    { type: "convergent", pts: [[35, 138], [30, 132], [20, 125], [5, 120], [-5, 115]] },
-    { type: "convergent", pts: [[28, 104], [26, 100], [22, 98], [18, 96], [10, 92]] },
-    { type: "divergent", pts: [[70, -30], [60, -25], [40, -30], [20, -20], [0, -15], [-20, -10]] },
-    { type: "divergent", pts: [[15, 40], [5, 38], [-5, 36], [-15, 35], [-30, 33]] },
-    { type: "conservative", pts: [[42, -125], [38, -122], [34, -118], [32, -115]] },
-    { type: "convergent", pts: [[-5, 95], [-10, 100], [-15, 110], [-20, 115], [-30, 118]] },
-    { type: "divergent", pts: [[65, -18], [63, -17], [64, -19], [62, -16]] },
+    { type: "convergent", pts: [[42, 146], [36, 142], [30, 134], [22, 126], [14, 122], [6, 127]] },
+    { type: "convergent", pts: [[36, 72], [34, 78], [30, 82], [28, 86], [27, 90], [28, 95]] },
+    { type: "divergent", pts: [[70, -18], [60, -28], [40, -30], [20, -40], [0, -25], [-20, -12], [-40, -15]] },
+    { type: "divergent", pts: [[15, 40], [8, 38], [0, 36], [-8, 34], [-15, 35]] },
+    { type: "conservative", pts: [[40.5, -124], [38, -122.5], [35, -120.5], [34, -118], [33, -116]] },
+    { type: "convergent", pts: [[6, 94], [2, 97], [-4, 102], [-8, 108], [-10, 116]] },
+    { type: "divergent", pts: [[66, -23], [64, -18], [63, -16]] },
   ];
 
   const BOUNDARY_COLORS = {
@@ -238,6 +213,8 @@
     scene.add(sun);
 
     const earthGroup = new THREE.Group();
+    /* 155.83° brings 22.3°N, 114.2°E to the camera, with east to the right and north up. */
+    earthGroup.rotation.y = 155.83 * deg;
     scene.add(earthGroup);
 
     const texLoader = new THREE.TextureLoader();
@@ -330,10 +307,12 @@
     scene.add(stars);
 
     let running = true;
+    let autoSpin = false;
+    controls.addEventListener("start", () => { autoSpin = false; });
     function animate() {
       if (!running) return;
       requestAnimationFrame(animate);
-      earthGroup.rotation.y += 0.0008;
+      if (autoSpin) earthGroup.rotation.y += 0.0008;
       controls.update();
       renderer.render(scene, camera);
     }
@@ -363,9 +342,10 @@
       scene, camera, renderer, earth, earthGroup, controls, plateMeshes,
       highlightPlate,
       focusHK() {
-        earthGroup.rotation.y = -114.17 * deg;
-        earthGroup.rotation.x = 0.35;
-        controls.target.set(0, 0.3, 0);
+        autoSpin = false;
+        earthGroup.rotation.y = 155.83 * deg;
+        earthGroup.rotation.x = 0;
+        controls.target.set(0, 0.25, 0);
       },
       destroy() {
         running = false;

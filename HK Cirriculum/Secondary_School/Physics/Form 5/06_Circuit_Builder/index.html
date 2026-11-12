@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>F5 ? Circuit Builder | ??????</title>
+  <title>F5 · Circuit Builder | 電路建造</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
 
@@ -40,7 +40,7 @@
 
       appId: "f5-phy-circuit",
 
-      appNameZh: "??????",
+      appNameZh: "電路建造",
 
       appNameEn: "Circuit Builder",
 
@@ -126,7 +126,7 @@
 
       enabled: true,
 
-      bannerText: "??????????????? ? ??????????????,
+      bannerText: "解鎖完整練習與家長進度 · 全年少於一次補習堂費",
 
       premiumFeatures: ["progress_sync", "parent_dashboard", "unlimited_mocks"]
 
@@ -139,6 +139,65 @@
     const { useState, useEffect, useRef } = React;
 
     const { useLang, LangSwitcher, appTabs } = window.NcsI18n;
+    const FLAGSHIP_STRINGS = {
+  "hub": {
+    "zh-Hant": "← 返回主頁",
+    "en": "← Back to hub",
+    "ne": "← हबमा फर्कनुहोस्",
+    "ur": "← مرکز پر واپس",
+    "tl": "← Bumalik sa hub",
+    "hi": "← हब पर वापस"
+  },
+  "subtitle": {
+    "zh-Hant": "中五物理 · 電學",
+    "en": "F5 Physics · Electricity",
+    "ne": "F5 Physics · Electricity",
+    "ur": "F5 Physics · Electricity",
+    "tl": "F5 Physics · Electricity",
+    "hi": "F5 Physics · Electricity"
+  },
+  "title": {
+    "zh-Hant": "電路建構器",
+    "en": "Circuit Builder",
+    "ne": "Circuit Builder",
+    "ur": "Circuit Builder",
+    "tl": "Circuit Builder",
+    "hi": "Circuit Builder"
+  },
+  "modes": {
+    "zh-Hant": "學習 · 實驗 · 引導 · 測驗 · 錯題",
+    "en": "Learn · Lab · Guided · Exam · Review",
+    "ne": "Learn · Lab · Guided · Exam · Review",
+    "ur": "Learn · Lab · Guided · Exam · Review",
+    "tl": "Learn · Lab · Guided · Exam · Review",
+    "hi": "Learn · Lab · Guided · Exam · Review"
+  }
+};
+
+    function flagshipUi(key) {
+      var lang = (window.NcsI18n && window.NcsI18n.getLang()) || "zh-Hant";
+      var row = FLAGSHIP_STRINGS[key];
+      if (!row) return key;
+      return row[lang] || row.en || row["zh-Hant"] || row.zh || key;
+    }
+
+    function registerFlagshipStrings() {
+      if (!window.NcsI18n || !window.NcsI18n.registerStrings) return;
+      var page = { zh: {}, en: {}, ne: {}, ur: {}, tl: {}, hi: {} };
+      Object.keys(FLAGSHIP_STRINGS).forEach(function (k) {
+        var row = FLAGSHIP_STRINGS[k];
+        ["zh", "en", "ne", "ur", "tl", "hi"].forEach(function (code) {
+          var val = row[code] || row["zh-Hant"] || row.en;
+          if (val) page[code][k] = val;
+        });
+      });
+      window.NcsI18n.registerStrings(page);
+    }
+    registerFlagshipStrings();
+    if (window.NcsI18n && window.NcsI18n.onChange) {
+      window.NcsI18n.onChange(registerFlagshipStrings);
+    }
+
 
     const APP_ID = "f5_phy_circuit";
 
@@ -204,109 +263,73 @@
 
 
 
-    const TFZ_STEPS = [
-
-      { id: "A1", title: "What is electric current?", titleZh: "????????",
-
-        body: "Current is the FLOW of charge. In metal wires, electrons drift around the circuit, pushed by the battery. Current I is measured in amperes (A) = charge per second.",
-
-        bodyZh: "???????????????????????,??????????????????I ?????(A) ????????????????????,
-
-        q: "Current is the rate of flow of??, qZh: "????????????????",
-
-        opts: ["Charge ???", "Voltage ????", "Resistance ???"], a: "Charge ???",
-
-        why: "I = Q/t ??amperes are coulombs per second." },
-
-      { id: "A2", title: "Voltage is the push (energy per charge)", titleZh: "???????????",
-
-        body: "A battery gives each coulomb of charge energy ??that is its voltage (EMF). 6 V means 6 joules of energy given to every coulomb that passes through the cell.",
-
-        bodyZh: "??????????????????????,????????? V ??????????? 6 ????????,
-
-        q: "A 6 V battery gives each coulomb??, qZh: "6 V ???????????????,
-
-        opts: ["6 J of energy 6 ??????, "6 A of current", "6 ? of resistance"], a: "6 J of energy 6 ??????,
-
-        why: "V = E/Q. Voltage is energy transferred per unit charge." },
-
-      { id: "A3", title: "Resistance opposes flow", titleZh: "???????????",
-
-        body: "Components resist the flow of charge, converting electrical energy to heat/light. Resistance R is measured in ohms (?). Bigger R ??smaller current for the same voltage.",
-
-        bodyZh: "?????????????,??????????/??????R ?????(?) ??????????????,R ???????????,
-
-        q: "Same battery, larger resistance ??current becomes??, qZh: "????????,?????,????????,
-
-        opts: ["Smaller ???", "Larger ??", "Unchanged ???"], a: "Smaller ???",
-
-        why: "I = V/R ??inverse proportion." },
-
-      { id: "A4", title: "Ohm's Law: V = IR", titleZh: "??????:V = IR",
-
-        body: "The three quantities lock together: V = I ? R. Know any two, find the third. A 12 V battery across a 4 ? resistor drives I = 12/4 = 3 A.",
-
-        bodyZh: "?????????V = I ? R?????????2 V ??????4 ? ???,???? I = 12/4 = 3 A??,
-
-        q: "9 V across 3 ? gives what current?", qZh: "9 V ??3 ?,??????????",
-
+        const TFZ_STEPS = [
+      { id: "A1", title: "What is electric current?", titleZh: "電流是什麼？",
+        body: "Current is the rate of flow of charge. The unit ampere means one coulomb per second.",
+        bodyZh: "電流是電荷流動的速率。1 A = 1 C/s。",
+        q: "Current is the rate of flow of…", qZh: "電流是哪一種量的流動速率？",
+        opts: ["Charge 電荷", "Voltage 電壓", "Resistance 電阻"], a: "Charge 電荷",
+        why: "I = Q/t. Amperes are coulombs per second." },
+      { id: "A2", title: "Voltage is energy per charge", titleZh: "電壓是每單位電荷的能量",
+        body: "A 6 V battery gives each coulomb of charge 6 J of electrical potential energy.",
+        bodyZh: "6 V 電池給每 1 C 電荷 6 J 的電能。",
+        q: "A 6 V battery gives each coulomb…", qZh: "6 V 電池給每庫侖電荷…",
+        opts: ["6 J of energy 6 J 能量", "6 A of current 6 A 電流", "6 Ω of resistance 6 Ω 電阻"], a: "6 J of energy 6 J 能量",
+        why: "V = W/Q, so 6 V means 6 J per coulomb." },
+      { id: "A3", title: "Resistance opposes flow", titleZh: "電阻阻礙電荷流動",
+        body: "For the same battery, a larger resistance gives a smaller current.",
+        bodyZh: "同一電池，電阻愈大，電流愈小。",
+        q: "Same battery, larger resistance. Current becomes…", qZh: "電池不變、電阻變大，電流…",
+        opts: ["Smaller 變小", "Larger 變大", "Unchanged 不變"], a: "Smaller 變小",
+        why: "I = V/R. R up, I down." },
+      { id: "A4", title: "Ohm's law: V = IR", titleZh: "歐姆定律：V = IR",
+        body: "Know any two of V, I and R to find the third. Example: 12 V across 4 Ω gives I = 12/4 = 3 A.",
+        bodyZh: "V、I、R 知其二可求其三。例如 12 V 跨在 4 Ω 上，I = 12/4 = 3 A。",
+        q: "9 V across 3 Ω gives what current?", qZh: "3 Ω 兩端是 9 V，電流是多少？",
         opts: ["3 A", "27 A", "0.33 A"], a: "3 A",
-
         why: "I = V/R = 9/3 = 3 A." },
-
-      { id: "A5", title: "Series: one path, shared current", titleZh: "??:???,????????",
-
-        body: "In series there is only ONE path, so the same current flows through every component. Resistances add: R_total = R??+ R?? The battery voltage is shared between components in proportion to their R.",
-
-        bodyZh: "??????????,???????????????????:R_total = R??+ R???????????????????,
-
-        q: "R??= 2 ? and R??= 4 ? in series. Total resistance?", qZh: "2 ? ??4 ? ??,????",
-
-        opts: ["6 ?", "1.33 ?", "2 ?"], a: "6 ?",
-
-        why: "Series: add them. 2 + 4 = 6 ?." },
-
-      { id: "A6", title: "Parallel: split paths, same voltage", titleZh: "??:???,????????",
-
-        body: "In parallel each branch connects across the SAME two points, so every branch gets the full battery voltage. Currents add: I_total = I??+ I?? Total resistance DROPS below the smallest branch: 1/R = 1/R??+ 1/R??",
-
-        bodyZh: "????????????????????????????????????????I_total = I??+ I??????????????????,
-
-        q: "Two 6 ? resistors in parallel. Total resistance?", qZh: "????6 ? ??,????",
-
-        opts: ["3 ?", "12 ?", "6 ?"], a: "3 ?",
-
-        why: "1/R = 1/6 + 1/6 = 1/3 ??R = 3 ?. Parallel always reduces resistance." },
-
-      { id: "A7", title: "Power: P = VI = I?R", titleZh: "??????P = VI = I?R",
-
-        body: "Components convert energy at a rate P = V ? I. In a resistor that becomes heating: P = I?R ??double the current, FOUR times the heating. This is why thin wires melt in short circuits.",
-
-        bodyZh: "?????P = V ? I ????????????????????????P = I?R:????????????????,
-
-        q: "A resistor carries 2 A and dissipates 12 W. Its resistance is??, qZh: "???????? 2 A,??? 12 W,???????,
-
-        opts: ["3 ?", "6 ?", "24 ?"], a: "3 ?",
-
-        why: "P = I?R ??12 = 4R ??R = 3 ?." },
-
-      { id: "A8", title: "Checkpoint: predict the circuit", titleZh: "??????????",
-
-        body: "In the lab you can switch series ??parallel, open the switch, and change E, R?? R?? Before touching a slider, PREDICT the ammeter reading ??then check. That habit is exam gold.",
-
-        bodyZh: "???????????/????????????E??R???R?????????????????????????????,
-
-        q: "You move a resistor from series to parallel with its twin. Total resistance??, qZh: "?????????????,????????,
-
-        opts: ["Drops ???", "Rises ???", "Stays the same ???"], a: "Drops ???",
-
-        why: "Parallel paths always reduce total R below the smallest branch ??so current rises." }
-
+      { id: "A5", title: "Series: one path, shared current", titleZh: "串聯：一條路徑，電流相同",
+        body: "Series resistances add: R_total = R₁ + R₂. The current is the same in each resistor.",
+        bodyZh: "串聯電阻相加：R_total = R₁ + R₂。每個電阻的電流相同。",
+        q: "R₁ = 2 Ω and R₂ = 4 Ω in series. Total resistance?", qZh: "2 Ω 與 4 Ω 串聯，總電阻？",
+        opts: ["6 Ω", "1.33 Ω", "2 Ω"], a: "6 Ω",
+        why: "Series: 2 + 4 = 6 Ω." },
+      { id: "A6", title: "Parallel: split paths, same voltage", titleZh: "並聯：分路，電壓相同",
+        body: "Two equal resistors in parallel have total resistance equal to half of one of them. 1/R = 1/R₁ + 1/R₂.",
+        bodyZh: "兩個相同電阻並聯，總電阻是其中一個的一半。1/R = 1/R₁ + 1/R₂。",
+        q: "Two 6 Ω resistors in parallel. Total resistance?", qZh: "兩個 6 Ω 並聯，總電阻？",
+        opts: ["3 Ω", "12 Ω", "6 Ω"], a: "3 Ω",
+        why: "1/R = 1/6 + 1/6 = 1/3, so R = 3 Ω." },
+      { id: "A7", title: "Power: P = VI = I²R", titleZh: "功率：P = VI = I²R",
+        body: "Power is energy per second. If you know I and P, R = P/I².",
+        bodyZh: "功率是每秒的能量。已知 I 與 P 時，R = P/I²。",
+        q: "A resistor carries 2 A and dissipates 12 W. Its resistance is…", qZh: "電阻通過 2 A、耗散 12 W，電阻是…",
+        opts: ["3 Ω", "6 Ω", "24 Ω"], a: "3 Ω",
+        why: "R = P/I² = 12/4 = 3 Ω. Also V = P/I = 6 V and R = V/I = 3 Ω." },
+      { id: "A8", title: "Series to parallel", titleZh: "由串聯改成並聯",
+        body: "Moving a resistor from series with its twin into parallel gives charge more paths, so total resistance falls.",
+        bodyZh: "把一枚電阻從與另一枚串聯改成並聯，電荷有更多路徑，總電阻下降。",
+        q: "You move a resistor from series to parallel with its twin. Total resistance…", qZh: "把電阻改成與其相同的另一枚並聯，總電阻…",
+        opts: ["Drops 下降", "Rises 上升", "Stays the same 不變"], a: "Drops 下降",
+        why: "Two equal resistors: series total 2R, parallel total R/2." }
     ];
 
+    function phyBeep(ok) {
+      try {
+        var c = phyBeep.c || (phyBeep.c = new (window.AudioContext || window.webkitAudioContext)());
+        if (c.state === "suspended") c.resume();
+        var o = c.createOscillator(), g = c.createGain();
+        o.type = "sine";
+        o.frequency.value = ok ? 880 : 220;
+        g.gain.setValueAtTime(0.0001, c.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.06, c.currentTime + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + 0.16);
+        o.connect(g); g.connect(c.destination);
+        o.start(); o.stop(c.currentTime + 0.17);
+      } catch (e) {}
+    }
 
-
-    function LearnFromZero({ steps, onComplete }) {
+function LearnFromZero({ steps, onComplete }) {
 
       const [i, setI] = useState(0);
 
@@ -332,7 +355,7 @@
 
           <div className="flex items-center justify-between mb-3">
 
-            <p className="text-xs font-black uppercase tracking-widest" style={{color: ACCENT}}>Learn From Zero ? ?????????/p>
+            <p className="text-xs font-black uppercase tracking-widest" style={{color: ACCENT}}>Learn From Zero · 由零開始</p>
 
             <p className="text-xs text-slate-500">{step.id} / A{steps.length}</p>
 
@@ -386,7 +409,7 @@
 
               <div className="mt-3 text-sm p-3 rounded-lg bg-white/70 border border-slate-200">
 
-                <p className="font-semibold">{picked === step.a ? "??Correct ? ????" : "??Not quite ??see why ? ?????}</p>
+                <p className="font-semibold">{picked === step.a ? "正確 Correct" : "再想想 Not quite"}</p>
 
                 <p className="mt-1 text-slate-600">{step.why}</p>
 
@@ -394,7 +417,7 @@
 
                   <button type="button" onClick={next} className="mt-3 px-4 py-2.5 rounded-xl font-semibold text-white min-h-[44px]" style={{background: ACCENT}}>
 
-                    {last ? "Unlock the Lab ?????????? : "Next step ??}
+                    {last ? "解鎖實驗室 Unlock the Lab" : "下一步 Next"}
 
                   </button>
 
@@ -592,7 +615,7 @@
 
         ctx.fillText("+", 130, 172);
 
-        ctx.fillText("??, 130, 212);
+        ctx.fillText("−", 130, 212);
 
         ctx.strokeStyle = "#7c3aed"; ctx.lineWidth = 2.5;
 
@@ -602,7 +625,7 @@
 
         const rPos = topo === "series" ? { r1: [360, 80, false], r2: [360, 300, false] } : { r1: [240, 190, true], r2: [480, 190, true] };
 
-        [[rPos.r1, R1, "R??, phys.P1], [rPos.r2, R2, "R??, phys.P2]].forEach(([rp, Rv, nm, Pw]) => {
+        [[rPos.r1, R1, "R₁", phys.P1], [rPos.r2, R2, "R₂", phys.P2]].forEach(([rp, Rv, nm, Pw]) => {
 
           const [x, y, vert] = rp;
 
@@ -620,7 +643,7 @@
 
           ctx.fillStyle = "#0f172a"; ctx.font = "bold 13px IBM Plex Sans";
 
-          ctx.fillText(nm + " = " + Rv + " ?", x - 26, y + (vert ? -34 : -22));
+          ctx.fillText(nm + " = " + Rv + " Ω", x - 26, y + (vert ? -34 : -22));
 
           ctx.fillStyle = "#64748b"; ctx.font = "12px IBM Plex Sans";
 
@@ -636,7 +659,7 @@
 
         ctx.fillStyle = "#64748b"; ctx.font = "12px IBM Plex Sans";
 
-        ctx.fillText(closed ? "switch closed ????????" : "switch OPEN ????????", 540, 290);
+        ctx.fillText(closed ? "switch closed 閉合" : "switch OPEN 斷開", 540, 290);
 
         function drawDots(list, path, v, color) {
 
@@ -678,9 +701,9 @@
 
         ctx.fillText(flowMode === "electrons"
 
-          ? "electrons ???? (????+ ? speed ??current ?????????"
+          ? "electrons 電子（外電路由負極流向正極）"
 
-          : "conventional current ??????? (+ ????? speed ??I)", 380, 340);
+          : "conventional current 慣例電流（外電路由正極流向負極）", 380, 340);
 
       }
 
@@ -698,13 +721,13 @@
 
                 className={"px-3 py-2 rounded-xl text-sm font-semibold min-h-[44px] border " + (topo === t ? "text-white" : "bg-white text-slate-700 border-slate-200")}
 
-                style={topo === t ? {background: ACCENT, borderColor: ACCENT} : {}}>{t === "series" ? "Series ??" : "Parallel ??"}</button>
+                style={topo === t ? {background: ACCENT, borderColor: ACCENT} : {}}>{t === "series" ? "串聯 Series" : "並聯 Parallel"}</button>
 
             ))}
 
             <button type="button" onClick={() => setClosed(c => !c)} className={"px-3 py-2 rounded-xl text-sm font-semibold min-h-[44px] border " + (closed ? "bg-emerald-600 text-white border-emerald-600" : "bg-rose-600 text-white border-rose-600")}>
 
-              {closed ? "Switch: CLOSED ????" : "Switch: OPEN ????"}</button>
+              {closed ? "開關：閉合 CLOSED" : "開關：斷開 OPEN"}</button>
 
           </div>
 
@@ -712,15 +735,15 @@
 
           <div className="grid sm:grid-cols-3 gap-3">
 
-            <label className="text-sm font-semibold bg-white border border-slate-200 rounded-xl p-3">EMF ??????E ? {E.toFixed(1)} V
+            <label className="text-sm font-semibold bg-white border border-slate-200 rounded-xl p-3">電動勢 EMF · {E.toFixed(1)} V
 
               <input type="range" min="1.5" max="12" step="0.5" value={E} onChange={e => setE(+e.target.value)} className="w-full mt-2" /></label>
 
-            <label className="text-sm font-semibold bg-white border border-slate-200 rounded-xl p-3">R??? {R1} ?
+            <label className="text-sm font-semibold bg-white border border-slate-200 rounded-xl p-3">R₁ · {R1} Ω
 
               <input type="range" min="2" max="40" step="1" value={R1} onChange={e => setR1(+e.target.value)} className="w-full mt-2" /></label>
 
-            <label className="text-sm font-semibold bg-white border border-slate-200 rounded-xl p-3">R??? {R2} ?
+            <label className="text-sm font-semibold bg-white border border-slate-200 rounded-xl p-3">R₂ · {R2} Ω
 
               <input type="range" min="2" max="40" step="1" value={R2} onChange={e => setR2(+e.target.value)} className="w-full mt-2" /></label>
 
@@ -728,25 +751,25 @@
 
           <div className="flex flex-wrap gap-2 text-sm">
 
-            <span className="px-3 py-1.5 rounded-full bg-violet-100 text-violet-800 font-bold">I total ??????{closed ? phys.I.toFixed(2) : "0.00"} A</span>
+            <span className="px-3 py-1.5 rounded-full bg-violet-100 text-violet-800 font-bold">總電流 I · {closed ? phys.I.toFixed(2) : "0.00"} A</span>
 
-            <span className="px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 font-semibold">R total ??{closed ? phys.Rt.toFixed(1) : "??} ?</span>
+            <span className="px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 font-semibold">總電阻 R · {closed ? phys.Rt.toFixed(1) : "—"} Ω</span>
 
-            <span className="px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 font-semibold">V??= {phys.V1.toFixed(1)} V ? V??= {phys.V2.toFixed(1)} V</span>
+            <span className="px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 font-semibold">V₁ = {phys.V1.toFixed(1)} V · V₂ = {phys.V2.toFixed(1)} V</span>
 
-            <span className="px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 font-semibold">P??= {phys.P1.toFixed(1)} W ? P??= {phys.P2.toFixed(1)} W</span>
+            <span className="px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 font-semibold">P₁ = {phys.P1.toFixed(1)} W · P₂ = {phys.P2.toFixed(1)} W</span>
 
           </div>
 
           <div className="flex flex-wrap gap-2 items-center rounded-xl border border-slate-200 p-3 bg-slate-50">
 
-            <button type="button" onClick={() => setPlaying(p => !p)} className="px-4 py-2 rounded-xl text-sm font-bold text-white min-h-[44px]" style={{background: ACCENT}}>{playing ? "?????? Pause" : "????? Play"}</button>
+            <button type="button" onClick={() => setPlaying(p => !p)} className="px-4 py-2 rounded-xl text-sm font-bold text-white min-h-[44px]" style={{background: ACCENT}}>{playing ? "暫停 Pause" : "播放 Play"}</button>
 
-            <button type="button" onClick={() => { setPlaying(false); stepOnce.current = true; }} className="px-4 py-2 rounded-xl text-sm font-bold bg-white border border-slate-300 min-h-[44px]">?????Step</button>
+            <button type="button" onClick={() => { setPlaying(false); stepOnce.current = true; }} className="px-4 py-2 rounded-xl text-sm font-bold bg-white border border-slate-300 min-h-[44px]">逐步 Step</button>
 
             <label className="flex items-center gap-2 text-sm font-semibold min-h-[44px] px-2">
 
-              <input type="checkbox" checked={slow} onChange={e => setSlow(e.target.checked)} className="w-5 h-5" /> ??? Slow
+              <input type="checkbox" checked={slow} onChange={e => setSlow(e.target.checked)} className="w-5 h-5" /> 慢動作 Slow
 
             </label>
 
@@ -758,13 +781,13 @@
 
                   className={"px-3 py-2 rounded-xl text-sm font-semibold min-h-[44px] border " + (flowMode === k ? "text-white" : "bg-white text-slate-700 border-slate-200")}
 
-                  style={flowMode === k ? {background: ACCENT, borderColor: ACCENT} : {}}>{k === "electrons" ? "??????Electrons" : "??????? Conventional"}</button>
+                  style={flowMode === k ? {background: ACCENT, borderColor: ACCENT} : {}}>{k === "electrons" ? "電子 Electrons" : "慣例電流 Conventional"}</button>
 
               ))}
 
             </div>
 
-            <button type="button" onClick={() => { setE(6); setR1(4); setR2(8); setTopo("series"); setClosed(true); setPlaying(true); setSlow(false); setFlowMode("electrons"); S.current.o = null; }} className="ml-auto px-4 py-2 rounded-xl text-sm font-bold bg-white border border-slate-300 min-h-[44px]">????? Reset</button>
+            <button type="button" onClick={() => { setE(6); setR1(4); setR2(8); setTopo("series"); setClosed(true); setPlaying(true); setSlow(false); setFlowMode("electrons"); S.current.o = null; }} className="ml-auto px-4 py-2 rounded-xl text-sm font-bold bg-white border border-slate-300 min-h-[44px]">重設 Reset</button>
 
           </div>
 
@@ -776,89 +799,48 @@
 
 
 
-    const GUIDED = [
-
-      { id: "g1", level: 1, q: "A 6 V battery drives a 12 ? resistor. What current flows?", qZh: "6 V ??????12 ? ???,??????????",
-
+        const GUIDED = [
+      { id: "g1", level: 1, q: "A 6 V battery drives a 12 Ω resistor. What current flows?", qZh: "6 V 電池接 12 Ω 電阻，電流是多少？",
         opts: ["0.5 A", "2 A", "6 A", "72 A"], a: "0.5 A",
-
-        hint: "I = V/R = 6/12. ?????? I = V/R?? },
-
-      { id: "g2", level: 1, q: "In a SERIES circuit with two resistors, which quantity is the same for both?", qZh: "??????????????????????",
-
-        opts: ["Current ????", "Voltage ????", "Power ????", "Resistance ???"], a: "Current ????",
-
-        hint: "One path ??one current. ?????????? },
-
-      { id: "g3", level: 1, q: "Two resistors in PARALLEL share the same??, qZh: "???????????????????,
-
-        opts: ["Voltage ????", "Current ????", "Resistance ???", "Heat ??], a: "Voltage ????",
-
-        hint: "Both connect across the same two nodes. ???????????????? },
-
-      { id: "g4", level: 2, q: "R??= 3 ? and R??= 6 ? in series on a 9 V battery. Current?", qZh: "3 ? ??6 ? ????9 V,?????",
-
+        hint: "I = V/R = 6/12 = 0.5 A。" },
+      { id: "g2", level: 1, q: "In a series circuit with two resistors, which quantity is the same for both?", qZh: "兩個電阻串聯，哪個量對兩者相同？",
+        opts: ["Current 電流", "Voltage 電壓", "Power 功率", "Resistance 電阻"], a: "Current 電流",
+        hint: "只有一條路徑，電流相同。" },
+      { id: "g3", level: 1, q: "Two resistors in parallel share the same…", qZh: "兩個電阻並聯，兩者相同的是…",
+        opts: ["Voltage 電壓", "Current 電流", "Resistance 電阻", "Heat 熱"], a: "Voltage 電壓",
+        hint: "並聯兩端接在相同兩點，電壓相同。" },
+      { id: "g4", level: 2, q: "R₁ = 3 Ω and R₂ = 6 Ω in series on a 9 V battery. Current?", qZh: "3 Ω 與 6 Ω 串聯接 9 V，電流？",
         opts: ["1 A", "3 A", "9 A", "0.5 A"], a: "1 A",
-
-        hint: "Series R adds: 3 + 6 = 9 ?, then I = 9/9. ???????????? },
-
-      { id: "g5", level: 2, q: "Same two resistors (3 ?, 6 ?) in PARALLEL on 9 V. Current through the 3 ? branch?", qZh: "??? 3 ??? ? ???????9 V,3 ? ????????",
-
+        hint: "串聯總電阻 3 + 6 = 9 Ω，I = 9/9 = 1 A。" },
+      { id: "g5", level: 2, q: "Same two resistors (3 Ω, 6 Ω) in parallel on 9 V. Current through the 3 Ω branch?", qZh: "同樣 3 Ω 與 6 Ω 改為並聯接 9 V，3 Ω 支路的電流？",
         opts: ["3 A", "1.5 A", "1 A", "6 A"], a: "3 A",
-
-        hint: "Each branch gets full voltage: I = 9/3. ???????????????? },
-
-      { id: "g6", level: 2, q: "Why does the total resistance DROP when you add a parallel branch?", qZh: "?????????????????????",
-
-        opts: ["Charge has more paths to flow ?????????", "Resistors get smaller ??????", "Voltage decreases ???????", "Electrons slow down ??????"], a: "Charge has more paths to flow ?????????",
-
-        hint: "More parallel paths = more total current for the same V = lower effective R. 1/R = 1/R??+ 1/R???? }
-
+        hint: "並聯每條支路得到全部電壓：I = 9/3 = 3 A。" },
+      { id: "g6", level: 2, q: "Why does the total resistance drop when you add a parallel branch?", qZh: "為什麼多加一條並聯支路，總電阻會下降？",
+        opts: ["Charge has more paths to flow 電荷有更多路徑", "Resistors get smaller 電阻器本身變小", "Voltage decreases 電壓下降", "Electrons slow down 電子變慢"], a: "Charge has more paths to flow 電荷有更多路徑",
+        hint: "路徑愈多，同一電壓下總電流愈大，等效電阻愈小。" }
     ];
-
     const EXAM = [
-
-      { id: "e1", level: 3, q: "R??= 4 ? and R??= 12 ? in series on a 12 V supply. Voltage across R??", qZh: "4 ? ??12 ? ????12 V,R???????",
-
+      { id: "e1", level: 3, q: "R₁ = 4 Ω and R₂ = 12 Ω in series on a 12 V supply. Voltage across R₂?", qZh: "4 Ω 與 12 Ω 串聯接 12 V，12 Ω 那個電阻（R₂）的電壓？",
         opts: ["9 V", "3 V", "12 V", "6 V"], a: "9 V",
-
-        hint: "I = 12/16 = 0.75 A; V??= 0.75 ? 12. ???????????? V = IR?? },
-
-      { id: "e2", level: 3, q: "A 60 W lamp runs on 12 V. What current does it draw and what is its resistance?", qZh: "60 W ?????12 V,?????????????????",
-
-        opts: ["5 A, 2.4 ?", "5 A, 12 ?", "0.2 A, 60 ?", "2 A, 6 ?"], a: "5 A, 2.4 ?",
-
-        hint: "I = P/V = 60/12 = 5 A; R = V/I = 12/5. ??P = VI?? },
-
-      { id: "e3", level: 3, q: "In the simulation, doubling EMF (fixed R) does what to current and power in a resistor?", qZh: "?????????????????),????????????????",
-
-        opts: ["I doubles, P quadruples I ????P ????, "I doubles, P doubles ??????, "I unchanged, P doubles", "I quadruples, P quadruples"], a: "I doubles, P quadruples I ????P ????,
-
-        hint: "I = V/R doubles; P = I?R ??(2I)?R = 4I?R. P ??I? ?????? },
-
-      { id: "e4", level: 4, q: "Three 6 ? resistors: two in parallel with each other, then in series with the third. Total resistance?", qZh: "???6 ? ???:???????,??????????????????",
-
-        opts: ["9 ?", "18 ?", "2 ?", "12 ?"], a: "9 ?",
-
-        hint: "Parallel pair: 3 ?. Series with third: 3 + 6. ???????? },
-
-      { id: "e5", level: 4, q: "A student opens the switch in the parallel simulation. Branch currents become??, qZh: "????????????????????,????????????,
-
-        opts: ["Zero everywhere ??????", "Half ???", "Unchanged ???", "Doubled ????], a: "Zero everywhere ??????",
-
-        hint: "The switch is on the main line ??open circuit stops ALL current. ??????,??????????? },
-
-      { id: "e6", level: 4, q: "Which circuit arrangement makes two identical bulbs brightest, and why?", qZh: "???????????????????????????",
-
-        opts: ["Parallel ??each gets full voltage ??,??????????", "Series ??current doubles ??????????, "Series ??voltage adds ??????????", "No difference ??????], a: "Parallel ??each gets full voltage ??,??????????",
-
-        hint: "Brightness = power = V?/R. Full V per bulb in parallel beats half V in series. ?????????? }
-
+        hint: "I = 12/(4+12) = 0.75 A。V₂ = IR₂ = 0.75 × 12 = 9 V。" },
+      { id: "e2", level: 3, q: "A 60 W lamp runs on 12 V. What current does it draw, and what is its resistance?", qZh: "60 W 燈泡接 12 V，電流與電阻是多少？",
+        opts: ["5 A, 2.4 Ω", "5 A, 12 Ω", "0.2 A, 60 Ω", "2 A, 6 Ω"], a: "5 A, 2.4 Ω",
+        hint: "I = P/V = 60/12 = 5 A。R = V/I = 12/5 = 2.4 Ω。" },
+      { id: "e3", level: 3, q: "In the simulation, doubling EMF (fixed R) does what to current and power in a resistor?", qZh: "電阻不變，電動勢加倍，電流與功率怎樣變？",
+        opts: ["I doubles, P quadruples 電流加倍、功率四倍", "I doubles, P doubles 電流與功率都加倍", "I unchanged, P doubles 電流不變、功率加倍", "I quadruples, P quadruples 電流與功率都四倍"], a: "I doubles, P quadruples 電流加倍、功率四倍",
+        hint: "I = V/R 加倍。P = I²R 變成 (2I)²R = 4I²R。" },
+      { id: "e4", level: 4, q: "Three 6 Ω resistors: two in parallel with each other, then in series with the third. Total resistance?", qZh: "三個 6 Ω：其中兩個先並聯，再與第三個串聯。總電阻？",
+        opts: ["9 Ω", "18 Ω", "2 Ω", "12 Ω"], a: "9 Ω",
+        hint: "並聯一對是 3 Ω，再串 6 Ω：3 + 6 = 9 Ω。" },
+      { id: "e5", level: 4, q: "A student opens the switch on the main line of the parallel simulation. Branch currents become…", qZh: "並聯模擬中，學生斷開主線上的開關，各支路電流變為…",
+        opts: ["Zero everywhere 處處為零", "Half 一半", "Unchanged 不變", "Doubled 加倍"], a: "Zero everywhere 處處為零",
+        hint: "開關在主線上。斷路後沒有閉合迴路，所有電流為零。" },
+      { id: "e6", level: 4, q: "Which arrangement makes two identical bulbs brightest, and why?", qZh: "兩隻相同燈泡怎樣接最亮？為什麼？",
+        opts: ["Parallel — each gets full voltage 並聯，每隻得到全部電壓", "Series — current doubles 串聯，電流加倍", "Series — voltage adds on one bulb 串聯，電壓加在同一隻", "No difference 沒有分別"], a: "Parallel — each gets full voltage 並聯，每隻得到全部電壓",
+        hint: "亮度看功率 P = V²/R。並聯每隻得到全部 V；串聯每隻大約只得一半 V。" }
     ];
 
-
-
-    function UpgradeCTA({ reason, onClose, onTrial }) {
+function UpgradeCTA({ reason, onClose, onTrial }) {
 
       return (
 
@@ -866,7 +848,7 @@
 
           <div className="w-full max-w-md rounded-2xl p-5 bg-white border border-slate-200">
 
-            <h3 className="text-lg font-bold" style={{color: ACCENT}}>???????????????</h3>
+            <h3 className="text-lg font-bold" style={{color: ACCENT}}>解鎖完整練習與家長進度</h3>
 
             <p className="text-sm mt-2 text-slate-600">{reason || window.SUBSCRIBE_CONFIG.bannerText}</p>
 
@@ -880,11 +862,11 @@
 
             </ul>
 
-            <button type="button" onClick={onTrial} className="mt-4 w-full min-h-[48px] rounded-xl font-semibold text-white" style={{background: ACCENT}}>???? 14 ?????????????/button>
+            <button type="button" onClick={onTrial} className="mt-4 w-full min-h-[48px] rounded-xl font-semibold text-white" style={{background: ACCENT}}>開始 14 日試用（本機）</button>
 
-            <a href={HKC.MARKETING_PATH} className="mt-2 block w-full min-h-[44px] text-center leading-[44px] rounded-xl border border-slate-300 text-sm">???????</a>
+            <a href={HKC.MARKETING_PATH} className="mt-2 block w-full min-h-[44px] text-center leading-[44px] rounded-xl border border-slate-300 text-sm">了解計劃</a>
 
-            <button type="button" onClick={onClose} className="mt-2 w-full text-sm underline text-slate-500">??????</button>
+            <button type="button" onClick={onClose} className="mt-2 w-full text-sm underline text-slate-500">繼續免費</button>
 
           </div>
 
@@ -918,7 +900,7 @@
 
           if (window.HkcSubscribe) HkcSubscribe.showPaywall("hit_free_cap");
 
-          onNeedUpgrade("?????????????);
+          onNeedUpgrade("已達免費練習上限");
 
           return;
 
@@ -926,13 +908,13 @@
 
         HKC.recordDrillUse(APP_ID);
 
-        const ok = opt === item.a;
+        const ok = opt === item.a; phyBeep(ok);
 
         setFb(ok
 
-          ? { ok: true, msg: "Correct ? ????" }
+          ? { ok: true, msg: "正確 Correct" }
 
-          : { ok: false, msg: "Not quite ? ?????Use Hint for the method (answer not shown)." });
+          : { ok: false, msg: "未中。請用提示看方法，不會直接顯示答案。" });
 
         if (ok) {
 
@@ -974,7 +956,7 @@
 
           <div className="flex justify-between text-sm mb-3 text-slate-500">
 
-            <span>{label} ? Q {qi + 1}/{bank.length} ? Lv {item.level}</span>
+            <span>{label} · Q {qi + 1}/{bank.length} · Lv {item.level}</span>
 
             <span>Score {score}</span>
 
@@ -996,7 +978,7 @@
 
           </div>
 
-          <button type="button" className="text-sm mt-3 font-semibold min-h-[44px]" style={{color: ACCENT}} onClick={() => setHint(true)}>Hint ? ???</button>
+          <button type="button" className="text-sm mt-3 font-semibold min-h-[44px]" style={{color: ACCENT}} onClick={() => setHint(true)}>提示 Hint</button>
 
           {hint && <p className="text-sm mt-1 p-3 rounded-xl bg-amber-50 text-amber-900 border border-amber-200">{item.hint}</p>}
 
@@ -1006,7 +988,7 @@
 
               {fb.msg}
 
-              {fb.ok && <button type="button" className="block mt-2 underline font-semibold" onClick={next}>Next ??/button>}
+              {fb.ok && <button type="button" className="block mt-2 underline font-semibold" onClick={next}>下一步 Next</button>}
 
               {!fb.ok && <button type="button" className="block mt-2 underline font-semibold" onClick={() => setFb(null)}>Retry</button>}
 
@@ -1024,7 +1006,7 @@
 
     function App() {
 
-      const { isZh, t } = useLang();
+      const { isZh, lang, t } = useLang();
 
       const [mode, setMode] = useState("learn");
 
@@ -1054,7 +1036,7 @@
 
 
 
-      const tabs = appTabs(["learn", "lab", "guided", "exam", "review"], isZh, { labLocked: !tfzDone });
+      const tabs = appTabs(["learn", "lab", "guided", "exam", "review"], lang, { labLocked: !tfzDone });
 
 
 
@@ -1064,16 +1046,17 @@
 
           <div className="flex flex-wrap justify-between items-center gap-2">
 
-            <a href="../../index.html" className="text-sm hover:underline font-semibold" style={{color: ACCENT}}>{t("?????????", "??Back to hub")}</a>
+            <a href="../../index.html" className="text-sm hover:underline font-semibold" style={{color: ACCENT}}>{flagshipUi("hub")}</a>
+            <LangSwitcher />
           </div>
 
           <header className="mt-4 mb-4">
 
-            <p className="text-xs uppercase tracking-widest font-bold" style={{color: ACCENT}}>{t("??????? ? ???", "F5 Physics ? Electricity")}</p>
+            <p className="text-xs uppercase tracking-widest font-bold" style={{color: ACCENT}}>{flagshipUi("subtitle")}</p>
 
-            <h1 className="text-2xl sm:text-3xl font-bold mt-1">{t("??????", "Circuit Builder")}</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold mt-1">{flagshipUi("title")}</h1>
 
-            <p className="text-slate-500 mt-1">{t("??? ????? ????? ????? ??????", "Learn ??Lab ??Guided ??Exam ??Review")}</p>
+            <p className="text-slate-500 mt-1">{flagshipUi("modes")}</p>
 
           </header>
 
@@ -1081,11 +1064,11 @@
 
           <div className="text-sm border border-dashed rounded-lg px-3 py-2 mb-3 flex flex-wrap justify-between gap-2 items-center border-slate-300 bg-white/80">
 
-            <span>{HKC.isPaid() ? (HKC.getEntitlement().tier + " ? " + t("????", "unlimited")) : (t("???", "Free") + " ? " + HKC.remainingFree() + "/" + HKC.FREE_DAILY_CAP + " " + t("??", "today"))} ? {t("????, "Best")} {progress.bestScore}</span>
+            <span>{HKC.isPaid() ? (HKC.getEntitlement().tier + " · " + t("無限", "unlimited")) : (t("免費", "Free") + " · " + HKC.remainingFree() + "/" + HKC.FREE_DAILY_CAP + " " + t("今日", "today"))} · {t("最佳", "Best")} {progress.bestScore}</span>
 
             {!HKC.isPaid() && (
 
-              <button type="button" className="px-3 py-1.5 rounded-md text-xs font-semibold text-white min-h-[36px]" style={{background: ACCENT}} onClick={() => setPay(true)}>{t("????", "Upgrade")}</button>
+              <button type="button" className="px-3 py-1.5 rounded-md text-xs font-semibold text-white min-h-[36px]" style={{background: ACCENT}} onClick={() => setPay(true)}>{t("升級", "Upgrade")}</button>
 
             )}
 
@@ -1121,11 +1104,11 @@
 
             <section className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 text-center">
 
-              <h2 className="text-xl font-bold">{t("???????????????A1??A8", "Finish Learn From Zero A1??A8 first")}</h2>
+              <h2 className="text-xl font-bold">{t("請先完成由零開始 A1–A8", "Finish Learn From Zero A1–A8 first")}</h2>
 
-              <p className="text-sm text-slate-500 mt-2">{t("???????????????, "We teach the model before you play.")}</p>
+              <p className="text-sm text-slate-500 mt-2">{t("先學模型，再做實驗。", "We teach the model before you play.")}</p>
 
-              <button type="button" className="mt-4 px-4 py-2.5 rounded-xl font-semibold text-white min-h-[48px]" style={{background: ACCENT}} onClick={() => setMode("learn")}>{t("??????? ??, "Go to Learn ??)}</button>
+              <button type="button" className="mt-4 px-4 py-2.5 rounded-xl font-semibold text-white min-h-[48px]" style={{background: ACCENT}} onClick={() => setMode("learn")}>{t("前往學習 →", "Go to Learn →")}</button>
 
             </section>
 
@@ -1135,7 +1118,7 @@
 
             <section className="bg-white border border-slate-200 shadow-sm rounded-2xl p-4 sm:p-5">
 
-              <h2 className="font-bold text-lg mb-3">{t("?????????", "Live Circuit Sandbox")}</h2>
+              <h2 className="font-bold text-lg mb-3">{t("電路沙盒", "Live Circuit Sandbox")}</h2>
 
               <CircuitSim />
 
@@ -1165,13 +1148,13 @@
 
             <section className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 text-center">
 
-              <h2 className="text-2xl font-bold">{t("???", "Complete")}</h2>
+              <h2 className="text-2xl font-bold">{t("完成", "Complete")}</h2>
 
               <p className="mt-2">{doneMsg.s} / {doneMsg.n}</p>
 
               <button type="button" className="mt-4 px-4 py-2 rounded-xl font-semibold min-h-[48px] text-white" style={{background: ACCENT}}
 
-                onClick={() => { setDoneMsg(null); setMode(doneMsg.next); }}>{t("??? ??, "Continue ??)}</button>
+                onClick={() => { setDoneMsg(null); setMode(doneMsg.next); }}>{t("繼續 →", "Continue →")}</button>
 
             </section>
 
@@ -1181,9 +1164,9 @@
 
             <section className="bg-white border border-slate-200 shadow-sm rounded-2xl p-4 sm:p-5 space-y-3">
 
-              <h2 className="font-bold text-lg">{t("??????, "Wrong-answer book")}</h2>
+              <h2 className="font-bold text-lg">{t("錯題簿", "Wrong-answer book")}</h2>
 
-              {(progress.wrongBook || []).length === 0 && <p className="text-sm text-slate-500">{t("???????", "No wrong answers yet")}</p>}
+              {(progress.wrongBook || []).length === 0 && <p className="text-sm text-slate-500">{t("暫無錯題", "No wrong answers yet")}</p>}
 
               {(progress.wrongBook || []).map(w => (
 

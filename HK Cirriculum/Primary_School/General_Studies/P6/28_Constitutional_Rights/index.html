@@ -118,14 +118,14 @@ const t = {
     ko: "이동의 자유"
   },
   s_speech: {
-    en: "Writing an opinion in a newspaper.",
-    zh: "在報紙上發表意見。",
+    en: "Saying your own view in a class meeting.",
+    zh: "在班會說出自己的意見。",
     ja: "新聞に意見を書く。",
     ko: "신문에 의견 쓰기."
   },
   s_vote: {
-    en: "Choosing a class monitor.",
-    zh: "選擇班長。",
+    en: "A Hong Kong permanent resident aged 18 or above votes in an election.",
+    zh: "年滿18歲的香港永久性居民在選舉中投票。",
     ja: "クラス委員を選ぶ。",
     ko: "반장 뽑기."
   },
@@ -136,18 +136,27 @@ const t = {
     ko: "교회나 절에 가기."
   },
   s_travel: {
-    en: "Flying to another country for holiday.",
-    zh: "飛往另一個國家度假。",
+    en: "Entering or leaving Hong Kong with valid documents.",
+    zh: "持有效證件進出香港。",
     ja: "休日に別の国へ飛ぶ。",
     ko: "휴가 때 다른 나라로 비행하기."
   },
   correct: {
-    en: "Correct! You have this right.",
-    zh: "正確！你擁有這項權利。",
+    en: "Correct. This is an example, not the whole definition.",
+    zh: "對了。這是一個例子，不是整項權利的定義。",
     ja: "正解！あなたにはこの権利があります。",
     ko: "정답! 당신에게는 이 권리가 있습니다."
   }
-};
+,
+  wrong: {
+    en: "Look again at which right this example shows.",
+    zh: "再看看這個例子是哪一項權利。"
+  },
+  note: {
+    en: "These are everyday examples, not full legal definitions. Choosing a class monitor is not the right to vote. Primary students do not yet have that right.",
+    zh: "下面是生活例子，不是法律的完整定義。選班長不是選舉權。小學生還沒有選舉權。"
+  }
+};
 const pairs = [{
   id: "speech",
   scenario: "s_speech",
@@ -168,7 +177,8 @@ const pairs = [{
 function App() {
   const [lang, setLang] = useState("zh");
   const [index, setIndex] = useState(0);
-  const [feedback, setFeedback] = useState(null);
+  const [feedback, setFeedback] = useState(null);
+  const [done, setDone] = useState(false);
   const getText = key => t[key][lang] || t[key]["en"];
   const current = pairs[index];
 
@@ -178,18 +188,20 @@ function App() {
   const handleChoice = optId => {
     if (feedback) return;
     if (optId === current.id) {
-      setFeedback("correct");
+      setFeedback("correct");window.GsSfx&&GsSfx.playCorrect();
       setTimeout(() => {
         setFeedback(null);
-        setIndex((index + 1) % pairs.length);
+        if (index + 1 >= pairs.length) { setDone(true); if (window.GsSfx) GsSfx.playComplete(); } else setIndex(index + 1);
       }, 1500);
     } else {
-      setFeedback("wrong"); // Add 'wrong' key if needed or simplify
+      setFeedback("wrong");window.GsSfx&&GsSfx.playWrong(); // Add 'wrong' key if needed or simplify
       setTimeout(() => setFeedback(null), 500);
     }
   };
-  return /*#__PURE__*/React.createElement("div", {
-    className: "min-h-screen flex flex-col items-center justify-center p-4"
+  if (done) {
+    return React.createElement("div", { className: "min-h-screen flex flex-col items-center justify-center p-4" }, React.createElement("div", { className: "bg-white p-8 rounded-3xl shadow-xl max-w-2xl" }, React.createElement("h1", { className: "text-3xl font-black text-purple-800 mb-4" }, "本課完成"), React.createElement("p", { className: "text-slate-700 leading-relaxed" }, getText("note"))));
+  }
+  return /*#__PURE__*/React.createElement("div", { className: "min-h-screen flex flex-col items-center justify-center p-4"
   }, /*#__PURE__*/React.createElement(LanguageSelector, {
     lang: lang,
     setLang: setLang
@@ -215,7 +227,7 @@ function App() {
     className: "font-bold text-sm text-center"
   }, getText(opt.id))))), feedback && /*#__PURE__*/React.createElement("div", {
     className: "mt-8 text-2xl font-black text-green-600 animate-bounce"
-  }, getText(feedback) || "Try again!")));
+  }, getText(feedback) || "")));
 }
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(/*#__PURE__*/React.createElement(App, null));
@@ -224,5 +236,6 @@ root.render(/*#__PURE__*/React.createElement(App, null));
       
       <!-- Footer -->
       <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+<script src="../../common/gs-sfx.js"></script>
 </body>
 </html>

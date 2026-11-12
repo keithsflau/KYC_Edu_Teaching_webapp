@@ -2,79 +2,122 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>14_EMF_Calc</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="../../../../common/babel-react-classic.js"></script>
-  <script src="../../../../common/learn-from-zero.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>電動勢 | Cell EMF</title>
+  <link rel="stylesheet" href="../../lesson.css" />
   <style>
-    body { font-family: "IBM Plex Sans", system-ui, sans-serif; background-color: #f8fafc; color: #0f172a; min-height: 100vh; }
+    #emf { font-size: 1.2rem; padding: 8px; width: 8rem; }
   </style>
-  <!-- NCS i18n fleet kit (auto-injected) -->
-  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
-  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
-  <style data-ncs-kit="fleet-bridge">
-    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
-    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
-      display: none !important;
-    }
-  </style>
-  <script data-ncs-kit="fleet-init">
-  (function () {
-    function hideLegacyToggles() {
-      document.body.classList.add("ncs-fleet-mounted");
-      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
-        var label = (btn.textContent || "").trim();
-        if (label === "EN" || label === "\u4E2D") {
-          btn.classList.add("ncs-hide-when-ncs-fleet");
-        }
-      });
-      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
-        el.classList.add("ncs-hide-when-ncs-fleet");
-      });
-    }
-    function boot() {
-      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
-      window.NcsI18n.init({
-        chromePath: "../../../../_shared/ncs-chrome.json",
-        target: document.body
-      }).then(hideLegacyToggles);
-    }
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", boot);
-    } else {
-      boot();
-    }
-  })();
-  </script>
 </head>
 <body>
-  <div id="root"></div>
-  <script type="text/babel" data-presets="react-classic">
-    const { useState } = React;
-    
-    function App() {
-      return (
-        <div className="max-w-4xl mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-4">14 EMF Calc</h1>
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 mb-8 text-center">
-            <div className="w-full h-64 bg-slate-100 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 mb-4">
-              <span className="text-slate-400 font-medium">[ Interactive Canvas Placeholder ]</span>
-            </div>
-            <p className="text-slate-500">This interactive lab is currently under development.</p>
-          </div>
-          <LearnFromZero />
-        </div>
-      );
+  <section class="chem-learn" data-chem-entry="1">
+    <h2>學習目標</h2>
+    <ul>
+      <li>用 E°cell = E°red(cathode) − E°red(anode)。</li>
+      <li>選還原電位較高的半電池做陰極。</li>
+      <li>計算這一題的電動勢並核對。</li>
+    </ul>
+    <p id="chem-feedback" role="status">操作：先選陰極，輸入 E°cell，再按核對。</p>
+  </section>
+  <main>
+    <div class="panel">
+      <h1>電動勢計算</h1>
+      <p class="muted">只做這一題。E°red(Cu<sup>2+</sup>/Cu) = +0.34 V，E°red(Zn<sup>2+</sup>/Zn) = −0.76 V。沒有裝電池的步驟。</p>
+      <p class="num" style="font-size:1.05rem">E°cell = E°red(cathode) − E°red(anode)</p>
+      <p class="muted"><strong>操作</strong>：選出陰極，把數值代入公式，輸入伏特後核對。答錯會寫出錯因。</p>
+      <div class="row" role="group" aria-label="選擇陰極">
+        <button type="button" id="pick-cu" class="alt">陰極是銅極（+0.34 V）</button>
+        <button type="button" id="pick-zn" class="alt">陰極是鋅極（−0.76 V）</button>
+      </div>
+      <p id="sub" class="muted">尚未選擇陰極。</p>
+      <label for="emf">E°cell（V）</label>
+      <input id="emf" type="number" step="0.01" inputmode="decimal" />
+      <div class="row">
+        <button type="button" id="check">核對</button>
+      </div>
+    </div>
+  </main>
+  <script src="../../lesson-kit.js"></script>
+  <script>
+    var E_CU = 0.34;
+    var E_ZN = -0.76;
+    var cathode = "";
+
+    function round2(n) {
+      return Number(n).toFixed(2);
     }
-    
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+
+    function parseVolt(raw) {
+      var text = String(raw == null ? "" : raw).trim().replace(/Ｖ/g, "V").replace(/\u2212/g, "-").replace(/v$/i, "").trim().replace(",", ".");
+      if (text === "") return { empty: true };
+      var n = Number(text);
+      if (!isFinite(n)) return { bad: true };
+      return { n: n };
+    }
+
+    function gradeEmf(which, raw) {
+      if (which !== "Cu" && which !== "Zn") {
+        return { ok: false, msg: "錯因：請先選陰極。比較 +0.34 V 和 −0.76 V，E°red 較高的半電池才是陰極。" };
+      }
+      var parsed = parseVolt(raw);
+      if (parsed.empty || parsed.bad) {
+        return { ok: false, msg: "錯因：請輸入以伏特為單位的數字。公式是 E°red(陰極) − E°red(陽極)。" };
+      }
+      var got = round2(parsed.n);
+      if (which === "Zn") {
+        return { ok: false, msg: "錯因：鋅極的還原電位較低，不是陰極。自發電池要選銅極做陰極，再算 E°red(陰極) − E°red(陽極)。把鋅當陰極會得到負值。" };
+      }
+      if (got === round2(E_CU - E_ZN)) {
+        return { ok: true, msg: "正確。陰極是銅極，陽極是鋅極。E°cell = 0.34 − (−0.76) = 1.10 V。" };
+      }
+      if (got === round2(E_ZN - E_CU)) {
+        return { ok: false, msg: "錯因：兩極在減法裡對調了。應是 E°red(陰極) − E°red(陽極)，銅的 +0.34 V 在前，鋅的 −0.76 V 在後。" };
+      }
+      if (got === round2(E_CU - 0.76)) {
+        return { ok: false, msg: "錯因：陽極電位是 −0.76 V，不是 +0.76 V。減去一個負數，等於加上這個數的大小。" };
+      }
+      if (got === round2(0.76 - E_CU)) {
+        return { ok: false, msg: "錯因：0.76 − 0.34 沒有按陰極減陽極，也漏了負號。要把 −0.76 放進括號再減。" };
+      }
+      if (got === round2(E_CU) || got === round2(E_ZN)) {
+        return { ok: false, msg: "錯因：這是其中一個半電池的 E°red，不是整個電池的電動勢。要用陰極的還原電位減去陽極的還原電位。" };
+      }
+      if (got === "1.00") {
+        return { ok: false, msg: "錯因：1 V 太粗略。請把 +0.34 和 −0.76 按陰極減陽極算到兩位小數。" };
+      }
+      if (got === "110.00" || got === "11.00") {
+        return { ok: false, msg: "錯因：單位是伏特。不要把小數點去掉，請按 E°red(陰極) − E°red(陽極) 重算。" };
+      }
+      return { ok: false, msg: "錯因：請重算 E°cell = E°red(cathode) − E°red(anode)。陰極用 +0.34 V，陽極用 −0.76 V，先處理括號裡的負號。" };
+    }
+
+    function paintEmf() {
+      document.getElementById("pick-cu").classList.toggle("on", cathode === "Cu");
+      document.getElementById("pick-zn").classList.toggle("on", cathode === "Zn");
+      var line = document.getElementById("sub");
+      if (cathode === "Cu") line.textContent = "代入：E°cell = 0.34 − (−0.76)。請算出數值再核對。";
+      else if (cathode === "Zn") line.textContent = "代入：E°cell = −0.76 − 0.34。請算出數值再核對。";
+      else line.textContent = "尚未選擇陰極。";
+    }
+
+    function wireEmf() {
+      document.getElementById("pick-cu").onclick = function () {
+        cathode = "Cu";
+        paintEmf();
+        ChemLesson.say("已選銅極為陰極。輸入 E°cell 後按核對。");
+      };
+      document.getElementById("pick-zn").onclick = function () {
+        cathode = "Zn";
+        paintEmf();
+        ChemLesson.say("已選鋅極為陰極。輸入 E°cell 後按核對。");
+      };
+      document.getElementById("check").onclick = function () {
+        var result = gradeEmf(cathode, document.getElementById("emf").value);
+        ChemLesson.say(result.msg, result.ok ? "ok" : "no");
+      };
+    }
+
+    if (typeof document !== "undefined") wireEmf();
   </script>
-<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 </body>
 </html>

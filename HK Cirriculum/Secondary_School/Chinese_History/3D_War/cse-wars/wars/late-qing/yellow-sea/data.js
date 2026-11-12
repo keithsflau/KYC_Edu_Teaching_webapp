@@ -203,12 +203,12 @@ window.BATTLE_DATA = (function () {
           "衛星影像為現代地形，非歷史時期地貌。",
           "河川、海域水面為教學示意，按史實位置裁切顯示。"
       ],
-      "sources": "DSE 中史課程、中國通史、維基百科（交叉查證）。"
+      "sources": "姚錫光《東方兵事紀略》、池仲祐《海軍實記》、《清史稿·鄧世昌傳》、日本海軍軍令部《廿七八年海戰史》中的黃海海戰記錄。人名依伊東祐亨。不以網絡百科為唯一依據。"
   };
   const analysis =   {
-      "military": "甲午战争黄海海战：北洋水师与日本联合舰队在鸭绿江口大东沟遭遇；双方以舰炮对射，致远、经远等舰沉没，北洋损失五舰。",
-      "leaders": "甲午戰爭黃海海戰中，清朝北洋水師提督丁汝昌率艦隊迎戰日本聯合艦隊。日軍司令伊東佑亨以速射炮、統一戰術搶佔「T」字橫頭，火力與訓練優勢明顯。北洋艦隊在劉步蟾等管帶率領下英勇作戰，卻因彈藥、戰術及指揮問題損失慘重，制海權落入日軍之手，直接影響後續威海衛陷落。",
-      "nationalPower": "日本明治维新后海军现代化；北洋虽购铁甲舰但训练、弹种、指挥不足，后勤与战意亦逊。",
+      "military": "1894年9月17日，北洋水師與日本聯合艦隊在大東溝外遭遇，以艦炮交戰。致遠、經遠等艦沉沒，北洋艦隊損失多艦。日本聯合艦隊司令是伊東祐亨。",
+      "leaders": "北洋水師提督丁汝昌迎戰日本聯合艦隊，司令是伊東祐亨。日艦以速射炮側擊，北洋多艦沉沒或重創，餘艦退回威海衛。",
+      "nationalPower": "日本艦隊速射炮和運動佔優。北洋艦隊在彈種、航速和指揮協調上不及對方。",
       "impact": "北洋水師主力受創，大清喪失黃海制海權。"
   };
   const storyboard =   [
@@ -361,8 +361,8 @@ window.BATTLE_DATA = (function () {
   const outro =   {
       "title_zh": "黃海海戰",
       "title_en": "BATTLE OF YELLOW SEA",
-      "narration_zh": "本戰役為 DSE 中史重要考點：北洋水師主力受創，大清喪失黃海制海權",
-      "narration_en": "A key HKDSE Chinese History topic.",
+      "narration_zh": "1894年9月17日海戰後，北洋艦隊餘艦退回威海衛。",
+      "narration_en": "After 17 September 1894 the remaining Beiyang ships withdrew to Weihaiwei.",
       "cam": {
           "lng": 122.5,
           "lat": 38.5,
@@ -372,5 +372,19 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       }
   };
-  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };
+  const lesson =   {
+      "junior": "初中：看1894年9月17日大東溝海戰和北洋艦隊損失。",
+      "senior": "高中：指揮官寫伊東祐亨，並分開戰術事實和「洋務成敗」的評價。",
+      "fact": "1894年9月17日，北洋水師護送運兵後，在大東溝外與日本聯合艦隊相遇。北洋提督是丁汝昌，日本聯合艦隊司令是伊東祐亨，不是伊東佑亨。雙方以艦炮交戰。致遠管帶鄧世昌陣亡，致遠、經遠等艦沉沒。北洋艦隊損失多艦，餘艦退回威海衛，黃海制海權轉到日軍一方。",
+      "sources": "姚錫光《東方兵事紀略》、池仲祐《海軍實記》、《清史稿·鄧世昌傳》、日本海軍軍令部《廿七八年海戰史》中的黃海海戰記錄。人名依伊東祐亨。不以網絡百科為唯一依據。",
+      "evaluation": "日艦速射炮和艦隊運動佔優，北洋在彈種、航速和指揮協調上吃虧。這能解釋當日損失。把整場洋務運動的成敗寫進這一仗的收束，是後來的評價，不是海戰當日的戰報。",
+      "judgment": {
+          "ask": "哪一則說法更能解釋黃海海戰北洋艦隊的損失？",
+          "a": "伊東佑亨一人決定勝敗，北洋因為定遠、鎮遠兩艦最大，所以應該獲勝。",
+          "b": "伊東祐亨指揮的日本艦隊以速射炮和較靈活的陣形側擊，北洋多艦沉沒或重創後撤退。",
+          "better": "b",
+          "why": "司令姓名是伊東祐亨。當日勝負要看火力、航速和損傷，不能只拿兩艘鐵甲艦的噸位來解釋。"
+      }
+  };
+  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, lesson, END_DAY };
 })();

@@ -2,79 +2,131 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>13_Vitamin_C</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="../../../../common/babel-react-classic.js"></script>
-  <script src="../../../../common/learn-from-zero.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>維他命 C 計量 | Vitamin C calculation</title>
+  <link rel="stylesheet" href="../../lesson.css" />
   <style>
-    body { font-family: "IBM Plex Sans", system-ui, sans-serif; background-color: #f8fafc; color: #0f172a; min-height: 100vh; }
+    .panel h2 { font-size: 1.05rem; margin: 1rem 0 .35rem; }
+    a { color: #0f766e; font-weight: 700; text-decoration: none; }
   </style>
-  <!-- NCS i18n fleet kit (auto-injected) -->
-  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
-  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
-  <style data-ncs-kit="fleet-bridge">
-    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
-    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
-      display: none !important;
-    }
-  </style>
-  <script data-ncs-kit="fleet-init">
-  (function () {
-    function hideLegacyToggles() {
-      document.body.classList.add("ncs-fleet-mounted");
-      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
-        var label = (btn.textContent || "").trim();
-        if (label === "EN" || label === "\u4E2D") {
-          btn.classList.add("ncs-hide-when-ncs-fleet");
-        }
-      });
-      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
-        el.classList.add("ncs-hide-when-ncs-fleet");
-      });
-    }
-    function boot() {
-      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
-      window.NcsI18n.init({
-        chromePath: "../../../../_shared/ncs-chrome.json",
-        target: document.body
-      }).then(hideLegacyToggles);
-    }
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", boot);
-    } else {
-      boot();
-    }
-  })();
-  </script>
 </head>
 <body>
-  <div id="root"></div>
-  <script type="text/babel" data-presets="react-classic">
-    const { useState } = React;
-    
-    function App() {
-      return (
-        <div className="max-w-4xl mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-4">13 Vitamin C</h1>
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 mb-8 text-center">
-            <div className="w-full h-64 bg-slate-100 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 mb-4">
-              <span className="text-slate-400 font-medium">[ Interactive Canvas Placeholder ]</span>
-            </div>
-            <p className="text-slate-500">This interactive lab is currently under development.</p>
-          </div>
-          <LearnFromZero />
-        </div>
-      );
+  <section class="chem-learn" data-chem-entry="1">
+    <h2>學習目標</h2>
+    <ul>
+      <li>用 1:1 的氧化還原計量計算抗壞血酸的物質的量。</li>
+      <li>把樣本體積換算成每 100 cm³ 的毫克數。</li>
+      <li>體積先由 cm³ 換成 dm³，再乘 mol/dm³。</li>
+    </ul>
+    <p class="muted">DSE 課題七　氧化還原反應，以及選修課題十五　分析化學。</p>
+    <p id="chem-feedback" role="status">體積和濃度是已記錄的數值。選出每 100 cm³ 的正確毫克數。</p>
+  </section>
+  <main>
+    <p><a href="../index.html">返回中六目錄</a></p>
+    <div class="panel">
+      <h1>抗壞血酸的含量</h1>
+      <p class="muted">C<sub>6</sub>H<sub>8</sub>O<sub>6</sub> 的相對分子質量取 176。與 DCPIP 或碘都是 1:1。沒有配製氧化劑，也沒有終點觀察或滴定步驟。</p>
+      <h2>操作</h2>
+      <label for="sample">果汁樣本體積</label>
+      <select id="sample">
+        <option value="10">10.0 cm³</option>
+        <option value="20">20.0 cm³</option>
+        <option value="25" selected>25.0 cm³</option>
+      </select>
+      <label for="vol">已記錄的氧化劑體積 = <span id="vol-v">20.0</span> cm³</label>
+      <input id="vol" type="range" min="50" max="400" step="1" value="200" />
+      <label for="conc">已記錄的濃度 = <span id="conc-v">1.00</span> × 10⁻³ mol/dm³</label>
+      <input id="conc" type="range" min="5" max="20" step="1" value="10" />
+      <p id="work"></p>
+      <p>每 100 cm³ 含多少毫克？三個數裡只有一個用了 1:1，並且由樣本換算到 100 cm³。</p>
+      <div class="row" id="choices"></div>
+      <div class="row">
+        <button type="button" id="dm3" class="alt">如果忘記把 cm³ 換成 dm³</button>
+      </div>
+      <h2>錯因</h2>
+      <ul>
+        <li>把 cm³ 直接乘 mol/dm³，物質的量會大 1000 倍。</li>
+        <li>把 1:1 寫成 1:2。抗壞血酸對 DCPIP 或對 I₂ 都是 1:1，毫克數不應減半。</li>
+        <li>把這份樣本裡的毫克數直接當成每 100 cm³。25.0 cm³ 要再乘 4。</li>
+        <li>這不是酸鹼滴定。不要用 pH 曲線計算維他命 C。</li>
+      </ul>
+    </div>
+  </main>
+  <script src="../../lesson-kit.js"></script>
+  <script>
+    var sampleEl = document.getElementById("sample");
+    var volEl = document.getElementById("vol");
+    var concEl = document.getElementById("conc");
+
+    function figures() {
+      var sample = Number(sampleEl.value);
+      var volTenth = Number(volEl.value);
+      var concMilli = Number(concEl.value);
+      var vol = volTenth / 10;
+      var molar = concMilli / 10000;
+      var n = (concMilli * volTenth) / 1e8;
+      var mg = n * 176 * 1000;
+      var per = mg * (100 / sample);
+      return { sample: sample, vol: vol, molar: molar, n: n, mg: mg, per: per };
     }
-    
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+
+    function shuffle(list) {
+      var i;
+      for (i = list.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var tmp = list[i];
+        list[i] = list[j];
+        list[j] = tmp;
+      }
+      return list;
+    }
+
+    function paint() {
+      var f = figures();
+      document.getElementById("vol-v").textContent = f.vol.toFixed(1);
+      document.getElementById("conc-v").textContent = (f.molar * 1000).toFixed(2);
+      document.getElementById("work").textContent =
+        "n(氧化劑) = " + f.molar.toFixed(4) + " × " + (f.vol / 1000).toFixed(4) + " = " + f.n.toExponential(2) + " mol。1:1 時抗壞血酸同樣是這個物質的量，樣本內 " +
+        f.mg.toFixed(3) + " mg。";
+      var box = document.getElementById("choices");
+      box.innerHTML = "";
+      var items = [
+        { kind: "ok", v: f.per },
+        { kind: "scale", v: f.mg },
+        { kind: "ratio", v: f.per / 2 }
+      ];
+      shuffle(items);
+      items.forEach(function (it) {
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.textContent = it.v.toFixed(2) + " mg／100 cm³";
+        btn.onclick = function () { judge(it.kind, f); };
+        box.appendChild(btn);
+      });
+    }
+
+    function judge(kind, f) {
+      if (kind === "ok") {
+        ChemLesson.say("正確。每 100 cm³ 是 " + f.per.toFixed(2) + " mg。樣本 " + f.sample.toFixed(1) + " cm³ 含 " + f.mg.toFixed(3) + " mg，要乘 " + (100 / f.sample) + "。", "ok");
+        return;
+      }
+      if (kind === "scale") {
+        ChemLesson.say(f.mg.toFixed(3) + " mg 只是這份 " + f.sample.toFixed(1) + " cm³ 樣本，不是每 100 cm³。要乘 " + (100 / f.sample) + "，得到 " + f.per.toFixed(2) + " mg。", "no");
+        return;
+      }
+      ChemLesson.say("這個數把摩爾比當成 1:2，所以變成一半。DCPIP 或 I₂ 與抗壞血酸都是 1:1，每 100 cm³ 是 " + f.per.toFixed(2) + " mg。", "no");
+    }
+
+    document.getElementById("dm3").onclick = function () {
+      var f = figures();
+      var wrong = f.per * 1000;
+      ChemLesson.say("若把 " + f.vol.toFixed(1) + " cm³ 直接乘濃度，物質的量會大 1000 倍，大約變成 " + wrong.toFixed(0) + " mg／100 cm³。cm³ 要先除以 1000。");
+    };
+    sampleEl.onchange = paint;
+    volEl.oninput = paint;
+    concEl.oninput = paint;
+    paint();
   </script>
-<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+  <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 </body>
 </html>

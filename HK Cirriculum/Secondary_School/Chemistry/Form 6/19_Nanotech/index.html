@@ -3,16 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>19_Nanotech</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="../../../../common/babel-react-classic.js"></script>
-  <script src="../../../../common/learn-from-zero.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <title>納米科技 | Nanotechnology</title>
+  <link rel="stylesheet" href="../../lesson.css" />
   <style>
-    body { font-family: "IBM Plex Sans", system-ui, sans-serif; background-color: #f8fafc; color: #0f172a; min-height: 100vh; }
+    body { font-family: "Segoe UI", "Microsoft JhengHei", "PingFang HK", "Noto Sans HK", sans-serif; }
+    a { color: #0f766e; }
+    h1 { font-size: 1.6rem; margin: 0.2rem 0 0.4rem; }
+    .track { height: 18px; background: #e2e8f0; border-radius: 99px; }
+    .track > div { height: 100%; background: #4338ca; border-radius: 99px; width: 8%; }
+    .pick { outline: 3px solid #0f766e; background: #f0fdfa; }
+    fieldset { border: 1px solid #e2e8f0; border-radius: 12px; margin: 0 0 10px; }
+    legend { font-weight: 800; padding: 0 6px; }
   </style>
   <!-- NCS i18n fleet kit (auto-injected) -->
   <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
@@ -53,28 +54,215 @@
   </script>
 </head>
 <body>
-  <div id="root"></div>
-  <script type="text/babel" data-presets="react-classic">
-    const { useState } = React;
-    
-    function App() {
-      return (
-        <div className="max-w-4xl mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-4">19 Nanotech</h1>
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 mb-8 text-center">
-            <div className="w-full h-64 bg-slate-100 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 mb-4">
-              <span className="text-slate-400 font-medium">[ Interactive Canvas Placeholder ]</span>
-            </div>
-            <p className="text-slate-500">This interactive lab is currently under development.</p>
-          </div>
-          <LearnFromZero />
+  <main>
+    <p><a href="../index.html">← 返回中六化學</a></p>
+    <section class="chem-learn" data-chem-entry="1">
+      <h2>學習目標</h2>
+      <ul>
+        <li>把納米和米、微米的尺度換算清楚。</li>
+        <li>用立方體的 6/L 說明粒徑變小會使表面積與體積比變大。</li>
+        <li>用例子分辨光學性質、表面積，以及需要同時考慮的風險。</li>
+      </ul>
+      <p id="chem-feedback" role="status">撥動指數滑桿，看 1 cm 立方和更小立方的表面積比。本頁沒有製備納米粒子的步驟。</p>
+    </section>
+
+    <div class="panel">
+      <h1>納米尺度</h1>
+      <p>1 nm = 10⁻⁹ m = 10⁻⁶ mm。1 μm = 10⁻⁶ m = 1000 nm，所以微米比納米大一千倍。納米顆粒通常指大約 1–100 nm。這比一塊可見的金屬小得多，但仍然比單個原子大。</p>
+      <ul>
+        <li>約 0.1 nm：原子的數量級。</li>
+        <li>約 1–100 nm：納米顆粒常用的範圍。</li>
+        <li>約 1000 nm（1 μm）：很多細菌的數量級。</li>
+        <li>約 8 × 10⁴ nm：頭髮直徑的數量級。</li>
+        <li>10⁷ nm = 1 cm：肉眼看得清楚的塊狀物料。</li>
+      </ul>
+    </div>
+
+    <div class="panel">
+      <h2>表面積與體積比</h2>
+      <p>立方體的表面積是 6L²，體積是 L³，所以表面積／體積 = 6/L。L 用米時，這個比的單位是 m⁻¹。L 越小，比值越大。同樣質量分成更多小粒，能參與表面反應的原子比例就更高。</p>
+      <p class="muted">滑桿的數字 p 代表邊長 = 10^p nm。p = 0 是 1 nm，p = 7 是 1 cm。色條用對數長度，否則納米那一端會遠遠超出畫面。真正的倍數寫在數字裡。</p>
+      <label for="pow">邊長指數 p <span id="pow-out">1.00</span>（邊長 = 10^p nm）</label>
+      <input id="pow" type="range" min="0" max="7" step="0.01" value="1" />
+      <div class="track"><div id="bar"></div></div>
+      <p class="num" id="size-out">10 nm</p>
+      <p class="work" id="nano-work" style="white-space:pre-wrap;background:#f8fafc;border-radius:10px;padding:10px 12px;line-height:1.55"></p>
+      <p id="scale-note">約 1–100 nm：納米顆粒常用的尺度。</p>
+    </div>
+
+    <div class="panel">
+      <h2>性質為什麼會不同</h2>
+      <div class="row">
+        <button type="button" class="on" data-app="gold">納米金</button>
+        <button type="button" data-app="tio2">納米二氧化鈦</button>
+        <button type="button" data-app="silver">納米銀</button>
+        <button type="button" data-app="tube">碳納米管</button>
+      </div>
+      <article class="pick" data-app-card="gold">
+        <h3>納米金</h3>
+        <p id="say-gold">塊狀金是金黃色。粒徑降到納米級時，它可以呈紅色或其他顏色。變的是光和顆粒裡電子的作用，金沒有變成另一種元素。</p>
+      </article>
+      <article data-app-card="tio2" hidden>
+        <h3>納米二氧化鈦</h3>
+        <p id="say-tio2">粒徑小，表面積大，又能吸收紫外光。防曬產品和自潔表面的討論都用到這個性質。本頁不寫製備方法，也不把它說成藥品。</p>
+      </article>
+      <article data-app-card="silver" hidden>
+        <h3>納米銀</h3>
+        <p id="say-silver">同樣質量的銀，粒徑變小後面積極大。表面可以抑制一些細菌，所以有抗菌塗層的研究。顆粒若進到環境，影響仍要評估，不能當成一般銀器那樣看待。</p>
+      </article>
+      <article data-app-card="tube" hidden>
+        <h3>碳納米管</h3>
+        <p id="say-tube">碳原子排成很細的管。沿管軸方向可以又強又能導電。它和石墨、鑽石一樣，討論的是碳的不同結構，不是一種新元素。</p>
+      </article>
+    </div>
+
+    <div class="panel">
+      <h2>好處和需要留意的地方</h2>
+      <p>表面積大，催化和吸附可以更有效，少量物料就有很大的接觸面。粒徑小，也代表顆粒可能隨空氣或水移動，甚至進入細胞。光學性質改變，則使同一種物質在塊狀和納米級看起來不一樣。所以用途和風險要一起看。這裡沒有製造、噴塗或吸入測試的步驟。</p>
+    </div>
+
+    <div class="panel">
+      <h2>常見錯誤</h2>
+      <ul>
+        <li>把 1 nm 記成 10⁻⁶ m。那是 1 μm。</li>
+        <li>以為把大塊切小後，表面積與體積比不變。立方體這個比等於 6/L，L 變小它就變大。</li>
+        <li>看見納米金是紅色，就說金元素變成了另一種元素。</li>
+      </ul>
+    </div>
+
+    <div class="panel">
+      <h2>檢查</h2>
+      <fieldset data-q="q1" data-hint="納米是 10⁻⁹ m。10⁻⁶ m 是微米。">
+        <legend>1. 1 nm 等於？</legend>
+        <div class="row">
+          <button type="button" data-choice="micro">10⁻⁶ m</button>
+          <button type="button" data-choice="nano">10⁻⁹ m</button>
+          <button type="button" data-choice="milli">10⁻³ m</button>
         </div>
-      );
+      </fieldset>
+      <fieldset data-q="q2" data-hint="表面積／體積 = 6/L，邊長 L 變小，比值變大。">
+        <legend>2. 把立方塊切得更小，表面積與體積比會？</legend>
+        <div class="row">
+          <button type="button" data-choice="up">變大</button>
+          <button type="button" data-choice="down">變小</button>
+          <button type="button" data-choice="same">維持不變</button>
+        </div>
+      </fieldset>
+      <fieldset data-q="q3" data-hint="納米顆粒的常用範圍大約是 1–100 nm，不是毫米或厘米。">
+        <legend>3. 納米顆粒常用的尺度約是？</legend>
+        <div class="row">
+          <button type="button" data-choice="nm">1–100 nm</button>
+          <button type="button" data-choice="mm">1–100 mm</button>
+          <button type="button" data-choice="cm">1–100 cm</button>
+        </div>
+      </fieldset>
+      <p id="score">尚未作答。</p>
+    </div>
+  </main>
+  <script src="../../lesson-kit.js"></script>
+  <script>
+  (function () {
+    function num(id) { return Number(document.getElementById(id).value); }
+    function say(msg, kind) {
+      if (window.ChemLesson) window.ChemLesson.say(msg, kind);
     }
-    
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+    function sup(exp) {
+      var map = { "-": "⁻", "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹" };
+      return String(exp).split("").map(function (ch) { return map[ch] || ch; }).join("");
+    }
+    function sci(n) {
+      if (!isFinite(n)) return "—";
+      if (n === 0) return "0";
+      var exp = Math.floor(Math.log10(Math.abs(n)) + 1e-12);
+      var m = n / Math.pow(10, exp);
+      if (Math.abs(m - 10) < 1e-8) {
+        m = 1;
+        exp += 1;
+      }
+      return m.toFixed(2) + " × 10" + sup(exp);
+    }
+    function nice(n) {
+      if (!isFinite(n)) return "—";
+      var abs = Math.abs(n);
+      if (abs >= 1 && abs < 10000) {
+        if (Math.abs(n - Math.round(n)) < 1e-6) return String(Math.round(n));
+        return String(Number(n.toPrecision(3)));
+      }
+      return sci(n);
+    }
+    function scaleLabel(nm) {
+      if (nm <= 100) return "約 1–100 nm：納米顆粒常用的尺度。";
+      if (nm < 2000) return "約 1 μm：很多細菌的數量級，已大於納米顆粒的常用定義。";
+      if (nm < 2e5) return "約 10–100 μm：頭髮直徑大約在 10⁵ nm 這一帶。";
+      if (nm < 2e6) return "約 1 mm：肉眼容易看見的顆粒。";
+      return "接近 1 cm 的立方塊：塊狀物料，表面積與體積比遠小於納米顆粒。";
+    }
+
+    function renderNano() {
+      var p = Math.round(num("pow") * 100) / 100;
+      var nm = Math.pow(10, p);
+      var sideM = nm * 1e-9;
+      var sav = 6 / sideM;
+      var fold = sav / 600;
+      var pieces = Math.pow(fold, 3);
+      document.getElementById("pow-out").textContent = p.toFixed(2);
+      document.getElementById("size-out").textContent = nice(nm) + " nm";
+      var width = Math.max(4, Math.min(100, (Math.log10(Math.max(fold, 1)) / 7) * 100));
+      if (!isFinite(width)) width = 4;
+      document.getElementById("bar").style.width = width + "%";
+      document.getElementById("nano-work").textContent =
+        "邊長 L = " + nice(nm) + " nm = " + nice(sideM) + " m\n" +
+        "表面積／體積 = 6 / L = " + nice(sav) + " m⁻¹\n" +
+        "1 cm 立方的表面積／體積 = 600 m⁻¹\n" +
+        "這個小立方的表面積／體積比，是 1 cm 立方的 " + nice(fold) + " 倍\n" +
+        "一個 1 cm 立方若切成這麼小，塊數 = " + nice(pieces);
+      document.getElementById("scale-note").textContent = scaleLabel(nm);
+    }
+
+    document.getElementById("pow").addEventListener("input", renderNano);
+
+    document.querySelectorAll("[data-app]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var id = btn.getAttribute("data-app");
+        document.querySelectorAll("[data-app]").forEach(function (b) {
+          b.classList.toggle("on", b === btn);
+        });
+        document.querySelectorAll("[data-app-card]").forEach(function (card) {
+          var on = card.getAttribute("data-app-card") === id;
+          card.hidden = !on;
+          card.classList.toggle("pick", on);
+        });
+        say(document.getElementById("say-" + id).textContent, "ok");
+      });
+    });
+
+    var KEY = { q1: "nano", q2: "up", q3: "nm" };
+    var picked = {};
+    document.querySelectorAll("[data-choice]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var box = btn.closest("fieldset");
+        var q = box.getAttribute("data-q");
+        picked[q] = btn.getAttribute("data-choice");
+        box.querySelectorAll("[data-choice]").forEach(function (b) {
+          b.classList.toggle("on", b === btn);
+        });
+        var ok = KEY[q] === picked[q];
+        var hint = box.getAttribute("data-hint") || "";
+        say(ok ? "正確。" + hint : "還未對。" + hint, ok ? "ok" : "no");
+        var n = 0;
+        var nOk = 0;
+        Object.keys(KEY).forEach(function (id) {
+          if (!picked[id]) return;
+          n += 1;
+          if (picked[id] === KEY[id]) nOk += 1;
+        });
+        document.getElementById("score").textContent = "已答 " + n + "／3 題，其中 " + nOk + " 題正確。";
+      });
+    });
+
+    renderNano();
+  })();
   </script>
-<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+  <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 </body>
 </html>

@@ -158,7 +158,7 @@ window.BATTLE_DATA = (function () {
       }
   ];
   const notes =   {
-      "summary": "薩拉熱窩圍城 — DSE 西史小戰役地圖。",
+      "summary": "薩拉熱窩圍城 — 課題地圖。兵力與路線為示意。",
       "caveats": [
           "本圖僅覆蓋該戰役核心區域；戰線與兵力為教學示意。",
           "衛星影像為現代地形。"
@@ -298,11 +298,33 @@ window.BATTLE_DATA = (function () {
           "forces_en": ""
       }
   ];
-  const outro =   {
+    const sourceTask = {
+    "cite": "聯合國人員對薩拉熱窩圍城的觀察，1992–1995年",
+    "excerpt": "觀察記錄市民在狙击與炮擊下出入取水。",
+    "ask": "這些記錄顯示圍城的哪一種情況？",
+    "options": [
+      {
+        "t": "戰鬥只發生在前線軍營，市民生活不受影響。",
+        "ok": false,
+        "why": "記錄寫的是市民取水也暴露在火力下。"
+      },
+      {
+        "t": "圍城把城市居民變成持續的目標。",
+        "ok": true,
+        "why": "圍城從1992年4月延續到1996年2月，不是單日戰役。"
+      },
+      {
+        "t": "薩拉熱窩在1992年6月28日因皇儲遇刺被圍。",
+        "ok": false,
+        "why": "1914年的暗殺是另一件事。這次圍城屬於1992年開始的波黑戰爭。"
+      }
+    ]
+  };
+const outro =   {
       "title_zh": "薩拉熱窩圍城",
       "title_en": "SARAJEVO SIEGE",
-      "narration_zh": "本戰役為 DSE 西史重要考點。",
-      "narration_en": "A key DSE Western History topic.",
+      "narration_zh": "薩拉熱窩圍城由1992年4月持續到1996年2月。",
+      "narration_en": "The siege of Sarajevo lasted from April 1992 to February 1996.",
       "cam": {
           "lng": 18.41,
           "lat": 43.86,
@@ -312,5 +334,5 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       }
   };
-  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };
+  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, sourceTask, END_DAY };
 })();

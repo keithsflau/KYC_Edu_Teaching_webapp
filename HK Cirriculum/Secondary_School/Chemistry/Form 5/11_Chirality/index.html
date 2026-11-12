@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>11_Chirality</title>
+  <title>手性與對映異構體 | Chirality</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
@@ -53,27 +53,258 @@
   </script>
 </head>
 <body>
-  <div id="root"></div>
-  <script type="text/babel" data-presets="react-classic">
-    const { useState } = React;
-    
-    function App() {
-      return (
-        <div className="max-w-4xl mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-4">11 Chirality</h1>
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 mb-8 text-center">
-            <div className="w-full h-64 bg-slate-100 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 mb-4">
-              <span className="text-slate-400 font-medium">[ Interactive Canvas Placeholder ]</span>
-            </div>
-            <p className="text-slate-500">This interactive lab is currently under development.</p>
-          </div>
-          <LearnFromZero />
-        </div>
-      );
+  <style>
+    main { max-width: 880px; margin: 0 auto; padding: 16px 16px 32px; }
+    h1 { font-size: 1.8rem; margin: 0.2rem 0 0.4rem; }
+    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px; margin-top: 12px; }
+    .muted { color: #475569; }
+    .ops, .pick { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+    button { min-height: 44px; border: 0; border-radius: 10px; padding: 8px 12px; font-weight: 700; cursor: pointer; background: #e2e8f0; color: #0f172a; }
+    button.on, button#check { background: #0f766e; color: #fff; }
+    button:focus { outline: 3px solid #99f6e4; }
+    canvas { width: 100%; height: auto; border-radius: 12px; background: #0f172a; }
+    a.back { color: #0f766e; font-weight: 700; text-decoration: none; }
+  </style>
+  <main>
+    <a class="back" href="../index.html">返回中五化學</a>
+    <p class="muted">中五化學 · 同分異構</p>
+    <h1>手性與對映異構體</h1>
+    <p class="muted">畫面用基團清單判斷手性。同一個碳連着四個不同基團，才是手性碳。</p>
+    <section class="chem-learn" data-chem-entry="1">
+      <h2>學習目標</h2>
+      <ul>
+        <li>判斷指定碳是否連着四個不同基團。</li>
+        <li>指出手性分子的鏡像不能與原分子重疊。</li>
+        <li>說明有兩個相同基團時，該碳不是手性碳。</li>
+      </ul>
+      <p id="chem-feedback" role="status">先看例子，再判斷練習分子。</p>
+    </section>
+    <section class="card">
+      <h2>例子</h2>
+      <ul>
+        <li>2-氯丁烷 CH₃CHClCH₂CH₃：C2 連着 H、Cl、CH₃、CH₂CH₃。四個基團都不同，是手性碳，鏡像不能重疊。</li>
+        <li>2-氯丙烷 CH₃CHClCH₃：C2 連着 H、Cl、CH₃、CH₃。兩個甲基相同，不是手性碳，鏡像能重疊。</li>
+      </ul>
+    </section>
+    <section class="card">
+      <h2>操作</h2>
+      <p>選一個練習分子。相同基團在圖上用粉紅色標出。再判斷它是不是手性碳，以及鏡像能否重疊。</p>
+      <div id="mols" class="ops">
+        <button type="button" data-id="lactic">2-羥基丙酸</button>
+        <button type="button" data-id="propanoic">丙酸</button>
+        <button type="button" data-id="bromobutane">2-溴丁烷</button>
+        <button type="button" data-id="methylpropanoic">2-甲基丙酸</button>
+      </div>
+      <p id="groups">尚未選擇分子。</p>
+      <canvas id="plot" width="640" height="240" aria-label="碳上的四個基團"></canvas>
+      <p>這個碳是不是手性碳？</p>
+      <div id="chiral" class="pick">
+        <button type="button" data-v="是">是手性碳</button>
+        <button type="button" data-v="否">不是手性碳</button>
+      </div>
+      <p>鏡像能否與原分子重疊？</p>
+      <div id="mirror" class="pick">
+        <button type="button" data-v="不能">不能重疊</button>
+        <button type="button" data-v="能">能重疊</button>
+      </div>
+      <button type="button" id="check" data-chem-silent="1">核對</button>
+      <p id="readout">核對後顯示結論。</p>
+    </section>
+    <section class="card">
+      <h2>錯因</h2>
+      <ul>
+        <li>錯法：分子裡有氯或羥基就一定有手性。錯因：要看同一個碳是否連着四個不同基團。2-氯丙烷有氯，但兩個甲基相同。</li>
+        <li>錯法：兩個甲基寫在結構式的不同位置，就算兩個不同基團。錯因：兩個甲基的組成相同，對這個碳來說是相同基團。</li>
+        <li>錯法：鏡像一定是另一種分子。錯因：沒有手性碳時，鏡像可以與原分子重疊，不是對映異構體。</li>
+        <li>錯法：手性分子的鏡像轉一轉就能重疊。錯因：對映異構體的空間排列相反，不能靠轉動重疊。</li>
+      </ul>
+    </section>
+  </main>
+  <script src="../../lesson-kit.js"></script>
+  <script>
+    var MOLS = {
+      lactic: {
+        name: "2-羥基丙酸",
+        formula: "CH₃CH(OH)COOH",
+        carbon: "C2",
+        groups: ["H", "OH", "CH₃", "COOH"],
+        chiral: true,
+        mirror: "不能",
+        why: "C2 連着 H、OH、CH₃ 和 COOH，四個都不同。鏡像不能重疊，兩者是對映異構體。",
+        badChiral: "錯因：四個基團都不相同，C2 是手性碳。有羥基只是其中一個基團，不是判斷本身。",
+        badMirror: "錯因：手性分子的鏡像不能靠轉動重疊。"
+      },
+      propanoic: {
+        name: "丙酸",
+        formula: "CH₃CH₂COOH",
+        carbon: "C2",
+        groups: ["H", "H", "CH₃", "COOH"],
+        chiral: false,
+        mirror: "能",
+        why: "C2 連着兩個 H。沒有手性碳，鏡像可以與原分子重疊。",
+        badChiral: "錯因：同一個碳上有兩個相同的氫，不是手性碳。有羧基也不等於有手性。",
+        badMirror: "錯因：沒有手性碳時，鏡像可以和原分子重疊。"
+      },
+      bromobutane: {
+        name: "2-溴丁烷",
+        formula: "CH₃CHBrCH₂CH₃",
+        carbon: "C2",
+        groups: ["H", "Br", "CH₃", "CH₂CH₃"],
+        chiral: true,
+        mirror: "不能",
+        why: "C2 連着 H、Br、CH₃ 和 CH₂CH₃，四個都不同。鏡像不能重疊。",
+        badChiral: "錯因：不要因為它和丁烷一樣有四個碳就當它沒有手性。C2 的四個基團全部不同。",
+        badMirror: "錯因：這對鏡像是對映異構體，不能靠轉動重疊。"
+      },
+      methylpropanoic: {
+        name: "2-甲基丙酸",
+        formula: "(CH₃)₂CHCOOH",
+        carbon: "C2",
+        groups: ["H", "CH₃", "CH₃", "COOH"],
+        chiral: false,
+        mirror: "能",
+        why: "C2 連着兩個 CH₃。基團不是四個都不同，所以不是手性碳，鏡像能重疊。",
+        badChiral: "錯因：C2 連着兩個甲基。重複的甲基用粉紅色標出，這個碳不是手性碳。",
+        badMirror: "錯因：沒有手性碳，鏡像可以重疊。"
+      }
+    };
+    var current = "";
+    var pickChiral = "";
+    var pickMirror = "";
+    var revealed = false;
+
+    function play(ok) {
+      try {
+        var AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return;
+        if (!play.ctx) play.ctx = new AC();
+        var ctx = play.ctx;
+        var start = function () {
+          var o = ctx.createOscillator();
+          var g = ctx.createGain();
+          var t = ctx.currentTime;
+          o.type = "sine";
+          o.frequency.value = ok ? 880 : 196;
+          g.gain.setValueAtTime(0.0001, t);
+          g.gain.exponentialRampToValueAtTime(0.05, t + 0.02);
+          g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+          o.connect(g);
+          g.connect(ctx.destination);
+          o.start(t);
+          o.stop(t + 0.2);
+        };
+        if (ctx.state === "suspended") {
+          var pending = ctx.resume();
+          if (pending && pending.then) pending.then(start);
+          else start();
+        } else start();
+      } catch (err) {}
     }
-    
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+
+    function say(msg, ok) {
+      var el = document.getElementById("chem-feedback");
+      if (el) el.textContent = msg;
+      if (window.ChemLesson) window.ChemLesson.say(msg);
+      if (ok === true || ok === false) play(ok);
+    }
+
+    function mark(box, btn) {
+      var list = box.querySelectorAll("button");
+      for (var i = 0; i < list.length; i++) list[i].classList.remove("on");
+      if (btn) btn.classList.add("on");
+    }
+
+    function paint() {
+      var c = document.getElementById("plot");
+      var g = c.getContext("2d");
+      var w = c.width;
+      var h = c.height;
+      g.fillStyle = "#0f172a";
+      g.fillRect(0, 0, w, h);
+      var mol = MOLS[current];
+      if (!mol) {
+        g.fillStyle = "#e2e8f0";
+        g.font = "18px sans-serif";
+        g.fillText("選一個練習分子", 24, 48);
+        return;
+      }
+      var cx = w / 2;
+      var cy = h / 2 + 6;
+      g.fillStyle = "#5eead4";
+      g.beginPath();
+      g.arc(cx, cy, 20, 0, Math.PI * 2);
+      g.fill();
+      g.fillStyle = "#042f2e";
+      g.font = "18px sans-serif";
+      g.fillText("C", cx - 6, cy + 6);
+      var spots = [[cx, cy - 78], [cx + 150, cy], [cx, cy + 78], [cx - 170, cy]];
+      for (var i = 0; i < 4; i++) {
+        g.strokeStyle = "#64748b";
+        g.lineWidth = 2;
+        g.beginPath();
+        g.moveTo(cx, cy);
+        g.lineTo(spots[i][0], spots[i][1]);
+        g.stroke();
+        var same = false;
+        for (var j = 0; j < 4; j++) {
+          if (j !== i && mol.groups[j] === mol.groups[i]) same = true;
+        }
+        g.fillStyle = same ? "#fb7185" : "#f8fafc";
+        g.font = "20px sans-serif";
+        g.fillText(mol.groups[i], spots[i][0] - 28, spots[i][1] + 6);
+      }
+    }
+
+    document.getElementById("mols").addEventListener("click", function (e) {
+      var btn = e.target.closest ? e.target.closest("button") : null;
+      if (!btn) return;
+      current = btn.getAttribute("data-id");
+      mark(document.getElementById("mols"), btn);
+      pickChiral = "";
+      pickMirror = "";
+      revealed = false;
+      mark(document.getElementById("chiral"), null);
+      mark(document.getElementById("mirror"), null);
+      var mol = MOLS[current];
+      document.getElementById("groups").textContent = mol.name + " " + mol.formula + "，看 " + mol.carbon + "： " + mol.groups.join("、");
+      document.getElementById("readout").textContent = "核對後顯示結論。";
+      paint();
+      say("數一數四個基團有沒有重複，再選擇。");
+    });
+
+    document.getElementById("chiral").addEventListener("click", function (e) {
+      var btn = e.target.closest ? e.target.closest("button") : null;
+      if (!btn) return;
+      pickChiral = btn.getAttribute("data-v");
+      mark(document.getElementById("chiral"), btn);
+    });
+
+    document.getElementById("mirror").addEventListener("click", function (e) {
+      var btn = e.target.closest ? e.target.closest("button") : null;
+      if (!btn) return;
+      pickMirror = btn.getAttribute("data-v");
+      mark(document.getElementById("mirror"), btn);
+    });
+
+    document.getElementById("check").addEventListener("click", function () {
+      var mol = MOLS[current];
+      if (!mol) {
+        say("先選一個練習分子。");
+        return;
+      }
+      if (!pickChiral || !pickMirror) {
+        say("請同時判斷手性碳和鏡像能否重疊。");
+        return;
+      }
+      var want = mol.chiral ? "是" : "否";
+      var ok = pickChiral === want && pickMirror === mol.mirror;
+      var msg = ok ? mol.why : (pickChiral !== want ? mol.badChiral : mol.badMirror);
+      revealed = true;
+      document.getElementById("readout").textContent = mol.carbon + (mol.chiral ? " 是手性碳" : " 不是手性碳") + "，鏡像" + mol.mirror + "重疊。";
+      say(msg, ok);
+    });
+
+    paint();
   </script>
 <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 </body>

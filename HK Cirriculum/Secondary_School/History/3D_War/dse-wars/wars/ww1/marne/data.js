@@ -45,9 +45,9 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       },
       "nextBattle": {
-          "href": "../verdun/",
-          "title_zh": "凡爾登戰役",
-          "title_en": "VERDUN 1916"
+          "href": "../gallipoli/",
+          "title_zh": "加里波利戰役",
+          "title_en": "GALLIPOLI 1915"
       }
   };
   const factions = {
@@ -266,7 +266,7 @@ window.BATTLE_DATA = (function () {
       }
   ];
   const notes =   {
-      "summary": "馬恩河戰役 — DSE 西史小戰役地圖。",
+      "summary": "馬恩河戰役 — 課題地圖。兵力與路線為示意。",
       "caveats": [
           "本圖僅覆蓋該戰役核心區域；戰線與兵力為教學示意。",
           "衛星影像為現代地形。"
@@ -446,11 +446,33 @@ window.BATTLE_DATA = (function () {
           "forces_en": ""
       }
   ];
-  const outro =   {
+    const sourceTask = {
+    "cite": "霞飛在馬恩河反擊前的命令要旨，1914年9月",
+    "excerpt": "命令要求法軍就地轉為反攻，不得再向南撤。",
+    "ask": "這道命令的立場是什麼？",
+    "options": [
+      {
+        "t": "承認巴黎不守，把戰場移到盧瓦爾河。",
+        "ok": false,
+        "why": "命令是停止南撤並反攻，不是放棄巴黎。"
+      },
+      {
+        "t": "把撤退終止，改為反攻。",
+        "ok": true,
+        "why": "它說明法軍統帥此時的決定：利用德軍右翼的空隙，在馬恩河轉向。"
+      },
+      {
+        "t": "宣布西線將在一週內以塹壕結束戰爭。",
+        "ok": false,
+        "why": "塹壕僵持是反擊之後的結果，不是這道命令預先宣布的結局。"
+      }
+    ]
+  };
+const outro =   {
       "title_zh": "馬恩河戰役",
       "title_en": "BATTLE OF THE MARNE",
-      "narration_zh": "本戰役為 DSE 西史重要考點。",
-      "narration_en": "A key DSE Western History topic.",
+      "narration_zh": "1914年9月的反擊之後，西線轉入塹壕，速決沒有實現。",
+      "narration_en": "After the September 1914 counter-attack the Western Front dug in.",
       "cam": {
           "lng": 3.4,
           "lat": 48.95,
@@ -460,5 +482,5 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       }
   };
-  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };
+  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, sourceTask, END_DAY };
 })();

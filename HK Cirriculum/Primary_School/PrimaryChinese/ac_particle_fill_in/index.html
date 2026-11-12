@@ -1,241 +1,83 @@
 ﻿<!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-HK">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>虛詞大搜查 - Ancient Chinese Particle Fill-in</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-    <style>
-        * {
-            font-family: 'Noto Sans TC', sans-serif;
-        }
-        
-        .drag-item {
-            cursor: grab;
-            transition: all 0.3s ease;
-        }
-        
-        .drag-item:active {
-            cursor: grabbing;
-            transform: scale(0.95);
-        }
-        
-        .drag-item.dragging {
-            opacity: 0.5;
-        }
-        
-        .drop-zone {
-            min-height: 60px;
-            transition: all 0.3s ease;
-            border: 2px dashed #cbd5e1;
-        }
-        
-        .drop-zone.drag-over {
-            border-color: #3b82f6;
-            background-color: #eff6ff;
-        }
-        
-        .drop-zone.correct {
-            border-color: #10b981;
-            background-color: #d1fae5;
-            animation: correctPulse 0.5s ease;
-        }
-        
-        .drop-zone.wrong {
-            border-color: #ef4444;
-            background-color: #fee2e2;
-            animation: shake 0.5s ease;
-        }
-        
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            75% { transform: translateX(10px); }
-        }
-        
-        @keyframes correctPulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-        
-        .particle-chip {
-            user-select: none;
-            transition: all 0.2s ease;
-        }
-        
-        .particle-chip:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        
-        .particle-chip.used {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-        
-        .fade-in {
-            animation: fadeIn 0.5s ease;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-    </style>
-      <!-- NCS i18n fleet kit (auto-injected) -->
-  <link rel="stylesheet" href="../../../common/ncs-i18n.css" />
-  <script src="../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
-  <style data-ncs-kit="fleet-bridge">
-    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
-    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
-      display: none !important;
-    }
-  </style>
-  <script data-ncs-kit="fleet-init">
-  (function () {
-    function hideLegacyToggles() {
-      document.body.classList.add("ncs-fleet-mounted");
-      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
-        var label = (btn.textContent || "").trim();
-        if (label === "EN" || label === "\u4E2D") {
-          btn.classList.add("ncs-hide-when-ncs-fleet");
-        }
-      });
-      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
-        el.classList.add("ncs-hide-when-ncs-fleet");
-      });
-    }
-    function boot() {
-      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
-      window.NcsI18n.init({
-        chromePath: "../../../_shared/ncs-chrome.json",
-        target: document.body
-      }).then(hideLegacyToggles);
-    }
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", boot);
-    } else {
-      boot();
-    }
-  })();
-  </script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小六｜詞語｜之、而、其</title>
+<link rel="stylesheet" href="../shared/lesson.css">
 </head>
-<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
-    <div class="container mx-auto px-4 py-8 max-w-4xl">
-        <!-- Header -->
-        <div class="text-center mb-8 fade-in">
-            <h1 class="text-4xl font-bold text-gray-800 mb-2">虛詞大搜查</h1>
-            <p class="text-lg text-gray-600">Ancient Chinese Particle Fill-in</p>
-        </div>
-
-        <!-- Score and Level Display -->
-        <div class="bg-white rounded-lg shadow-lg p-6 mb-6 fade-in">
-            <div class="flex justify-between items-center">
-                <div class="flex items-center space-x-6">
-                    <div>
-                        <div class="text-sm text-gray-500">分數</div>
-                        <div class="text-3xl font-bold text-blue-600" id="score">0</div>
-                    </div>
-                    <div>
-                        <div class="text-sm text-gray-500">等級</div>
-                        <div class="text-3xl font-bold text-purple-600" id="level">1</div>
-                    </div>
-                    <div>
-                        <div class="text-sm text-gray-500">生命值</div>
-                        <div class="text-3xl font-bold text-red-600" id="lives">3</div>
-                    </div>
-                </div>
-                <div>
-                    <div class="text-sm text-gray-500">題目</div>
-                    <div class="text-xl font-semibold text-gray-700">
-                        <span id="currentQuestion">1</span> / <span id="totalQuestions">10</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Game Area -->
-        <div class="bg-white rounded-lg shadow-lg p-8 mb-6 fade-in" id="gameArea">
-            <!-- Sentence Display -->
-            <div class="mb-8">
-                <div class="text-center mb-4">
-                    <p class="text-sm text-gray-500 mb-2">請將正確的虛詞拖放到空格中</p>
-                    <div class="text-3xl md:text-4xl font-medium text-gray-800 leading-relaxed" id="sentenceDisplay">
-                        <!-- Sentence will be displayed here -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- Drop Zone -->
-            <div class="flex justify-center mb-8">
-                <div 
-                    class="drop-zone rounded-lg px-6 py-4 text-4xl font-bold text-center"
-                    id="dropZone"
-                    data-gap-index=""
-                >
-                    <span id="dropZoneText" class="text-gray-400">拖放虛詞到這裡</span>
-                    <span id="droppedParticle" class="hidden"></span>
-                </div>
-            </div>
-
-            <!-- Translation Hint (shown after correct answer) -->
-            <div class="hidden mb-6 p-4 bg-green-50 border border-green-200 rounded-lg" id="translationBox">
-                <div class="text-sm text-green-700 font-semibold mb-1">現代中文翻譯：</div>
-                <div class="text-lg text-green-800" id="translationText"></div>
-            </div>
-
-            <!-- Feedback Message -->
-            <div class="hidden text-center mb-4" id="feedbackMessage">
-                <p class="text-xl font-semibold" id="feedbackText"></p>
-            </div>
-
-            <!-- Particle Options -->
-            <div class="mb-6">
-                <div class="text-sm text-gray-500 mb-3 text-center">選擇虛詞：</div>
-                <div class="flex flex-wrap justify-center gap-3" id="particleOptions">
-                    <!-- Particle chips will be generated here -->
-                </div>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="flex justify-center gap-4">
-                <button 
-                    class="hidden bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-8 rounded-lg shadow-md transition-all transform hover:scale-105"
-                    id="nextButton"
-                >
-                    下一題 →
-                </button>
-                <button 
-                    class="hidden bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-all"
-                    id="resetButton"
-                >
-                    重新開始
-                </button>
-            </div>
-        </div>
-
-        <!-- Game Over Modal -->
-        <div class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" id="gameOverModal">
-            <div class="bg-white rounded-lg shadow-xl p-8 max-w-md w-full mx-4">
-                <h2 class="text-3xl font-bold text-center mb-4" id="gameOverTitle">遊戲結束</h2>
-                <div class="text-center mb-6">
-                    <p class="text-xl mb-2">最終分數：<span class="font-bold text-blue-600" id="finalScore">0</span></p>
-                    <p class="text-lg text-gray-600">等級：<span class="font-semibold" id="finalLevel">1</span></p>
-                </div>
-                <button 
-                    class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-all"
-                    id="restartButton"
-                >
-                    再玩一次
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+<body>
+<div class="wrap">
+<a class="back" href="../index.html">返回中國語文</a>
+<p class="meta">小六 · 詞語</p>
+<h1>選出「之」「而」「其」</h1>
+<section class="objective">
+<h2>學習目標</h2>
+<p>能在短句的空位選出「之」、「而」或「其」，並說出它在該句是「的」、順接，還是「它的」。</p>
+</section>
+<section class="objective">
+<h2>怎樣做</h2>
+<p>先把三個字分別代進空位讀一遍，看哪一個讀得通。再選那個字。選了之後才會聽到聲音。</p>
+</section>
+<section class="objective">
+<h2>答錯時</h2>
+<p>答錯會聽到較低的一聲，並寫出這個字放進去之後句子為甚麼變了意思，或為甚麼讀不通。請再選一次。</p>
+</section>
+<main id="app"></main>
+</div>
+<script src="../shared/sfx.js"></script>
+<script>
+window.LESSON = {
+  done: "你已能分出「之」何時是「的」、何時指前面的事物，也不會把順接的「而」和「它的」的「其」調亂。",
+  items: [
+    {
+      type: "choice",
+      prompt: "「求學___道，不可不勤。」空位最適合哪一個？",
+      options: [
+        { text: "之", ok: true, because: "「求學之道」就是求學的方法。「之」在這裡等於「的」。" },
+        { text: "而", ok: false, why: "「而」用來連接前後兩件事。這裡「求學」和「道」不是兩件先後發生的事。" },
+        { text: "其", ok: false, why: "「其」常解作「它的」。這句還沒有另一樣東西可以讓「其」去指。" }
+      ]
+    },
+    {
+      type: "choice",
+      prompt: "「日出___作，日入而息。」空位最適合哪一個？",
+      options: [
+        { text: "之", ok: false, why: "用「之」會變成「日出的作」，後面接不上「作」這個動作。" },
+        { text: "而", ok: true, because: "太陽出來，然後去勞作。和後面的「日入而息」一樣，是順着說下去。" },
+        { text: "其", ok: false, why: "「其」不是「然後」，不能用來連接「日出」和「作」。" }
+      ]
+    },
+    {
+      type: "choice",
+      prompt: "「樹高千尺，___根必深。」空位要表示「它的」。應選哪一個？",
+      options: [
+        { text: "之", ok: false, why: "分句開頭不能單用「之」來表示「它的」。" },
+        { text: "而", ok: false, why: "「而」只負責連接，不是「它的」。" },
+        { text: "其", ok: true, because: "「其根」就是「它的根」，「它」指前面那棵樹。" }
+      ]
+    },
+    {
+      type: "choice",
+      prompt: "「朋友___言，不可失信。」空位最適合哪一個？",
+      options: [
+        { text: "之", ok: true, because: "「朋友之言」就是朋友的話。「之」等於「的」。" },
+        { text: "而", ok: false, why: "這裡不是把兩個動作順接或轉折，「而」放進去讀不通。" },
+        { text: "其", ok: false, why: "「朋友」就是要修飾的對象，要用「之」說成「朋友的話」，不是再用「其」去指別人。" }
+      ]
+    },
+    {
+      type: "choice",
+      prompt: "「溫習舊課，不可忘___。」空位要指「舊課」。應選哪一個？",
+      options: [
+        { text: "而", ok: false, why: "空位要代替「舊課」這件東西，不是用來連接下一個動作。" },
+        { text: "其", ok: false, why: "「其」是「它的」，後面還要有名詞。這裡句子已經結束，接不上。" },
+        { text: "之", ok: true, because: "「之」是代詞，指前面的「舊課」。不可忘掉的是舊課。" }
+      ]
+    }
+  ]
+};
+</script>
+<script src="../shared/engine.js"></script>
 </body>
 </html>
-

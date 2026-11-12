@@ -2,79 +2,202 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>09_Titration_Curves</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="../../../../common/babel-react-classic.js"></script>
-  <script src="../../../../common/learn-from-zero.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>滴定曲線閱讀 | Reading titration curves</title>
+  <script src="../../chem-model.js"></script>
+  <link rel="stylesheet" href="../../lesson.css" />
   <style>
-    body { font-family: "IBM Plex Sans", system-ui, sans-serif; background-color: #f8fafc; color: #0f172a; min-height: 100vh; }
+    .panel h2 { font-size: 1.05rem; margin: 1rem 0 .35rem; }
+    a { color: #0f766e; font-weight: 700; text-decoration: none; }
   </style>
-  <!-- NCS i18n fleet kit (auto-injected) -->
-  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
-  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
-  <style data-ncs-kit="fleet-bridge">
-    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
-    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
-      display: none !important;
-    }
-  </style>
-  <script data-ncs-kit="fleet-init">
-  (function () {
-    function hideLegacyToggles() {
-      document.body.classList.add("ncs-fleet-mounted");
-      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
-        var label = (btn.textContent || "").trim();
-        if (label === "EN" || label === "\u4E2D") {
-          btn.classList.add("ncs-hide-when-ncs-fleet");
-        }
-      });
-      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
-        el.classList.add("ncs-hide-when-ncs-fleet");
-      });
-    }
-    function boot() {
-      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
-      window.NcsI18n.init({
-        chromePath: "../../../../_shared/ncs-chrome.json",
-        target: document.body
-      }).then(hideLegacyToggles);
-    }
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", boot);
-    } else {
-      boot();
-    }
-  })();
-  </script>
 </head>
 <body>
-  <div id="root"></div>
-  <script type="text/babel" data-presets="react-classic">
-    const { useState } = React;
-    
-    function App() {
-      return (
-        <div className="max-w-4xl mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-4">09 Titration Curves</h1>
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 mb-8 text-center">
-            <div className="w-full h-64 bg-slate-100 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 mb-4">
-              <span className="text-slate-400 font-medium">[ Interactive Canvas Placeholder ]</span>
-            </div>
-            <p className="text-slate-500">This interactive lab is currently under development.</p>
-          </div>
-          <LearnFromZero />
-        </div>
-      );
+  <section class="chem-learn" data-chem-entry="1">
+    <h2>學習目標</h2>
+    <ul>
+      <li>從曲線讀出等當點、半等當點和緩衝區。</li>
+      <li>比較強酸強鹼和弱酸強鹼的等當點 pH。</li>
+      <li>按變色範圍決定甲基橙、酚酞，或兩者都可以。</li>
+    </ul>
+    <p class="muted">DSE 課題四　酸和鹼，以及選修課題十五　分析化學。</p>
+    <p id="chem-feedback" role="status">模型固定為酸 25.0 mL、0.10 mol/dm³，鹼 0.10 mol/dm³。弱酸 pKa = 4.76。先選曲線，再拖動體積。</p>
+  </section>
+  <main>
+    <p><a href="../index.html">返回中六目錄</a></p>
+    <div class="panel">
+      <h1>讀滴定曲線</h1>
+      <p class="muted">這頁只讀曲線和指示劑範圍。沒有配製標準溶液，也沒有滴定操作。</p>
+      <h2>操作</h2>
+      <div class="row">
+        <button type="button" id="mode-sa" class="on">強酸強鹼</button>
+        <button type="button" id="mode-wa" class="alt">弱酸強鹼</button>
+      </div>
+      <canvas id="plot" width="640" height="280" aria-label="滴定曲線"></canvas>
+      <label for="vol">鹼的體積 = <span id="vol-v">0.0</span> mL</label>
+      <input id="vol" type="range" min="0" max="40" step="0.1" value="0" />
+      <p class="num" id="out"></p>
+      <p>等當點在 25.0 mL。問的是整條曲線，不看你停在哪一點。</p>
+      <div class="row">
+        <button type="button" id="eq-seven">等當點 pH 約是 7</button>
+        <button type="button" id="eq-high">等當點 pH 高於 7</button>
+      </div>
+      <div class="row">
+        <button type="button" id="ind-mo" class="alt">只選甲基橙</button>
+        <button type="button" id="ind-ph" class="alt">只選酚酞</button>
+        <button type="button" id="ind-both" class="alt">兩者都可以</button>
+      </div>
+      <div class="row">
+        <button type="button" id="half" class="alt">這裡是半等當點嗎？</button>
+        <button type="button" id="drop" class="alt">比較 0 和 0.1 mL</button>
+      </div>
+      <div class="row">
+        <button type="button" id="see-mo" class="alt">看現時 pH 的甲基橙顏色</button>
+        <button type="button" id="see-ph" class="alt">看現時 pH 的酚酞顏色</button>
+      </div>
+      <h2>錯因</h2>
+      <ul>
+        <li>弱酸強鹼的等當點不是 7。共軛鹼水解，pH 高於 7。</li>
+        <li>強酸強鹼的陡升大約由 pH 3 伸到 pH 11，所以甲基橙（3.1–4.4）和酚酞（8.2–10.0）都可以。不是只准用其中一支。</li>
+        <li>弱酸強鹼要用酚酞。甲基橙在緩衝區已經變色，會把終點讀得太早。</li>
+        <li>半等當點在 12.5 mL，那裡 pH 接近 pKa，不是終點。強酸強鹼沒有這一段。</li>
+        <li>剛加入 0.1 mL 鹼時，pH 不應下跌。緩衝區是陡升之前較平的一段，不是垂直的那段。</li>
+      </ul>
+    </div>
+  </main>
+  <script src="../../lesson-kit.js"></script>
+  <script>
+    var mode = "SA_SB";
+    var volEl = document.getElementById("vol");
+    var canvas = document.getElementById("plot");
+    var ctx = canvas.getContext("2d");
+
+    function region(v) {
+      if (mode === "WA_SB" && Math.abs(v - 12.5) <= 0.3) return "半等當點，pH 接近 pKa";
+      if (Math.abs(v - 25) <= 1) return "等當點附近";
+      if (v > 26) return "等當點之後，鹼過量";
+      if (mode === "WA_SB" && v >= 5 && v <= 20) return "緩衝區";
+      return "等當點之前";
     }
-    
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+
+    function paint() {
+      var vNow = Number(volEl.value);
+      var ph = ChemModel.titrationPH(vNow, mode);
+      document.getElementById("vol-v").textContent = vNow.toFixed(1);
+      document.getElementById("out").textContent = "pH " + ph.toFixed(2) + "　" + region(vNow);
+      var w = canvas.width;
+      var h = canvas.height;
+      ctx.fillStyle = "#0f172a";
+      ctx.fillRect(0, 0, w, h);
+      function xOf(v) { return 46 + (v / 40) * (w - 70); }
+      function yOf(p) { return 16 + (1 - p / 14) * (h - 48); }
+      ctx.strokeStyle = "#334155";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(xOf(25), 16);
+      ctx.lineTo(xOf(25), h - 32);
+      ctx.stroke();
+      if (mode === "WA_SB") {
+        ctx.strokeStyle = "#38bdf8";
+        ctx.beginPath();
+        ctx.moveTo(xOf(12.5), 16);
+        ctx.lineTo(xOf(12.5), h - 32);
+        ctx.stroke();
+      }
+      ctx.strokeStyle = "#34d399";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      var i;
+      for (i = 0; i <= 80; i++) {
+        var v = i * 0.5;
+        var p = ChemModel.titrationPH(v, mode);
+        var x = xOf(v);
+        var y = yOf(p);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+      ctx.fillStyle = "#fbbf24";
+      ctx.beginPath();
+      ctx.arc(xOf(vNow), yOf(ph), 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#e2e8f0";
+      ctx.font = "14px sans-serif";
+      ctx.fillText("pH", 8, 24);
+      ctx.fillText("mL", w - 36, h - 12);
+      ctx.fillText("25", xOf(25) - 8, h - 12);
+    }
+
+    function setMode(next, id) {
+      mode = next;
+      document.getElementById("mode-sa").className = id === "mode-sa" ? "on" : "alt";
+      document.getElementById("mode-wa").className = id === "mode-wa" ? "on" : "alt";
+      paint();
+      var eq = ChemModel.titrationPH(25, mode);
+      ChemLesson.say(mode === "SA_SB"
+        ? "強酸強鹼。25.0 mL 的 pH 是 " + eq.toFixed(2) + "。陡升跨越酸性和鹼性兩側。"
+        : "弱酸強鹼。25.0 mL 的 pH 是 " + eq.toFixed(2) + "。半等當點約在 12.5 mL，藍色虛線標出。");
+    }
+
+    document.getElementById("mode-sa").onclick = function () { setMode("SA_SB", "mode-sa"); };
+    document.getElementById("mode-wa").onclick = function () { setMode("WA_SB", "mode-wa"); };
+    volEl.oninput = paint;
+
+    document.getElementById("eq-seven").onclick = function () {
+      var eq = ChemModel.titrationPH(25, mode);
+      var ok = eq < 7.2 && eq > 6.8;
+      ChemLesson.say((ok ? "正確。" : "這條曲線的等當點不是 7。") + " 25.0 mL 時 pH 是 " + eq.toFixed(2) + "。" +
+        (mode === "WA_SB" ? " 弱酸的共軛鹼會水解，等當點高於 7。" : " 強酸強鹼生成的鹽不水解，等當點是 7。"), ok ? "ok" : "no");
+    };
+    document.getElementById("eq-high").onclick = function () {
+      var eq = ChemModel.titrationPH(25, mode);
+      var ok = eq > 7.2;
+      ChemLesson.say((ok ? "正確。" : "這條曲線的等當點約是 7，不是高於 7。") + " 25.0 mL 時 pH 是 " + eq.toFixed(2) + "。", ok ? "ok" : "no");
+    };
+    document.getElementById("ind-mo").onclick = function () {
+      ChemLesson.say(mode === "SA_SB"
+        ? "甲基橙可以用，但酚酞也可以。陡升同時蓋過 3.1–4.4 和 8.2–10.0，答案是兩者都可以。"
+        : "甲基橙的變色範圍在 3.1–4.4，弱酸強鹼那時還在緩衝區，終點會過早。要選酚酞。", "no");
+    };
+    document.getElementById("ind-ph").onclick = function () {
+      var ok = mode === "WA_SB";
+      ChemLesson.say(ok
+        ? "正確。等當點在鹼性側，酚酞的 8.2–10.0 落在陡升段。甲基橙會過早變色。"
+        : "酚酞可以用，但甲基橙也可以。強酸強鹼的答案是兩者都可以。", ok ? "ok" : "no");
+    };
+    document.getElementById("ind-both").onclick = function () {
+      var ok = mode === "SA_SB";
+      ChemLesson.say(ok
+        ? "正確。陡升大約由 pH 3 伸到 pH 11，兩支指示劑的變色範圍都在裡面。"
+        : "弱酸強鹼不是兩者都可以。甲基橙在到達等當點之前已經變色。", ok ? "ok" : "no");
+    };
+    document.getElementById("half").onclick = function () {
+      var v = Number(volEl.value);
+      var ph = ChemModel.titrationPH(v, mode);
+      if (mode !== "WA_SB") {
+        ChemLesson.say("強酸強鹼沒有弱酸那種半等當點。pH 不會在中段停在 pKa。", "no");
+        return;
+      }
+      var ok = Math.abs(v - 12.5) <= 0.3;
+      ChemLesson.say(ok
+        ? "正確。12.5 mL 是半等當點，現時 pH " + ph.toFixed(2) + "，接近 pKa 4.76。這不是終點。"
+        : "半等當點在 12.5 mL。你現在是 " + v.toFixed(1) + " mL，pH " + ph.toFixed(2) + "。", ok ? "ok" : "no");
+    };
+    document.getElementById("drop").onclick = function () {
+      var p0 = ChemModel.titrationPH(0, mode);
+      var p1 = ChemModel.titrationPH(0.1, mode);
+      var ok = p1 + 1e-9 >= p0;
+      ChemLesson.say("0 mL 的 pH 是 " + p0.toFixed(3) + "，0.1 mL 是 " + p1.toFixed(3) + "。" +
+        (ok ? " pH 沒有下跌。" : " 這不應下跌。"), ok ? "ok" : "no");
+    };
+    function preview(name, label) {
+      var ph = ChemModel.titrationPH(Number(volEl.value), mode);
+      var tone = ChemModel.indicatorStyle(name, ph);
+      ChemLesson.say(label + " 在 pH " + ph.toFixed(2) + " 顯示為" + tone.name + "。終點看變色範圍是否落在陡升段，不是只看這一點的顏色。");
+    }
+    document.getElementById("see-mo").onclick = function () { preview("methyl", "甲基橙"); };
+    document.getElementById("see-ph").onclick = function () { preview("phenol", "酚酞"); };
+    paint();
   </script>
-<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+  <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 </body>
 </html>

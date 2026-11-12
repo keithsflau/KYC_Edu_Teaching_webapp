@@ -12,10 +12,10 @@ window.BATTLE_DATA = (function () {
       ],
       "geo": {
           "minLng": 31,
-          "maxLng": 35,
+          "maxLng": 36.1,
           "minLat": 28.75,
-          "maxLat": 32.25,
-          "Z": 9
+          "maxLat": 33.45,
+          "Z": 8
       },
       "startDate": [
           1973,
@@ -185,7 +185,7 @@ window.BATTLE_DATA = (function () {
       }
   ];
   const notes =   {
-      "summary": "贖罪日戰爭 — DSE 西史小戰役地圖。",
+      "summary": "贖罪日戰爭 — 課題地圖。兵力與路線為示意。",
       "caveats": [
           "本圖僅覆蓋該戰役核心區域；戰線與兵力為教學示意。",
           "衛星影像為現代地形。"
@@ -340,11 +340,33 @@ window.BATTLE_DATA = (function () {
           "forces_en": ""
       }
   ];
-  const outro =   {
+    const sourceTask = {
+    "cite": "薩達特在1973年戰爭前後的公開目標",
+    "excerpt": "他把跨越運河說成打破1967年以來「不能打」的局面，以迫使以色列談判。",
+    "ask": "這段話的立場是什麼？",
+    "options": [
+      {
+        "t": "埃及只求在一天之內消滅以色列。",
+        "ok": false,
+        "why": "跨運河的計劃是有限度的橋頭堡，不是當日攻入特拉維夫。"
+      },
+      {
+        "t": "用一場有限度的戰爭改變談判地位。",
+        "ok": true,
+        "why": "10月6日的進攻打破了1967年之後的停滯。以軍後來渡過運河，戰局又再轉。"
+      },
+      {
+        "t": "敘利亞沒有參加這場戰爭。",
+        "ok": false,
+        "why": "敘利亞在同一天進攻戈蘭。"
+      }
+    ]
+  };
+const outro =   {
       "title_zh": "贖罪日戰爭",
       "title_en": "YOM KIPPUR WAR",
-      "narration_zh": "本戰役為 DSE 西史重要考點。",
-      "narration_en": "A key DSE Western History topic.",
+      "narration_zh": "1973年10月6日埃及與敘利亞同時進攻。以軍後來渡過運河。",
+      "narration_en": "Egypt and Syria attacked together on 6 October 1973. Israel later crossed the Canal.",
       "cam": {
           "lng": 33,
           "lat": 30.5,
@@ -354,5 +376,5 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       }
   };
-  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };
+  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, sourceTask, END_DAY };
 })();

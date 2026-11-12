@@ -3,18 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>17_Contact_Process</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="../../../../common/babel-react-classic.js"></script>
-  <script src="../../../../common/learn-from-zero.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
-  <style>
-    body { font-family: "IBM Plex Sans", system-ui, sans-serif; background-color: #f8fafc; color: #0f172a; min-height: 100vh; }
-  </style>
-  <!-- NCS i18n fleet kit (auto-injected) -->
+  <title>接觸法的平衡折衷 | Contact process</title>
+  <link rel="stylesheet" href="../../lesson.css" />
   <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
   <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
   <style data-ncs-kit="fleet-bridge">
@@ -53,28 +43,174 @@
   </script>
 </head>
 <body>
-  <div id="root"></div>
-  <script type="text/babel" data-presets="react-classic">
-    const { useState } = React;
-    
-    function App() {
-      return (
-        <div className="max-w-4xl mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-4">17 Contact Process</h1>
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 mb-8 text-center">
-            <div className="w-full h-64 bg-slate-100 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 mb-4">
-              <span className="text-slate-400 font-medium">[ Interactive Canvas Placeholder ]</span>
-            </div>
-            <p className="text-slate-500">This interactive lab is currently under development.</p>
-          </div>
-          <LearnFromZero />
-        </div>
-      );
+  <section class="chem-learn" data-chem-entry="1">
+    <h2>學習目標</h2>
+    <ul>
+      <li>判斷 2SO₂ + O₂ ⇌ 2SO₃ 是放熱，升溫使平衡產率下降。</li>
+      <li>說明五氧化二釩只加快速率，不改變平衡位置。</li>
+      <li>選出約 450°C、約 1–2 atm、有催化劑這個折衷。</li>
+    </ul>
+    <h2>操作</h2>
+    <ul>
+      <li>調溫度和壓力，並開關催化劑。兩條棒只表示高低。</li>
+      <li>按「判斷折衷」，看這一組是否接近課堂上的條件。</li>
+      <li>判斷每句說法是對還是錯。沒有燃燒、吸收或稀釋步驟。</li>
+    </ul>
+    <h2>錯因</h2>
+    <ul>
+      <li>以為催化劑提高平衡產率。</li>
+      <li>只追低溫而忽略速率。</li>
+      <li>以為必須用極高壓力。加壓有利產率，但常壓附近已經很高。</li>
+      <li>把 ΔH 為負看成吸熱。</li>
+    </ul>
+    <p id="chem-feedback" role="status">現在是 650°C、8 atm、沒有催化劑。這組不是折衷。</p>
+  </section>
+  <main>
+    <div class="panel">
+      <p class="muted"><a href="../index.html">← 中六化學</a></p>
+      <h1>接觸法的平衡折衷</h1>
+      <p class="muted">只討論 2SO₂(g) + O₂(g) ⇌ 2SO₃(g)。這一步放熱，ΔH 為負。右邊氣體摩爾數較少。棒的長短不是工廠實測百分率。</p>
+      <label for="temp">溫度 = <span id="temp-v">650</span> °C</label>
+      <input id="temp" type="range" min="250" max="700" step="10" value="650" />
+      <label for="pres">壓力 = <span id="pres-v">8</span> atm</label>
+      <input id="pres" type="range" min="1" max="10" step="1" value="8" />
+      <div class="row">
+        <button type="button" class="alt" id="cat">沒有催化劑</button>
+        <button type="button" id="judge">判斷折衷</button>
+        <button type="button" class="alt" id="preset">設成課堂折衷</button>
+      </div>
+      <p class="num" id="out"></p>
+      <canvas id="bars" width="640" height="220" aria-label="產率與速率的示意高低"></canvas>
+      <h2>這句對不對</h2>
+      <div id="myths"></div>
+    </div>
+  </main>
+  <script src="../../lesson-kit.js"></script>
+  <script>
+    var tempEl = document.getElementById("temp");
+    var presEl = document.getElementById("pres");
+    var catOn = false;
+    var canvas = document.getElementById("bars");
+    var ctx = canvas.getContext("2d");
+    var MYTHS = [
+      { text: "催化劑會提高平衡產率。", ok: false, why: "錯因：催化劑同時加快正反應和逆反應，平衡位置不變，只縮短達到平衡的時間。" },
+      { text: "溫度愈低愈適合工業生產。", ok: false, why: "錯因：低溫的平衡產率較高，但速率太慢。約 450°C 是產率和速率的折衷。" },
+      { text: "因為左邊氣體摩爾數較多，所以必須用極高壓力。", ok: false, why: "錯因：右邊氣體摩爾數較少，加壓確實有利平衡產率，但常壓附近產率已經很高，課堂上的條件是約 1–2 atm。" },
+      { text: "ΔH 為負表示這一步吸熱。", ok: false, why: "錯因：ΔH 為負是放熱。升溫使平衡向左，平衡產率下降。" },
+      { text: "這一步放熱，升溫會使平衡向左，平衡產率下降。", ok: true, why: "正確。放熱反應升溫，平衡向逆反應方向移動。" }
+    ];
+
+    function clamp(n) {
+      if (n < 8) return 8;
+      if (n > 96) return 96;
+      return n;
     }
-    
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+
+    function word(score) {
+      if (score >= 70) return "高";
+      if (score >= 40) return "中";
+      return "低";
+    }
+
+    function scores() {
+      var T = Number(tempEl.value);
+      var P = Number(presEl.value);
+      var yieldScore = clamp(78 - (T - 450) * 0.2 + (P - 1) * 1.2);
+      var rateScore = clamp((catOn ? 50 : 8) + (T - 450) * (catOn ? 0.18 : 0.04));
+      return { T: T, P: P, yieldScore: yieldScore, rateScore: rateScore };
+    }
+
+    function near(s) {
+      return catOn && s.T >= 430 && s.T <= 480 && s.P >= 1 && s.P <= 2;
+    }
+
+    function paint() {
+      var s = scores();
+      document.getElementById("temp-v").textContent = String(s.T);
+      document.getElementById("pres-v").textContent = String(s.P);
+      document.getElementById("cat").textContent = catOn ? "有五氧化二釩" : "沒有催化劑";
+      document.getElementById("cat").className = catOn ? "on" : "alt";
+      document.getElementById("out").textContent = "平衡產率趨勢：" + word(s.yieldScore) + "　　速率趨勢：" + word(s.rateScore) + (catOn ? "　　催化劑：有" : "　　催化劑：沒有");
+      var w = canvas.width;
+      var h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = "#0f172a";
+      ctx.fillRect(0, 0, w, h);
+      ctx.font = "15px sans-serif";
+      ctx.fillStyle = "#e2e8f0";
+      ctx.fillText("平衡產率", 24, 36);
+      ctx.fillText("速率", 24, 118);
+      ctx.fillStyle = "#38bdf8";
+      ctx.fillRect(140, 16, (w - 180) * (s.yieldScore / 100), 28);
+      ctx.fillStyle = "#fbbf24";
+      ctx.fillRect(140, 98, (w - 180) * (s.rateScore / 100), 28);
+    }
+
+    function explain(s) {
+      if (near(s)) return "接近課堂折衷：約 450°C、1–2 atm、有五氧化二釩。低溫產率較高但速率慢；催化劑只加快速率。";
+      var bits = [];
+      if (!catOn) bits.push("沒有催化劑時平衡產率不變，但速率太慢。");
+      if (s.T < 430) bits.push(s.T + "°C 的平衡產率較高，但速率偏慢。折衷約 450°C。");
+      if (s.T > 480) bits.push(s.T + "°C 速率更快，但放熱反應的平衡產率下降。");
+      if (s.P > 2) bits.push(s.P + " atm 會使平衡產率再略升，因為右邊氣體較少。產率不會因此變差，只是課堂上通常用約 1–2 atm，因為常壓附近已經很高。");
+      return bits.join("");
+    }
+
+    tempEl.oninput = function () {
+      paint();
+      ChemLesson.say("溫度 " + tempEl.value + "°C。這一步放熱，升溫使平衡產率下降、速率上升。");
+    };
+    presEl.oninput = function () {
+      paint();
+      ChemLesson.say("壓力 " + presEl.value + " atm。右邊氣體摩爾數較少，加壓有利平衡產率。");
+    };
+    document.getElementById("cat").onclick = function () {
+      catOn = !catOn;
+      paint();
+      ChemLesson.say(catOn ? "已加上五氧化二釩。催化劑加快速率，不改變平衡位置。" : "已拿掉催化劑。平衡產率的趨勢不變，速率變慢。");
+    };
+    document.getElementById("judge").onclick = function () {
+      var s = scores();
+      ChemLesson.say(explain(s), near(s) ? "ok" : "no");
+    };
+    document.getElementById("preset").onclick = function () {
+      tempEl.value = "450";
+      presEl.value = "1";
+      catOn = true;
+      paint();
+      ChemLesson.say("已設成 450°C、1 atm、有五氧化二釩。這是速率和平衡產率的折衷。", "ok");
+    };
+
+    MYTHS.forEach(function (item) {
+      var wrap = document.createElement("div");
+      wrap.className = "row";
+      var label = document.createElement("p");
+      label.className = "muted";
+      label.textContent = item.text;
+      label.style.flex = "1 1 220px";
+      label.style.margin = "0";
+      var yes = document.createElement("button");
+      yes.type = "button";
+      yes.textContent = "這句正確";
+      var no = document.createElement("button");
+      no.type = "button";
+      no.className = "alt";
+      no.textContent = "這句錯誤";
+      yes.onclick = function () {
+        ChemLesson.say(item.ok ? item.why : "不對。" + item.why, item.ok ? "ok" : "no");
+      };
+      no.onclick = function () {
+        if (!item.ok) ChemLesson.say("判斷正確。" + item.why, "ok");
+        else ChemLesson.say("這句是正確的。" + item.why, "no");
+      };
+      wrap.appendChild(label);
+      wrap.appendChild(yes);
+      wrap.appendChild(no);
+      document.getElementById("myths").appendChild(wrap);
+    });
+
+    paint();
   </script>
-<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+  <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 </body>
 </html>

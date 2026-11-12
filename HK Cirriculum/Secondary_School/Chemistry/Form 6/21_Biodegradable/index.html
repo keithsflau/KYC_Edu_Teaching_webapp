@@ -3,18 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>21_Biodegradable</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="../../../../common/babel-react-classic.js"></script>
-  <script src="../../../../common/learn-from-zero.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
-  <style>
-    body { font-family: "IBM Plex Sans", system-ui, sans-serif; background-color: #f8fafc; color: #0f172a; min-height: 100vh; }
-  </style>
-  <!-- NCS i18n fleet kit (auto-injected) -->
+  <title>生物降解塑膠 | Biodegradable plastics</title>
+  <link rel="stylesheet" href="../../lesson.css" />
   <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
   <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
   <style data-ncs-kit="fleet-bridge">
@@ -53,28 +43,211 @@
   </script>
 </head>
 <body>
-  <div id="root"></div>
-  <script type="text/babel" data-presets="react-classic">
-    const { useState } = React;
-    
-    function App() {
-      return (
-        <div className="max-w-4xl mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-4">21 Biodegradable</h1>
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 mb-8 text-center">
-            <div className="w-full h-64 bg-slate-100 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 mb-4">
-              <span className="text-slate-400 font-medium">[ Interactive Canvas Placeholder ]</span>
-            </div>
-            <p className="text-slate-500">This interactive lab is currently under development.</p>
-          </div>
-          <LearnFromZero />
-        </div>
-      );
+  <section class="chem-learn" data-chem-entry="1">
+    <h2>學習目標</h2>
+    <ul>
+      <li>用主鏈是碳碳鍵還是酯鍵，判斷塑膠易不易被水解、生物降解。</li>
+      <li>分開生物降解、可氧分解和回收再造。</li>
+      <li>說明一般堆填區不保證可降解塑膠會快速消失。</li>
+    </ul>
+    <h2>操作</h2>
+    <ul>
+      <li>選一種塑膠和一個環境，再判斷會不會生物降解。</li>
+      <li>讀每句說法，按「這句正確」或「這句錯誤」。</li>
+      <li>鏈圖只顯示鍵的類型。沒有聚合或堆肥步驟。</li>
+    </ul>
+    <h2>錯因</h2>
+    <ul>
+      <li>把所有塑膠都當成會在堆填區消失。</li>
+      <li>把可氧分解當成生物降解。碎成小片仍然是塑膠。</li>
+      <li>以為澱粉混合物裡的聚乙烯主鏈也會一併消失。</li>
+    </ul>
+    <p id="chem-feedback" role="status">先選塑膠和環境，再判斷會不會生物降解。</p>
+  </section>
+  <main>
+    <div class="panel">
+      <p class="muted"><a href="../index.html">← 中六化學</a></p>
+      <h1>生物降解塑膠</h1>
+      <p class="muted">聚乙烯是加成聚合物，主鏈是碳碳鍵。聚乳酸和聚羥基烷酸酯含酯鍵，在有水分和微生物時可被水解。</p>
+      <p class="muted">塑膠</p>
+      <div class="row" id="materials"></div>
+      <p class="muted">環境</p>
+      <div class="row" id="places"></div>
+      <p id="link-note" class="muted"></p>
+      <canvas id="chain" width="640" height="180" aria-label="聚合物鏈示意"></canvas>
+      <div class="row">
+        <button type="button" id="yes">會生物降解</button>
+        <button type="button" class="alt" id="no">不會生物降解</button>
+      </div>
+      <h2>這句對不對</h2>
+      <div id="claims"></div>
+    </div>
+  </main>
+  <script src="../../lesson-kit.js"></script>
+  <script>
+    var MATERIALS = [
+      { id: "pe", name: "聚乙烯", link: "cc", note: "主鏈是碳碳鍵，不易被微生物水解。" },
+      { id: "pla", name: "聚乳酸", link: "ester", note: "含酯鍵。在有水分和微生物的堆肥中可被水解。" },
+      { id: "pha", name: "聚羥基烷酸酯", link: "ester", note: "含酯鍵，可由微生物製造，在有微生物的堆肥中可生物降解。" },
+      { id: "oxo", name: "可氧分解塑膠", link: "cc", note: "主鏈仍是碳碳鍵。它主要碎成小片，不是生物降解。" },
+      { id: "blend", name: "澱粉與聚乙烯混合物", link: "mix", note: "澱粉部分可被消耗，聚乙烯主鏈仍在。" }
+    ];
+    var PLACES = [
+      { id: "compost", name: "有微生物的堆肥" },
+      { id: "landfill", name: "一般堆填" },
+      { id: "recycle", name: "回收桶" }
+    ];
+    var CLAIMS = [
+      { text: "聚乙烯的碳碳主鏈容易被微生物分解。", ok: false, why: "錯因：聚乙烯是加成聚合物，主鏈是碳碳鍵，不易生物降解。" },
+      { text: "聚乳酸含有酯鍵，在有水分和微生物的堆肥中可以被水解。", ok: true, why: "正確。酯鍵可以水解，所以聚乳酸在合適的堆肥條件下可降解。" },
+      { text: "聚羥基烷酸酯含酯鍵，在有微生物的堆肥中可以生物降解。", ok: true, why: "正確。它是聚酯，微生物可以把它的酯鍵水解。" },
+      { text: "寫著可降解，就代表在一般堆填區會很快消失。", ok: false, why: "錯因：一般堆填又乾又缺氧，微生物活動不足，不應預期快速生物降解。" },
+      { text: "可氧分解等於生物降解。", ok: false, why: "錯因：可氧分解主要是碎成小片，碎片仍是塑膠，不是生物降解。" },
+      { text: "把塑膠放進回收桶，就是生物降解。", ok: false, why: "錯因：回收是再造，不是微生物把聚合物水解。" },
+      { text: "澱粉與聚乙烯的混合物被消耗後，聚乙烯主鏈也一併消失。", ok: false, why: "錯因：澱粉部分可以被消耗，聚乙烯的碳碳主鏈仍留下。" }
+    ];
+    var materialIndex = 0;
+    var placeIndex = 1;
+    var canvas = document.getElementById("chain");
+    var ctx = canvas.getContext("2d");
+
+    function material() { return MATERIALS[materialIndex]; }
+    function place() { return PLACES[placeIndex]; }
+
+    function willDegrade() {
+      if (place().id !== "compost") return false;
+      var id = material().id;
+      return id === "pla" || id === "pha";
     }
-    
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+
+    function reason() {
+      var m = material();
+      var p = place();
+      if (p.id === "recycle") return "回收桶是再造，不是生物降解。";
+      if (p.id === "landfill") return "一般堆填通常乾燥、缺氧，不應預期" + m.name + "會在那裡快速生物降解。";
+      if (m.id === "pla" || m.id === "pha") return m.name + "含酯鍵，在有水分和微生物的堆肥中可以生物降解。";
+      if (m.id === "blend") return "澱粉部分可以被消耗，但聚乙烯主鏈仍在，整件不是生物降解。";
+      if (m.id === "oxo") return "可氧分解主要是碎成小片，小片仍是塑膠，不是生物降解。";
+      return "聚乙烯的碳碳主鏈在堆肥中也不易生物降解。";
+    }
+
+    function paint() {
+      var m = material();
+      document.getElementById("link-note").textContent = m.name + " · " + place().name + "。 " + m.note;
+      var w = canvas.width;
+      var h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = "#0f172a";
+      ctx.fillRect(0, 0, w, h);
+      var n = 8;
+      var gap = (w - 80) / (n - 1);
+      for (var i = 0; i < n; i++) {
+        var x = 40 + i * gap;
+        var y = h / 2;
+        if (i < n - 1) {
+          ctx.strokeStyle = m.link === "ester" && i % 2 === 1 ? "#fbbf24" : "#94a3b8";
+          ctx.lineWidth = 4;
+          ctx.beginPath();
+          ctx.moveTo(x + 16, y);
+          ctx.lineTo(x + gap - 16, y);
+          ctx.stroke();
+          if (m.link === "mix" && i % 2 === 0) {
+            ctx.fillStyle = "#fbbf24";
+            ctx.font = "13px sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillText("澱粉", x + gap / 2, y - 16);
+          }
+          if (m.link === "ester" && i % 2 === 1) {
+            ctx.fillStyle = "#fbbf24";
+            ctx.font = "13px sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillText("酯", x + gap / 2, y - 16);
+          }
+        }
+        ctx.beginPath();
+        ctx.arc(x, y, 14, 0, Math.PI * 2);
+        ctx.fillStyle = m.link === "cc" ? "#38bdf8" : "#34d399";
+        ctx.fill();
+      }
+      ctx.fillStyle = "#e2e8f0";
+      ctx.font = "14px sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText(m.link === "ester" ? "酯鍵可被水解" : m.link === "mix" ? "只有澱粉部分可被消耗" : "碳碳主鏈", 16, 28);
+    }
+
+    function mark(id, index, list) {
+      var box = document.getElementById(id);
+      for (var i = 0; i < list.length; i++) box.children[i].className = i === index ? "on" : "alt";
+    }
+
+    MATERIALS.forEach(function (m, index) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = m.name;
+      btn.className = index === 0 ? "on" : "alt";
+      btn.onclick = function () {
+        materialIndex = index;
+        mark("materials", index, MATERIALS);
+        paint();
+        ChemLesson.say(m.name + "。" + m.note);
+      };
+      document.getElementById("materials").appendChild(btn);
+    });
+
+    PLACES.forEach(function (p, index) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = p.name;
+      btn.className = index === placeIndex ? "on" : "alt";
+      btn.onclick = function () {
+        placeIndex = index;
+        mark("places", index, PLACES);
+        paint();
+        ChemLesson.say("環境改成" + p.name + "。再判斷會不會生物降解。");
+      };
+      document.getElementById("places").appendChild(btn);
+    });
+
+    function answer(saidYes) {
+      var actual = willDegrade();
+      var text = reason();
+      if (saidYes === actual) ChemLesson.say("正確。" + text, "ok");
+      else ChemLesson.say("不對。" + text, "no");
+    }
+
+    document.getElementById("yes").onclick = function () { answer(true); };
+    document.getElementById("no").onclick = function () { answer(false); };
+
+    CLAIMS.forEach(function (item) {
+      var wrap = document.createElement("div");
+      wrap.className = "row";
+      var label = document.createElement("p");
+      label.className = "muted";
+      label.style.flex = "1 1 240px";
+      label.style.margin = "0";
+      label.textContent = item.text;
+      var yes = document.createElement("button");
+      yes.type = "button";
+      yes.textContent = "這句正確";
+      var no = document.createElement("button");
+      no.type = "button";
+      no.className = "alt";
+      no.textContent = "這句錯誤";
+      yes.onclick = function () {
+        ChemLesson.say(item.ok ? item.why : "不對。" + item.why, item.ok ? "ok" : "no");
+      };
+      no.onclick = function () {
+        if (!item.ok) ChemLesson.say("判斷正確。" + item.why, "ok");
+        else ChemLesson.say("這句是正確的。" + item.why, "no");
+      };
+      wrap.appendChild(label);
+      wrap.appendChild(yes);
+      wrap.appendChild(no);
+      document.getElementById("claims").appendChild(wrap);
+    });
+
+    paint();
   </script>
-<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+  <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 </body>
 </html>

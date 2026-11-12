@@ -23,12 +23,8 @@ function cn(...inputs) {
 
 const Footer = () => (
   <footer className="mt-12 text-center text-white/40 text-sm z-10 p-4">
-    <p className="italic mb-1 font-serif">
-      "Sing to him a new song; play skillfully, and shout for joy." - Psalm 33:3
-    </p>
-    <p className="text-xs mb-1 mt-2">
-      「應當向他唱新歌，彈得巧妙，聲音宏亮。」 詩篇 33:3
-    </p>
+    <p className="mb-1">初中音樂 · 演奏工具。大調與小調分開顯示。</p>
+    <p className="text-xs mt-2">分析失敗會顯示未能判斷，不會當成 C 調。</p>
     <p className="text-xs mt-4 pt-4 border-t border-white/10 opacity-50">
       © 2025 MPEG Transposer App
     </p>
@@ -49,8 +45,8 @@ export default function App() {
   const [currentTime, setCurrentTime] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingProgress, setProcessingProgress] = useState(0);
-  const [originalKey, setOriginalKey] = useState("C");
-  const [detectedKeyLabel, setDetectedKeyLabel] = useState("");
+  const [originalKey, setOriginalKey] = useState("");
+  const [keyResult, setKeyResult] = useState(null);
   const [isDetecting, setIsDetecting] = useState(false);
 
   const playerRef = useRef(null);
@@ -77,8 +73,8 @@ export default function App() {
     setFile(file);
     setIsPlaying(false);
     setCurrentTime(0);
-    setDetectedKeyLabel("");
-    setOriginalKey("C");
+    setKeyResult(null);
+    setOriginalKey("");
 
     try {
       const url = URL.createObjectURL(file);
@@ -117,16 +113,22 @@ export default function App() {
 
   const performKeyDetection = async (buffer) => {
     setIsDetecting(true);
+    setKeyResult(null);
     setTimeout(async () => {
       try {
-        const key = await detectKey(buffer);
-        console.log("Detected Key:", key);
-        if (key) {
-          setOriginalKey(key);
-          setDetectedKeyLabel(key);
+        const result = await detectKey(buffer);
+        console.log("Detected Key:", result);
+        if (result?.ok && (result.major || result.minor)) {
+          setKeyResult(result);
+          setOriginalKey(result.major || result.minor);
+        } else {
+          setKeyResult({ ok: false, major: null, minor: null });
+          setOriginalKey("");
         }
       } catch (e) {
         console.error("Key detection failed", e);
+        setKeyResult({ ok: false, major: null, minor: null });
+        setOriginalKey("");
       } finally {
         setIsDetecting(false);
       }
@@ -364,10 +366,17 @@ export default function App() {
 
   const getTargetKey = (startKey, semitones) => {
     const startIndex = KEYS.indexOf(startKey);
+    if (startIndex < 0) return "—";
     let targetIndex = (startIndex + semitones) % 12;
     if (targetIndex < 0) targetIndex += 12;
     return KEYS[targetIndex];
   };
+
+  const prettyNote = (note) =>
+    note ? note.replaceAll("#", "♯").replaceAll("b", "♭") : "";
+
+  const modeText = (note, modeName) =>
+    note ? `${prettyNote(note)} ${modeName}` : "未能判斷";
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col font-sans relative overflow-hidden selection:bg-pink-500/30">
@@ -385,7 +394,7 @@ export default function App() {
             <h1 className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-200 via-pink-200 to-white tracking-tight">
               MPEG Transposer
             </h1>
-            <p className="text-white/40 text-lg">Studio-quality Key Shifter</p>
+            <p className="text-white/40 text-lg">初中演奏 · 調性判斷與移調</p>
           </div>
 
           {/* Main Card */}
@@ -440,41 +449,53 @@ export default function App() {
                   </button>
                 </div>
 
-                {/* Key Selection with AI Detect */}
-                <div className="bg-white/5 rounded-2xl p-4 border border-white/5 relative overflow-hidden">
+                <div className="bg-white/5 rounded-2xl p-4 border border-white/5 relative overflow-hidden space-y-4">
                   {isDetecting && (
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-10 transition-all">
                       <div className="flex items-center gap-2 text-purple-300">
                         <Wand2 className="animate-pulse" size={18} />
                         <span className="text-sm font-medium">
-                          Detecting Key...
+                          正在分析調性…
                         </span>
                       </div>
                     </div>
                   )}
 
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-xl bg-black/20 border border-white/10 px-3 py-2">
+                      <p className="text-[10px] uppercase tracking-widest text-white/40">
+                        大調
+                      </p>
+                      <p className="text-lg font-semibold text-purple-100">
+                        {keyResult ? modeText(keyResult.major, "大調") : "—"}
+                      </p>
+                    </div>
+                    <div className="rounded-xl bg-black/20 border border-white/10 px-3 py-2">
+                      <p className="text-[10px] uppercase tracking-widest text-white/40">
+                        小調
+                      </p>
+                      <p className="text-lg font-semibold text-pink-100">
+                        {keyResult ? modeText(keyResult.minor, "小調") : "—"}
+                      </p>
+                    </div>
+                  </div>
+
                   <div className="flex items-center justify-between gap-4">
-                    {/* Original Key */}
                     <div className="flex-1 space-y-1">
-                      <div className="flex justify-between items-center">
-                        <label className="text-xs text-white/40 uppercase tracking-widest font-semibold ml-1">
-                          Original Key
-                        </label>
-                        {detectedKeyLabel && !isDetecting && (
-                          <div className="flex items-center gap-1 text-[10px] text-purple-300 bg-purple-500/10 px-1.5 py-0.5 rounded border border-purple-500/20">
-                            <Wand2 size={10} />
-                            <span>AI Detected</span>
-                          </div>
-                        )}
-                      </div>
+                      <label className="text-xs text-white/40 uppercase tracking-widest font-semibold ml-1">
+                        移調起點
+                      </label>
                       <select
                         value={originalKey}
                         onChange={(e) => setOriginalKey(e.target.value)}
                         className="w-full bg-black/20 border border-white/10 text-white rounded-xl px-3 py-2 outline-none focus:border-purple-500/50 appearance-none font-medium cursor-pointer"
                       >
+                        <option value="" className="bg-zinc-900">
+                          未選擇
+                        </option>
                         {KEYS.map((k) => (
                           <option key={k} value={k} className="bg-zinc-900">
-                            {k}
+                            {prettyNote(k)}
                           </option>
                         ))}
                       </select>
@@ -488,10 +509,10 @@ export default function App() {
                     {/* Target Key Display */}
                     <div className="flex-1 space-y-1">
                       <label className="text-xs text-white/40 uppercase tracking-widest font-semibold ml-1">
-                        New Key
+                        新調
                       </label>
                       <div className="w-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-white/10 text-purple-200 rounded-xl px-3 py-2 font-bold text-center shadow-inner">
-                        {getTargetKey(originalKey, pitch)}
+                        {prettyNote(getTargetKey(originalKey, pitch)) || "—"}
                       </div>
                     </div>
                   </div>

@@ -880,10 +880,20 @@
     return isZhMode ? item.zh : item.en;
   }
 
-  function appTabs(ids, isZhMode, extras) {
+  function appTabs(ids, langOrIsZh, extras) {
     extras = extras || {};
+    var lang =
+      typeof langOrIsZh === "boolean"
+        ? langOrIsZh
+          ? "zh-Hant"
+          : "en"
+        : langOrIsZh || state.lang || DEFAULT_LANG;
     return (ids || []).map(function (id) {
-      var label = tab(id, isZhMode);
+      var fromChrome = resolveKey(id, lang);
+      var label =
+        fromChrome != null
+          ? fromChrome
+          : tab(id, normalizeLang(lang) === "zh-Hant");
       if (id === "lab" && extras.labLocked) label += " \uD83D\uDD12";
       return { id: id, label: label };
     });
@@ -934,6 +944,7 @@
     if (!global.React) {
       return {
         isZh: isZh(),
+        lang: getLang(),
         toggle: toggle,
         t: function (zhStr, enStr) {
           return isZh() ? zhStr || "" : enStr || "";
@@ -942,20 +953,34 @@
     }
     var useState = global.React.useState;
     var useEffect = global.React.useEffect;
-    var st = useState(isZh());
-    var langZh = st[0];
-    var setLangZh = st[1];
+    var st = useState(function () {
+      return { zh: isZh(), lang: getLang() };
+    });
+    var langState = st[0];
+    var setLangState = st[1];
     useEffect(function () {
       function h() {
-        setLangZh(isZh());
+        setLangState({ zh: isZh(), lang: getLang() });
       }
-      return onChange(h);
+      var unsub = onChange(h);
+      if (global.document) {
+        global.document.addEventListener("hksteam-ncs-lang-change", h);
+        global.document.addEventListener("ncs-lang-change", h);
+      }
+      return function () {
+        unsub();
+        if (global.document) {
+          global.document.removeEventListener("hksteam-ncs-lang-change", h);
+          global.document.removeEventListener("ncs-lang-change", h);
+        }
+      };
     }, []);
     return {
-      isZh: langZh,
+      isZh: langState.zh,
+      lang: langState.lang,
       toggle: toggle,
       t: function (zhStr, enStr) {
-        return langZh ? zhStr || "" : enStr || "";
+        return langState.zh ? zhStr || "" : enStr || "";
       },
     };
   }

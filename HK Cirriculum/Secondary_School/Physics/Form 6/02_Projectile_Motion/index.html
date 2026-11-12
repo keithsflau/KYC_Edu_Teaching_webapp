@@ -223,6 +223,7 @@
     const TRACE_COLORS = ["#dc2626", "#7c3aed", "#0284c8"];
     const PXM = 6, OX = 70, GY = 330;
 
+    function phyBeep(ok){try{var c=phyBeep.c||(phyBeep.c=new (window.AudioContext||window.webkitAudioContext)());if(c.state==="suspended")c.resume();var o=c.createOscillator(),g=c.createGain();o.type="sine";o.frequency.value=ok?880:220;g.gain.setValueAtTime(0.0001,c.currentTime);g.gain.exponentialRampToValueAtTime(0.06,c.currentTime+0.02);g.gain.exponentialRampToValueAtTime(0.0001,c.currentTime+0.16);o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+0.17);}catch(e){}}
     function ProjectileSim() {
       const [angle, setAngle] = useState(45);
       const [speed, setSpeed] = useState(40);
@@ -230,6 +231,7 @@
       const [traces, setTraces] = useState([]);
       const [live, setLive] = useState(null);
       const [playing, setPlaying] = useState(true);
+      const [showPred, setShowPred] = useState(false);
       const [slowMo, setSlowMo] = useState(false);
       const cv = useRef(null);
       const S = useRef({ flight: null });
@@ -339,7 +341,7 @@
         <div className="space-y-3">
           <div className="flex flex-wrap gap-2 items-center">
             {Object.keys(GRAV).map(k => (
-              <button key={k} type="button" onClick={() => setWorld(k)}
+              <button key={k} type="button" onClick={() => { setWorld(k); setShowPred(false); }}
                 className={"px-3 py-2 rounded-xl text-sm font-semibold min-h-[44px] border " + (world === k ? "text-white" : "bg-white text-slate-700 border-slate-200")}
                 style={world === k ? {background: ACCENT, borderColor: ACCENT} : {}}>{GRAV[k].name}</button>
             ))}
@@ -353,13 +355,14 @@
           <canvas ref={cv} className="sim" width="720" height="380" />
           <div className="grid sm:grid-cols-2 gap-3">
             <label className="text-sm font-semibold bg-white border border-slate-200 rounded-xl p-3">Launch angle 發射角 · {angle}°
-              <input type="range" min="15" max="75" step="1" value={angle} onChange={e => setAngle(+e.target.value)} className="w-full mt-2" /></label>
+              <input type="range" min="15" max="75" step="1" value={angle} onChange={e => { setAngle(+e.target.value); setShowPred(false); }} className="w-full mt-2" /></label>
             <label className="text-sm font-semibold bg-white border border-slate-200 rounded-xl p-3">Launch speed 發射速率 · {speed} m/s
-              <input type="range" min="10" max="70" step="1" value={speed} onChange={e => setSpeed(+e.target.value)} className="w-full mt-2" /></label>
+              <input type="range" min="10" max="70" step="1" value={speed} onChange={e => { setSpeed(+e.target.value); setShowPred(false); }} className="w-full mt-2" /></label>
           </div>
           <div className="flex flex-wrap gap-2 text-sm">
-            <span className="px-3 py-1.5 rounded-full bg-red-100 text-red-800 font-bold">Predicted R 預測射程 ≈ {predR.toFixed(1)} m</span>
-            <span className="px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 font-semibold">Predicted T 預測時間 ≈ {predT.toFixed(2)} s</span>
+            <button type="button" onClick={() => { setShowPred(true); phyBeep(true); }} className="px-3 py-2 rounded-xl text-sm font-bold text-white min-h-[44px]" style={{background: ACCENT}}>核對預測 Check</button>
+            {showPred && <span className="px-3 py-1.5 rounded-full bg-red-100 text-red-800 font-bold">預測射程 R ≈ {predR.toFixed(1)} m</span>}
+            {showPred && <span className="px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 font-semibold">預測時間 T ≈ {predT.toFixed(2)} s</span>}
             {live && <span className="px-3 py-1.5 rounded-full bg-emerald-100 text-emerald-800 font-semibold">t={live.t.toFixed(2)}s · vx={live.vx.toFixed(1)} · vy={live.vy.toFixed(1)} m/s</span>}
           </div>
           {traces.length > 0 && (
@@ -370,7 +373,7 @@
                 <tbody>
                   {traces.map((tr, k) => (
                     <tr key={k} style={{color: tr.color}} className="font-semibold">
-                      <td className="pr-3">#{k + 1}</td><td className="pr-3">{GRAV[tr.w].name}</td><td className="pr-3">{tr.th}°</td><td className="pr-3">{tr.u}</td>
+                      <td className="pr-3">#{k + 1}</td><td className="pr-3">{GRAV[tr.w].name}</td><td className="pr-3">{Math.round((tr.th * 180) / Math.PI)}°</td><td className="pr-3">{tr.u}</td>
                       <td className="pr-3">{tr.range.toFixed(1)} m</td><td className="pr-3">{tr.maxH.toFixed(1)} m</td><td>{tr.T.toFixed(2)} s</td>
                     </tr>
                   ))}

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>初中音樂 · 音樂與語境</title>
+    <style>
+      :root { color-scheme: light; --ink: #1c1917; --muted: #57534e; --accent: #7c2d12; }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Microsoft JhengHei", "PingFang HK", sans-serif;
+        color: var(--ink);
+        background: #fff7ed;
+      }
+      .wrap { max-width: 880px; margin: 0 auto; padding: 24px 18px 64px; }
+      a { color: var(--accent); }
+      .back { color: var(--muted); text-decoration: none; }
+      h1, h2 { line-height: 1.3; }
+      p, li { color: var(--muted); line-height: 1.75; }
+      .panel { margin-top: 16px; padding: 18px; background: #fff; border: 1px solid #fed7aa; border-radius: 16px; }
+      table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+      th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #ffedd5; }
+      button {
+        font: inherit;
+        margin: 6px 6px 0 0;
+        padding: 8px 12px;
+        border-radius: 10px;
+        border: 1px solid #fdba74;
+        background: #fff;
+        cursor: pointer;
+      }
+      button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+      #status { color: var(--accent); font-weight: 700; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <a class="back" href="../index.html">← 返回初中音樂</a>
+      <p>初中 · 音樂與語境</p>
+      <h1>粵音、粵劇與聖樂</h1>
+      <p>聽賞、演奏、創作是音樂科的三個範疇。下面兩種音樂都只說明它們出現的語境，不是整科的代替品。本頁沒有商業歌曲，也沒有整段粵曲。</p>
+      <p id="status">按按鈕可聽見示意。</p>
+
+      <section class="panel">
+        <h2>粵音六聲</h2>
+        <p>粵語有聲調。同一串語音，聲調不同，意思就不同。下表是香港課堂常用的六聲，例字只用來記調形，不是歌詞。入聲以 p、t、k 收結，音很短，音高大致接近陰平、陰去或陽去。</p>
+        <table>
+          <thead>
+            <tr><th>調類</th><th>例字</th><th>走向</th><th></th></tr>
+          </thead>
+          <tbody>
+            <tr><td>陰平</td><td>詩</td><td>高而平</td><td><button type="button" data-tone="1">聽調形</button></td></tr>
+            <tr><td>陰上</td><td>史</td><td>由中升到高</td><td><button type="button" data-tone="2">聽調形</button></td></tr>
+            <tr><td>陰去</td><td>試</td><td>中而平</td><td><button type="button" data-tone="3">聽調形</button></td></tr>
+            <tr><td>陽平</td><td>時</td><td>由中降到低</td><td><button type="button" data-tone="4">聽調形</button></td></tr>
+            <tr><td>陽上</td><td>市</td><td>由低升到中</td><td><button type="button" data-tone="5">聽調形</button></td></tr>
+            <tr><td>陽去</td><td>事</td><td>低而平</td><td><button type="button" data-tone="6">聽調形</button></td></tr>
+          </tbody>
+        </table>
+        <p>這些是示意音高，不是某一個人的錄音。</p>
+      </section>
+
+      <section class="panel">
+        <h2>粵劇與鑼鼓</h2>
+        <p>粵劇用粵語演唱，旋律要遷就字的聲調，否則聽者會把字聽成另一個意思，這就是依字行腔。常用敲擊樂器包括高邊鑼、大文鑼、卜魚和沙的，用來提示速度、過門和身段。</p>
+        <p>下面是為本課寫的四拍示範，用合成音色模仿鼓、木魚和鑼。它不是任何一折戲的鑼鼓譜，也不是商業錄音。</p>
+        <button class="primary" id="play-drum" type="button">播放課堂鑼鼓節奏</button>
+      </section>
+
+      <section class="panel">
+        <h2>聖樂</h2>
+        <p>聖樂是宗教語境裡的音樂，可以討論人聲、歌詞和信仰場合的關係。它只是音樂與語境的一個例子，不能代替聽賞、演奏和創作。本頁不轉載歌詞。</p>
+        <p><a href="../apps/suno-generator/public_player/songs/player.html">開啟已有的聖樂播放器</a></p>
+      </section>
+    </div>
+    <script>
+      const TONES = {
+        1: { name: "陰平", points: [[330, 0], [330, 0.7]] },
+        2: { name: "陰上", points: [[220, 0], [330, 0.7]] },
+        3: { name: "陰去", points: [[247, 0], [247, 0.7]] },
+        4: { name: "陽平", points: [[247, 0], [175, 0.7]] },
+        5: { name: "陽上", points: [[175, 0], [230, 0.7]] },
+        6: { name: "陽去", points: [[196, 0], [196, 0.7]] },
+      };
+      let audioCtx = null;
+      let noiseBuffer = null;
+      function status(text) { document.getElementById("status").textContent = text; }
+      async function context() {
+        if (!audioCtx) audioCtx = new AudioContext();
+        if (audioCtx.state !== "running") await audioCtx.resume();
+        if (audioCtx.state !== "running") throw new Error("blocked");
+        if (!noiseBuffer) {
+          noiseBuffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.4, audioCtx.sampleRate);
+          const data = noiseBuffer.getChannelData(0);
+          for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+        }
+        return audioCtx;
+      }
+      function glide(ac, points) {
+        const osc = ac.createOscillator();
+        const gain = ac.createGain();
+        const now = ac.currentTime + 0.05;
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(points[0][0], now);
+        points.slice(1).forEach(([freq, at]) => osc.frequency.linearRampToValueAtTime(freq, now + at));
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.exponentialRampToValueAtTime(0.2, now + 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.75);
+        osc.connect(gain);
+        gain.connect(ac.destination);
+        osc.start(now);
+        osc.stop(now + 0.8);
+      }
+      function hit(ac, when, kind) {
+        if (kind === "drum") {
+          const src = ac.createBufferSource();
+          src.buffer = noiseBuffer;
+          const filter = ac.createBiquadFilter();
+          filter.type = "lowpass";
+          filter.frequency.setValueAtTime(240, when);
+          const gain = ac.createGain();
+          gain.gain.setValueAtTime(0.45, when);
+          gain.gain.exponentialRampToValueAtTime(0.001, when + 0.18);
+          src.connect(filter);
+          filter.connect(gain);
+          gain.connect(ac.destination);
+          src.start(when);
+          src.stop(when + 0.2);
+          return;
+        }
+        if (kind === "wood") {
+          const osc = ac.createOscillator();
+          const gain = ac.createGain();
+          osc.type = "square";
+          osc.frequency.setValueAtTime(980, when);
+          gain.gain.setValueAtTime(0.12, when);
+          gain.gain.exponentialRampToValueAtTime(0.001, when + 0.05);
+          osc.connect(gain);
+          gain.connect(ac.destination);
+          osc.start(when);
+          osc.stop(when + 0.06);
+          return;
+        }
+        [196, 289, 411].forEach((freq, index) => {
+          const osc = ac.createOscillator();
+          const gain = ac.createGain();
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(freq, when);
+          gain.gain.setValueAtTime(0.08 / (index + 1), when);
+          gain.gain.exponentialRampToValueAtTime(0.001, when + 0.9);
+          osc.connect(gain);
+          gain.connect(ac.destination);
+          osc.start(when);
+          osc.stop(when + 0.95);
+        });
+      }
+      document.querySelectorAll("[data-tone]").forEach((button) => {
+        button.addEventListener("click", async () => {
+          const tone = TONES[button.dataset.tone];
+          try {
+            glide(await context(), tone.points);
+            status("正在播放" + tone.name + "的調形示意");
+          } catch (e) {
+            status("瀏覽器未允許發聲");
+          }
+        });
+      });
+      document.getElementById("play-drum").addEventListener("click", async () => {
+        try {
+          const ac = await context();
+          const step = 0.5;
+          const now = ac.currentTime + 0.05;
+          for (let bar = 0; bar < 2; bar++) {
+            const start = now + bar * step * 4;
+            hit(ac, start, "drum");
+            hit(ac, start, "gong");
+            hit(ac, start + step, "wood");
+            hit(ac, start + step * 2, "drum");
+            hit(ac, start + step * 3, "wood");
+          }
+          status("正在播放課堂自製鑼鼓節奏");
+        } catch (e) {
+          status("瀏覽器未允許發聲");
+        }
+      });
+    </script>
+  </body>
+</html>

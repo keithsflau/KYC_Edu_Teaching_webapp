@@ -126,11 +126,87 @@
     return mathCode === "zh" ? "zh-Hant" : mathCode;
   }
 
+  function applyMathLang(setLang, ncsLang) {
+    var mathLang = ncsToMathLang(ncsLang);
+    if (typeof setLang === "function") setLang(mathLang);
+    if (document.body) document.body.dir = mathLang === "ar" ? "rtl" : "ltr";
+    return mathLang;
+  }
+
+  /** Poll until NcsI18n is loaded (defer/async kit). */
+  function waitForNcsI18n(callback, maxMs) {
+    maxMs = maxMs || 10000;
+    var start = Date.now();
+    (function tryAttach() {
+      if (window.NcsI18n) {
+        callback(window.NcsI18n);
+        return;
+      }
+      if (Date.now() - start < maxMs) setTimeout(tryAttach, 50);
+    })();
+  }
+
+  /** Subscribe NcsI18n → React setLang; returns unsubscribe. */
+  function bindNcsLangSync(setLang) {
+    var cleanups = [];
+
+    function onNcsChange(ncsLang) {
+      applyMathLang(
+        setLang,
+        ncsLang || (window.NcsI18n && window.NcsI18n.getLang())
+      );
+    }
+
+    function attach(ni) {
+      onNcsChange(ni.getLang());
+      cleanups.push(ni.onChange(onNcsChange));
+    }
+
+    if (window.NcsI18n) attach(window.NcsI18n);
+    else waitForNcsI18n(attach);
+
+    function onDom(ev) {
+      var l = ev.detail && ev.detail.lang;
+      if (l) onNcsChange(l);
+      else if (window.NcsI18n) onNcsChange(window.NcsI18n.getLang());
+    }
+    document.addEventListener("ncs:langchange", onDom);
+    window.addEventListener("ncs-lang-change", onDom);
+    cleanups.push(function () {
+      document.removeEventListener("ncs:langchange", onDom);
+      window.removeEventListener("ncs-lang-change", onDom);
+    });
+
+    return function unsubscribe() {
+      cleanups.forEach(function (fn) {
+        if (typeof fn === "function") fn();
+      });
+    };
+  }
+
   window.MathI18n = {
     langs: langs,
     _common: common,
     ncsToMathLang: ncsToMathLang,
     mathToNcsLang: mathToNcsLang,
+    bindNcsLangSync: bindNcsLangSync,
+    resolveText: function (pack, key, lang) {
+      if (!pack || !pack[key]) return key;
+      var mathLang = ncsToMathLang(lang);
+      return pack[key][mathLang] || pack[key].en || pack[key].zh || key;
+    },
+    useMathLang: function () {
+      var useState = React.useState;
+      var useEffect = React.useEffect;
+      var initial = window.NcsI18n ? ncsToMathLang(window.NcsI18n.getLang()) : "zh";
+      var state = useState(initial);
+      var lang = state[0];
+      var setLang = state[1];
+      useEffect(function () {
+        return bindNcsLangSync(setLang);
+      }, []);
+      return [lang, setLang];
+    },
     get: function (key, lang) {
       if (!common[key]) return key;
       const mathLang = ncsToMathLang(lang);
@@ -143,18 +219,19 @@
     },
     // Hidden bridge — NcsI18n fleet switcher mounts top-right via math-i18n-ncs-bridge.js
     LanguageSelector: function (props) {
-      const e = React.createElement;
-      const useEffect = React.useEffect;
+      var e = React.createElement;
+      var useEffect = React.useEffect;
+      var useState = React.useState;
+      var bumpState = useState(0);
+      var bump = bumpState[1];
       useEffect(
         function () {
-          if (!window.NcsI18n) return;
-          const sync = function (ncsLang) {
-            const mathLang = ncsToMathLang(ncsLang);
+          return bindNcsLangSync(function (mathLang) {
             if (props.setLang) props.setLang(mathLang);
-            if (mathLang === "ar" && document.body) document.body.dir = "rtl";
-          };
-          sync(window.NcsI18n.getLang());
-          return window.NcsI18n.onChange(sync);
+            bump(function (n) {
+              return n + 1;
+            });
+          });
         },
         [props.setLang]
       );

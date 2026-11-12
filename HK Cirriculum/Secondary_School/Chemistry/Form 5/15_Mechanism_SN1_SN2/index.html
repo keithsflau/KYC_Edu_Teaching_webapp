@@ -2,79 +2,164 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>15_Mechanism_SN1_SN2</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="../../../../common/babel-react-classic.js"></script>
-  <script src="../../../../common/learn-from-zero.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
-  <style>
-    body { font-family: "IBM Plex Sans", system-ui, sans-serif; background-color: #f8fafc; color: #0f172a; min-height: 100vh; }
-  </style>
-  <!-- NCS i18n fleet kit (auto-injected) -->
-  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
-  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
-  <style data-ncs-kit="fleet-bridge">
-    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
-    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
-      display: none !important;
-    }
-  </style>
-  <script data-ncs-kit="fleet-init">
-  (function () {
-    function hideLegacyToggles() {
-      document.body.classList.add("ncs-fleet-mounted");
-      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
-        var label = (btn.textContent || "").trim();
-        if (label === "EN" || label === "\u4E2D") {
-          btn.classList.add("ncs-hide-when-ncs-fleet");
-        }
-      });
-      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
-        el.classList.add("ncs-hide-when-ncs-fleet");
-      });
-    }
-    function boot() {
-      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
-      window.NcsI18n.init({
-        chromePath: "../../../../_shared/ncs-chrome.json",
-        target: document.body
-      }).then(hideLegacyToggles);
-    }
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", boot);
-    } else {
-      boot();
-    }
-  })();
-  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SN1 與 SN2 | Nucleophilic substitution</title>
+  <link rel="stylesheet" href="../../lesson.css" />
 </head>
-<body>
-  <div id="root"></div>
-  <script type="text/babel" data-presets="react-classic">
-    const { useState } = React;
-    
-    function App() {
-      return (
-        <div className="max-w-4xl mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-4">15 Mechanism SN1 SN2</h1>
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 mb-8 text-center">
-            <div className="w-full h-64 bg-slate-100 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 mb-4">
-              <span className="text-slate-400 font-medium">[ Interactive Canvas Placeholder ]</span>
-            </div>
-            <p className="text-slate-500">This interactive lab is currently under development.</p>
-          </div>
-          <LearnFromZero />
-        </div>
-      );
-    }
-    
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+<body data-chem-silent="1">
+  <section class="chem-learn" data-chem-entry="1">
+    <h2>學習目標</h2>
+    <ul>
+      <li>由鹵代烷級別和親核劑強弱，判斷偏向 SN1 還是 SN2。</li>
+      <li>把「速率只隨鹵代烷濃度改變」和「有碳陽離子」歸入 SN1。</li>
+      <li>把「一步、背面進攻、構型反轉」歸入 SN2。</li>
+    </ul>
+    <h2>常見錯因</h2>
+    <ul>
+      <li>三級鹵代烷仍選成一步背面進攻。</li>
+      <li>速率與親核劑無關卻選成 SN2。</li>
+      <li>把碳陽離子中間體說成 SN2。</li>
+    </ul>
+    <p id="chem-feedback" role="status">讀條件，判斷偏向哪種機理。</p>
+  </section>
+  <main>
+    <div class="panel">
+      <h1>哪種條件偏向哪種機理</h1>
+      <p class="muted">只比較條件偏向哪種機理。本頁不寫試劑和做法。</p>
+      <h2>操作</h2>
+      <canvas id="plot" width="640" height="180" aria-label="兩種機理的差別"></canvas>
+      <p id="prompt" style="font-size:1.05rem;font-weight:700"></p>
+      <p id="progress" class="muted"></p>
+      <div class="row" id="choices">
+        <button type="button" class="alt" data-choice="SN1">偏向 SN1</button>
+        <button type="button" class="alt" data-choice="SN2">偏向 SN2</button>
+      </div>
+      <div class="row">
+        <button type="button" id="check">核對</button>
+      </div>
+      <p><a href="../index.html">返回中五</a></p>
+    </div>
+  </main>
+  <script src="../../lesson-kit.js"></script>
+  <script>
+    (function () {
+      var index = 0;
+      var picked = "";
+      var done = [false, false, false, false, false];
+      var items = [
+        {
+          text: "三級鹵代烷，親核劑較弱。",
+          answer: "SN1",
+          ok: "三級碳空間阻礙大，不利一步背面進攻；它較易先形成碳陽離子，所以偏向 SN1。",
+          wrong: "錯因：三級碳空間阻礙大，強行看成一步背面進攻並不適合。三級鹵代烷配合較弱的親核劑，偏向先形成碳陽離子的 SN1。"
+        },
+        {
+          text: "一級鹵代烷，親核劑較強，由背面一步進攻。",
+          answer: "SN2",
+          ok: "一級碳空間阻礙小，較強的親核劑可以從背面一步取代，所以偏向 SN2。",
+          wrong: "錯因：這組條件是一級碳加較強親核劑，而且指明一步、背面進攻，偏向 SN2。SN1 要先形成碳陽離子，一級碳陽離子並不穩定。"
+        },
+        {
+          text: "速率只隨鹵代烷濃度改變，親核劑濃度不影響速率。",
+          answer: "SN1",
+          ok: "慢步驟只有鹵代烷參與，速率與親核劑濃度無關，這是 SN1。",
+          wrong: "錯因：SN2 的速率同時取決於鹵代烷和親核劑。速率與親核劑無關，代表慢步驟只有鹵代烷，偏向 SN1。"
+        },
+        {
+          text: "反應一步完成，產物的立體構型反轉。",
+          answer: "SN2",
+          ok: "一步、背面進攻、構型反轉是 SN2 的特徵。",
+          wrong: "錯因：SN1 分兩步。碳陽離子是平面的，兩邊都可能被攻擊，通常得到一對外消旋產物，而不是一步造成的構型反轉。"
+        },
+        {
+          text: "慢步驟先形成碳陽離子，親核劑其後才結合。",
+          answer: "SN1",
+          ok: "有碳陽離子中間體就是兩步的 SN1。",
+          wrong: "錯因：SN2 沒有碳陽離子中間體，親核劑進入和鹵素離開在同一步發生。先形成碳陽離子是 SN1。"
+        }
+      ];
+
+      function say(msg, kind) {
+        if (window.ChemLesson) ChemLesson.say(msg, kind);
+      }
+
+      function countDone() {
+        var n = 0;
+        var i;
+        for (i = 0; i < done.length; i++) if (done[i]) n += 1;
+        return n;
+      }
+
+      function card(g, x, title, line1, line2, color) {
+        g.fillStyle = "#1e293b";
+        g.fillRect(x, 24, 280, 130);
+        g.fillStyle = color;
+        g.font = "20px sans-serif";
+        g.fillText(title, x + 16, 58);
+        g.fillStyle = "#e2e8f0";
+        g.font = "15px sans-serif";
+        g.fillText(line1, x + 16, 96);
+        g.fillText(line2, x + 16, 122);
+      }
+
+      function paint() {
+        var canvas = document.getElementById("plot");
+        var g = canvas.getContext("2d");
+        g.fillStyle = "#0f172a";
+        g.fillRect(0, 0, canvas.width, canvas.height);
+        card(g, 24, "SN1", "兩步，先有碳陽離子", "速率只看鹵代烷", "#5eead4");
+        card(g, 332, "SN2", "一步，背面進攻", "立體構型反轉", "#fb923c");
+        document.getElementById("prompt").textContent = items[index].text;
+        document.getElementById("progress").textContent = "第 " + (index + 1) + " / " + items.length + " 題 · 已答對 " + countDone() + " / " + items.length;
+      }
+
+      function clearChoice() {
+        var buttons = document.getElementById("choices").querySelectorAll("button");
+        var i;
+        picked = "";
+        for (i = 0; i < buttons.length; i++) buttons[i].className = "alt";
+      }
+
+      document.getElementById("choices").onclick = function (e) {
+        var btn = e.target.closest ? e.target.closest("button") : null;
+        var buttons;
+        var i;
+        if (!btn) return;
+        picked = btn.getAttribute("data-choice");
+        buttons = document.getElementById("choices").querySelectorAll("button");
+        for (i = 0; i < buttons.length; i++) buttons[i].className = "alt";
+        btn.className = "on";
+      };
+      document.getElementById("check").onclick = function () {
+        var item = items[index];
+        var i;
+        if (!picked) {
+          say("錯因：先選偏向 SN1 還是 SN2。", "no");
+          return;
+        }
+        if (picked !== item.answer) {
+          say(item.wrong, "no");
+          return;
+        }
+        done[index] = true;
+        if (countDone() === items.length) {
+          say("正確。偏向 " + item.answer + "。" + item.ok + " 五組條件都判斷對過。", "ok");
+          paint();
+          return;
+        }
+        say("正確。偏向 " + item.answer + "。" + item.ok, "ok");
+        for (i = 1; i <= items.length; i++) {
+          if (!done[(index + i) % items.length]) {
+            index = (index + i) % items.length;
+            clearChoice();
+            paint();
+            return;
+          }
+        }
+      };
+      paint();
+    })();
   </script>
-<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+  <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 </body>
 </html>

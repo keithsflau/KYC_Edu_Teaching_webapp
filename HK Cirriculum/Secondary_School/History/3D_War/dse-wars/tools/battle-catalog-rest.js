@@ -7,7 +7,7 @@ module.exports = function (CATALOG, ctx) {
       title_zh: "第二次世界大戰（歐洲）",
       title_en: "WWII · EUROPE",
       period: "1939–1945",
-      intro: "歐洲戰場拆為六個 DSE 核心小戰役，每圖聚焦單一城市或戰區約 50–120 公里。",
+      intro: "歐洲戰場拆為六個 DSE 核心課題，每圖聚焦單一城市或戰區約 50–120 公里。",
       warAnalysis: {
         military: "二戰歐洲戰場以閃電戰、戰略轟炸、兩棲登陸與東線消耗戰為特徵；坦克、空軍與工業動員決定勝負。",
         nationalPower: "德國初期軍事領先；美蘇英工業總動員後形成壓倒優勢，空海封鎖削弱軸心國。",
@@ -180,7 +180,7 @@ module.exports = function (CATALOG, ctx) {
       title_zh: "第二次世界大戰（太平洋）",
       title_en: "WWII · PACIFIC",
       period: "1941–1945",
-      intro: "太平洋戰場拆為五個小戰役；珍珠港與中途島以字幕說明真實位置（部分在海圖範圍外）。",
+      intro: "太平洋戰場拆為五個課題；珍珠港與中途島以字幕說明真實位置（部分在海圖範圍外）。",
       warAnalysis: {
         military: "太平洋戰爭以航母海戰、跳島兩棲與戰略轟炸為主；美國海空優勢逐步壓倒日本。",
         nationalPower: "日本倚賴有限資源與聯合艦隊；美國工業產能與補給線橫跨太平洋。",
@@ -311,7 +311,7 @@ module.exports = function (CATALOG, ctx) {
               { a: 40, b: 60, lng: 129.87, lat: 32.75, kind: "explosion", i: 1 },
             ],
             storyboard: [
-              { day: 1, hold: 10, cam: cam(132.46, 34.39, 500), dateLabel: "1945年8月6日", title_zh: "廣島原子彈", title_en: "Hiroshima", narration_zh: "「小男孩」投下，約十四萬人喪生，開啟核時代。", narration_en: "\"Little Boy\" — ~140,000 dead; the nuclear age begins.", focus: ["us_b29"], side: "us" },
+              { day: 1, hold: 10, cam: cam(132.46, 34.39, 500), dateLabel: "1945年8月6日", title_zh: "廣島原子彈", title_en: "Hiroshima", narration_zh: "「小男孩」投下。約十四萬是至1945年底的累計死難，不是引爆瞬間的人數。", narration_en: "\"Little Boy\" — ~140,000 dead; the nuclear age begins.", focus: ["us_b29"], side: "us" },
               { day: 80, hold: 8, cam: cam(139.69, 35.69, 900), dateLabel: "1945年8月15日", title_zh: "日本投降", title_en: "Japanese Surrender", narration_zh: "天皇宣布無條件投降，太平洋戰爭結束。", narration_en: "Emperor announces unconditional surrender.", focus: ["us_b29"], side: "us" },
             ],
           }),
@@ -323,7 +323,7 @@ module.exports = function (CATALOG, ctx) {
       title_zh: "韓戰",
       title_en: "KOREAN WAR",
       period: "1950–1953",
-      intro: "韓戰拆為四個小戰役，地圖聚焦半島局部約 80–150 公里。",
+      intro: "韓戰拆為四個課題，地圖聚焦半島局部約 80–150 公里。",
       warAnalysis: {
         military: "韓戰結合大規模機動、兩棲登陸、山地冬季戰與三八線陣地戰；中美介入改變力量平衡。",
         nationalPower: "美國主導聯合國軍與海空優勢；中國志願軍以人力與近戰補給劣勢。",
@@ -440,7 +440,7 @@ module.exports = function (CATALOG, ctx) {
       title_zh: "以巴／中東戰爭",
       title_en: "ARAB-ISRAELI CONFLICTS",
       period: "1948–2000",
-      intro: "中東衝突拆為四個小戰役，每圖聚焦耶路撒冷、西奈或加沙一帶。",
+      intro: "中東衝突拆為四個課題，每圖聚焦耶路撒冷、西奈或加沙一帶。",
       warAnalysis: {
         military: "以巴衝突以常規戰（1948、1967、1973）與非常規抵抗（起義）交替；空軍與情報常決定初期優勢。",
         nationalPower: "以色列軍事現代化與美國支持；阿拉伯國家人口與資源優勢但政治分裂。",
@@ -558,7 +558,7 @@ module.exports = function (CATALOG, ctx) {
       title_zh: "巴爾幹種族衝突",
       title_en: "YUGOSLAV WARS",
       period: "1991–1999",
-      intro: "南斯拉夫戰爭拆為四個小戰役，聚焦克羅地亞、波黑與科索沃局部。",
+      intro: "南斯拉夫戰爭拆為四個課題，聚焦克羅地亞、波黑與科索沃局部。",
       warAnalysis: {
         military: "南斯拉夫解體後民族戰爭以圍城、炮擊、種族清洗與北約空襲為特徵；聯合國維和屢陷困境。",
         nationalPower: "塞族初期軍備優勢；克羅地亞軍事改革與北約介入改變平衡。",

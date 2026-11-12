@@ -2,79 +2,210 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>21_Activation_Energy</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="../../../../common/babel-react-classic.js"></script>
-  <script src="../../../../common/learn-from-zero.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
-  <style>
-    body { font-family: "IBM Plex Sans", system-ui, sans-serif; background-color: #f8fafc; color: #0f172a; min-height: 100vh; }
-  </style>
-  <!-- NCS i18n fleet kit (auto-injected) -->
-  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
-  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
-  <style data-ncs-kit="fleet-bridge">
-    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
-    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
-      display: none !important;
-    }
-  </style>
-  <script data-ncs-kit="fleet-init">
-  (function () {
-    function hideLegacyToggles() {
-      document.body.classList.add("ncs-fleet-mounted");
-      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
-        var label = (btn.textContent || "").trim();
-        if (label === "EN" || label === "\u4E2D") {
-          btn.classList.add("ncs-hide-when-ncs-fleet");
-        }
-      });
-      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
-        el.classList.add("ncs-hide-when-ncs-fleet");
-      });
-    }
-    function boot() {
-      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
-      window.NcsI18n.init({
-        chromePath: "../../../../_shared/ncs-chrome.json",
-        target: document.body
-      }).then(hideLegacyToggles);
-    }
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", boot);
-    } else {
-      boot();
-    }
-  })();
-  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>活化能 | Activation energy</title>
+  <link rel="stylesheet" href="../../lesson.css" />
 </head>
 <body>
-  <div id="root"></div>
-  <script type="text/babel" data-presets="react-classic">
-    const { useState } = React;
-    
-    function App() {
-      return (
-        <div className="max-w-4xl mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-4">21 Activation Energy</h1>
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 mb-8 text-center">
-            <div className="w-full h-64 bg-slate-100 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 mb-4">
-              <span className="text-slate-400 font-medium">[ Interactive Canvas Placeholder ]</span>
-            </div>
-            <p className="text-slate-500">This interactive lab is currently under development.</p>
-          </div>
-          <LearnFromZero />
-        </div>
-      );
+  <section class="chem-learn" data-chem-entry="1">
+    <h2>學習目標</h2>
+    <ul>
+      <li>在能量圖上，Ea 是過渡態與反應物的焓差。</li>
+      <li>催化劑降低 Ea。</li>
+      <li>催化劑不改變 ΔH。</li>
+    </ul>
+    <p id="chem-feedback" role="status">移動下降量，讀圖上的三個焓，再填 Ea 和 ΔH。</p>
+  </section>
+  <main>
+    <div class="panel">
+      <h1>活化能與催化劑</h1>
+      <p class="muted">操作：移動催化劑把峰降低多少，讀反應物、過渡態和產物的焓，填現時途徑的 Ea 和 ΔH。答錯會寫出錯因。沒有混合或加熱步驟。</p>
+      <canvas id="plot" width="640" height="340" aria-label="焓對反應進程的能量圖"></canvas>
+      <p class="muted" id="levels"></p>
+      <label for="drop">催化劑使過渡態下降 <span id="drop-v">40</span> kJ/mol（0 表示無催化劑）</label>
+      <input id="drop" type="range" min="0" max="100" step="1" value="40" />
+      <label for="ea">現時途徑的 Ea（kJ/mol）</label>
+      <input id="ea" type="number" step="1" style="font-size:1.1rem;padding:8px;width:8rem" />
+      <label for="dh">ΔH（kJ/mol）</label>
+      <input id="dh" type="number" step="1" style="font-size:1.1rem;padding:8px;width:8rem" />
+      <div class="row">
+        <button type="button" id="check">核對 Ea 和 ΔH</button>
+        <button type="button" class="alt" id="same-dh">催化劑不改變 ΔH</button>
+        <button type="button" class="alt" id="dh-changes">ΔH 會跟著 Ea 一起變</button>
+      </div>
+    </div>
+  </main>
+  <script src="../../lesson-kit.js"></script>
+  <script>
+    var HR = 80;
+    var HP = 30;
+    var TS0 = 200;
+    var MIN_EA = 20;
+    var dropEl = document.getElementById("drop");
+    dropEl.max = String(TS0 - HR - MIN_EA);
+
+    function kj(n) {
+      if (n < 0) return "−" + (-n);
+      return String(n);
     }
-    
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+
+    function parseKJ(raw) {
+      var s = String(raw).trim().replace(/−/g, "-").replace(/－/g, "-").replace(/\s/g, "");
+      if (!/^[+-]?\d+$/.test(s)) return null;
+      return Number(s);
+    }
+
+    function state() {
+      var drop = Number(dropEl.value);
+      var ts = TS0 - drop;
+      return { drop: drop, ts: ts, ea: ts - HR, dh: HP - HR };
+    }
+
+    function paint() {
+      var now = state();
+      document.getElementById("drop-v").textContent = String(now.drop);
+      document.getElementById("levels").textContent = "圖上的焓：反應物 " + HR + "，現時過渡態 " + now.ts + "，產物 " + HP + " kJ/mol。這三個數不是 Ea，也不是 ΔH。";
+      draw(now);
+    }
+
+    function draw(now) {
+      var canvas = document.getElementById("plot");
+      var ctx = canvas.getContext("2d");
+      var w = canvas.width;
+      var hgt = canvas.height;
+      ctx.clearRect(0, 0, w, hgt);
+      ctx.fillStyle = "#0f172a";
+      ctx.fillRect(0, 0, w, hgt);
+      var axisL = 64;
+      var top = 28;
+      var bottom = 292;
+      var eMax = 240;
+      function yOf(e) {
+        return top + (eMax - e) * (bottom - top) / eMax;
+      }
+      var xR = 140;
+      var xTs = 330;
+      var xP = 520;
+      var yR = yOf(HR);
+      var yP = yOf(HP);
+      var yTs0 = yOf(TS0);
+      var yTs = yOf(now.ts);
+      ctx.strokeStyle = "#334155";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(axisL, top);
+      ctx.lineTo(axisL, bottom);
+      ctx.lineTo(610, bottom);
+      ctx.stroke();
+      ctx.fillStyle = "#94a3b8";
+      ctx.font = "13px Segoe UI, Noto Sans HK, sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText("焓", 28, top + 4);
+      ctx.fillText("反應進程", 520, bottom + 22);
+      ctx.strokeStyle = "#475569";
+      ctx.setLineDash([3, 4]);
+      ctx.beginPath();
+      ctx.moveTo(xR - 24, yR);
+      ctx.lineTo(xP + 24, yR);
+      ctx.moveTo(xR - 24, yP);
+      ctx.lineTo(xP + 24, yP);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      function hump(yPeak, color, dash) {
+        ctx.save();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 3;
+        ctx.setLineDash(dash);
+        ctx.beginPath();
+        ctx.moveTo(xR, yR);
+        ctx.quadraticCurveTo((xR + xTs) / 2, yPeak, xTs, yPeak);
+        ctx.quadraticCurveTo((xTs + xP) / 2, yPeak, xP, yP);
+        ctx.stroke();
+        ctx.restore();
+      }
+      if (now.drop > 0) {
+        hump(yTs0, "#fb7185", [7, 5]);
+        hump(yTs, "#2dd4bf", []);
+      } else {
+        hump(yTs0, "#fb7185", []);
+      }
+      ctx.font = "13px Segoe UI, Noto Sans HK, sans-serif";
+      ctx.textAlign = "right";
+      ctx.fillStyle = "#fecdd3";
+      ctx.fillText("無催化劑 " + TS0, xTs - 10, yTs0 - 8);
+      ctx.textAlign = "left";
+      if (now.drop > 0) {
+        ctx.fillStyle = "#99f6e4";
+        ctx.fillText("催化劑 " + now.ts, xTs + 10, yTs + 18);
+      }
+      ctx.fillStyle = "#e2e8f0";
+      ctx.fillText("反應物 " + HR, xR - 10, yR - 8);
+      ctx.fillText("產物 " + HP, xP - 24, yP + 18);
+      var yPeak = now.drop > 0 ? yTs : yTs0;
+      ctx.strokeStyle = "#fbbf24";
+      ctx.fillStyle = "#fbbf24";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(xR - 18, yR);
+      ctx.lineTo(xR - 18, yPeak);
+      ctx.stroke();
+      ctx.fillText("Ea", xR - 36, (yR + yPeak) / 2);
+      ctx.beginPath();
+      ctx.moveTo(xP + 28, yR);
+      ctx.lineTo(xP + 28, yP);
+      ctx.stroke();
+      ctx.fillText("ΔH", xP + 34, (yR + yP) / 2);
+      ctx.fillText(now.dh < 0 ? "放熱" : "吸熱", xP + 34, (yR + yP) / 2 + 16);
+    }
+
+    function onEnter(e) {
+      if (e.key === "Enter") document.getElementById("check").click();
+    }
+
+    document.getElementById("ea").addEventListener("keydown", onEnter);
+    document.getElementById("dh").addEventListener("keydown", onEnter);
+    dropEl.oninput = paint;
+
+    document.getElementById("check").onclick = function () {
+      var now = state();
+      var gotEa = parseKJ(document.getElementById("ea").value);
+      var gotDh = parseKJ(document.getElementById("dh").value);
+      if (gotEa === null || gotDh === null) {
+        ChemLesson.say("錯因：Ea 和 ΔH 都要填整數，單位 kJ/mol。", "no");
+        return;
+      }
+      if (gotEa === now.ea && gotDh === now.dh) {
+        ChemLesson.say("正確。Ea = " + now.ts + " − " + HR + " = " + now.ea + " kJ/mol。ΔH = " + HP + " − " + HR + " = " + kj(now.dh) + " kJ/mol。催化劑把過渡態從 " + TS0 + " 降到 " + now.ts + "，反應物和產物的焓不變，所以 ΔH 不變。", "ok");
+        return;
+      }
+      var bits = [];
+      if (gotEa !== now.ea) {
+        if (gotEa === TS0 - HR) bits.push("錯因：你用了無催化劑的峰 " + TS0 + "。現時下降 " + now.drop + " kJ/mol，過渡態是 " + now.ts + "，Ea = " + now.ts + " − " + HR + "。");
+        else if (gotEa === now.ts) bits.push("錯因：" + now.ts + " 是過渡態的焓，不是活化能。Ea 還要減去反應物焓 " + HR + "。");
+        else if (gotEa === now.ts - HP) bits.push("錯因：正向 Ea 從反應物量到過渡態，是 " + now.ts + " − " + HR + "，不是過渡態減產物 " + HP + "。");
+        else if (gotEa === -now.ea) bits.push("錯因：活化能是要越過的能壘，取正值。Ea = 過渡態焓 − 反應物焓。");
+        else bits.push("錯因：Ea = 現時過渡態焓 − 反應物焓 = " + now.ts + " − " + HR + "。催化劑只降低這座峰。");
+      }
+      if (gotDh !== now.dh) {
+        if (gotDh === HR - HP) bits.push("錯因：ΔH = 產物焓 − 反應物焓 = " + HP + " − " + HR + " = " + kj(now.dh) + "。產物較低，是放熱，符號為負。");
+        else if (gotDh === -now.dh) bits.push("錯因：你把放熱寫成正。ΔH = " + HP + " − " + HR + " = " + kj(now.dh) + " kJ/mol。");
+        else if (gotDh === gotEa || gotDh === now.ea || gotDh === -now.ea) bits.push("錯因：這個數是活化能，不是 ΔH。催化劑改變 Ea，不改變 ΔH。ΔH 只看產物 " + HP + " 和反應物 " + HR + "。");
+        else if (gotDh === 0) bits.push("錯因：催化劑沒有把 ΔH 變成 0。兩條水平線仍是 " + HR + " 和 " + HP + "，ΔH = " + kj(now.dh) + "。");
+        else if (gotDh === now.dh - now.drop || gotDh === now.dh + now.drop) bits.push("錯因：下降量 " + now.drop + " 只影響過渡態。反應物和產物的焓不變，ΔH 仍是 " + kj(now.dh) + "。");
+        else bits.push("錯因：ΔH = 產物焓 − 反應物焓 = " + HP + " − " + HR + " = " + kj(now.dh) + " kJ/mol。催化劑不改變這個差。");
+      }
+      ChemLesson.say(bits.join(""), "no");
+    };
+
+    document.getElementById("same-dh").onclick = function () {
+      ChemLesson.say("正確。催化劑提供另一條較低能壘的途徑，所以 Ea 變小。反應物和產物兩條水平線不動，ΔH 不變。", "ok");
+    };
+
+    document.getElementById("dh-changes").onclick = function () {
+      ChemLesson.say("錯因：Ea 會變小，因為峰變低。ΔH 不是 Ea。ΔH 只由產物和反應物的焓決定，這兩條水平線不隨催化劑移動。", "no");
+    };
+
+    paint();
   </script>
-<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 </body>
 </html>

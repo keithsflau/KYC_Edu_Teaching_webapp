@@ -53,7 +53,7 @@ window.BATTLE_DATA = (function () {
   const factions = {
     "nk": {
       main: 0x8b0000, glow: 0xdc143c, dim: 0x5a0000,
-      css: "#8b0000", label_zh: "北韓／志願軍", label_en: "North Korea / PVA",
+      css: "#8b0000", label_zh: "北韓人民軍", label_en: "Korean People's Army",
       emblem: "circle", maxStrength: 100000, textLight: "#ffd9d2"
     },
     "un": {
@@ -187,7 +187,7 @@ window.BATTLE_DATA = (function () {
       }
   ];
   const notes =   {
-      "summary": "仁川登陸 — DSE 西史小戰役地圖。",
+      "summary": "仁川登陸 — 課題地圖。兵力與路線為示意。",
       "caveats": [
           "本圖僅覆蓋該戰役核心區域；戰線與兵力為教學示意。",
           "衛星影像為現代地形。"
@@ -335,11 +335,33 @@ window.BATTLE_DATA = (function () {
           "forces_en": ""
       }
   ];
-  const outro =   {
+    const sourceTask = {
+    "cite": "麥克阿瑟為仁川登陸下達的任務，1950年9月",
+    "excerpt": "任務是在仁川上陸，切斷南下人民軍的後路，並奪回漢城。",
+    "ask": "這次登陸的時候，中國人民志願軍在哪裡？",
+    "options": [
+      {
+        "t": "已經在漢城與美軍巷戰。",
+        "ok": false,
+        "why": "仁川是9月15日。志願軍10月才入朝。"
+      },
+      {
+        "t": "尚未入朝。圖例應是北韓人民軍對聯合國軍。",
+        "ok": true,
+        "why": "9月的對手仍是北韓人民軍。"
+      },
+      {
+        "t": "已在板門店簽署停戰。",
+        "ok": false,
+        "why": "停戰是1953年7月27日。"
+      }
+    ]
+  };
+const outro =   {
       "title_zh": "仁川登陸",
       "title_en": "INCHON LANDING",
-      "narration_zh": "本戰役為 DSE 西史重要考點。",
-      "narration_en": "A key DSE Western History topic.",
+      "narration_zh": "1950年9月15日的登陸，發生在志願軍入朝之前。",
+      "narration_en": "The 15 September 1950 landing came before Chinese volunteers entered the war.",
       "cam": {
           "lng": 126.62,
           "lat": 37.46,
@@ -349,5 +371,5 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       }
   };
-  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };
+  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, sourceTask, END_DAY };
 })();

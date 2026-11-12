@@ -2,79 +2,180 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>18_Ind_Compromise</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="../../../../common/babel-react-classic.js"></script>
-  <script src="../../../../common/learn-from-zero.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>工業折衷 | Industrial compromise</title>
+  <link rel="stylesheet" href="../../lesson.css" />
   <style>
-    body { font-family: "IBM Plex Sans", system-ui, sans-serif; background-color: #f8fafc; color: #0f172a; min-height: 100vh; }
+    .panel h2 { font-size: 1.05rem; margin: 1rem 0 .35rem; }
+    a { color: #0f766e; font-weight: 700; text-decoration: none; }
   </style>
-  <!-- NCS i18n fleet kit (auto-injected) -->
-  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
-  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
-  <style data-ncs-kit="fleet-bridge">
-    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
-    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
-      display: none !important;
-    }
-  </style>
-  <script data-ncs-kit="fleet-init">
-  (function () {
-    function hideLegacyToggles() {
-      document.body.classList.add("ncs-fleet-mounted");
-      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
-        var label = (btn.textContent || "").trim();
-        if (label === "EN" || label === "\u4E2D") {
-          btn.classList.add("ncs-hide-when-ncs-fleet");
-        }
-      });
-      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
-        el.classList.add("ncs-hide-when-ncs-fleet");
-      });
-    }
-    function boot() {
-      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
-      window.NcsI18n.init({
-        chromePath: "../../../../_shared/ncs-chrome.json",
-        target: document.body
-      }).then(hideLegacyToggles);
-    }
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", boot);
-    } else {
-      boot();
-    }
-  })();
-  </script>
 </head>
 <body>
-  <div id="root"></div>
-  <script type="text/babel" data-presets="react-classic">
-    const { useState } = React;
-    
-    function App() {
-      return (
-        <div className="max-w-4xl mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-4">18 Ind Compromise</h1>
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 mb-8 text-center">
-            <div className="w-full h-64 bg-slate-100 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 mb-4">
-              <span className="text-slate-400 font-medium">[ Interactive Canvas Placeholder ]</span>
-            </div>
-            <p className="text-slate-500">This interactive lab is currently under development.</p>
-          </div>
-          <LearnFromZero />
-        </div>
-      );
+  <section class="chem-learn" data-chem-entry="1">
+    <h2>學習目標</h2>
+    <ul>
+      <li>說明放熱、氣體摩爾數減少的反應為何要折衷溫度。</li>
+      <li>比較哈柏法和接觸法對壓力的不同取捨。</li>
+      <li>指出催化劑只提高速率，不改變平衡產率。</li>
+    </ul>
+    <p class="muted">DSE 選修課題十三　工業化學。哈柏法的平衡移動也呼應課題十。</p>
+    <p id="chem-feedback" role="status">分數只供比較取捨，不是工廠的實際百分產率。先選過程，再按「是不是課本折衷」。</p>
+  </section>
+  <main>
+    <p><a href="../index.html">返回中六目錄</a></p>
+    <div class="panel">
+      <h1>產率和速率的折衷</h1>
+      <p class="muted">只比較溫度、壓力和催化劑。沒有反應器操作，沒有氣體吸收或排放的步驟。接觸法停在平衡條件，不談三氧化硫之後怎樣處理。</p>
+      <h2>操作</h2>
+      <div class="row">
+        <button type="button" id="haber" class="on">哈柏法</button>
+        <button type="button" id="contact" class="alt">接觸法</button>
+      </div>
+      <p id="eqn"></p>
+      <canvas id="plot" width="640" height="220" aria-label="示意產率和示意速率"></canvas>
+      <label for="temp">溫度 = <span id="temp-v">450</span> °C</label>
+      <input id="temp" type="range" min="200" max="800" step="10" value="450" />
+      <label for="press">壓力 = <span id="press-v">200</span> <span id="press-unit">atm</span></label>
+      <input id="press" type="range" min="50" max="400" step="10" value="200" />
+      <label><input id="cat" type="checkbox" checked /> 使用催化劑（哈柏法用鐵，接觸法用五氧化二釩）</label>
+      <p class="num" id="score"></p>
+      <div class="row">
+        <button type="button" id="check">這組是課本折衷嗎？</button>
+      </div>
+      <h2>錯因</h2>
+      <ul>
+        <li>催化劑不提高平衡產率。它同時加快正向和逆向，K 不變，示意產率分數不動，只有速率分數上升。</li>
+        <li>這兩個反應都是放熱的。溫度越高，平衡越向反應物一方，不是產率越高。</li>
+        <li>只追最低溫度會讓示意產率很高，但速率太慢，工業上不採用。</li>
+        <li>哈柏法約 200 atm，因為左側 4 mol 氣體、右側 2 mol。接觸法約 1–2 atm 已經足夠，不必抄哈柏法的高壓。</li>
+        <li>未反應的氮氣和氫氣可以循環再用。那是提高原料的使用，不是改變 K。</li>
+      </ul>
+    </div>
+  </main>
+  <script src="../../lesson-kit.js"></script>
+  <script>
+    var process = "haber";
+    var tempEl = document.getElementById("temp");
+    var pressEl = document.getElementById("press");
+    var catEl = document.getElementById("cat");
+    var canvas = document.getElementById("plot");
+    var ctx = canvas.getContext("2d");
+
+    function scores() {
+      var t = Number(tempEl.value);
+      var p = Number(pressEl.value);
+      var tNorm = (t - 200) / 600;
+      if (tNorm < 0) tNorm = 0;
+      if (tNorm > 1) tNorm = 1;
+      var yieldF;
+      if (process === "haber") {
+        var pF = Math.pow(p / 400, 0.45);
+        yieldF = (1 - tNorm) * (0.35 + 0.65 * pF);
+      } else {
+        var pBoost = 0.82 + 0.18 * (Math.min(p, 2) / 2);
+        yieldF = (1 - tNorm) * pBoost;
+      }
+      var rateF = tNorm * (catEl.checked ? 1 : 0.22);
+      return {
+        yield: Math.round(Math.max(0.08, yieldF) * 100),
+        rate: Math.round(Math.max(0.04, rateF) * 100)
+      };
     }
-    
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+
+    function paint() {
+      var t = Number(tempEl.value);
+      var p = Number(pressEl.value);
+      document.getElementById("temp-v").textContent = String(t);
+      document.getElementById("press-v").textContent = String(p);
+      var s = scores();
+      document.getElementById("score").textContent = "示意產率 " + s.yield + "　　示意速率 " + s.rate;
+      document.getElementById("eqn").textContent = process === "haber"
+        ? "N₂ + 3H₂ ⇌ 2NH₃　　放熱，氣體由 4 mol 減到 2 mol。課本折衷大約 450°C、200 atm、鐵催化劑。"
+        : "2SO₂ + O₂ ⇌ 2SO₃　　放熱，氣體由 3 mol 減到 2 mol。課本折衷大約 450°C、1–2 atm、五氧化二釩。";
+      var w = canvas.width;
+      var h = canvas.height;
+      ctx.fillStyle = "#0f172a";
+      ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = "#e2e8f0";
+      ctx.font = "16px sans-serif";
+      ctx.fillText(process === "haber" ? "哈柏法　示意分數" : "接觸法　示意分數", 24, 36);
+      function bar(y, frac, color, label) {
+        ctx.fillStyle = "#1e293b";
+        ctx.fillRect(24, y, w - 48, 28);
+        ctx.fillStyle = color;
+        ctx.fillRect(24, y, (w - 48) * (frac / 100), 28);
+        ctx.fillStyle = "#f8fafc";
+        ctx.fillText(label + " " + frac, 36, y + 20);
+      }
+      bar(70, s.yield, "#34d399", "產率");
+      bar(130, s.rate, "#38bdf8", "速率");
+    }
+
+    function applyProcess(next) {
+      process = next;
+      document.getElementById("haber").className = next === "haber" ? "on" : "alt";
+      document.getElementById("contact").className = next === "contact" ? "on" : "alt";
+      if (next === "haber") {
+        pressEl.min = "50";
+        pressEl.max = "400";
+        pressEl.step = "10";
+        pressEl.value = "200";
+      } else {
+        pressEl.min = "1";
+        pressEl.max = "10";
+        pressEl.step = "1";
+        pressEl.value = "2";
+      }
+      tempEl.value = "450";
+      paint();
+      ChemLesson.say(next === "haber"
+        ? "哈柏法要較高壓力。約 450°C 是速率和產率的折衷，不是產率最高的溫度。"
+        : "接觸法約 1–2 atm 已經足夠。升溫仍然會降低放熱反應的平衡產率。");
+    }
+
+    function compromise() {
+      var t = Number(tempEl.value);
+      var p = Number(pressEl.value);
+      if (!catEl.checked) return false;
+      if (t < 400 || t > 500) return false;
+      if (process === "haber") return p >= 150 && p <= 250;
+      return p >= 1 && p <= 2;
+    }
+
+    document.getElementById("haber").onclick = function () { applyProcess("haber"); };
+    document.getElementById("contact").onclick = function () { applyProcess("contact"); };
+    tempEl.oninput = paint;
+    pressEl.oninput = paint;
+    catEl.onchange = function () {
+      paint();
+      var s = scores();
+      ChemLesson.say(catEl.checked
+        ? "催化劑開了。示意產率仍是 " + s.yield + "，示意速率升到 " + s.rate + "。K 沒有改變。"
+        : "催化劑關了。示意產率仍是 " + s.yield + "，示意速率降到 " + s.rate + "。");
+    };
+    document.getElementById("check").onclick = function () {
+      var t = Number(tempEl.value);
+      var p = Number(pressEl.value);
+      var bits = [];
+      if (t < 400) bits.push("溫度偏低：示意產率較高，但速率太慢。");
+      else if (t > 500) bits.push("溫度偏高：放熱反應的平衡向反應物一方，示意產率下降。");
+      else bits.push("溫度在大約 450°C 附近。");
+      if (process === "haber") {
+        if (p < 150) bits.push("壓力偏低，哈柏法的產率會較差。");
+        else if (p > 250) bits.push("壓力再高，產率更好，但設備成本高。課本折衷約 200 atm。");
+        else bits.push("壓力接近 200 atm。");
+      } else if (p > 2) {
+        bits.push("接觸法不必再用更高壓力，約 1–2 atm 已是折衷。");
+      } else {
+        bits.push("壓力在 1–2 atm。");
+      }
+      if (!catEl.checked) bits.push("還沒有催化劑，速率立不住。催化劑不改變產率。");
+      else bits.push(process === "haber" ? "鐵催化劑只提高速率。" : "五氧化二釩只提高速率。");
+      var ok = compromise();
+      ChemLesson.say((ok ? "這組接近課本折衷。" : "這組還不是課本折衷。") + bits.join(""), ok ? "ok" : "no");
+    };
+    paint();
   </script>
-<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+  <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 </body>
 </html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>初中音樂 · 創作</title>
+    <style>
+      :root { color-scheme: light; --ink: #1c1917; --muted: #57534e; --accent: #047857; }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Microsoft JhengHei", "PingFang HK", sans-serif;
+        color: var(--ink);
+        background: #f0fdf4;
+      }
+      .wrap { max-width: 960px; margin: 0 auto; padding: 24px 18px 56px; }
+      a { color: var(--accent); text-decoration: none; }
+      h1 { margin: 12px 0 8px; }
+      p { color: var(--muted); line-height: 1.7; }
+      .panel { margin-top: 16px; padding: 18px; background: #fff; border: 1px solid #d1fae5; border-radius: 16px; }
+      .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+      .cell { border: 1px solid #d6d3d1; border-radius: 12px; padding: 10px; background: #fafaf9; }
+      .cell.on { border-color: #059669; background: #ecfdf5; }
+      label { display: block; font-size: 0.82rem; margin-top: 6px; }
+      select, button, input { font: inherit; width: 100%; margin-top: 4px; padding: 6px; border-radius: 8px; border: 1px solid #d6d3d1; }
+      button.primary { width: auto; background: var(--accent); color: #fff; border-color: var(--accent); cursor: pointer; padding: 10px 16px; }
+      .row { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; }
+      .row label { width: 140px; }
+      #status { color: var(--accent); font-weight: 700; }
+      @media (max-width: 700px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <a href="../index.html">← 返回初中音樂</a>
+      <p>初中 · 創作</p>
+      <h1>自己選音高、節奏、力度</h1>
+      <p>八格是 4/4 的八個八分音符。四分音符佔兩格。改任何一格都會先聽見該音；按「播放樂句」聽見整句。這頁不連接外網生成器，也不要求貼上 cookie。</p>
+      <p id="status">已備好一句課堂例題，可直接播放，也可以改。</p>
+      <section class="panel">
+        <div class="row">
+          <label>速度（每分鐘拍數）<input id="tempo" type="number" min="60" max="160" value="96" /></label>
+          <button class="primary" id="play-phrase" type="button">播放樂句</button>
+        </div>
+        <div class="grid" id="grid"></div>
+      </section>
+    </div>
+    <script>
+      const PITCHES = [
+        ["C4", 60], ["D4", 62], ["E4", 64], ["F4", 65], ["F♯4", 66],
+        ["G4", 67], ["A4", 69], ["B♭4", 70], ["B4", 71], ["C5", 72],
+      ];
+      const RHYTHMS = [["eighth", "八分音符"], ["quarter", "四分音符"], ["rest", "休止符"]];
+      const DYNAMICS = [["p", "弱 p", 0.1], ["mf", "中強 mf", 0.24], ["f", "強 f", 0.42]];
+      const STARTER = [
+        ["C4", "eighth", "mf"], ["E4", "eighth", "mf"], ["G4", "quarter", "f"], ["G4", "rest", "mf"],
+        ["E4", "eighth", "p"], ["D4", "eighth", "mf"], ["C4", "quarter", "mf"], ["C4", "rest", "mf"],
+      ];
+      let audioCtx = null;
+      let active = [];
+      const grid = document.getElementById("grid");
+
+      function field(cell, className, options, selected) {
+        const select = document.createElement("select");
+        select.className = className;
+        options.forEach(([value, label]) => {
+          const option = document.createElement("option");
+          option.value = value;
+          option.textContent = label;
+          if (value === selected) option.selected = true;
+          select.appendChild(option);
+        });
+        cell.appendChild(select);
+        return select;
+      }
+
+      for (let i = 0; i < 8; i++) {
+        const starter = STARTER[i] || ["C4", "rest", "mf"];
+        const cell = document.createElement("div");
+        cell.className = "cell";
+        cell.id = "cell-" + i;
+        const title = document.createElement("strong");
+        title.textContent = "第 " + (i + 1) + " 格";
+        cell.appendChild(title);
+        const pitch = field(cell, "pitch", PITCHES.map(([name]) => [name, name]), starter[0]);
+        field(cell, "rhythm", RHYTHMS, starter[1]);
+        field(cell, "dynamic", DYNAMICS.map(([id, label]) => [id, label]), starter[2]);
+        pitch.addEventListener("change", () => audition(pitch.value, cell.querySelector(".dynamic").value, i));
+        cell.querySelector(".dynamic").addEventListener("change", () => {
+          if (cell.querySelector(".rhythm").value !== "rest") audition(pitch.value, cell.querySelector(".dynamic").value, i);
+        });
+        grid.appendChild(cell);
+      }
+
+      function hz(midi) { return 440 * 2 ** ((midi - 69) / 12); }
+      function midiOf(name) { return PITCHES.find((item) => item[0] === name)[1]; }
+      function gainOf(id) { return DYNAMICS.find((item) => item[0] === id)[2]; }
+      async function context() {
+        if (!audioCtx) audioCtx = new AudioContext();
+        if (audioCtx.state !== "running") await audioCtx.resume();
+        if (audioCtx.state !== "running") throw new Error("blocked");
+        return audioCtx;
+      }
+      function tone(ac, midi, when, dur, gainValue) {
+        const osc = ac.createOscillator();
+        const gain = ac.createGain();
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(hz(midi), when);
+        gain.gain.setValueAtTime(0.0001, when);
+        gain.gain.exponentialRampToValueAtTime(gainValue, when + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.0001, when + Math.max(dur, 0.05));
+        osc.connect(gain);
+        gain.connect(ac.destination);
+        osc.start(when);
+        osc.stop(when + dur + 0.02);
+        active.push(osc);
+      }
+      async function audition(name, dynamic, index) {
+        document.querySelectorAll(".cell").forEach((el) => el.classList.remove("on"));
+        document.getElementById("cell-" + index).classList.add("on");
+        try {
+          const ac = await context();
+          tone(ac, midiOf(name), ac.currentTime, 0.35, gainOf(dynamic));
+          document.getElementById("status").textContent = "聽見 " + name + "，力度 " + dynamic;
+        } catch (e) {
+          document.getElementById("status").textContent = "瀏覽器未允許發聲";
+        }
+      }
+      async function playPhrase() {
+        active.forEach((node) => { try { node.stop(); } catch (e) {} });
+        active = [];
+        const tempo = Math.min(160, Math.max(60, Number(document.getElementById("tempo").value) || 96));
+        const eighth = 60 / tempo / 2;
+        const cells = [...document.querySelectorAll(".cell")].map((cell) => ({
+          pitch: cell.querySelector(".pitch").value,
+          rhythm: cell.querySelector(".rhythm").value,
+          dynamic: cell.querySelector(".dynamic").value,
+        }));
+        try {
+          const ac = await context();
+          let time = ac.currentTime + 0.05;
+          let index = 0;
+          while (index < cells.length) {
+            const cell = cells[index];
+            const beats = cell.rhythm === "quarter" ? 2 : 1;
+            if (cell.rhythm !== "rest") {
+              tone(ac, midiOf(cell.pitch), time, eighth * beats * 0.92, gainOf(cell.dynamic));
+            }
+            time += eighth * beats;
+            index += beats;
+          }
+          document.getElementById("status").textContent = "正在播放你寫的樂句";
+        } catch (e) {
+          document.getElementById("status").textContent = "瀏覽器未允許發聲";
+        }
+      }
+      document.getElementById("play-phrase").addEventListener("click", playPhrase);
+    </script>
+  </body>
+</html>

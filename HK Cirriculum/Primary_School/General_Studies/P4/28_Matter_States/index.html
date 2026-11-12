@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>物態｜小四常識</title>
+<style>
+  :root { --accent: #0f766e; --soft: #f0fdfa; }
+  body { margin: 0; font-family: "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", sans-serif; background: var(--soft); color: #1e293b; }
+  main { max-width: 40rem; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+  a { color: var(--accent); font-weight: 700; text-decoration: none; }
+  .meta { margin: 0.8rem 0 0; color: var(--accent); font-weight: 800; letter-spacing: 0.04em; }
+  h1 { margin: 0.2rem 0 0; font-size: 2rem; }
+  h2 { margin: 0; font-size: 1.15rem; }
+  .card { background: #fff; border-radius: 1rem; padding: 1.1rem 1.2rem; margin-top: 1rem; box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06); }
+  ul { margin: 0.6rem 0 0; padding-left: 1.2rem; line-height: 1.7; }
+  p { line-height: 1.7; }
+  .states { display: flex; gap: 0.6rem; margin-top: 0.7rem; }
+  .states div { flex: 1; text-align: center; background: #ccfbf1; border-radius: 0.8rem; padding: 0.7rem 0.3rem; font-weight: 800; }
+  button.choice { display: block; width: 100%; text-align: left; margin-top: 0.7rem; padding: 0.9rem 1rem; border-radius: 0.9rem; border: 2px solid #99f6e4; background: #fff; font: inherit; font-size: 1.05rem; line-height: 1.5; cursor: pointer; }
+  button.choice:hover:not(:disabled) { border-color: var(--accent); }
+  button.choice:disabled { cursor: default; opacity: 0.72; }
+  button.choice.bad { border-color: #e11d48; background: #fff1f2; }
+  button.choice.good { border-color: #059669; background: #ecfdf5; opacity: 1; }
+  #feedback { min-height: 4.8rem; font-weight: 700; line-height: 1.7; }
+  #feedback.bad { color: #be123c; }
+  #feedback.good { color: #047857; }
+</style>
+</head>
+<body>
+<main>
+  <p><a href="../../index.html">← 返回常識科</a></p>
+  <p class="meta">小四 · 科學與科技</p>
+  <h1>物態</h1>
+  <section class="card">
+    <h2>學習目標</h2>
+    <ul>
+      <li>能分辨固體、液體和氣體。</li>
+      <li>知道加熱或冷卻可以改變物態。</li>
+      <li>能說出熔化、凝固、蒸發和凝結的分別。</li>
+    </ul>
+  </section>
+  <section class="card">
+    <h2>一項操作</h2>
+    <p>一塊冰放在室溫中，慢慢變成水。選出這種物態變化的名稱。</p>
+    <div class="states" aria-hidden="true"><div>固體</div><div>液體</div><div>氣體</div></div>
+    <div id="choices">
+      <button type="button" class="choice" data-ok="0" data-why="答錯了。凝固是液體變成固體，例如水結成冰。現在是冰變成水，方向剛好相反。">凝固：液體變成固體</button>
+      <button type="button" class="choice" data-ok="1" data-why="答對了。冰是固體，水是液體。固體受熱變成液體，稱為熔化。">熔化：固體變成液體</button>
+      <button type="button" class="choice" data-ok="0" data-why="答錯了。凝結是氣體變成液體，例如水蒸氣在冷杯外變成水珠。冰是固體，不是氣體。">凝結：氣體變成液體</button>
+    </div>
+    <p id="feedback">選一種變化。</p>
+  </section>
+</main>
+<script>
+(function () {
+  var box = document.getElementById("choices");
+  var feedback = document.getElementById("feedback");
+  var done = false;
+  var ctx = null;
+  function tone(ok) {
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    if (!ctx) ctx = new AC();
+    if (ctx.state === "suspended") ctx.resume();
+    var t = ctx.currentTime;
+    var notes = ok
+      ? [{ f: 493.88, at: 0, d: 0.1 }, { f: 587.33, at: 0.09, d: 0.12 }]
+      : [{ f: 164.81, at: 0, d: 0.16 }];
+    notes.forEach(function (n) {
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.type = ok ? "sine" : "triangle";
+      osc.frequency.setValueAtTime(n.f, t + n.at);
+      gain.gain.setValueAtTime(0.0001, t + n.at);
+      gain.gain.exponentialRampToValueAtTime(0.05, t + n.at + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + n.at + n.d);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(t + n.at);
+      osc.stop(t + n.at + n.d + 0.02);
+    });
+  }
+  box.addEventListener("click", function (event) {
+    var btn = event.target.closest("button");
+    if (!btn || done) return;
+    var ok = btn.getAttribute("data-ok") === "1";
+    tone(ok);
+    feedback.textContent = btn.getAttribute("data-why");
+    feedback.className = ok ? "good" : "bad";
+    if (ok) {
+      done = true;
+      box.querySelectorAll("button").forEach(function (b) { b.disabled = true; });
+      btn.classList.add("good");
+    } else {
+      box.querySelectorAll("button").forEach(function (b) { b.classList.remove("bad"); });
+      btn.classList.add("bad");
+    }
+  });
+})();
+</script>
+</body>
+</html>

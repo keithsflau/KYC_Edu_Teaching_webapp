@@ -1,38 +1,39 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HK Maths: Approx & Errors Visualizer</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
-        body { font-family: 'Outfit', sans-serif; }
-        
-        /* Custom Animations */
-        @keyframes fade-in-up {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-enter { animation: fade-in-up 0.5s ease-out forwards; }
-        
-        .tab-active {
-            background-color: #4F46E5; /* Indigo 600 */
-            color: white;
-            border-bottom: 3px solid #312E81;
-        }
-        .tab-inactive {
-            color: #4B5563;
-            background-color: #F3F4F6;
-            border-bottom: 3px solid transparent;
-        }
-        .tab-inactive:hover {
-            background-color: #E5E7EB;
-        }
-        
-        canvas { touch-action: none; } /* Prevent scrolling while dragging on canvas */
-    </style>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HK Maths: Approx & Errors Visualizer</title>
+    <script src="../../shared/answer-audio.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
+        body { font-family: 'Outfit', sans-serif; }
+        
+        /* Custom Animations */
+        @keyframes fade-in-up {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-enter { animation: fade-in-up 0.5s ease-out forwards; }
+        
+        .tab-active {
+            background-color: #4F46E5; /* Indigo 600 */
+            color: white;
+            border-bottom: 3px solid #312E81;
+        }
+        .tab-inactive {
+            color: #4B5563;
+            background-color: #F3F4F6;
+            border-bottom: 3px solid transparent;
+        }
+        .tab-inactive:hover {
+            background-color: #E5E7EB;
+        }
+        
+        canvas { touch-action: none; } /* Prevent scrolling while dragging on canvas */
+    </style>
     <!-- NCS i18n fleet kit (auto-injected) -->
   <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
   <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
@@ -70,221 +71,445 @@
     }
   })();
   </script>
-</head>
-<body class="bg-slate-50 min-h-screen flex flex-col">
-
-    <!-- Navbar -->
-    <nav class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg">
-        <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-            <div class="flex items-center space-x-3">
-                <i class="fa-solid fa-ruler-combined text-2xl"></i>
-                <div>
-                    <h1 class="text-xl font-bold tracking-tight">Maths Explorer</h1>
-                    <p class="text-xs text-indigo-200">Ch.1: Visualizing Errors</p>
-                </div>
-            </div>
-            <button onclick="resetAll()" class="text-sm bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full transition">
-                <i class="fa-solid fa-rotate-right mr-1"></i> Reset
-            </button>
-        </div>
-    </nav>
-
-    <!-- Main Content -->
-    <main class="flex-grow max-w-6xl mx-auto w-full px-4 py-8">
-        
-        <!-- Tab Navigation -->
-        <div class="grid grid-cols-3 gap-2 mb-8 text-center font-semibold text-sm md:text-base">
-            <button onclick="switchTab('measurement')" id="btn-measurement" class="tab-active py-3 rounded-t-lg transition-all duration-200 shadow-sm">
-                <i class="fa-solid fa-ruler-horizontal mr-2"></i>Measurement Lab
-            </button>
-            <button onclick="switchTab('rounding')" id="btn-rounding" class="tab-inactive py-3 rounded-t-lg transition-all duration-200 shadow-sm">
-                <i class="fa-solid fa-bullseye mr-2"></i>Rounding Tool
-            </button>
-            <button onclick="switchTab('quiz')" id="btn-quiz" class="tab-inactive py-3 rounded-t-lg transition-all duration-200 shadow-sm">
-                <i class="fa-solid fa-brain mr-2"></i>Quick Quiz
-            </button>
-        </div>
-
-        <!-- Section 1: Visual Measurement Lab -->
-        <section id="tab-measurement" class="animate-enter">
-            <div class="bg-white rounded-b-xl rounded-tr-xl shadow-xl border border-gray-100 overflow-hidden">
-                <div class="p-6">
-                    <div class="flex justify-between items-end mb-4">
-                        <div>
-                            <h2 class="text-2xl font-bold text-gray-800">Visual Measurement Lab</h2>
-                            <p class="text-gray-500 text-sm">Drag the sliders to see how scale affects accuracy.</p>
-                        </div>
-                    </div>
-
-                    <!-- Interactive Canvas Area -->
-                    <div class="bg-gray-100 rounded-xl border border-gray-300 relative overflow-hidden mb-6 h-64 md:h-80 cursor-crosshair">
-                        <canvas id="rulerCanvas" class="w-full h-full"></canvas>
-                        
-                        <!-- Floating Labels for Canvas -->
-                        <div class="absolute top-2 right-2 bg-white/90 backdrop-blur px-3 py-1 rounded text-xs font-mono text-gray-600 shadow border border-gray-200">
-                            Green: Object | Blue: Ruler
-                        </div>
-                    </div>
-
-                    <!-- Controls & Stats Grid -->
-                    <div class="grid lg:grid-cols-12 gap-6">
-                        
-                        <!-- Controls -->
-                        <div class="lg:col-span-4 space-y-5 bg-slate-50 p-5 rounded-xl border border-slate-200">
-                            <h3 class="font-bold text-slate-700 border-b border-slate-200 pb-2 mb-3">
-                                <i class="fa-solid fa-sliders mr-2"></i>Controls
-                            </h3>
-                            
-                            <!-- Scale Selector -->
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Ruler Scale Interval</label>
-                                <div class="grid grid-cols-3 gap-2">
-                                    <button onclick="setScale(1)" id="scale-1" class="scale-btn bg-indigo-600 text-white py-2 rounded text-sm font-bold shadow transition">1 cm</button>
-                                    <button onclick="setScale(0.5)" id="scale-0.5" class="scale-btn bg-white text-gray-600 hover:bg-gray-100 border py-2 rounded text-sm font-bold shadow-sm transition">0.5 cm</button>
-                                    <button onclick="setScale(0.1)" id="scale-0.1" class="scale-btn bg-white text-gray-600 hover:bg-gray-100 border py-2 rounded text-sm font-bold shadow-sm transition">0.1 cm</button>
-                                </div>
-                            </div>
-
-                            <!-- Object Length Slider -->
-                            <div>
-                                <label class="flex justify-between text-xs font-bold text-gray-500 uppercase mb-1">
-                                    <span>True Length</span>
-                                    <span id="disp-true-len" class="text-green-600 font-mono">12.34 cm</span>
-                                </label>
-                                <input type="range" id="slider-length" min="5" max="18" step="0.01" value="12.34" 
-                                    class="w-full h-2 bg-green-200 rounded-lg appearance-none cursor-pointer" oninput="updateSimulation()">
-                            </div>
-
-                            <!-- Ruler Position Slider -->
-                            <div>
-                                <label class="flex justify-between text-xs font-bold text-gray-500 uppercase mb-1">
-                                    <span>Ruler Shift</span>
-                                    <span id="disp-shift" class="text-blue-600 font-mono">0.00 cm</span>
-                                </label>
-                                <input type="range" id="slider-shift" min="-2" max="2" step="0.01" value="0" 
-                                    class="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer" oninput="updateSimulation()">
-                            </div>
-                        </div>
-
-                        <!-- Calculations Display -->
-                        <div class="lg:col-span-8 grid md:grid-cols-2 gap-4">
-                            
-                            <!-- Main Measurement -->
-                            <div class="bg-indigo-50 border border-indigo-100 p-5 rounded-xl relative">
-                                <div class="absolute top-0 right-0 p-3 opacity-10"><i class="fa-solid fa-eye text-6xl text-indigo-900"></i></div>
-                                <h4 class="text-xs font-bold text-indigo-500 uppercase mb-1">Measured Value</h4>
-                                <div class="text-4xl font-mono font-bold text-indigo-900 mb-1" id="disp-measured">---</div>
-                                <p class="text-xs text-indigo-400">Values are rounded to the nearest scale marking.</p>
-                            </div>
-
-                            <!-- Max Error -->
-                            <div class="bg-orange-50 border border-orange-100 p-5 rounded-xl relative">
-                                <div class="absolute top-0 right-0 p-3 opacity-10"><i class="fa-solid fa-triangle-exclamation text-6xl text-orange-900"></i></div>
-                                <h4 class="text-xs font-bold text-orange-500 uppercase mb-1">Max. Absolute Error</h4>
-                                <div class="text-3xl font-mono font-bold text-orange-800 mb-1" id="disp-max-error">---</div>
-                                <p class="text-xs text-orange-400">Scale Interval ÷ 2</p>
-                            </div>
-
-                            <!-- Range -->
-                            <div class="bg-white border-2 border-slate-100 p-5 rounded-xl shadow-sm md:col-span-2 flex flex-col justify-center">
-                                <h4 class="text-xs font-bold text-slate-400 uppercase mb-3 text-center">True Value Range (Lower Limit &le; x &lt; Upper Limit)</h4>
-                                <div class="flex items-center justify-center space-x-2 md:space-x-4 font-mono text-lg md:text-2xl text-slate-700">
-                                    <span id="disp-lower" class="px-3 py-1 bg-red-50 text-red-600 rounded border border-red-100">---</span>
-                                    <span class="text-slate-300">&le; x &lt;</span>
-                                    <span id="disp-upper" class="px-3 py-1 bg-green-50 text-green-600 rounded border border-green-100">---</span>
-                                </div>
-                            </div>
-
-                            <!-- Relative & Percentage Error -->
-                            <div class="bg-white border border-gray-200 p-4 rounded-xl shadow-sm">
-                                <h4 class="text-xs font-bold text-gray-400 uppercase">Relative Error</h4>
-                                <div class="text-xl font-mono text-gray-700 mt-1" id="disp-rel-error">---</div>
-                            </div>
-                            <div class="bg-white border border-gray-200 p-4 rounded-xl shadow-sm">
-                                <h4 class="text-xs font-bold text-gray-400 uppercase">Percentage Error</h4>
-                                <div class="text-xl font-mono text-purple-600 font-bold mt-1" id="disp-perc-error">---</div>
-                            </div>
-
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Section 2: Rounding & Sig Figs -->
-        <section id="tab-rounding" class="hidden animate-enter">
-            <div class="bg-white rounded-b-xl rounded-tr-xl shadow-xl border border-gray-100 overflow-hidden">
-                <div class="p-6 md:p-8">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-2">Rounding Laboratory</h2>
-                    <p class="text-gray-500 mb-6">Compare Significant Figures vs Decimal Places.</p>
-
-                    <div class="grid md:grid-cols-2 gap-8">
-                        <div class="space-y-6">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Enter a Number</label>
-                                <input type="number" step="any" id="round-input" value="123.4567" oninput="calculateRounding()" 
-                                    class="w-full text-lg p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none shadow-inner">
-                            </div>
-                            <div class="bg-indigo-50 p-5 rounded-lg border border-indigo-100">
-                                <label class="block text-sm font-bold text-indigo-900 mb-3">Adjust Precision</label>
-                                <input type="range" id="precision-slider" min="1" max="6" value="3" oninput="calculateRounding()" class="w-full h-2 bg-indigo-200 rounded-lg cursor-pointer mb-2">
-                                <div class="flex justify-between text-xs text-indigo-600 font-bold">
-                                    <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span>
-                                </div>
-                                <div class="text-center mt-2 font-mono text-indigo-800">Target: <span id="precision-display">3</span></div>
-                            </div>
-                        </div>
-
-                        <div class="space-y-4">
-                            <div class="bg-blue-600 rounded-xl p-5 text-white shadow-lg">
-                                <div class="flex justify-between"><h3 class="font-bold text-blue-100 text-sm">SIGNIFICANT FIGURES</h3><span class="bg-white/20 px-2 rounded text-xs">sig. fig.</span></div>
-                                <div class="mt-4 text-4xl font-mono font-bold" id="result-sf">---</div>
-                            </div>
-                            <div class="bg-purple-600 rounded-xl p-5 text-white shadow-lg">
-                                <div class="flex justify-between"><h3 class="font-bold text-purple-100 text-sm">DECIMAL PLACES</h3><span class="bg-white/20 px-2 rounded text-xs">d.p.</span></div>
-                                <div class="mt-4 text-4xl font-mono font-bold" id="result-dp">---</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Section 3: Quiz -->
-        <section id="tab-quiz" class="hidden animate-enter">
-            <div class="max-w-2xl mx-auto">
-                <div class="bg-white rounded-xl shadow-2xl border border-indigo-100 overflow-hidden">
-                    <div class="bg-indigo-900 p-6 text-white text-center">
-                        <div class="flex justify-between items-center mb-2">
-                            <h2 class="text-2xl font-bold">Challenge Mode</h2>
-                            <div class="bg-white/10 px-3 py-1 rounded-full text-sm">Score: <span id="score-display">0</span></div>
-                        </div>
-                    </div>
-                    
-                    <div class="p-8 text-center">
-                        <div class="mb-8">
-                            <p class="text-gray-500 text-sm uppercase font-bold tracking-widest mb-2">Question</p>
-                            <div class="text-3xl md:text-4xl font-bold text-gray-800 mb-4" id="quiz-question">Round 34.567 to 2 d.p.</div>
-                            <div id="feedback-msg" class="h-6 text-sm font-bold"></div>
-                        </div>
-
-                        <input type="text" id="quiz-answer" placeholder="Answer" class="text-center text-xl p-3 border-2 border-gray-300 rounded-lg w-48 mb-6 focus:border-indigo-500 focus:outline-none" onkeypress="handleEnter(event)">
-                        
-                        <div class="space-x-4">
-                            <button onclick="checkAnswer()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition">Submit</button>
-                            <button onclick="generateQuestion()" class="text-gray-500 hover:text-indigo-600 underline text-sm">Skip</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-    
-    
-    </main>
-
-            <!-- Footer -->
-    <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
-</body>
-</html>
-
+</head>
+<body class="bg-slate-50 min-h-screen flex flex-col">
+
+    <!-- Navbar -->
+    <nav class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <i class="fa-solid fa-ruler-combined text-2xl"></i>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight">Maths Explorer</h1>
+                    <p class="text-xs text-indigo-200">Ch.1: Visualizing Errors</p>
+                </div>
+            </div>
+            <button onclick="resetAll()" class="text-sm bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full transition">
+                <i class="fa-solid fa-rotate-right mr-1"></i> Reset
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-6xl mx-auto w-full px-4 py-8">
+        
+        <!-- Tab Navigation -->
+        <div class="grid grid-cols-3 gap-2 mb-8 text-center font-semibold text-sm md:text-base">
+            <button onclick="switchTab('measurement')" id="btn-measurement" class="tab-active py-3 rounded-t-lg transition-all duration-200 shadow-sm">
+                <i class="fa-solid fa-ruler-horizontal mr-2"></i>Measurement Lab
+            </button>
+            <button onclick="switchTab('rounding')" id="btn-rounding" class="tab-inactive py-3 rounded-t-lg transition-all duration-200 shadow-sm">
+                <i class="fa-solid fa-bullseye mr-2"></i>Rounding Tool
+            </button>
+            <button onclick="switchTab('quiz')" id="btn-quiz" class="tab-inactive py-3 rounded-t-lg transition-all duration-200 shadow-sm">
+                <i class="fa-solid fa-brain mr-2"></i>Quick Quiz
+            </button>
+        </div>
+
+        <!-- Section 1: Visual Measurement Lab -->
+        <section id="tab-measurement" class="animate-enter">
+            <div class="bg-white rounded-b-xl rounded-tr-xl shadow-xl border border-gray-100 overflow-hidden">
+                <div class="p-6">
+                    <div class="flex justify-between items-end mb-4">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-800">Visual Measurement Lab</h2>
+                            <p class="text-gray-500 text-sm">Drag the sliders to see how scale affects accuracy.</p>
+                        </div>
+                    </div>
+
+                    <!-- Interactive Canvas Area -->
+                    <div class="bg-gray-100 rounded-xl border border-gray-300 relative overflow-hidden mb-6 h-64 md:h-80 cursor-crosshair">
+                        <canvas id="rulerCanvas" class="w-full h-full"></canvas>
+                        
+                        <!-- Floating Labels for Canvas -->
+                        <div class="absolute top-2 right-2 bg-white/90 backdrop-blur px-3 py-1 rounded text-xs font-mono text-gray-600 shadow border border-gray-200">
+                            Green: Object | Blue: Ruler
+                        </div>
+                    </div>
+
+                    <!-- Controls & Stats Grid -->
+                    <div class="grid lg:grid-cols-12 gap-6">
+                        
+                        <!-- Controls -->
+                        <div class="lg:col-span-4 space-y-5 bg-slate-50 p-5 rounded-xl border border-slate-200">
+                            <h3 class="font-bold text-slate-700 border-b border-slate-200 pb-2 mb-3">
+                                <i class="fa-solid fa-sliders mr-2"></i>Controls
+                            </h3>
+                            
+                            <!-- Scale Selector -->
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Ruler Scale Interval</label>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <button onclick="setScale(1)" id="scale-1" class="scale-btn bg-indigo-600 text-white py-2 rounded text-sm font-bold shadow transition">1 cm</button>
+                                    <button onclick="setScale(0.5)" id="scale-0.5" class="scale-btn bg-white text-gray-600 hover:bg-gray-100 border py-2 rounded text-sm font-bold shadow-sm transition">0.5 cm</button>
+                                    <button onclick="setScale(0.1)" id="scale-0.1" class="scale-btn bg-white text-gray-600 hover:bg-gray-100 border py-2 rounded text-sm font-bold shadow-sm transition">0.1 cm</button>
+                                </div>
+                            </div>
+
+                            <!-- Object Length Slider -->
+                            <div>
+                                <label class="flex justify-between text-xs font-bold text-gray-500 uppercase mb-1">
+                                    <span>True Length</span>
+                                    <span id="disp-true-len" class="text-green-600 font-mono">12.34 cm</span>
+                                </label>
+                                <input type="range" id="slider-length" min="5" max="18" step="0.01" value="12.34" 
+                                    class="w-full h-2 bg-green-200 rounded-lg appearance-none cursor-pointer" oninput="updateSimulation()">
+                            </div>
+
+                            <!-- Ruler Position Slider -->
+                            <div>
+                                <label class="flex justify-between text-xs font-bold text-gray-500 uppercase mb-1">
+                                    <span>Ruler Shift</span>
+                                    <span id="disp-shift" class="text-blue-600 font-mono">0.00 cm</span>
+                                </label>
+                                <input type="range" id="slider-shift" min="-2" max="2" step="0.01" value="0" 
+                                    class="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer" oninput="updateSimulation()">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Your measured value (cm)</label>
+                                <input id="guess-measured" type="number" step="any" class="w-full border rounded-lg p-2 font-mono" placeholder="先作答">
+                                <button type="button" onclick="checkMeasurement()" class="mt-2 w-full bg-indigo-600 text-white font-bold py-2 rounded-lg">核對 Check</button>
+                                <p id="measure-mark" class="text-xs font-bold mt-2"></p>
+                            </div>
+                        </div>
+
+                        <!-- Calculations Display -->
+                        <div class="lg:col-span-8 grid md:grid-cols-2 gap-4">
+                            
+                            <!-- Main Measurement -->
+                            <div class="bg-indigo-50 border border-indigo-100 p-5 rounded-xl relative">
+                                <div class="absolute top-0 right-0 p-3 opacity-10"><i class="fa-solid fa-eye text-6xl text-indigo-900"></i></div>
+                                <h4 class="text-xs font-bold text-indigo-500 uppercase mb-1">Measured Value</h4>
+                                <div class="text-4xl font-mono font-bold text-indigo-900 mb-1" id="disp-measured">---</div>
+                                <p class="text-xs text-indigo-400">Values are rounded to the nearest scale marking.</p>
+                            </div>
+
+                            <!-- Max Error -->
+                            <div class="bg-orange-50 border border-orange-100 p-5 rounded-xl relative">
+                                <div class="absolute top-0 right-0 p-3 opacity-10"><i class="fa-solid fa-triangle-exclamation text-6xl text-orange-900"></i></div>
+                                <h4 class="text-xs font-bold text-orange-500 uppercase mb-1">Max. Absolute Error</h4>
+                                <div class="text-3xl font-mono font-bold text-orange-800 mb-1" id="disp-max-error">---</div>
+                                <p class="text-xs text-orange-400">Scale Interval ÷ 2</p>
+                            </div>
+
+                            <!-- Range -->
+                            <div class="bg-white border-2 border-slate-100 p-5 rounded-xl shadow-sm md:col-span-2 flex flex-col justify-center">
+                                <h4 class="text-xs font-bold text-slate-400 uppercase mb-3 text-center">True Value Range (Lower Limit &le; x &lt; Upper Limit)</h4>
+                                <div class="flex items-center justify-center space-x-2 md:space-x-4 font-mono text-lg md:text-2xl text-slate-700">
+                                    <span id="disp-lower" class="px-3 py-1 bg-red-50 text-red-600 rounded border border-red-100">---</span>
+                                    <span class="text-slate-300">&le; x &lt;</span>
+                                    <span id="disp-upper" class="px-3 py-1 bg-green-50 text-green-600 rounded border border-green-100">---</span>
+                                </div>
+                            </div>
+
+                            <!-- Relative & Percentage Error -->
+                            <div class="bg-white border border-gray-200 p-4 rounded-xl shadow-sm">
+                                <h4 class="text-xs font-bold text-gray-400 uppercase">Relative Error</h4>
+                                <div class="text-xl font-mono text-gray-700 mt-1" id="disp-rel-error">---</div>
+                            </div>
+                            <div class="bg-white border border-gray-200 p-4 rounded-xl shadow-sm">
+                                <h4 class="text-xs font-bold text-gray-400 uppercase">Percentage Error</h4>
+                                <div class="text-xl font-mono text-purple-600 font-bold mt-1" id="disp-perc-error">---</div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: Rounding & Sig Figs -->
+        <section id="tab-rounding" class="hidden animate-enter">
+            <div class="bg-white rounded-b-xl rounded-tr-xl shadow-xl border border-gray-100 overflow-hidden">
+                <div class="p-6 md:p-8">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">Rounding Laboratory</h2>
+                    <p class="text-gray-500 mb-6">Compare Significant Figures vs Decimal Places.</p>
+
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Enter a Number</label>
+                                <input type="number" step="any" id="round-input" value="123.4567" oninput="calculateRounding()" 
+                                    class="w-full text-lg p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none shadow-inner">
+                            </div>
+                            <div class="bg-indigo-50 p-5 rounded-lg border border-indigo-100">
+                                <label class="block text-sm font-bold text-indigo-900 mb-3">Adjust Precision</label>
+                                <input type="range" id="precision-slider" min="1" max="6" value="3" oninput="calculateRounding()" class="w-full h-2 bg-indigo-200 rounded-lg cursor-pointer mb-2">
+                                <div class="flex justify-between text-xs text-indigo-600 font-bold">
+                                    <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span>
+                                </div>
+                                <div class="text-center mt-2 font-mono text-indigo-800">Target: <span id="precision-display">3</span></div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <label class="text-sm font-bold text-slate-600">Your sig. fig.<input id="guess-sf" class="mt-1 w-full border rounded-lg p-2 font-mono" placeholder="先作答"></label>
+                                <label class="text-sm font-bold text-slate-600">Your d.p.<input id="guess-dp" class="mt-1 w-full border rounded-lg p-2 font-mono" placeholder="先作答"></label>
+                            </div>
+                            <button type="button" onclick="checkRounding()" class="bg-indigo-600 text-white font-bold px-4 py-2 rounded-lg">核對 Check</button>
+                            <p id="round-mark" class="text-sm font-bold"></p>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div class="bg-blue-600 rounded-xl p-5 text-white shadow-lg">
+                                <div class="flex justify-between"><h3 class="font-bold text-blue-100 text-sm">SIGNIFICANT FIGURES</h3><span class="bg-white/20 px-2 rounded text-xs">sig. fig.</span></div>
+                                <div class="mt-4 text-4xl font-mono font-bold" id="result-sf">---</div>
+                            </div>
+                            <div class="bg-purple-600 rounded-xl p-5 text-white shadow-lg">
+                                <div class="flex justify-between"><h3 class="font-bold text-purple-100 text-sm">DECIMAL PLACES</h3><span class="bg-white/20 px-2 rounded text-xs">d.p.</span></div>
+                                <div class="mt-4 text-4xl font-mono font-bold" id="result-dp">---</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Quiz -->
+        <section id="tab-quiz" class="hidden animate-enter">
+            <div class="max-w-2xl mx-auto">
+                <div class="bg-white rounded-xl shadow-2xl border border-indigo-100 overflow-hidden">
+                    <div class="bg-indigo-900 p-6 text-white text-center">
+                        <div class="flex justify-between items-center mb-2">
+                            <h2 class="text-2xl font-bold">Challenge Mode</h2>
+                            <div class="bg-white/10 px-3 py-1 rounded-full text-sm">Score: <span id="score-display">0</span></div>
+                        </div>
+                    </div>
+                    
+                    <div class="p-8 text-center">
+                        <div class="mb-8">
+                            <p class="text-gray-500 text-sm uppercase font-bold tracking-widest mb-2">Question</p>
+                            <div class="text-3xl md:text-4xl font-bold text-gray-800 mb-4" id="quiz-question">Round 34.567 to 2 d.p.</div>
+                            <div id="feedback-msg" class="h-6 text-sm font-bold"></div>
+                        </div>
+
+                        <input type="text" id="quiz-answer" placeholder="Answer" class="text-center text-xl p-3 border-2 border-gray-300 rounded-lg w-48 mb-6 focus:border-indigo-500 focus:outline-none" onkeypress="handleEnter(event)">
+                        
+                        <div class="space-x-4">
+                            <button onclick="checkAnswer()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition">Submit</button>
+                            <button onclick="generateQuestion()" class="text-gray-500 hover:text-indigo-600 underline text-sm">Skip</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    
+    
+    </main>
+
+    <script>
+    (function () {
+      var scale = 1;
+      var score = 0;
+      var quiz = null;
+
+      function roundToScale(value, interval) {
+        return Math.round(value / interval) * interval;
+      }
+      function roundSig(num, sig) {
+        if (!isFinite(num)) return NaN;
+        if (num === 0) return 0;
+        var neg = num < 0 ? -1 : 1;
+        return neg * Number(Math.abs(num).toPrecision(sig));
+      }
+      function roundDp(num, dp) {
+        return Number(num.toFixed(dp));
+      }
+      function reading() {
+        var trueLen = Number(document.getElementById("slider-length").value);
+        var shift = Number(document.getElementById("slider-shift").value);
+        var measured = roundToScale(trueLen, scale);
+        var maxErr = scale / 2;
+        return {
+          trueLen: trueLen,
+          shift: shift,
+          measured: measured,
+          maxErr: maxErr,
+          lower: measured - maxErr,
+          upper: measured + maxErr,
+          relative: measured === 0 ? NaN : maxErr / measured,
+          percent: measured === 0 ? NaN : (maxErr / measured) * 100
+        };
+      }
+      function fmt(n, dp) {
+        return Number(n.toFixed(dp)).toString();
+      }
+
+      function drawRuler() {
+        var canvas = document.getElementById("rulerCanvas");
+        if (!canvas) return;
+        var rect = canvas.getBoundingClientRect();
+        canvas.width = Math.max(300, Math.floor(rect.width));
+        canvas.height = Math.max(160, Math.floor(rect.height));
+        var ctx = canvas.getContext("2d");
+        var r = reading();
+        var px = (canvas.width - 40) / 20;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#e2e8f0";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        var yR = canvas.height * 0.62;
+        ctx.strokeStyle = "#2563eb";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(20, yR);
+        ctx.lineTo(canvas.width - 20, yR);
+        ctx.stroke();
+        var i;
+        for (i = 0; i <= 20; i += scale) {
+          var x = 20 + (i + r.shift + 2) * px;
+          if (x < 10 || x > canvas.width - 10) continue;
+          ctx.beginPath();
+          ctx.moveTo(x, yR);
+          ctx.lineTo(x, yR - (Math.abs(i / scale - Math.round(i / scale)) < 1e-6 && scale < 1 ? 18 : 28));
+          ctx.stroke();
+        }
+        var x0 = 20 + (r.shift + 2) * px;
+        var x1 = x0 + r.trueLen * px;
+        ctx.fillStyle = "rgba(22, 163, 74, 0.85)";
+        ctx.fillRect(Math.min(x0, x1), yR - 70, Math.abs(x1 - x0), 22);
+      }
+
+      window.updateSimulation = function () {
+        var r = reading();
+        document.getElementById("disp-true-len").textContent = r.trueLen.toFixed(2) + " cm";
+        document.getElementById("disp-shift").textContent = r.shift.toFixed(2) + " cm";
+        document.getElementById("measure-mark").textContent = "";
+        ["disp-measured", "disp-max-error", "disp-lower", "disp-upper", "disp-rel-error", "disp-perc-error"].forEach(function (id) {
+          document.getElementById(id).textContent = "—";
+        });
+        drawRuler();
+      };
+
+      window.setScale = function (next) {
+        scale = next;
+        ["1", "0.5", "0.1"].forEach(function (key) {
+          var btn = document.getElementById("scale-" + key);
+          var on = Number(key) === next;
+          btn.className = on
+            ? "scale-btn bg-indigo-600 text-white py-2 rounded text-sm font-bold shadow transition"
+            : "scale-btn bg-white text-gray-600 hover:bg-gray-100 border py-2 rounded text-sm font-bold shadow-sm transition";
+        });
+        window.updateSimulation();
+      };
+
+      window.checkMeasurement = function () {
+        var r = reading();
+        var g = Number(document.getElementById("guess-measured").value);
+        var ok = Number.isFinite(g) && Math.abs(g - r.measured) <= scale / 20 + 1e-6;
+        document.getElementById("disp-measured").textContent = fmt(r.measured, 2) + " cm";
+        document.getElementById("disp-max-error").textContent = fmt(r.maxErr, 2) + " cm";
+        document.getElementById("disp-lower").textContent = fmt(r.lower, 2);
+        document.getElementById("disp-upper").textContent = fmt(r.upper, 2);
+        document.getElementById("disp-rel-error").textContent = r.relative.toFixed(4);
+        document.getElementById("disp-perc-error").textContent = r.percent.toFixed(2) + "%";
+        var mark = document.getElementById("measure-mark");
+        if (ok) {
+          mark.textContent = "答對了。最大絕對誤差 = 刻度 ÷ 2。";
+          if (window.MathSfx) MathSfx.complete();
+        } else {
+          mark.textContent = "未對。量度值取最接近的刻度，最大絕對誤差是刻度的一半。";
+          if (window.MathSfx) MathSfx.wrong();
+        }
+      };
+
+      window.calculateRounding = function () {
+        var n = Number(document.getElementById("precision-slider").value);
+        document.getElementById("precision-display").textContent = String(n);
+        document.getElementById("result-sf").textContent = "—";
+        document.getElementById("result-dp").textContent = "—";
+        document.getElementById("round-mark").textContent = "";
+      };
+
+      window.checkRounding = function () {
+        var num = Number(document.getElementById("round-input").value);
+        var n = Number(document.getElementById("precision-slider").value);
+        if (!isFinite(num)) {
+          document.getElementById("round-mark").textContent = "請先輸入數字。";
+          if (window.MathSfx) MathSfx.wrong();
+          return;
+        }
+        var sf = roundSig(num, n);
+        var dp = roundDp(num, n);
+        var gsf = document.getElementById("guess-sf").value.trim();
+        var gdp = document.getElementById("guess-dp").value.trim();
+        var ok = Number(gsf) === sf && Number(gdp) === dp;
+        document.getElementById("result-sf").textContent = String(sf);
+        document.getElementById("result-dp").textContent = String(dp);
+        document.getElementById("round-mark").textContent = ok
+          ? "答對了。有效數字與小數位已核對。"
+          : "未對。有效數字看前 " + n + " 個有效位；小數位看小數點後 " + n + " 位。";
+        if (window.MathSfx) MathSfx[ok ? "complete" : "wrong"]();
+      };
+
+      function makeQuiz() {
+        var bank = [
+          { q: "Round 34.567 to 2 d.p.", a: "34.57" },
+          { q: "Round 0.0486 to 2 significant figures.", a: "0.049" },
+          { q: "A ruler has scale interval 0.5 cm. What is the maximum absolute error, in cm?", a: "0.25" },
+          { q: "A length is recorded as 8 cm with maximum absolute error 0.5 cm. What is the lower limit?", a: "7.5" },
+          { q: "Round 123.4567 to 3 significant figures.", a: "123" }
+        ];
+        quiz = bank[Math.floor(Math.random() * bank.length)];
+        document.getElementById("quiz-question").textContent = quiz.q;
+        document.getElementById("quiz-answer").value = "";
+        document.getElementById("feedback-msg").textContent = "";
+      }
+      window.generateQuestion = makeQuiz;
+      window.handleEnter = function (event) {
+        if (event.key === "Enter") window.checkAnswer();
+      };
+      window.checkAnswer = function () {
+        if (!quiz) makeQuiz();
+        var got = document.getElementById("quiz-answer").value.trim();
+        var fb = document.getElementById("feedback-msg");
+        var ok = got !== "" && Number(got) === Number(quiz.a);
+        if (ok) {
+          score += 1;
+          document.getElementById("score-display").textContent = String(score);
+          fb.textContent = "答對了 Correct.";
+          fb.className = "h-6 text-sm font-bold text-emerald-600";
+          if (window.MathSfx) MathSfx.correct();
+          setTimeout(makeQuiz, 700);
+        } else {
+          fb.textContent = "未對。答案是 " + quiz.a + "。";
+          fb.className = "h-6 text-sm font-bold text-rose-600";
+          if (window.MathSfx) MathSfx.wrong();
+        }
+      };
+
+      window.switchTab = function (name) {
+        ["measurement", "rounding", "quiz"].forEach(function (key) {
+          document.getElementById("tab-" + key).classList.toggle("hidden", key !== name);
+          var btn = document.getElementById("btn-" + key);
+          btn.className = (key === name ? "tab-active" : "tab-inactive") + " py-3 rounded-t-lg transition-all duration-200 shadow-sm";
+        });
+        if (name === "measurement") drawRuler();
+      };
+
+      window.resetAll = function () {
+        scale = 1;
+        score = 0;
+        document.getElementById("score-display").textContent = "0";
+        document.getElementById("slider-length").value = "12.34";
+        document.getElementById("slider-shift").value = "0";
+        document.getElementById("round-input").value = "123.4567";
+        document.getElementById("precision-slider").value = "3";
+        document.getElementById("guess-measured").value = "";
+        document.getElementById("guess-sf").value = "";
+        document.getElementById("guess-dp").value = "";
+        window.setScale(1);
+        window.calculateRounding();
+        makeQuiz();
+        window.switchTab("measurement");
+      };
+
+      window.setScale(1);
+      window.calculateRounding();
+      makeQuiz();
+      window.addEventListener("resize", drawRuler);
+    })();
+    </script>
+            <!-- Footer -->
+    <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+</body>
+</html>
+

@@ -163,13 +163,27 @@ const {
   LanguageSelector,
 
 
-  get
+  get,
+
+
+  useMathLang,
+
+
+  resolveText
 
 
 } = window.MathI18n;
 
 
 const t = {
+  anthem_unavailable: { zh: "這部裝置播不到國歌。請逐項確認禮儀，仍然可以完成升旗禮。", en: "The anthem cannot play on this device. Check each etiquette step and you can still finish." },
+  flag_is: { zh: "這是國旗，國歌是《義勇軍進行曲》。", en: "This is the national flag. The national anthem is the March of the Volunteers." },
+  etiq_title: { zh: "升旗禮儀", en: "Flag etiquette" },
+  e1: { zh: "肅立，面向國旗。", en: "Stand still and face the flag." },
+  e2: { zh: "不說話、不吃東西、不玩耍。", en: "Do not talk, eat, or play." },
+  e3: { zh: "目光望向國旗，表現尊重。", en: "Look at the flag and show respect." },
+  e4: { zh: "國旗升到頂，禮成後才離開。", en: "Leave only after the flag is at the top and the ceremony ends." },
+  finish_etiq: { zh: "我已明白，完成禮儀", en: "I understand. Finish the ceremony." },
 
 
   title: {
@@ -391,10 +405,29 @@ const t = {
 };
 
 
+function EtiquetteFallback(props) {
+  const steps = ["e1", "e2", "e3", "e4"];
+  return React.createElement("div", { className: "bg-white rounded-2xl p-4 mb-4 text-left shadow-lg" },
+    React.createElement("p", { className: "font-bold text-red-700 mb-2" }, props.getText("anthem_unavailable")),
+    React.createElement("h3", { className: "font-black text-slate-800 mb-2" }, props.getText("etiq_title")),
+    steps.map(id => React.createElement("button", {
+      key: id,
+      type: "button",
+      onClick: () => props.onToggle(id),
+      className: "block w-full text-left px-3 py-2 mb-2 rounded-lg border font-bold " + (props.checked.includes(id) ? "bg-green-100 border-green-600" : "bg-slate-50 border-slate-200")
+    }, (props.checked.includes(id) ? "☑ " : "☐ ") + props.getText(id))),
+    React.createElement("button", {
+      type: "button",
+      disabled: props.checked.length < steps.length,
+      onClick: props.onFinish,
+      className: "mt-2 w-full py-3 rounded-full font-bold " + (props.checked.length < steps.length ? "bg-slate-300 text-slate-500" : "bg-red-600 text-white")
+    }, props.getText("finish_etiq"))
+  );
+}
 function App() {
 
 
-  const [lang, setLang] = useState("zh");
+  const [lang, setLang] = useMathLang();
 
 
   const [progress, setProgress] = useState(0);
@@ -407,6 +440,13 @@ function App() {
 
 
   const [isAnthemPlaying, setIsAnthemPlaying] = useState(false);
+  const [anthemError, setAnthemError] = useState(false);
+  const [checkedSteps, setCheckedSteps] = useState([]);
+  const toggleStep = id => setCheckedSteps(prev => {
+    if (prev.includes(id)) return prev;
+    if (window.GsSfx) GsSfx.playCorrect();
+    return prev.concat(id);
+  });
 
 
   const syncFrameRef = useRef(null);
@@ -424,7 +464,7 @@ function App() {
   const anthemRef = useRef(null);
 
 
-  const getText = key => t[key][lang] || t[key]["en"];
+  const getText = key => resolveText(t, key, lang);
 
 
   const clearSyncLoop = () => {
@@ -547,7 +587,7 @@ function App() {
     resetAnthem();
 
 
-    setCompleted(true);
+    setCompleted(true);window.GsSfx&&GsSfx.playComplete();
 
 
   };
@@ -556,51 +596,43 @@ function App() {
   useEffect(() => () => clearSyncLoop(), []);
 
 
-  const waitForAudioDuration = audio =>
-
-
-    new Promise(resolve => {
-
-
-      if (audio.duration && isFinite(audio.duration)) {
-
-
-        resolve(audio.duration);
-
-
-        return;
-
-
-      }
-
-
-      const onReady = () => {
-
-
-        audio.removeEventListener("loadedmetadata", onReady);
-
-
-        audio.removeEventListener("durationchange", onReady);
-
-
-        resolve(audio.duration);
-
-
-      };
-
-
-      audio.addEventListener("loadedmetadata", onReady);
-
-
-      audio.addEventListener("durationchange", onReady);
-
-
-      audio.load();
-
-
-    });
-
-
+  const beginFallback = () => {
+    clearSyncLoop();
+    ceremonyRunningRef.current = false;
+    setCeremonyRunning(false);
+    setIsAnthemPlaying(false);
+    setAnthemError(true);
+    const audio = anthemRef.current;
+    if (audio) {
+      try { audio.pause(); } catch (e) {}
+    }
+  };
+  const waitForAudioDuration = audio => new Promise((resolve, reject) => {
+    let settled = false;
+    const finish = (err, value) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      audio.removeEventListener("loadedmetadata", onReady);
+      audio.removeEventListener("durationchange", onReady);
+      audio.removeEventListener("error", onFail);
+      if (err) reject(err);
+      else resolve(value);
+    };
+    const onReady = () => {
+      if (audio.duration && isFinite(audio.duration)) finish(null, audio.duration);
+    };
+    const onFail = () => finish(new Error("audio"));
+    const timer = setTimeout(() => finish(new Error("timeout")), 3000);
+    if (audio.duration && isFinite(audio.duration)) {
+      finish(null, audio.duration);
+      return;
+    }
+    audio.addEventListener("loadedmetadata", onReady);
+    audio.addEventListener("durationchange", onReady);
+    audio.addEventListener("error", onFail);
+    try { audio.load(); } catch (loadErr) { finish(loadErr); }
+  });
   const startCeremony = async () => {
 
 
@@ -610,7 +642,10 @@ function App() {
     const audio = anthemRef.current;
 
 
-    if (!audio) return;
+    if (!audio) {
+      beginFallback();
+      return;
+    }
 
 
     ceremonyRunningRef.current = true;
@@ -635,8 +670,7 @@ function App() {
 
 
       await audio.play();
-
-
+      setAnthemError(false);
       setIsAnthemPlaying(true);
 
 
@@ -644,14 +678,7 @@ function App() {
 
 
     } catch (err) {
-
-
-      ceremonyRunningRef.current = false;
-
-
-      setCeremonyRunning(false);
-
-
+      beginFallback();
     }
 
 
@@ -659,32 +686,15 @@ function App() {
 
 
   const restart = () => {
-
-
     clearSyncLoop();
-
-
     resetAnthem();
-
-
     ceremonyRunningRef.current = false;
-
-
     completedRef.current = false;
-
-
     progressRef.current = 0;
-
-
     setProgress(0);
-
-
     setCompleted(false);
-
-
     setCeremonyRunning(false);
-
-
+    setCheckedSteps([]);
   };
 
 
@@ -706,7 +716,7 @@ function App() {
     src: ANTHEM_SRC,
 
 
-    onEnded: completeCeremony
+    onEnded: completeCeremony, onError: () => setAnthemError(true)
 
 
   }), /*#__PURE__*/React.createElement(LanguageSelector, {
@@ -724,7 +734,9 @@ function App() {
     className: "text-4xl md:text-5xl font-black text-slate-800 mb-2 mt-8 drop-shadow-sm"
 
 
-  }, "🇨🇳 ", getText("title")), /*#__PURE__*/React.createElement("div", {
+  }, "🇨🇳 ", getText("title")), /*#__PURE__*/React.createElement("p", {
+    className: "font-bold text-red-800 text-center px-4"
+  }, getText("flag_is")), /*#__PURE__*/React.createElement("div", {
 
 
     className: "flex-1 w-full max-w-lg relative flex justify-center items-end pb-20 mt-8"
@@ -922,7 +934,7 @@ function App() {
     className: "font-bold text-slate-500 mb-6 text-sm"
 
 
-  }, "\"", getText("stand"), "\""), /*#__PURE__*/React.createElement("button", {
+  }, "\"", getText("stand"), "\""), anthemError && !completed && React.createElement(EtiquetteFallback, { getText: getText, checked: checkedSteps, onToggle: toggleStep, onFinish: completeCeremony }), /*#__PURE__*/React.createElement("button", {
 
 
     onClick: startCeremony,
@@ -952,7 +964,7 @@ function App() {
     className: "text-3xl font-black text-red-600 mb-4"
 
 
-  }, getText("completed")), /*#__PURE__*/React.createElement("button", {
+  }, getText("completed")), ["e1", "e2", "e3", "e4"].map(id => React.createElement("p", { key: id, className: "text-slate-700 font-bold mb-1" }, getText(id))), /*#__PURE__*/React.createElement("button", {
 
 
     onClick: restart,
@@ -976,6 +988,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.c
   <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 
 
+<script src="../../common/gs-sfx.js"></script>
 </body>
 
 

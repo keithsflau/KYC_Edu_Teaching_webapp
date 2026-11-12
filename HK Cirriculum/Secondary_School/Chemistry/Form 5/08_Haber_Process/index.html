@@ -2,79 +2,233 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>08_Haber_Process</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="../../../../common/babel-react-classic.js"></script>
-  <script src="../../../../common/learn-from-zero.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
-  <style>
-    body { font-family: "IBM Plex Sans", system-ui, sans-serif; background-color: #f8fafc; color: #0f172a; min-height: 100vh; }
-  </style>
-  <!-- NCS i18n fleet kit (auto-injected) -->
-  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
-  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
-  <style data-ncs-kit="fleet-bridge">
-    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
-    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
-      display: none !important;
-    }
-  </style>
-  <script data-ncs-kit="fleet-init">
-  (function () {
-    function hideLegacyToggles() {
-      document.body.classList.add("ncs-fleet-mounted");
-      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
-        var label = (btn.textContent || "").trim();
-        if (label === "EN" || label === "\u4E2D") {
-          btn.classList.add("ncs-hide-when-ncs-fleet");
-        }
-      });
-      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
-        el.classList.add("ncs-hide-when-ncs-fleet");
-      });
-    }
-    function boot() {
-      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
-      window.NcsI18n.init({
-        chromePath: "../../../../_shared/ncs-chrome.json",
-        target: document.body
-      }).then(hideLegacyToggles);
-    }
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", boot);
-    } else {
-      boot();
-    }
-  })();
-  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>哈柏法 | Haber process</title>
+  <link rel="stylesheet" href="../../lesson.css" />
 </head>
-<body>
-  <div id="root"></div>
-  <script type="text/babel" data-presets="react-classic">
-    const { useState } = React;
-    
-    function App() {
-      return (
-        <div className="max-w-4xl mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-4">08 Haber Process</h1>
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 mb-8 text-center">
-            <div className="w-full h-64 bg-slate-100 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 mb-4">
-              <span className="text-slate-400 font-medium">[ Interactive Canvas Placeholder ]</span>
-            </div>
-            <p className="text-slate-500">This interactive lab is currently under development.</p>
-          </div>
-          <LearnFromZero />
-        </div>
-      );
-    }
-    
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+<body data-chem-silent="1">
+  <section class="chem-learn" data-chem-entry="1">
+    <h2>學習目標</h2>
+    <ul>
+      <li>寫出氮氣與氫氣生成氨，並知道正反應放熱。</li>
+      <li>判斷升溫、加壓、催化劑對平衡產率和速率的方向。</li>
+      <li>產率和速率要分開看。本頁沒有加壓或反應器步驟。</li>
+    </ul>
+    <h2>常見錯因</h2>
+    <ul>
+      <li>以為升溫一定提高氨的平衡產率。</li>
+      <li>以為催化劑能提高平衡產率。</li>
+      <li>把加壓理解成推向氣體摩爾數較多的一邊。</li>
+    </ul>
+    <p id="chem-feedback" role="status">選一個改變，再分別判斷平衡產率和速率。</p>
+  </section>
+  <main>
+    <div class="panel">
+      <h1>哈柏法的方向</h1>
+      <p class="muted">N₂ + 3H₂ ⇌ 2NH₃，正反應放熱。左邊共 4 mol 氣體，右邊 2 mol。只判斷方向，沒有氣體壓縮或反應器的操作步驟。</p>
+      <h2>操作</h2>
+      <canvas id="plot" width="640" height="180" aria-label="反應物與氨的氣體摩爾數"></canvas>
+      <p class="muted">選一個改變</p>
+      <div class="row" id="factors">
+        <button type="button" class="alt" data-factor="temp">升高溫度</button>
+        <button type="button" class="alt" data-factor="pressure">升高壓力</button>
+        <button type="button" class="alt" data-factor="catalyst">加入催化劑</button>
+      </div>
+      <p class="muted">平衡產率</p>
+      <div class="row" id="yields">
+        <button type="button" class="alt" data-yield="up">上升</button>
+        <button type="button" class="alt" data-yield="down">下降</button>
+        <button type="button" class="alt" data-yield="same">不變</button>
+      </div>
+      <p class="muted">到達平衡的速率</p>
+      <div class="row" id="rates">
+        <button type="button" class="alt" data-rate="up">上升</button>
+        <button type="button" class="alt" data-rate="down">下降</button>
+        <button type="button" class="alt" data-rate="same">不變</button>
+      </div>
+      <div class="row">
+        <button type="button" id="check">核對這項</button>
+      </div>
+      <p><a href="../index.html">返回中五</a></p>
+    </div>
+  </main>
+  <script src="../../lesson-kit.js"></script>
+  <script>
+    (function () {
+      var ctx = null;
+      var finished = false;
+      var factor = "";
+      var yieldPick = "";
+      var ratePick = "";
+      var done = { temp: false, pressure: false, catalyst: false };
+      var facts = {
+        temp: {
+          yield: "down",
+          rate: "up",
+          ok: "升高溫度：正反應放熱，平衡向左移，氨的平衡產率下降；粒子能量更高，到達平衡的速率上升。",
+          yieldWhy: {
+            up: "錯因：升溫不是提高氨的平衡產率。正反應放熱，升溫把平衡推向反應物。",
+            same: "錯因：溫度會改變平衡位置。正反應放熱，升溫使平衡產率下降，而不是不變。"
+          },
+          rateWhy: {
+            down: "錯因：產率下降不代表速率下降。升溫仍然加快反應，到達平衡更快。",
+            same: "錯因：溫度會改變速率。產率不變而速率上升的是催化劑，不是升溫。"
+          }
+        },
+        pressure: {
+          yield: "up",
+          rate: "up",
+          ok: "升高壓力：平衡向氣體摩爾數較少的右邊移動，氨的平衡產率上升；粒子更密，速率也上升。",
+          yieldWhy: {
+            down: "錯因：加壓不是推向摩爾數較多的一邊。左邊共 4 mol 氣體，右邊 2 mol，加壓有利生成氨。",
+            same: "錯因：兩邊氣體摩爾數不同，壓力會改變平衡產率，不會維持不變。"
+          },
+          rateWhy: {
+            down: "錯因：加壓使氣體更密，碰撞更頻密，速率不會因此下降。",
+            same: "錯因：壓力改變會影響氣體反應的速率。這一項的速率是上升。"
+          }
+        },
+        catalyst: {
+          yield: "same",
+          rate: "up",
+          ok: "催化劑同等加快正反應和逆反應，平衡產率不變，但更快到達平衡。",
+          yieldWhy: {
+            up: "錯因：催化劑不把平衡推向氨。它不改變平衡產率，只縮短到達平衡的時間。",
+            down: "錯因：催化劑不會降低平衡產率。平衡位置不變。"
+          },
+          rateWhy: {
+            down: "錯因：催化劑的作用是加快反應，不是減慢。",
+            same: "錯因：若速率也不變，催化劑就沒有發揮作用。它加快到達平衡，但不改產率。"
+          }
+        }
+      };
+
+      function ac() {
+        var Ctor = window.AudioContext || window.webkitAudioContext;
+        if (!Ctor) return null;
+        if (!ctx) ctx = new Ctor();
+        if (ctx.state === "suspended") ctx.resume();
+        return ctx;
+      }
+
+      function tone(freq, delay, dur) {
+        var c = ac();
+        if (!c) return;
+        var start = c.currentTime + delay;
+        var o = c.createOscillator();
+        var g = c.createGain();
+        o.type = "sine";
+        o.frequency.setValueAtTime(freq, start);
+        g.gain.setValueAtTime(0.0001, start);
+        g.gain.exponentialRampToValueAtTime(0.04, start + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+        o.connect(g);
+        g.connect(c.destination);
+        o.start(start);
+        o.stop(start + dur + 0.02);
+      }
+
+      function playOk() {
+        tone(523.25, 0, 0.12);
+        tone(659.25, 0.14, 0.16);
+      }
+
+      function playNo() {
+        tone(196, 0, 0.22);
+      }
+
+      function playDone() {
+        tone(523.25, 0, 0.1);
+        tone(659.25, 0.12, 0.1);
+        tone(783.99, 0.24, 0.2);
+      }
+
+      function say(msg, kind) {
+        var el = document.getElementById("chem-feedback");
+        if (el) el.textContent = msg;
+        if (kind === "ok") playOk();
+        else if (kind === "no") playNo();
+        else if (kind === "done") playDone();
+      }
+
+      function mark(container, btn) {
+        var buttons = container.querySelectorAll("button");
+        for (var i = 0; i < buttons.length; i++) buttons[i].className = "alt";
+        btn.className = "on";
+      }
+
+      function paint() {
+        var canvas = document.getElementById("plot");
+        var g = canvas.getContext("2d");
+        var w = canvas.width;
+        var h = canvas.height;
+        g.fillStyle = "#0f172a";
+        g.fillRect(0, 0, w, h);
+        g.fillStyle = "#e2e8f0";
+        g.font = "16px sans-serif";
+        g.fillText("反應物：4 mol 氣體", 24, 32);
+        g.fillText("氨：2 mol 氣體", 24, 108);
+        g.fillStyle = "#38bdf8";
+        for (var i = 0; i < 4; i++) {
+          g.beginPath();
+          g.arc(48 + i * 36, 62, 12, 0, Math.PI * 2);
+          g.fill();
+        }
+        g.fillStyle = "#34d399";
+        for (var j = 0; j < 2; j++) {
+          g.beginPath();
+          g.arc(48 + j * 36, 142, 12, 0, Math.PI * 2);
+          g.fill();
+        }
+      }
+
+      function allDone() {
+        return done.temp && done.pressure && done.catalyst;
+      }
+
+      document.getElementById("factors").onclick = function (e) {
+        var btn = e.target.closest ? e.target.closest("button") : null;
+        if (!btn) return;
+        factor = btn.getAttribute("data-factor");
+        mark(document.getElementById("factors"), btn);
+      };
+      document.getElementById("yields").onclick = function (e) {
+        var btn = e.target.closest ? e.target.closest("button") : null;
+        if (!btn) return;
+        yieldPick = btn.getAttribute("data-yield");
+        mark(document.getElementById("yields"), btn);
+      };
+      document.getElementById("rates").onclick = function (e) {
+        var btn = e.target.closest ? e.target.closest("button") : null;
+        if (!btn) return;
+        ratePick = btn.getAttribute("data-rate");
+        mark(document.getElementById("rates"), btn);
+      };
+      document.getElementById("check").onclick = function () {
+        if (!factor || !yieldPick || !ratePick) {
+          say("錯因：先選一個改變，以及產率和速率的方向。", "no");
+          return;
+        }
+        var item = facts[factor];
+        if (yieldPick !== item.yield) {
+          say(item.yieldWhy[yieldPick], "no");
+          return;
+        }
+        if (ratePick !== item.rate) {
+          say(item.rateWhy[ratePick], "no");
+          return;
+        }
+        done[factor] = true;
+        if (allDone() && !finished) {
+          finished = true;
+          say("正確。" + item.ok + " 三項改變都判斷對過。", "done");
+          return;
+        }
+        say("正確。" + item.ok, "ok");
+      };
+      paint();
+    })();
   </script>
-<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+  <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 </body>
 </html>

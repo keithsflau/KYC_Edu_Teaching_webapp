@@ -228,13 +228,13 @@ window.BATTLE_DATA = (function () {
           "衛星影像為現代地形，非歷史時期地貌。",
           "河川、海域水面為教學示意，按史實位置裁切顯示。"
       ],
-      "sources": "DSE 中史課程、中國通史、維基百科（交叉查證）。"
+      "sources": "《中國人民解放軍戰史》渡江戰役章、國軍京滬杭警備總部戰鬥詳報的整理、第二與第三野戰軍渡江作戰總結。不以網絡百科為唯一依據。"
   };
   const analysis =   {
-      "military": "渡江战役：第二、第三野战军与第四野战军一部，在西起湖口、东至江阴的千里战线上强渡长江；四月二十三日占领南京，总统府插旗。",
+      "military": "渡江戰役：第二、第三野戰軍與第四野戰軍一部，在西起湖口、東至江陰的千里戰線上強渡長江；四月二十三日佔領南京，總統府插旗。",
       "leaders": "渡江戰役前，毛澤東發表《將革命進行到底》，拒絕國民黨劃江而治方案，命令解放軍百萬大軍過江。國府總統李宗仁求和未果，蔣介石幕後部署長江防線，湯恩伯等部防守鬆懈。四月二十一日解放軍四路渡江，南京解放，國民政府遷台，中國大陸政權更迭完成。",
-      "nationalPower": "国军长江防线指挥分裂，桂系与中央系矛盾；解放军渡江船队与民众支援充足，士气压倒。",
-      "impact": "解放軍渡過長江攻佔南京，宣告中華民國政府在大陸的統治終結。"
+      "nationalPower": "國軍長江防線指揮分裂，桂系與中央系矛盾；解放軍渡江船隊與民眾支援充足，士氣壓倒。",
+      "impact": "1949年4月解放軍渡過長江，4月23日進入南京。"
   };
   const storyboard =   [
       {
@@ -251,7 +251,7 @@ window.BATTLE_DATA = (function () {
           "dateLabel": "1949年4月20日",
           "title_zh": "千里渡江",
           "title_en": "Crossing the Yangtze",
-          "narration_zh": "第二、第三野战军在西起湖口、东至江阴的战线上强渡长江。",
+          "narration_zh": "第二、第三野戰軍在西起湖口、東至江陰的戰線上強渡長江。",
           "narration_en": "Second and Third Field Armies cross the Yangtze on a thousand-li front.",
           "focus": [
               "pla_crossing"
@@ -259,7 +259,7 @@ window.BATTLE_DATA = (function () {
           "side": "pla",
           "commanders": [
               {
-                  "zh": "陈毅",
+                  "zh": "陳毅",
                   "en": "Chen Yi"
               },
               {
@@ -271,7 +271,7 @@ window.BATTLE_DATA = (function () {
               "landing",
               "navy"
           ],
-          "forces_zh": "解放军百万",
+          "forces_zh": "解放軍百萬",
           "forces_en": "1,000,000+ PLA"
       },
       {
@@ -288,7 +288,7 @@ window.BATTLE_DATA = (function () {
           "dateLabel": "1949年4月21日",
           "title_zh": "突破江防",
           "title_en": "Breaching the Line",
-          "narration_zh": "解放军在中下游多处突破国民党长江防线，向纵深挺进。",
+          "narration_zh": "解放軍在中下游多處突破國民党長江防線，向縱深挺進。",
           "narration_en": "PLA breaches the Nationalist Yangtze line at multiple points.",
           "focus": [
               "pla_crossing",
@@ -314,9 +314,9 @@ window.BATTLE_DATA = (function () {
               "orbit": 0.65
           },
           "dateLabel": "1949年4月23日",
-          "title_zh": "占领南京",
+          "title_zh": "佔領南京",
           "title_en": "Nanjing Captured",
-          "narration_zh": "第三野战军占领南京，总统府升起红旗。",
+          "narration_zh": "第三野戰軍佔領南京，總統府升起紅旗。",
           "narration_en": "Third Field Army enters Nanjing — the red flag rises over the presidential palace.",
           "focus": [
               "pla_crossing"
@@ -324,7 +324,7 @@ window.BATTLE_DATA = (function () {
           "side": "pla",
           "commanders": [
               {
-                  "zh": "陈毅",
+                  "zh": "陳毅",
                   "en": "Chen Yi"
               }
           ],
@@ -346,7 +346,7 @@ window.BATTLE_DATA = (function () {
           "dateLabel": "1949年5月",
           "title_zh": "解放上海",
           "title_en": "Shanghai Liberated",
-          "narration_zh": "第三野战军发起沪战役，上海宣告解放。",
+          "narration_zh": "第三野戰軍發起滬戰役，上海宣告解放。",
           "narration_en": "The Shanghai campaign ends — China's largest city is liberated.",
           "focus": [
               "pla_crossing"
@@ -369,23 +369,23 @@ window.BATTLE_DATA = (function () {
               "orbit": 0.65
           },
           "dateLabel": "1949年",
-          "title_zh": "大陆统治终结",
+          "title_zh": "進入南京",
           "title_en": "End of Mainland Rule",
-          "narration_zh": "渡江战役宣告中华民国政府在大陆的统治终结，全国解放进入最后阶段。",
+          "narration_zh": "1949年4月23日，解放軍進入南京。",
           "narration_en": "The Yangtze crossing ends ROC rule on the mainland.",
           "focus": [],
           "side": "pla",
           "commanders": [],
           "assets": [],
-          "forces_zh": "四月二十三占南京",
+          "forces_zh": "四月二十三佔南京",
           "forces_en": "Nanjing taken 23 April"
       }
   ];
   const outro =   {
       "title_zh": "渡江戰役",
       "title_en": "CROSSING THE YANGTZE",
-      "narration_zh": "本戰役為 DSE 中史重要考點：解放軍渡過長江攻佔南京，宣告中華民國政府在大陸的統治終結",
-      "narration_en": "A key HKDSE Chinese History topic.",
+      "narration_zh": "1949年4月23日，解放軍進入南京。",
+      "narration_en": "The People's Liberation Army entered Nanjing on 23 April 1949.",
       "cam": {
           "lng": 118.78,
           "lat": 32.06,
@@ -395,5 +395,19 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       }
   };
-  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };
+  const lesson =   {
+      "junior": "初中：看1949年4月20日至23日解放軍渡江並進入南京。",
+      "senior": "高中：用江防被突破說明南京易手，評價口號不要寫進經過。",
+      "fact": "1949年4月20日夜起，第二、第三野戰軍等在湖口至江陰一線渡過長江。4月23日解放軍進入南京。國軍長江防線多處被突破，湯恩伯部未能把解放軍擋在北岸。",
+      "sources": "《中國人民解放軍戰史》渡江戰役章、國軍京滬杭警備總部戰鬥詳報的整理、第二與第三野戰軍渡江作戰總結。不以網絡百科為唯一依據。",
+      "evaluation": "江防失敗，是因為戰線長、艦船和炮火擋不住多點渡江，國軍指揮也不統一。說「大陸統治終結」，是對其後政局的評價，不是4月23日進入南京這一件事的全部內容。",
+      "judgment": {
+          "ask": "哪一則說法更能解釋南京為什麼在1949年4月易手？",
+          "a": "因為一句統治終結的口號，所以長江不必被突破。",
+          "b": "解放軍在千里戰線上渡過長江，江防被突破，4月23日進入南京。",
+          "better": "b",
+          "why": "南京易手發生在渡江之後。江防失敗才能說明這一天為什麼進得了城。"
+      }
+  };
+  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, lesson, END_DAY };
 })();

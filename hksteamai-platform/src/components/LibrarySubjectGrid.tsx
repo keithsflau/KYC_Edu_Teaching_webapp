@@ -8,7 +8,9 @@ import type {
 } from "@/lib/curriculum";
 import {
   countModulesByGrade,
+  gradeBucket,
   gradeGroupLabel,
+  isPathGuessedGrade,
   sortGradeKeys,
   subjectLabel,
   subjectLabelEn,
@@ -46,12 +48,23 @@ export function LibrarySubjectGrid({
           .filter((x) => x.mods.length > 0)
       : [];
 
-  function subjectHref(subject: string) {
+  function subjectHref(subject: string, grade?: string) {
     const q = new URLSearchParams();
     q.set("section", section);
     q.set("subject", subject);
+    if (grade) q.set("grade", grade);
     if (systemQuery && systemQuery !== "hk") q.set("system", systemQuery);
     return `/library?${q.toString()}`;
+  }
+
+  function gradeLinkLabel(mods: ModuleTags[], grade: string) {
+    const base = gradeGroupLabel(grade, system, locale);
+    const inGrade = mods.filter((m) => gradeBucket(m, system) === grade);
+    const allGuessed =
+      inGrade.length > 0 && inGrade.every((m) => isPathGuessedGrade(m));
+    return allGuessed
+      ? `${t(locale, "librarySuggestedGrade")} · ${base}`
+      : base;
   }
 
   return (
@@ -91,6 +104,7 @@ export function LibrarySubjectGrid({
             ? "中學科目"
             : "Secondary subjects"}
       </h2>
+      <p className="library-grade-note">{t(locale, "libraryGradeHonesty")}</p>
 
       <div className="library-subject-grid">
         {subjects.map((subject) => {
@@ -112,10 +126,12 @@ export function LibrarySubjectGrid({
               <ul className="library-grade-breakdown">
                 {grades.map((g) => (
                   <li key={g}>
-                    <span className="library-grade-name">
-                      {gradeGroupLabel(g, system, locale)}
-                    </span>
-                    <span>{gradeCounts[g]}</span>
+                    <Link href={subjectHref(subject, g)}>
+                      <span className="library-grade-name">
+                        {gradeLinkLabel(mods, g)}
+                      </span>
+                      <span>{gradeCounts[g]}</span>
+                    </Link>
                   </li>
                 ))}
               </ul>

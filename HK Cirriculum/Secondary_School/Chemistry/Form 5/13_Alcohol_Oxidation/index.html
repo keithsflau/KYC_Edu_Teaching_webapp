@@ -2,79 +2,242 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>13_Alcohol_Oxidation</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="../../../../common/babel-react-classic.js"></script>
-  <script src="../../../../common/learn-from-zero.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
-  <style>
-    body { font-family: "IBM Plex Sans", system-ui, sans-serif; background-color: #f8fafc; color: #0f172a; min-height: 100vh; }
-  </style>
-  <!-- NCS i18n fleet kit (auto-injected) -->
-  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
-  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
-  <style data-ncs-kit="fleet-bridge">
-    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
-    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
-      display: none !important;
-    }
-  </style>
-  <script data-ncs-kit="fleet-init">
-  (function () {
-    function hideLegacyToggles() {
-      document.body.classList.add("ncs-fleet-mounted");
-      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
-        var label = (btn.textContent || "").trim();
-        if (label === "EN" || label === "\u4E2D") {
-          btn.classList.add("ncs-hide-when-ncs-fleet");
-        }
-      });
-      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
-        el.classList.add("ncs-hide-when-ncs-fleet");
-      });
-    }
-    function boot() {
-      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
-      window.NcsI18n.init({
-        chromePath: "../../../../_shared/ncs-chrome.json",
-        target: document.body
-      }).then(hideLegacyToggles);
-    }
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", boot);
-    } else {
-      boot();
-    }
-  })();
-  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>醇的氧化 | Alcohol oxidation</title>
+  <link rel="stylesheet" href="../../lesson.css" />
 </head>
-<body>
-  <div id="root"></div>
-  <script type="text/babel" data-presets="react-classic">
-    const { useState } = React;
-    
-    function App() {
-      return (
-        <div className="max-w-4xl mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-4">13 Alcohol Oxidation</h1>
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 mb-8 text-center">
-            <div className="w-full h-64 bg-slate-100 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 mb-4">
-              <span className="text-slate-400 font-medium">[ Interactive Canvas Placeholder ]</span>
-            </div>
-            <p className="text-slate-500">This interactive lab is currently under development.</p>
-          </div>
-          <LearnFromZero />
-        </div>
-      );
-    }
-    
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+<body data-chem-silent="1">
+  <section class="chem-learn" data-chem-entry="1">
+    <h2>學習目標</h2>
+    <ul>
+      <li>按羥基碳上的氫數目分辨一級、二級、三級醇。</li>
+      <li>判斷氧化後的有機產物類別。</li>
+      <li>知道橙變綠這個觀察屬於哪一類醇。本頁沒有氧化劑配法。</li>
+    </ul>
+    <h2>常見錯因</h2>
+    <ul>
+      <li>把二級醇的產物當成醛。</li>
+      <li>以為三級醇也會使重鉻酸鹽由橙變綠。</li>
+      <li>把酮和羧酸的來源對調。</li>
+    </ul>
+    <p id="chem-feedback" role="status">選一種醇，再選產物類別和顏色觀察。</p>
+  </section>
+  <main>
+    <div class="panel">
+      <h1>醇的氧化類別</h1>
+      <p class="muted">只辨認產物類別和課堂觀察：酸化重鉻酸鹽由橙變綠。不寫氧化劑的配製、加熱或分離步驟。「停在醛」和「持續到羧酸」是概念階段，不是實驗指示。</p>
+      <h2>操作</h2>
+      <canvas id="plot" width="640" height="140" aria-label="醇的級別"></canvas>
+      <label for="alcohol">醇</label>
+      <select id="alcohol">
+        <option value="ethanol">乙醇（一級）</option>
+        <option value="ipa">丙-2-醇（二級）</option>
+        <option value="tba">2-甲基丙-2-醇（三級）</option>
+      </select>
+      <p id="detail" class="muted"></p>
+      <div id="stage-block">
+      <p class="muted">概念階段（只用於一級醇）</p>
+      <div class="row" id="stages">
+        <button type="button" class="on" data-stage="aldehyde">停在醛</button>
+        <button type="button" class="alt" data-stage="acid">持續到羧酸</button>
+      </div>
+      </div>
+      <p class="muted">有機產物類別</p>
+      <div class="row" id="products">
+        <button type="button" class="alt" data-product="醛">醛</button>
+        <button type="button" class="alt" data-product="酮">酮</button>
+        <button type="button" class="alt" data-product="羧酸">羧酸</button>
+        <button type="button" class="alt" data-product="不氧化">通常不氧化</button>
+      </div>
+      <p class="muted">酸化重鉻酸鹽的顏色</p>
+      <div class="row" id="colors">
+        <button type="button" class="alt" data-color="green">由橙變綠</button>
+        <button type="button" class="alt" data-color="stay">橙色維持</button>
+      </div>
+      <div class="row">
+        <button type="button" id="check">核對</button>
+      </div>
+      <p><a href="../index.html">返回中五</a></p>
+    </div>
+  </main>
+  <script src="../../lesson-kit.js"></script>
+  <script>
+    (function () {
+      var ctx = null;
+      var finished = false;
+      var stage = "aldehyde";
+      var product = "";
+      var color = "";
+      var done = { ethanol: false, ipa: false, tba: false };
+      var alcohols = {
+        ethanol: { name: "乙醇", cls: "一級醇", detail: "羥基碳上有兩個氫。", primary: true, color: "green" },
+        ipa: { name: "丙-2-醇", cls: "二級醇", detail: "羥基碳上只有一個氫。", primary: false, color: "green", product: "酮" },
+        tba: { name: "2-甲基丙-2-醇", cls: "三級醇", detail: "羥基碳上沒有氫。", primary: false, color: "stay", product: "不氧化" }
+      };
+
+      function ac() {
+        var Ctor = window.AudioContext || window.webkitAudioContext;
+        if (!Ctor) return null;
+        if (!ctx) ctx = new Ctor();
+        if (ctx.state === "suspended") ctx.resume();
+        return ctx;
+      }
+
+      function tone(freq, delay, dur) {
+        var c = ac();
+        if (!c) return;
+        var start = c.currentTime + delay;
+        var o = c.createOscillator();
+        var g = c.createGain();
+        o.type = "sine";
+        o.frequency.setValueAtTime(freq, start);
+        g.gain.setValueAtTime(0.0001, start);
+        g.gain.exponentialRampToValueAtTime(0.04, start + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+        o.connect(g);
+        g.connect(c.destination);
+        o.start(start);
+        o.stop(start + dur + 0.02);
+      }
+
+      function playOk() {
+        tone(523.25, 0, 0.12);
+        tone(659.25, 0.14, 0.16);
+      }
+
+      function playNo() {
+        tone(196, 0, 0.22);
+      }
+
+      function playDone() {
+        tone(523.25, 0, 0.1);
+        tone(659.25, 0.12, 0.1);
+        tone(783.99, 0.24, 0.2);
+      }
+
+      function say(msg, kind) {
+        var el = document.getElementById("chem-feedback");
+        if (el) el.textContent = msg;
+        if (kind === "ok") playOk();
+        else if (kind === "no") playNo();
+        else if (kind === "done") playDone();
+      }
+
+      function mark(container, btn) {
+        var buttons = container.querySelectorAll("button");
+        for (var i = 0; i < buttons.length; i++) buttons[i].className = "alt";
+        if (btn) btn.className = "on";
+      }
+
+      function current() {
+        return alcohols[document.getElementById("alcohol").value];
+      }
+
+      function wantProduct(item) {
+        if (!item.primary) return item.product;
+        return stage === "acid" ? "羧酸" : "醛";
+      }
+
+      function productWhy(item, picked) {
+        var want = wantProduct(item);
+        if (picked === want) return "";
+        if (item.primary && stage === "aldehyde" && picked === "羧酸") {
+          return "錯因：羧酸是持續氧化後的產物。這一題的概念階段停在醛。本頁不寫分離步驟。";
+        }
+        if (item.primary && stage === "acid" && picked === "醛") {
+          return "錯因：醛只是中途概念。你選了持續氧化，一級醇會到羧酸。";
+        }
+        if (item.primary) {
+          return "錯因：乙醇是一級醇，可以被氧化。酮來自二級醇，通常不氧化的是三級醇。";
+        }
+        if (item.product === "酮") {
+          return "錯因：丙-2-醇是二級醇，產物是酮。醛來自一級醇，它也不會再到羧酸。";
+        }
+        return "錯因：三級醇的羥基碳沒有氫，中學課程裡通常不氧化，不會得到醛、酮或羧酸。";
+      }
+
+      function colorWhy(item, picked) {
+        if (picked === item.color) return "";
+        if (item.color === "green") {
+          return "錯因：一級和二級醇會被氧化，酸化重鉻酸鹽由橙變綠。橙色維持是三級醇的觀察。這裡不寫配製或加熱方法。";
+        }
+        return "錯因：三級醇通常沒有氧化，所以橙色維持。橙變綠表示醇被氧化了。";
+      }
+
+      function paint() {
+        var item = current();
+        var canvas = document.getElementById("plot");
+        var g = canvas.getContext("2d");
+        g.fillStyle = "#0f172a";
+        g.fillRect(0, 0, canvas.width, canvas.height);
+        g.fillStyle = "#e2e8f0";
+        g.font = "20px sans-serif";
+        g.fillText(item.name + " · " + item.cls, 24, 58);
+        g.font = "16px sans-serif";
+        g.fillText(item.detail, 24, 96);
+        document.getElementById("detail").textContent = item.name + "是" + item.cls + "。" + item.detail;
+        document.getElementById("stage-block").style.display = item.primary ? "block" : "none";
+      }
+
+      function clearPicks() {
+        product = "";
+        color = "";
+        mark(document.getElementById("products"), null);
+        mark(document.getElementById("colors"), null);
+      }
+
+      document.getElementById("alcohol").onchange = function () {
+        clearPicks();
+        paint();
+      };
+      document.getElementById("stages").onclick = function (e) {
+        var btn = e.target.closest ? e.target.closest("button") : null;
+        if (!btn || !current().primary) return;
+        stage = btn.getAttribute("data-stage");
+        mark(document.getElementById("stages"), btn);
+      };
+      document.getElementById("products").onclick = function (e) {
+        var btn = e.target.closest ? e.target.closest("button") : null;
+        if (!btn) return;
+        product = btn.getAttribute("data-product");
+        mark(document.getElementById("products"), btn);
+      };
+      document.getElementById("colors").onclick = function (e) {
+        var btn = e.target.closest ? e.target.closest("button") : null;
+        if (!btn) return;
+        color = btn.getAttribute("data-color");
+        mark(document.getElementById("colors"), btn);
+      };
+      document.getElementById("check").onclick = function () {
+        var item = current();
+        var key = document.getElementById("alcohol").value;
+        if (!product || !color) {
+          say("錯因：先選產物類別，再選顏色觀察。", "no");
+          return;
+        }
+        var whyP = productWhy(item, product);
+        if (whyP) {
+          say(whyP, "no");
+          return;
+        }
+        var whyC = colorWhy(item, color);
+        if (whyC) {
+          say(whyC, "no");
+          return;
+        }
+        done[key] = true;
+        var colorText = item.color === "green" ? "由橙變綠" : "橙色維持";
+        var msg = "正確。" + item.name + "的產物類別是" + wantProduct(item) + "，顏色是" + colorText + "。";
+        if (done.ethanol && done.ipa && done.tba && !finished) {
+          finished = true;
+          say(msg + " 三種醇都判斷對過。", "done");
+          return;
+        }
+        say(msg, "ok");
+      };
+      paint();
+    })();
   </script>
-<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+  <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 </body>
 </html>

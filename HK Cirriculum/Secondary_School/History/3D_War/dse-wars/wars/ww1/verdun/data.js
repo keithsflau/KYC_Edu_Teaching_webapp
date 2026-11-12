@@ -180,7 +180,7 @@ window.BATTLE_DATA = (function () {
       }
   ];
   const notes =   {
-      "summary": "凡爾登戰役 — DSE 西史小戰役地圖。",
+      "summary": "凡爾登戰役 — 課題地圖。兵力與路線為示意。",
       "caveats": [
           "本圖僅覆蓋該戰役核心區域；戰線與兵力為教學示意。",
           "衛星影像為現代地形。"
@@ -335,11 +335,33 @@ window.BATTLE_DATA = (function () {
           "forces_en": "700,000+ casualties"
       }
   ];
-  const outro =   {
+    const sourceTask = {
+    "cite": "貝當守凡爾登時的口號，1916年",
+    "excerpt": "「他們將不會通過。」",
+    "ask": "這句話顯示法軍指揮的立場是什麼？",
+    "options": [
+      {
+        "t": "準備放棄默茲河東岸，縮短防線。",
+        "ok": false,
+        "why": "口號要求守住，不是撤退。"
+      },
+      {
+        "t": "以守住要塞為優先，接受長期消耗。",
+        "ok": true,
+        "why": "它說明法軍把威爾登當作不可失的象徵，雙方因而在同一地帶持續對耗。"
+      },
+      {
+        "t": "宣布德國已在2月被趕出要塞。",
+        "ok": false,
+        "why": "2月德軍曾經突入。口號是堅持，不是宣布戰役已經結束。"
+      }
+    ]
+  };
+const outro =   {
       "title_zh": "凡爾登戰役",
       "title_en": "VERDUN",
-      "narration_zh": "本戰役為 DSE 西史重要考點。",
-      "narration_en": "A key DSE Western History topic.",
+      "narration_zh": "1916年2月至12月，法軍守住要塞，雙方都在同一地帶長期對耗。",
+      "narration_en": "From February to December 1916 France held the fortress while both sides bled.",
       "cam": {
           "lng": 5.38,
           "lat": 49.16,
@@ -349,5 +371,5 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       }
   };
-  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };
+  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, sourceTask, END_DAY };
 })();

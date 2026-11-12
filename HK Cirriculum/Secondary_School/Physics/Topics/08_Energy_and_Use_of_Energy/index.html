@@ -2,33 +2,76 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Energy and Use of Energy | 能量和能源的使用</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>能源使用 | Energy use</title>
   <style>
-    body { margin:0; font-family:"Segoe UI","Noto Sans HK",sans-serif; background:#f8fafc; color:#0f172a; }
-    header { padding:2rem 1.25rem 1rem; max-width:1100px; margin:0 auto; }
-    a.back, a.xlink { color:#2563eb; text-decoration:none; font-size:.9rem; }
-    a.xlink { margin-right:1rem; }
-    h1 { margin:.6rem 0; }
-    .topic-nav { max-width:1100px; margin:0 auto 1rem; padding:0 1.25rem; font-size:.85rem; }
-    .empty { max-width:1100px; margin:0 auto; padding:2rem 1.25rem; background:#fff; border:1px dashed #cbd5e1; border-radius:14px; text-align:center; color:#64748b; }
+    body { margin: 0; font-family: "Segoe UI", "Noto Sans HK", sans-serif; background: #f8fafc; color: #0f172a; }
+    main { max-width: 720px; margin: 0 auto; padding: 1.2rem; }
+    a { color: #2563eb; }
+    .bar { height: 28px; background: #e2e8f0; border-radius: 999px; overflow: hidden; }
+    .fill { height: 100%; background: #f59e0b; width: 40%; }
+    button { min-height: 44px; border: 0; border-radius: 10px; background: #d97706; color: #fff; font-weight: 700; padding: 0 1rem; }
+    label { display: block; margin: 0.8rem 0; font-weight: 600; }
   </style>
 </head>
 <body>
-  <header>
-    <a class="back" href="../index.html">← All topics</a>
-    <a class="back" href="../../index.html">Physics hub</a>
-    <h1>VIII · Energy and Use of Energy · 能量和能源的使用</h1>
-    <p>HKDSE elective · labs coming soon</p>
-  </header>
-  <nav class="topic-nav" aria-label="Related topics">
-    <a class="xlink" href="../04_Electricity_and_Magnetism/index.html">← Electricity &amp; Magnetism</a>
-    <a class="xlink" href="../02_Force_and_Motion/index.html">Work, Energy &amp; Power</a>
-  </nav>
-  <div class="empty">
-    <p>No labs in this topic yet. Check back after the next content sprint.</p>
-    <p class="text-sm">暫未有此課題的互動實驗。</p>
-  </div>
+  <main>
+    <p><a href="../index.html">← 課題</a> · <a href="../../Form%206/index.html">中六</a></p>
+    <h1>用電能 · Energy and power</h1>
+    <p>電能 E（kWh）= 功率 P（kW）× 時間 t（h）= P（W）× t（h）/ 1000。先拖動，再核對。</p>
+    <div class="bar"><div class="fill" id="fill"></div></div>
+    <label>功率 P = <span id="pLab">100</span> W
+      <input id="p" type="range" min="20" max="2000" step="10" value="100" />
+    </label>
+    <label>時間 t = <span id="tLab">2</span> h
+      <input id="t" type="range" min="0.5" max="10" step="0.5" value="2" />
+    </label>
+    <button id="check" type="button">核對 Check</button>
+    <p id="out">能量先不顯示。</p>
+  </main>
+  <script>
+    (function () {
+      var p = document.getElementById("p");
+      var t = document.getElementById("t");
+      var out = document.getElementById("out");
+      var revealed = false;
+
+      function energyKwh() {
+        return (parseFloat(p.value) * parseFloat(t.value)) / 1000;
+      }
+
+      function paint() {
+        document.getElementById("pLab").textContent = p.value;
+        document.getElementById("tLab").textContent = t.value;
+        document.getElementById("fill").style.width = Math.min(100, parseFloat(p.value) / 20) + "%";
+        if (!revealed) out.textContent = "能量先不顯示。拖動功率或時間後按核對。";
+      }
+
+      function beep() {
+        try {
+          var c = beep.c || (beep.c = new (window.AudioContext || window.webkitAudioContext)());
+          if (c.state === "suspended") c.resume();
+          var o = c.createOscillator(), g = c.createGain();
+          o.frequency.value = 660;
+          g.gain.setValueAtTime(0.0001, c.currentTime);
+          g.gain.exponentialRampToValueAtTime(0.06, c.currentTime + 0.02);
+          g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + 0.16);
+          o.connect(g); g.connect(c.destination);
+          o.start(); o.stop(c.currentTime + 0.18);
+        } catch (e) {}
+      }
+
+      p.addEventListener("input", function () { revealed = false; paint(); });
+      t.addEventListener("input", function () { revealed = false; paint(); });
+      document.getElementById("check").addEventListener("click", function () {
+        revealed = true;
+        var e = energyKwh();
+        out.textContent = "E = " + p.value + " W × " + t.value + " h / 1000 = " + e.toFixed(3) + " kWh = " + (e * 3.6e6).toExponential(3) + " J。";
+        beep();
+      });
+      paint();
+    })();
+  </script>
   <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 </body>
 </html>

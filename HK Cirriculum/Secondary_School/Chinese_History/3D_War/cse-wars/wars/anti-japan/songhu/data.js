@@ -248,13 +248,13 @@ window.BATTLE_DATA = (function () {
           "衛星影像為現代地形，非歷史時期地貌。",
           "河川、海域水面為教學示意，按史實位置裁切顯示。"
       ],
-      "sources": "DSE 中史課程、中國通史、維基百科（交叉查證）。"
+      "sources": "中國第二歷史檔案館編《抗日戰爭正面戰場》、日本防衛廳防衛研修所戰史叢書《中國方面海軍作戰》及上海作戰相關檔、謝晉元部四行倉庫人數的戰史整理。不以網絡百科為唯一依據。"
   };
   const analysis =   {
-      "military": "八一三事变后日军进攻上海，国军以德械师与中央军精锐在闸北、江湾逐屋血战；战斗持续三月，日军增兵至二十余万，国军有序撤退。",
-      "leaders": "淞滬會戰中，蔣介石調集精銳主力在上海主動反擊，意圖引日軍東移、爭取國際調停並展示抗戰決心。日軍華中方面軍司令松井石根以海空優勢強登，逐屋爭奪，戰事持續三個月。國軍傷亡慘重但遲滯日軍西進，粉碎日本「三月亡華」企圖，卻也消耗大量中央軍，影響後續徐州、武漢防線部署。",
-      "nationalPower": "日本海军可自长江口投送兵力；国军装备与训练优于其他战场，但海空劣势、伤亡惨重。",
-      "impact": "戰況慘烈，成功粉碎日軍「三月亡華」的戰略企圖。"
+      "military": "1937年8月13日日軍進攻上海，國軍在閘北、江灣等地作戰約三個月，其後撤出上海。長期相持的通說在武漢會戰之後。",
+      "leaders": "蔣介石把精銳調到上海，松井石根指揮日軍進攻，戰事自1937年8月13日打到11月。謝晉元部固守四行倉庫，紀念話語稱八百壯士，和研究所述約一個營的人數不是同一件事。國軍其後撤出上海。長期相持的通說在武漢會戰之後。",
+      "nationalPower": "日軍可從長江口增兵。國軍在上海的裝備較齊，但海空處於劣勢，傷亡很大。",
+      "impact": "上海作戰約三個月後國軍撤出。日軍仍繼續進攻南京、徐州、武漢。"
   };
   const storyboard =   [
       {
@@ -269,9 +269,9 @@ window.BATTLE_DATA = (function () {
               "orbit": 0.65
           },
           "dateLabel": "1937年8月13日",
-          "title_zh": "淞沪开战",
+          "title_zh": "淞滬開戰",
           "title_en": "Battle of Shanghai Opens",
-          "narration_zh": "日军进攻上海，国军第八十七、八十八师在闸北反击，淞沪会战爆发。",
+          "narration_zh": "日軍進攻上海，國軍在閘北反擊，淞滬會戰開始。",
           "narration_en": "Japan attacks Shanghai — Nationalist divisions counter-attack in Zhabei.",
           "focus": [
               "kmt_songhu"
@@ -279,16 +279,16 @@ window.BATTLE_DATA = (function () {
           "side": "kmt",
           "commanders": [
               {
-                  "zh": "张治中",
+                  "zh": "張治中",
                   "en": "Zhang Zhizhong"
               },
               {
-                  "zh": "蒋介石",
+                  "zh": "蔣介石",
                   "en": "Chiang Kai-shek"
               }
           ],
           "assets": [],
-          "forces_zh": "国军约七十万",
+          "forces_zh": "國軍約七十萬",
           "forces_en": "~700,000 ROC troops"
       },
       {
@@ -303,9 +303,9 @@ window.BATTLE_DATA = (function () {
               "orbit": 0.65
           },
           "dateLabel": "1937年8–9月",
-          "title_zh": "闸北江湾血战",
+          "title_zh": "閘北江灣血戰",
           "title_en": "Bloody Fighting in Zhabei",
-          "narration_zh": "双方逐屋争夺，国军反复冲锋，伤亡极大。",
+          "narration_zh": "雙方逐屋爭奪，國軍反覆衝鋒，傷亡極大。",
           "narration_en": "House-to-house fighting — both sides suffer enormous casualties.",
           "focus": [
               "kmt_songhu",
@@ -331,9 +331,9 @@ window.BATTLE_DATA = (function () {
               "orbit": 0.65
           },
           "dateLabel": "1937年10月",
-          "title_zh": "四行仓库",
+          "title_zh": "四行倉庫",
           "title_en": "Sihang Warehouse",
-          "narration_zh": "谢晋元率八百壮士坚守四行仓库，振奋全国士气。",
+          "narration_zh": "謝晉元率部固守四行倉庫。該部約一個營，研究多記四百餘人；「八百壯士」是紀念數字，要和實際人數分開。",
           "narration_en": "Xie Jinyuan's '800 Heroes' hold Sihang Warehouse — a morale boost nationwide.",
           "focus": [
               "kmt_songhu"
@@ -341,7 +341,7 @@ window.BATTLE_DATA = (function () {
           "side": "kmt",
           "commanders": [
               {
-                  "zh": "谢晋元",
+                  "zh": "謝晉元",
                   "en": "Xie Jinyuan"
               }
           ],
@@ -361,9 +361,9 @@ window.BATTLE_DATA = (function () {
               "orbit": 0.65
           },
           "dateLabel": "1937年11月",
-          "title_zh": "日军增兵",
+          "title_zh": "日軍增兵",
           "title_en": "Japanese Reinforcements",
-          "narration_zh": "日军自杭州湾登陆，国军侧翼受威胁，被迫后撤。",
+          "narration_zh": "日軍自杭州灣登陸，國軍側翼受威脅，被迫後撤。",
           "narration_en": "Japanese land at Hangzhou Bay — the Nationalist flank is turned.",
           "focus": [
               "japan_songhu"
@@ -389,23 +389,23 @@ window.BATTLE_DATA = (function () {
               "orbit": 0.65
           },
           "dateLabel": "1937年11月",
-          "title_zh": "粉碎三月亡华",
+          "title_zh": "撤出上海",
           "title_en": "Three-Month Plan Shattered",
-          "narration_zh": "淞沪鏖战三月，日军速胜计划破产，战事转入长期相持。",
+          "narration_zh": "淞滬作戰約三個月後國軍撤出上海。日軍仍進攻南京、徐州、武漢。長期相持的通說在武漢會戰之後，不能寫成戰後立即相持。",
           "narration_en": "Three months of fighting shatters Japan's plan for a quick victory.",
           "focus": [],
           "side": "both",
           "commanders": [],
           "assets": [],
-          "forces_zh": "鏖战三个月",
+          "forces_zh": "鏖戰三個月",
           "forces_en": "Three months of battle"
       }
   ];
   const outro =   {
       "title_zh": "淞滬會戰",
       "title_en": "BATTLE OF SHANGHAI",
-      "narration_zh": "本戰役為 DSE 中史重要考點：戰況慘烈，成功粉碎日軍「三月亡華」的戰略企圖",
-      "narration_en": "A key HKDSE Chinese History topic.",
+      "narration_zh": "1937年11月國軍撤出上海。長期相持的通說在武漢會戰之後。",
+      "narration_en": "Nationalist forces left Shanghai in November 1937. The stalemate is usually dated after the Wuhan campaign.",
       "cam": {
           "lng": 121.47,
           "lat": 31.23,
@@ -415,5 +415,19 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       }
   };
-  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };
+  const lesson =   {
+      "junior": "初中：看1937年8月至11月上海作戰，以及國軍撤出上海。",
+      "senior": "高中：八百壯士是紀念數字；長期相持的通說在武漢會戰之後。",
+      "fact": "1937年8月13日起，日軍進攻上海，國軍在閘北、江灣等地逐屋作戰，戰事持續約三個月。10月，謝晉元率部固守四行倉庫。該部約一個營，研究多記四百餘人；「八百壯士」是後來的紀念數字，要和實際人數分開。11月日軍在杭州灣登陸，國軍撤出上海。其後仍有南京、徐州、武漢等會戰。長期相持的通說在1938年10月武漢會戰之後，不能寫成淞滬一結束就進入相持。",
+      "sources": "中國第二歷史檔案館編《抗日戰爭正面戰場》、日本防衛廳防衛研修所戰史叢書《中國方面海軍作戰》及上海作戰相關檔、謝晉元部四行倉庫人數的戰史整理。不以網絡百科為唯一依據。",
+      "evaluation": "上海一仗拖住日軍約三個月，日軍原想速勝的日程被打亂。這是對戰役效果的一種解釋。它沒有使戰爭在11月進入長期相持，因為日軍接著仍在進攻。紀念意義上的「八百」也不能代替營級人數。",
+      "judgment": {
+          "ask": "哪一則說法更能解釋淞滬會戰結束時的戰局？",
+          "a": "八百壯士守住上海，戰後中國立刻進入長期相持，日軍不再進攻。",
+          "b": "國軍在上海打了約三個月後撤出；日軍仍繼續進攻，相持通說要到武漢會戰之後。",
+          "better": "b",
+          "why": "四行倉庫是局部堅守，八百是紀念數字。淞滬結束後還有南京、徐州、武漢。把相持寫在淞滬戰後，日期不對。"
+      }
+  };
+  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, lesson, END_DAY };
 })();

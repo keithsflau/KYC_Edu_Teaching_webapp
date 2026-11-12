@@ -241,12 +241,12 @@ window.BATTLE_DATA = (function () {
           "衛星影像為現代地形，非歷史時期地貌。",
           "河川、海域水面為教學示意，按史實位置裁切顯示。"
       ],
-      "sources": "DSE 中史課程、中國通史、維基百科（交叉查證）。"
+      "sources": "《三國志·武帝紀》《三國志·袁紹傳》、裴松之注引《曹瞞傳》《資治通鑑》卷六十三至六十四。不以網絡百科為唯一依據。"
   };
   const analysis =   {
       "military": "袁紹率十餘萬大軍南下，曹操以少數精銳在官渡對峙；許攸投曹，曹操奇襲烏巢焚燒袁軍糧草，袁軍潰散。",
-      "leaders": "袁紹擁有四州、兵多將廣，卻優柔寡斷，未能趁曹操後方空虛時一舉擊滅，反以持久消耗戰略拖垮自身聯盟。曹操兵少糧絕，卻敢於奇襲烏巢，焚毀袁軍糧草，以少勝多扭轉戰局。此戰後曹操統一北方，袁紹集團瓦解，三國鼎立格局由此成形。",
-      "nationalPower": "袁紹據有河北四州，兵多糧足但指揮分裂；曹操挟天子以令诸侯，精兵善戰、謀士雲集。",
+      "leaders": "袁紹擁有四州、兵多將廣，卻優柔寡斷，未能趁曹操後方空虛時一舉擊滅，反以持久消耗戰略拖垮自身聯盟。曹操兵少糧絕，卻敢於奇襲烏巢，焚毀袁軍糧草，以少勝多扭轉戰局。官渡之後曹操取得對袁紹的決定性優勢，其後逐步佔有河北。三國稱帝要到220至229年，不是官渡當日形成。",
+      "nationalPower": "袁紹據有河北四州，兵多糧足但指揮分裂；曹操挾天子以令諸侯，精兵善戰、謀士雲集。",
       "impact": "曹操以少勝多擊敗袁紹，奠定統一北方基礎。"
   };
   const storyboard =   [
@@ -380,7 +380,7 @@ window.BATTLE_DATA = (function () {
           "dateLabel": "200年後",
           "title_zh": "北方統一",
           "title_en": "North Unification Begins",
-          "narration_zh": "官渡之勝使曹操統一河北，奠定曹魏基業。",
+          "narration_zh": "200年烏巢糧草被焚後袁紹軍潰退。曹操其後用數年取得河北。曹丕稱帝是220年的事。",
           "narration_en": "Guandu opens the path to unifying the north — the foundation of Cao Wei.",
           "focus": [
               "cao_guandu"
@@ -400,8 +400,8 @@ window.BATTLE_DATA = (function () {
   const outro =   {
       "title_zh": "官渡之戰",
       "title_en": "BATTLE OF GUANDU",
-      "narration_zh": "本戰役為 DSE 中史重要考點：曹操以少勝多擊敗袁紹，奠定統一北方基礎",
-      "narration_en": "A key HKDSE Chinese History topic.",
+      "narration_zh": "200年烏巢糧草被焚後，袁紹軍潰退。曹操其後逐步取得河北。",
+      "narration_en": "After the Wuchao depot burned in 200, Yuan Shao's army retreated. Cao Cao took the north over the following years.",
       "cam": {
           "lng": 113.9,
           "lat": 34.7,
@@ -411,5 +411,19 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       }
   };
-  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };
+  const lesson =   {
+      "junior": "初中：看200年官渡如何由對峙轉為襲擊烏巢。",
+      "senior": "高中：用糧草和指揮分裂解釋袁紹為什麼敗，不把官渡說成三國已經鼎立。",
+      "fact": "200年，袁紹率大軍南下，與曹操在官渡相持數月。曹操兵少糧絀。袁紹謀士許攸投曹操，曹操夜襲烏巢，燒掉袁軍糧草，袁軍潰散。曹操其後用數年取得河北。曹丕稱帝是220年的事。",
+      "sources": "《三國志·武帝紀》《三國志·袁紹傳》、裴松之注引《曹瞞傳》《資治通鑑》卷六十三至六十四。不以網絡百科為唯一依據。",
+      "evaluation": "袁紹兵多糧足，但指揮分裂，糧草被燒後士氣撐不住。曹操以少勝多，關鍵在烏巢，不是因為官渡當日已經形成三國。",
+      "judgment": {
+          "ask": "哪一則說法更能解釋官渡的勝敗？",
+          "a": "曹操人多勢眾，又已在官渡確立三國鼎立，所以袁紹必敗。",
+          "b": "曹操兵少，但燒掉烏巢糧草，袁紹陣營指揮分裂，大軍失去補給後潰散。",
+          "better": "b",
+          "why": "官渡的轉折是糧草被襲和袁紹內部不協。三國稱帝要到220至229年，不能用來解釋200年這一仗。"
+      }
+  };
+  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, lesson, END_DAY };
 })();

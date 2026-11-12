@@ -84,6 +84,7 @@
     }
   })();
   </script>
+  <script src="../../../../../../common/sample-ui-kit.js"></script>
 </head>
 
   <body class="p-4 flex justify-center min-h-screen">
@@ -162,7 +163,55 @@ const Icon = ({
 
 };
 
+
+  const ncsApi = window.NcsI18n || {
+    useLang: function () {
+      return { isZh: true, t: function (zh, en) { return zh || en; } };
+    },
+    LangSwitcher: function () { return null; }
+  };
+  const useLang = ncsApi.useLang;
+  const LangSwitcher = ncsApi.LangSwitcher;
+
+const HKDSE_QUIZ = [
+  { q: "A AND gate output is 1 only when…", qZh: "AND 閘輸出 1 僅當…", opts: ["All inputs are 1 全部輸入為 1", "Any input is 1 任一輸入為 1", "Inputs differ 輸入不同", "Never 從不"], a: "All inputs are 1 全部輸入為 1", hint: "AND = intersection of 1s." },
+  { q: "NOT A when A=1 gives…", qZh: "NOT A 當 A=1 得…", opts: ["0", "1", "A", "Undefined 未定"], a: "0", hint: "NOT inverts the bit." },
+  { q: "(A OR B) AND NOT C with A=1,B=0,C=0 equals…", qZh: "(A OR B) AND NOT C，A=1,B=0,C=0 等於…", opts: ["1", "0", "C", "Undefined"], a: "1", hint: "(1 OR 0)=1; NOT 0=1; 1 AND 1=1." },
+];
+
+function QuizPanel({ accent, isZh, t }) {
+  const [qi, setQi] = useState(0);
+  const [picked, setPicked] = useState(null);
+  const [score, setScore] = useState(0);
+  const item = HKDSE_QUIZ[qi];
+  function choose(opt) {
+    if (picked) return;
+    setPicked(opt);
+    const ok = opt === item.a;
+    if (window.HkcSampleUI) HkcSampleUI.toast({ type: ok ? "success" : "error", zh: ok ? "正確！" : "再想想", en: ok ? "Correct!" : "Try again", isZh: isZh, duration: 2000 });
+    if (ok) setScore(s => s + 1);
+  }
+  function next() {
+    if (qi + 1 >= HKDSE_QUIZ.length) return;
+    setQi(qi + 1); setPicked(null);
+  }
+  const done = qi === HKDSE_QUIZ.length - 1 && picked;
+  return React.createElement("div", { className: "bg-slate-800 p-6 rounded-xl border border-slate-700 space-y-4" },
+    React.createElement("h3", { className: "text-white font-bold flex items-center gap-2" },
+      React.createElement(Icon, { name: "GraduationCap" }), " ", t("HKDSE 挑戰測驗", "HKDSE Challenge")),
+    React.createElement("p", { className: "text-slate-400 text-sm" }, t("第", "Q"), " ", qi + 1, "/", HKDSE_QUIZ.length, " · ", t("得分", "Score"), " ", score),
+    React.createElement("p", { className: "text-white font-semibold" }, t(item.qZh, item.q)),
+    React.createElement("div", { className: "grid gap-2" }, item.opts.map(o =>
+      React.createElement("button", { key: o, type: "button", onClick: () => choose(o),
+        className: "text-left px-4 py-3 rounded-xl min-h-[48px] font-mono text-sm " + (picked === o ? (o === item.a ? "bg-emerald-900/50 border-2 border-emerald-500 text-emerald-200" : "bg-rose-900/50 border-2 border-rose-500") : "bg-slate-900 border border-slate-600 hover:bg-slate-700 text-slate-200") }, o))),
+    picked && picked !== item.a && React.createElement("p", { className: "text-amber-300 text-sm" }, t("提示：", "Hint: "), item.hint),
+    picked && React.createElement("button", { type: "button", onClick: next, className: "px-4 py-2 rounded-lg font-bold text-white min-h-[44px]", style: { background: accent || "#8b5cf6" } }, done ? t("測驗完成", "Quiz complete") : t("下一題 →", "Next →"))
+  );
+}
+
 const App = () => {
+  const { isZh, t } = useLang();
+  const [tab, setTab] = useState("sim");
 
   const [expr, setExpr] = useState("(A AND B) OR C");
 
@@ -253,9 +302,25 @@ const App = () => {
   const isValid = truthTable.every(r => r.res !== null);
 
   return /*#__PURE__*/React.createElement("div", {
-
     className: "w-full space-y-6"
-
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-wrap justify-between items-center gap-2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-2 flex-wrap"
+  }, /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    onClick: () => setTab("sim"),
+    className: "px-4 py-2 rounded-lg font-bold min-h-[44px] " + (tab === "sim" ? "bg-purple-600 text-white shadow-lg" : "bg-slate-700 text-slate-300 hover:bg-slate-600")
+  }, t("模擬器", "Simulator")), /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    onClick: () => setTab("quiz"),
+    className: "px-4 py-2 rounded-lg font-bold min-h-[44px] " + (tab === "quiz" ? "bg-purple-600 text-white shadow-lg" : "bg-slate-700 text-slate-300 hover:bg-slate-600")
+  }, t("DSE 測驗", "HKDSE Quiz"))), /*#__PURE__*/React.createElement(LangSwitcher, { dark: true })), tab === "quiz" ? /*#__PURE__*/React.createElement(QuizPanel, {
+    accent: "#a855f7",
+    isZh: isZh,
+    t: t
+  }) : /*#__PURE__*/React.createElement("div", {
+    className: "w-full space-y-6"
   }, /*#__PURE__*/React.createElement("header", {
 
     className: "bg-slate-800 p-6 rounded-2xl border border-slate-700 flex items-center gap-4"
@@ -276,11 +341,11 @@ const App = () => {
 
     className: "text-2xl font-bold text-white"
 
-  }, "Logic Gates Evaluator"), /*#__PURE__*/React.createElement("p", {
+  }, t("邏輯閘評估器", "Logic Gates Evaluator"), /*#__PURE__*/React.createElement("p", {
 
     className: "text-slate-400 text-sm"
 
-  }, "HKDSE ICT Ch3 - Truth Tables"))), /*#__PURE__*/React.createElement("div", {
+  }, t("HKDSE ICT 第三章 · 真值表", "HKDSE ICT Ch3 - Truth Tables"))), /*#__PURE__*/React.createElement("div", {
 
     className: "bg-slate-800 p-6 rounded-xl border border-slate-700"
 
@@ -288,7 +353,7 @@ const App = () => {
 
     className: "block text-purple-400 font-bold mb-2"
 
-  }, "Boolean Expression"), /*#__PURE__*/React.createElement("div", {
+  }, t("布林表達式", "Boolean Expression")), /*#__PURE__*/React.createElement("div", {
 
     className: "flex gap-2 mb-4"
 
@@ -436,7 +501,7 @@ const App = () => {
 
     className: `p-2 font-bold ${row.res ? "text-green-400" : "text-slate-500"} bg-slate-900/30`
 
-  }, row.res === null ? "Err" : row.res ? 1 : 0)))))))));
+  }, row.res === null ? "Err" : row.res ? 1 : 0))))))))))));
 
 };
 
@@ -447,6 +512,53 @@ root.render(/*#__PURE__*/React.createElement(App, null));
 </script>
 
   <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+
+
+<aside data-ict-lesson-frame data-ict-topic="sys" lang="zh-HK">
+  <h2>學習目標</h2>
+  <p data-ict-goal>AND 閘要全部輸入為 1，輸出才是 1。OR 閘任一輸入為 1，輸出就是 1。NOT 閘把 0 和 1 對調。</p>
+  <p data-ict-task>你要做的一件事：AND 閘在甚麼時候輸出 1？</p>
+         <div data-ict-choices><button type="button" data-ict-choice="0">全部輸入都是 1</button><button type="button" data-ict-choice="1">任一輸入是 1</button><button type="button" data-ict-choice="2">全部輸入都是 0</button><button type="button" data-ict-choice="3">輸入不同就一定是 1</button></div>
+         <p data-ict-feedback hidden></p>
+         <script type="application/json" data-ict-json>{"answer":0,"ok":"正確。AND 是「全部都要成立」。","bad":"那是 OR 或其他情況。AND 要每個輸入都是 1。"}</script>
+         <script>
+         (function () {
+           var root = document.currentScript.previousElementSibling.parentElement;
+           var data = JSON.parse(root.querySelector("[data-ict-json]").textContent);
+           function tone(ok) {
+             var AC = window.AudioContext || window.webkitAudioContext;
+             if (!AC) return;
+             var ctx = new AC();
+             var o = ctx.createOscillator();
+             var g = ctx.createGain();
+             o.type = "sine";
+             o.frequency.value = ok ? 880 : 196;
+             o.connect(g); g.connect(ctx.destination);
+             var t = ctx.currentTime;
+             g.gain.setValueAtTime(0.0001, t);
+             g.gain.exponentialRampToValueAtTime(0.07, t + 0.02);
+             g.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
+             o.start(t); o.stop(t + 0.2);
+           }
+           root.querySelectorAll("[data-ict-choice]").forEach(function (btn) {
+             btn.addEventListener("click", function () {
+               var ok = Number(btn.getAttribute("data-ict-choice")) === data.answer;
+               var fb = root.querySelector("[data-ict-feedback]");
+               fb.hidden = false;
+               fb.textContent = ok ? data.ok : data.bad;
+               tone(ok);
+             });
+           });
+         })();
+         </script>
+</aside>
+<style>
+  [data-ict-lesson-frame]{position:fixed;right:12px;bottom:12px;z-index:99999;width:min(340px,calc(100vw - 24px));max-height:46vh;overflow:auto;background:#fff;color:#0f172a;border:1px solid #bae6fd;border-radius:14px;padding:12px 14px;box-shadow:0 10px 30px rgba(15,23,42,.18);font-family:"Microsoft JhengHei","PingFang TC",sans-serif;text-align:left}
+  [data-ict-lesson-frame] h2{margin:0 0 6px;font-size:15px}
+  [data-ict-lesson-frame] p{margin:0 0 8px;font-size:13px;line-height:1.45}
+  [data-ict-lesson-frame] button{display:block;width:100%;margin:4px 0;padding:6px 8px;border-radius:8px;border:1px solid #67e8f9;background:#f0fdfa;cursor:pointer;text-align:left}
+  [data-ict-feedback]{background:#ecfeff;border-radius:8px;padding:6px 8px}
+</style>
 </body>
 
 </html>

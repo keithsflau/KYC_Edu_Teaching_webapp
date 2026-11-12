@@ -2,79 +2,439 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>01_Distillation</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="../../../../common/babel-react-classic.js"></script>
-  <script src="../../../../common/learn-from-zero.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>簡單蒸餾 | 沸點與冷凝</title>
+  <link rel="stylesheet" href="../../lesson.css" />
   <style>
-    body { font-family: "IBM Plex Sans", system-ui, sans-serif; background-color: #f8fafc; color: #0f172a; min-height: 100vh; }
+    a { color: #0f766e; }
+    canvas { cursor: pointer; }
   </style>
-  <!-- NCS i18n fleet kit (auto-injected) -->
-  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
-  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
-  <style data-ncs-kit="fleet-bridge">
-    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
-    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
-      display: none !important;
-    }
-  </style>
-  <script data-ncs-kit="fleet-init">
-  (function () {
-    function hideLegacyToggles() {
-      document.body.classList.add("ncs-fleet-mounted");
-      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
-        var label = (btn.textContent || "").trim();
-        if (label === "EN" || label === "\u4E2D") {
-          btn.classList.add("ncs-hide-when-ncs-fleet");
-        }
-      });
-      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
-        el.classList.add("ncs-hide-when-ncs-fleet");
-      });
-    }
-    function boot() {
-      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
-      window.NcsI18n.init({
-        chromePath: "../../../../_shared/ncs-chrome.json",
-        target: document.body
-      }).then(hideLegacyToggles);
-    }
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", boot);
-    } else {
-      boot();
-    }
-  })();
-  </script>
 </head>
 <body>
-  <div id="root"></div>
-  <script type="text/babel" data-presets="react-classic">
-    const { useState } = React;
-    
-    function App() {
-      return (
-        <div className="max-w-4xl mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-4">01 Distillation</h1>
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 mb-8 text-center">
-            <div className="w-full h-64 bg-slate-100 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 mb-4">
-              <span className="text-slate-400 font-medium">[ Interactive Canvas Placeholder ]</span>
-            </div>
-            <p className="text-slate-500">This interactive lab is currently under development.</p>
-          </div>
-          <LearnFromZero />
-        </div>
-      );
+  <section class="chem-learn" data-chem-entry="1">
+    <h2>學習目標</h2>
+    <ul>
+      <li>指出沸點較低的物質先變成蒸氣。</li>
+      <li>說明蒸氣在冷凝器遇冷變回液體。</li>
+      <li>分辨簡單蒸餾和分餾各適合哪種混合物。</li>
+    </ul>
+    <p id="chem-feedback" role="status">移動溫度，再判斷誰在汽化、冷凝在哪裡、該用哪種蒸餾。</p>
+  </section>
+  <main>
+    <div class="panel">
+      <h1>簡單蒸餾：沸點與冷凝</h1>
+      <p class="muted">這是模型，圖上沒有火焰，也不能當成加熱步驟。原油的分餾塔在另一課：塔頂較冷、塔底較熱，碳鏈愈長沸點愈高。本課只有一個冷凝器，不列出那些餾分。</p>
+      <p class="muted"><a href="../index.html">返回中四化學</a></p>
+      <canvas id="still" width="720" height="300" aria-label="簡單蒸餾模型，可點燒瓶、冷凝器或接收瓶"></canvas>
+      <label for="temp">模型溫度 <span id="temp-v">40</span>°C（普通大氣壓）</label>
+      <input id="temp" type="range" min="20" max="180" step="1" value="40" />
+      <div class="row" id="mixes">
+        <button type="button" data-mix="brine">食鹽水</button>
+        <button type="button" data-mix="far">甲 50°C 與乙 150°C</button>
+        <button type="button" data-mix="close">丙 70°C 與丁 81°C</button>
+      </div>
+      <p id="readout" class="muted" aria-live="polite"></p>
+      <p class="muted">現在大量汽化的是？</p>
+      <div class="row" id="who"></div>
+      <p class="muted">冷凝發生在哪裡？可以點圖，也可以按按鈕。</p>
+      <div class="row" id="place">
+        <button type="button" data-place="flask">燒瓶</button>
+        <button type="button" data-place="condenser">冷凝器</button>
+        <button type="button" data-place="receiver">接收瓶</button>
+      </div>
+      <p class="muted">這杯混合物該用哪種方法？</p>
+      <div class="row" id="method">
+        <button type="button" data-simple="yes">簡單蒸餾</button>
+        <button type="button" data-simple="no">分餾</button>
+      </div>
+    </div>
+  </main>
+  <script src="../../lesson-kit.js"></script>
+  <script>
+    var MIXES = [
+      {
+        id: "brine",
+        simple: true,
+        blurb: "食鹽水：看水會不會變成蒸氣，氯化鈉會不會跟著走。",
+        yesSimple: "正確。食鹽水用簡單蒸餾：水變成蒸氣，在冷凝器變回液體，氯化鈉留在燒瓶。不必用分餾塔。",
+        noColumn: "分餾用來分開沸點接近的多種液體，例如原油。氯化鈉不會跟水一起汽化。分餾塔在另一課：塔頂較冷、塔底較熱，碳鏈愈長沸點愈高。這支冷凝器不是那座塔。",
+        parts: [
+          { name: "水", bp: 100 },
+          { name: "氯化鈉", bp: null }
+        ]
+      },
+      {
+        id: "far",
+        simple: true,
+        blurb: "甲 50°C、乙 150°C，相差 100°C。升溫，看誰先變成蒸氣。",
+        yesSimple: "正確。甲 50°C、乙 150°C，相差 100°C。乙還沒沸騰時，冷凝後主要得到甲。這是簡單蒸餾，不是原油分餾塔。",
+        noColumn: "兩個沸點相差 100°C，一個冷凝器就夠，不必用分餾柱。分餾塔用來分沸點接近的混合物，例如原油；塔頂較冷、塔底較熱，碳鏈愈長沸點愈高。",
+        parts: [
+          { name: "液體甲", bp: 50 },
+          { name: "液體乙", bp: 150 }
+        ]
+      },
+      {
+        id: "close",
+        simple: false,
+        blurb: "丙 70°C、丁 81°C，只差 11°C。先不要假設一個冷凝器就分得開。",
+        yesColumn: "正確。丙 70°C、丁 81°C，只差 11°C。蒸氣不純，要靠分餾柱裡反覆的汽化和冷凝。原油分餾塔在另一課：塔頂較冷、塔底較熱，碳鏈愈長沸點愈高。本模型只有一個冷凝器。",
+        noSimple: "一個冷凝器分不開沸點只差 11°C 的兩種液體。簡單蒸餾適合相差大的情況，例如 50°C 對 150°C，或水和不揮發的氯化鈉。",
+        parts: [
+          { name: "液體丙", bp: 70 },
+          { name: "液體丁", bp: 81 }
+        ]
+      }
+    ];
+
+    var mixId = "brine";
+    var temp = 40;
+    var clock = 0;
+    var canvas = document.getElementById("still");
+    var ctx = canvas.getContext("2d");
+
+    function say(msg, kind) {
+      if (window.ChemLesson) window.ChemLesson.say(msg, kind);
     }
-    
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+
+    function buttonOf(target) {
+      var node = target;
+      while (node && node !== document) {
+        if (node.tagName === "BUTTON") return node;
+        node = node.parentNode;
+      }
+      return null;
+    }
+
+    function current() {
+      for (var i = 0; i < MIXES.length; i++) {
+        if (MIXES[i].id === mixId) return MIXES[i];
+      }
+      return MIXES[0];
+    }
+
+    function whoState(m, T) {
+      var vols = [];
+      for (var i = 0; i < m.parts.length; i++) {
+        if (m.parts[i].bp != null) vols.push(m.parts[i]);
+      }
+      vols.sort(function (a, b) { return a.bp - b.bp; });
+      var hot = 0;
+      for (var j = 0; j < vols.length; j++) {
+        if (T >= vols[j].bp) hot += 1;
+      }
+      if (hot === 0) return "none";
+      if (vols.length > 1 && hot === vols.length) return "both";
+      return "low";
+    }
+
+    function paintMixButtons() {
+      var buttons = document.querySelectorAll("#mixes button");
+      for (var i = 0; i < buttons.length; i++) {
+        buttons[i].className = buttons[i].getAttribute("data-mix") === mixId ? "on" : "";
+      }
+    }
+
+    function paintWhoButtons() {
+      var m = current();
+      var low = m.parts[0];
+      var high = m.parts[1];
+      var items = [
+        ["none", "都還沒有大量汽化"],
+        ["low", "只有" + low.name + "大量汽化"],
+        ["high", "只有" + high.name + "大量汽化"],
+        ["both", low.name + "和" + high.name + "都大量汽化"]
+      ];
+      var box = document.getElementById("who");
+      box.innerHTML = "";
+      items.forEach(function (item) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.setAttribute("data-who", item[0]);
+        b.textContent = item[1];
+        box.appendChild(b);
+      });
+    }
+
+    function readout(m, T) {
+      var low = m.parts[0];
+      var high = m.parts[1];
+      var state = whoState(m, T);
+      var bits = ["模型溫度 " + T + "°C。"];
+      bits.push(low.name + "沸點 " + low.bp + "°C：" + (T >= low.bp ? "正在汽化。" : "仍是液體。"));
+      if (high.bp == null) {
+        bits.push(high.name + "不揮發，留在燒瓶。");
+      } else {
+        bits.push(high.name + "沸點 " + high.bp + "°C：" + (T >= high.bp ? "正在汽化。" : "仍是液體。"));
+      }
+      if (state === "none") {
+        bits.push("沒有大量蒸氣經過冷凝器。");
+      } else if (state === "low") {
+        bits.push("蒸氣進入冷凝器，遇冷變回液體，再進接收瓶。");
+        if (!m.simple) bits.push("兩種沸點太接近，蒸氣並不純。");
+        else if (high.bp != null) bits.push("這段溫度接收到的主要是" + low.name + "。");
+        else bits.push("接收到的是水，不是氯化鈉。");
+      } else {
+        bits.push("兩種都在汽化，接收瓶裡是混合物。");
+      }
+      return bits.join("");
+    }
+
+    function paintReadout() {
+      document.getElementById("readout").textContent = readout(current(), temp);
+    }
+
+    function okWho(m, T, state) {
+      var low = m.parts[0];
+      var high = m.parts[1];
+      if (state === "none") {
+        return "正確。現在 " + T + "°C，低於" + low.name + "的沸點 " + low.bp + "°C，還沒有大量蒸氣。";
+      }
+      if (state === "low" && high.bp == null) {
+        return "正確。水到了 100°C，變成蒸氣。氯化鈉不揮發，留在燒瓶。蒸氣要在冷凝器才變回液體。";
+      }
+      if (state === "low" && m.simple) {
+        return "正確。" + low.name + "沸點較低，先變成蒸氣。" + high.name + "要到 " + high.bp + "°C。相差大，這段溫度冷凝後主要得到" + low.name + "。";
+      }
+      if (state === "low") {
+        return "正確。" + low.name + "先到沸點，" + high.name + "尚未大量汽化。可是兩者只差 " + (high.bp - low.bp) + "°C，蒸氣裡仍混有不少" + high.name + "，一個冷凝器得不到純的" + low.name + "。";
+      }
+      return "正確。溫度到了 " + T + "°C，" + low.name + "和" + high.name + "都會大量汽化，接收到的是混合物。";
+    }
+
+    function badWho(m, T, guess) {
+      var low = m.parts[0];
+      var high = m.parts[1];
+      var state = whoState(m, T);
+      if (guess === "high" && high.bp == null) {
+        return "氯化鈉在這個模型溫度下不揮發，不會變成蒸氣。會離開燒瓶的是水，而且要到 100°C。";
+      }
+      if (guess === "high") {
+        return high.name + "的沸點是 " + high.bp + "°C，高於" + low.name + "的 " + low.bp + "°C。沸點較高的不會單獨先汽化；溫度夠它汽化時，" + low.name + "一定也在汽化。";
+      }
+      if (guess === "none") {
+        if (state === "both") return "現在 " + T + "°C，兩種沸點都到了，兩種都在汽化。";
+        return "現在 " + T + "°C，已經到達" + low.name + "的沸點 " + low.bp + "°C，有物質正在汽化。";
+      }
+      if (guess === "low" && state === "none") {
+        return low.name + "的沸點是 " + low.bp + "°C。現在只有 " + T + "°C，它仍然是液體。";
+      }
+      if (guess === "low" && state === "both") {
+        return "溫度也過了" + high.name + "的沸點 " + high.bp + "°C，不是只有" + low.name + "。";
+      }
+      if (guess === "both" && high.bp == null) {
+        if (T >= low.bp) return "水會變成蒸氣，氯化鈉不會一起變成蒸氣。不是兩種都大量汽化。";
+        return "水還沒到 100°C。氯化鈉在這個溫度下也不會變成蒸氣。";
+      }
+      if (guess === "both" && state === "none") {
+        return "現在 " + T + "°C，低於" + low.name + "的 " + low.bp + "°C，也低於" + high.name + "的 " + high.bp + "°C。兩種都還沒有大量汽化。";
+      }
+      if (guess === "both") {
+        return "只有" + low.name + "到了沸點。" + high.name + "要到 " + high.bp + "°C，現在仍是液體。";
+      }
+      return "再看現在的溫度和兩個沸點。";
+    }
+
+    function judgeWho(guess) {
+      var m = current();
+      var state = whoState(m, temp);
+      if (guess === state) say(okWho(m, temp, state), "ok");
+      else say(badWho(m, temp, guess), "no");
+    }
+
+    function judgePlace(place) {
+      var vapor = whoState(current(), temp) !== "none";
+      if (!vapor) {
+        say("現在溫度還沒到較低的沸點，沒有大量蒸氣。冷凝是蒸氣遇冷變回液體，要等蒸氣進入冷凝器。", "no");
+        return;
+      }
+      if (place === "condenser") {
+        say("正確。冷凝器是低溫的一段。蒸氣走到這裡，降到沸點以下，變回液體，再進接收瓶。燒瓶那一側負責汽化。", "ok");
+      } else if (place === "flask") {
+        say("燒瓶裡的液體到了沸點會汽化，不是在這裡冷凝。冷凝要冷卻，發生在冷凝器。", "no");
+      } else {
+        say("接收瓶盛的是已經變回液體的餾出物。蒸氣變成液體的位置是冷凝器。", "no");
+      }
+    }
+
+    function judgeMethod(wantSimple) {
+      var m = current();
+      var ok = wantSimple === m.simple;
+      var msg;
+      if (ok && m.simple) msg = m.yesSimple;
+      else if (ok) msg = m.yesColumn;
+      else if (m.simple) msg = m.noColumn;
+      else msg = m.noSimple;
+      say(msg, ok ? "ok" : "no");
+    }
+
+    function pointOnPath(u) {
+      var path = [
+        { x: 150, y: 168 },
+        { x: 150, y: 104 },
+        { x: 270, y: 104 },
+        { x: 500, y: 104 },
+        { x: 600, y: 168 }
+      ];
+      var segs = path.length - 1;
+      var x = u * segs;
+      var i = Math.min(segs - 1, Math.floor(x));
+      var f = x - i;
+      return {
+        x: path[i].x + (path[i + 1].x - path[i].x) * f,
+        y: path[i].y + (path[i + 1].y - path[i].y) * f
+      };
+    }
+
+    function draw() {
+      var m = current();
+      var state = whoState(m, temp);
+      var w = canvas.width;
+      var h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = "#0f172a";
+      ctx.fillRect(0, 0, w, h);
+      ctx.font = "14px 'Segoe UI', 'Microsoft JhengHei', sans-serif";
+
+      ctx.fillStyle = "#075985";
+      ctx.fillRect(248, 78, 268, 52);
+      ctx.fillStyle = "#e2e8f0";
+      ctx.fillRect(260, 96, 244, 16);
+      ctx.strokeStyle = "#64748b";
+      ctx.lineWidth = 8;
+      ctx.beginPath();
+      ctx.moveTo(164, 104);
+      ctx.lineTo(260, 104);
+      ctx.moveTo(504, 104);
+      ctx.lineTo(600, 168);
+      ctx.stroke();
+
+      var liquid = m.id === "brine" ? "#0284c7" : (m.id === "far" ? "#6366f1" : "#d97706");
+      ctx.save();
+      ctx.beginPath();
+      ctx.ellipse(150, 190, 74, 58, 0, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.fillStyle = liquid;
+      ctx.fillRect(70, 188, 170, 80);
+      if (m.id === "brine") {
+        ctx.fillStyle = "#f8fafc";
+        var grains = [[128, 214], [150, 224], [172, 210], [138, 232], [166, 230]];
+        for (var g = 0; g < grains.length; g++) {
+          ctx.fillRect(grains[g][0], grains[g][1], 7, 5);
+        }
+      }
+      if (state !== "none") {
+        ctx.strokeStyle = "rgba(255,255,255,.75)";
+        for (var b = 0; b < 4; b++) {
+          var by = 214 - ((clock / 280 + b * 18) % 36);
+          ctx.beginPath();
+          ctx.arc(122 + b * 16, by, 3, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      }
+      ctx.restore();
+
+      ctx.strokeStyle = "#94a3b8";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.ellipse(150, 190, 78, 62, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.strokeRect(136, 78, 28, 78);
+
+      ctx.strokeStyle = "#f8fafc";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(150, 40);
+      ctx.lineTo(150, 150);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(150, 154, 6, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = "#f8fafc";
+      ctx.fillText(temp + "°C", 162, 56);
+
+      ctx.beginPath();
+      ctx.ellipse(610, 214, 52, 40, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      if (state !== "none") {
+        ctx.save();
+        ctx.beginPath();
+        ctx.ellipse(610, 214, 48, 36, 0, 0, Math.PI * 2);
+        ctx.clip();
+        ctx.fillStyle = liquid;
+        ctx.fillRect(555, 214, 110, 50);
+        ctx.restore();
+      }
+
+      if (state !== "none") {
+        ctx.fillStyle = state === "both" ? "#fde68a" : "#bae6fd";
+        for (var i = 0; i < 8; i++) {
+          var p = pointOnPath((clock / 4000 + i / 8) % 1);
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      ctx.fillStyle = "#e2e8f0";
+      ctx.fillText("燒瓶", 128, 286);
+      ctx.fillText("冷凝器", 350, 72);
+      ctx.fillText("接收瓶", 578, 286);
+    }
+
+    function frame(ts) {
+      clock = ts || 0;
+      draw();
+      requestAnimationFrame(frame);
+    }
+
+    document.getElementById("temp").oninput = function () {
+      temp = Number(this.value);
+      document.getElementById("temp-v").textContent = String(temp);
+      paintReadout();
+    };
+
+    document.getElementById("mixes").onclick = function (e) {
+      var btn = buttonOf(e.target);
+      if (!btn) return;
+      mixId = btn.getAttribute("data-mix");
+      paintMixButtons();
+      paintWhoButtons();
+      paintReadout();
+      say(current().blurb);
+    };
+
+    document.getElementById("who").onclick = function (e) {
+      var btn = buttonOf(e.target);
+      if (!btn) return;
+      judgeWho(btn.getAttribute("data-who"));
+    };
+
+    document.getElementById("place").onclick = function (e) {
+      var btn = buttonOf(e.target);
+      if (!btn) return;
+      judgePlace(btn.getAttribute("data-place"));
+    };
+
+    document.getElementById("method").onclick = function (e) {
+      var btn = buttonOf(e.target);
+      if (!btn) return;
+      judgeMethod(btn.getAttribute("data-simple") === "yes");
+    };
+
+    canvas.addEventListener("click", function (ev) {
+      var rect = canvas.getBoundingClientRect();
+      var x = (ev.clientX - rect.left) * (canvas.width / rect.width);
+      if (x < 230) judgePlace("flask");
+      else if (x < 540) judgePlace("condenser");
+      else judgePlace("receiver");
+    });
+
+    paintMixButtons();
+    paintWhoButtons();
+    paintReadout();
+    requestAnimationFrame(frame);
   </script>
-<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+  <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 </body>
 </html>

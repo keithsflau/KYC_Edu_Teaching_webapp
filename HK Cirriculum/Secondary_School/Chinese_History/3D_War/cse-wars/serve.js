@@ -51,9 +51,18 @@ function pipeTile(up, res, kind) {
 }
 
 function send502(res) {
-  res.writeHead(502);
+  if (res.writableEnded) return;
+  if (res.headersSent) {
+    try { res.end(); } catch (e) {}
+    return;
+  }
+  res.writeHead(502, { "Content-Type": "text/plain; charset=utf-8" });
   res.end("Tile upstream failed");
 }
+
+process.on("uncaughtException", (err) => {
+  console.error("伺服器攔截未處理錯誤，繼續提供頁面：", err && err.message ? err.message : err);
+});
 
 http
   .createServer((req, res) => {

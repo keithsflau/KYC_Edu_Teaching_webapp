@@ -72,16 +72,17 @@
 <body class="text-white overflow-hidden">
     <div class="absolute top-4 flex justify-between w-full px-8">
         <div class="bg-black/50 backdrop-blur px-6 py-3 rounded-xl">
-            <div class="text-sm">得分</div>
+            <div id="ui-score-label" class="text-sm">得分</div>
             <div class="text-3xl font-bold" id="score">0</div>
         </div>
         <div class="bg-black/50 backdrop-blur px-6 py-3 rounded-xl">
-            <div class="text-sm">準確度</div>
+            <div id="ui-accuracy-label" class="text-sm">準確度</div>
             <div class="text-3xl font-bold text-green-400" id="accuracy">100%</div>
         </div>
     </div>
     <div class="absolute top-32 left-1/2 transform -translate-x-1/2 w-full max-w-2xl px-8">
         <div class="bg-slate-800/80 backdrop-blur p-6 rounded-2xl">
+            <p class="text-sm text-center text-pink-100 mb-3">標點落到黃框時按下去，會發出對應的聲音。</p>
             <div class="text-xl mb-4 text-center leading-relaxed" id="sentence">今天天氣真好我們一起去公園玩吧</div>
         </div>
     </div>
@@ -99,6 +100,100 @@
             class="bg-gradient-to-r from-red-600 to-orange-600 px-12 py-6 rounded-2xl text-4xl font-bold">！</button>
     </div>
     <div id="notes-container" class="absolute inset-0 pointer-events-none"></div>
+    <script>
+        var APP_STRINGS = {
+            zh: { pageTitle: "標點符號節奏 Punctuation Rhythm", scoreLabel: "得分", accuracyLabel: "準確度", complete: "完成！得分: " },
+            en: { pageTitle: "Punctuation Rhythm", scoreLabel: "Score", accuracyLabel: "Accuracy", complete: "Complete! Score: " },
+            ne: { pageTitle: "Punctuation Rhythm", scoreLabel: "Score", accuracyLabel: "Accuracy", complete: "Done! Score: " },
+            ur: { pageTitle: "Punctuation Rhythm", scoreLabel: "Score", accuracyLabel: "Accuracy", complete: "Done! Score: " },
+            tl: { pageTitle: "Punctuation Rhythm", scoreLabel: "Score", accuracyLabel: "Accuracy", complete: "Tapos! Score: " },
+            hi: { pageTitle: "Punctuation Rhythm", scoreLabel: "Score", accuracyLabel: "Accuracy", complete: "पूरा! Score: " }
+        };
+        function uiLangBucket() { if (window.NcsI18n && window.NcsI18n.getLang) { var l = window.NcsI18n.getLang(); return l === "zh-Hant" ? "zh" : l; } return "zh"; }
+        function ui(k) { if (window.NcsI18n && window.NcsI18n.isInitialized && window.NcsI18n.isInitialized()) { var t = window.NcsI18n.t(k); if (t != null && t !== k) return t; } var b = uiLangBucket(); if (APP_STRINGS[b] && APP_STRINGS[b][k]) return APP_STRINGS[b][k]; if (b !== "en" && APP_STRINGS.en && APP_STRINGS.en[k]) return APP_STRINGS.en[k]; return (APP_STRINGS.zh && APP_STRINGS.zh[k]) || k; }
+        function wireI18n() { if (window.NcsI18n && window.NcsI18n.registerStrings) window.NcsI18n.registerStrings(APP_STRINGS); applyUI(); if (window.NcsI18n && window.NcsI18n.onChange) window.NcsI18n.onChange(applyUI); document.addEventListener("hksteam-ncs-lang-change", applyUI); document.addEventListener("ncs-lang-change", applyUI); }
+        function applyUI() { document.title = ui("pageTitle"); document.getElementById("ui-score-label").textContent = ui("scoreLabel"); document.getElementById("ui-accuracy-label").textContent = ui("accuracyLabel"); }
+        function whenNcsReady(fn) { var t = 0, timer = setInterval(function () { if ((window.NcsI18n && window.NcsI18n.isInitialized && window.NcsI18n.isInitialized()) || ++t > 120) { clearInterval(timer); fn(); } }, 50); }
+        var SENTENCES = [
+            { text: "今天天氣真好我們一起去公園玩吧", punctuated: "今天天氣真好，我們一起去公園玩吧。", beats: [{ time: 2, mark: "，" }, { time: 4.2, mark: "。" }] },
+            { text: "外面下雨了你還要出去嗎", punctuated: "外面下雨了，你還要出去嗎？", beats: [{ time: 2, mark: "，" }, { time: 4, mark: "？" }] },
+            { text: "快點跑", punctuated: "快點跑！", beats: [{ time: 1.6, mark: "！" }] },
+            { text: "這本書很有趣你也應該看看", punctuated: "這本書很有趣，你也應該看看。", beats: [{ time: 2, mark: "，" }, { time: 4.2, mark: "。" }] }
+        ];
+        var STATE = { score: 0, hits: 0, total: 0, currentSentence: 0, startTime: 0 };
+        function loadSentence() {
+            if (STATE.currentSentence >= SENTENCES.length) { alert(ui("complete") + STATE.score); location.reload(); return; }
+            var s = SENTENCES[STATE.currentSentence];
+            document.getElementById('sentence').textContent = s.text;
+            STATE.startTime = Date.now();
+            s.beats.forEach(function (b) { setTimeout(function () { spawnNote(b.mark); }, b.time * 1000); });
+        }
+        function spawnNote(mark) {
+            var note = document.createElement('div');
+            note.className = 'beat-note absolute left-1/2 transform -translate-x-1/2 text-6xl font-bold';
+            note.textContent = mark; note.dataset.mark = mark;
+            document.getElementById('notes-container').appendChild(note);
+            STATE.total++;
+            playAudio("tick");
+            setTimeout(function () { if (note.parentNode) { note.remove(); updateAccuracy(); } }, 3000);
+        }
+        function hit(mark) {
+            var notes = document.querySelectorAll('.beat-note'), found = false;
+            notes.forEach(function (n) {
+                if (n.dataset.mark === mark && !found) {
+                    var rect = n.getBoundingClientRect();
+                    var zoneRect = document.getElementById('beat-zone').getBoundingClientRect();
+                    if (Math.abs(rect.top - zoneRect.top) < 100) {
+                        n.remove(); STATE.score += 100; STATE.hits++;
+                        document.getElementById('score').textContent = STATE.score;
+                        updateAccuracy(); found = true;
+                        playAudio(mark);
+                    }
+                }
+            });
+            if (!found) playAudio("miss");
+        }
+        function playAudio(mark) {
+            try {
+                var AC = window.AudioContext || window.webkitAudioContext;
+                if (!AC) return;
+                if (!playAudio.ctx) playAudio.ctx = new AC();
+                var ctx = playAudio.ctx;
+                var sound = function () {
+                    var now = ctx.currentTime;
+                    var freq = 440;
+                    var dur = 0.12;
+                    var wave = "sine";
+                    if (mark === "，") { freq = 494; dur = 0.1; }
+                    else if (mark === "。") { freq = 330; dur = 0.2; }
+                    else if (mark === "？") { freq = 740; dur = 0.16; wave = "triangle"; }
+                    else if (mark === "！") { freq = 880; dur = 0.14; wave = "square"; }
+                    else if (mark === "tick") { freq = 220; dur = 0.05; }
+                    else if (mark === "miss") { freq = 110; dur = 0.16; wave = "sawtooth"; }
+                    var osc = ctx.createOscillator();
+                    var amp = ctx.createGain();
+                    osc.type = wave;
+                    osc.frequency.setValueAtTime(freq, now);
+                    if (mark === "？") osc.frequency.exponentialRampToValueAtTime(980, now + dur);
+                    amp.gain.setValueAtTime(0.0001, now);
+                    amp.gain.exponentialRampToValueAtTime(mark === "tick" ? 0.06 : 0.2, now + 0.015);
+                    amp.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+                    osc.connect(amp);
+                    amp.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + dur + 0.02);
+                };
+                if (ctx.state === "suspended") ctx.resume().then(sound);
+                else sound();
+            } catch (err) {
+                return;
+            }
+        }
+        function updateAccuracy() {
+            document.getElementById('accuracy').textContent = STATE.total > 0 ? Math.round(STATE.hits / STATE.total * 100) + '%' : '100%';
+        }
+        whenNcsReady(function () { wireI18n(); loadSentence(); setInterval(function () { if (document.querySelectorAll('.beat-note').length === 0 && STATE.total > 0) { var done = SENTENCES[STATE.currentSentence]; if (done && done.punctuated) document.getElementById('sentence').textContent = done.punctuated; STATE.currentSentence++; STATE.total = 0; STATE.hits = 0; setTimeout(loadSentence, 1200); } }, 500); });
+    </script>
     <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 </body>
 

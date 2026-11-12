@@ -2,79 +2,192 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>01_Periodic_Trends</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="../../../../common/babel-react-classic.js"></script>
-  <script src="../../../../common/learn-from-zero.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>週期趨勢 | Periodic trends</title>
+  <link rel="stylesheet" href="../../lesson.css" />
   <style>
-    body { font-family: "IBM Plex Sans", system-ui, sans-serif; background-color: #f8fafc; color: #0f172a; min-height: 100vh; }
+    .panel h2 { font-size: 1.05rem; margin: 1rem 0 .35rem; }
+    a { color: #0f766e; font-weight: 700; text-decoration: none; }
   </style>
-  <!-- NCS i18n fleet kit (auto-injected) -->
-  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
-  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
-  <style data-ncs-kit="fleet-bridge">
-    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
-    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
-      display: none !important;
-    }
-  </style>
-  <script data-ncs-kit="fleet-init">
-  (function () {
-    function hideLegacyToggles() {
-      document.body.classList.add("ncs-fleet-mounted");
-      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
-        var label = (btn.textContent || "").trim();
-        if (label === "EN" || label === "\u4E2D") {
-          btn.classList.add("ncs-hide-when-ncs-fleet");
-        }
-      });
-      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
-        el.classList.add("ncs-hide-when-ncs-fleet");
-      });
-    }
-    function boot() {
-      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
-      window.NcsI18n.init({
-        chromePath: "../../../../_shared/ncs-chrome.json",
-        target: document.body
-      }).then(hideLegacyToggles);
-    }
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", boot);
-    } else {
-      boot();
-    }
-  })();
-  </script>
 </head>
 <body>
-  <div id="root"></div>
-  <script type="text/babel" data-presets="react-classic">
-    const { useState } = React;
-    
-    function App() {
-      return (
-        <div className="max-w-4xl mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-4">01 Periodic Trends</h1>
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 mb-8 text-center">
-            <div className="w-full h-64 bg-slate-100 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 mb-4">
-              <span className="text-slate-400 font-medium">[ Interactive Canvas Placeholder ]</span>
-            </div>
-            <p className="text-slate-500">This interactive lab is currently under development.</p>
-          </div>
-          <LearnFromZero />
-        </div>
-      );
+  <section class="chem-learn" data-chem-entry="1">
+    <h2>學習目標</h2>
+    <ul>
+      <li>比較第 3 週期由左至右的原子半徑、第一電離焓和電負性。</li>
+      <li>比較第 1 族由上至下的同一組趨勢。</li>
+      <li>指出第一電離焓的兩個常見例外：Al 低於 Mg，S 低於 P。</li>
+    </ul>
+    <p class="muted">DSE 課題十二　化學世界中的規律。原子半徑和電離焓也呼應課題二　微觀世界 I。</p>
+    <p id="chem-feedback" role="status">先選週期或族，再選性質。黃色棒是這一題要比較的兩種元素。</p>
+  </section>
+  <main>
+    <p><a href="../index.html">返回中六目錄</a></p>
+    <div class="panel">
+      <h1>週期趨勢</h1>
+      <p class="muted">只比較數據。沒有焰色試驗，也沒有反應步驟。半徑是比較用的原子半徑（pm），第一電離焓單位是 kJ/mol，電負性用鮑林標度。</p>
+      <h2>操作</h2>
+      <div class="row" id="views">
+        <button type="button" id="view-p3" class="on">第 3 週期</button>
+        <button type="button" id="view-g1" class="alt">第 1 族</button>
+      </div>
+      <div class="row" id="props">
+        <button type="button" id="prop-r" class="on">原子半徑</button>
+        <button type="button" id="prop-ie" class="alt">第一電離焓</button>
+        <button type="button" id="prop-en" class="alt">電負性</button>
+      </div>
+      <canvas id="plot" width="640" height="280" aria-label="週期趨勢棒形圖"></canvas>
+      <p id="ask"></p>
+      <div class="row" id="answers"></div>
+      <p class="num" id="readout"></p>
+      <h2>錯因</h2>
+      <ul>
+        <li>同一週期由左至右，原子半徑不是變大。核電荷增加，最外層主層不變，半徑下降。</li>
+        <li>第一電離焓不是每一格都上升。Al 的 3p 電子較易除去，所以低於 Mg；S 的 3p⁴ 有成對電子相斥，所以低於 P。</li>
+        <li>第 1 族由上至下，半徑變大，第一電離焓和電負性變小。不要把族的方向和第 3 週期對調。</li>
+        <li>本課只比較中性原子。離子半徑是另一件事，Na⁺ 比 Na 小，Cl⁻ 比 Cl 大。</li>
+      </ul>
+    </div>
+  </main>
+  <script src="../../lesson-kit.js"></script>
+  <script>
+    var period3 = [
+      { sym: "Na", r: 186, ie: 496, en: 0.9 },
+      { sym: "Mg", r: 160, ie: 738, en: 1.2 },
+      { sym: "Al", r: 143, ie: 577, en: 1.5 },
+      { sym: "Si", r: 117, ie: 786, en: 1.8 },
+      { sym: "P", r: 110, ie: 1012, en: 2.1 },
+      { sym: "S", r: 104, ie: 1000, en: 2.5 },
+      { sym: "Cl", r: 99, ie: 1251, en: 3.0 }
+    ];
+    var group1 = [
+      { sym: "Li", r: 152, ie: 520, en: 1.0 },
+      { sym: "Na", r: 186, ie: 496, en: 0.9 },
+      { sym: "K", r: 231, ie: 419, en: 0.8 }
+    ];
+    var meta = {
+      r: { name: "原子半徑", unit: " pm" },
+      ie: { name: "第一電離焓", unit: " kJ/mol" },
+      en: { name: "電負性", unit: "" }
+    };
+    var view = "p3";
+    var prop = "r";
+    var pair = [0, 1];
+    var canvas = document.getElementById("plot");
+    var ctx = canvas.getContext("2d");
+
+    function setOf() {
+      return view === "p3" ? period3 : group1;
     }
-    
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+
+    function pickPair() {
+      var s = setOf();
+      var i = Math.floor(Math.random() * s.length);
+      var j = Math.floor(Math.random() * (s.length - 1));
+      if (j >= i) j += 1;
+      pair = [i, j];
+    }
+
+    function trend() {
+      if (view === "p3" && prop === "r") return "第 3 週期由左至右，核電荷增加，最外層仍是第三層，原子半徑下降。";
+      if (view === "p3" && prop === "ie") return "第 3 週期的第一電離焓大致上升。例外：Al 低於 Mg，S 低於 P。";
+      if (view === "p3" && prop === "en") return "第 3 週期由左至右，電負性上升。";
+      if (view === "g1" && prop === "r") return "第 1 族由上至下，電子層增加，原子半徑上升。";
+      if (view === "g1" && prop === "ie") return "第 1 族由上至下，最外層電子離核較遠，第一電離焓下降。";
+      return "第 1 族由上至下，電負性下降。";
+    }
+
+    function isException(a, b) {
+      if (view !== "p3" || prop !== "ie") return false;
+      var names = [a.sym, b.sym].sort().join(",");
+      return names === "Al,Mg" || names === "P,S";
+    }
+
+    function paint() {
+      var s = setOf();
+      var m = meta[prop];
+      var max = 0;
+      var i;
+      for (i = 0; i < s.length; i++) if (s[i][prop] > max) max = s[i][prop];
+      var w = canvas.width;
+      var h = canvas.height;
+      ctx.fillStyle = "#0f172a";
+      ctx.fillRect(0, 0, w, h);
+      var gap = (w - 70) / s.length;
+      for (i = 0; i < s.length; i++) {
+        var bh = ((h - 70) * s[i][prop]) / max;
+        var x = 36 + i * gap;
+        var y = h - 36 - bh;
+        ctx.fillStyle = (i === pair[0] || i === pair[1]) ? "#fbbf24" : "#34d399";
+        ctx.fillRect(x, y, Math.max(18, gap - 18), bh);
+        ctx.fillStyle = "#e2e8f0";
+        ctx.font = "14px sans-serif";
+        ctx.fillText(s[i].sym, x, h - 14);
+      }
+      var bits = [];
+      for (i = 0; i < s.length; i++) bits.push(s[i].sym + " " + s[i][prop] + m.unit);
+      document.getElementById("readout").textContent = m.name + "：" + bits.join("　");
+      var a = s[pair[0]];
+      var b = s[pair[1]];
+      document.getElementById("ask").textContent = "哪一個的" + m.name + "較大？" + a.sym + " 還是 " + b.sym + "？";
+      var box = document.getElementById("answers");
+      box.innerHTML = "";
+      [a, b].forEach(function (el) {
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.textContent = el.sym;
+        btn.onclick = function () { judge(el.sym); };
+        box.appendChild(btn);
+      });
+    }
+
+    function judge(sym) {
+      var s = setOf();
+      var a = s[pair[0]];
+      var b = s[pair[1]];
+      var winner = a[prop] >= b[prop] ? a : b;
+      var loser = winner === a ? b : a;
+      var m = meta[prop];
+      var ok = sym === winner.sym;
+      var msg = (ok ? "正確。" : "較大的是 " + winner.sym + "。") +
+        winner.sym + " 是 " + winner[prop] + m.unit + "，" +
+        loser.sym + " 是 " + loser[prop] + m.unit + "。" + trend();
+      if (isException(a, b)) msg += "這一對是例外，要用數據，不要只背「一直上升」。";
+      ChemLesson.say(msg, ok ? "ok" : "no");
+    }
+
+    function select(group, id, fn) {
+      document.querySelectorAll(group + " button").forEach(function (b) { b.className = "alt"; });
+      document.getElementById(id).className = "on";
+      fn();
+      pickPair();
+      paint();
+      ChemLesson.say(trend());
+    }
+
+    document.getElementById("view-p3").onclick = function () {
+      view = "p3";
+      select("#views", "view-p3", function () {});
+    };
+    document.getElementById("view-g1").onclick = function () {
+      view = "g1";
+      select("#views", "view-g1", function () {});
+    };
+    document.getElementById("prop-r").onclick = function () {
+      prop = "r";
+      select("#props", "prop-r", function () {});
+    };
+    document.getElementById("prop-ie").onclick = function () {
+      prop = "ie";
+      select("#props", "prop-ie", function () {});
+    };
+    document.getElementById("prop-en").onclick = function () {
+      prop = "en";
+      select("#props", "prop-en", function () {});
+    };
+    pickPair();
+    paint();
   </script>
-<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+  <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 </body>
 </html>

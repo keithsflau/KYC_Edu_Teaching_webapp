@@ -13,7 +13,7 @@ window.BATTLE_DATA = (function () {
       "geo": {
           "minLng": 19.25,
           "maxLng": 22.75,
-          "minLat": 50.95,
+          "minLat": 49.7,
           "maxLat": 53.45,
           "Z": 9
       },
@@ -194,7 +194,7 @@ window.BATTLE_DATA = (function () {
       }
   ];
   const notes =   {
-      "summary": "入侵波蘭 — DSE 西史小戰役地圖。",
+      "summary": "入侵波蘭 — 課題地圖。兵力與路線為示意。",
       "caveats": [
           "本圖僅覆蓋該戰役核心區域；戰線與兵力為教學示意。",
           "衛星影像為現代地形。"
@@ -343,11 +343,33 @@ window.BATTLE_DATA = (function () {
           "forces_en": ""
       }
   ];
-  const outro =   {
+    const sourceTask = {
+    "cite": "希特勒於1939年9月1日對德國國會的講話",
+    "excerpt": "他把當日的軍事行動說成是對波蘭攻擊的回應。",
+    "ask": "這段講話的立場是什麼？",
+    "options": [
+      {
+        "t": "承認德軍在拂曉入侵波蘭。",
+        "ok": false,
+        "why": "講話把責任推給對方，沒有把自己說成入侵的一方。"
+      },
+      {
+        "t": "把進攻說成自衛。",
+        "ok": true,
+        "why": "用詞是回應，不是承認自己開啟戰爭。對照的事實是德軍於9月1日攻入波蘭。"
+      },
+      {
+        "t": "宣布與蘇聯同時進兵，並已分好波蘭。",
+        "ok": false,
+        "why": "蘇聯紅軍是9月17日才從東面進入。9月1日的講話沒有把這件事說成當日的行動。"
+      }
+    ]
+  };
+const outro =   {
       "title_zh": "入侵波蘭",
       "title_en": "INVASION OF POLAND",
-      "narration_zh": "本戰役為 DSE 西史重要考點。",
-      "narration_en": "A key DSE Western History topic.",
+      "narration_zh": "1939年9月1日德軍入侵波蘭，歐洲的第二次世界大戰由此打開。",
+      "narration_en": "Germany invaded Poland on 1 September 1939.",
       "cam": {
           "lng": 21.01,
           "lat": 52.23,
@@ -357,5 +379,5 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       }
   };
-  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };
+  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, sourceTask, END_DAY };
 })();

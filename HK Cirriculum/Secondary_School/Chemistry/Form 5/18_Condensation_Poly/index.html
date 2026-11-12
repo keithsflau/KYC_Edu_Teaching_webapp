@@ -2,79 +2,264 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>18_Condensation_Poly</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="../../../../common/babel-react-classic.js"></script>
-  <script src="../../../../common/learn-from-zero.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
-  <style>
-    body { font-family: "IBM Plex Sans", system-ui, sans-serif; background-color: #f8fafc; color: #0f172a; min-height: 100vh; }
-  </style>
-  <!-- NCS i18n fleet kit (auto-injected) -->
-  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
-  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
-  <style data-ncs-kit="fleet-bridge">
-    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
-    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
-      display: none !important;
-    }
-  </style>
-  <script data-ncs-kit="fleet-init">
-  (function () {
-    function hideLegacyToggles() {
-      document.body.classList.add("ncs-fleet-mounted");
-      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
-        var label = (btn.textContent || "").trim();
-        if (label === "EN" || label === "\u4E2D") {
-          btn.classList.add("ncs-hide-when-ncs-fleet");
-        }
-      });
-      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
-        el.classList.add("ncs-hide-when-ncs-fleet");
-      });
-    }
-    function boot() {
-      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
-      window.NcsI18n.init({
-        chromePath: "../../../../_shared/ncs-chrome.json",
-        target: document.body
-      }).then(hideLegacyToggles);
-    }
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", boot);
-    } else {
-      boot();
-    }
-  })();
-  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>縮合聚合 | Condensation polymerisation</title>
+  <link rel="stylesheet" href="../../lesson.css" />
 </head>
-<body>
-  <div id="root"></div>
-  <script type="text/babel" data-presets="react-classic">
-    const { useState } = React;
-    
-    function App() {
-      return (
-        <div className="max-w-4xl mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-4">18 Condensation Poly</h1>
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 mb-8 text-center">
-            <div className="w-full h-64 bg-slate-100 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 mb-4">
-              <span className="text-slate-400 font-medium">[ Interactive Canvas Placeholder ]</span>
-            </div>
-            <p className="text-slate-500">This interactive lab is currently under development.</p>
-          </div>
-          <LearnFromZero />
-        </div>
-      );
-    }
-    
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+<body data-chem-silent="1">
+  <section class="chem-learn" data-chem-entry="1">
+    <h2>學習目標</h2>
+    <ul>
+      <li>指出縮合聚合會釋出小分子，加成聚合不會。</li>
+      <li>分辨酯鍵和酰胺鍵。</li>
+      <li>用乙烯作對照。本頁沒有聚合的製備步驟。</li>
+    </ul>
+    <h2>常見錯因</h2>
+    <ul>
+      <li>以為所有聚合都沒有小分子。</li>
+      <li>把酯鍵和酰胺鍵對調。</li>
+      <li>把二羧酸縮合的小分子寫成氯化氫。</li>
+    </ul>
+    <p id="chem-feedback" role="status">選一組單體，再判斷聚合類型、小分子和鏈上的特徵。</p>
+  </section>
+  <main>
+    <div class="panel">
+      <h1>縮合聚合</h1>
+      <p class="muted">比較重複單位和小分子。二醇與二羧酸釋出水並形成酯鍵；二胺與二羧酸釋出水並形成酰胺鍵。乙烯只作加成對照。沒有混合、拉絲或二醯氯的步驟。</p>
+      <h2>操作</h2>
+      <div class="row" id="pairs">
+        <button type="button" class="on" data-pair="pet">乙二醇 + 對苯二甲酸</button>
+        <button type="button" class="alt" data-pair="nylon">己-1,6-二胺 + 己二酸</button>
+        <button type="button" class="alt" data-pair="ethene">乙烯（對照）</button>
+      </div>
+      <canvas id="plot" width="640" height="150" aria-label="聚合物鏈的示意"></canvas>
+      <p id="detail" class="muted"></p>
+      <p class="muted">聚合類型</p>
+      <div class="row" id="types">
+        <button type="button" class="alt" data-type="cond">縮合</button>
+        <button type="button" class="alt" data-type="add">加成</button>
+      </div>
+      <p class="muted">離開的小分子</p>
+      <div class="row" id="smalls">
+        <button type="button" class="alt" data-small="water">水</button>
+        <button type="button" class="alt" data-small="hcl">氯化氫</button>
+        <button type="button" class="alt" data-small="none">沒有</button>
+      </div>
+      <p class="muted">鏈上的特徵</p>
+      <div class="row" id="links">
+        <button type="button" class="alt" data-link="ester">酯鍵</button>
+        <button type="button" class="alt" data-link="amide">酰胺鍵</button>
+        <button type="button" class="alt" data-link="carbon">只有碳鏈</button>
+      </div>
+      <div class="row">
+        <button type="button" id="check">核對</button>
+      </div>
+      <p><a href="../index.html">返回中五</a></p>
+    </div>
+  </main>
+  <script src="../../lesson-kit.js"></script>
+  <script>
+    (function () {
+      var ctx = null;
+      var finished = false;
+      var pair = "pet";
+      var typePick = "";
+      var smallPick = "";
+      var linkPick = "";
+      var done = { pet: false, nylon: false, ethene: false };
+      var pairs = {
+        pet: {
+          title: "乙二醇 + 對苯二甲酸",
+          type: "cond",
+          small: "water",
+          link: "ester",
+          chain: ["二醇", "酯", "二酸", "酯"],
+          note: "每形成一個酯鍵，概念上釋出一分子水。",
+          ok: "這是縮合聚合。二醇和二羧酸形成酯鍵，釋出的小分子是水。重複單位含 –COO–。",
+          typeWhy: "錯因：這對單體不是打開雙鍵相連。它們以酯鍵連接，並有小分子離開，所以是縮合。",
+          smallWhy: {
+            none: "錯因：沒有小分子的是加成聚合。這對單體縮合時離開的是水。",
+            hcl: "錯因：氯化氫對應二醯氯的寫法。這裡是二羧酸，離開的小分子是水。本頁不寫混合方法。"
+          },
+          linkWhy: {
+            amide: "錯因：酰胺鍵來自胺和羧酸。二醇和二羧酸形成的是酯鍵。",
+            carbon: "錯因：只有碳鏈相連的是乙烯那類加成聚合物。這裡的特徵是酯鍵。"
+          }
+        },
+        nylon: {
+          title: "己-1,6-二胺 + 己二酸",
+          type: "cond",
+          small: "water",
+          link: "amide",
+          chain: ["二胺", "酰胺", "二酸", "酰胺"],
+          note: "這組用二酸，釋出的小分子是水。",
+          ok: "這是縮合聚合。二胺和二羧酸形成酰胺鍵，釋出的小分子是水。重複單位含 –CONH–。",
+          typeWhy: "錯因：兩種單體各有兩個官能基，連接時有小分子離開，不是加成聚合。",
+          smallWhy: {
+            none: "錯因：酰胺鍵形成時有小分子離開。這組用的是二羧酸，小分子是水。",
+            hcl: "錯因：若改寫成二醯氯才會提到氯化氫。本頁這組是己二酸，小分子是水，而且沒有操作步驟。"
+          },
+          linkWhy: {
+            ester: "錯因：酯鍵來自醇和羧酸。這裡有二胺，鏈上的是酰胺鍵。",
+            carbon: "錯因：產物不是單純碳鏈。重複單位裡有酰胺鍵。"
+          }
+        },
+        ethene: {
+          title: "乙烯（對照）",
+          type: "add",
+          small: "none",
+          link: "carbon",
+          chain: ["CH2", "CH2", "CH2", "CH2"],
+          note: "雙鍵打開後相連，沒有小分子離開。",
+          ok: "乙烯是加成聚合。雙鍵打開後連成 –CH₂–CH₂–，沒有小分子離開。",
+          typeWhy: "錯因：乙烯聚合沒有小分子離開，不能稱為縮合。縮合要釋出小分子。",
+          smallWhy: {
+            water: "錯因：水是聚酯或聚酰胺那類縮合才離開的。乙烯加成沒有這個小分子。",
+            hcl: "錯因：乙烯加成不釋出氯化氫。沒有小分子離開。"
+          },
+          linkWhy: {
+            ester: "錯因：乙烯沒有酯鍵。重複單位只是碳鏈。",
+            amide: "錯因：乙烯沒有酰胺鍵。它只是碳碳相連。"
+          }
+        }
+      };
+
+      function ac() {
+        var Ctor = window.AudioContext || window.webkitAudioContext;
+        if (!Ctor) return null;
+        if (!ctx) ctx = new Ctor();
+        if (ctx.state === "suspended") ctx.resume();
+        return ctx;
+      }
+
+      function tone(freq, delay, dur) {
+        var c = ac();
+        if (!c) return;
+        var start = c.currentTime + delay;
+        var o = c.createOscillator();
+        var g = c.createGain();
+        o.type = "sine";
+        o.frequency.setValueAtTime(freq, start);
+        g.gain.setValueAtTime(0.0001, start);
+        g.gain.exponentialRampToValueAtTime(0.04, start + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+        o.connect(g);
+        g.connect(c.destination);
+        o.start(start);
+        o.stop(start + dur + 0.02);
+      }
+
+      function playOk() {
+        tone(523.25, 0, 0.12);
+        tone(659.25, 0.14, 0.16);
+      }
+
+      function playNo() {
+        tone(196, 0, 0.22);
+      }
+
+      function playDone() {
+        tone(523.25, 0, 0.1);
+        tone(659.25, 0.12, 0.1);
+        tone(783.99, 0.24, 0.2);
+      }
+
+      function say(msg, kind) {
+        var el = document.getElementById("chem-feedback");
+        if (el) el.textContent = msg;
+        if (kind === "ok") playOk();
+        else if (kind === "no") playNo();
+        else if (kind === "done") playDone();
+      }
+
+      function mark(container, btn) {
+        var buttons = container.querySelectorAll("button");
+        for (var i = 0; i < buttons.length; i++) buttons[i].className = "alt";
+        if (btn) btn.className = "on";
+      }
+
+      function paint() {
+        var item = pairs[pair];
+        var canvas = document.getElementById("plot");
+        var g = canvas.getContext("2d");
+        g.fillStyle = "#0f172a";
+        g.fillRect(0, 0, canvas.width, canvas.height);
+        g.font = "16px sans-serif";
+        g.fillStyle = "#e2e8f0";
+        g.fillText(item.title, 24, 32);
+        for (var i = 0; i < item.chain.length; i++) {
+          g.fillStyle = i % 2 === 0 ? "#38bdf8" : "#fbbf24";
+          g.fillRect(24 + i * 120, 58, 104, 40);
+          g.fillStyle = "#0f172a";
+          g.fillText(item.chain[i], 40 + i * 120, 84);
+        }
+        document.getElementById("detail").textContent = item.note;
+      }
+
+      function clearPicks() {
+        typePick = "";
+        smallPick = "";
+        linkPick = "";
+        mark(document.getElementById("types"), null);
+        mark(document.getElementById("smalls"), null);
+        mark(document.getElementById("links"), null);
+      }
+
+      document.getElementById("pairs").onclick = function (e) {
+        var btn = e.target.closest ? e.target.closest("button") : null;
+        if (!btn) return;
+        pair = btn.getAttribute("data-pair");
+        mark(document.getElementById("pairs"), btn);
+        clearPicks();
+        paint();
+      };
+      document.getElementById("types").onclick = function (e) {
+        var btn = e.target.closest ? e.target.closest("button") : null;
+        if (!btn) return;
+        typePick = btn.getAttribute("data-type");
+        mark(document.getElementById("types"), btn);
+      };
+      document.getElementById("smalls").onclick = function (e) {
+        var btn = e.target.closest ? e.target.closest("button") : null;
+        if (!btn) return;
+        smallPick = btn.getAttribute("data-small");
+        mark(document.getElementById("smalls"), btn);
+      };
+      document.getElementById("links").onclick = function (e) {
+        var btn = e.target.closest ? e.target.closest("button") : null;
+        if (!btn) return;
+        linkPick = btn.getAttribute("data-link");
+        mark(document.getElementById("links"), btn);
+      };
+      document.getElementById("check").onclick = function () {
+        if (!typePick || !smallPick || !linkPick) {
+          say("錯因：三項都要選：聚合類型、小分子、鏈上的特徵。", "no");
+          return;
+        }
+        var item = pairs[pair];
+        if (typePick !== item.type) {
+          say(item.typeWhy, "no");
+          return;
+        }
+        if (smallPick !== item.small) {
+          say(item.smallWhy[smallPick], "no");
+          return;
+        }
+        if (linkPick !== item.link) {
+          say(item.linkWhy[linkPick], "no");
+          return;
+        }
+        done[pair] = true;
+        if (done.pet && done.nylon && done.ethene && !finished) {
+          finished = true;
+          say("正確。" + item.ok + " 三組都判斷對過。", "done");
+          return;
+        }
+        say("正確。" + item.ok, "ok");
+      };
+      paint();
+    })();
   </script>
-<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+  <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 </body>
 </html>

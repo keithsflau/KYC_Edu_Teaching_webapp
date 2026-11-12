@@ -2,33 +2,112 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Medical Physics | 醫學物理</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>輻射屏蔽 | Radiation shields</title>
   <style>
-    body { margin:0; font-family:"Segoe UI","Noto Sans HK",sans-serif; background:#f8fafc; color:#0f172a; }
-    header { padding:2rem 1.25rem 1rem; max-width:1100px; margin:0 auto; }
-    a.back, a.xlink { color:#2563eb; text-decoration:none; font-size:.9rem; }
-    a.xlink { margin-right:1rem; }
-    h1 { margin:.6rem 0; }
-    .topic-nav { max-width:1100px; margin:0 auto 1rem; padding:0 1.25rem; font-size:.85rem; }
-    .empty { max-width:1100px; margin:0 auto; padding:2rem 1.25rem; background:#fff; border:1px dashed #cbd5e1; border-radius:14px; text-align:center; color:#64748b; }
+    body { margin: 0; font-family: "Segoe UI", "Noto Sans HK", sans-serif; background: #f8fafc; color: #0f172a; }
+    main { max-width: 760px; margin: 0 auto; padding: 1.2rem; }
+    a { color: #2563eb; }
+    .row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 0.6rem 0; }
+    button { min-height: 44px; border-radius: 10px; border: 1px solid #cbd5e1; background: #fff; font-weight: 700; padding: 0 0.8rem; }
+    button.on { background: #0f766e; color: #fff; border-color: #0f766e; }
+    #check { background: #0f766e; color: #fff; border: 0; }
   </style>
 </head>
 <body>
-  <header>
-    <a class="back" href="../index.html">← All topics</a>
-    <a class="back" href="../../index.html">Physics hub</a>
-    <h1>IX · Medical Physics · 醫學物理</h1>
-    <p>HKDSE elective · labs coming soon</p>
-  </header>
-  <nav class="topic-nav" aria-label="Related topics">
-    <a class="xlink" href="../05_Radioactivity_and_Nuclear_Energy/index.html">← Radioactivity (imaging)</a>
-    <a class="xlink" href="../03_Wave_Motion/index.html">Wave Motion (ultrasound)</a>
-  </nav>
-  <div class="empty">
-    <p>No labs in this topic yet. Check back after the next content sprint.</p>
-    <p class="text-sm">暫未有此課題的互動實驗。</p>
-  </div>
+  <main>
+    <p><a href="../index.html">← 課題</a> · <a href="../../Form%206/index.html">中六</a></p>
+    <h1>體外輻射屏蔽 · Shields</h1>
+    <p>先選輻射，再把屏蔽拖到中間（或按屏蔽按鈕），最後核對。學校模型：紙擋 α；數毫米鋁擋 β；厚鉛才大幅減弱 γ。</p>
+    <div class="row" id="sources"></div>
+    <div id="drop" style="min-height:72px;border:2px dashed #94a3b8;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0.8rem 0;">把屏蔽拖到這裡</div>
+    <div class="row" id="shields"></div>
+    <button id="check" type="button">核對 Check</button>
+    <p id="out">先選擇，再核對。</p>
+  </main>
+  <script>
+    (function () {
+      var sources = [
+        { id: "alpha", label: "α" },
+        { id: "beta", label: "β" },
+        { id: "gamma", label: "γ" }
+      ];
+      var shields = [
+        { id: "paper", label: "紙 paper" },
+        { id: "aluminium", label: "薄鋁 aluminium" },
+        { id: "lead", label: "厚鉛 lead" }
+      ];
+      var stopped = {
+        paper: { alpha: true, beta: false, gamma: false },
+        aluminium: { alpha: true, beta: true, gamma: false },
+        lead: { alpha: true, beta: true, gamma: true }
+      };
+      var why = {
+        paper: "一張紙可以擋住 α，擋不住 β 和 γ。",
+        aluminium: "數毫米鋁可以擋住 α 和 β，γ 大部分仍穿過。",
+        lead: "厚鉛擋住 α、β，並大幅減弱 γ（不是把 γ 變成零的薄片）。"
+      };
+      var source = "alpha";
+      var shield = null;
+      var out = document.getElementById("out");
+
+      function beep(ok) {
+        try {
+          var c = beep.c || (beep.c = new (window.AudioContext || window.webkitAudioContext)());
+          if (c.state === "suspended") c.resume();
+          var o = c.createOscillator(), g = c.createGain();
+          o.frequency.value = ok ? 880 : 220;
+          g.gain.setValueAtTime(0.0001, c.currentTime);
+          g.gain.exponentialRampToValueAtTime(0.06, c.currentTime + 0.02);
+          g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + 0.16);
+          o.connect(g); g.connect(c.destination);
+          o.start(); o.stop(c.currentTime + 0.17);
+        } catch (e) {}
+      }
+
+      function render() {
+        document.getElementById("drop").textContent = shield ? shields.filter(function (s) { return s.id === shield; })[0].label : "把屏蔽拖到這裡";
+        out.textContent = "先選擇輻射和屏蔽，再核對。";
+      }
+
+      var sRow = document.getElementById("sources");
+      sources.forEach(function (s) {
+        var b = document.createElement("button");
+        b.textContent = s.label;
+        b.className = s.id === source ? "on" : "";
+        b.addEventListener("click", function () {
+          source = s.id;
+          Array.prototype.forEach.call(sRow.children, function (el) { el.className = ""; });
+          b.className = "on";
+          render();
+        });
+        sRow.appendChild(b);
+      });
+      var hRow = document.getElementById("shields");
+      shields.forEach(function (s) {
+        var b = document.createElement("button");
+        b.textContent = s.label;
+        b.draggable = true;
+        b.addEventListener("dragstart", function (e) { e.dataTransfer.setData("text/plain", s.id); });
+        b.addEventListener("click", function () { shield = s.id; render(); });
+        hRow.appendChild(b);
+      });
+      var drop = document.getElementById("drop");
+      drop.addEventListener("dragover", function (e) { e.preventDefault(); });
+      drop.addEventListener("drop", function (e) {
+        e.preventDefault();
+        shield = e.dataTransfer.getData("text/plain");
+        render();
+      });
+      document.getElementById("check").addEventListener("click", function () {
+        if (!shield) { out.textContent = "還沒有屏蔽。"; beep(false); return; }
+        var ok = stopped[shield][source];
+        out.textContent = (ok ? "這種屏蔽擋得住或大幅減弱所選輻射。" : "這種屏蔽擋不住所選輻射。") + why[shield];
+        beep(ok);
+      });
+      render();
+    })();
+  </script>
   <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 </body>
 </html>

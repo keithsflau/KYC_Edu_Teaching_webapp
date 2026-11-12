@@ -171,7 +171,7 @@ window.BATTLE_DATA = (function () {
       }
   ];
   const notes =   {
-      "summary": "第一次中東戰爭 — DSE 西史小戰役地圖。",
+      "summary": "第一次中東戰爭 — 課題地圖。兵力與路線為示意。",
       "caveats": [
           "本圖僅覆蓋該戰役核心區域；戰線與兵力為教學示意。",
           "衛星影像為現代地形。"
@@ -181,7 +181,7 @@ window.BATTLE_DATA = (function () {
   const analysis =   {
       "military": "以色列建國次日，阿拉伯聯軍入侵；以軍在特拉維夫、耶路撒冷等地抵抗，最終停火線劃定。",
       "leaders": "以色列本-古里安宣布建國；阿拉伯聯軍多國進攻。阿拉伯軍事領導分散，以軍在特拉維夫、耶路撒冷等地反擊。戰後大量巴勒斯坦難民與以阿敵對格局奠定，影響中東數十年。",
-      "nationalPower": "以色列全民动员與海外猶太支持；阿拉伯國家政治分裂、軍事協調不足。",
+      "nationalPower": "以色列全民動員與海外猶太支持；阿拉伯國家政治分裂、軍事協調不足。",
       "impact": "第一次中東戰爭確立以色列生存；巴勒斯坦難民問題與以阿敵對開端。"
   };
   const storyboard =   [
@@ -317,11 +317,33 @@ window.BATTLE_DATA = (function () {
           "forces_en": ""
       }
   ];
-  const outro =   {
+    const sourceTask = {
+    "cite": "聯合國大會第181號決議與以色列宣告建國，1947–1948年",
+    "excerpt": "決議建議分治。1948年5月14日本-古里安宣告建國，鄰國軍隊隨即進入。",
+    "ask": "戰爭在5月開始的直接原因，文件指向什麼？",
+    "options": [
+      {
+        "t": "六日戰爭的戈蘭攻勢。",
+        "ok": false,
+        "why": "戈蘭攻勢是1967年6月9日至10日。"
+      },
+      {
+        "t": "分治建議、建國宣告，以及阿拉伯國家拒絕這個結果並出兵。",
+        "ok": true,
+        "why": "1948年的戰爭由這一連串決定接上，不是由1967年的空襲引起。"
+      },
+      {
+        "t": "奧斯陸協議失敗。",
+        "ok": false,
+        "why": "奧斯陸原則宣言是1993年。"
+      }
+    ]
+  };
+const outro =   {
       "title_zh": "第一次中東戰爭",
       "title_en": "1948 WAR",
-      "narration_zh": "本戰役為 DSE 西史重要考點。",
-      "narration_en": "A key DSE Western History topic.",
+      "narration_zh": "1948年5月宣告建國之後，阿拉伯國家軍隊分路進入。1949年的停火線後來被稱作綠線。",
+      "narration_en": "After the May 1948 declaration, Arab armies entered. The 1949 ceasefire lines became the Green Line.",
       "cam": {
           "lng": 35.21,
           "lat": 31.77,
@@ -331,5 +353,5 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       }
   };
-  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };
+  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, sourceTask, END_DAY };
 })();

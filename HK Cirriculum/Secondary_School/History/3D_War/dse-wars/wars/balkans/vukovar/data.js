@@ -165,7 +165,7 @@ window.BATTLE_DATA = (function () {
       }
   ];
   const notes =   {
-      "summary": "武科瓦爾圍城 — DSE 西史小戰役地圖。",
+      "summary": "武科瓦爾圍城 — 課題地圖。兵力與路線為示意。",
       "caveats": [
           "本圖僅覆蓋該戰役核心區域；戰線與兵力為教學示意。",
           "衛星影像為現代地形。"
@@ -308,11 +308,33 @@ window.BATTLE_DATA = (function () {
           "forces_en": ""
       }
   ];
-  const outro =   {
+    const sourceTask = {
+    "cite": "克羅地亞守軍在武科瓦爾陷落前的呼叫，1991年11月",
+    "excerpt": "呼叫說城市已被炮毀，守軍沒有彈藥。",
+    "ask": "這則呼叫說明的原因是什麼？",
+    "options": [
+      {
+        "t": "守軍主動放棄一座完好的城市。",
+        "ok": false,
+        "why": "呼叫把陷落和炮擊、彈藥耗盡連在一起。"
+      },
+      {
+        "t": "圍城中的炮擊與補給斷絕，使防守無法繼續。",
+        "ok": true,
+        "why": "武科瓦爾在1991年11月陷落。這是圍城的結果，不是一日決戰。"
+      },
+      {
+        "t": "北約已在1991年炸毀貝爾格萊德。",
+        "ok": false,
+        "why": "北約對塞爾維亞的空襲是1999年科索沃戰爭。"
+      }
+    ]
+  };
+const outro =   {
       "title_zh": "武科瓦爾圍城",
       "title_en": "VUKOVAR",
-      "narration_zh": "本戰役為 DSE 西史重要考點。",
-      "narration_en": "A key DSE Western History topic.",
+      "narration_zh": "武科瓦爾在1991年被圍約三個月後陷落。",
+      "narration_en": "Vukovar fell in 1991 after a siege of about three months.",
       "cam": {
           "lng": 19,
           "lat": 45.35,
@@ -322,5 +344,5 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       }
   };
-  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };
+  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, sourceTask, END_DAY };
 })();

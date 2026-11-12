@@ -241,12 +241,12 @@ window.BATTLE_DATA = (function () {
           "衛星影像為現代地形，非歷史時期地貌。",
           "河川、海域水面為教學示意，按史實位置裁切顯示。"
       ],
-      "sources": "DSE 中史課程、中國通史、維基百科（交叉查證）。"
+      "sources": "《史記·項羽本紀》《史記·高祖本紀》《史記·淮陰侯列傳》《資治通鑑》卷十一。對照上述史書，不以網絡百科為唯一依據。"
   };
   const analysis =   {
-      "military": "劉邦聯合韓信、彭越等部，在垓下對項羽楚軍實施十面埋伏；韓信以背水列陣穩住陣腳，楚軍夜聞四面楚歌，士氣崩潰。",
-      "leaders": "項羽率楚軍固守垓下，卻因韓信佈下十面埋伏、四面楚歌而士氣崩潰；他拒絕渡江東再起，最終烏江自刎，象徵霸王氣數已盡。劉邦在蕭何、張良輔佐下採持久戰略，聯合韓信、彭越夾擊，以政治聯盟與軍事包圍取代正面決戰。韓信以背水一戰後的威望統率漢軍主力，切斷項羽退路，其用兵決斷直接促成西楚滅亡與漢朝建立。",
-      "nationalPower": "劉邦得關中與巴蜀後勤，得項伯、英布等倒戈；項羽雖驍勇，但分封失當、失齊楚民心，兵疲糧盡。",
+      "military": "前202年，劉邦會合韓信、彭越、英布等部，把項羽圍在垓下。《史記·項羽本紀》記漢軍夜唱楚歌，楚軍士氣動搖。「十面埋伏」不見於《史記》對當日戰法的記載，不能當作垓下當日戰術。",
+      "leaders": "項羽在垓下兵少食盡。《史記·項羽本紀》記漢軍夜唱楚歌，他率騎潰圍，至東城餘二十八騎，其後自刎烏江。劉邦一側由韓信、彭越、英布等部合圍。「十面埋伏」也不能當作《史記》所記的當日戰法。",
+      "nationalPower": "劉邦據關中與巴蜀，糧食和兵員較穩。英布在戰前已歸漢。項伯是項羽的叔父，鴻門宴時曾護過劉邦，不能與英布並列為垓下倒戈。項羽分封失當，彭越、英布不附，楚軍兵少食盡。",
       "impact": "楚漢相爭結束，項羽兵敗自刎，劉邦勝出並建立漢朝。"
   };
   const storyboard =   [
@@ -297,8 +297,8 @@ window.BATTLE_DATA = (function () {
               "orbit": 0.65
           },
           "dateLabel": "前202年冬",
-          "title_zh": "十面埋伏",
-          "title_en": "Ten-Sided Ambush",
+          "title_zh": "合圍垓下",
+          "title_en": "Encirclement at Gaixia",
           "narration_zh": "韓信、彭越、英布等合圍垓下，切斷楚軍退路與補給。",
           "narration_en": "Han Xin, Peng Yue and Ying Bu encircle Gaixia, cutting Chu supply lines.",
           "focus": [
@@ -359,7 +359,7 @@ window.BATTLE_DATA = (function () {
           "dateLabel": "前202年",
           "title_zh": "項羽突圍",
           "title_en": "Xiang Yu Breaks Out",
-          "narration_zh": "項羽率八百騎突圍，至烏江自刎，楚軍瓦解。",
+          "narration_zh": "《史記》記項羽夜潰圍，騎從者八百餘人，至東城僅餘二十八騎，其後自刎烏江。",
           "narration_en": "Xiang Yu breaks out with 800 cavalry, then takes his life at the Wu River.",
           "focus": [
               "chu_gaixia"
@@ -384,7 +384,7 @@ window.BATTLE_DATA = (function () {
           "dateLabel": "前202年",
           "title_zh": "漢朝建立",
           "title_en": "Han Dynasty Founded",
-          "narration_zh": "劉邦稱帝，定都長安，開創四百年漢業。",
+          "narration_zh": "劉邦於前202年稱帝，國號漢。",
           "narration_en": "Liu Bang becomes emperor, establishes Chang'an as capital — four centuries of Han rule begin.",
           "focus": [
               "han_gaixia"
@@ -404,8 +404,8 @@ window.BATTLE_DATA = (function () {
   const outro =   {
       "title_zh": "垓下之戰",
       "title_en": "BATTLE OF GAIXIA",
-      "narration_zh": "本戰役為 DSE 中史重要考點：楚漢相爭結束，項羽兵敗自刎，劉邦勝出並建立漢朝",
-      "narration_en": "A key HKDSE Chinese History topic.",
+      "narration_zh": "前202年垓下之後，項羽死，劉邦稱帝，國號漢。",
+      "narration_en": "After Gaixia in 202 BCE, Xiang Yu dies and Liu Bang takes the title of emperor.",
       "cam": {
           "lng": 117.2,
           "lat": 33.6,
@@ -415,5 +415,19 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       }
   };
-  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };
+  const lesson =   {
+      "junior": "初中：看前202年垓下怎樣結束楚漢之爭。",
+      "senior": "高中：把《史記》所記和「十面埋伏」分開，再判斷勝敗。",
+      "fact": "前202年，劉邦會合韓信、彭越、英布等部，把項羽圍在垓下。《史記·項羽本紀》記漢軍夜唱楚歌，楚軍士氣動搖；項羽夜潰圍，騎從者八百餘人，至東城餘二十八騎，其後自刎烏江。「十面埋伏」不見於《史記》對當日戰法的記載。英布在戰前已歸漢。項伯是項羽的叔父，曾在鴻門護劉邦，不能與英布並列為垓下倒戈。",
+      "sources": "《史記·項羽本紀》《史記·高祖本紀》《史記·淮陰侯列傳》《資治通鑑》卷十一。對照上述史書，不以網絡百科為唯一依據。",
+      "evaluation": "漢軍勝，關鍵在關中、巴蜀的糧食與兵員，以及韓信、彭越、英布等部已經合圍，楚軍兵少食盡。把後世「十面埋伏」當成垓下當日戰術，解釋不了這一仗。",
+      "judgment": {
+          "ask": "哪一則說法更能解釋垓下的勝敗？",
+          "a": "韓信用《史記》所載的十面埋伏困住項羽，所以漢軍必勝。",
+          "b": "項羽兵少糧盡，韓信、彭越、英布等部已把楚軍圍在垓下，退路和補給被切斷。",
+          "better": "b",
+          "why": "《史記》沒有把「十面埋伏」寫成當日戰術。合圍、缺糧和已歸漢的英布等部，更能說明楚軍為什麼敗。"
+      }
+  };
+  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, lesson, END_DAY };
 })();

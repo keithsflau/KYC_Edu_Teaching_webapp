@@ -45,9 +45,9 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       },
       "nextBattle": {
-          "href": "../el-alamein/",
-          "title_zh": "阿拉曼戰役",
-          "title_en": "EL ALAMEIN 1942"
+          "href": "../berlin/",
+          "title_zh": "柏林戰役",
+          "title_en": "BERLIN 1945"
       }
   };
   const factions = {
@@ -187,7 +187,7 @@ window.BATTLE_DATA = (function () {
       }
   ];
   const notes =   {
-      "summary": "諾曼第登陸 — DSE 西史小戰役地圖。",
+      "summary": "諾曼第登陸 — 課題地圖。兵力與路線為示意。",
       "caveats": [
           "本圖僅覆蓋該戰役核心區域；戰線與兵力為教學示意。",
           "衛星影像為現代地形。"
@@ -340,11 +340,33 @@ window.BATTLE_DATA = (function () {
           "forces_en": ""
       }
   ];
-  const outro =   {
+    const sourceTask = {
+    "cite": "艾森豪威爾於1944年6月6日給盟軍的當日命令",
+    "excerpt": "他稱這次登陸是進入歐洲大陸的十字軍，目標是摧毀德軍、消除納粹對西歐的統治。",
+    "ask": "這道命令的立場是什麼？",
+    "options": [
+      {
+        "t": "只求在灘頭停住，不打算向內陸前進。",
+        "ok": false,
+        "why": "命令把登陸寫成進入大陸，不是停在沙灘。"
+      },
+      {
+        "t": "登陸是為了在西歐對德國再開地面戰場。",
+        "ok": true,
+        "why": "1944年6月的西線因此不再只是空戰與海上封鎖。"
+      },
+      {
+        "t": "宣布德國已在6月6日投降。",
+        "ok": false,
+        "why": "德國投降是1945年5月。6月6日只是建立灘頭。"
+      }
+    ]
+  };
+const outro =   {
       "title_zh": "諾曼第登陸",
       "title_en": "D-DAY",
-      "narration_zh": "本戰役為 DSE 西史重要考點。",
-      "narration_en": "A key DSE Western History topic.",
+      "narration_zh": "1944年6月6日盟軍在諾曼第建立灘頭。",
+      "narration_en": "On 6 June 1944 the Allies secured a lodgement in Normandy.",
       "cam": {
           "lng": -0.5,
           "lat": 49.35,
@@ -354,5 +376,5 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       }
   };
-  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };
+  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, sourceTask, END_DAY };
 })();

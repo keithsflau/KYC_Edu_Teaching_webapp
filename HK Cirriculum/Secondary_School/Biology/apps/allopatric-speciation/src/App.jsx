@@ -9,7 +9,6 @@ const BEAK_MAX = 100;
 const STARTING_MEAN = 50;
 const STARTING_STD_DEV = 10;
 const EVOLUTION_RATE = 0.05; // How fast the population adapts
-const SPECIATION_THRESHOLD = 30; // Difference in mean required for speciation
 
 const FOOD_SOURCES = {
   seeds: { name: 'Average Seeds', targetMean: 50, color: '#9CA3AF', icon: '🌱' }, // Gray
@@ -101,26 +100,33 @@ const App = () => {
   };
 
   const handleTestSpeciation = () => {
-    const diff = Math.abs(popA.mean - popB.mean);
+    const beakGap = Math.abs(popA.mean - popB.mean);
     if (!isIsolated) {
-      setSpeciationTestResult({ 
-        status: "FAIL", 
-        message: "Populations are not geographically isolated! Gene flow is still active." 
+      setSpeciationTestResult({
+        status: "FAIL",
+        message: "Populations are not geographically isolated, so gene flow can still occur. Speciation is not decided by beak length. It is decided by reproductive isolation: whether they can still produce fertile offspring."
       });
       return;
     }
-    
-    if (diff > SPECIATION_THRESHOLD) {
-      setSpeciationTestResult({ 
-        status: "SUCCESS", 
-        message: "SPECIATION OCCURRED! The beak sizes are too different. They no longer recognize each other as mates." 
+
+    setSpeciationTestResult({
+      status: "ASK",
+      message: `Mean beak length differs by ${beakGap.toFixed(1)} units. That gap does not decide speciation, however large it is. A new species is recognised only if the populations are reproductively isolated.`
+    });
+  };
+
+  const recordBreedingResult = (reproductivelyIsolated) => {
+    if (reproductivelyIsolated) {
+      setSpeciationTestResult({
+        status: "SUCCESS",
+        message: "Speciation occurred because the populations are reproductively isolated: they do not interbreed to produce fertile offspring. Beak length was not the test."
       });
-    } else {
-      setSpeciationTestResult({ 
-        status: "FAIL", 
-        message: "No Speciation yet. The populations are still similar enough to interbreed." 
-      });
+      return;
     }
+    setSpeciationTestResult({
+      status: "FAIL",
+      message: "Not separate species. They can still interbreed and produce fertile offspring, so reproductive isolation is absent. A difference in beak length does not by itself mean speciation."
+    });
   };
 
   // --- Derived Data for Charts ---
@@ -173,7 +179,7 @@ const App = () => {
               <p><strong className="text-white">Step 2:</strong> Geographic Isolation creates a barrier (e.g., ocean channel).</p>
               <p><strong className="text-white">Step 3:</strong> Different environments (Food Sources) exert different selection pressures.</p>
               <p><strong className="text-white">Step 4:</strong> Natural selection shifts the average traits (Beak Size) over generations.</p>
-              <p><strong className="text-white">Step 5:</strong> Eventually, the populations become so different they cannot mate (Speciation).</p>
+              <p><strong className="text-white">Step 5:</strong> Speciation is reproductive isolation: they cannot produce fertile offspring. Beak-length difference alone does not make a new species.</p>
             </div>
           </div>
         </section>
@@ -414,20 +420,40 @@ const App = () => {
                  animate={{ opacity: 1, y: 0 }}
                  exit={{ opacity: 0 }}
                  className={`mt-6 p-6 rounded-xl border-l-4 max-w-2xl w-full text-center shadow-2xl ${
-                   speciationTestResult.status === 'SUCCESS' 
-                    ? 'bg-emerald-900/30 border-emerald-500 text-emerald-200' 
+                   speciationTestResult.status === 'SUCCESS'
+                    ? 'bg-emerald-900/30 border-emerald-500 text-emerald-200'
+                    : speciationTestResult.status === 'ASK'
+                    ? 'bg-slate-800/80 border-sky-500 text-slate-100'
                     : 'bg-rose-900/30 border-rose-500 text-rose-200'
                  }`}
                >
                  <h3 className={`text-xl font-bold mb-2 ${
-                   speciationTestResult.status === 'SUCCESS' ? 'text-emerald-400' : 'text-rose-400'
+                   speciationTestResult.status === 'SUCCESS' ? 'text-emerald-400' : speciationTestResult.status === 'ASK' ? 'text-sky-300' : 'text-rose-400'
                  }`}>
-                   {speciationTestResult.status === 'SUCCESS' ? 'Speciation Successful! 🎉' : 'Speciation Failed ❌'}
+                   {speciationTestResult.status === 'SUCCESS' ? 'Speciation Successful! 🎉' : speciationTestResult.status === 'ASK' ? 'Check reproductive isolation' : 'Speciation Failed ❌'}
                  </h3>
                  <p className="text-lg">{speciationTestResult.message}</p>
+                 {speciationTestResult.status === 'ASK' && (
+                   <div className="mt-4 flex flex-col sm:flex-row gap-3 justify-center">
+                     <button
+                       type="button"
+                       onClick={() => recordBreedingResult(false)}
+                       className="px-4 py-3 rounded-xl font-semibold bg-slate-700 hover:bg-slate-600 text-slate-100"
+                     >
+                       Still produce fertile offspring
+                     </button>
+                     <button
+                       type="button"
+                       onClick={() => recordBreedingResult(true)}
+                       className="px-4 py-3 rounded-xl font-semibold bg-sky-600 hover:bg-sky-500 text-white"
+                     >
+                       Reproductively isolated (no fertile offspring)
+                     </button>
+                   </div>
+                 )}
                  {speciationTestResult.status === 'SUCCESS' && (
                    <p className="mt-4 text-sm opacity-80 bg-emerald-950/50 p-3 rounded inline-block">
-                     The two populations have diverged enough genetically that they can no longer interbreed to produce fertile offspring. They are now distinct species.
+                     Under the biological species concept they are separate species because they cannot interbreed to produce fertile offspring. Beak-length difference is not the test.
                    </p>
                  )}
                </motion.div>

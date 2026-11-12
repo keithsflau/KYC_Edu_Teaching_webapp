@@ -1,39 +1,40 @@
-﻿<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Doppler Effect Lab (With Sound)</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        input[type=range] {
-            -webkit-appearance: none; 
-            background: transparent; 
-        }
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            height: 16px;
-            width: 16px;
-            border-radius: 50%;
-            background: #38bdf8;
-            cursor: pointer;
-            margin-top: -6px; 
-            box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
-        }
-        input[type=range]::-webkit-slider-runnable-track {
-            width: 100%;
-            height: 4px;
-            cursor: pointer;
-            background: #334155;
-            border-radius: 2px;
-        }
-        .canvas-container {
-            background-image: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
-        }
-    </style>
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doppler Effect Lab (With Sound)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        input[type=range] {
+            -webkit-appearance: none; 
+            background: transparent; 
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #38bdf8;
+            cursor: pointer;
+            margin-top: -6px; 
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #334155;
+            border-radius: 2px;
+        }
+        .canvas-container {
+            background-image: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+        }
+    </style>
     <!-- NCS i18n fleet kit (auto-injected) -->
   <link rel="stylesheet" href="../../../../../common/ncs-i18n.css" />
   <script src="../../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <script src="../../../../../common/ncs-vanilla-bridge.js"></script>
   <style data-ncs-kit="fleet-bridge">
     body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
     body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
@@ -68,103 +69,377 @@
     }
   })();
   </script>
-</head>
-<body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col">
-
-    <header class="p-6 border-b border-slate-700 bg-slate-800/50 backdrop-blur-md sticky top-0 z-10">
-        <div class="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-            <div>
-                <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-600">
-                    Doppler Effect Lab
-                </h1>
-                <p class="text-slate-400 text-sm mt-1">Interactive Physics Simulation with Audio</p>
-            </div>
-            <div class="flex gap-3">
-                <div class="flex items-center gap-2 px-3 py-1 bg-slate-700 rounded-full text-xs border border-slate-600">
-                    <div class="w-3 h-3 rounded-full bg-cyan-400 shadow-[0_0_10px_#22d3ee]"></div>
-                    <span>Approaching observer (higher pitch)</span>
-                </div>
-                <div class="flex items-center gap-2 px-3 py-1 bg-slate-700 rounded-full text-xs border border-slate-600">
-                    <div class="w-3 h-3 rounded-full bg-red-400 shadow-[0_0_10px_#f87171]"></div>
-                    <span>Receding from observer (lower pitch)</span>
-                </div>
-            </div>
-        </div>
-    </header>
-
-    <main class="flex-grow flex flex-col md:flex-row max-w-6xl mx-auto w-full p-4 gap-6">
-        
-        <aside class="w-full md:w-1/4 flex flex-col gap-6 order-2 md:order-1">
-            <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl">
-                <h2 class="text-xl font-semibold mb-6 flex items-center gap-2">
-                    <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
-                    Controls
-                </h2>
-
-                <div class="mb-6 p-4 bg-slate-900 rounded-xl border border-slate-700">
-                    <div class="flex justify-between items-center mb-2">
-                        <label class="text-sm font-medium text-slate-300">Audio Simulation</label>
-                        <span id="audioStatus" class="text-xs font-bold text-slate-500">MUTED</span>
-                    </div>
-                    <button id="audioBtn" class="w-full py-2 rounded-lg text-sm font-bold bg-slate-700 text-slate-300 hover:bg-slate-600 transition-all">
-                        Turn Sound On
-                    </button>
-                    <p class="text-[10px] text-slate-500 mt-2 text-center">Click to enable Doppler Audio</p>
-                </div>
-
-                <div class="mb-6 group">
-                    <div class="flex justify-between mb-2">
-                        <label class="text-sm font-medium text-slate-300">Source Speed ($v_s$)</label>
-                        <span id="speedVal" class="text-sm font-mono text-cyan-400">0.0</span>
-                    </div>
-                    <input type="range" id="speedSlider" min="0" max="2" step="0.1" value="0.8" class="w-full">
-                </div>
-
-                <div class="mb-6">
-                    <div class="flex justify-between mb-2">
-                        <label class="text-sm font-medium text-slate-300">Emission Frequency</label>
-                        <span id="freqVal" class="text-sm font-mono text-purple-400">Normal</span>
-                    </div>
-                    <input type="range" id="freqSlider" min="5" max="30" step="1" value="15" class="w-full">
-                </div>
-
-                <div class="flex gap-2 mt-4">
-                    <button id="toggleBtn" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-2 px-4 rounded-lg font-medium transition-colors shadow-lg shadow-blue-900/50">
-                        Pause
-                    </button>
-                    <button id="resetBtn" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-2 px-4 rounded-lg font-medium transition-colors border border-slate-600">
-                        Reset
-                    </button>
-                </div>
-            </div>
-
-            <div class="bg-slate-800/50 p-6 rounded-2xl border border-slate-700">
-                <h3 class="font-semibold text-slate-200 mb-2">Observation</h3>
-                <ul class="text-sm text-slate-400 space-y-2 list-disc pl-4">
-                    <li>The observer is now in the <strong class="text-white">Center</strong>.</li>
-                    <li>As the source approaches, the sound is <strong class="text-cyan-400">High Pitched</strong>.</li>
-                    <li>As it passes, the sound drops to <strong class="text-red-400">Low Pitched</strong>.</li>
-                </ul>
-            </div>
-        </aside>
-
-        <div class="w-full md:w-3/4 order-1 md:order-2 flex flex-col">
-            <div class="relative w-full h-[500px] bg-slate-900 rounded-2xl overflow-hidden shadow-2xl border border-slate-700 canvas-container">
-                <canvas id="dopplerCanvas" class="absolute top-0 left-0 w-full h-full block"></canvas>
-                
-                <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none flex flex-col items-center gap-2 z-10">
-                    <div class="w-4 h-4 rounded-full bg-yellow-400 shadow-[0_0_15px_#facc15] animate-pulse"></div>
-                    <div class="bg-slate-900/80 px-2 py-1 rounded text-[10px] text-yellow-400 border border-yellow-400/30">Observer</div>
-                </div>
-
-                <div class="absolute left-1/2 top-0 bottom-0 w-px bg-slate-700 border-l border-dashed border-slate-500 opacity-30"></div>
-            </div>
-        </div>
-
-    
-    
-    </main>
-
-    <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
-</body>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col">
+
+    <header class="p-6 border-b border-slate-700 bg-slate-800/50 backdrop-blur-md sticky top-0 z-10">
+        <div class="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-600">
+                    Doppler Effect Lab
+                </h1>
+                <p class="text-slate-400 text-sm mt-1">Interactive Physics Simulation with Audio</p>
+            </div>
+            <div class="flex gap-3">
+                <div class="flex items-center gap-2 px-3 py-1 bg-slate-700 rounded-full text-xs border border-slate-600">
+                    <div class="w-3 h-3 rounded-full bg-cyan-400 shadow-[0_0_10px_#22d3ee]"></div>
+                    <span>Approaching observer (higher pitch)</span>
+                </div>
+                <div class="flex items-center gap-2 px-3 py-1 bg-slate-700 rounded-full text-xs border border-slate-600">
+                    <div class="w-3 h-3 rounded-full bg-red-400 shadow-[0_0_10px_#f87171]"></div>
+                    <span>Receding from observer (lower pitch)</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow flex flex-col md:flex-row max-w-6xl mx-auto w-full p-4 gap-6">
+        
+        <aside class="w-full md:w-1/4 flex flex-col gap-6 order-2 md:order-1">
+            <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl">
+                <h2 class="text-xl font-semibold mb-6 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+                    Controls
+                </h2>
+
+                <div class="mb-6 p-4 bg-slate-900 rounded-xl border border-slate-700">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-sm font-medium text-slate-300">Audio Simulation</label>
+                        <span id="audioStatus" class="text-xs font-bold text-slate-500">MUTED</span>
+                    </div>
+                    <button id="audioBtn" class="w-full py-2 rounded-lg text-sm font-bold bg-slate-700 text-slate-300 hover:bg-slate-600 transition-all">
+                        Turn Sound On
+                    </button>
+                    <p class="text-[10px] text-slate-500 mt-2 text-center">Click to enable Doppler Audio</p>
+                </div>
+
+                <div class="mb-6 group">
+                    <div class="flex justify-between mb-2">
+                        <label class="text-sm font-medium text-slate-300">Source Speed ($v_s$)</label>
+                        <span id="speedVal" class="text-sm font-mono text-cyan-400">0.0</span>
+                    </div>
+                    <input type="range" id="speedSlider" min="0" max="2" step="0.1" value="0.8" class="w-full">
+                </div>
+
+                <div class="mb-6">
+                    <div class="flex justify-between mb-2">
+                        <label class="text-sm font-medium text-slate-300">Emission Frequency</label>
+                        <span id="freqVal" class="text-sm font-mono text-purple-400">Normal</span>
+                    </div>
+                    <input type="range" id="freqSlider" min="5" max="30" step="1" value="15" class="w-full">
+                </div>
+
+                <div class="flex gap-2 mt-4">
+                    <button id="toggleBtn" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-2 px-4 rounded-lg font-medium transition-colors shadow-lg shadow-blue-900/50">
+                        Pause
+                    </button>
+                    <button id="resetBtn" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-2 px-4 rounded-lg font-medium transition-colors border border-slate-600">
+                        Reset
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-slate-800/50 p-6 rounded-2xl border border-slate-700">
+                <h3 class="font-semibold text-slate-200 mb-2">Observation</h3>
+                <ul class="text-sm text-slate-400 space-y-2 list-disc pl-4">
+                    <li>The observer is now in the <strong class="text-white">Center</strong>.</li>
+                    <li>As the source approaches, the sound is <strong class="text-cyan-400">High Pitched</strong>.</li>
+                    <li>As it passes, the sound drops to <strong class="text-red-400">Low Pitched</strong>.</li>
+                </ul>
+            </div>
+
+            <div id="lab-ramp"></div>
+            <div id="lab-challenges"></div>
+
+            <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 text-center">
+                <p class="text-xs text-slate-400 uppercase tracking-wider mb-1">Observed frequency</p>
+                <p id="freqObserved" class="text-2xl font-mono font-bold text-cyan-400">—</p>
+                <p class="text-[10px] text-slate-500 mt-1 font-mono">f′ = f · v / (v − v<sub>approach</sub>)</p>
+                <button id="btnFreq" type="button" class="mt-3 w-full py-2 rounded-lg bg-cyan-600 text-white text-sm font-bold">核對 Check</button>
+                <p class="text-[10px] text-slate-500 mt-2">先開聲或看波前，再核對頻率。觀察者靜止。v = 343 m/s。</p>
+            </div>
+        </aside>
+
+        <div class="w-full md:w-3/4 order-1 md:order-2 flex flex-col">
+            <div class="relative w-full h-[500px] bg-slate-900 rounded-2xl overflow-hidden shadow-2xl border border-slate-700 canvas-container">
+                <canvas id="dopplerCanvas" class="absolute top-0 left-0 w-full h-full block"></canvas>
+                
+                <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none flex flex-col items-center gap-2 z-10">
+                    <div class="w-4 h-4 rounded-full bg-yellow-400 shadow-[0_0_15px_#facc15] animate-pulse"></div>
+                    <div class="bg-slate-900/80 px-2 py-1 rounded text-[10px] text-yellow-400 border border-yellow-400/30">Observer</div>
+                </div>
+
+                <div class="absolute left-1/2 top-0 bottom-0 w-px bg-slate-700 border-l border-dashed border-slate-500 opacity-30"></div>
+            </div>
+        </div>
+
+    
+    
+    </main>
+
+    <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+    <script src="../../../../../common/interactive-lab-kit.js"></script>
+    <script src="../../../../../common/sample-ui-kit.js"></script>
+    <script>
+    (function () {
+        var canvas = document.getElementById('dopplerCanvas');
+        var ctx = canvas.getContext('2d');
+        var speedSlider = document.getElementById('speedSlider');
+        var freqSlider = document.getElementById('freqSlider');
+        var speedVal = document.getElementById('speedVal');
+        var freqVal = document.getElementById('freqVal');
+        var freqObserved = document.getElementById('freqObserved');
+        var toggleBtn = document.getElementById('toggleBtn');
+        var resetBtn = document.getElementById('resetBtn');
+        var audioBtn = document.getElementById('audioBtn');
+        var audioStatus = document.getElementById('audioStatus');
+
+        var WAVE_SPEED = 343;
+        var travel = 0.15;
+        var dir = 1;
+        var freqUnlocked = false;
+        var approachNow = 0;
+        var running = true;
+        var wavefronts = [];
+        var lastEmit = 0;
+        var audioCtx = null;
+        var osc = null;
+        var gain = null;
+        var audioOn = false;
+
+        function resize() {
+            var rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        function baseFreq() { return 200 + parseFloat(freqSlider.value) * 15; }
+        function sourceSpeed() { return parseFloat(speedSlider.value) * 80; }
+
+        function sourcePos() {
+            var y = canvas.height / 2;
+            var x0 = canvas.width * 0.08;
+            var x1 = canvas.width * 0.92;
+            var x = x0 + travel * (x1 - x0);
+            var vs = Math.min(sourceSpeed(), 0.8 * WAVE_SPEED);
+            return { x: x, y: y, vx: dir * vs, vy: 0 };
+        }
+
+        function observedFreq(src) {
+            var cx = canvas.width / 2;
+            var cy = canvas.height / 2;
+            var dx = cx - src.x;
+            var dy = cy - src.y;
+            var dist = Math.hypot(dx, dy) || 1;
+            var approach = (src.vx * dx + src.vy * dy) / dist;
+            var cap = 0.8 * WAVE_SPEED;
+            if (approach > cap) approach = cap;
+            if (approach < -cap) approach = -cap;
+            approachNow = approach;
+            return baseFreq() * WAVE_SPEED / (WAVE_SPEED - approach);
+        }
+
+        function updateLabels() {
+            speedVal.textContent = Math.round(Math.min(sourceSpeed(), 0.8 * WAVE_SPEED)) + ' m/s';
+            var f0 = baseFreq();
+            freqVal.textContent = Math.round(f0) + ' Hz';
+        }
+
+        function startAudio() {
+            if (audioOn) return;
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            osc = audioCtx.createOscillator();
+            gain = audioCtx.createGain();
+            osc.type = 'sine';
+            gain.gain.value = 0.08;
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            audioOn = true;
+            audioStatus.textContent = 'LIVE';
+            audioStatus.className = 'text-xs font-bold text-cyan-400';
+            audioBtn.textContent = 'Sound On ✓';
+            audioBtn.className = 'w-full py-2 rounded-lg text-sm font-bold bg-cyan-700 text-white transition-all';
+        }
+
+        function stopAudio() {
+            if (!audioOn) return;
+            try { osc.stop(); audioCtx.close(); } catch (e) {}
+            osc = null; gain = null; audioCtx = null;
+            audioOn = false;
+            audioStatus.textContent = 'MUTED';
+            audioStatus.className = 'text-xs font-bold text-slate-500';
+            audioBtn.textContent = 'Turn Sound On';
+            audioBtn.className = 'w-full py-2 rounded-lg text-sm font-bold bg-slate-700 text-slate-300 hover:bg-slate-600 transition-all';
+        }
+
+        function draw() {
+            if (!running) return requestAnimationFrame(draw);
+            var src = sourcePos();
+            var fObs = observedFreq(src);
+            freqObserved.textContent = freqUnlocked ? Math.round(fObs) + ' Hz' : '—';
+            if (audioOn && osc) osc.frequency.setTargetAtTime(Math.max(40, fObs), audioCtx.currentTime, 0.05);
+
+            var now = performance.now();
+            if (now - lastEmit > 180) {
+                wavefronts.push({ x: src.x, y: src.y, r: 0, birth: now, approach: approachNow > 1 });
+                lastEmit = now;
+            }
+            wavefronts = wavefronts.filter(function (w) { return now - w.birth < 4000; });
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            wavefronts.forEach(function (w) {
+                w.r = ((now - w.birth) / 1000) * 90;
+                var alpha = Math.max(0, 1 - (now - w.birth) / 4000);
+                ctx.beginPath();
+                ctx.arc(w.x, w.y, w.r, 0, Math.PI * 2);
+                ctx.strokeStyle = w.approach ? 'rgba(56,189,248,' + alpha + ')' : 'rgba(248,113,113,' + alpha + ')';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            });
+
+            ctx.beginPath();
+            ctx.arc(src.x, src.y, 14, 0, Math.PI * 2);
+            ctx.fillStyle = '#38bdf8';
+            ctx.shadowColor = '#22d3ee';
+            ctx.shadowBlur = 20;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 10px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('SRC', src.x, src.y + 4);
+
+            var dt = Math.min(0.05, (now - (draw.last || now)) / 1000);
+            draw.last = now;
+            var span = Math.max(80, canvas.width * 0.76);
+            travel += dir * Math.min(sourceSpeed(), 0.8 * WAVE_SPEED) * 1.6 * dt / span;
+            if (travel > 1) { travel = 1; dir = -1; }
+            if (travel < 0) { travel = 0; dir = 1; }
+            requestAnimationFrame(draw);
+        }
+
+        speedSlider.addEventListener('input', updateLabels);
+        freqSlider.addEventListener('input', updateLabels);
+        toggleBtn.addEventListener('click', function () {
+            running = !running;
+            toggleBtn.textContent = running ? 'Pause' : 'Play';
+            if (running) draw();
+        });
+        resetBtn.addEventListener('click', function () {
+            travel = 0.15;
+            dir = 1;
+            freqUnlocked = false;
+            freqObserved.textContent = '—';
+            wavefronts = [];
+            updateLabels();
+        });
+        audioBtn.addEventListener('click', function () {
+            if (audioOn) stopAudio(); else startAudio();
+        });
+        document.getElementById('btnFreq').addEventListener('click', function () {
+            freqUnlocked = true;
+            try {
+                var c = document.getElementById('btnFreq')._ac || (document.getElementById('btnFreq')._ac = new (window.AudioContext || window.webkitAudioContext)());
+                if (c.state === 'suspended') c.resume();
+                var o = c.createOscillator(), g = c.createGain();
+                o.frequency.value = 880;
+                g.gain.setValueAtTime(0.0001, c.currentTime);
+                g.gain.exponentialRampToValueAtTime(0.06, c.currentTime + 0.02);
+                g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + 0.16);
+                o.connect(g); g.connect(c.destination);
+                o.start(); o.stop(c.currentTime + 0.17);
+            } catch (e) {}
+        });
+        updateLabels();
+        draw();
+
+        if (window.HKCLabKit) {
+            HKCLabKit.mountLearnFromZero(document.getElementById('lab-ramp'), {
+                accent: '#38bdf8', dark: true, appId: 'doppler_effect',
+                steps: [
+                    { id: 'D1', titleEn: 'What is the Doppler effect?', titleZh: '什麼是多普勒效應？',
+                      bodyEn: 'When a wave source moves relative to an observer, the observed frequency changes.', bodyZh: '當波源相對觀察者運動時，觀測到的頻率會改變。' },
+                    { id: 'D2', titleEn: 'Approaching source', titleZh: '波源接近',
+                      bodyEn: 'Wavefronts bunch up → higher observed frequency (blue shift / higher pitch).', bodyZh: '波前被壓縮 → 觀測頻率升高（音調變高）。' },
+                    { id: 'D3', titleEn: 'Receding source', titleZh: '波源遠離',
+                      bodyEn: 'Wavefronts spread out → lower observed frequency (red shift / lower pitch).', bodyZh: '波前被拉開 → 觀測頻率降低（音調變低）。' },
+                    { id: 'D4', titleEn: 'Try it', titleZh: '動手試',
+                      bodyEn: 'Increase source speed and turn sound on. Listen for the pitch drop as the source passes the centre.', bodyZh: '增加波源速度並開啟音效，留意波源經過中心時音調的變化。' }
+                ]
+            });
+            HKCLabKit.mountChallenges(document.getElementById('lab-challenges'), {
+                accent: '#38bdf8', dark: true, storageKey: 'doppler_ch_v1',
+                challenges: [
+                    { id: 'C1', en: 'Raise source speed (m/s) and hear the pitch rise on approach', zh: '提高波源速率（m/s），聽接近時音調升高' },
+                    { id: 'C2', en: 'Observe cyan vs red wavefronts on each side', zh: '觀察兩側青色與紅色波前' },
+                    { id: 'C3', en: 'Read the live f′ formula value while source moves', zh: '波源移動時讀取 f′ 數值' }
+                ]
+            });
+        }
+    })();
+    </script>
+  <script data-ncs-fix6="lang">
+  (function () {
+    var APP_STRINGS = {
+    "zh": {
+        "pageTitle": "都卜勒效應實驗室",
+        "title": "都卜勒效應實驗室",
+        "subtitle": "互動物理模擬（含音效）",
+        "controls": "控制",
+        "approach": "接近觀察者（音調較高）",
+        "recede": "遠離觀察者（音調較低）",
+        "obs": "觀察",
+        "freqObs": "觀測頻率",
+        "pause": "暫停",
+        "reset": "重設",
+        "observer": "觀察者"
+    },
+    "en": {
+        "pageTitle": "Doppler Effect Lab",
+        "title": "Doppler Effect Lab",
+        "subtitle": "Interactive Physics Simulation with Audio",
+        "controls": "Controls",
+        "approach": "Approaching observer (higher pitch)",
+        "recede": "Receding from observer (lower pitch)",
+        "obs": "Observation",
+        "freqObs": "Observed frequency",
+        "pause": "Pause",
+        "reset": "Reset",
+        "observer": "Observer"
+    }
+};
+    function applyUI() {
+      var u = function (k) { return window.NcsVanillaBridge.ui(k, APP_STRINGS); };
+      document.title = u("pageTitle");
+      
+      var h1 = document.querySelector("header h1");
+      if (h1) h1.textContent = u("title");
+      var sub = document.querySelector("header p.text-slate-400");
+      if (sub) sub.textContent = u("subtitle");
+      var badges = document.querySelectorAll("header .rounded-full span:last-child");
+      if (badges[0]) badges[0].textContent = u("approach");
+      if (badges[1]) badges[1].textContent = u("recede");
+      var h2 = document.querySelector("aside h2");
+      if (h2 && h2.lastChild) h2.lastChild.textContent = " " + u("controls");
+      var obsH = document.querySelector("aside h3.font-semibold");
+      if (obsH) obsH.textContent = u("obs");
+      var freqLbl = document.querySelector("#freqObserved") && document.querySelector("#freqObserved").previousElementSibling;
+      if (freqLbl) freqLbl.textContent = u("freqObs");
+      var pauseBtn = document.getElementById("toggleBtn");
+      if (pauseBtn && pauseBtn.textContent.indexOf("Pause") >= 0 || pauseBtn && pauseBtn.textContent.indexOf("暫") >= 0) pauseBtn.textContent = u("pause");
+      var resetBtn = document.getElementById("resetBtn");
+      if (resetBtn) resetBtn.textContent = u("reset");
+      var obsTag = document.querySelector(".text-yellow-400.border");
+      if (obsTag) obsTag.textContent = u("observer");
+  
+    }
+    window.NcsVanillaBridge.whenNcsReady(function () {
+      window.NcsVanillaBridge.wireVanillaI18n(APP_STRINGS, applyUI);
+    });
+  })();
+  </script>
+</body>
 </html>

@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>小三英語：超市任務 | KS1 Shopping</title>
+  <link rel="stylesheet" href="../../common/lesson.css">
+  <link rel="stylesheet" href="../../../../common/ncs-i18n.css">
+  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) { display: none !important; }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() { document.body.classList.add("ncs-fleet-mounted"); }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({ chromePath: "../../../../_shared/ncs-chrome.json", target: document.body }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
+    else boot();
+  })();
+  </script>
+</head>
+<body class="lesson" data-stage="ks1">
+  <div class="wrap">
+    <div class="topbar">
+      <a href="../../index.html">← 英語課 English</a>
+      <div class="progress" id="progress">熱身 Warm-up</div>
+    </div>
+    <h1>超市任務<span class="zh-title">KS1 · 小三 P3 · Listen, read a receipt, write</span></h1>
+    <section class="objective">
+      <strong>學習目標 Learning objective</strong>
+      <p>聽超市對話、閱讀收據，並用英式英文寫一句有 please 的購物句。答錯時會指出錯在價錢、用字或圖。</p>
+      <p class="muted">Listen to a shop dialogue, read a receipt, and write one polite British sentence.</p>
+    </section>
+    <section class="panel" id="stage"></section>
+    <div class="feedback" id="feedback" aria-live="polite"></div>
+    <p id="autotest-result" class="sr"></p>
+  </div>
+  <script src="../../common/gb-audio.js"></script>
+  <script src="../../common/checks.js"></script>
+  <script src="../../common/page.js"></script>
+  <script>
+  (function () {
+    var flower = '<svg class="pic-svg" viewBox="0 0 64 64" aria-hidden="true"><ellipse cx="32" cy="56" rx="5" ry="7" fill="#3f8f4a"/><circle cx="24" cy="30" r="13" fill="#f7f4ee" stroke="#d9d3c7"/><circle cx="40" cy="28" r="13" fill="#fff" stroke="#d9d3c7"/><circle cx="32" cy="20" r="12" fill="#fbfaf6" stroke="#d9d3c7"/><circle cx="32" cy="34" r="11" fill="#efeae0" stroke="#d9d3c7"/></svg>';
+    var dialogue = [
+      "Good morning. What would you like?",
+      "I would like a cauliflower and a packet of biscuits, please.",
+      "The cauliflower is twelve dollars and the biscuits are sixteen dollars.",
+      "Here is your receipt."
+    ];
+    var warm = [
+      {
+        say: "A vegetable with a white head.",
+        choices: [
+          { id: "flower", html: flower + "cauliflower", ok: true, okZh: "對。圖是白色花球，不是綠葉。cauliflower 是白色的頭。", okEn: "Yes. The picture is a white head, not green leaves. A cauliflower has a white head." },
+          { id: "lettuce", html: "🥬<br>lettuce", zh: "你選了 lettuce（生菜）。生菜是綠色的葉。cauliflower 是白色的頭，和這張圖不同。", en: "You chose lettuce. Lettuce is green leaves. A cauliflower has a white head, which matches the white picture." },
+          { id: "broccoli", html: "🥦<br>broccoli", zh: "你選了 broccoli。它是綠色的。這句說的是 white head，所以是 cauliflower。", en: "You chose broccoli. It is green. The sentence says a white head, so the vegetable is cauliflower." }
+        ]
+      },
+      {
+        say: "The person who takes your money at the till.",
+        choices: [
+          { id: "cashier", html: "🧾<br>cashier", ok: true, okZh: "對。cashier 是在收銀台收錢的人。", okEn: "Yes. A cashier takes your money at the till." },
+          { id: "customer", html: "🛍️<br>customer", zh: "你選了 customer。customer 是買東西的人。收錢的是 cashier。", en: "You chose customer. The customer buys things. The cashier takes the money." },
+          { id: "explore", html: "🧭<br>person exploring money", zh: "你選了 person exploring money。exploring 是探索。cashier 不是探索錢，而是在收銀台收錢的人。", en: "You chose person exploring money. Exploring means looking around. A cashier takes your money at the till." }
+        ]
+      },
+      {
+        say: "A crunchy baked snack. British English says biscuit.",
+        choices: [
+          { id: "biscuit", html: "🍪<br>biscuit", ok: true, okZh: "對。英式英文叫 biscuit，不叫 cookie。", okEn: "Yes. British English says biscuit, not cookie." },
+          { id: "cookie", html: "🍪<br>cookie", zh: "你選了 cookie。那是美式說法。這一課用 biscuit。", en: "You chose cookie. That is the American word. This lesson uses biscuit." },
+          { id: "cake", html: "🍰<br>cake", zh: "你選了 cake。cake 是蛋糕。這句說的是薄而脆的 biscuit。", en: "You chose cake. A cake is not the thin crunchy snack in the sentence. That snack is a biscuit." }
+        ]
+      },
+      {
+        say: "The goodness food gives your body.",
+        choices: [
+          { id: "nutrition", html: "🥗<br>nutrition", ok: true, okZh: "對。nutrition 是食物給身體的好處，不是一句含糊的 Health in food。", okEn: "Yes. Nutrition is the goodness food gives your body." },
+          { id: "vague", html: "❓<br>Health in food", zh: "你選了 Health in food。這句太含糊。nutrition 在這裡是 the goodness food gives your body。", en: "You chose Health in food. That phrase is too vague. Nutrition here means the goodness food gives your body." },
+          { id: "medicine", html: "💊<br>medicine", zh: "你選了 medicine。藥不是 nutrition。nutrition 來自食物。", en: "You chose medicine. Medicine is not nutrition. Nutrition comes from food." }
+        ]
+      }
+    ];
+    var listenQs = [
+      {
+        q: "顧客想買什麼？ What does the customer want?",
+        choices: [
+          { id: "both", text: "a cauliflower and a packet of biscuits", ok: true, okZh: "對。顧客說 cauliflower 和 a packet of biscuits。", okEn: "Yes. The customer asks for a cauliflower and a packet of biscuits." },
+          { id: "cookie", text: "lettuce and cookies", zh: "你選了 lettuce and cookies。對話沒有 lettuce，也沒有用 cookie。顧客要的是 cauliflower 和 biscuits。", en: "You chose lettuce and cookies. The dialogue does not say lettuce or cookie. The customer wants a cauliflower and biscuits." },
+          { id: "trolley", text: "a trolley", zh: "你選了 trolley（手推車）。對話裡顧客要買的是食物，不是手推車。", en: "You chose a trolley. The customer asks for food, not a trolley." }
+        ]
+      },
+      {
+        q: "誰收錢？ Who takes the money?",
+        choices: [
+          { id: "cashier", text: "the cashier", ok: true, okZh: "對。收錢的是 cashier。", okEn: "Yes. The cashier takes the money." },
+          { id: "customer", text: "the customer", zh: "你選了 customer。顧客是付錢的人，收錢的是 cashier。", en: "You chose the customer. The customer pays. The cashier takes the money." },
+          { id: "baker", text: "the baker", zh: "你選了 baker。這段對話沒有麵包師傅。收錢的是 cashier。", en: "You chose the baker. This dialogue has no baker. The cashier takes the money." }
+        ]
+      },
+      {
+        q: "餅乾多少錢？ How much are the biscuits?",
+        choices: [
+          { id: "16", text: "$16", ok: true, okZh: "對。biscuits are sixteen dollars。", okEn: "Yes. The biscuits are sixteen dollars." },
+          { id: "12", text: "$12", zh: "你選了十二元。十二元是 cauliflower 的價錢。biscuits 是 sixteen dollars。", en: "You chose twelve dollars. Twelve dollars is the cauliflower. The biscuits are sixteen dollars." },
+          { id: "28", text: "$28", zh: "你選了二十八元。那是 12 加 16 的合計，不是餅乾的單價。餅乾是 $16。", en: "You chose twenty-eight dollars. That is 12 plus 16, the total of the two items, not the price of the biscuits. The biscuits are $16." }
+        ]
+      }
+    ];
+    var receiptQs = [
+      {
+        q: "哪一樣是九元？ Which item costs nine dollars?",
+        choices: [
+          { id: "yoghurt", text: "Yoghurt", ok: true, okZh: "對。收據上 Yoghurt 那一行是 $9.00。", okEn: "Yes. The Yoghurt line on the receipt says $9.00." },
+          { id: "biscuits", text: "Biscuits", zh: "你選了 Biscuits。收據上 Biscuits 是 $16.00。$9.00 在 Yoghurt 那一行。", en: "You chose Biscuits. On the receipt, Biscuits are $16.00. $9.00 is on the Yoghurt line." },
+          { id: "flower", text: "Cauliflower", zh: "你選了 Cauliflower。收據上它是 $12.00。$9.00 是 Yoghurt。", en: "You chose Cauliflower. That line is $12.00. $9.00 is Yoghurt." }
+        ]
+      },
+      {
+        q: "收據上的拼寫是哪一個？ Which spelling is printed?",
+        choices: [
+          { id: "gb", text: "Yoghurt", ok: true, okZh: "對。收據印的是 Yoghurt，這是英式拼寫。", okEn: "Yes. The receipt prints Yoghurt, the British spelling." },
+          { id: "us", text: "Yogurt", zh: "你選了 Yogurt。收據沒有這個美式拼寫。收據印的是 Yoghurt，h 在 g 後面。", en: "You chose Yogurt. That American spelling is not on the receipt. The receipt prints Yoghurt, with an h after the g." }
+        ]
+      },
+      {
+        q: "收據上的收銀員是誰？ Who is the cashier on the receipt?",
+        choices: [
+          { id: "chan", text: "Ms Chan", ok: true, okZh: "對。Cashier 那一行寫著 Ms Chan。", okEn: "Yes. The Cashier line says Ms Chan." },
+          { id: "sunny", text: "Sunny Market", zh: "你選了店名 Sunny Market。收銀員名字在最底的 Cashier 一行，是 Ms Chan。", en: "You chose the shop name, Sunny Market. The cashier's name is on the Cashier line: Ms Chan." },
+          { id: "customer", text: "the customer", zh: "你選了 customer。收據的 Cashier 一行寫的是 Ms Chan，不是顧客。", en: "You chose the customer. The Cashier line names Ms Chan." }
+        ]
+      },
+      {
+        q: "用 $50 付款，應找回多少？ You pay with $50. How much change?",
+        choices: [
+          { id: "13", text: "$13", ok: true, okZh: "對。總數是 $37。50 減 37 是 13。", okEn: "Yes. The total is $37. 50 minus 37 is 13." },
+          { id: "37", text: "$37", zh: "你選了 $37。那是收據的 total，不是找回的錢。找回的錢是 50 減 37。", en: "You chose $37. That is the total on the receipt, not the change. Change is 50 minus 37." },
+          { id: "22", text: "$22", zh: "你選了 $22。那是只減了 cauliflower 和 biscuits（12+16=28，50-28=22），漏了 Yoghurt 的 $9。總數是 $37，找回 $13。", en: "You chose $22. That subtracts only the cauliflower and the biscuits (12+16=28, 50-28=22) and forgets the yoghurt at $9. The total is $37, so the change is $13." }
+        ]
+      }
+    ];
+    var stage = "warm";
+    var index = 0;
+    var heard = false;
+
+    function setProgress() {
+      var labels = { warm: "熱身 Warm-up", listen: "聽對話 Listen", receipt: "讀收據 Receipt", write: "寫一句 Write", done: "完成 Done" };
+      document.getElementById("progress").textContent = labels[stage] + " " + (stage === "write" || stage === "done" ? "" : (index + 1));
+    }
+
+    function choiceButton(choice, onPick) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "choice";
+      if (choice.html) btn.innerHTML = choice.html;
+      else btn.textContent = choice.text;
+      btn.addEventListener("click", function () { onPick(choice.id); });
+      return btn;
+    }
+
+    function render() {
+      var root = document.getElementById("stage");
+      root.replaceChildren();
+      setProgress();
+      if (stage === "done") {
+        root.innerHTML = "<div class='finish'><h2>任務完成 Mission complete</h2><p>你聽了對話、讀了收據，並寫了一句英式購物句。</p><p>You listened, read the receipt, and wrote a British shopping sentence.</p></div>";
+        return;
+      }
+      if (stage === "write") {
+        root.innerHTML = "<p>用一句英文向店員說你想買 cauliflower 或 biscuits，要有 please、大寫和句號。</p><p class='muted'>Write one sentence asking for a cauliflower or biscuits. Use please, a capital letter, and a full stop.</p>";
+        var model = document.createElement("p");
+        model.className = "target-line";
+        model.textContent = "I would like a packet of biscuits, please.";
+        root.appendChild(model);
+        var row = document.createElement("div");
+        row.className = "row";
+        var hear = document.createElement("button");
+        hear.className = "primary";
+        hear.type = "button";
+        hear.textContent = "聽範例 Hear";
+        hear.addEventListener("click", function () { GBAudio.speak(model.textContent); });
+        var box = document.createElement("textarea");
+        box.id = "draft";
+        box.spellcheck = false;
+        var check = document.createElement("button");
+        check.className = "primary";
+        check.type = "button";
+        check.textContent = "檢查 Check";
+        check.addEventListener("click", function () {
+          var result = HKChecks.checkShoppingSentence(box.value);
+          LessonPage.showFeedback(document.getElementById("feedback"), result);
+          if (!result.ok) return;
+          GBAudio.speak(box.value);
+          stage = "done";
+          render();
+        });
+        row.appendChild(hear);
+        var meter = document.createElement("div");
+        meter.className = "meter";
+        meter.innerHTML = "<span id='meter-bar'></span>";
+        row.appendChild(meter);
+        root.appendChild(row);
+        root.appendChild(box);
+        root.appendChild(check);
+        return;
+      }
+      var pack = stage === "warm" ? warm : stage === "listen" ? listenQs : receiptQs;
+      if (stage === "listen" && index === 0) {
+        var intro = document.createElement("p");
+        intro.textContent = "先聽完整段對話，再答題。 Hear the whole dialogue, then answer.";
+        root.appendChild(intro);
+      }
+      if (stage === "receipt") {
+        var receipt = document.createElement("div");
+        receipt.className = "receipt";
+        receipt.innerHTML = "<strong>SUNNY MARKET</strong><div class='line'><span>Cauliflower</span><span>$12.00</span></div><div class='line'><span>Biscuits</span><span>$16.00</span></div><div class='line'><span>Yoghurt</span><span>$9.00</span></div><div class='line'><span>Total</span><span>$37.00</span></div><div>Cashier: Ms Chan</div>";
+        root.appendChild(receipt);
+      }
+      var tools = document.createElement("div");
+      tools.className = "row";
+      if (stage !== "receipt") {
+        var hearBtn = document.createElement("button");
+        hearBtn.type = "button";
+        hearBtn.className = "primary";
+        hearBtn.textContent = stage === "listen" && index === 0 ? "聽對話 Hear the dialogue" : "聽這題 Hear";
+        hearBtn.addEventListener("click", play);
+        var again = document.createElement("button");
+        again.type = "button";
+        again.className = "ghost";
+        again.textContent = "再聽 Replay";
+        again.addEventListener("click", play);
+        tools.appendChild(hearBtn);
+        tools.appendChild(again);
+      }
+      var meterWrap = document.createElement("div");
+      meterWrap.className = "meter";
+      meterWrap.innerHTML = "<span id='meter-bar'></span>";
+      tools.appendChild(meterWrap);
+      root.appendChild(tools);
+      var engine = document.createElement("p");
+      engine.className = "engine";
+      engine.id = "engine-label";
+      engine.textContent = GBAudio.engineLabel();
+      root.appendChild(engine);
+      if (stage !== "listen" || index > 0 || heard) {
+        var q = document.createElement("p");
+        q.textContent = pack[index].q || "聽意思，選正確的圖或詞。 Choose the matching picture or word.";
+        if (stage === "warm") q.textContent = "聽意思，選正確的一項。 Listen, then choose.";
+        root.appendChild(q);
+        var choices = document.createElement("div");
+        choices.className = "choices";
+        pack[index].choices.forEach(function (choice) {
+          choices.appendChild(choiceButton(choice, answer));
+        });
+        root.appendChild(choices);
+      }
+    }
+
+    function play() {
+      heard = true;
+      if (stage === "listen" && index === 0) {
+        var chain = Promise.resolve();
+        dialogue.forEach(function (line) {
+          chain = chain.then(function () { return GBAudio.speak(line); });
+        });
+        chain.then(render).catch(render);
+        return;
+      }
+      var pack = stage === "warm" ? warm : stage === "listen" ? listenQs : receiptQs;
+      if (pack[index].say) GBAudio.speak(pack[index].say);
+      else if (stage === "listen") {
+        GBAudio.speak(dialogue.join(" "));
+      }
+      render();
+    }
+
+    function answer(id) {
+      if ((stage === "warm" || (stage === "listen" && index === 0)) && !heard) {
+        LessonPage.showFeedback(document.getElementById("feedback"), {
+          ok: false,
+          messages: [{ zh: "先按聽。這一題的意思在聲音裡。", en: "Press Hear first. The meaning is in the audio." }]
+        });
+        return;
+      }
+      var pack = stage === "warm" ? warm : stage === "listen" ? listenQs : receiptQs;
+      var result = HKChecks.diagnoseChoice(pack[index], id);
+      LessonPage.showFeedback(document.getElementById("feedback"), result);
+      if (!result.ok) return;
+      index += 1;
+      heard = stage === "receipt";
+      if (index >= pack.length) {
+        index = 0;
+        heard = false;
+        stage = stage === "warm" ? "listen" : stage === "listen" ? "receipt" : "write";
+      }
+      render();
+    }
+
+    window.__checkLesson = function () {
+      var page = document.body.textContent;
+      if (page.indexOf("Person exploring money") !== -1 && page.indexOf("exploring 是探索") === -1) {
+        throw new Error("cashier is still defined as exploring");
+      }
+      var cookie = HKChecks.checkShoppingSentence("I would like a cookie, please.");
+      if (cookie.ok || cookie.messages[0].en.toLowerCase().indexOf("biscuit") === -1) throw new Error("cookie feedback");
+      var good = HKChecks.checkShoppingSentence("I would like a cauliflower, please.");
+      if (!good.ok) throw new Error("British sentence should pass");
+      var lettuce = HKChecks.diagnoseChoice(warm[0], "lettuce");
+      if (lettuce.messages[0].en.indexOf("white head") === -1) throw new Error("cauliflower feedback");
+      var price = HKChecks.diagnoseChoice(listenQs[2], "12");
+      if (price.messages[0].en.indexOf("cauliflower") === -1) throw new Error("price feedback");
+      var change = HKChecks.diagnoseChoice(receiptQs[3], "22");
+      if (change.messages[0].en.indexOf("yoghurt") === -1) throw new Error("change feedback");
+      dialogue.forEach(function (line) {
+        if (!(GBAudio.render(line).duration > 0.45)) throw new Error("dialogue silent: " + line);
+      });
+      if (!document.querySelector("#stage svg, #stage .receipt, .objective")) throw new Error("lesson shell missing");
+    };
+
+    LessonPage.boot(function () { render(); });
+  })();
+  </script>
+  <script src="../../../../common/learn-from-zero.js"></script>
+  <script src="../../../../common/interactive-lab-kit.js"></script>
+</body>
+</html>

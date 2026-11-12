@@ -11,7 +11,7 @@ window.BATTLE_DATA = (function () {
           "allies"
       ],
       "geo": {
-          "minLng": 1.38,
+          "minLng": 1.05,
           "maxLng": 3.38,
           "minLat": 50.24,
           "maxLat": 51.84,
@@ -192,7 +192,7 @@ window.BATTLE_DATA = (function () {
       }
   ];
   const notes =   {
-      "summary": "敦克爾克撤退 — DSE 西史小戰役地圖。",
+      "summary": "敦克爾克撤退 — 課題地圖。兵力與路線為示意。",
       "caveats": [
           "本圖僅覆蓋該戰役核心區域；戰線與兵力為教學示意。",
           "衛星影像為現代地形。"
@@ -201,7 +201,7 @@ window.BATTLE_DATA = (function () {
   };
   const analysis =   {
       "military": "德軍裝甲部隊突破阿登森林，切斷英法聯軍；英軍自敦克爾克海灘撤離逾三十萬人。",
-      "leaders": "英首相丘吉爾堅持「戰鬥到底」並組織撤退；海軍拉姆齊將軍協調「发电机行動」。德軍倫德施泰特、戈林主張停止進攻（希特勒下令暫停），使英軍主力得以保存，影響日後諾曼第反攻人力。",
+      "leaders": "英首相丘吉爾堅持「戰鬥到底」並組織撤退；海軍拉姆齊將軍協調「發電機行動」。德軍倫德施泰特、戈林主張停止進攻（希特勒下令暫停），使英軍主力得以保存，影響日後諾曼第反攻人力。",
       "nationalPower": "德國陸軍強勁但海軍不足；英國保留核心戰力，民船動員展現海權。",
       "impact": "敦克爾克奇蹟保存英軍骨幹，為日後諾曼第反攻奠定基礎。"
   };
@@ -280,7 +280,7 @@ window.BATTLE_DATA = (function () {
               "orbit": 0.65
           },
           "dateLabel": "1940年5月26日",
-          "title_zh": "发电机行動",
+          "title_zh": "發電機行動",
           "title_en": "Operation Dynamo",
           "narration_zh": "英國啟動敦克爾克撤離，民船與軍艦協力運兵。",
           "narration_en": "Operation Dynamo — civilian boats join naval evacuation.",
@@ -346,11 +346,33 @@ window.BATTLE_DATA = (function () {
           "forces_en": ""
       }
   ];
-  const outro =   {
+    const sourceTask = {
+    "cite": "邱吉爾在下院的演說，1940年6月4日",
+    "excerpt": "他說英國將在海灘、上陸地點、田野和街上繼續作戰，絕不投降。",
+    "ask": "把這段話放在敦克爾克撤退剛結束時，它的立場是什麼？",
+    "options": [
+      {
+        "t": "宣布敦克爾克是一場已經打贏的決戰。",
+        "ok": false,
+        "why": "撤退保住了約33萬8千人，重裝備留在灘上。演說要說的是戰爭還要打下去。"
+      },
+      {
+        "t": "撤退之後仍拒絕求和，準備在本土繼續打。",
+        "ok": true,
+        "why": "立場是不投降。它沒有把撤出海灘說成擊敗德軍。"
+      },
+      {
+        "t": "要求立即與德國停戰，以換回被俘士兵。",
+        "ok": false,
+        "why": "演說的結論是繼續作戰。"
+      }
+    ]
+  };
+const outro =   {
       "title_zh": "敦克爾克撤退",
       "title_en": "DUNKIRK EVACUATION",
-      "narration_zh": "本戰役為 DSE 西史重要考點。",
-      "narration_en": "A key DSE Western History topic.",
+      "narration_zh": "1940年5月26日至6月4日約33萬8千人撤出，重裝備留在大陸。",
+      "narration_en": "About 338,000 were evacuated from 26 May to 4 June 1940. Heavy equipment stayed behind.",
       "cam": {
           "lng": 2.38,
           "lat": 51.04,
@@ -360,5 +382,5 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       }
   };
-  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };
+  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, sourceTask, END_DAY };
 })();

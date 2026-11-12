@@ -30,21 +30,21 @@ export function LibrarySectionTabs({ locale, section }: Props) {
       </Link>
       <nav className="library-tabs" aria-label="School level">
         <Link
-          href={hrefFor("secondary")}
-          className={`library-tab ${section === "secondary" ? "active" : ""}`}
-        >
-          {t(locale, "librarySecondaryTab")}
-          <span className="library-tab-en">
-            {locale === "zh-HK" ? "Secondary" : "中學"}
-          </span>
-        </Link>
-        <Link
           href={hrefFor("primary")}
           className={`library-tab ${section === "primary" ? "active" : ""}`}
         >
           {t(locale, "libraryPrimaryTab")}
           <span className="library-tab-en">
             {locale === "zh-HK" ? "Primary" : "小學"}
+          </span>
+        </Link>
+        <Link
+          href={hrefFor("secondary")}
+          className={`library-tab ${section === "secondary" ? "active" : ""}`}
+        >
+          {t(locale, "librarySecondaryTab")}
+          <span className="library-tab-en">
+            {locale === "zh-HK" ? "Secondary" : "中學"}
           </span>
         </Link>
       </nav>

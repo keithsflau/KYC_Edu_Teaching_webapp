@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>稀缺與機會成本</title>
+  <link rel="stylesheet" href="../../shared/lesson.css">
+</head>
+<body data-entry="junior-scarcity">
+  <div class="wrap">
+    <nav class="nav">
+      <a href="../../index.html">經濟科</a>
+      <a href="../../../index.html">中學</a>
+    </nav>
+    <p class="kicker">初中</p>
+    <h1>稀缺與機會成本</h1>
+    <p class="lead">稀缺是指資源有限，而想做的事很多，所以必須選擇。機會成本是所放棄的最高價值選擇，只計次佳那一項，不是把所有沒做的事相加。</p>
+    <div id="app" class="card"></div>
+    <footer>@HKSTEAMAI All Copy-Right Reserved.</footer>
+  </div>
+  <script src="../../shared/sfx.js"></script>
+  <script>
+    var items = [
+      { name: "留家溫習中文默書", detail: "沒有現金收入" },
+      { name: "茶餐廳兼職三小時", detail: "賺 $150" },
+      { name: "到社區中心探訪長者", detail: "沒有工資" }
+    ];
+    var stage = "scarcity";
+    var ranked = [];
+
+    function el(tag, className, text) {
+      var node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text != null) node.textContent = text;
+      return node;
+    }
+
+    function choice(app, title, progress, options, nextStage) {
+      app.appendChild(el("p", "progress", progress));
+      app.appendChild(el("h2", null, title));
+      var feedback = el("div", "feedback");
+      var locked = false;
+      options.forEach(function (opt) {
+        var button = el("button", "option", opt.label);
+        button.type = "button";
+        button.addEventListener("click", function () {
+          if (locked || !window.EconomySfx) return;
+          if (!opt.ok) {
+            window.EconomySfx.wrong();
+            feedback.className = "feedback bad";
+            feedback.textContent = opt.why;
+            return;
+          }
+          locked = true;
+          window.EconomySfx.correct();
+          feedback.className = "feedback good";
+          feedback.textContent = opt.why;
+          var next = el("button", "next", nextStage === "done" ? "完成本課" : "下一題");
+          next.type = "button";
+          next.addEventListener("click", function () {
+            window.EconomySfx.click();
+            stage = nextStage;
+            render();
+          });
+          app.appendChild(next);
+        });
+        app.appendChild(button);
+      });
+      app.appendChild(feedback);
+    }
+
+    function render() {
+      var app = document.getElementById("app");
+      app.innerHTML = "";
+      if (stage === "scarcity") {
+        choice(app, "中三學生的星期六只有三小時。哪一項說明了稀缺？", "第 1 / 3 題", [
+          { ok: true, label: "三小時不能同時做齊溫習、茶餐廳兼職和探訪長者", why: "正確。時間有限，想做的事卻有三件，所以要取捨。稀缺不是「只有窮人才有」，政府、學生和有錢人一樣要選擇。" },
+          { ok: false, label: "只有低收入家庭才要面對稀缺", why: "不對。稀缺來自有限資源和無限慾望。收入高低會改變選擇，但不會令人不再面對稀缺。" },
+          { ok: false, label: "三個選擇都沒有代價，因為學生仍有空氣可以呼吸", why: "不對。空氣不是這題的稀缺資源。星期六的三小時用了一項，就不能同時用在其餘兩項。" }
+        ], "rank");
+        return;
+      }
+      if (stage === "rank") {
+        app.appendChild(el("p", "progress", "第 2 / 3 題"));
+        app.appendChild(el("h2", null, "把這三小時的三個選擇排次序"));
+        app.appendChild(el("p", "story", "先按你心目中的優先次序排列。排好之後，機會成本要按你自己的次佳選擇來答，不是按老師的喜好。"));
+        var pool = el("div", "options");
+        items.forEach(function (item) {
+          if (ranked.indexOf(item) >= 0) return;
+          var button = el("button", "option", item.name + "（" + item.detail + "）");
+          button.type = "button";
+          button.addEventListener("click", function () {
+            if (!window.EconomySfx) return;
+            window.EconomySfx.click();
+            ranked.push(item);
+            render();
+          });
+          pool.appendChild(button);
+        });
+        app.appendChild(pool);
+        if (ranked.length) {
+          var list = el("div", "panel");
+          ranked.forEach(function (item, index) {
+            var row = el("div", "rank");
+            row.appendChild(el("b", null, String(index + 1)));
+            row.appendChild(el("span", null, item.name));
+            list.appendChild(row);
+          });
+          app.appendChild(list);
+        }
+        var reset = el("button", "ghost", "重新排序");
+        reset.type = "button";
+        reset.addEventListener("click", function () {
+          ranked = [];
+          render();
+        });
+        app.appendChild(reset);
+        if (ranked.length === 3) {
+          var feedback = el("div", "feedback");
+          var locked = false;
+          var options = [
+            { id: "second", label: "次佳選擇：「" + ranked[1].name + "」", ok: true },
+            { id: "sum", label: "把「" + ranked[1].name + "」和「" + ranked[2].name + "」的價值相加", ok: false },
+            { id: "zero", label: "零，因為你選了最想做的「" + ranked[0].name + "」", ok: false }
+          ];
+          app.appendChild(el("h3", null, "你選擇了「" + ranked[0].name + "」。這次選擇的機會成本是什麼？"));
+          options.forEach(function (opt) {
+            var button = el("button", "option", opt.label);
+            button.type = "button";
+            button.addEventListener("click", function () {
+              if (locked || !window.EconomySfx) return;
+              if (!opt.ok) {
+                window.EconomySfx.wrong();
+                feedback.className = "feedback bad";
+                feedback.textContent = opt.id === "sum"
+                  ? "不對。機會成本只計次佳的那一個選擇，不會把第二和第三都加進去。"
+                  : "不對。你喜歡第一選擇，不代表沒有代價。你放棄了排第二的「" + ranked[1].name + "」。";
+                return;
+              }
+              locked = true;
+              window.EconomySfx.correct();
+              feedback.className = "feedback good";
+              feedback.textContent = "正確。你的機會成本是所放棄的最高價值選擇，也就是排第二的「" + ranked[1].name + "」。兼職的 $150 只在它成為次佳選擇時，才是這次決定的機會成本。";
+              var next = el("button", "next", "下一題");
+              next.type = "button";
+              next.addEventListener("click", function () {
+                window.EconomySfx.click();
+                stage = "hospital";
+                render();
+              });
+              app.appendChild(next);
+            });
+            app.appendChild(button);
+          });
+          app.appendChild(feedback);
+        }
+        return;
+      }
+      if (stage === "hospital") {
+        choice(app, "政府有一幅市區土地，不能同時興建公營醫院和公營學校。若決定建醫院，而次佳用途是建學校，機會成本是什麼？", "第 3 / 3 題", [
+          { ok: true, label: "放棄的那間公營學校", why: "正確。同一幅土地不能兩用。機會成本是次佳用途，也就是放棄的學校服務，不是兩項建築費相加。" },
+          { ok: false, label: "醫院建築費加上學校建築費", why: "不對。把所有方案的開支加總，不是機會成本。機會成本只計被放棄的最高價值選擇。" },
+          { ok: false, label: "零，因為土地屬於政府", why: "不對。政府一樣面對稀缺。土地用來建醫院，就不能同時提供那間學校。" }
+        ], "done");
+        return;
+      }
+      app.appendChild(el("h2", "done", "本課完成"));
+      var done = el("p", null, "你已用自己的排序答出機會成本：選擇「" + ranked[0].name + "」時，機會成本是「" + ranked[1].name + "」。稀缺令人要選擇，機會成本只計次佳選擇。");
+      done.id = "lesson-complete";
+      app.appendChild(done);
+    }
+
+    render();
+  </script>
+</body>
+</html>

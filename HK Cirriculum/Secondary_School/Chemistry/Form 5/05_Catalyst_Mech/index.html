@@ -2,79 +2,173 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>05_Catalyst_Mech</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="../../../../common/babel-react-classic.js"></script>
-  <script src="../../../../common/learn-from-zero.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
-  <style>
-    body { font-family: "IBM Plex Sans", system-ui, sans-serif; background-color: #f8fafc; color: #0f172a; min-height: 100vh; }
-  </style>
-  <!-- NCS i18n fleet kit (auto-injected) -->
-  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
-  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
-  <style data-ncs-kit="fleet-bridge">
-    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
-    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
-      display: none !important;
-    }
-  </style>
-  <script data-ncs-kit="fleet-init">
-  (function () {
-    function hideLegacyToggles() {
-      document.body.classList.add("ncs-fleet-mounted");
-      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
-        var label = (btn.textContent || "").trim();
-        if (label === "EN" || label === "\u4E2D") {
-          btn.classList.add("ncs-hide-when-ncs-fleet");
-        }
-      });
-      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
-        el.classList.add("ncs-hide-when-ncs-fleet");
-      });
-    }
-    function boot() {
-      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
-      window.NcsI18n.init({
-        chromePath: "../../../../_shared/ncs-chrome.json",
-        target: document.body
-      }).then(hideLegacyToggles);
-    }
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", boot);
-    } else {
-      boot();
-    }
-  })();
-  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>催化劑與反應途徑 | Catalyst</title>
+  <link rel="stylesheet" href="../../lesson.css" />
 </head>
-<body>
-  <div id="root"></div>
-  <script type="text/babel" data-presets="react-classic">
-    const { useState } = React;
-    
-    function App() {
-      return (
-        <div className="max-w-4xl mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-4">05 Catalyst Mech</h1>
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 mb-8 text-center">
-            <div className="w-full h-64 bg-slate-100 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 mb-4">
-              <span className="text-slate-400 font-medium">[ Interactive Canvas Placeholder ]</span>
-            </div>
-            <p className="text-slate-500">This interactive lab is currently under development.</p>
-          </div>
-          <LearnFromZero />
-        </div>
-      );
-    }
-    
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+<body data-chem-silent="1">
+  <section class="chem-learn" data-chem-entry="1">
+    <h2>學習目標</h2>
+    <ul>
+      <li>指出催化劑提供活化能較低的另一條途徑。</li>
+      <li>知道焓變由反應物和生成物的能量差決定，不因改道而改變。</li>
+      <li>知道催化劑不改變平衡常數，反應結束後整體仍可再參與反應。</li>
+    </ul>
+    <h2>常見錯因</h2>
+    <ul>
+      <li>把較矮的能峰看成焓變變小。</li>
+      <li>以為平衡會因為反應變快而向生成物移動。</li>
+      <li>把催化劑當成會被用完的反應物。</li>
+    </ul>
+    <p id="chem-feedback" role="status">看能量圖，再判斷活化能、焓變、平衡常數和催化劑本身。</p>
+  </section>
+  <main>
+    <div class="panel">
+      <h1>催化劑與反應途徑</h1>
+      <p class="muted">這是放熱例子：生成物能量低於反應物。兩條途徑的起點和終點相同。本頁只比較能量圖，沒有催化劑的做法。</p>
+      <h2>操作</h2>
+      <canvas id="plot" width="640" height="240" aria-label="有催化和無催化的能量圖"></canvas>
+      <p class="muted">催化途徑的活化能</p>
+      <div class="row" id="ea">
+        <button type="button" class="alt" data-ea="lower">較低</button>
+        <button type="button" class="alt" data-ea="higher">較高</button>
+        <button type="button" class="alt" data-ea="same">與無催化相同</button>
+      </div>
+      <p class="muted">焓變</p>
+      <div class="row" id="dh">
+        <button type="button" class="alt" data-dh="same">維持不變</button>
+        <button type="button" class="alt" data-dh="smaller">變小</button>
+        <button type="button" class="alt" data-dh="larger">變大</button>
+      </div>
+      <p class="muted">平衡常數</p>
+      <div class="row" id="kc">
+        <button type="button" class="alt" data-kc="same">維持不變</button>
+        <button type="button" class="alt" data-kc="up">變大</button>
+        <button type="button" class="alt" data-kc="down">變小</button>
+      </div>
+      <p class="muted">反應結束時的催化劑</p>
+      <div class="row" id="fate">
+        <button type="button" class="alt" data-fate="back">整體可再參與反應</button>
+        <button type="button" class="alt" data-fate="used">像反應物一樣被消耗</button>
+      </div>
+      <div class="row">
+        <button type="button" id="check">核對</button>
+      </div>
+      <p><a href="../index.html">返回中五</a></p>
+    </div>
+  </main>
+  <script src="../../lesson-kit.js"></script>
+  <script>
+    (function () {
+      var ea = "";
+      var dh = "";
+      var kc = "";
+      var fate = "";
+
+      function mark(container, btn) {
+        var buttons = container.querySelectorAll("button");
+        var i;
+        for (i = 0; i < buttons.length; i++) buttons[i].className = "alt";
+        if (btn) btn.className = "on";
+      }
+
+      function say(msg, kind) {
+        if (window.ChemLesson) ChemLesson.say(msg, kind);
+      }
+
+      function path(g, pts) {
+        var i;
+        g.beginPath();
+        g.moveTo(pts[0][0], pts[0][1]);
+        for (i = 1; i < pts.length; i++) g.lineTo(pts[i][0], pts[i][1]);
+        g.stroke();
+      }
+
+      function paint() {
+        var canvas = document.getElementById("plot");
+        var g = canvas.getContext("2d");
+        g.fillStyle = "#0f172a";
+        g.fillRect(0, 0, canvas.width, canvas.height);
+        g.strokeStyle = "#334155";
+        g.lineWidth = 1;
+        g.beginPath();
+        g.moveTo(48, 28);
+        g.lineTo(48, 210);
+        g.lineTo(610, 210);
+        g.stroke();
+        g.strokeStyle = "#fb7185";
+        g.lineWidth = 2.5;
+        path(g, [[78, 150], [230, 48], [540, 186]]);
+        g.strokeStyle = "#5eead4";
+        path(g, [[78, 150], [300, 108], [540, 186]]);
+        g.fillStyle = "#e2e8f0";
+        g.beginPath();
+        g.arc(78, 150, 4, 0, Math.PI * 2);
+        g.arc(540, 186, 4, 0, Math.PI * 2);
+        g.fill();
+        g.strokeStyle = "#facc15";
+        g.setLineDash([4, 4]);
+        g.beginPath();
+        g.moveTo(575, 150);
+        g.lineTo(575, 186);
+        g.stroke();
+        g.setLineDash([]);
+        g.font = "14px sans-serif";
+        g.fillStyle = "#e2e8f0";
+        g.fillText("能量", 8, 24);
+        g.fillText("反應進程", 520, 230);
+        g.fillText("反應物", 64, 142);
+        g.fillText("生成物", 500, 208);
+        g.fillStyle = "#facc15";
+        g.fillText("焓變", 582, 174);
+        g.fillStyle = "#fb7185";
+        g.fillText("無催化：較高的能峰", 150, 40);
+        g.fillStyle = "#5eead4";
+        g.fillText("有催化：較矮的能峰", 250, 100);
+      }
+
+      function bind(id, key) {
+        document.getElementById(id).onclick = function (e) {
+          var btn = e.target.closest ? e.target.closest("button") : null;
+          if (!btn) return;
+          if (key === "ea") ea = btn.getAttribute("data-ea");
+          if (key === "dh") dh = btn.getAttribute("data-dh");
+          if (key === "kc") kc = btn.getAttribute("data-kc");
+          if (key === "fate") fate = btn.getAttribute("data-fate");
+          mark(document.getElementById(id), btn);
+        };
+      }
+
+      bind("ea", "ea");
+      bind("dh", "dh");
+      bind("kc", "kc");
+      bind("fate", "fate");
+      document.getElementById("check").onclick = function () {
+        if (!ea || !dh || !kc || !fate) {
+          say("錯因：四項都要選：活化能、焓變、平衡常數，以及催化劑本身。", "no");
+          return;
+        }
+        if (ea !== "lower") {
+          say("錯因：圖中青色能峰較矮。催化劑的作用是改走活化能較低的途徑，不是把能峰抬高，也不是維持原來的能峰。", "no");
+          return;
+        }
+        if (dh !== "same") {
+          say("錯因：焓變是生成物和反應物的能量差。兩條途徑的起點和終點相同，所以焓變不變。較矮的只是中間的能峰。", "no");
+          return;
+        }
+        if (kc !== "same") {
+          say("錯因：催化劑同時加快正反應和逆反應，平衡位置不變，平衡常數也不變。反應變快不等於平衡向生成物移動。", "no");
+          return;
+        }
+        if (fate !== "back") {
+          say("錯因：催化劑會參與較低能峰的途徑，但反應結束時會再生，不是像反應物那樣被消耗。", "no");
+          return;
+        }
+        say("正確。活化能較低，焓變和平衡常數都不變，催化劑整體可再參與反應。", "ok");
+      };
+      paint();
+    })();
   </script>
-<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+  <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 </body>
 </html>

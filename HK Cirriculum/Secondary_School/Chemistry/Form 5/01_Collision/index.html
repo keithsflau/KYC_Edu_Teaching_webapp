@@ -2,79 +2,102 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>01_Collision</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="../../../../common/babel-react-classic.js"></script>
-  <script src="../../../../common/learn-from-zero.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
-  <style>
-    body { font-family: "IBM Plex Sans", system-ui, sans-serif; background-color: #f8fafc; color: #0f172a; min-height: 100vh; }
-  </style>
-  <!-- NCS i18n fleet kit (auto-injected) -->
-  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
-  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
-  <style data-ncs-kit="fleet-bridge">
-    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
-    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
-      display: none !important;
-    }
-  </style>
-  <script data-ncs-kit="fleet-init">
-  (function () {
-    function hideLegacyToggles() {
-      document.body.classList.add("ncs-fleet-mounted");
-      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
-        var label = (btn.textContent || "").trim();
-        if (label === "EN" || label === "\u4E2D") {
-          btn.classList.add("ncs-hide-when-ncs-fleet");
-        }
-      });
-      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
-        el.classList.add("ncs-hide-when-ncs-fleet");
-      });
-    }
-    function boot() {
-      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
-      window.NcsI18n.init({
-        chromePath: "../../../../_shared/ncs-chrome.json",
-        target: document.body
-      }).then(hideLegacyToggles);
-    }
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", boot);
-    } else {
-      boot();
-    }
-  })();
-  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>碰撞理論 | Collision theory</title>
+  <script src="../../chem-model.js"></script>
+  <link rel="stylesheet" href="../../lesson.css" />
 </head>
 <body>
-  <div id="root"></div>
-  <script type="text/babel" data-presets="react-classic">
-    const { useState } = React;
-    
-    function App() {
-      return (
-        <div className="max-w-4xl mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-4">01 Collision</h1>
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 mb-8 text-center">
-            <div className="w-full h-64 bg-slate-100 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 mb-4">
-              <span className="text-slate-400 font-medium">[ Interactive Canvas Placeholder ]</span>
-            </div>
-            <p className="text-slate-500">This interactive lab is currently under development.</p>
-          </div>
-          <LearnFromZero />
-        </div>
-      );
+  <section class="chem-learn" data-chem-entry="1">
+    <h2>學習目標</h2>
+    <ul>
+      <li>說出有效碰撞的兩項條件：相對能量大於或等於活化能，而且取向正確。</li>
+      <li>判斷單一次碰撞是否有效。</li>
+      <li>答錯時指出缺了能量還是取向。</li>
+    </ul>
+    <p id="chem-feedback" role="status">判斷下面這一次碰撞是有效還是無效。</p>
+  </section>
+  <main>
+    <div class="panel">
+      <h1>碰撞理論：有效碰撞</h1>
+      <p class="muted">濃度上升會增加碰撞次數；溫度上升會增加能量達到活化能的粒子比例。下面只判斷其中一次碰撞，不涉及實驗用量。</p>
+      <p class="muted">模型活化能門檻 Ea = <span id="ea">1.5</span>（相對能量）。</p>
+      <p id="case" style="font-size:1.15rem;font-weight:700">讀取碰撞例子。</p>
+      <div class="row">
+        <button type="button" id="yes">有效碰撞</button>
+        <button type="button" id="nope">無效碰撞</button>
+        <button type="button" class="alt" id="next">下一例</button>
+      </div>
+      <p class="muted" id="score">分數 0 / 0</p>
+    </div>
+  </main>
+  <script src="../../lesson-kit.js"></script>
+  <script>
+    var ea = ChemModel.collisionSetup(4, 25).ea;
+    var cases = [
+      { energy: ea + 0.5, orient: true },
+      { energy: ea + 0.5, orient: false },
+      { energy: ea - 0.7, orient: true },
+      { energy: ea, orient: true },
+      { energy: ea - 1.1, orient: false }
+    ];
+    var i = 0;
+    var score = 0;
+    var tried = 0;
+    var locked = false;
+    var caseEl = document.getElementById("case");
+    var scoreEl = document.getElementById("score");
+    document.getElementById("ea").textContent = ea.toFixed(1);
+
+    function failReason(c) {
+      var low = c.energy < ea;
+      var bad = !c.orient;
+      if (low && bad) return "相對能量低於活化能，粒子會彈開；取向也不正確，反應部位沒有碰上。";
+      if (low) return "取向雖然正確，相對能量仍低於活化能，粒子沒有足夠能量變成產物。";
+      if (bad) return "相對能量已經達到活化能，但取向不正確，反應部位沒有碰上。";
+      return "";
     }
-    
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+
+    function render() {
+      var c = cases[i];
+      var face = c.orient ? "反應部位正對" : "側面擦過，反應部位沒有碰上";
+      caseEl.textContent = "第 " + (i + 1) + " / " + cases.length + " 例：相對能量 " + c.energy.toFixed(1) + "，活化能 " + ea.toFixed(1) + "，" + face + "。";
+    }
+
+    function judge(saysEffective) {
+      var c = cases[i];
+      var effective = c.energy >= ea && c.orient;
+      var msg;
+      if (locked) {
+        ChemLesson.say("這一例已判斷，請按下一例。");
+        return;
+      }
+      locked = true;
+      tried += 1;
+      if (saysEffective === effective) score += 1;
+      scoreEl.textContent = "分數 " + score + " / " + tried;
+      if (saysEffective === effective && effective) {
+        msg = "正確。相對能量大於或等於活化能，而且取向正確，這是有效碰撞。";
+      } else if (saysEffective === effective) {
+        msg = "正確。這次無效。" + failReason(c) + "兩項條件要同時符合。";
+      } else if (saysEffective) {
+        msg = "這次不是有效碰撞。" + failReason(c);
+      } else {
+        msg = "這次其實有效。相對能量 " + c.energy.toFixed(1) + " 已大於或等於活化能 " + ea.toFixed(1) + "，反應部位也正對。";
+      }
+      ChemLesson.say(msg, saysEffective === effective ? "ok" : "no");
+    }
+
+    document.getElementById("yes").onclick = function () { judge(true); };
+    document.getElementById("nope").onclick = function () { judge(false); };
+    document.getElementById("next").onclick = function () {
+      locked = false;
+      i = (i + 1) % cases.length;
+      render();
+      ChemLesson.say("換一例。先判斷這次碰撞。");
+    };
+    render();
   </script>
-<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+  <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 </body>
 </html>

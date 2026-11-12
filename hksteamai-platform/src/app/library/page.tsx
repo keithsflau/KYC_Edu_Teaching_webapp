@@ -17,6 +17,7 @@ import {
 import { auth } from "@/lib/auth";
 import { getUserAccess } from "@/lib/entitlements";
 import { LibraryFilters } from "@/components/LibraryFilters";
+import { LibraryLevelPicker } from "@/components/LibraryLevelPicker";
 import { LibrarySectionTabs } from "@/components/LibrarySectionTabs";
 import { LibrarySubjectGrid } from "@/components/LibrarySubjectGrid";
 import { LibrarySubjectModules } from "@/components/LibrarySubjectModules";
@@ -28,10 +29,12 @@ type Search = Promise<{
   section?: string;
   subject?: string;
   system?: string;
+  grade?: string;
 }>;
 
-function parseSection(raw?: string): LibrarySection {
-  return raw === "primary" ? "primary" : "secondary";
+function parseSection(raw?: string): LibrarySection | null {
+  if (raw === "primary" || raw === "secondary") return raw;
+  return null;
 }
 
 export default async function LibraryPage({
@@ -44,13 +47,15 @@ export default async function LibraryPage({
   const map = loadCurriculumMap();
   const section = parseSection(sp.section);
   const subject = sp.subject || "all";
+  const grade =
+    sp.grade && sp.grade !== "all" ? sp.grade : undefined;
   const system = (
     CURRICULUM_SYSTEMS.includes(sp.system as CurriculumSystem)
       ? sp.system
       : "hk"
   ) as CurriculumSystem;
 
-  const sectionModules = modulesForSection(section);
+  const sectionModules = section ? modulesForSection(section) : [];
   const subjectModules =
     subject !== "all"
       ? sectionModules.filter((m) => m.subject === subject)
@@ -89,9 +94,13 @@ export default async function LibraryPage({
         ) : null}
       </header>
 
-      <Suspense fallback={null}>
-        <LibrarySectionTabs locale={locale} section={section} />
-      </Suspense>
+      {!section ? (
+        <LibraryLevelPicker locale={locale} system={system} />
+      ) : (
+        <Suspense fallback={null}>
+          <LibrarySectionTabs locale={locale} section={section} />
+        </Suspense>
+      )}
 
       <Suspense fallback={null}>
         <LibraryFilters
@@ -101,7 +110,7 @@ export default async function LibraryPage({
         />
       </Suspense>
 
-      {subject !== "all" && subjectModules.length > 0 ? (
+      {!section ? null : subject !== "all" && subjectModules.length > 0 ? (
         <LibrarySubjectModules
           locale={locale}
           subject={subject}
@@ -110,6 +119,7 @@ export default async function LibraryPage({
           section={section}
           systemQuery={system}
           entitlement={entitlement}
+          selectedGrade={grade}
         />
       ) : subject !== "all" && subjectModules.length === 0 ? (
         <p className="form-hint warn">{t(locale, "libraryEmpty")}</p>

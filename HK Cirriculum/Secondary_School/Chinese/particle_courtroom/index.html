@@ -64,29 +64,163 @@
 
 <body class="bg-gradient-to-br from-red-900 to-orange-900 text-white p-4">
     <div class="max-w-4xl mx-auto">
-        <h1 class="text-5xl font-bold text-center mb-6">⚖️ 虛詞法庭</h1>
+        <h1 id="ui-title" class="text-5xl font-bold text-center mb-6">⚖️ 虛詞法庭</h1>
         <div class="bg-slate-800/90 backdrop-blur rounded-2xl p-6 mb-4">
             <div class="flex items-center gap-4 mb-4">
                 <div class="text-6xl">👨‍⚖️</div>
                 <div class="flex-1">
-                    <h2 class="text-2xl font-bold">案件：<span id="case-title" class="text-yellow-400"></span></h2>
+                    <h2 class="text-2xl font-bold"><span id="ui-case-prefix">案件：</span><span id="case-title" class="text-yellow-400"></span></h2>
                     <p class="text-gray-300" id="sentence"></p>
                 </div>
             </div>
             <div class="bg-slate-900 rounded-xl p-4 mb-4">
-                <h3 class="font-bold mb-2">爭議焦點</h3>
-                <p class="text-lg">句中的「<span id="particle" class="text-red-400 text-2xl font-bold"></span>」是什麼詞性？</p>
+                <h3 id="ui-dispute-heading" class="font-bold mb-2">爭議焦點</h3>
+                <p id="ui-dispute-text" class="text-lg">句中的「<span id="particle" class="text-red-400 text-2xl font-bold"></span>」是什麼詞性？</p>
             </div>
             <div id="evidence" class="bg-blue-900/30 rounded-xl p-4 mb-4 hidden evidence-box">
-                <h3 class="font-bold mb-2">📜 證據</h3>
+                <h3 id="ui-evidence-heading" class="font-bold mb-2">📜 證據</h3>
                 <p id="evidence-text"></p>
             </div>
             <div class="grid grid-cols-3 gap-3" id="options"></div>
         </div>
         <div class="text-center">
-            <div class="text-sm text-gray-400">案件進度：<span id="progress">1/5</span></div>
+            <div class="text-sm text-gray-400"><span id="ui-progress-label">案件進度：</span><span id="progress">1/5</span></div>
         </div>
     </div>
+    <script>
+        var APP_STRINGS = {
+            zh: {
+                pageTitle: "虛詞法庭",
+                title: "⚖️ 虛詞法庭",
+                casePrefix: "案件：",
+                disputeHeading: "爭議焦點",
+                disputeTemplate: "句中的「{p}」是什麼詞性？",
+                evidenceHeading: "📜 證據",
+                progressLabel: "案件進度：",
+                caseTitle: "虛詞辨析案 {n}",
+                allDone: "全部案件審理完畢！你是虛詞大師！",
+                correct: "✅ 判決正確！",
+                wrong: "❌ 判決錯誤！請重新審理。"
+            },
+            en: {
+                pageTitle: "Particle Courtroom",
+                title: "⚖️ Particle Courtroom",
+                casePrefix: "Case: ",
+                disputeHeading: "Dispute",
+                disputeTemplate: "What part of speech is 「{p}」 in this sentence?",
+                evidenceHeading: "📜 Evidence",
+                progressLabel: "Progress: ",
+                caseTitle: "Particle case {n}",
+                allDone: "All cases complete! You are a particle master!",
+                correct: "✅ Correct verdict!",
+                wrong: "❌ Wrong verdict! Try again."
+            },
+            ne: { pageTitle: "Particle Courtroom", title: "⚖️ Particle Courtroom", casePrefix: "Case: ", disputeHeading: "Dispute", disputeTemplate: "「{p}」 को part of speech?", evidenceHeading: "📜 Evidence", progressLabel: "Progress: ", caseTitle: "Case {n}", allDone: "All done!", correct: "✅ Correct!", wrong: "❌ Wrong!" },
+            ur: { pageTitle: "Particle Courtroom", title: "⚖️ Particle Courtroom", casePrefix: "Case: ", disputeHeading: "Dispute", disputeTemplate: "「{p}」 کا part of speech?", evidenceHeading: "📜 Evidence", progressLabel: "Progress: ", caseTitle: "Case {n}", allDone: "All done!", correct: "✅ Correct!", wrong: "❌ Wrong!" },
+            tl: { pageTitle: "Particle Courtroom", title: "⚖️ Particle Courtroom", casePrefix: "Case: ", disputeHeading: "Dispute", disputeTemplate: "Ano ang part of speech ng 「{p}」?", evidenceHeading: "📜 Evidence", progressLabel: "Progress: ", caseTitle: "Case {n}", allDone: "Tapos na!", correct: "✅ Tama!", wrong: "❌ Mali!" },
+            hi: { pageTitle: "Particle Courtroom", title: "⚖️ Particle Courtroom", casePrefix: "Case: ", disputeHeading: "Dispute", disputeTemplate: "「{p}」 का part of speech?", evidenceHeading: "📜 Evidence", progressLabel: "Progress: ", caseTitle: "Case {n}", allDone: "सब हो गया!", correct: "✅ सही!", wrong: "❌ गलत!" }
+        };
+        function uiLangBucket() {
+            if (window.NcsI18n && window.NcsI18n.getLang) { var lang = window.NcsI18n.getLang(); return lang === "zh-Hant" ? "zh" : lang; }
+            return "zh";
+        }
+        function ui(key) {
+            if (window.NcsI18n && window.NcsI18n.isInitialized && window.NcsI18n.isInitialized()) {
+                var fromKit = window.NcsI18n.t(key);
+                if (fromKit != null && fromKit !== key) return fromKit;
+            }
+            var bucket = uiLangBucket();
+            if (APP_STRINGS[bucket] && APP_STRINGS[bucket][key]) return APP_STRINGS[bucket][key];
+            if (bucket !== "en" && APP_STRINGS.en && APP_STRINGS.en[key]) return APP_STRINGS.en[key];
+            return (APP_STRINGS.zh && APP_STRINGS.zh[key]) || key;
+        }
+        function registerAppStrings() { if (window.NcsI18n && window.NcsI18n.registerStrings) window.NcsI18n.registerStrings(APP_STRINGS); }
+        function applyUI() {
+            document.title = ui("pageTitle");
+            document.getElementById("ui-title").textContent = ui("title");
+            document.getElementById("ui-case-prefix").textContent = ui("casePrefix");
+            document.getElementById("ui-dispute-heading").textContent = ui("disputeHeading");
+            document.getElementById("ui-evidence-heading").textContent = ui("evidenceHeading");
+            document.getElementById("ui-progress-label").textContent = ui("progressLabel");
+            var p = document.getElementById("particle").textContent;
+            if (p) document.getElementById("ui-dispute-text").innerHTML = ui("disputeTemplate").replace("{p}", '<span id="particle" class="text-red-400 text-2xl font-bold">' + p + '</span>');
+        }
+        function wireI18n() {
+            registerAppStrings(); applyUI();
+            if (window.NcsI18n && window.NcsI18n.onChange) window.NcsI18n.onChange(applyUI);
+            document.addEventListener("hksteam-ncs-lang-change", applyUI);
+            document.addEventListener("ncs-lang-change", applyUI);
+        }
+        function whenNcsReady(fn) {
+            var tries = 0, timer = setInterval(function () {
+                if ((window.NcsI18n && window.NcsI18n.isInitialized && window.NcsI18n.isInitialized()) || ++tries > 120) { clearInterval(timer); fn(); }
+            }, 50);
+        }
+
+        var CASES = [
+            { sentence: "何陋之有？", particle: "之", options: ["代詞 (它)", "助詞 (賓語前置標誌)", "動詞 (到/往)"], correct: 1, evidence: "此為賓語前置句，原句為「有何陋」。「之」是賓語前置的結構助詞，標示「陋」前置，不是代詞。" },
+            { sentence: "吾欲之南海。", particle: "之", options: ["代詞", "助詞", "動詞 (到/往)"], correct: 2, evidence: "此處「之」解作「前往」，為動詞。" },
+            { sentence: "師者，所以傳道授業解惑也。", particle: "也", options: ["語氣助詞", "代詞", "動詞"], correct: 0, evidence: "「也」用於句末，表示判斷語氣，為語氣助詞。" },
+            { sentence: "此誠危急存亡之秋也。", particle: "之", options: ["代詞", "助詞 (的)", "動詞"], correct: 1, evidence: "「存亡之秋」即「存亡的時候」，「之」為結構助詞，相當於「的」。" },
+            { sentence: "學而時習之。", particle: "之", options: ["代詞（所學的）", "助詞", "動詞"], correct: 0, evidence: "「時習」是按時溫習，不是學完之後才複習。「之」指所學的內容，是代詞。" }
+        ];
+        var currentCase = 0;
+        var judging = false;
+
+        function loadCase() {
+            judging = false;
+            if (currentCase >= CASES.length) {
+                alert(ui("allDone"));
+                currentCase = 0;
+                loadCase();
+                return;
+            }
+            var c = CASES[currentCase];
+            document.getElementById('case-title').textContent = ui("caseTitle").replace("{n}", String(currentCase + 1));
+            document.getElementById('sentence').textContent = c.sentence;
+            document.getElementById('particle').textContent = c.particle;
+            document.getElementById('ui-dispute-text').innerHTML = ui("disputeTemplate").replace("{p}", '<span id="particle" class="text-red-400 text-2xl font-bold">' + c.particle + '</span>');
+            document.getElementById('progress').textContent = (currentCase + 1) + '/' + CASES.length;
+            document.getElementById('evidence').classList.add('hidden');
+            var opts = document.getElementById('options');
+            opts.innerHTML = '';
+            c.options.forEach(function (opt, i) {
+                var btn = document.createElement('button');
+                btn.className = 'bg-gradient-to-br from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 p-4 rounded-xl font-bold transition-all';
+                btn.textContent = opt;
+                btn.onclick = function () { judge(i); };
+                opts.appendChild(btn);
+            });
+        }
+
+        function setOptionsDisabled(disabled) {
+            document.querySelectorAll('#options button').forEach(function (btn) {
+                btn.disabled = disabled;
+                btn.classList.toggle('opacity-60', disabled);
+                btn.classList.toggle('cursor-not-allowed', disabled);
+            });
+        }
+
+        function judge(choice) {
+            var c = CASES[currentCase];
+            if (!c || judging) return;
+            judging = true;
+            setOptionsDisabled(true);
+            document.getElementById('evidence').classList.remove('hidden');
+            document.getElementById('evidence-text').textContent = c.evidence;
+            if (choice === c.correct) {
+                alert(ui("correct"));
+                currentCase++;
+                setTimeout(loadCase, 1000);
+            } else {
+                alert(ui("wrong"));
+                judging = false;
+                setOptionsDisabled(false);
+            }
+        }
+
+        whenNcsReady(function () { wireI18n(); loadCase(); });
+    </script>
     <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 </body>
 

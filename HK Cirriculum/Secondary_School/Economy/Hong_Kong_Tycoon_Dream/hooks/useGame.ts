@@ -1,17 +1,24 @@
-
 import { useState, useCallback, useEffect } from 'react';
 import { GameState, Player, SpaceType, PendingAction } from '../types';
 import { BOARD_DATA, INITIAL_MONEY, GO_MONEY, JAIL_FINE } from '../constants';
 import { audioService } from '../services/audio';
+import {
+  ChoiceEvent,
+  applyChoice,
+  describeUtilityCharge,
+  opportunityQuestion,
+  payOrBankrupt,
+  ratesAndRentBill,
+  resolveJailFine,
+  salariesTaxBill,
+  utilityRent,
+  CHOICE_EVENTS,
+  FORTUNE_EVENTS,
+  applyFortune,
+} from '../logic/rules';
 
-const PLAYER_COLORS = [
-  'bg-red-600',
-  'bg-blue-600',
-  'bg-green-600',
-  'bg-yellow-500',
-];
+const PLAYER_COLORS = ['bg-red-600', 'bg-blue-600', 'bg-green-600', 'bg-yellow-500'];
 
-/** Append log in the same setState update (addLog() alone is lost when called inside setState). */
 const pushLog = (prev: GameState, msg: string) => [msg, ...prev.log].slice(0, 20);
 
 const releaseBankruptProperties = (spaces: GameState['spaces'], ownerId: number) =>
@@ -21,32 +28,58 @@ const releaseBankruptProperties = (spaces: GameState['spaces'], ownerId: number)
 
 const countActivePlayers = (players: Player[]) => players.filter((p) => !p.bankrupt).length;
 
-export const useGame = () => {
-  const [state, setState] = useState<GameState>({
-    players: [],
-    currentPlayerIndex: 0,
-    spaces: JSON.parse(JSON.stringify(BOARD_DATA)),
-    dice: [1, 1],
-    isDoubles: false,
-    doublesCount: 0,
-    gamePhase: 'SETUP',
-    log: [],
-    pendingAction: null,
-    rentPayment: null,
-  });
+const blankState = (): GameState => ({
+  players: [],
+  currentPlayerIndex: 0,
+  spaces: JSON.parse(JSON.stringify(BOARD_DATA)),
+  dice: [1, 1],
+  isDoubles: false,
+  doublesCount: 0,
+  gamePhase: 'SETUP',
+  log: [],
+  pendingAction: null,
+  rentPayment: null,
+  decisionNote: null,
+});
 
-  // Effect to auto-clear rent payment notification after animation
+const conclude = (state: GameState): GameState => {
+  const active = countActivePlayers(state.players);
+  if (state.players.length > 0 && active <= 1 && state.players.some((p) => p.bankrupt)) {
+    const winner = state.players.find((p) => !p.bankrupt);
+    return {
+      ...state,
+      gamePhase: 'GAME_OVER',
+      pendingAction: null,
+      log: pushLog(state, winner ? `${winner.name} 贏得遊戲！` : '遊戲結束'),
+    };
+  }
+  return state;
+};
+
+const markBankrupt = (players: Player[], spaces: GameState['spaces'], index: number) => {
+  const nextPlayers = players.map((p, i) =>
+    i === index ? { ...p, money: 0, bankrupt: true, isJailed: false, jailTurns: 0 } : p
+  );
+  return {
+    players: nextPlayers,
+    spaces: releaseBankruptProperties(spaces, nextPlayers[index].id),
+  };
+};
+
+export const useGame = () => {
+  const [state, setState] = useState<GameState>(blankState);
+
   useEffect(() => {
     if (state.rentPayment) {
       const timer = setTimeout(() => {
-        setState(prev => ({ ...prev, rentPayment: null }));
-      }, 2500); // Keep visible for 2.5 seconds
+        setState((prev) => ({ ...prev, rentPayment: null }));
+      }, 2500);
       return () => clearTimeout(timer);
     }
   }, [state.rentPayment]);
 
   const addLog = (msg: string) => {
-    setState(prev => ({ ...prev, log: [msg, ...prev.log].slice(0, 20) }));
+    setState((prev) => ({ ...prev, log: [msg, ...prev.log].slice(0, 20) }));
   };
 
   const startGame = useCallback((playerCount: number) => {
@@ -59,50 +92,42 @@ export const useGame = () => {
       isJailed: false,
       jailTurns: 0,
       getOutOfJailFreeCards: 0,
-      bankrupt: false
+      bankrupt: false,
     }));
 
-    setState(prev => ({
-      ...prev,
+    setState({
+      ...blankState(),
       players: newPlayers,
       gamePhase: 'ROLL',
       log: [`遊戲開始! ${playerCount} 位玩家準備就緒!`, '歡迎來到香江富豪夢!'],
-      spaces: JSON.parse(JSON.stringify(BOARD_DATA)), // Reset board
-      currentPlayerIndex: 0,
-      rentPayment: null,
-    }));
+    });
   }, []);
 
   const nextTurn = useCallback(() => {
-    setState(prev => {
-      // Check if current player rolled doubles and is not in jail, they go again
-      if (prev.isDoubles && !prev.players[prev.currentPlayerIndex].isJailed && prev.gamePhase !== 'GAME_OVER') {
-         return {
-           ...prev,
-           gamePhase: 'ROLL',
-           pendingAction: null,
-           log: pushLog(prev, `${prev.players[prev.currentPlayerIndex].name} 擲出孖寶，再擲一次！`),
-         };
+    setState((prev) => {
+      if (prev.gamePhase === 'GAME_OVER') return prev;
+      const current = prev.players[prev.currentPlayerIndex];
+      if (prev.isDoubles && current && !current.isJailed && !current.bankrupt) {
+        return {
+          ...prev,
+          gamePhase: 'ROLL',
+          pendingAction: null,
+          decisionNote: null,
+          log: pushLog(prev, `${current.name} 擲出孖寶，再擲一次！`),
+        };
       }
 
-      // Find next non-bankrupt player
       let nextIndex = (prev.currentPlayerIndex + 1) % prev.players.length;
       let loops = 0;
       while (prev.players[nextIndex].bankrupt && loops < prev.players.length) {
         nextIndex = (nextIndex + 1) % prev.players.length;
         loops++;
       }
-      
-      if (loops === prev.players.length) {
-          // Should be handled by win condition, but safe guard
-          return prev;
-      }
+      if (loops >= prev.players.length) return prev;
 
       const nextPlayer = prev.players[nextIndex];
       let nextPhase: GameState['gamePhase'] = 'ROLL';
       let nextPending: PendingAction | null = null;
-
-      // If next player is in jail, they must make a decision first
       if (nextPlayer.isJailed) {
         nextPhase = 'ACTION';
         nextPending = { type: 'JAIL_DECISION' };
@@ -113,61 +138,66 @@ export const useGame = () => {
         currentPlayerIndex: nextIndex,
         gamePhase: nextPhase,
         pendingAction: nextPending,
+        decisionNote: null,
         isDoubles: false,
         doublesCount: 0,
-        ...(nextPlayer.isJailed
-          ? { log: pushLog(prev, `${nextPlayer.name} 在獄中，請選擇行動。`) }
-          : {}),
+        ...(nextPlayer.isJailed ? { log: pushLog(prev, `${nextPlayer.name} 在獄中，請選擇行動。`) } : {}),
       };
     });
   }, []);
 
   const handleJailDecision = useCallback((decision: 'PAY' | 'CARD') => {
-    setState(prev => {
+    setState((prev) => {
       const player = prev.players[prev.currentPlayerIndex];
-      const newPlayers = [...prev.players];
+      if (!player || player.bankrupt) return prev;
 
       if (decision === 'PAY') {
-        if (player.money < JAIL_FINE) {
-          return { ...prev, log: pushLog(prev, `${player.name} 資金不足，無法支付罰金。`) };
+        const fine = resolveJailFine(player.money, JAIL_FINE);
+        if (fine.bankrupt) {
+          audioService.play('jail');
+          const cleared = markBankrupt(prev.players, prev.spaces, prev.currentPlayerIndex);
+          return conclude({
+            ...prev,
+            ...cleared,
+            gamePhase: 'END_TURN',
+            pendingAction: null,
+            decisionNote: '坐監罰金付不出時會破產，現金不會變成負數。',
+            log: pushLog(prev, `${player.name} 付不出坐監罰金 $${JAIL_FINE}，宣佈破產。`),
+          });
         }
         audioService.play('pay');
-        newPlayers[prev.currentPlayerIndex] = {
-          ...player,
-          money: player.money - JAIL_FINE,
-          isJailed: false,
-          jailTurns: 0
-        };
+        const players = prev.players.map((p, i) =>
+          i === prev.currentPlayerIndex
+            ? { ...p, money: fine.money, isJailed: false, jailTurns: 0 }
+            : p
+        );
         return {
           ...prev,
-          players: newPlayers,
+          players,
           gamePhase: 'ROLL',
           pendingAction: null,
+          decisionNote: null,
           log: pushLog(prev, `${player.name} 支付了 $${JAIL_FINE} 罰金，重獲自由！請擲骰子。`),
-        };
-      } else if (decision === 'CARD') {
-        if (player.getOutOfJailFreeCards <= 0) return prev;
-        newPlayers[prev.currentPlayerIndex] = {
-          ...player,
-          getOutOfJailFreeCards: player.getOutOfJailFreeCards - 1,
-          isJailed: false,
-          jailTurns: 0
-        };
-        return {
-          ...prev,
-          players: newPlayers,
-          gamePhase: 'ROLL',
-          pendingAction: null,
-          log: pushLog(prev, `${player.name} 使用了保釋卡，重獲自由！請擲骰子。`),
         };
       }
 
-      return {
-        ...prev,
-        players: newPlayers,
-        gamePhase: 'ROLL', // Now they can roll normally
-        pendingAction: null
-      };
+      if (decision === 'CARD') {
+        if (player.getOutOfJailFreeCards <= 0) return prev;
+        const players = prev.players.map((p, i) =>
+          i === prev.currentPlayerIndex
+            ? { ...p, getOutOfJailFreeCards: p.getOutOfJailFreeCards - 1, isJailed: false, jailTurns: 0 }
+            : p
+        );
+        return {
+          ...prev,
+          players,
+          gamePhase: 'ROLL',
+          pendingAction: null,
+          decisionNote: null,
+          log: pushLog(prev, `${player.name} 使用了保釋卡，重獲自由！請擲骰子。`),
+        };
+      }
+      return prev;
     });
   }, []);
 
@@ -177,387 +207,343 @@ export const useGame = () => {
     const d2 = Math.floor(Math.random() * 6) + 1;
     const isDoubles = d1 === d2;
 
-    setState(prev => {
+    setState((prev) => {
       const player = prev.players[prev.currentPlayerIndex];
-      let newDoublesCount = isDoubles ? prev.doublesCount + 1 : 0;
-      const newPlayers = [...prev.players];
-      
-      // Handle Jail Rolling Logic
+      if (!player || player.bankrupt || prev.gamePhase === 'GAME_OVER') return prev;
+      const newDoublesCount = isDoubles ? prev.doublesCount + 1 : 0;
+
       if (player.isJailed) {
-         if (isDoubles) {
-            newPlayers[prev.currentPlayerIndex] = { ...player, isJailed: false, jailTurns: 0 };
-            const moved = processMovement(prev, d1 + d2, newPlayers, [d1, d2], isDoubles, 0);
-            return { ...moved, log: pushLog(moved, `${player.name} 擲出孖寶 (${d1}, ${d2})，成功越獄！`) };
-         } else {
-            const newTurns = player.jailTurns + 1;
-            if (newTurns >= 3) {
-               newPlayers[prev.currentPlayerIndex] = { 
-                 ...player, 
-                 money: player.money - JAIL_FINE,
-                 isJailed: false, 
-                 jailTurns: 0 
-               };
-               const moved = processMovement(prev, d1 + d2, newPlayers, [d1, d2], isDoubles, 0);
-               return { ...moved, log: pushLog(moved, `${player.name} 坐監期滿，強制罰款 $${JAIL_FINE} 出獄。`) };
-            } else {
-               newPlayers[prev.currentPlayerIndex] = { ...player, jailTurns: newTurns };
-               return {
-                 ...prev,
-                 dice: [d1, d2],
-                 players: newPlayers,
-                 isDoubles: false, 
-                 gamePhase: 'END_TURN',
-                 pendingAction: null,
-                 log: pushLog(prev, `${player.name} 越獄失敗 (${d1}, ${d2})，繼續坐監。`),
-               };
-            }
-         }
+        if (isDoubles) {
+          const released = prev.players.map((p, i) =>
+            i === prev.currentPlayerIndex ? { ...p, isJailed: false, jailTurns: 0 } : { ...p }
+          );
+          const moved = processMovement({ ...prev, players: released }, d1 + d2, [d1, d2], true, 0);
+          return {
+            ...moved,
+            isDoubles: false,
+            log: pushLog(moved, `${player.name} 擲出孖寶 (${d1}, ${d2})，成功越獄！`),
+          };
+        }
+        const newTurns = player.jailTurns + 1;
+        if (newTurns >= 3) {
+          const fine = resolveJailFine(player.money, JAIL_FINE);
+          if (fine.bankrupt) {
+            audioService.play('jail');
+            const cleared = markBankrupt(prev.players, prev.spaces, prev.currentPlayerIndex);
+            return conclude({
+              ...prev,
+              ...cleared,
+              dice: [d1, d2],
+              isDoubles: false,
+              doublesCount: 0,
+              gamePhase: 'END_TURN',
+              pendingAction: null,
+              decisionNote: '坐監期滿仍付不出罰金，跟付不出租金一樣，進入破產。',
+              log: pushLog(prev, `${player.name} 坐監期滿仍付不出罰金 $${JAIL_FINE}，不可留下負現金，宣佈破產。`),
+            });
+          }
+          audioService.play('pay');
+          const released = prev.players.map((p, i) =>
+            i === prev.currentPlayerIndex ? { ...p, money: fine.money, isJailed: false, jailTurns: 0 } : { ...p }
+          );
+          const moved = processMovement({ ...prev, players: released }, d1 + d2, [d1, d2], false, 0);
+          return { ...moved, log: pushLog(moved, `${player.name} 坐監期滿，支付罰金 $${JAIL_FINE} 後出獄。`) };
+        }
+        const players = prev.players.map((p, i) =>
+          i === prev.currentPlayerIndex ? { ...p, jailTurns: newTurns } : p
+        );
+        return {
+          ...prev,
+          dice: [d1, d2],
+          players,
+          isDoubles: false,
+          gamePhase: 'END_TURN',
+          pendingAction: null,
+          decisionNote: null,
+          log: pushLog(prev, `${player.name} 越獄失敗 (${d1}, ${d2})，繼續坐監。`),
+        };
       }
 
-      // Handle Speeding (3 doubles) - Only for non-jailed players
       if (newDoublesCount === 3) {
-        newPlayers[prev.currentPlayerIndex] = {
-          ...player,
-          position: 10, // Jail ID
-          isJailed: true,
-          jailTurns: 0
-        };
+        audioService.play('jail');
+        const players = prev.players.map((p, i) =>
+          i === prev.currentPlayerIndex ? { ...p, position: 10, isJailed: true, jailTurns: 0 } : { ...p }
+        );
         return {
           ...prev,
           dice: [d1, d2],
           isDoubles,
-          doublesCount: 0, // Reset
-          players: newPlayers,
+          doublesCount: 0,
+          players,
           gamePhase: 'END_TURN',
+          pendingAction: null,
+          decisionNote: null,
           log: pushLog(prev, `${player.name} 連續三次擲出孖寶，立即坐監！`),
         };
       }
 
-      // Normal Move
-      return processMovement(prev, d1 + d2, newPlayers, [d1, d2], isDoubles, newDoublesCount);
+      return processMovement(prev, d1 + d2, [d1, d2], isDoubles, newDoublesCount);
     });
   }, []);
 
-  // Helper to process movement and landing
-  const processMovement = (
-      state: GameState, 
-      steps: number, 
-      players: Player[], 
-      dice: [number, number],
-      isDoubles: boolean,
-      doublesCount: number
-  ): GameState => {
-    const playerIndex = state.currentPlayerIndex;
-    const player = players[playerIndex];
-    const oldPos = player.position;
-    let newPos = (oldPos + steps) % 40;
-    let passedGo = false;
-
-    if (newPos < oldPos) {
-      passedGo = true;
-      players[playerIndex].money += GO_MONEY;
-    }
-
-    players[playerIndex].position = newPos;
-    const space = state.spaces[newPos];
-    
-    // Determine action based on space
-    let phase: GameState['gamePhase'] = 'END_TURN';
-    let pending: PendingAction | null = null;
-
-    if (space.type === SpaceType.PROPERTY || space.type === SpaceType.STATION || space.type === SpaceType.UTILITY) {
-      if (space.ownerId === undefined && space.price) {
-        phase = 'ACTION';
-        pending = { type: 'BUY_PROPERTY', data: space };
-      } else if (space.ownerId !== undefined && space.ownerId !== player.id && !space.isMortgaged) {
-        // Rent calculation
-        let rent = 0;
-        if (space.type === SpaceType.UTILITY) {
-             const ownerSpaces = state.spaces.filter(s => s.ownerId === space.ownerId && s.type === SpaceType.UTILITY);
-             const multiplier = ownerSpaces.length === 2 ? 10 : 4;
-             rent = (dice[0] + dice[1]) * multiplier; 
-        } else if (space.type === SpaceType.STATION) {
-            const ownerStations = state.spaces.filter(s => s.ownerId === space.ownerId && s.type === SpaceType.STATION).length;
-            rent = space.rent ? space.rent[ownerStations - 1] || 25 : 25;
-        } else {
-            // Regular property
-            const colorGroup = state.spaces.filter(s => s.group === space.group);
-            const ownsAll = colorGroup.every(s => s.ownerId === space.ownerId);
-            
-            if (space.houses === 0 && ownsAll) {
-                rent = (space.rent ? space.rent[0] : 0) * 2;
-            } else {
-                rent = space.rent ? space.rent[space.houses] : 0;
-            }
-        }
-        
-        phase = 'ACTION';
-        pending = { type: 'PAY_RENT', data: { amount: rent, ownerId: space.ownerId } };
-      }
-    } else if (space.type === SpaceType.GO_TO_JAIL) {
-      players[playerIndex].position = 10;
-      players[playerIndex].isJailed = true;
-      players[playerIndex].jailTurns = 0;
-      phase = 'END_TURN';
-    } else if (space.type === SpaceType.TAX) {
-      phase = 'ACTION';
-      pending = { type: 'PAY_TAX', data: { amount: space.price, name: space.name } };
-    } else if (space.type === SpaceType.CHANCE || space.type === SpaceType.COMMUNITY) {
-       phase = 'ACTION';
-       pending = { type: 'CARD_EFFECT', data: { type: space.type } };
-    }
-
-    let nextLog = state.log;
-    if (passedGo) {
-      nextLog = pushLog(state, `${player.name} 經過起點，獲得 $${GO_MONEY}`);
-    }
-    if (space.type === SpaceType.GO_TO_JAIL) {
-      nextLog = pushLog({ ...state, log: nextLog }, `${player.name} 被送進赤柱監獄！`);
-    }
-
-    return {
-      ...state,
-      players,
-      dice,
-      isDoubles,
-      doublesCount,
-      gamePhase: phase,
-      pendingAction: pending,
-      log: nextLog,
-    };
-  };
+  const passBuy = useCallback(() => {
+    setState((prev) => {
+      if (prev.pendingAction?.type !== 'BUY_PROPERTY') return prev;
+      const player = prev.players[prev.currentPlayerIndex];
+      return {
+        ...prev,
+        gamePhase: 'END_TURN',
+        pendingAction: null,
+        decisionNote: null,
+        log: pushLog(prev, `${player.name} 決定不購買此物業。`),
+      };
+    });
+  }, []);
 
   const handleBuyProperty = () => {
-    setState(prev => {
-       const player = prev.players[prev.currentPlayerIndex];
-       const space = prev.spaces[player.position];
-       
-       if (player.money >= (space.price || 0)) {
-         audioService.play('buy');
-         const newPlayers = [...prev.players];
-         newPlayers[prev.currentPlayerIndex].money -= (space.price || 0);
-         
-         const newSpaces = [...prev.spaces];
-         newSpaces[player.position] = { ...space, ownerId: player.id };
-         
-         return {
-           ...prev,
-           players: newPlayers,
-           spaces: newSpaces,
-           gamePhase: 'END_TURN',
-           pendingAction: null,
-           log: pushLog(prev, `${player.name} 以 $${space.price} 購買了 ${space.name}`),
-         };
-       }
-       return prev;
+    setState((prev) => {
+      const player = prev.players[prev.currentPlayerIndex];
+      const space = prev.spaces[player.position];
+      const price = space.price || 0;
+      if (player.money < price) return prev;
+      audioService.play('buy');
+      const players = prev.players.map((p, i) =>
+        i === prev.currentPlayerIndex ? { ...p, money: p.money - price } : p
+      );
+      const spaces = prev.spaces.map((s, i) => (i === player.position ? { ...s, ownerId: player.id } : s));
+      return {
+        ...prev,
+        players,
+        spaces,
+        gamePhase: 'ACTION',
+        pendingAction: { type: 'OPPORTUNITY_COST', data: opportunityQuestion(space.name, price) },
+        decisionNote: null,
+        log: pushLog(prev, `${player.name} 以 $${price} 購買了 ${space.name}。請回答機會成本。`),
+      };
+    });
+  };
+
+  const answerOpportunity = (optionId: string) => {
+    setState((prev) => {
+      if (prev.pendingAction?.type !== 'OPPORTUNITY_COST') return prev;
+      const option = prev.pendingAction.data?.options?.find((item: { id: string }) => item.id === optionId);
+      if (!option) return prev;
+      if (!option.correct) {
+        audioService.play('pay');
+        return { ...prev, decisionNote: option.explanation, log: pushLog(prev, option.explanation) };
+      }
+      audioService.play('win');
+      return {
+        ...prev,
+        decisionNote: option.explanation,
+        gamePhase: 'END_TURN',
+        pendingAction: null,
+        log: pushLog(prev, option.explanation),
+      };
     });
   };
 
   const handleUpgradeProperty = (spaceId: number) => {
-    setState(prev => {
-      const space = prev.spaces.find(s => s.id === spaceId);
+    setState((prev) => {
+      const space = prev.spaces.find((s) => s.id === spaceId);
       const player = prev.players[prev.currentPlayerIndex];
-
-      if (!space || !space.houseCost) return prev;
-
-      // Validations
+      if (!space || !space.houseCost || player.bankrupt) return prev;
       if (space.ownerId !== player.id) return prev;
-      if (space.houses >= 5) return prev; // Max level (Hotel)
+      if (space.houses >= 5) return prev;
       if (player.money < space.houseCost) {
         return { ...prev, log: pushLog(prev, `${player.name} 資金不足，無法在 ${space.name} 蓋房。`) };
       }
-
-      // Check Monopoly (Must own all of color group)
-      const groupSpaces = prev.spaces.filter(s => s.group === space.group);
-      const ownsAll = groupSpaces.every(s => s.ownerId === player.id);
-      if (!ownsAll) {
-        return { ...prev, log: pushLog(prev, `必須擁有整個顏色組別才能蓋房。`) };
+      const groupSpaces = prev.spaces.filter((s) => s.group === space.group);
+      if (!groupSpaces.every((s) => s.ownerId === player.id)) {
+        return { ...prev, log: pushLog(prev, '必須擁有整個顏色組別才能蓋房。') };
       }
-
-      // Check Mortgage rule (Cannot build if any property in group is mortgaged)
-      if (groupSpaces.some(s => s.isMortgaged)) {
-        return { ...prev, log: pushLog(prev, `同一色系中有物業被抵押，無法蓋房。`) };
+      if (groupSpaces.some((s) => s.isMortgaged)) {
+        return { ...prev, log: pushLog(prev, '同一色系中有物業被抵押，無法蓋房。') };
       }
-
-      // Check Even Build Rule
-      const minHouses = Math.min(...groupSpaces.map(s => s.houses));
+      const minHouses = Math.min(...groupSpaces.map((s) => s.houses));
       if (space.houses > minHouses) {
-        return { ...prev, log: pushLog(prev, `必須平均發展物業 (先在其他同色物業蓋房)。`) };
+        return { ...prev, log: pushLog(prev, '必須平均發展物業 (先在其他同色物業蓋房)。') };
       }
-
-      // Execute Upgrade
       audioService.play('buy');
-      const newPlayers = [...prev.players];
-      newPlayers[prev.currentPlayerIndex].money -= space.houseCost;
-
-      const newSpaces = prev.spaces.map(s => {
-        if (s.id === spaceId) {
-          return { ...s, houses: s.houses + 1 };
-        }
-        return s;
-      });
-
+      const players = prev.players.map((p, i) =>
+        i === prev.currentPlayerIndex ? { ...p, money: p.money - (space.houseCost || 0) } : p
+      );
+      const spaces = prev.spaces.map((s) => (s.id === spaceId ? { ...s, houses: s.houses + 1 } : s));
       const typeName = space.houses === 4 ? '酒店' : '房屋';
-
       return {
         ...prev,
-        players: newPlayers,
-        spaces: newSpaces,
+        players,
+        spaces,
         log: pushLog(prev, `${player.name} 在 ${space.name} 興建了${typeName} (花費 $${space.houseCost})`),
       };
     });
   };
 
   const handlePayRent = () => {
-    setState(prev => {
-        if (!prev.pendingAction || prev.pendingAction.type !== 'PAY_RENT') return prev;
-        
-        const { amount, ownerId } = prev.pendingAction.data;
-        const newPlayers = [...prev.players];
-        const player = newPlayers[prev.currentPlayerIndex];
-        const owner = newPlayers.find(p => p.id === ownerId);
-
-        audioService.play('pay');
-        
-        let nextSpaces = prev.spaces;
-        let msg: string;
-        if (player.money < amount) {
-            msg = `${player.name} 無法支付 $${amount} 租金，宣佈破產！`;
-            newPlayers[prev.currentPlayerIndex].bankrupt = true;
-            newPlayers[prev.currentPlayerIndex].money = 0;
-            nextSpaces = releaseBankruptProperties(prev.spaces, player.id);
-        } else {
-            player.money -= amount;
-            if (owner) owner.money += amount;
-            msg = `${player.name} 向 ${owner?.name} 支付租金 $${amount}`;
-        }
-
-        const after = {
-            ...prev,
-            players: newPlayers,
-            spaces: nextSpaces,
-            gamePhase: 'END_TURN' as const,
-            pendingAction: null,
-            rentPayment: {
-                payerId: player.id,
-                receiverId: ownerId,
-                amount: amount
-            },
-            log: pushLog(prev, msg),
-        };
-        const active = countActivePlayers(after.players);
-        if (active <= 1) {
-          const winner = after.players.find((p) => !p.bankrupt);
-          return {
-            ...after,
-            gamePhase: 'GAME_OVER',
-            log: pushLog(after, winner ? `${winner.name} 贏得遊戲！` : '遊戲結束'),
-          };
-        }
-        return after;
+    setState((prev) => {
+      if (!prev.pendingAction || prev.pendingAction.type !== 'PAY_RENT') return prev;
+      const { amount, ownerId } = prev.pendingAction.data;
+      const players = prev.players.map((p) => ({ ...p }));
+      const player = players[prev.currentPlayerIndex];
+      const owner = players.find((p) => p.id === ownerId);
+      const result = payOrBankrupt({ money: player.money, bankrupt: false }, amount);
+      audioService.play(result.paid ? 'pay' : 'jail');
+      let spaces = prev.spaces;
+      let msg: string;
+      if (!result.paid) {
+        const cleared = markBankrupt(players, spaces, prev.currentPlayerIndex);
+        players.splice(0, players.length, ...cleared.players);
+        spaces = cleared.spaces;
+        msg = `${player.name} 無法支付 $${amount} 租金，宣佈破產！`;
+      } else {
+        players[prev.currentPlayerIndex] = { ...player, money: result.wallet.money, bankrupt: false };
+        if (owner && !owner.bankrupt) owner.money += amount;
+        msg = `${player.name} 向 ${owner?.name} 支付租金 $${amount}`;
+      }
+      return conclude({
+        ...prev,
+        players,
+        spaces,
+        gamePhase: 'END_TURN',
+        pendingAction: null,
+        decisionNote: null,
+        rentPayment: result.paid ? { payerId: player.id, receiverId: ownerId, amount } : null,
+        log: pushLog(prev, msg),
+      });
     });
   };
 
   const handlePayTax = () => {
-      setState(prev => {
-          if (!prev.pendingAction || prev.pendingAction.type !== 'PAY_TAX') return prev;
-          const { amount, name } = prev.pendingAction.data;
-          const newPlayers = [...prev.players];
-          const player = newPlayers[prev.currentPlayerIndex];
-          
-          audioService.play('pay');
-
-          let nextSpaces = prev.spaces;
-          let msg: string;
-          if (player.money < amount) {
-               msg = `${player.name} 無法支付 ${name} ($${amount})，宣佈破產！`;
-               newPlayers[prev.currentPlayerIndex].bankrupt = true;
-               newPlayers[prev.currentPlayerIndex].money = 0;
-               nextSpaces = releaseBankruptProperties(prev.spaces, player.id);
-          } else {
-              player.money -= amount;
-              msg = `${player.name} 繳交 ${name} $${amount}`;
-          }
-
-          const after = {
-              ...prev,
-              players: newPlayers,
-              spaces: nextSpaces,
-              gamePhase: 'END_TURN' as const,
-              pendingAction: null,
-              log: pushLog(prev, msg),
-          };
-          const active = countActivePlayers(after.players);
-          if (active <= 1) {
-            const winner = after.players.find((p) => !p.bankrupt);
-            return {
-              ...after,
-              gamePhase: 'GAME_OVER',
-              log: pushLog(after, winner ? `${winner.name} 贏得遊戲！` : '遊戲結束'),
-            };
-          }
-          return after;
+    setState((prev) => {
+      if (!prev.pendingAction || prev.pendingAction.type !== 'PAY_TAX') return prev;
+      const { amount, name, kind } = prev.pendingAction.data;
+      const players = prev.players.map((p) => ({ ...p }));
+      const player = players[prev.currentPlayerIndex];
+      const result = payOrBankrupt({ money: player.money, bankrupt: false }, amount);
+      if (amount > 0) audioService.play(result.paid ? 'pay' : 'jail');
+      else audioService.play('card');
+      let spaces = prev.spaces;
+      let msg: string;
+      if (!result.paid) {
+        const cleared = markBankrupt(players, spaces, prev.currentPlayerIndex);
+        players.splice(0, players.length, ...cleared.players);
+        spaces = cleared.spaces;
+        msg = `${player.name} 無法支付${name} $${amount}，宣佈破產！`;
+      } else {
+        players[prev.currentPlayerIndex] = { ...player, money: result.wallet.money, bankrupt: false };
+        msg =
+          kind === 'SALARIES'
+            ? `${player.name} 按淨入息（已扣遊戲免稅額）繳交薪俸稅 $${amount}`
+            : amount === 0
+              ? `${player.name} 沒有住宅物業，本期差餉及地租為 $0`
+              : `${player.name} 按應課差餉租值繳交差餉及地租 $${amount}`;
+      }
+      return conclude({
+        ...prev,
+        players,
+        spaces,
+        gamePhase: 'END_TURN',
+        pendingAction: null,
+        decisionNote: null,
+        log: pushLog(prev, msg),
       });
+    });
   };
 
   const drawCard = () => {
-      setState(prev => {
-          if (!prev.pendingAction || prev.pendingAction.type !== 'CARD_EFFECT') return prev;
-          const isChance = prev.pendingAction.data.type === SpaceType.CHANCE;
-          const player = prev.players[prev.currentPlayerIndex];
-          
-          const events = [
-              { text: "中六合彩二獎！", money: 2000, type: 'money' },
-              { text: "違例泊車，罰款 $500", money: -500, type: 'money' },
-              { text: "政府派糖，每人獲發 $1000", money: 1000, type: 'money' },
-              { text: "颱風襲港，家居維修 $1500", money: -1500, type: 'money' },
-              { text: "股票投資獲利", money: 500, type: 'money' },
-              { text: "請飲茶，支付 $200", money: -200, type: 'money' },
-              { text: "獲得保釋卡 (可抵消一次監獄)", money: 0, type: 'card' }
-          ];
-          
-          const evt = events[Math.floor(Math.random() * events.length)];
-          const newPlayers = [...prev.players];
-          
-          let nextLog = prev.log;
-          if (evt.type === 'money') {
-            if (evt.money > 0) audioService.play('win');
-            else audioService.play('pay');
-            newPlayers[prev.currentPlayerIndex].money += evt.money;
-             nextLog = pushLog(prev, `${player.name} 抽取${isChance ? '時運高低' : '獅子山精神'}: ${evt.text} (變動: $${evt.money})`);
-          } else if (evt.type === 'card') {
-             audioService.play('win');
-             newPlayers[prev.currentPlayerIndex].getOutOfJailFreeCards += 1;
-             nextLog = pushLog(prev, `${player.name} 獲得一張「保釋卡」！`);
-          }
+    setState((prev) => {
+      if (!prev.pendingAction || prev.pendingAction.type !== 'CARD_EFFECT') return prev;
+      const spaceType = prev.pendingAction.data?.type as SpaceType | undefined;
+      const player = prev.players[prev.currentPlayerIndex];
+      if (!player) return prev;
 
-          let nextSpaces = prev.spaces;
-          if (newPlayers[prev.currentPlayerIndex].money < 0) {
-             newPlayers[prev.currentPlayerIndex].bankrupt = true;
-             newPlayers[prev.currentPlayerIndex].money = 0;
-             nextSpaces = releaseBankruptProperties(prev.spaces, player.id);
-             nextLog = pushLog({ ...prev, log: nextLog }, `${player.name} 破產了！`);
-          }
+      if (spaceType === SpaceType.COMMUNITY) {
+        const spirit = CHOICE_EVENTS[Math.floor(Math.random() * CHOICE_EVENTS.length)];
+        audioService.play('card');
+        return {
+          ...prev,
+          pendingAction: { type: 'CARD_CHOICE', data: { event: spirit, type: spaceType } },
+          decisionNote: null,
+          log: pushLog(prev, `${player.name} 在獅子山精神抽到：${spirit.title}`),
+        };
+      }
 
-          const after = {
-              ...prev,
-              players: newPlayers,
-              spaces: nextSpaces,
-              gamePhase: 'END_TURN' as const,
-              pendingAction: null,
-              log: nextLog,
+      if (spaceType === SpaceType.CHANCE) {
+        const fortune = FORTUNE_EVENTS[Math.floor(Math.random() * FORTUNE_EVENTS.length)];
+        const applied = applyFortune(
+          prev.players.map((p) => ({ money: p.money, bankrupt: p.bankrupt })),
+          prev.currentPlayerIndex,
+          fortune,
+        );
+        let spaces = prev.spaces;
+        const players = prev.players.map((p, i) => {
+          const wallet = applied.wallets[i];
+          const becameBankrupt = wallet.bankrupt && !p.bankrupt;
+          if (becameBankrupt) spaces = releaseBankruptProperties(spaces, p.id);
+          return {
+            ...p,
+            money: wallet.money,
+            bankrupt: wallet.bankrupt,
+            isJailed: becameBankrupt ? false : p.isJailed,
           };
-          const active = countActivePlayers(after.players);
-          if (active <= 1) {
-            const winner = after.players.find((p) => !p.bankrupt);
-            return {
-              ...after,
-              gamePhase: 'GAME_OVER',
-              log: pushLog(after, winner ? `${winner.name} 贏得遊戲！` : '遊戲結束'),
-            };
-          }
-          return after;
+        });
+        const actor = players[prev.currentPlayerIndex];
+        audioService.play(actor.bankrupt ? 'jail' : fortune.personalDelta > 0 ? 'win' : 'pay');
+        return conclude({
+          ...prev,
+          players,
+          spaces,
+          gamePhase: 'END_TURN',
+          pendingAction: null,
+          decisionNote: applied.note,
+          log: pushLog(prev, `${actor.name} 抽到時運高低「${fortune.title}」。${applied.note}`),
+        });
+      }
+
+      return prev;
+    });
+  };
+
+  const resolveChoice = (optionId: string) => {
+    setState((prev) => {
+      if (!prev.pendingAction || prev.pendingAction.type !== 'CARD_CHOICE') return prev;
+      const event = prev.pendingAction.data.event as ChoiceEvent;
+      const option = event.options.find((item) => item.id === optionId);
+      if (!option) return prev;
+      const applied = applyChoice(
+        prev.players.map((p) => ({ money: p.money, bankrupt: p.bankrupt })),
+        prev.currentPlayerIndex,
+        option
+      );
+      if (!applied.accepted) {
+        audioService.play('pay');
+        return { ...prev, decisionNote: applied.note, log: pushLog(prev, applied.note) };
+      }
+      audioService.play(option.personalGain ? 'win' : 'pay');
+      let spaces = prev.spaces;
+      const players = prev.players.map((p, i) => {
+        const wallet = applied.wallets[i];
+        const becameBankrupt = wallet.bankrupt && !p.bankrupt;
+        if (becameBankrupt) spaces = releaseBankruptProperties(spaces, p.id);
+        return {
+          ...p,
+          money: wallet.money,
+          bankrupt: wallet.bankrupt,
+          isJailed: becameBankrupt ? false : p.isJailed,
+        };
       });
+      const actor = players[prev.currentPlayerIndex];
+      const note = actor.bankrupt ? `${applied.note} ${actor.name} 付不出這筆稅款，宣佈破產。` : applied.note;
+      return conclude({
+        ...prev,
+        players,
+        spaces,
+        gamePhase: 'END_TURN',
+        pendingAction: null,
+        decisionNote: note,
+        log: pushLog(prev, note),
+      });
+    });
   };
 
   return {
@@ -570,7 +556,92 @@ export const useGame = () => {
     handlePayTax,
     handleJailDecision,
     drawCard,
+    resolveChoice,
+    answerOpportunity,
+    passBuy,
     addLog,
-    startGame
+    startGame,
   };
 };
+
+function processMovement(
+  state: GameState,
+  steps: number,
+  dice: [number, number],
+  isDoubles: boolean,
+  doublesCount: number,
+): GameState {
+  const players = state.players.map((p) => ({ ...p }));
+  const playerIndex = state.currentPlayerIndex;
+  const player = players[playerIndex];
+  const oldPos = player.position;
+  const newPos = (oldPos + steps) % 40;
+  const passedGo = newPos < oldPos;
+  if (passedGo) player.money += GO_MONEY;
+  player.position = newPos;
+  const space = state.spaces[newPos];
+
+  let phase: GameState['gamePhase'] = 'END_TURN';
+  let pending: PendingAction | null = null;
+
+  if (space.type === SpaceType.PROPERTY || space.type === SpaceType.STATION || space.type === SpaceType.UTILITY) {
+    if (space.ownerId === undefined && space.price) {
+      phase = 'ACTION';
+      pending = { type: 'BUY_PROPERTY', data: space };
+    } else if (space.ownerId !== undefined && space.ownerId !== player.id && !space.isMortgaged) {
+      let rent = 0;
+      let utilityText: string | undefined;
+      if (space.type === SpaceType.UTILITY) {
+        const owned = state.spaces.filter((s) => s.ownerId === space.ownerId && s.type === SpaceType.UTILITY).length;
+        rent = utilityRent(dice[0] + dice[1], owned);
+        utilityText = describeUtilityCharge(dice[0] + dice[1], owned);
+      } else if (space.type === SpaceType.STATION) {
+        const ownerStations = state.spaces.filter((s) => s.ownerId === space.ownerId && s.type === SpaceType.STATION).length;
+        rent = space.rent ? space.rent[ownerStations - 1] || 25 : 25;
+      } else {
+        const colorGroup = state.spaces.filter((s) => s.group === space.group);
+        const ownsAll = colorGroup.every((s) => s.ownerId === space.ownerId);
+        if (space.houses === 0 && ownsAll) rent = (space.rent ? space.rent[0] : 0) * 2;
+        else rent = space.rent ? space.rent[space.houses] : 0;
+      }
+      phase = 'ACTION';
+      pending = { type: 'PAY_RENT', data: { amount: rent, ownerId: space.ownerId, utilityText } };
+    }
+  } else if (space.type === SpaceType.GO_TO_JAIL) {
+    player.position = 10;
+    player.isJailed = true;
+    player.jailTurns = 0;
+    phase = 'END_TURN';
+  } else if (space.type === SpaceType.TAX) {
+    phase = 'ACTION';
+    if (space.taxKind === 'RATES') {
+      const owned = state.spaces
+        .filter((s) => s.ownerId === player.id && s.type === SpaceType.PROPERTY)
+        .map((s) => ({ name: s.name, rateableValue: s.rateableValue || 0 }));
+      pending = { type: 'PAY_TAX', data: { ...ratesAndRentBill(owned), kind: 'RATES' } };
+    } else {
+      pending = { type: 'PAY_TAX', data: { ...salariesTaxBill(), kind: 'SALARIES' } };
+    }
+  } else if (space.type === SpaceType.CHANCE || space.type === SpaceType.COMMUNITY) {
+    phase = 'ACTION';
+    pending = { type: 'CARD_EFFECT', data: { type: space.type } };
+  }
+
+  let nextLog = state.log;
+  if (passedGo) nextLog = pushLog(state, `${player.name} 經過起點，獲得 $${GO_MONEY}`);
+  if (space.type === SpaceType.GO_TO_JAIL) {
+    nextLog = pushLog({ ...state, log: nextLog }, `${player.name} 被送進赤柱監獄！`);
+  }
+
+  return {
+    ...state,
+    players,
+    dice,
+    isDoubles,
+    doublesCount,
+    gamePhase: phase,
+    pendingAction: pending,
+    decisionNote: null,
+    log: nextLog,
+  };
+}

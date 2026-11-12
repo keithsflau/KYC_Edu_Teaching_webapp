@@ -2,79 +2,62 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>17_Corrosion</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="../../../../common/babel-react-classic.js"></script>
-  <script src="../../../../common/learn-from-zero.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
-  <style>
-    body { font-family: "IBM Plex Sans", system-ui, sans-serif; background-color: #f8fafc; color: #0f172a; min-height: 100vh; }
-  </style>
-  <!-- NCS i18n fleet kit (auto-injected) -->
-  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
-  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
-  <style data-ncs-kit="fleet-bridge">
-    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
-    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
-      display: none !important;
-    }
-  </style>
-  <script data-ncs-kit="fleet-init">
-  (function () {
-    function hideLegacyToggles() {
-      document.body.classList.add("ncs-fleet-mounted");
-      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
-        var label = (btn.textContent || "").trim();
-        if (label === "EN" || label === "\u4E2D") {
-          btn.classList.add("ncs-hide-when-ncs-fleet");
-        }
-      });
-      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
-        el.classList.add("ncs-hide-when-ncs-fleet");
-      });
-    }
-    function boot() {
-      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
-      window.NcsI18n.init({
-        chromePath: "../../../../_shared/ncs-chrome.json",
-        target: document.body
-      }).then(hideLegacyToggles);
-    }
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", boot);
-    } else {
-      boot();
-    }
-  })();
-  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>腐蝕與防鏽 | Corrosion</title>
+  <link rel="stylesheet" href="../../lesson.css" />
 </head>
 <body>
-  <div id="root"></div>
-  <script type="text/babel" data-presets="react-classic">
-    const { useState } = React;
-    
-    function App() {
-      return (
-        <div className="max-w-4xl mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-4">17 Corrosion</h1>
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 mb-8 text-center">
-            <div className="w-full h-64 bg-slate-100 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 mb-4">
-              <span className="text-slate-400 font-medium">[ Interactive Canvas Placeholder ]</span>
-            </div>
-            <p className="text-slate-500">This interactive lab is currently under development.</p>
-          </div>
-          <LearnFromZero />
-        </div>
-      );
-    }
-    
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
-  </script>
-<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+  <section class="chem-learn" data-chem-entry="1">
+    <h2>學習目標</h2>
+    <ul>
+      <li>說出鐵生鏽要同時有氧和水。</li>
+      <li>判斷只有水或只有氧時不會生鏽。</li>
+      <li>比較屏障、鍍鋅、鍍錫和犧牲保護。</li>
+    </ul>
+    <p id="chem-feedback" role="status">先設定水和氧，再判斷鐵會不會生鏽。</p>
+  </section>
+  <main>
+    <div class="panel">
+      <h1>鐵生鏽的條件</h1>
+      <p class="muted">操作：開關水和氧，或用三個情境按鈕，然後判斷會不會生鏽。概念式：鐵 + 氧 + 水 → 含水的氧化鐵。這裡沒有加速腐蝕的配法。</p>
+      <canvas id="nail" width="720" height="240" aria-label="鐵釘與水和氧的條件"></canvas>
+      <div class="row">
+        <button type="button" class="alt" id="water">水：無</button>
+        <button type="button" class="alt" id="oxygen">氧：無</button>
+        <button type="button" class="alt" id="electrolyte">電解質：無</button>
+      </div>
+      <div class="row">
+        <button type="button" class="alt" id="preset-dry">設為乾燥空氣</button>
+        <button type="button" class="alt" id="preset-water">設為只有水</button>
+        <button type="button" class="alt" id="preset-wet">設為潮濕空氣</button>
+      </div>
+      <div class="row">
+        <button type="button" id="guess-rust">我判斷會生鏽</button>
+        <button type="button" class="alt" id="guess-clean">我判斷不會生鏽</button>
+      </div>
+      <p class="muted" id="env-label"></p>
+    </div>
+    <div class="panel">
+      <h1>防鏽方法</h1>
+      <p class="muted">操作：選一種方法，再選保護層完整或破損。以下判斷假設鐵同時接觸水和氧。犧牲保護不用外加電源。</p>
+      <canvas id="guard" width="720" height="220" aria-label="防鏽方法下的鐵釘"></canvas>
+      <div class="row" id="methods">
+        <button type="button" data-method="paint" class="on">油漆或塗油</button>
+        <button type="button" class="alt" data-method="zinc">鍍鋅</button>
+        <button type="button" class="alt" data-method="tin">鍍錫</button>
+        <button type="button" class="alt" data-method="magnesium">連接鎂或鋅塊</button>
+      </div>
+      <div class="row">
+        <button type="button" id="sit-intact" class="on">保護層完整</button>
+        <button type="button" class="alt" id="sit-broken">保護層破損</button>
+      </div>
+      <div class="row">
+        <button type="button" id="guess-safe">我判斷鐵受保護</button>
+        <button type="button" class="alt" id="guess-fail">我判斷鐵會生鏽</button>
+      </div>
+    </div>
+  </main>
+  <script src="../../lesson-kit.js"></script>
+  <script src="lesson.js"></script>
 </body>
 </html>

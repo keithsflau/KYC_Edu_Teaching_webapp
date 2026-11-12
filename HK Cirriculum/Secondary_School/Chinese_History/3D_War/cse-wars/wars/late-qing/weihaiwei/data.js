@@ -228,13 +228,13 @@ window.BATTLE_DATA = (function () {
           "衛星影像為現代地形，非歷史時期地貌。",
           "河川、海域水面為教學示意，按史實位置裁切顯示。"
       ],
-      "sources": "DSE 中史課程、中國通史、維基百科（交叉查證）。"
+      "sources": "姚錫光《東方兵事紀略》威海衛篇、《清史稿·丁汝昌傳》、日本參謀本部與海軍記錄中的威海衛之役。不以網絡百科為唯一依據。"
   };
   const analysis =   {
-      "military": "日军海陆合围威海卫，以鱼雷艇夜袭北洋泊地；刘公岛孤立无援，丁汝昌拒降自尽，北洋水师全军覆没。",
-      "leaders": "威海衛陷落前夕，丁汝昌率殘存北洋艦隊困守劉公島，面對日軍海陸夾擊與援兵不至。定遠管帶劉步蟾等將領力戰殉國，水兵士氣在圍困中逐漸瓦解。丁汝昌拒降服毒殉職，北洋水師全軍覆沒，標誌清朝近代海軍建設的失敗，《馬關條約》簽訂，列強瓜分中國加劇。",
-      "nationalPower": "北洋经黄海海战已元气大伤；日本陆海军协同，占据威海湾炮台，切断陆上补给。",
-      "impact": "北洋艦隊全軍覆沒，標誌著「洋務運動」宣告徹底失敗。"
+      "military": "日軍海陸合圍威海衛，以魚雷艇夜襲北洋泊地。劉公島被圍，丁汝昌拒絕投降後自盡，殘餘艦船向日軍交出。",
+      "leaders": "丁汝昌率殘餘北洋艦隊困守劉公島。日軍佔領兩岸炮台並夜襲港內。丁汝昌拒降後自盡，殘餘艦船交出。馬關條約是其後的條約，不寫進這一仗的收束。",
+      "nationalPower": "北洋艦隊經黃海一役已損失多艦。日軍佔領威海灣兩岸炮台，切斷陸上補給。",
+      "impact": "1895年2月，北洋殘餘艦船在威海衛向日軍投降。"
   };
   const storyboard =   [
       {
@@ -251,7 +251,7 @@ window.BATTLE_DATA = (function () {
           "dateLabel": "1895年1月",
           "title_zh": "威海被圍",
           "title_en": "Weihaiwei Besieged",
-          "narration_zh": "日軍占領威海灣南北炮台，海陸合圍北洋水師泊地劉公島。",
+          "narration_zh": "日軍佔領威海灣南北炮台，海陸合圍北洋水師泊地劉公島。",
           "narration_en": "Japan seizes forts on both sides of Weihai Bay — the Beiyang Fleet is trapped.",
           "focus": [
               "japan_wh"
@@ -370,7 +370,7 @@ window.BATTLE_DATA = (function () {
           "dateLabel": "1895年",
           "title_zh": "洋務運動失敗",
           "title_en": "Self-Strengthening Fails",
-          "narration_zh": "威海衛陷落標誌洋務運動在軍事現代化上的徹底失敗，馬關條約簽訂。",
+          "narration_zh": "1895年2月，丁汝昌死，北洋殘艦在劉公島向日軍投降。",
           "narration_en": "Weihaiwei marks the failure of military modernization — the Treaty of Shimonoseki follows.",
           "focus": [],
           "side": "both",
@@ -383,8 +383,8 @@ window.BATTLE_DATA = (function () {
   const outro =   {
       "title_zh": "威海衛淪陷",
       "title_en": "FALL OF WEIHAIWEI",
-      "narration_zh": "本戰役為 DSE 中史重要考點：北洋艦隊全軍覆沒，標誌著「洋務運動」宣告徹底失敗",
-      "narration_en": "A key HKDSE Chinese History topic.",
+      "narration_zh": "1895年2月，丁汝昌死，北洋殘艦在威海衛向日軍投降。",
+      "narration_en": "In February 1895 Ding Ruchang died and the remaining Beiyang ships at Weihaiwei surrendered.",
       "cam": {
           "lng": 122.12,
           "lat": 37.51,
@@ -394,5 +394,19 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       }
   };
-  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };
+  const lesson =   {
+      "junior": "初中：看1895年2月北洋艦隊在威海衛被圍並覆沒。",
+      "senior": "高中：把劉公島投降的經過，和「洋務運動失敗」這句評價分開。",
+      "fact": "1895年1月至2月，日軍佔領威海灣南北炮台，水陸圍住劉公島。日軍魚雷艇夜襲港內艦船。丁汝昌拒絕投降，2月12日前後服毒而死，殘餘北洋艦船向日軍交出。",
+      "sources": "姚錫光《東方兵事紀略》威海衛篇、《清史稿·丁汝昌傳》、日本參謀本部與海軍記錄中的威海衛之役。不以網絡百科為唯一依據。",
+      "evaluation": "威海衛失守，是因為黃海戰後艦船已少，岸炮又落入日軍手中，港內艦隊無法出港。說這一仗「宣告洋務運動徹底失敗」，是後來的總評，不是劉公島當日的作戰紀錄。",
+      "judgment": {
+          "ask": "哪一則說法更能解釋威海衛北洋艦隊為什麼覆沒？",
+          "a": "因為洋務運動在口號上已經失敗，所以艦隊不必再看炮台和港內被圍。",
+          "b": "岸防炮台被佔、魚雷艇夜襲、港口被圍，殘餘艦船無法再編成艦隊出戰。",
+          "better": "b",
+          "why": "覆沒發生在被圍的劉公島。炮台、夜襲和退路被切斷，比一句總評更能解釋這次投降。"
+      }
+  };
+  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, lesson, END_DAY };
 })();

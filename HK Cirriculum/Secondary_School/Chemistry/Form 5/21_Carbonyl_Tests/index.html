@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>21_Carbonyl_Tests</title>
+  <title>醛和酮的觀察配對 | Carbonyl tests</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
@@ -53,27 +53,269 @@
   </script>
 </head>
 <body>
-  <div id="root"></div>
-  <script type="text/babel" data-presets="react-classic">
-    const { useState } = React;
-    
-    function App() {
-      return (
-        <div className="max-w-4xl mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-4">21 Carbonyl Tests</h1>
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 mb-8 text-center">
-            <div className="w-full h-64 bg-slate-100 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 mb-4">
-              <span className="text-slate-400 font-medium">[ Interactive Canvas Placeholder ]</span>
-            </div>
-            <p className="text-slate-500">This interactive lab is currently under development.</p>
-          </div>
-          <LearnFromZero />
-        </div>
-      );
+  <style>
+    main { max-width: 880px; margin: 0 auto; padding: 16px 16px 32px; }
+    h1 { font-size: 1.8rem; margin: 0.2rem 0 0.4rem; }
+    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px; margin-top: 12px; }
+    .muted { color: #475569; }
+    .ops, .pick { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+    button { min-height: 44px; border: 0; border-radius: 10px; padding: 8px 12px; font-weight: 700; cursor: pointer; background: #e2e8f0; color: #0f172a; }
+    button.on, button#check { background: #0f766e; color: #fff; }
+    button:focus { outline: 3px solid #99f6e4; }
+    canvas { width: 100%; height: auto; border-radius: 12px; background: #0f172a; }
+    a.back { color: #0f766e; font-weight: 700; text-decoration: none; }
+  </style>
+  <main>
+    <a class="back" href="../index.html">返回中五化學</a>
+    <p class="muted">中五化學 · 羰基化合物</p>
+    <h1>醛和酮的觀察配對</h1>
+    <p class="muted">畫面只核對觀察名稱，用來分辨乙醛、丙酮和丙酸。</p>
+    <section class="chem-learn" data-chem-entry="1">
+      <h2>學習目標</h2>
+      <ul>
+        <li>用課本觀察分開醛和酮。</li>
+        <li>指出 2,4-二硝基苯肼不能單獨分開醛和酮。</li>
+        <li>避免把銀鏡、磚紅色、橙黃色和碘仿的結論對調。</li>
+      </ul>
+      <p id="chem-feedback" role="status">先選化合物和檢驗。</p>
+    </section>
+    <section class="card">
+      <h2>觀察名稱</h2>
+      <ul>
+        <li>2,4-二硝基苯肼：乙醛和丙酮都是橙黃色沉澱。丙酸沒有這個沉澱。</li>
+        <li>多倫試劑：乙醛是銀鏡。丙酮和丙酸都沒有銀鏡。</li>
+        <li>斐林試劑：乙醛是磚紅色沉澱。丙酮和丙酸都沒有。</li>
+        <li>酸化重鉻酸鉀：乙醛由橙色轉為綠色。丙酮和丙酸保持橙色。</li>
+        <li>碘仿試驗：乙醛和丙酮都有黃色碘仿。丙酸沒有。</li>
+      </ul>
+    </section>
+    <section class="card">
+      <h2>操作</h2>
+      <p>選化合物和檢驗，再選你預期的觀察，然後核對。</p>
+      <div id="compounds" class="ops">
+        <button type="button" data-id="ethanal">乙醛 CH₃CHO</button>
+        <button type="button" data-id="propanone">丙酮 CH₃COCH₃</button>
+        <button type="button" data-id="propanoic">丙酸 CH₃CH₂COOH</button>
+      </div>
+      <div id="tests" class="ops">
+        <button type="button" data-id="dnph">2,4-二硝基苯肼</button>
+        <button type="button" data-id="tollens">多倫試劑</button>
+        <button type="button" data-id="fehling">斐林試劑</button>
+        <button type="button" data-id="dichromate">酸化重鉻酸鉀</button>
+        <button type="button" data-id="iodoform">碘仿試驗</button>
+      </div>
+      <div id="obs" class="pick"></div>
+      <button type="button" id="check" data-chem-silent="1">核對觀察</button>
+      <canvas id="plot" width="640" height="160" aria-label="觀察名稱"></canvas>
+      <p id="readout">核對後顯示觀察名稱。</p>
+    </section>
+    <section class="card">
+      <h2>錯因</h2>
+      <ul>
+        <li>錯法：酮也會出現銀鏡。錯因：銀鏡是醛的觀察。丙酮是酮，沒有銀鏡。</li>
+        <li>錯法：橙黃色沉澱代表一定是醛。錯因：2,4-二硝基苯肼和醛、酮都可以生成橙黃色沉澱。</li>
+        <li>錯法：只有酮才有黃色碘仿。錯因：丙酮有，乙醛也有。丙酸沒有。</li>
+        <li>錯法：酸化重鉻酸鉀由橙變綠代表酮。錯因：變綠表示醛被氧化。酮通常保持橙色。</li>
+        <li>錯法：羧酸會出現銀鏡或磚紅色沉澱。錯因：丙酸沒有醛基，這兩項觀察都沒有。</li>
+      </ul>
+    </section>
+  </main>
+  <script src="../../lesson-kit.js"></script>
+  <script>
+    var COMPOUNDS = {
+      ethanal: { name: "乙醛", formula: "CH₃CHO", cls: "醛" },
+      propanone: { name: "丙酮", formula: "CH₃COCH₃", cls: "酮" },
+      propanoic: { name: "丙酸", formula: "CH₃CH₂COOH", cls: "羧酸" }
+    };
+    var TESTS = {
+      dnph: "2,4-二硝基苯肼",
+      tollens: "多倫試劑",
+      fehling: "斐林試劑",
+      dichromate: "酸化重鉻酸鉀",
+      iodoform: "碘仿試驗"
+    };
+    var ANS = {
+      ethanal: { dnph: "橙黃色沉澱", tollens: "銀鏡", fehling: "磚紅色沉澱", dichromate: "橙色轉為綠色", iodoform: "黃色碘仿沉澱" },
+      propanone: { dnph: "橙黃色沉澱", tollens: "沒有銀鏡", fehling: "沒有磚紅色沉澱", dichromate: "保持橙色", iodoform: "黃色碘仿沉澱" },
+      propanoic: { dnph: "沒有橙黃色沉澱", tollens: "沒有銀鏡", fehling: "沒有磚紅色沉澱", dichromate: "保持橙色", iodoform: "沒有黃色碘仿沉澱" }
+    };
+    var CHOICES = {
+      dnph: ["橙黃色沉澱", "沒有橙黃色沉澱", "銀鏡"],
+      tollens: ["銀鏡", "沒有銀鏡", "磚紅色沉澱"],
+      fehling: ["磚紅色沉澱", "沒有磚紅色沉澱", "銀鏡"],
+      dichromate: ["橙色轉為綠色", "保持橙色", "黃色碘仿沉澱"],
+      iodoform: ["黃色碘仿沉澱", "沒有黃色碘仿沉澱", "橙黃色沉澱"]
+    };
+    var COLORS = {
+      "橙黃色沉澱": "#fb923c",
+      "沒有橙黃色沉澱": "#334155",
+      "銀鏡": "#e5e7eb",
+      "沒有銀鏡": "#334155",
+      "磚紅色沉澱": "#b91c1c",
+      "沒有磚紅色沉澱": "#334155",
+      "橙色轉為綠色": "#16a34a",
+      "保持橙色": "#ea580c",
+      "黃色碘仿沉澱": "#facc15",
+      "沒有黃色碘仿沉澱": "#334155"
+    };
+    var compound = "";
+    var test = "";
+    var pick = "";
+    var revealed = false;
+
+    function play(ok) {
+      try {
+        var AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return;
+        if (!play.ctx) play.ctx = new AC();
+        var ctx = play.ctx;
+        var start = function () {
+          var o = ctx.createOscillator();
+          var g = ctx.createGain();
+          var t = ctx.currentTime;
+          o.type = "sine";
+          o.frequency.value = ok ? 880 : 196;
+          g.gain.setValueAtTime(0.0001, t);
+          g.gain.exponentialRampToValueAtTime(0.05, t + 0.02);
+          g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+          o.connect(g);
+          g.connect(ctx.destination);
+          o.start(t);
+          o.stop(t + 0.2);
+        };
+        if (ctx.state === "suspended") {
+          var pending = ctx.resume();
+          if (pending && pending.then) pending.then(start);
+          else start();
+        } else start();
+      } catch (err) {}
     }
-    
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+
+    function say(msg, ok) {
+      var el = document.getElementById("chem-feedback");
+      if (el) el.textContent = msg;
+      if (window.ChemLesson) window.ChemLesson.say(msg);
+      if (ok === true || ok === false) play(ok);
+    }
+
+    function mark(box, btn) {
+      var list = box.querySelectorAll("button");
+      for (var i = 0; i < list.length; i++) list[i].classList.remove("on");
+      if (btn) btn.classList.add("on");
+    }
+
+    function cause(comp, testId, chosen) {
+      if (chosen === "銀鏡" && testId !== "tollens") return "錯因：銀鏡是多倫試劑對醛的觀察，不是這項檢驗的結果。";
+      if (testId === "tollens" && chosen === "銀鏡" && comp !== "ethanal") {
+        return comp === "propanone"
+          ? "錯因：丙酮是酮，沒有銀鏡。銀鏡用來指出醛。"
+          : "錯因：丙酸沒有醛基，沒有銀鏡。";
+      }
+      if (testId === "tollens" && chosen !== "銀鏡" && comp === "ethanal") return "錯因：乙醛有醛基，觀察是銀鏡。不要把酮或羧酸的結果套到醛。";
+      if (testId === "dnph" && chosen === "橙黃色沉澱" && comp === "propanoic") return "錯因：丙酸是羧酸，不會給出醛和酮那種橙黃色沉澱。";
+      if (testId === "dnph" && chosen !== "橙黃色沉澱" && comp !== "propanoic") return "錯因：醛和酮都可以生成橙黃色沉澱。這項不能用來排除酮。";
+      if (testId === "fehling" && chosen === "磚紅色沉澱" && comp !== "ethanal") return "錯因：磚紅色沉澱是脂肪醛的觀察。丙酮和丙酸都沒有。";
+      if (testId === "fehling" && chosen !== "磚紅色沉澱" && comp === "ethanal") return "錯因：乙醛是脂肪醛，觀察是磚紅色沉澱。";
+      if (testId === "dichromate" && chosen === "橙色轉為綠色" && comp !== "ethanal") return "錯因：由橙變綠表示醛被氧化。酮和羧酸通常保持橙色。";
+      if (testId === "dichromate" && chosen !== "橙色轉為綠色" && comp === "ethanal") return "錯因：乙醛會被氧化，橙色會轉為綠色。";
+      if (testId === "iodoform" && chosen === "黃色碘仿沉澱" && comp === "propanoic") return "錯因：丙酸沒有乙醛或 CH₃CO− 那種結構，沒有黃色碘仿。";
+      if (testId === "iodoform" && chosen !== "黃色碘仿沉澱" && comp !== "propanoic") {
+        return comp === "ethanal"
+          ? "錯因：乙醛也會產生黃色碘仿，不是只有酮才有。"
+          : "錯因：丙酮含 CH₃CO−，會有黃色碘仿沉澱。";
+      }
+      return "錯因：先分清醛、酮和羧酸，再對回這項檢驗的觀察。";
+    }
+
+    function paint() {
+      var c = document.getElementById("plot");
+      var g = c.getContext("2d");
+      var w = c.width;
+      var h = c.height;
+      g.fillStyle = "#0f172a";
+      g.fillRect(0, 0, w, h);
+      g.font = "18px sans-serif";
+      var info = COMPOUNDS[compound];
+      var label = info ? info.name + " " + info.formula + "（" + info.cls + "）" : "先選化合物和檢驗";
+      g.fillStyle = "#e2e8f0";
+      g.fillText(label, 24, 40);
+      if (!revealed || !compound || !test) {
+        g.fillStyle = "#94a3b8";
+        g.fillText(TESTS[test] || "尚未核對", 24, 100);
+        return;
+      }
+      var text = ANS[compound][test];
+      g.fillStyle = COLORS[text] || "#334155";
+      g.fillRect(24, 70, 110, 48);
+      g.fillStyle = "#f8fafc";
+      g.fillText(text, 150, 100);
+    }
+
+    function renderChoices() {
+      var box = document.getElementById("obs");
+      box.innerHTML = "";
+      pick = "";
+      revealed = false;
+      if (!test) {
+        paint();
+        return;
+      }
+      var list = CHOICES[test];
+      for (var i = 0; i < list.length; i++) {
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.setAttribute("data-v", list[i]);
+        btn.textContent = list[i];
+        box.appendChild(btn);
+      }
+      paint();
+    }
+
+    document.getElementById("compounds").addEventListener("click", function (e) {
+      var btn = e.target.closest ? e.target.closest("button") : null;
+      if (!btn) return;
+      compound = btn.getAttribute("data-id");
+      mark(document.getElementById("compounds"), btn);
+      renderChoices();
+      document.getElementById("readout").textContent = "核對後顯示觀察名稱。";
+      say("已選" + COMPOUNDS[compound].name + "，它是" + COMPOUNDS[compound].cls + "。");
+    });
+
+    document.getElementById("tests").addEventListener("click", function (e) {
+      var btn = e.target.closest ? e.target.closest("button") : null;
+      if (!btn) return;
+      test = btn.getAttribute("data-id");
+      mark(document.getElementById("tests"), btn);
+      renderChoices();
+      document.getElementById("readout").textContent = "核對後顯示觀察名稱。";
+      say("已選" + TESTS[test] + "。再選觀察名稱。");
+    });
+
+    document.getElementById("obs").addEventListener("click", function (e) {
+      var btn = e.target.closest ? e.target.closest("button") : null;
+      if (!btn) return;
+      pick = btn.getAttribute("data-v");
+      mark(document.getElementById("obs"), btn);
+    });
+
+    document.getElementById("check").addEventListener("click", function () {
+      if (!compound || !test) {
+        say("請先選化合物和檢驗。");
+        return;
+      }
+      if (!pick) {
+        say("請選一個觀察名稱。");
+        return;
+      }
+      var correct = ANS[compound][test];
+      var ok = pick === correct;
+      revealed = true;
+      paint();
+      document.getElementById("readout").textContent = COMPOUNDS[compound].name + "、" + TESTS[test] + "：" + correct + "。";
+      say(ok ? "觀察名稱正確。" + correct + "。" : cause(compound, test, pick), ok);
+    });
+
+    paint();
   </script>
 <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 </body>

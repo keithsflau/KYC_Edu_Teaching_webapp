@@ -11,11 +11,11 @@ window.BATTLE_DATA = (function () {
           "us"
       ],
       "geo": {
-          "minLng": 130.71,
-          "maxLng": 134.21,
-          "minLat": 33.14,
-          "maxLat": 35.64,
-          "Z": 9
+          "minLng": 129.45,
+          "maxLng": 133.35,
+          "minLat": 32.35,
+          "maxLat": 34.95,
+          "Z": 8
       },
       "startDate": [
           1945,
@@ -78,13 +78,6 @@ window.BATTLE_DATA = (function () {
               "type": "city",
               "lng": 129.87,
               "lat": 32.75
-          },
-          {
-              "name_en": "Tokyo",
-              "name_zh": "東京",
-              "type": "city",
-              "lng": 139.69,
-              "lat": 35.69
           }
       ],
       "lines": []
@@ -179,7 +172,7 @@ window.BATTLE_DATA = (function () {
       }
   ];
   const notes =   {
-      "summary": "廣島與長崎 — DSE 西史小戰役地圖。",
+      "summary": "廣島與長崎 — 核爆課題地圖。約十四萬是至1945年底的累計死難。",
       "caveats": [
           "本圖僅覆蓋該戰役核心區域；戰線與兵力為教學示意。",
           "衛星影像為現代地形。"
@@ -188,7 +181,7 @@ window.BATTLE_DATA = (function () {
   };
   const analysis =   {
       "military": "美軍以 B-29 投下原子彈「小男孩」「胖子」，廣島、長崎化為廢墟；日本迅速投降。",
-      "leaders": "杜魯門決定使用原子彈；史汀生、格羅夫斯推動曼哈頓計劃成果。日本東條英機內閣遲遲決定投降；裕仁天皇終於「玉音放送」。核武器開啟冷戰軍備競賽，重塑國際安全秩序。",
+      "leaders": "杜魯門決定使用原子彈；史汀生、格羅夫斯推動曼哈頓計劃成果。東條內閣已於1944年7月總辭。1945年8月的首相是鈴木貫太郎。裕仁於8月15日廣播接受《波茨坦公告》。核武器開啟冷戰軍備競賽，重塑國際安全秩序。",
       "nationalPower": "美國核武壟斷；日本軍國體制已無力持久，本土決戰計劃未實施。",
       "impact": "開啟核時代；二戰結束，冷戰與去殖民化浪潮來臨。"
   };
@@ -239,8 +232,8 @@ window.BATTLE_DATA = (function () {
           "dateLabel": "1945年8月6日 8:15",
           "title_zh": "廣島核爆",
           "title_en": "Hiroshima",
-          "narration_zh": "原子彈在廣島上空引爆，約十四萬人喪生。",
-          "narration_en": "\"Little Boy\" detonates — ~140,000 dead.",
+          "narration_zh": "原子彈於上午8時15分在廣島上空引爆。當日死傷已極重；約十四萬是至1945年底的累計死難，包括其後死於燒傷與輻射的人，不是引爆瞬間的人數。當時首相是鈴木貫太郎。",
+          "narration_en": "The bomb detonates at 8:15 a.m. Deaths that morning were already vast; about 140,000 is the toll by the end of 1945, not the instant of detonation. The prime minister was Suzuki Kantaro.",
           "focus": [
               "us_b29"
           ],
@@ -283,8 +276,8 @@ window.BATTLE_DATA = (function () {
           "day": 70,
           "hold": 8,
           "cam": {
-              "lng": 139.69,
-              "lat": 35.69,
+              "lng": 132.46,
+              "lat": 34.39,
               "dist": 800,
               "az": 200,
               "el": 46,
@@ -293,7 +286,7 @@ window.BATTLE_DATA = (function () {
           "dateLabel": "1945年8月14–15日",
           "title_zh": "天皇詔書",
           "title_en": "Imperial Rescript",
-          "narration_zh": "天皇宣布接受《波茨坦公告》，戰爭結束。",
+          "narration_zh": "8月15日，天皇在東京廣播接受《波茨坦公告》。本圖只覆蓋廣島與長崎；當時的首相是鈴木貫太郎，不是東條。",
           "narration_en": "Emperor announces acceptance of the Potsdam Declaration.",
           "focus": [],
           "side": "jp",
@@ -331,11 +324,33 @@ window.BATTLE_DATA = (function () {
           "forces_en": ""
       }
   ];
-  const outro =   {
+    const sourceTask = {
+    "cite": "廣島市對1945年死難人數的統計說明",
+    "excerpt": "約十四萬人死於1945年年底之前，當中包括引爆之後才死於燒傷與輻射的人。",
+    "ask": "這個數字應當怎樣用？",
+    "options": [
+      {
+        "t": "把它寫成8月6日上午8時15分引爆瞬間的死亡人數。",
+        "ok": false,
+        "why": "引爆當日已經有大量死亡，但十四萬是累計到年底的數字。"
+      },
+      {
+        "t": "把它寫成至1945年底的累計死難，並註明當時首相是鈴木貫太郎。",
+        "ok": true,
+        "why": "東條內閣在1944年7月已經總辭。8月的內閣是鈴木貫太郎。"
+      },
+      {
+        "t": "把它只計算軍人，不包括廣島市民。",
+        "ok": false,
+        "why": "死難者大多數是市民，不是單一支部隊的戰鬥傷亡。"
+      }
+    ]
+  };
+const outro =   {
       "title_zh": "廣島與長崎",
       "title_en": "ATOMIC BOMBS",
-      "narration_zh": "本戰役為 DSE 西史重要考點。",
-      "narration_en": "A key DSE Western History topic.",
+      "narration_zh": "1945年8月的首相是鈴木貫太郎。廣島約十四萬死難是至年底的累計。",
+      "narration_en": "The prime minister in August 1945 was Suzuki Kantaro. Hiroshima's toll of about 140,000 is the count by the end of 1945.",
       "cam": {
           "lng": 132.46,
           "lat": 34.39,
@@ -345,5 +360,5 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       }
   };
-  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };
+  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, sourceTask, END_DAY };
 })();

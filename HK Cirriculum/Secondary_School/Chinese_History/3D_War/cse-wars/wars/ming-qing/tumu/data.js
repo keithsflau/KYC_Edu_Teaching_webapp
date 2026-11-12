@@ -203,12 +203,12 @@ window.BATTLE_DATA = (function () {
           "衛星影像為現代地形，非歷史時期地貌。",
           "河川、海域水面為教學示意，按史實位置裁切顯示。"
       ],
-      "sources": "DSE 中史課程、中國通史、維基百科（交叉查證）。"
+      "sources": "《明史·英宗前紀》《明史·王振傳》《明史·于謙傳》《明史紀事本末·土木之變》。公曆換算採通行的1449年9月1日。不以網絡百科為唯一依據。"
   };
   const analysis =   {
-      "military": "明英宗朱祁镇在宦官王振怂恿下亲征瓦剌，于土木堡遭也先伏击；明军溃败，英宗被俘，京师震动。",
-      "leaders": "明英宗朱祁鎮在宦官王振慫恿下親征瓦剌，於土木堡輕敵冒進，全軍覆沒，英宗被俘。也先挾英宗南下威逼北京，明朝軍政大亂。兵部尚書于謙擁立景泰帝、固守北京，擊退瓦剌，英宗後來復辟；此戰重創明軍精銳，邊防由攻轉守，國防體制大幅調整。",
-      "nationalPower": "明朝前期国力强盛但军政被宦官干政；瓦剌也先统一蒙古诸部，骑兵机动灵活。",
+      "military": "明英宗在宦官王振慫恿下親征瓦剌。明人記載人數為五十萬，這是記載，不是現代清點。決戰通說在公曆1449年9月1日，也先在土木堡擊潰明軍，英宗被俘。",
+      "leaders": "明英宗在王振慫恿下親征。決戰通說是公曆1449年9月1日，英宗在土木堡被俘。記載作五十萬，不是現代清點。于謙等擁立景泰帝，守住北京。",
+      "nationalPower": "瓦剌也先已統一蒙古諸部，騎兵機動快。明朝軍政受王振左右。出兵人數的五十萬是記載。",
       "impact": "明英宗親征被瓦剌俘虜，明朝國勢由盛轉衰，轉取守勢。"
   };
   const storyboard =   [
@@ -226,7 +226,7 @@ window.BATTLE_DATA = (function () {
           "dateLabel": "1449年",
           "title_zh": "英宗親征",
           "title_en": "Emperor's Personal Campaign",
-          "narration_zh": "明英宗在王振慫恿下率五十萬大軍親征瓦剌。",
+          "narration_zh": "明英宗在王振慫恿下親征瓦剌。明人記載作五十萬，這是記載數字，不是現代清點人數。",
           "narration_en": "Emperor Yingzong leads 500,000 troops north against the Oirats.",
           "focus": [
               "ming_tumu"
@@ -243,8 +243,8 @@ window.BATTLE_DATA = (function () {
               }
           ],
           "assets": [],
-          "forces_zh": "明軍約五十萬",
-          "forces_en": "~500,000 Ming troops"
+          "forces_zh": "記載約五十萬",
+          "forces_en": "recorded figure of about 500,000"
       },
       {
           "day": 22,
@@ -282,10 +282,10 @@ window.BATTLE_DATA = (function () {
               "el": 46,
               "orbit": 0.65
           },
-          "dateLabel": "1449年9月8日",
+          "dateLabel": "公曆1449年9月1日",
           "title_zh": "土木堡之變",
           "title_en": "Disaster at Tumu",
-          "narration_zh": "也先率瓦剌騎兵伏擊土木堡，明軍大潰，英宗被俘。",
+          "narration_zh": "公曆1449年9月1日（夏曆正統十四年八月十五日），也先的瓦剌騎兵在土木堡擊潰明軍，英宗被俘。不是公曆9月8日。",
           "narration_en": "Esen's Oirat cavalry ambushes Tumu — the Ming routs, the emperor is captured.",
           "focus": [
               "oirat_tumu",
@@ -346,7 +346,7 @@ window.BATTLE_DATA = (function () {
           "dateLabel": "1449年後",
           "title_zh": "由攻轉守",
           "title_en": "From Offense to Defense",
-          "narration_zh": "土木之变后明朝国势转衰，对蒙古由攻转守，加强长城防御。",
+          "narration_zh": "土木堡之後，明朝對蒙古改為守勢，並加強邊牆。五十萬是記載中的人數。",
           "narration_en": "After Tumu, Ming turns defensive — the Great Wall is reinforced.",
           "focus": [],
           "side": "ming",
@@ -359,8 +359,8 @@ window.BATTLE_DATA = (function () {
   const outro =   {
       "title_zh": "土木堡之變",
       "title_en": "TUMU CRISIS",
-      "narration_zh": "本戰役為 DSE 中史重要考點：明英宗親征被瓦剌俘虜，明朝國勢由盛轉衰，轉取守勢",
-      "narration_en": "A key HKDSE Chinese History topic.",
+      "narration_zh": "公曆1449年9月1日，英宗在土木堡被俘。五十萬是記載中的人數。",
+      "narration_en": "On 1 September 1449 the emperor was captured at Tumu. The figure of 500,000 is what the records claim.",
       "cam": {
           "lng": 115.25,
           "lat": 40.45,
@@ -370,5 +370,19 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       }
   };
-  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };
+  const lesson =   {
+      "junior": "初中：記公曆1449年9月1日土木堡英宗被俘，五十萬是記載。",
+      "senior": "高中：分清夏曆八月十五和公曆9月1日，不被誤寫成9月8日。",
+      "fact": "正統十四年，明英宗在王振慫恿下親征瓦剌。明人記載出兵人數為五十萬，這是記載，不是現代清點人數。決戰通說在公曆1449年9月1日，即夏曆正統十四年八月十五日，不是公曆9月8日。也先的瓦剌騎兵在土木堡擊潰明軍，英宗被俘。其後郕王即皇帝位，于謙組織北京防守，也先未能佔領北京。",
+      "sources": "《明史·英宗前紀》《明史·王振傳》《明史·于謙傳》《明史紀事本末·土木之變》。公曆換算採通行的1449年9月1日。不以網絡百科為唯一依據。",
+      "evaluation": "明軍敗，是因為親征倉促、王振亂命、缺水缺糧，騎兵在堡外被衝擊。五十萬不能當成已經點算的實數。北京沒有因此失陷，是于謙等改立皇帝並守城的結果，和土木堡當日的潰敗要分開看。",
+      "judgment": {
+          "ask": "哪一則說法更能解釋土木堡明軍的潰敗？",
+          "a": "公曆1449年9月8日，五十萬實兵在堡內被全殲，所以明朝當日滅亡。",
+          "b": "決戰通說是公曆1449年9月1日。記載作五十萬。明軍缺水缺糧、指揮紊亂，英宗被俘。",
+          "better": "b",
+          "why": "通說日期是9月1日，不是9月8日。五十萬要註明是記載。潰敗原因在親征部署和戰場指揮，不是一個未經核對的實數。"
+      }
+  };
+  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, lesson, END_DAY };
 })();

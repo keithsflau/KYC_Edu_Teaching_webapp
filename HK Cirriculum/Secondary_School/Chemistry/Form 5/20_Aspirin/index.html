@@ -2,79 +2,198 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>20_Aspirin</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="../../../../common/babel-react-classic.js"></script>
-  <script src="../../../../common/learn-from-zero.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
-  <style>
-    body { font-family: "IBM Plex Sans", system-ui, sans-serif; background-color: #f8fafc; color: #0f172a; min-height: 100vh; }
-  </style>
-  <!-- NCS i18n fleet kit (auto-injected) -->
-  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
-  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
-  <style data-ncs-kit="fleet-bridge">
-    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
-    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
-      display: none !important;
-    }
-  </style>
-  <script data-ncs-kit="fleet-init">
-  (function () {
-    function hideLegacyToggles() {
-      document.body.classList.add("ncs-fleet-mounted");
-      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
-        var label = (btn.textContent || "").trim();
-        if (label === "EN" || label === "\u4E2D") {
-          btn.classList.add("ncs-hide-when-ncs-fleet");
-        }
-      });
-      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
-        el.classList.add("ncs-hide-when-ncs-fleet");
-      });
-    }
-    function boot() {
-      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
-      window.NcsI18n.init({
-        chromePath: "../../../../_shared/ncs-chrome.json",
-        target: document.body
-      }).then(hideLegacyToggles);
-    }
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", boot);
-    } else {
-      boot();
-    }
-  })();
-  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>阿士匹靈的官能基 | Aspirin</title>
+  <link rel="stylesheet" href="../../lesson.css" />
 </head>
-<body>
-  <div id="root"></div>
-  <script type="text/babel" data-presets="react-classic">
-    const { useState } = React;
-    
-    function App() {
-      return (
-        <div className="max-w-4xl mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-4">20 Aspirin</h1>
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 mb-8 text-center">
-            <div className="w-full h-64 bg-slate-100 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 mb-4">
-              <span className="text-slate-400 font-medium">[ Interactive Canvas Placeholder ]</span>
-            </div>
-            <p className="text-slate-500">This interactive lab is currently under development.</p>
-          </div>
-          <LearnFromZero />
-        </div>
-      );
-    }
-    
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+<body data-chem-silent="1">
+  <section class="chem-learn" data-chem-entry="1">
+    <h2>學習目標</h2>
+    <ul>
+      <li>辨認阿士匹靈有酯基和羧基，純品沒有游離酚羥基。</li>
+      <li>知道直接加入氯化鐵時，純品通常不變紫。</li>
+      <li>知道酯基若已水解，出現酚羥基才會使氯化鐵變紫；碳酸氫鹽的氣泡來自羧基。</li>
+    </ul>
+    <h2>常見錯因</h2>
+    <ul>
+      <li>把純品說成仍有游離酚羥基。</li>
+      <li>把氯化鐵變紫歸給酯基或羧基。</li>
+      <li>把碳酸氫鹽的氣泡歸給酯基。</li>
+    </ul>
+    <p id="chem-feedback" role="status">看片段或檢驗概念，選出對應答案。</p>
+  </section>
+  <main>
+    <div class="panel">
+      <h1>阿士匹靈：官能基與檢驗</h1>
+      <p class="muted">只談官能基和檢驗概念。本頁沒有合成做法，也不談服藥份量。</p>
+      <h2>操作</h2>
+      <canvas id="plot" width="640" height="160" aria-label="阿士匹靈問題"></canvas>
+      <p id="progress" class="muted"></p>
+      <div class="row" id="choices"></div>
+      <div class="row">
+        <button type="button" id="check">核對</button>
+      </div>
+      <p><a href="../index.html">返回中五</a></p>
+    </div>
+  </main>
+  <script src="../../lesson-kit.js"></script>
+  <script>
+    (function () {
+      var index = 0;
+      var picked = "";
+      var done = [false, false, false, false, false];
+      var items = [
+        {
+          prompt: "片段 —COOH 是哪一個官能基？",
+          answer: "羧基",
+          options: ["羧基", "酯基", "醛基", "游離酚羥基"],
+          ok: "—COOH 是羧基，羰基和羥基在同一個碳上。",
+          wrong: {
+            "酯基": "錯因：酯基是 —COO— 再連上另一段碳鏈。—COOH 的羥基氫仍在，所以是羧基，不是酯基。",
+            "醛基": "錯因：醛基是 CHO，沒有羥基。—COOH 多了那個羥基，所以是羧基。",
+            "游離酚羥基": "錯因：酚羥基是直接連在苯環上的 OH。—COOH 是羧基，不是酚羥基。"
+          }
+        },
+        {
+          prompt: "片段 —OCOCH₃ 連在環上，是哪一個官能基？",
+          answer: "酯基",
+          options: ["酯基", "羧基", "酮基", "游離酚羥基"],
+          ok: "單鍵氧再連着羰基，是酯基。純阿士匹靈因此沒有游離酚羥基。",
+          wrong: {
+            "羧基": "錯因：羧基寫成 —COOH，羥基氫仍在。—OCOCH₃ 連着甲基，所以是酯基。",
+            "酮基": "錯因：酮基只有羰基。這裡還有一個單鍵氧把羰基連到環上，所以是酯基。",
+            "游離酚羥基": "錯因：游離酚羥基是環上的 OH。這個 OH 已經變成 —OCOCH₃，所以是酯基，不是游離酚羥基。"
+          }
+        },
+        {
+          prompt: "純阿士匹靈直接與氯化鐵溶液混合，預期怎樣？",
+          answer: "通常不變紫",
+          options: ["通常不變紫", "立刻變紫", "出現銀鏡", "放出可使石灰水變濁的氣體"],
+          ok: "紫色來自游離酚羥基。純品沒有這個基團，所以通常不變紫。",
+          wrong: {
+            "立刻變紫": "錯因：變紫表示有游離酚羥基。純阿士匹靈的那個位置是酯基，所以通常不變紫。",
+            "出現銀鏡": "錯因：銀鏡指向醛。阿士匹靈沒有醛基，氯化鐵這個檢驗也不是看銀鏡。",
+            "放出可使石灰水變濁的氣體": "錯因：這句描述的是羧基和碳酸氫鹽的概念，不是氯化鐵。氯化鐵用來看有沒有游離酚羥基。"
+          }
+        },
+        {
+          prompt: "若酯基已經水解，再加入氯化鐵，為什麼可能變紫？",
+          answer: "出現游離酚羥基",
+          options: ["出現游離酚羥基", "羧基消失了", "生成了碳碳雙鍵", "苯環打開了"],
+          ok: "變紫表示出現游離酚羥基。這裡只講檢驗概念，不說明如何水解。",
+          wrong: {
+            "羧基消失了": "錯因：變紫來自酚羥基，不是因為羧基消失。羧基仍然可以用碳酸氫鹽來認識。",
+            "生成了碳碳雙鍵": "錯因：碳碳雙鍵的觀察是溴水褪色。氯化鐵變紫表示出現游離酚羥基。",
+            "苯環打開了": "錯因：苯環沒有打開。變紫表示酯基水解這個概念之後，出現了游離酚羥基。"
+          }
+        },
+        {
+          prompt: "與碳酸氫鹽有氣泡，原因是哪一個官能基？",
+          answer: "羧基",
+          options: ["羧基", "酯基", "苯環", "酮基"],
+          ok: "氣泡來自羧基。酯基本身不會放出這種氣體。",
+          wrong: {
+            "酯基": "錯因：酯基不會和碳酸氫鹽放出二氧化碳。阿士匹靈有氣泡，是因為分子上還有羧基。",
+            "苯環": "錯因：苯環不會和碳酸氫鹽產生氣泡。對應的是羧基。",
+            "酮基": "錯因：阿士匹靈這個氣泡檢驗對應羧基，不是酮基。"
+          }
+        }
+      ];
+
+      function say(msg, kind) {
+        if (window.ChemLesson) ChemLesson.say(msg, kind);
+      }
+
+      function countDone() {
+        var n = 0;
+        var i;
+        for (i = 0; i < done.length; i++) if (done[i]) n += 1;
+        return n;
+      }
+
+      function wrap(g, text, x, y, max) {
+        var line = "";
+        var i;
+        var ch;
+        var yy = y;
+        for (i = 0; i < text.length; i++) {
+          ch = text.charAt(i);
+          if (g.measureText(line + ch).width > max) {
+            g.fillText(line, x, yy);
+            line = ch;
+            yy += 32;
+          } else line += ch;
+        }
+        g.fillText(line, x, yy);
+      }
+
+      function paint() {
+        var canvas = document.getElementById("plot");
+        var g = canvas.getContext("2d");
+        var item = items[index];
+        var box = document.getElementById("choices");
+        var i;
+        var button;
+        g.fillStyle = "#0f172a";
+        g.fillRect(0, 0, canvas.width, canvas.height);
+        g.fillStyle = "#94a3b8";
+        g.font = "15px sans-serif";
+        g.fillText("官能基與檢驗概念", 24, 32);
+        g.fillStyle = "#f8fafc";
+        g.font = "20px sans-serif";
+        wrap(g, item.prompt, 24, 78, 590);
+        document.getElementById("progress").textContent = "第 " + (index + 1) + " / " + items.length + " 題 · 已答對 " + countDone() + " / " + items.length;
+        box.innerHTML = "";
+        for (i = 0; i < item.options.length; i++) {
+          button = document.createElement("button");
+          button.type = "button";
+          button.className = "alt";
+          button.textContent = item.options[i];
+          button.setAttribute("data-choice", item.options[i]);
+          box.appendChild(button);
+        }
+        picked = "";
+      }
+
+      document.getElementById("choices").onclick = function (e) {
+        var btn = e.target.closest ? e.target.closest("button") : null;
+        var buttons;
+        var i;
+        if (!btn) return;
+        picked = btn.getAttribute("data-choice");
+        buttons = document.getElementById("choices").querySelectorAll("button");
+        for (i = 0; i < buttons.length; i++) buttons[i].className = "alt";
+        btn.className = "on";
+      };
+      document.getElementById("check").onclick = function () {
+        var item = items[index];
+        var i;
+        if (!picked) {
+          say("錯因：先選一個答案。", "no");
+          return;
+        }
+        if (picked !== item.answer) {
+          say(item.wrong[picked], "no");
+          return;
+        }
+        done[index] = true;
+        if (countDone() === items.length) {
+          say("正確。" + item.ok + " " + items.length + " 題都判斷對過。", "ok");
+          paint();
+          return;
+        }
+        say("正確。" + item.ok, "ok");
+        for (i = 1; i <= items.length; i++) {
+          if (!done[(index + i) % items.length]) {
+            index = (index + i) % items.length;
+            paint();
+            return;
+          }
+        }
+      };
+      paint();
+    })();
   </script>
-<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+  <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 </body>
 </html>

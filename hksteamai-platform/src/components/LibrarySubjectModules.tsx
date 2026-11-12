@@ -4,14 +4,15 @@ import { t } from "@/lib/i18n";
 import type { CurriculumSystem, ModuleTags } from "@/lib/curriculum";
 import {
   gradeGroupLabel,
+  gradeLabelFor,
   groupModulesByGrade,
+  isPathGuessedGrade,
   subjectLabel,
   subjectLabelEn,
 } from "@/lib/curriculum";
 import type { Entitlement } from "@/lib/entitlements";
 import { canAccessModule } from "@/lib/entitlements";
 import { ModuleCard } from "@/components/ModuleCard";
-import { gradeLabelFor } from "@/lib/curriculum";
 
 type Props = {
   locale: Locale;
@@ -21,6 +22,7 @@ type Props = {
   section: "primary" | "secondary";
   systemQuery: string;
   entitlement: Entitlement;
+  selectedGrade?: string;
 };
 
 export function LibrarySubjectModules({
@@ -31,13 +33,52 @@ export function LibrarySubjectModules({
   section,
   systemQuery,
   entitlement,
+  selectedGrade,
 }: Props) {
   const groups = groupModulesByGrade(modules, system);
+  const visible = selectedGrade
+    ? groups.filter((g) => g.grade === selectedGrade)
+    : groups;
+
+  function hrefFor(grade?: string) {
+    const q = new URLSearchParams();
+    q.set("section", section);
+    q.set("subject", subject);
+    if (grade) q.set("grade", grade);
+    if (systemQuery && systemQuery !== "hk") q.set("system", systemQuery);
+    return `/library?${q.toString()}`;
+  }
 
   const backQ = new URLSearchParams();
   backQ.set("section", section);
   if (systemQuery && systemQuery !== "hk") backQ.set("system", systemQuery);
   const backHref = `/library?${backQ.toString()}`;
+
+  function groupIsAllGuessed(gradeMods: ModuleTags[]) {
+    return gradeMods.length > 0 && gradeMods.every((m) => isPathGuessedGrade(m));
+  }
+
+  function groupHeading(grade: string, gradeMods: ModuleTags[]) {
+    const base = gradeGroupLabel(grade, system, locale);
+    return groupIsAllGuessed(gradeMods)
+      ? `${t(locale, "librarySuggestedGrade")} · ${base}`
+      : base;
+  }
+
+  const shownCount = visible.reduce((n, g) => n + g.modules.length, 0);
+
+  const levelLabel =
+    section === "primary"
+      ? t(locale, "libraryPrimaryTab")
+      : t(locale, "librarySecondaryTab");
+  const selectedGroup = selectedGrade
+    ? groups.find((g) => g.grade === selectedGrade)
+    : undefined;
+  const activeGradeLabel = selectedGroup
+    ? groupHeading(selectedGroup.grade, selectedGroup.modules)
+    : selectedGrade
+      ? gradeGroupLabel(selectedGrade, system, locale)
+      : t(locale, "allGrades");
 
   return (
     <div className="library-subject-detail">
@@ -46,34 +87,88 @@ export function LibrarySubjectModules({
       </Link>
 
       <header className="library-subject-detail-head">
+        <p className="library-browse-path">
+          {levelLabel}
+          {" → "}
+          {subjectLabel(subject, locale)}
+          {" → "}
+          {activeGradeLabel}
+        </p>
         <h2>{subjectLabel(subject, locale)}</h2>
         <p>
           {subjectLabelEn(subject)} ·{" "}
-          {t(locale, "libraryModuleCount", { count: modules.length })}
+          {t(locale, "libraryModuleCount", { count: shownCount })}
         </p>
+        <p className="library-grade-note">{t(locale, "libraryGradeHonesty")}</p>
       </header>
 
-      {groups.map(({ grade, modules: gradeMods }) => (
-        <section key={grade} className="library-grade-section">
-          <h3 className="library-grade-heading">
-            {gradeGroupLabel(grade, system, locale)}
-          </h3>
-          <div className="module-grid">
-            {gradeMods.map((m) => {
-              const decision = canAccessModule(entitlement, m.path);
-              return (
-                <ModuleCard
-                  key={m.moduleId || m.path}
-                  locale={locale}
-                  module={m}
-                  allowed={decision.allowed}
-                  gradeLabel={gradeLabelFor(m, system, locale)}
-                />
-              );
-            })}
-          </div>
-        </section>
-      ))}
+      <nav className="library-grade-nav" aria-label={t(locale, "gradeLabel")}>
+        <Link
+          href={hrefFor()}
+          className={`library-grade-chip${selectedGrade ? "" : " active"}`}
+        >
+          {t(locale, "allGrades")}
+        </Link>
+        {groups.map(({ grade, modules: gradeMods }) => (
+          <Link
+            key={grade}
+            href={hrefFor(grade)}
+            className={`library-grade-chip${
+              selectedGrade === grade ? " active" : ""
+            }`}
+          >
+            {groupHeading(grade, gradeMods)}
+          </Link>
+        ))}
+      </nav>
+
+      {visible.length === 0 ? (
+        <p className="form-hint warn">{t(locale, "libraryGradeEmpty")}</p>
+      ) : null}
+
+      {visible.map(({ grade, modules: gradeMods }) => {
+        const guessedCount = gradeMods.filter((m) => isPathGuessedGrade(m)).length;
+        const allGuessed = groupIsAllGuessed(gradeMods);
+        const heading = groupHeading(grade, gradeMods);
+
+        return (
+          <section
+            key={grade}
+            className="library-grade-section"
+            id={`grade-${grade.replace(/\s+/g, "-")}`}
+          >
+            <h3 className="library-grade-heading">{heading}</h3>
+            {guessedCount > 0 ? (
+              <p className="library-grade-note">
+                {allGuessed
+                  ? t(locale, "librarySuggestedGradeNote")
+                  : t(locale, "librarySuggestedGradeMixed")}
+              </p>
+            ) : null}
+            <div className="module-grid">
+              {gradeMods.map((m) => {
+                const decision = canAccessModule(entitlement, m.path);
+                const guessed = isPathGuessedGrade(m);
+                const base = gradeLabelFor(m, system, locale);
+                return (
+                  <ModuleCard
+                    key={m.moduleId || m.path}
+                    locale={locale}
+                    module={m}
+                    allowed={decision.allowed}
+                    gradeSuggested={guessed}
+                    gradeLabel={
+                      guessed
+                        ? `${t(locale, "librarySuggestedGrade")} · ${base}`
+                        : base
+                    }
+                  />
+                );
+              })}
+            </div>
+          </section>
+        );
+      })}
     </div>
   );
 }

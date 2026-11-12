@@ -128,5 +128,10 @@ node "HK Cirriculum/_tools/inject-ncs-i18n.js" --apply
 
 - `LANGUAGE_TEAM_FLEET_INJECT.md` — fleet injector CLI
 - `CEO_NCS_TOPRIGHT_FLEET.md` — CEO coverage mandate
+- `FIX_5_PRIMARY_MATHI18N_NCS.md` — **Fix 5:** NCS switcher → visible React UI (2026-07-29)
 - `_tools/inject-ncs-i18n.js` — bulk HTML injector
 - `_tools/inject-math-i18n-bridge.js` — MathI18n-specific pass
+
+## Fix 5 follow-up (2026-07-29)
+
+`LanguageSelector` now uses `bindNcsLangSync()` — polls for async `NcsI18n`, subscribes `onChange`, listens `ncs:langchange`. Added `useMathLang()` hook and `resolveText()` helper. All **480** apps inherit via shared `i18n.js`; see `FIX_5_PRIMARY_MATHI18N_NCS.md`.

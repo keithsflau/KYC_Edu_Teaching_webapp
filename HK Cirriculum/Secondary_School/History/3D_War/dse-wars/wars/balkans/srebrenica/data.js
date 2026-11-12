@@ -149,7 +149,7 @@ window.BATTLE_DATA = (function () {
       }
   ];
   const notes =   {
-      "summary": "斯雷布雷尼察 — DSE 西史小戰役地圖。",
+      "summary": "斯雷布雷尼察 — 屠殺事件地圖。死亡發生在安全區陷落之後的處決。",
       "caveats": [
           "本圖僅覆蓋該戰役核心區域；戰線與兵力為教學示意。",
           "衛星影像為現代地形。"
@@ -294,11 +294,33 @@ window.BATTLE_DATA = (function () {
           "forces_en": ""
       }
   ];
-  const outro =   {
+    const sourceTask = {
+    "cite": "前南斯拉夫問題國際法庭對斯雷布雷尼察的判決要旨",
+    "excerpt": "判決認定，1995年7月被俘的波斯尼亞穆斯林男子與男童遭有組織處決。",
+    "ask": "這份判決把死亡歸成哪一類？",
+    "options": [
+      {
+        "t": "兩軍對陣時的普通戰場傷亡。",
+        "ok": false,
+        "why": "判決寫的是安全區陷落之後，被分離的男子與男童遭處決。"
+      },
+      {
+        "t": "對已經被控制的平民與戰俘的屠殺。",
+        "ok": true,
+        "why": "逾八千人被殺。法庭認定這是安全區陷落之後的有組織處決。"
+      },
+      {
+        "t": "荷蘭維和部隊主動執行的處決。",
+        "ok": false,
+        "why": "判決指向的是波斯尼亞塞族軍隊。維和部隊沒有阻止進入安全區，這是失職，不是判決裡的行刑者。"
+      }
+    ]
+  };
+const outro =   {
       "title_zh": "斯雷布雷尼察",
       "title_en": "SREBRENICA",
-      "narration_zh": "本戰役為 DSE 西史重要考點。",
-      "narration_en": "A key DSE Western History topic.",
+      "narration_zh": "1995年7月，斯雷布雷尼察逾八千名男子與男童被處決。",
+      "narration_en": "In July 1995 more than eight thousand men and boys from Srebrenica were executed.",
       "cam": {
           "lng": 19.29,
           "lat": 44.1,
@@ -308,5 +330,5 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       }
   };
-  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };
+  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, sourceTask, END_DAY };
 })();

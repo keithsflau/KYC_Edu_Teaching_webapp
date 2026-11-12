@@ -204,13 +204,13 @@ window.BATTLE_DATA = (function () {
           "衛星影像為現代地形，非歷史時期地貌。",
           "河川、海域水面為教學示意，按史實位置裁切顯示。"
       ],
-      "sources": "DSE 中史課程、中國通史、維基百科（交叉查證）。"
+      "sources": "《史記·衛將軍驃騎列傳》《史記·匈奴列傳》《漢書·武帝紀》《漢書·匈奴傳》《資治通鑑》卷二十至二十一。西域都護的設置年代見《漢書·西域傳》。不以網絡百科為唯一依據。"
   };
   const analysis =   {
-      "military": "漢武帝遣衛青、霍去病率騎兵遠征漠北，分路出擊匈奴王庭；霍去病封狼居胥，大破左贤王，匈奴遠徙漠北。",
-      "leaders": "漢武帝劉徹決心改變漢初和親政策，以國力支撐長期對匈戰爭，設置河西走廊與屯田以穩固邊防。衛青多次率軍出塞，以穩健指揮擊破匈奴主力，解除長安威脅，並提拔年輕將領霍去病。霍去病深入漠北，推行「匈奴未滅，何以家為」的速戰速決戰略，兩度大敗匈奴並封狼居胥，使漢朝取得漠北決定性勝利，奠定西域經營基礎。",
+      "military": "漢武帝遣衛青、霍去病率騎兵遠征漠北，分路出擊匈奴王庭；霍去病封狼居胥，大破左賢王，匈奴遠徙漠北。",
+      "leaders": "漢武帝改變和親，以國力支持對匈奴用兵。前119年，衛青出定襄擊單于，霍去病出代郡擊左賢王，至狼居胥山。河西走廊在前121年已經開通，西域都護府設於前60年，不能寫成漠北這一戰的直接結果。",
       "nationalPower": "漢朝經文景積蓄，馬政與財政支撐大規模遠征；匈奴內部分裂，單于勢力削弱。",
-      "impact": "漢武帝遣衛青、霍去病擊潰匈奴，保障絲綢之路及邊疆穩定。"
+      "impact": "前119年衛青、霍去病擊破匈奴主力，單于部遠徙。河西走廊與西域都護不是此戰的直接結果。"
   };
   const storyboard =   [
       {
@@ -342,7 +342,7 @@ window.BATTLE_DATA = (function () {
           "dateLabel": "前119年後",
           "title_zh": "絲路暢通",
           "title_en": "Silk Road Secured",
-          "narration_zh": "漠北勝利保障河西走廊，絲綢之路貿易與邊疆屯田得以發展。",
+          "narration_zh": "前119年這一戰之後，匈奴王庭遠徙，漠南的軍事壓力減輕。河西走廊是前121年霍去病河西之戰打下的，西域都護要到前60年才設置，都不是前119年此戰的直接結果。",
           "narration_en": "Victory secures the Hexi Corridor — Silk Road trade and frontier settlement expand.",
           "focus": [],
           "side": "han",
@@ -355,8 +355,8 @@ window.BATTLE_DATA = (function () {
   const outro =   {
       "title_zh": "漠北之戰",
       "title_en": "BATTLE OF MOBEI",
-      "narration_zh": "本戰役為 DSE 中史重要考點：漢武帝遣衛青、霍去病擊潰匈奴，保障絲綢之路及邊疆穩定",
-      "narration_en": "A key HKDSE Chinese History topic.",
+      "narration_zh": "前119年漠北戰後，匈奴單于部遠徙。河西與西域都護不是此戰的直接結果。",
+      "narration_en": "After 119 BCE the Chanyu withdrew. Hexi and the Western Regions Protectorate were not direct results of this battle.",
       "cam": {
           "lng": 110,
           "lat": 43,
@@ -366,5 +366,19 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       }
   };
-  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };
+  const lesson =   {
+      "junior": "初中：看前119年衛青、霍去病分路出塞的經過。",
+      "senior": "高中：把此戰和前121年河西、前60年西域都護的年代分開。",
+      "fact": "前119年，漢武帝派衛青出定襄擊單于，霍去病出代郡擊左賢王，兩路深入漠北。霍去病至狼居胥山。匈奴單于部遠徙，漠南的王庭壓力減輕。河西走廊是前121年霍去病河西之戰的結果。西域都護設於前60年。兩件事都不是前119年這一戰的直接結果。",
+      "sources": "《史記·衛將軍驃騎列傳》《史記·匈奴列傳》《漢書·武帝紀》《漢書·匈奴傳》《資治通鑑》卷二十至二十一。西域都護的設置年代見《漢書·西域傳》。不以網絡百科為唯一依據。",
+      "evaluation": "此戰能打，是因為文景以後馬政和財政撐得住遠征，而匈奴單于與左賢王被分路擊破。若把河西開通或西域都護算進前119年的直接戰果，年代就錯了，也解釋不了這一仗本身的勝負。",
+      "judgment": {
+          "ask": "哪一則說法更能解釋漠北之戰的結果？",
+          "a": "前119年這一仗直接打下河西走廊，並設立西域都護，所以絲路從此暢通。",
+          "b": "衛青、霍去病分路擊破單于和左賢王，匈奴王庭遠徙；河西在前121年，西域都護在前60年。",
+          "better": "b",
+          "why": "勝負發生在漠北戰場。河西之戰和西域都護的年代都更晚或更早，不能寫成前119年此戰的直接結果。"
+      }
+  };
+  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, lesson, END_DAY };
 })();

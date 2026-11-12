@@ -168,7 +168,7 @@ window.BATTLE_DATA = (function () {
       }
   ];
   const notes =   {
-      "summary": "板門店停戰 — DSE 西史小戰役地圖。",
+      "summary": "板門店停戰 — 課題地圖。兵力與路線為示意。",
       "caveats": [
           "本圖僅覆蓋該戰役核心區域；戰線與兵力為教學示意。",
           "衛星影像為現代地形。"
@@ -177,7 +177,7 @@ window.BATTLE_DATA = (function () {
   };
   const analysis =   {
       "military": "1951–1953 年三八線附近僵持；停戰談判拖延，1953 年 7 月簽署《朝鮮停戰協定》。",
-      "leaders": "艾森豪威爾1953年就任後推動停戰；南韓李承晚反對分裂。北韓金日成、志願軍彭德怀、聯軍克拉克簽署板門店協定。三八線固化，朝鮮半島分裂至今，冷戰亞洲前線形成。",
+      "leaders": "艾森豪威爾1953年就任後推動停戰；南韓李承晚反對分裂。北韓金日成、志願軍彭德懷、聯軍克拉克簽署板門店協定。三八線固化，朝鮮半島分裂至今，冷戰亞洲前線形成。",
       "nationalPower": "中美蘇介入，雙方均無法完全取勝；韓半島分裂持續。",
       "impact": "正式停火但未簽和平條約；南北分治至今，冷戰遺產。"
   };
@@ -300,11 +300,33 @@ window.BATTLE_DATA = (function () {
           "forces_en": ""
       }
   ];
-  const outro =   {
+    const sourceTask = {
+    "cite": "《朝鮮停戰協定》簽署時的文本性質，1953年7月27日",
+    "excerpt": "協定停止軍事行動，並設立非軍事區。它沒有寫成和平條約。",
+    "ask": "哪一項判斷符合這份文件？",
+    "options": [
+      {
+        "t": "簽署之後朝鮮半島已經以和平條約統一。",
+        "ok": false,
+        "why": "協定停的是戰鬥。南北仍是兩個政府，和平條約沒有簽。"
+      },
+      {
+        "t": "戰鬥停止，但政治分裂沒有因此結束。",
+        "ok": true,
+        "why": "彭德懷、金日成與克拉克在協定上代表交戰各方。李承晚反對停戰，南韓不是簽字的一方。"
+      },
+      {
+        "t": "協定規定志願軍繼續向釜山進攻。",
+        "ok": false,
+        "why": "協定是停火，不是新的進攻命令。"
+      }
+    ]
+  };
+const outro =   {
       "title_zh": "板門店停戰",
       "title_en": "ARMISTICE",
-      "narration_zh": "本戰役為 DSE 西史重要考點。",
-      "narration_en": "A key DSE Western History topic.",
+      "narration_zh": "1953年7月27日簽署的是停戰協定，不是和平條約。",
+      "narration_en": "The 27 July 1953 document is an armistice, not a peace treaty.",
       "cam": {
           "lng": 126.68,
           "lat": 37.95,
@@ -314,5 +336,5 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       }
   };
-  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };
+  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, sourceTask, END_DAY };
 })();

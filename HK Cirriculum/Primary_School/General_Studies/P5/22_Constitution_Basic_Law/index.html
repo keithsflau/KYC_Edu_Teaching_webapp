@@ -147,32 +147,82 @@ const t = {
     ja: "言論、出版、集会",
     ko: "언론, 출판, 집회"
   }
-};
-const pairs = [{
-  id: 1,
-  term: "one_country_two_systems",
-  match: "hk_prc"
-},
-// Concept -> Desc ? No, specific.
-// Let's make logical pairs for primary school level.
-{
-  id: 1,
-  term: "one_country_two_systems",
-  match: "unchanged_50"
-},
-// Closely related
-{
-  id: 2,
-  term: "high_autonomy",
-  match: "hk_people_rule"
-}, {
-  id: 3,
-  term: "rights",
-  match: "speech_assembly"
-}];
+,
+  octs_meaning: {
+    en: "In one country, the mainland keeps socialism and Hong Kong keeps its own system.",
+    zh: "一個國家之內，內地實行社會主義，香港保持自己的制度。"
+  },
+  octs_example: {
+    en: "You use Hong Kong dollars and go to a Hong Kong school, while a mainland city keeps a different system.",
+    zh: "你在香港用港幣、讀香港的學校；內地城市的制度不一樣。"
+  },
+  part_meaning: {
+    en: "The HKSAR is an inalienable part of the People's Republic of China.",
+    zh: "香港特別行政區是中華人民共和國不可分離的部分。"
+  },
+  part_example: {
+    en: "On a map of China, Hong Kong sits on the southern coast.",
+    zh: "看中國地圖，香港在南面的沿海。"
+  },
+  fifty_meaning: {
+    en: "The previous capitalist system and way of life remain unchanged for 50 years.",
+    zh: "原有的資本主義制度和生活方式，五十年不變。"
+  },
+  fifty_example: {
+    en: "Speaking Cantonese, giving lai see at Lunar New Year, and going to yum cha can continue.",
+    zh: "用廣東話聊天、過年派利是、去茶樓，這些生活方式會繼續。"
+  },
+  auto_example: {
+    en: "Many local school and transport matters are arranged in Hong Kong.",
+    zh: "很多學校和交通上的本地事務，由香港自己安排。"
+  },
+  rights_example: {
+    en: "You can give an idea in a class meeting, or make a noticeboard with classmates.",
+    zh: "你可以在班會說出想法，也可以和同學一起辦壁報。"
+  },
+  wrong: {
+    en: "Not a match. Find the sentence about the same idea.",
+    zh: "還未配對，找說同一件事的句子。"
+  },
+  done: {
+    en: "All pairs are done.",
+    zh: "全部配對完成。"
+  },
+  example_label: {
+    en: "A primary-school example:",
+    zh: "小學生的例子："
+  }
+};
+const pairs = [{
+  id: "octs",
+  term: "one_country_two_systems",
+  match: "octs_meaning",
+  example: "octs_example"
+}, {
+  id: "part",
+  term: "hk_prc",
+  match: "part_meaning",
+  example: "part_example"
+}, {
+  id: "fifty",
+  term: "unchanged_50",
+  match: "fifty_meaning",
+  example: "fifty_example"
+}, {
+  id: "auto",
+  term: "high_autonomy",
+  match: "hk_people_rule",
+  example: "auto_example"
+}, {
+  id: "rights",
+  term: "rights",
+  match: "speech_assembly",
+  example: "rights_example"
+}];
 function App() {
   const [lang, setLang] = useState("zh");
-  const [selectedTerm, setSelectedTerm] = useState(null);
+  const [selectedTerm, setSelectedTerm] = useState(null);
+  const [feedback, setFeedback] = useState("");
   const [matched, setMatched] = useState([]);
   const getText = key => t[key][lang] || t[key]["en"];
 
@@ -205,13 +255,20 @@ function App() {
     } else {
       if (selectedTerm.id === card.id) {
         setSelectedTerm(null); // Deselect self
-      } else if (selectedTerm.pairId === card.pairId) {
-        setMatched([...matched, selectedTerm.id, card.id]);
-        setSelectedTerm(null);
+      } else if (selectedTerm.pairId === card.pairId && selectedTerm.type !== card.type && selectedTerm.type !== card.type && selectedTerm.type !== card.type) {
+        const nextMatched = matched.concat(selectedTerm.id, card.id);
+        setMatched(nextMatched);
+        setSelectedTerm(null);
+        setFeedback("");
+        if (window.GsSfx) {
+          if (nextMatched.length >= cards.length) GsSfx.playComplete();
+          else GsSfx.playCorrect();
+        }
       } else {
         // Wrong match
         // Shake animation logic handled by CSS or just reset
-        alert("Try Again");
+        setFeedback(getText("wrong"));
+        if (window.GsSfx) GsSfx.playWrong();
         setSelectedTerm(null);
       }
     }
@@ -238,9 +295,9 @@ function App() {
                             ${isMatched ? "bg-green-100 text-green-800 opacity-50" : isSelected ? "bg-rose-500 text-white scale-105" : "bg-white text-rose-900 hover:bg-rose-50"}
                          `
     }, getText(card.text));
-  })), matched.length === cards.length && matched.length > 0 && /*#__PURE__*/React.createElement("div", {
+  })), React.createElement("div", { className: "mt-6 max-w-3xl space-y-2" }, pairs.filter(p => matched.includes("t" + p.id)).map(p => React.createElement("p", { key: p.id, className: "bg-white rounded-xl px-4 py-3 text-slate-700" }, React.createElement("span", { className: "font-black text-rose-700" }, getText("example_label") + " "), getText(p.example)))), feedback && React.createElement("p", { className: "mt-4 text-xl font-black text-red-600", role: "alert" }, feedback), matched.length === cards.length && matched.length > 0 && /*#__PURE__*/React.createElement("div", {
     className: "mt-8 text-4xl font-black text-rose-600 animate-bounce"
-  }, "Complete!"));
+  }, getText("done")));
 }
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(/*#__PURE__*/React.createElement(App, null));
@@ -249,5 +306,6 @@ root.render(/*#__PURE__*/React.createElement(App, null));
       
       <!-- Footer -->
       <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+<script src="../../common/gs-sfx.js"></script>
 </body>
 </html>

@@ -11,9 +11,17 @@ type Props = {
   module: ModuleTags;
   allowed: boolean;
   gradeLabel?: string;
+  /** Year was not read from a grade folder; label must stay a suggestion. */
+  gradeSuggested?: boolean;
 };
 
-export function ModuleCard({ locale, module, allowed, gradeLabel }: Props) {
+export function ModuleCard({
+  locale,
+  module,
+  allowed,
+  gradeLabel,
+  gradeSuggested,
+}: Props) {
   const key = moduleKey(module.path);
   const href = `/play/${key.split("/").map(encodeURIComponent).join("/")}`;
   const title = moduleDisplayTitle(module, locale);
@@ -26,7 +34,11 @@ export function ModuleCard({ locale, module, allowed, gradeLabel }: Props) {
         ) : allowed ? null : (
           <span className="badge lock">{getPaywallCopy(locale, "lockedBadge") || t(locale, "locked")}</span>
         )}
-        {gradeLabel ? <span className="grade-pill">{gradeLabel}</span> : null}
+        {gradeLabel ? (
+          <span className={`grade-pill${gradeSuggested ? " suggested" : ""}`}>
+            {gradeLabel}
+          </span>
+        ) : null}
       </div>
       <h3 className="module-title">{title}</h3>
       <p className="module-meta">

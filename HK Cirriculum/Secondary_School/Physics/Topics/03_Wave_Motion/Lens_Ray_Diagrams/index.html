@@ -1,45 +1,46 @@
-﻿<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Lens Lab | Physics 101</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        /* Custom range slider styling for cross-browser consistency */
-        input[type=range] {
-            -webkit-appearance: none; 
-            background: transparent; 
-        }
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            height: 20px;
-            width: 20px;
-            border-radius: 50%;
-            background: #4F46E5;
-            cursor: pointer;
-            margin-top: -8px; 
-            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-            border: 2px solid white;
-        }
-        input[type=range]::-webkit-slider-runnable-track {
-            width: 100%;
-            height: 4px;
-            cursor: pointer;
-            background: #CBD5E1;
-            border-radius: 2px;
-        }
-        /* Canvas grid background */
-        .grid-bg {
-            background-image: 
-                linear-gradient(to right, #f1f5f9 1px, transparent 1px),
-                linear-gradient(to bottom, #f1f5f9 1px, transparent 1px);
-            background-size: 20px 20px;
-        }
-    </style>
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Lens Lab | Physics 101</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom range slider styling for cross-browser consistency */
+        input[type=range] {
+            -webkit-appearance: none; 
+            background: transparent; 
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #4F46E5;
+            cursor: pointer;
+            margin-top: -8px; 
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            border: 2px solid white;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #CBD5E1;
+            border-radius: 2px;
+        }
+        /* Canvas grid background */
+        .grid-bg {
+            background-image: 
+                linear-gradient(to right, #f1f5f9 1px, transparent 1px),
+                linear-gradient(to bottom, #f1f5f9 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+    </style>
     <!-- NCS i18n fleet kit (auto-injected) -->
   <link rel="stylesheet" href="../../../../../common/ncs-i18n.css" />
   <script src="../../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <script src="../../../../../common/ncs-vanilla-bridge.js"></script>
   <style data-ncs-kit="fleet-bridge">
     body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
     body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
@@ -74,110 +75,419 @@
     }
   })();
   </script>
-</head>
-<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
-
-    <nav class="bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-            <div class="flex items-center space-x-2">
-                <span class="text-2xl">🔭</span>
-                <div>
-                    <h1 class="font-bold text-xl leading-none">Lens Ray Lab</h1>
-                    <p class="text-indigo-200 text-xs">Interactive Physics Simulation</p>
-                </div>
-            </div>
-            <div class="text-sm font-medium bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm">
-                Standard: Light & Optics
-            </div>
-        </div>
-    </nav>
-
-    <main class="flex-grow max-w-7xl mx-auto w-full p-4 lg:p-8 flex flex-col lg:flex-row gap-8">
-        
-        <aside class="w-full lg:w-1/3 space-y-6">
-            
-            <div class="bg-white p-6 rounded-2xl shadow-md border border-slate-100">
-                <h2 class="text-lg font-bold text-slate-700 mb-4 flex items-center gap-2">
-                    <span>⚙️</span> Configuration
-                </h2>
-
-                <div class="mb-6">
-                    <label class="block text-sm font-semibold text-slate-500 mb-2 uppercase tracking-wide">Lens Type</label>
-                    <div class="flex bg-slate-100 p-1 rounded-xl">
-                        <button id="btnConvex" class="flex-1 py-2 rounded-lg text-sm font-bold transition-all shadow-sm bg-white text-indigo-600 ring-1 ring-slate-200">
-                            Convex (Converging)
-                        </button>
-                        <button id="btnConcave" class="flex-1 py-2 rounded-lg text-sm font-bold transition-all text-slate-500 hover:text-indigo-600">
-                            Concave (Diverging)
-                        </button>
-                    </div>
-                </div>
-
-                <div class="mb-6">
-                    <div class="flex justify-between mb-2">
-                        <label class="text-sm font-semibold text-slate-700">Focal Length (<span class="italic">f</span>)</label>
-                        <span id="displayF" class="text-sm font-mono font-bold text-indigo-600 bg-indigo-50 px-2 rounded">100 mm</span>
-                    </div>
-                    <input type="range" id="sliderF" min="50" max="250" value="100" class="w-full">
-                </div>
-
-                <div class="mb-2">
-                    <div class="flex justify-between mb-2">
-                        <label class="text-sm font-semibold text-slate-700">Object Distance (<span class="italic">do</span>)</label>
-                        <span id="displayDo" class="text-sm font-mono font-bold text-indigo-600 bg-indigo-50 px-2 rounded">200 mm</span>
-                    </div>
-                    <input type="range" id="sliderDo" min="50" max="500" value="200" class="w-full">
-                </div>
-            </div>
-
-            <div class="bg-slate-900 text-white p-6 rounded-2xl shadow-lg border border-slate-700">
-                <h2 class="text-lg font-bold mb-4 flex items-center gap-2 text-indigo-400">
-                    <span>📊</span> Live Analysis
-                </h2>
-                
-                <div class="space-y-4">
-                    <div class="flex justify-between items-center border-b border-slate-700 pb-2">
-                        <span class="text-slate-400 text-sm">Image Distance (<span class="italic">di</span>)</span>
-                        <span id="valDi" class="font-mono text-lg font-bold text-emerald-400">0 mm</span>
-                    </div>
-
-                    <div class="flex justify-between items-center border-b border-slate-700 pb-2">
-                        <span class="text-slate-400 text-sm">Magnification (<span class="italic">M</span>)</span>
-                        <span id="valMag" class="font-mono text-lg font-bold text-yellow-400">0.00x</span>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4 pt-2">
-                        <div class="bg-white/10 p-3 rounded-lg text-center">
-                            <span class="block text-xs text-slate-400 uppercase">Nature</span>
-                            <span id="valNature" class="font-bold text-blue-300">Real</span>
-                        </div>
-                        <div class="bg-white/10 p-3 rounded-lg text-center">
-                            <span class="block text-xs text-slate-400 uppercase">Orientation</span>
-                            <span id="valOrient" class="font-bold text-purple-300">Inverted</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="text-xs text-slate-400 text-center">
-                Formula: 1/f = 1/do + 1/di
-            </div>
-        </aside>
-
-        <section class="flex-grow bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden flex flex-col relative h-[500px] lg:h-auto">
-            <div class="absolute top-4 left-4 flex gap-4 bg-white/90 backdrop-blur px-3 py-2 rounded-lg border border-slate-200 text-xs font-semibold shadow-sm z-10">
-                <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-blue-600"></span> Object</div>
-                <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-emerald-500"></span> Image</div>
-                <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-orange-400"></span> Rays</div>
-            </div>
-
-            <canvas id="opticsCanvas" class="w-full h-full grid-bg cursor-crosshair"></canvas>
-        </section>
-
-    
-    
-    </main>
-
-    <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
-</body>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
+
+    <nav class="bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <span class="text-2xl">🔭</span>
+                <div>
+                    <h1 class="font-bold text-xl leading-none">Lens Ray Lab</h1>
+                    <p class="text-indigo-200 text-xs">Interactive Physics Simulation</p>
+                </div>
+            </div>
+            <div class="text-sm font-medium bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm">
+                Standard: Light & Optics
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow max-w-7xl mx-auto w-full p-4 lg:p-8 flex flex-col lg:flex-row gap-8">
+        
+        <aside class="w-full lg:w-1/3 space-y-6">
+            
+            <div class="bg-white p-6 rounded-2xl shadow-md border border-slate-100">
+                <h2 class="text-lg font-bold text-slate-700 mb-4 flex items-center gap-2">
+                    <span>⚙️</span> Configuration
+                </h2>
+
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold text-slate-500 mb-2 uppercase tracking-wide">Lens Type</label>
+                    <div class="flex bg-slate-100 p-1 rounded-xl">
+                        <button id="btnConvex" class="flex-1 py-2 rounded-lg text-sm font-bold transition-all shadow-sm bg-white text-indigo-600 ring-1 ring-slate-200">
+                            Convex (Converging)
+                        </button>
+                        <button id="btnConcave" class="flex-1 py-2 rounded-lg text-sm font-bold transition-all text-slate-500 hover:text-indigo-600">
+                            Concave (Diverging)
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <div class="flex justify-between mb-2">
+                        <label class="text-sm font-semibold text-slate-700">Focal Length (<span class="italic">f</span>)</label>
+                        <span id="displayF" class="text-sm font-mono font-bold text-indigo-600 bg-indigo-50 px-2 rounded">100 mm</span>
+                    </div>
+                    <input type="range" id="sliderF" min="50" max="250" value="100" class="w-full">
+                </div>
+
+                <div class="mb-2">
+                    <div class="flex justify-between mb-2">
+                        <label class="text-sm font-semibold text-slate-700">Object Distance (<span class="italic">do</span>)</label>
+                        <span id="displayDo" class="text-sm font-mono font-bold text-indigo-600 bg-indigo-50 px-2 rounded">200 mm</span>
+                    </div>
+                    <input type="range" id="sliderDo" min="50" max="500" value="200" class="w-full">
+                </div>
+            </div>
+
+            <div class="bg-slate-900 text-white p-6 rounded-2xl shadow-lg border border-slate-700">
+                <h2 class="text-lg font-bold mb-4 flex items-center gap-2 text-indigo-400">
+                    <span>📊</span> Live Analysis
+                </h2>
+                
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+                        <span class="text-slate-400 text-sm">Image Distance (<span class="italic">di</span>)</span>
+                        <span id="valDi" class="font-mono text-lg font-bold text-emerald-400">0 mm</span>
+                    </div>
+
+                    <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+                        <span class="text-slate-400 text-sm">Magnification (<span class="italic">M</span>)</span>
+                        <span id="valMag" class="font-mono text-lg font-bold text-yellow-400">0.00x</span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 pt-2">
+                        <div class="bg-white/10 p-3 rounded-lg text-center">
+                            <span class="block text-xs text-slate-400 uppercase">Nature</span>
+                            <span id="valNature" class="font-bold text-blue-300">Real</span>
+                        </div>
+                        <div class="bg-white/10 p-3 rounded-lg text-center">
+                            <span class="block text-xs text-slate-400 uppercase">Orientation</span>
+                            <span id="valOrient" class="font-bold text-purple-300">Inverted</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-xs text-slate-400 text-center">
+                實正虛負：1/f = 1/u + 1/v。先拖動，再核對。
+            </div>
+            <button id="btnLens" type="button" class="w-full py-2 rounded-lg bg-indigo-600 text-white text-sm font-bold">核對 Check</button>
+
+            <div id="lab-ramp"></div>
+            <div id="lab-challenges"></div>
+        </aside>
+
+        <section class="flex-grow bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden flex flex-col relative h-[500px] lg:h-auto">
+            <div class="absolute top-4 left-4 flex gap-4 bg-white/90 backdrop-blur px-3 py-2 rounded-lg border border-slate-200 text-xs font-semibold shadow-sm z-10">
+                <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-blue-600"></span> Object</div>
+                <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-emerald-500"></span> Image</div>
+                <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-orange-400"></span> Rays</div>
+            </div>
+
+            <canvas id="opticsCanvas" class="w-full h-full grid-bg cursor-crosshair"></canvas>
+        </section>
+
+    
+    
+    </main>
+
+    <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+    <script src="../../../../../common/interactive-lab-kit.js"></script>
+    <script src="../../../../../common/sample-ui-kit.js"></script>
+    <script>
+    (function () {
+        var canvas = document.getElementById('opticsCanvas');
+        var ctx = canvas.getContext('2d');
+        var btnConvex = document.getElementById('btnConvex');
+        var btnConcave = document.getElementById('btnConcave');
+        var sliderF = document.getElementById('sliderF');
+        var sliderDo = document.getElementById('sliderDo');
+        var displayF = document.getElementById('displayF');
+        var displayDo = document.getElementById('displayDo');
+        var valDi = document.getElementById('valDi');
+        var valMag = document.getElementById('valMag');
+        var valNature = document.getElementById('valNature');
+        var valOrient = document.getElementById('valOrient');
+
+        var isConvex = true;
+        var lensRevealed = false;
+        var SCALE = 0.55;
+
+        function resize() {
+            var rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height || 500;
+            draw();
+        }
+
+            function setLensType(convex) {
+            lensRevealed = false;
+            isConvex = convex;
+            btnConvex.className = convex
+                ? 'flex-1 py-2 rounded-lg text-sm font-bold transition-all shadow-sm bg-white text-indigo-600 ring-1 ring-slate-200'
+                : 'flex-1 py-2 rounded-lg text-sm font-bold transition-all text-slate-500 hover:text-indigo-600';
+            btnConcave.className = !convex
+                ? 'flex-1 py-2 rounded-lg text-sm font-bold transition-all shadow-sm bg-white text-indigo-600 ring-1 ring-slate-200'
+                : 'flex-1 py-2 rounded-lg text-sm font-bold transition-all text-slate-500 hover:text-indigo-600';
+            draw();
+        }
+
+        function compute() {
+            var f = parseFloat(sliderF.value);
+            var do_ = parseFloat(sliderDo.value);
+            var fSigned = isConvex ? f : -f;
+            var invDi = 1 / fSigned - 1 / do_;
+            var di = invDi === 0 ? Infinity : 1 / invDi;
+            var m = -di / do_;
+            return { f: fSigned, do: do_, di: di, m: m };
+        }
+
+        function rayThrough(cx, cy, x0, y0, x1, y1, clipX) {
+            var dx = x1 - x0, dy = y1 - y0;
+            if (Math.abs(dx) < 1e-6) return { x: x0, y: y0 };
+            var t = (clipX - x0) / dx;
+            return { x: clipX, y: y0 + dy * t };
+        }
+
+        function drawArrow(x, yBase, height, color, label) {
+            ctx.strokeStyle = color;
+            ctx.fillStyle = color;
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(x, yBase);
+            ctx.lineTo(x, yBase - height);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x, yBase - height);
+            ctx.lineTo(x - 6, yBase - height + 10);
+            ctx.lineTo(x + 6, yBase - height + 10);
+            ctx.closePath();
+            ctx.fill();
+            if (label) {
+                ctx.font = 'bold 11px sans-serif';
+                ctx.fillText(label, x - 14, yBase + 18);
+            }
+        }
+
+        function draw() {
+            var w = canvas.width, h = canvas.height;
+            var cx = w / 2, cy = h / 2;
+            var data = compute();
+            var fPx = data.f * SCALE;
+            var doPx = data.do * SCALE;
+            var diPx = isFinite(data.di) ? data.di * SCALE : 0;
+            var objH = 70;
+
+            displayF.textContent = Math.abs(data.f) + ' mm';
+            displayDo.textContent = data.do + ' mm';
+            if (!lensRevealed) {
+                valDi.textContent = '—';
+                valMag.textContent = '—';
+                valNature.textContent = '—';
+                valOrient.textContent = '—';
+            } else {
+                valDi.textContent = isFinite(data.di) ? Math.round(data.di) + ' mm' : '∞';
+                valMag.textContent = (isFinite(data.m) ? data.m.toFixed(2) : '—') + '×';
+                valNature.textContent = !isFinite(data.di) || data.di > 0 ? 'Real 實' : 'Virtual 虛';
+                valOrient.textContent = data.m > 0 ? 'Upright 正立' : 'Inverted 倒立';
+            }
+
+            ctx.clearRect(0, 0, w, h);
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(0, cy); ctx.lineTo(w, cy);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            var lensX = cx;
+            ctx.fillStyle = isConvex ? 'rgba(99,102,241,0.25)' : 'rgba(99,102,241,0.15)';
+            ctx.strokeStyle = '#6366f1';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            if (isConvex) {
+                ctx.moveTo(lensX, cy - 100);
+                ctx.quadraticCurveTo(lensX + 18, cy, lensX, cy + 100);
+                ctx.quadraticCurveTo(lensX - 18, cy, lensX, cy - 100);
+            } else {
+                ctx.moveTo(lensX, cy - 100);
+                ctx.quadraticCurveTo(lensX - 18, cy, lensX, cy + 100);
+                ctx.quadraticCurveTo(lensX + 18, cy, lensX, cy - 100);
+            }
+            ctx.fill(); ctx.stroke();
+
+            [ -1, 1 ].forEach(function (sign) {
+                var fx = cx + sign * Math.abs(fPx);
+                ctx.fillStyle = '#f59e0b';
+                ctx.beginPath(); ctx.arc(fx, cy, 5, 0, Math.PI * 2); ctx.fill();
+                ctx.font = '10px sans-serif'; ctx.fillStyle = '#92400e';
+                ctx.fillText('F', fx - 4, cy + 18);
+            });
+
+            var objX = cx - doPx;
+            drawArrow(objX, cy, objH, '#2563eb', 'Object');
+
+            if (isFinite(data.di)) {
+                var imgX = cx + diPx;
+                var imgH = objH * data.m;
+                if (Math.abs(imgX) > 10 && Math.abs(imgX) < w - 10) {
+                    drawArrow(imgX, cy, imgH, '#10b981', 'Image');
+                }
+            }
+
+            function strokePoly(pts, dash) {
+                ctx.strokeStyle = '#fb923c';
+                ctx.lineWidth = 2;
+                ctx.setLineDash(dash || []);
+                ctx.beginPath();
+                ctx.moveTo(pts[0].x, pts[0].y);
+                for (var i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+            function yAt(x0, y0, x1, y1, x) {
+                var dx = x1 - x0;
+                if (Math.abs(dx) < 1e-6) return y0;
+                return y0 + (y1 - y0) * (x - x0) / dx;
+            }
+            var objTipY = cy - objH;
+            var fAbs = Math.abs(fPx);
+            var fR = cx + fAbs;
+            var fL = cx - fAbs;
+            var right = w - 8;
+            var left = 8;
+            var hit1y = objTipY;
+            if (isConvex) {
+                strokePoly([{ x: objX, y: objTipY }, { x: lensX, y: hit1y }, { x: right, y: yAt(lensX, hit1y, fR, cy, right) }]);
+            } else {
+                strokePoly([{ x: objX, y: objTipY }, { x: lensX, y: hit1y }, { x: right, y: yAt(fL, cy, lensX, hit1y, right) }]);
+                strokePoly([{ x: lensX, y: hit1y }, { x: left, y: yAt(lensX, hit1y, fL, cy, left) }], [6, 4]);
+            }
+            strokePoly([{ x: objX, y: objTipY }, { x: lensX, y: cy }, { x: right, y: yAt(objX, objTipY, lensX, cy, right) }]);
+            if (isConvex) {
+                var yHit3 = yAt(fL, cy, objX, objTipY, lensX);
+                if (Math.abs(yHit3 - cy) < 420) strokePoly([{ x: objX, y: objTipY }, { x: lensX, y: yHit3 }, { x: right, y: yHit3 }]);
+            } else {
+                var yHit3c = yAt(objX, objTipY, fR, cy, lensX);
+                if (Math.abs(yHit3c - cy) < 420) strokePoly([{ x: objX, y: objTipY }, { x: lensX, y: yHit3c }, { x: right, y: yHit3c }]);
+            }
+            if (isFinite(data.di) && data.di < 0) {
+                var imgTip = { x: cx + diPx, y: cy - objH * data.m };
+                strokePoly([{ x: lensX, y: hit1y }, imgTip], [5, 4]);
+                strokePoly([{ x: lensX, y: cy }, imgTip], [5, 4]);
+            }
+        }
+
+        btnConvex.addEventListener('click', function () { setLensType(true); });
+        btnConcave.addEventListener('click', function () { setLensType(false); });
+        sliderF.addEventListener('input', function () { lensRevealed = false; draw(); });
+        sliderDo.addEventListener('input', function () { lensRevealed = false; draw(); });
+        document.getElementById('btnLens').addEventListener('click', function () {
+            lensRevealed = true;
+            try {
+                var c = window.__phyAc || (window.__phyAc = new (window.AudioContext || window.webkitAudioContext)());
+                if (c.state === 'suspended') c.resume();
+                var o = c.createOscillator(), g = c.createGain();
+                o.frequency.value = 880;
+                g.gain.setValueAtTime(0.0001, c.currentTime);
+                g.gain.exponentialRampToValueAtTime(0.06, c.currentTime + 0.02);
+                g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + 0.16);
+                o.connect(g); g.connect(c.destination);
+                o.start(); o.stop(c.currentTime + 0.17);
+            } catch (e0) {}
+            draw();
+        });
+        window.addEventListener('resize', resize);
+        resize();
+
+        if (window.HKCLabKit) {
+            HKCLabKit.mountLearnFromZero(document.getElementById('lab-ramp'), {
+                accent: '#4f46e5', appId: 'lens_ray_lab',
+                steps: [
+                    { id: 'L1', titleEn: 'Thin lens equation', titleZh: '薄透鏡公式',
+                      bodyEn: '1/f = 1/do + 1/di links object distance, image distance and focal length.', bodyZh: '1/f = 1/do + 1/di 連結物距、像距與焦距。' },
+                    { id: 'L2', titleEn: 'Principal rays', titleZh: '主光線',
+                      bodyEn: 'Three standard rays locate the image: parallel→through F, through centre, through F→parallel.', bodyZh: '三條主光線可定像：平行→過 F、過光心、過 F→平行。' },
+                    { id: 'L3', titleEn: 'Real vs virtual', titleZh: '實像與虛像',
+                      bodyEn: 'Positive di → real, inverted image on the far side. Negative di → virtual, upright image on same side.', bodyZh: 'di 為正 → 實像、倒立；di 為負 → 虛像、正立。' }
+                ]
+            });
+            HKCLabKit.mountChallenges(document.getElementById('lab-challenges'), {
+                accent: '#4f46e5', storageKey: 'lens_ch_v1',
+                challenges: [
+                    { id: 'C1', en: 'Convex lens, do > 2f → real inverted image', zh: '凸透鏡 do > 2f → 實像倒立' },
+                    { id: 'C2', en: 'Concave lens → always virtual upright image', zh: '凹透鏡 → 恆為虛像正立' },
+                    { id: 'C3', en: 'Move do to f and watch di → ∞', zh: 'do = f 時 di → ∞' }
+                ]
+            });
+        }
+    })();
+    </script>
+  <script data-ncs-fix6="lang">
+  (function () {
+    var APP_STRINGS = {
+    "zh": {
+        "pageTitle": "透鏡光線圖實驗室",
+        "title": "透鏡光線圖實驗室",
+        "subtitle": "互動物理模擬",
+        "standard": "標準：光學",
+        "config": "設定",
+        "lensType": "透鏡類型",
+        "convex": "凸透鏡（會聚）",
+        "concave": "凹透鏡（發散）",
+        "focalLen": "焦距 (f)",
+        "objDist": "物距 (do)",
+        "liveAnalysis": "即時分析",
+        "imgDist": "像距 (di)",
+        "mag": "放大率 (M)",
+        "nature": "性質",
+        "orient": "方向"
+    },
+    "en": {
+        "pageTitle": "Lens Ray Lab",
+        "title": "Lens Ray Lab",
+        "subtitle": "Interactive Physics Simulation",
+        "standard": "Standard: Light & Optics",
+        "config": "Configuration",
+        "lensType": "Lens Type",
+        "convex": "Convex (Converging)",
+        "concave": "Concave (Diverging)",
+        "focalLen": "Focal Length (f)",
+        "objDist": "Object Distance (do)",
+        "liveAnalysis": "Live Analysis",
+        "imgDist": "Image Distance (di)",
+        "mag": "Magnification (M)",
+        "nature": "Nature",
+        "orient": "Orientation"
+    }
+};
+    function applyUI() {
+      var u = function (k) { return window.NcsVanillaBridge.ui(k, APP_STRINGS); };
+      document.title = u("pageTitle");
+      
+      var h1 = document.querySelector("nav h1");
+      if (h1) h1.textContent = u("title");
+      var sub = document.querySelector("nav p");
+      if (sub) sub.textContent = u("subtitle");
+      var std = document.querySelector("nav .rounded-full");
+      if (std) std.textContent = u("standard");
+      var cfg = document.querySelector("aside h2");
+      if (cfg && cfg.textContent.indexOf("Configuration") >= 0 || cfg && cfg.textContent.indexOf("設定") >= 0) cfg.lastChild.textContent = " " + u("config");
+      var lensLbl = document.querySelector("aside label.uppercase");
+      if (lensLbl) lensLbl.textContent = u("lensType");
+      var convex = document.getElementById("btnConvex");
+      if (convex) convex.textContent = u("convex");
+      var concave = document.getElementById("btnConcave");
+      if (concave) concave.textContent = u("concave");
+      var fl = document.querySelector("label.text-sm.font-semibold.text-slate-700");
+      if (fl) fl.innerHTML = u("focalLen").replace("(f)", "(<span class=\"italic\">f</span>)");
+      var live = document.querySelector(".bg-slate-900 h2");
+      if (live && live.lastChild) live.lastChild.textContent = " " + u("liveAnalysis");
+      var spans = document.querySelectorAll(".bg-slate-900 .text-slate-400.text-sm");
+      if (spans[0]) spans[0].innerHTML = u("imgDist").replace("(di)", "(<span class=\"italic\">di</span>)");
+      if (spans[1]) spans[1].innerHTML = u("mag").replace("(M)", "(<span class=\"italic\">M</span>)");
+      var ups = document.querySelectorAll(".bg-white\/10 .text-xs.uppercase");
+      if (ups[0]) ups[0].textContent = u("nature");
+      if (ups[1]) ups[1].textContent = u("orient");
+  
+    }
+    window.NcsVanillaBridge.whenNcsReady(function () {
+      window.NcsVanillaBridge.wireVanillaI18n(APP_STRINGS, applyUI);
+    });
+  })();
+  </script>
+</body>
 </html>

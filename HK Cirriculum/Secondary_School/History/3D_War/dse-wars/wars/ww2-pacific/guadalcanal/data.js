@@ -187,7 +187,7 @@ window.BATTLE_DATA = (function () {
       }
   ];
   const notes =   {
-      "summary": "瓜達爾卡納爾戰役 — DSE 西史小戰役地圖。",
+      "summary": "瓜達爾卡納爾戰役 — 課題地圖。兵力與路線為示意。",
       "caveats": [
           "本圖僅覆蓋該戰役核心區域；戰線與兵力為教學示意。",
           "衛星影像為現代地形。"
@@ -340,11 +340,33 @@ window.BATTLE_DATA = (function () {
           "forces_en": ""
       }
   ];
-  const outro =   {
+    const sourceTask = {
+    "cite": "美軍陸戰隊於1942年8月占领亨德森機場後的任務說明",
+    "excerpt": "說明把守住機場寫成這座島的目的。",
+    "ask": "指揮部當時的立場是什麼？",
+    "options": [
+      {
+        "t": "登島只為報復，不需要跑道。",
+        "ok": false,
+        "why": "文件把機場當作必須守住的東西。"
+      },
+      {
+        "t": "控制跑道，才能讓飛機留在所羅門群島。",
+        "ok": true,
+        "why": "其後數月的陸地戰鬥與夜戰，都圍繞這條跑道。"
+      },
+      {
+        "t": "宣布日軍已在8月7日撤出瓜島。",
+        "ok": false,
+        "why": "日軍撤出是1943年2月。"
+      }
+    ]
+  };
+const outro =   {
       "title_zh": "瓜達爾卡納爾戰役",
       "title_en": "GUADALCANAL",
-      "narration_zh": "本戰役為 DSE 西史重要考點。",
-      "narration_en": "A key DSE Western History topic.",
+      "narration_zh": "1942年8月至1943年2月，雙方爭奪亨德森機場，日軍最後撤出。",
+      "narration_en": "From August 1942 to February 1943 the fight was for Henderson Field. Japan then withdrew.",
       "cam": {
           "lng": 160.15,
           "lat": -9.55,
@@ -354,5 +376,5 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       }
   };
-  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };
+  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, sourceTask, END_DAY };
 })();

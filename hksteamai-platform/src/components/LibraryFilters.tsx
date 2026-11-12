@@ -34,7 +34,7 @@ export function LibraryFilters({ locale, systems, system }: Props) {
         <span>{t(locale, "regionLabel")}</span>
         <select
           value={system}
-          onChange={(e) => update({ system: e.target.value })}
+          onChange={(e) => update({ system: e.target.value, grade: "all" })}
         >
           {(Object.keys(systems) as CurriculumSystem[]).map((key) => {
             const info = systems[key];

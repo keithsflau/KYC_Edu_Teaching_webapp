@@ -204,13 +204,13 @@ window.BATTLE_DATA = (function () {
           "衛星影像為現代地形，非歷史時期地貌。",
           "河川、海域水面為教學示意，按史實位置裁切顯示。"
       ],
-      "sources": "DSE 中史課程、中國通史、維基百科（交叉查證）。"
+      "sources": "《中國人民解放軍戰史》淮海戰役章、國防部史政局與國軍徐州剿總戰鬥詳報的整理、粟裕等關於淮海戰役的電報。孫元良兵團的下落依西撤潰散、本人脫走的通行記載。不以網絡百科為唯一依據。"
   };
   const analysis =   {
-      "military": "淮海战役：华东、中原野战军以六十万对八十万，在黄泛区构筑纵深包围；杜聿明集团自徐州南撤被围于陈官庄，邱清泉、黄维兵团先后被歼。",
-      "leaders": "淮海戰役為解放戰爭規模最大之役，華東野戰軍代司令粟裕建議發動，以圍殲黃淮地區國軍主力。國軍徐州「剿總」副司令杜聿明率邱清泉、孫元良等兵團突圍，在陳官莊等地被合圍殲滅。此戰國軍損失五十餘萬，長江以北國民黨統治體系崩潰，南京政府風雨飄搖。",
-      "nationalPower": "解放军得民众百万支前，后勤优于国军；国军徐蚌线崩溃，指挥分裂，士气低落。",
-      "impact": "規模最大、最慘烈的一役。國軍主力被殲，長江以北盡歸共產黨。"
+      "military": "淮海戰役：華東、中原野戰軍以六十萬對八十萬，在黃氾區構築縱深包圍；杜聿明集團自徐州南撤被圍于陳官莊，邱清泉、黃維兵團先後被殲。",
+      "leaders": "粟裕建議在徐蚌地區圍殲國軍主力。黃百韜兵團在碾莊被殲，黃維兵團在雙堆集被殲。陳官莊被圍殲的是杜聿明、邱清泉、李彌等部。孫元良兵團在西撤時潰散，孫元良本人脫走。",
+      "nationalPower": "解放軍得民眾百萬支前，後勤優于國軍；國軍徐蚌線崩潰，指揮分裂，士氣低落。",
+      "impact": "徐蚌地區的國軍主力被分段圍殲。孫元良兵團在西撤時潰散，本人脫走。"
   };
   const storyboard =   [
       {
@@ -225,9 +225,9 @@ window.BATTLE_DATA = (function () {
               "orbit": 0.65
           },
           "dateLabel": "1948年11月",
-          "title_zh": "淮海开战",
+          "title_zh": "淮海開戰",
           "title_en": "Huaihai Campaign Opens",
-          "narration_zh": "华东、中原野战军发起淮海战役，以徐州为中心展开大规模会战。",
+          "narration_zh": "華東、中原野戰軍發起淮海戰役，以徐州為中心展開大規模會戰。",
           "narration_en": "East China and Central Plains armies open the Huaihai Campaign centred on Xuzhou.",
           "focus": [
               "pla_huaihai"
@@ -239,12 +239,12 @@ window.BATTLE_DATA = (function () {
                   "en": "Su Yu"
               },
               {
-                  "zh": "刘伯承",
+                  "zh": "劉伯承",
                   "en": "Liu Bocheng"
               }
           ],
           "assets": [],
-          "forces_zh": "解放军六十万",
+          "forces_zh": "解放軍六十萬",
           "forces_en": "600,000 PLA"
       },
       {
@@ -259,9 +259,9 @@ window.BATTLE_DATA = (function () {
               "orbit": 0.65
           },
           "dateLabel": "1948年11月",
-          "title_zh": "黄百韬被围",
+          "title_zh": "黃百韜被圍",
           "title_en": "Huang Baitao Encircled",
-          "narration_zh": "黄百韬第七兵团被围于碾庄圩，徐蚌线切断。",
+          "narration_zh": "黃百韜第七兵團被圍于碾莊圩，徐蚌線切斷。",
           "narration_en": "Huang Baitao's 7th army is trapped at Nianzhuang — the Xuzhou–Bengbu line is cut.",
           "focus": [
               "pla_huaihai",
@@ -285,9 +285,9 @@ window.BATTLE_DATA = (function () {
               "orbit": 0.65
           },
           "dateLabel": "1948年11–12月",
-          "title_zh": "双堆集歼灭黄维",
+          "title_zh": "雙堆集殲滅黃維",
           "title_en": "Huang Wei Destroyed",
-          "narration_zh": "中原野战军围歼黄维第十二兵团于双堆集。",
+          "narration_zh": "中原野戰軍圍殲黃維第十二兵團于雙堆集。",
           "narration_en": "Huang Wei's 12th army is annihilated at Shuangduiji.",
           "focus": [
               "pla_huaihai"
@@ -295,7 +295,7 @@ window.BATTLE_DATA = (function () {
           "side": "pla",
           "commanders": [
               {
-                  "zh": "邓小平",
+                  "zh": "鄧小平",
                   "en": "Deng Xiaoping"
               }
           ],
@@ -315,9 +315,9 @@ window.BATTLE_DATA = (function () {
               "orbit": 0.65
           },
           "dateLabel": "1949年1月",
-          "title_zh": "杜聿明集团覆灭",
+          "title_zh": "杜聿明集團覆滅",
           "title_en": "Du Yuming Group Destroyed",
-          "narration_zh": "杜聿明率邱清泉等部自徐州南撤，被围于陈官庄，全军覆没。",
+          "narration_zh": "杜聿明率邱清泉、李彌等部撤到陳官莊被圍。孫元良兵團在西撤時潰散，本人脫走。",
           "narration_en": "Du Yuming's retreating force is encircled at Chenguanzhuang and destroyed.",
           "focus": [
               "kmt_huaihai"
@@ -330,7 +330,7 @@ window.BATTLE_DATA = (function () {
               }
           ],
           "assets": [],
-          "forces_zh": "国军五十五万被歼",
+          "forces_zh": "國軍五十五萬被殲",
           "forces_en": "550,000 ROC troops lost"
       },
       {
@@ -345,10 +345,10 @@ window.BATTLE_DATA = (function () {
               "orbit": 0.65
           },
           "dateLabel": "1949年1月10日",
-          "title_zh": "长江以北尽归共军",
-          "title_en": "North of Yangtze Lost",
-          "narration_zh": "淮海战役结束，国军主力被歼，长江以北战略态势彻底逆转。",
-          "narration_en": "Huaihai ends — the ROC loses the north of the Yangtze.",
+          "title_zh": "陳官莊圍困結束",
+          "title_en": "Chenguanzhuang Pocket Ends",
+          "narration_zh": "1949年1月10日陳官莊圍困結束，杜聿明被俘。",
+          "narration_en": "On 10 January 1949 the Chenguanzhuang pocket ends and Du Yuming is captured.",
           "focus": [],
           "side": "pla",
           "commanders": [],
@@ -360,8 +360,8 @@ window.BATTLE_DATA = (function () {
   const outro =   {
       "title_zh": "淮海戰役",
       "title_en": "HUAIHAI CAMPAIGN",
-      "narration_zh": "本戰役為 DSE 中史重要考點：規模最大、最慘烈的一役。國軍主力被殲，長江以北盡歸共產黨",
-      "narration_en": "A key HKDSE Chinese History topic.",
+      "narration_zh": "1949年1月10日陳官莊圍困結束，杜聿明被俘。",
+      "narration_en": "The Chenguanzhuang pocket ended on 10 January 1949, and Du Yuming was captured.",
       "cam": {
           "lng": 117.2,
           "lat": 34.25,
@@ -371,5 +371,19 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       }
   };
-  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };
+  const lesson =   {
+      "junior": "初中：分清碾莊、雙堆集、陳官莊是三個不同的包圍圈。",
+      "senior": "高中：分清三個包圍圈；孫元良兵團在西撤時潰散，本人脫走。",
+      "fact": "1948年11月至1949年1月，華東野戰軍與中原野戰軍在徐蚌地區作戰。黃百韜兵團在碾莊被殲，黃維兵團在雙堆集被殲。杜聿明放棄徐州後，邱清泉、李彌等部被圍在陳官莊，1949年1月10日圍困結束，杜聿明被俘。孫元良兵團在西撤時潰散，孫元良本人脫走。這一役摧毀了國軍在徐蚌地區的主力。西北等地仍有國軍。",
+      "sources": "《中國人民解放軍戰史》淮海戰役章、國防部史政局與國軍徐州剿總戰鬥詳報的整理、粟裕等關於淮海戰役的電報。孫元良兵團的下落依西撤潰散、本人脫走的通行記載。不以網絡百科為唯一依據。",
+      "evaluation": "解放軍能分段圍殲，是因為國軍兵團被拆開，民眾支前又維持了解放軍的補給。孫元良兵團在西撤時潰散，和陳官莊的覆沒要分開看。",
+      "judgment": {
+          "ask": "哪一則說法更能解釋淮海戰役國軍主力是怎樣喪失的？",
+          "a": "黃百韜、黃維和杜聿明三個兵團同時困在陳官莊，一起被殲。",
+          "b": "黃百韜、黃維、陳官莊的杜聿明和邱清泉等部被分段圍殲；孫元良兵團在西撤時潰散。",
+          "better": "b",
+          "why": "三個包圍圈要分開。陳官莊被圍的是杜聿明、邱清泉、李彌等部。孫元良兵團在西撤時潰散，本人脫走。"
+      }
+  };
+  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, lesson, END_DAY };
 })();

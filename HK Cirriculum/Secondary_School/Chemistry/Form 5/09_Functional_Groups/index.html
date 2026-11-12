@@ -2,79 +2,209 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>09_Functional_Groups</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="../../../../common/babel-react-classic.js"></script>
-  <script src="../../../../common/learn-from-zero.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
-  <style>
-    body { font-family: "IBM Plex Sans", system-ui, sans-serif; background-color: #f8fafc; color: #0f172a; min-height: 100vh; }
-  </style>
-  <!-- NCS i18n fleet kit (auto-injected) -->
-  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
-  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
-  <style data-ncs-kit="fleet-bridge">
-    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
-    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
-      display: none !important;
-    }
-  </style>
-  <script data-ncs-kit="fleet-init">
-  (function () {
-    function hideLegacyToggles() {
-      document.body.classList.add("ncs-fleet-mounted");
-      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
-        var label = (btn.textContent || "").trim();
-        if (label === "EN" || label === "\u4E2D") {
-          btn.classList.add("ncs-hide-when-ncs-fleet");
-        }
-      });
-      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
-        el.classList.add("ncs-hide-when-ncs-fleet");
-      });
-    }
-    function boot() {
-      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
-      window.NcsI18n.init({
-        chromePath: "../../../../_shared/ncs-chrome.json",
-        target: document.body
-      }).then(hideLegacyToggles);
-    }
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", boot);
-    } else {
-      boot();
-    }
-  })();
-  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>官能基 | Functional groups</title>
+  <link rel="stylesheet" href="../../lesson.css" />
 </head>
-<body>
-  <div id="root"></div>
-  <script type="text/babel" data-presets="react-classic">
-    const { useState } = React;
-    
-    function App() {
-      return (
-        <div className="max-w-4xl mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-4">09 Functional Groups</h1>
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 mb-8 text-center">
-            <div className="w-full h-64 bg-slate-100 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 mb-4">
-              <span className="text-slate-400 font-medium">[ Interactive Canvas Placeholder ]</span>
-            </div>
-            <p className="text-slate-500">This interactive lab is currently under development.</p>
-          </div>
-          <LearnFromZero />
-        </div>
-      );
-    }
-    
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+<body data-chem-silent="1">
+  <section class="chem-learn" data-chem-entry="1">
+    <h2>學習目標</h2>
+    <ul>
+      <li>由結構式辨認醇、醛、酮、羧酸、酯和鹵代烷。</li>
+      <li>分開容易混淆的組合：醇和羧酸、醛和酮、羧酸和酯。</li>
+      <li>知道化合物類別由官能基決定。</li>
+    </ul>
+    <h2>常見錯因</h2>
+    <ul>
+      <li>看見氧就當成羧酸。</li>
+      <li>把鏈端羰基和鏈中羰基對調。</li>
+      <li>把酯的 —COO— 當成羧基。</li>
+    </ul>
+    <p id="chem-feedback" role="status">看結構式，選出化合物類別。</p>
+  </section>
+  <main>
+    <div class="panel">
+      <h1>官能基</h1>
+      <p class="muted">只辨認類別。本頁沒有反應做法。</p>
+      <h2>操作</h2>
+      <canvas id="plot" width="640" height="150" aria-label="結構式"></canvas>
+      <p id="progress" class="muted">第 1 / 6 題</p>
+      <div class="row" id="choices">
+        <button type="button" class="alt" data-choice="醇">醇</button>
+        <button type="button" class="alt" data-choice="醛">醛</button>
+        <button type="button" class="alt" data-choice="酮">酮</button>
+        <button type="button" class="alt" data-choice="羧酸">羧酸</button>
+        <button type="button" class="alt" data-choice="酯">酯</button>
+        <button type="button" class="alt" data-choice="鹵代烷">鹵代烷</button>
+      </div>
+      <div class="row">
+        <button type="button" id="check">核對</button>
+      </div>
+      <p><a href="../index.html">返回中五</a></p>
+    </div>
+  </main>
+  <script src="../../lesson-kit.js"></script>
+  <script>
+    (function () {
+      var index = 0;
+      var picked = "";
+      var done = [false, false, false, false, false, false];
+      var items = [
+        {
+          formula: "CH₃CH₂OH",
+          answer: "醇",
+          see: "只有羥基連在飽和碳上，沒有羰基。",
+          wrong: {
+            "醛": "錯因：醛要有末端羰基 CHO。這裡是 OH，沒有 C=O，所以是醇。",
+            "酮": "錯因：酮要有兩邊都連碳的羰基。這裡沒有 C=O，只有羥基，所以是醇。",
+            "羧酸": "錯因：羧酸要有 COOH，羰基和羥基在同一個碳。這裡沒有羰基，所以是醇，不是羧酸。",
+            "酯": "錯因：酯是 —COO— 連接兩段碳鏈。這裡只有一個 OH，所以是醇。",
+            "鹵代烷": "錯因：鹵代烷要有碳鹵鍵。這裡的雜原子是氧，而且形成羥基，所以是醇。"
+          }
+        },
+        {
+          formula: "CH₃CH₂CHO",
+          answer: "醛",
+          see: "羰基在鏈端，那個碳還連着氫。",
+          wrong: {
+            "醇": "錯因：醇的官能基是 OH，沒有末端羰基。這裡是 CHO，所以是醛。",
+            "酮": "錯因：酮的羰基在碳鏈中間，兩邊都連碳。這裡羰基在鏈端，所以是醛，不是酮。",
+            "羧酸": "錯因：羧酸是 COOH，有羥基連在羰基碳上。這裡的末端基團是 CHO，沒有那個羥基，所以是醛。",
+            "酯": "錯因：酯要有 —COO— 再連上另一段碳鏈。這裡只有末端 CHO，所以是醛。",
+            "鹵代烷": "錯因：這個結構沒有碳鹵鍵。末端是羰基，所以是醛。"
+          }
+        },
+        {
+          formula: "CH₃COCH₃",
+          answer: "酮",
+          see: "羰基兩邊都連着碳。",
+          wrong: {
+            "醇": "錯因：醇有羥基 OH。這裡是羰基，而且在鏈中，所以是酮。",
+            "醛": "錯因：醛的羰基在鏈端。這裡羰基兩邊都是碳，所以是酮，不是醛。",
+            "羧酸": "錯因：羧酸有 COOH。這裡的氧只成雙鍵，沒有連在羰基碳上的羥基，所以是酮。",
+            "酯": "錯因：酯的單鍵氧還會連上另一段碳鏈。這裡只有一個羰基在兩個甲基中間，所以是酮。",
+            "鹵代烷": "錯因：結構裡沒有鹵素。中間是羰基，所以是酮。"
+          }
+        },
+        {
+          formula: "CH₃COOH",
+          answer: "羧酸",
+          see: "同一個碳上有羰基和羥基。",
+          wrong: {
+            "醇": "錯因：醇只有 OH。這裡羥基連在羰基碳上，是 COOH，所以是羧酸。",
+            "醛": "錯因：醛的末端是 CHO，沒有羥基。這裡是 COOH，所以是羧酸。",
+            "酮": "錯因：酮的羰基兩邊都連碳，沒有羥基。這裡有 OH 連在羰基碳上，所以是羧酸。",
+            "酯": "錯因：酯的單鍵氧連着碳鏈，不是連着氫。CH₃COOH 的 OH 仍在，所以是羧酸，不是酯。",
+            "鹵代烷": "錯因：沒有碳鹵鍵。COOH 是羧基，所以是羧酸。"
+          }
+        },
+        {
+          formula: "CH₃COOCH₃",
+          answer: "酯",
+          see: "—COO— 兩邊都連着碳，沒有羧基上的氫。",
+          wrong: {
+            "醇": "錯因：醇是一個 OH。這裡有 —COO— 連接兩段碳鏈，所以是酯。",
+            "醛": "錯因：醛是末端 CHO。這裡氧原子還連着另一個甲基，所以是酯。",
+            "酮": "錯因：酮只有羰基。酯多了一個單鍵氧，把羰基和另一段碳鏈連起來。",
+            "羧酸": "錯因：羧酸的羥基氫仍在。CH₃COOCH₃ 那個位置連的是甲基，所以是酯，不是羧酸。",
+            "鹵代烷": "錯因：沒有碳鹵鍵。—COO— 是酯基。"
+          }
+        },
+        {
+          formula: "CH₃CH₂Cl",
+          answer: "鹵代烷",
+          see: "碳直接連着氯。",
+          wrong: {
+            "醇": "錯因：醇的雜原子是氧，形成 OH。這裡碳連的是氯，所以是鹵代烷。",
+            "醛": "錯因：醛要有 CHO。這裡沒有氧，只有碳氯鍵，所以是鹵代烷。",
+            "酮": "錯因：酮要有羰基。這裡沒有 C=O，所以不是酮。",
+            "羧酸": "錯因：羧酸要有 COOH。這裡沒有氧，碳氯鍵代表鹵代烷。",
+            "酯": "錯因：酯要有 —COO—。這裡沒有氧，所以是鹵代烷。"
+          }
+        }
+      ];
+
+      function say(msg, kind) {
+        if (window.ChemLesson) ChemLesson.say(msg, kind);
+      }
+
+      function current() {
+        return items[index];
+      }
+
+      function countDone() {
+        var n = 0;
+        var i;
+        for (i = 0; i < done.length; i++) if (done[i]) n += 1;
+        return n;
+      }
+
+      function paint() {
+        var canvas = document.getElementById("plot");
+        var g = canvas.getContext("2d");
+        var item = current();
+        g.fillStyle = "#0f172a";
+        g.fillRect(0, 0, canvas.width, canvas.height);
+        g.fillStyle = "#94a3b8";
+        g.font = "16px sans-serif";
+        g.fillText("結構式", 28, 42);
+        g.fillStyle = "#f8fafc";
+        g.font = "32px sans-serif";
+        g.fillText(item.formula, 28, 96);
+        document.getElementById("progress").textContent = "第 " + (index + 1) + " / " + items.length + " 題 · 已答對 " + countDone() + " / " + items.length;
+      }
+
+      function clearChoice() {
+        var buttons = document.getElementById("choices").querySelectorAll("button");
+        var i;
+        picked = "";
+        for (i = 0; i < buttons.length; i++) buttons[i].className = "alt";
+      }
+
+      function go(next) {
+        index = next;
+        clearChoice();
+        paint();
+      }
+
+      document.getElementById("choices").onclick = function (e) {
+        var btn = e.target.closest ? e.target.closest("button") : null;
+        var buttons;
+        var i;
+        if (!btn) return;
+        picked = btn.getAttribute("data-choice");
+        buttons = document.getElementById("choices").querySelectorAll("button");
+        for (i = 0; i < buttons.length; i++) buttons[i].className = "alt";
+        btn.className = "on";
+      };
+      document.getElementById("check").onclick = function () {
+        var item = current();
+        var i;
+        if (!picked) {
+          say("錯因：先選一個化合物類別。", "no");
+          return;
+        }
+        if (picked !== item.answer) {
+          say(item.wrong[picked] || ("錯因：" + item.see + "所以是" + item.answer + "，不是" + picked + "。"), "no");
+          return;
+        }
+        done[index] = true;
+        if (countDone() === items.length) {
+          say("正確。" + item.formula + " 是" + item.answer + "。" + item.see + " 六個結構都判斷對過。", "ok");
+          paint();
+          return;
+        }
+        say("正確。" + item.formula + " 是" + item.answer + "。" + item.see, "ok");
+        for (i = 1; i <= items.length; i++) {
+          if (!done[(index + i) % items.length]) {
+            go((index + i) % items.length);
+            return;
+          }
+        }
+      };
+      paint();
+    })();
   </script>
-<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+  <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 </body>
 </html>

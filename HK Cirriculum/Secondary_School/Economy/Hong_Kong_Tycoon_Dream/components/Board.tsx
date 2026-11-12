@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { BoardSpace, Player, SpaceType, ColorGroup, RentPayment } from '../types';
+import { UTILITY_RULE_TEXT } from '../logic/rules';
 
 interface Props {
   spaces: BoardSpace[];
@@ -78,7 +79,7 @@ const Space: React.FC<{ space: BoardSpace; players: Player[] }> = ({ space, play
   const isCorner = space.id % 10 === 0;
 
   return (
-    <div className={`relative border border-slate-800 flex flex-col items-center justify-between ${isCorner ? 'col-span-1 row-span-1' : ''} h-full w-full bg-white overflow-hidden text-[10px] sm:text-xs select-none z-10`}>
+    <div title={space.type === SpaceType.UTILITY ? UTILITY_RULE_TEXT : space.blurb || space.name} className={`relative border border-slate-800 flex flex-col items-center justify-between ${isCorner ? 'col-span-1 row-span-1' : ''} h-full w-full bg-white overflow-hidden text-[10px] sm:text-xs select-none z-10`}>
       {/* Color Bar for Properties */}
       {space.type === SpaceType.PROPERTY && (
         <div className={`w-full h-1/4 ${getColorClass(space.group)} border-b border-slate-800 relative`}>
@@ -103,7 +104,9 @@ const Space: React.FC<{ space: BoardSpace; players: Player[] }> = ({ space, play
       {/* Content */}
       <div className="flex flex-col items-center justify-center flex-grow p-1 text-center w-full z-10">
         <span className="font-bold leading-tight text-slate-900 drop-shadow-sm">{space.name}</span>
-        {space.price && <span className="text-slate-700 font-semibold mt-0.5">${space.price}</span>}
+        {space.badge && <span className="text-[8px] leading-tight font-bold text-amber-700">{space.badge}</span>}
+        {space.blurb && <span className="text-[8px] leading-tight text-slate-600">{space.blurb}</span>}
+        {space.price && space.type !== SpaceType.TAX && <span className="text-slate-700 font-semibold mt-0.5">${space.price}</span>}
         
         {/* Owner Indicator */}
         {space.ownerId !== undefined && (

@@ -57,8 +57,9 @@ export function loadCurriculumMap(): CurriculumMap {
       generatedAt: "",
       approximate: true,
       disclaimer: {
-        en: "Grade labels are approximate equivalences for discovery, not official accreditation.",
-        "zh-HK": "年級標籤僅供對照搜尋，並非官方認證。",
+        en: "Grade labels are read or estimated from folder paths for browsing only. They are not accreditation by the Education Bureau or the Curriculum Development Institute.",
+        "zh-HK":
+          "年級標籤由資料夾路徑讀出或估計，只供瀏覽，並非教育局或課程發展處認可。",
       },
       systems: {} as CurriculumMap["systems"],
       modules: [],
@@ -109,6 +110,19 @@ export function gradesForSystem(system: CurriculumSystem): string[] {
 export function getDisclaimer(locale: "en" | "zh-HK" = "en"): string {
   const map = loadCurriculumMap();
   return map.disclaimer[locale] || map.disclaimer.en;
+}
+
+/**
+ * True when the year was not read from a P1–P6 / Form / F1–F6 token in the path.
+ * Those rows use the generator's folder fallback (for example a subject hub → P3).
+ * The label is a suggested grade for browsing, not an Education Bureau placement.
+ */
+export function isPathGuessedGrade(module: Pick<ModuleTags, "path">): boolean {
+  const norm = module.path.replace(/\\/g, "/").replace(/^HK Cirriculum\//, "");
+  if (/\/P[1-6](?:\/|$)/i.test(norm)) return false;
+  if (/Form\s*[1-6]/i.test(norm)) return false;
+  if (/\/F[1-6](?:\/|$)/i.test(norm)) return false;
+  return true;
 }
 
 /** Grade tag for the active region switcher key. */

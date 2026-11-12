@@ -78,6 +78,7 @@
     }
   })();
   </script>
+  <script src="../../../../../../common/sample-ui-kit.js"></script>
 </head>
 
   <body class="p-4 flex justify-center min-h-screen">
@@ -212,7 +213,46 @@ const TEXT = {
 
 };
 
+
+const HKDSE_QUIZ = [
+  { q: "In Excess-4 notation with 3 exponent bits, stored value 100 means real exponent…", qZh: "Excess-4 三比特指數，存儲值 100 表示真實指數…", opts: ["0 (4−4)", "4", "−4", "100"], a: "0 (4−4)", hint: "Real exp = stored − Excess (4)." },
+  { q: "Sign bit 1 in floating point means the number is…", qZh: "浮點符號位 1 表示數值為…", opts: ["Negative 負數", "Positive 正數", "Zero only 僅零", "Infinity 無限"], a: "Negative 負數", hint: "S=1 → multiply by (−1)." },
+  { q: "Mantissa 1.1010₂ with exponent 0 gives decimal…", qZh: "尾數 1.1010₂ 指數 0 的十進值為…", opts: ["1.625", "1.101", "6.5", "0.625"], a: "1.625", hint: "1 + 1/2 + 0/4 + 1/8 + 0/16 = 1.625." },
+];
+
+function QuizPanel({ accent }) {
+  const [qi, setQi] = useState(0);
+  const [picked, setPicked] = useState(null);
+  const [score, setScore] = useState(0);
+  const item = HKDSE_QUIZ[qi];
+  function choose(opt) {
+    if (picked) return;
+    setPicked(opt);
+    const ok = opt === item.a;
+    if (window.HkcSampleUI) HkcSampleUI.toast({ type: ok ? "success" : "error", zh: ok ? "正確！" : "再想想", en: ok ? "Correct!" : "Try again", isZh: false, duration: 2000 });
+    if (ok) setScore(s => s + 1);
+  }
+  function next() {
+    if (qi + 1 >= HKDSE_QUIZ.length) return;
+    setQi(qi + 1); setPicked(null);
+  }
+  const done = qi === HKDSE_QUIZ.length - 1 && picked;
+  return React.createElement("div", { className: "bg-slate-800 p-6 rounded-xl border border-slate-700 space-y-4" },
+    React.createElement("h3", { className: "text-white font-bold flex items-center gap-2" },
+      React.createElement(Icon, { name: "GraduationCap" }), " HKDSE Challenge · 挑戰測驗"),
+    React.createElement("p", { className: "text-slate-400 text-sm" }, "Q ", qi + 1, "/", HKDSE_QUIZ.length, " · Score ", score),
+    React.createElement("p", { className: "text-white font-semibold" }, item.q),
+    React.createElement("p", { className: "text-slate-500 text-sm" }, item.qZh),
+    React.createElement("div", { className: "grid gap-2" }, item.opts.map(o =>
+      React.createElement("button", { key: o, type: "button", onClick: () => choose(o),
+        className: "text-left px-4 py-3 rounded-xl min-h-[48px] font-mono text-sm " + (picked === o ? (o === item.a ? "bg-emerald-900/50 border-2 border-emerald-500 text-emerald-200" : "bg-rose-900/50 border-2 border-rose-500") : "bg-slate-900 border border-slate-600 hover:bg-slate-700 text-slate-200") }, o))),
+    picked && picked !== item.a && React.createElement("p", { className: "text-amber-300 text-sm" }, "Hint: ", item.hint),
+    picked && React.createElement("button", { type: "button", onClick: next, className: "px-4 py-2 rounded-lg font-bold text-white min-h-[44px]", style: { background: accent || "#8b5cf6" } }, done ? "Quiz complete · 完成" : "Next →")
+  );
+}
+
 const App = () => {
+  const [tab, setTab] = useState("sim");
 
   const [lang, setLang] = useState("en");
 
@@ -255,9 +295,21 @@ const App = () => {
   const finalVal = (sign ? -1 : 1) * manVal * Math.pow(2, realExp);
 
   return /*#__PURE__*/React.createElement("div", {
-
+    className: "space-y-6 w-full"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-2 flex-wrap"
+  }, /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    onClick: () => setTab("sim"),
+    className: "px-4 py-2 rounded-lg font-bold min-h-[44px] " + (tab === "sim" ? "bg-purple-600 text-white shadow-lg" : "bg-slate-700 text-slate-300 hover:bg-slate-600")
+  }, lang === "en" ? "Simulator" : "模擬器"), /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    onClick: () => setTab("quiz"),
+    className: "px-4 py-2 rounded-lg font-bold min-h-[44px] " + (tab === "quiz" ? "bg-purple-600 text-white shadow-lg" : "bg-slate-700 text-slate-300 hover:bg-slate-600")
+  }, lang === "en" ? "HKDSE Quiz" : "DSE 測驗")), tab === "quiz" ? /*#__PURE__*/React.createElement(QuizPanel, {
+    accent: "#ec4899"
+  }) : /*#__PURE__*/React.createElement("div", {
     className: "space-y-6"
-
   }, /*#__PURE__*/React.createElement("div", {
 
     className: "flex justify-between items-center bg-slate-800 p-4 rounded-xl border border-slate-700"
@@ -400,7 +452,7 @@ const App = () => {
 
     className: "mt-2 pt-2 border-t border-slate-700 text-yellow-300 font-bold"
 
-  }, "Result = ", sign ? "-" : "", "1 × ", manVal.toFixed(4), " × 2^", realExp, " = ", finalVal)))));
+  }, "Result = ", sign ? "-" : "", "1 × ", manVal.toFixed(4), " × 2^", realExp, " = ", finalVal))))));
 
 };
 
@@ -411,6 +463,53 @@ root.render(/*#__PURE__*/React.createElement(App, null));
 </script>
 
   <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+
+
+<aside data-ict-lesson-frame data-ict-topic="sys" lang="zh-HK">
+  <h2>學習目標</h2>
+  <p data-ict-goal>浮點數用符號、指數和尾數表示很大或很小的數，但有效數字有限，小數不一定能完全精確。</p>
+  <p data-ict-task>你要做的一件事：浮點表示的一個限制是？</p>
+         <div data-ict-choices><button type="button" data-ict-choice="0">有效數字有限，小數可能無法完全精確</button><button type="button" data-ict-choice="1">它不能表示負數</button><button type="button" data-ict-choice="2">1 byte 因此變成 10 bits</button><button type="button" data-ict-choice="3">它不能用來表示大於 1 的數</button></div>
+         <p data-ict-feedback hidden></p>
+         <script type="application/json" data-ict-json>{"answer":0,"ok":"正確。金錢若要避免分幣誤差，實務上常改用整數「分」來計算。","bad":"浮點數可以表示負數。它的限制是精度。"}</script>
+         <script>
+         (function () {
+           var root = document.currentScript.previousElementSibling.parentElement;
+           var data = JSON.parse(root.querySelector("[data-ict-json]").textContent);
+           function tone(ok) {
+             var AC = window.AudioContext || window.webkitAudioContext;
+             if (!AC) return;
+             var ctx = new AC();
+             var o = ctx.createOscillator();
+             var g = ctx.createGain();
+             o.type = "sine";
+             o.frequency.value = ok ? 880 : 196;
+             o.connect(g); g.connect(ctx.destination);
+             var t = ctx.currentTime;
+             g.gain.setValueAtTime(0.0001, t);
+             g.gain.exponentialRampToValueAtTime(0.07, t + 0.02);
+             g.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
+             o.start(t); o.stop(t + 0.2);
+           }
+           root.querySelectorAll("[data-ict-choice]").forEach(function (btn) {
+             btn.addEventListener("click", function () {
+               var ok = Number(btn.getAttribute("data-ict-choice")) === data.answer;
+               var fb = root.querySelector("[data-ict-feedback]");
+               fb.hidden = false;
+               fb.textContent = ok ? data.ok : data.bad;
+               tone(ok);
+             });
+           });
+         })();
+         </script>
+</aside>
+<style>
+  [data-ict-lesson-frame]{position:fixed;right:12px;bottom:12px;z-index:99999;width:min(340px,calc(100vw - 24px));max-height:46vh;overflow:auto;background:#fff;color:#0f172a;border:1px solid #bae6fd;border-radius:14px;padding:12px 14px;box-shadow:0 10px 30px rgba(15,23,42,.18);font-family:"Microsoft JhengHei","PingFang TC",sans-serif;text-align:left}
+  [data-ict-lesson-frame] h2{margin:0 0 6px;font-size:15px}
+  [data-ict-lesson-frame] p{margin:0 0 8px;font-size:13px;line-height:1.45}
+  [data-ict-lesson-frame] button{display:block;width:100%;margin:4px 0;padding:6px 8px;border-radius:8px;border:1px solid #67e8f9;background:#f0fdfa;cursor:pointer;text-align:left}
+  [data-ict-feedback]{background:#ecfeff;border-radius:8px;padding:6px 8px}
+</style>
 </body>
 
 </html>

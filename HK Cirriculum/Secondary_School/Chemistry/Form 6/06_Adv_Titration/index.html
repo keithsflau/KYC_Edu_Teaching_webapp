@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>06_Adv_Titration</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="../../../../common/babel-react-classic.js"></script>
-  <script src="../../../../common/learn-from-zero.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <title>進階滴定計算 | Advanced titration</title>
+  <link rel="stylesheet" href="../../lesson.css" />
   <style>
-    body { font-family: "IBM Plex Sans", system-ui, sans-serif; background-color: #f8fafc; color: #0f172a; min-height: 100vh; }
+    body { font-family: "Segoe UI", "Microsoft JhengHei", "PingFang HK", "Noto Sans HK", sans-serif; }
+    a { color: #0f766e; }
+    h1 { font-size: 1.6rem; margin: 0.2rem 0 0.4rem; }
+    .work { white-space: pre-wrap; background: #f8fafc; border-radius: 10px; padding: 10px 12px; line-height: 1.55; }
+    .swatch { height: 88px; width: 140px; border-radius: 12px; border: 2px solid #cbd5e1; }
+    fieldset { border: 1px solid #e2e8f0; border-radius: 12px; margin: 0 0 10px; }
+    legend { font-weight: 800; padding: 0 6px; }
   </style>
   <!-- NCS i18n fleet kit (auto-injected) -->
   <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
@@ -53,28 +53,348 @@
   </script>
 </head>
 <body>
-  <div id="root"></div>
-  <script type="text/babel" data-presets="react-classic">
-    const { useState } = React;
-    
-    function App() {
-      return (
-        <div className="max-w-4xl mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-4">06 Adv Titration</h1>
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 mb-8 text-center">
-            <div className="w-full h-64 bg-slate-100 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 mb-4">
-              <span className="text-slate-400 font-medium">[ Interactive Canvas Placeholder ]</span>
-            </div>
-            <p className="text-slate-500">This interactive lab is currently under development.</p>
-          </div>
-          <LearnFromZero />
+  <main>
+    <p><a href="../index.html">← 返回中六化學</a></p>
+    <section class="chem-learn" data-chem-entry="1">
+      <h2>學習目標</h2>
+      <ul>
+        <li>用濃度、體積和化學計量比計算直接滴定。</li>
+        <li>回滴時用「加入的酸減去剩餘的酸」。</li>
+        <li>按等當點附近的 pH 急變，選擇甲基橙或酚酞。</li>
+      </ul>
+      <p id="chem-feedback" role="status">這是計算練習。滑桿的體積步進是 0.1 cm³。本頁沒有滴定操作步驟。</p>
+    </section>
+
+    <div class="panel">
+      <h1>進階滴定計算</h1>
+      <p class="muted">摩爾數 n = c × V。V 若用 cm³，就要除以 1000 變成 dm³。分子和分母的體積單位必須相同。直接滴定用化學計量比把酸的摩爾數換成鹼的摩爾數。回滴則先求過量，再相減。</p>
+      <div class="row">
+        <button type="button" class="on" data-mode="direct">直接滴定</button>
+        <button type="button" data-mode="back">回滴</button>
+        <button type="button" data-mode="dilute">稀釋</button>
+        <button type="button" data-mode="indicator">指示劑</button>
+      </div>
+    </div>
+
+    <section class="panel" id="panel-direct">
+      <h2>直接滴定</h2>
+      <p>例：0.100 mol dm⁻³ 的一元酸 25.0 cm³，用去鹼 20.0 cm³，化學計量比 1:1。n(酸) = 0.100 × 25.0 / 1000 = 2.50 × 10⁻³ mol。n(鹼) 相同。c(鹼) = 2.50 × 10⁻³ / 0.0200 = 0.125 mol dm⁻³。</p>
+      <p class="muted">通式：c(鹼) = c(酸) × V(酸) × b / (V(鹼) × a)，其中 a:b 是酸對鹼的摩爾比。滑桿一開始就是上面這題。</p>
+      <label for="cA">酸的濃度 <span id="cA-out">0.100</span> mol dm⁻³</label>
+      <input id="cA" type="range" min="0.05" max="0.5" step="0.005" value="0.1" />
+      <label for="vA">酸的體積 <span id="vA-out">25.0</span> cm³</label>
+      <input id="vA" type="range" min="10" max="50" step="0.1" value="25" />
+      <label for="vB">鹼的體積 <span id="vB-out">20.0</span> cm³</label>
+      <input id="vB" type="range" min="5" max="50" step="0.1" value="20" />
+      <label for="a">酸的係數 a <span id="a-out">1</span></label>
+      <input id="a" type="range" min="1" max="3" step="1" value="1" />
+      <label for="b">鹼的係數 b <span id="b-out">1</span></label>
+      <input id="b" type="range" min="1" max="3" step="1" value="1" />
+      <p class="num" id="direct-result">0.125 mol dm⁻³</p>
+      <p class="work" id="direct-work"></p>
+    </section>
+
+    <section class="panel" id="panel-back" hidden>
+      <h2>回滴</h2>
+      <p>有些樣品不適合直接滴定，例如反應較慢，或沒有清晰的直接終點。計算上，先加入已知的過量酸，再用標準鹼求出剩下的酸。樣品用去的酸 = 加入的酸 − 剩餘的酸。這裡假設剩餘滴定的酸和鹼是 1:1，不寫溶解、加熱或如何判斷終點。</p>
+      <p>例：酸 0.200 mol dm⁻³、50.0 cm³，剩餘用去鹼 0.100 mol dm⁻³、20.0 cm³。加入 0.0100 mol，剩餘 0.00200 mol，用去 0.00800 mol。若每 1 mol 樣品消耗 2 mol 酸，n(樣品) = 0.00400 mol。質量 0.400 g 時，摩爾質量 = 100 g mol⁻¹。若純物質的摩爾質量也是 100 g mol⁻¹，純度 = 100%。</p>
+      <label for="cH">加入的酸濃度 <span id="cH-out">0.200</span> mol dm⁻³</label>
+      <input id="cH" type="range" min="0.05" max="0.5" step="0.01" value="0.2" />
+      <label for="vH">加入的酸體積 <span id="vH-out">50.0</span> cm³</label>
+      <input id="vH" type="range" min="20" max="100" step="0.1" value="50" />
+      <label for="cOH">標準鹼濃度 <span id="cOH-out">0.100</span> mol dm⁻³</label>
+      <input id="cOH" type="range" min="0.05" max="0.5" step="0.01" value="0.1" />
+      <label for="vOH">標準鹼體積 <span id="vOH-out">20.0</span> cm³</label>
+      <input id="vOH" type="range" min="0" max="80" step="0.1" value="20" />
+      <label for="per">每 1 mol 樣品消耗的酸 <span id="per-out">2</span> mol</label>
+      <input id="per" type="range" min="1" max="4" step="1" value="2" />
+      <label for="mass">樣品質量 <span id="mass-out">0.40</span> g</label>
+      <input id="mass" type="range" min="0.1" max="2" step="0.01" value="0.4" />
+      <label for="mpure">純物質的摩爾質量 <span id="mpure-out">100</span> g mol⁻¹</label>
+      <input id="mpure" type="range" min="40" max="200" step="1" value="100" />
+      <p class="num" id="back-result">100.0 g mol⁻¹</p>
+      <p class="work" id="back-work"></p>
+    </section>
+
+    <section class="panel" id="panel-dilute" hidden>
+      <h2>稀釋</h2>
+      <p>稀釋前後溶質的摩爾數不變：c₁V₁ = c₂V₂。稀釋倍數 = V₂ / V₁。例：0.500 mol dm⁻³ 取出 25.0 cm³，放到 250 cm³，c₂ = 0.0500 mol dm⁻³，稀釋倍數 = 10。本頁只做這條算式，不寫容量瓶的配製步驟。</p>
+      <label for="c1">原濃度 c₁ <span id="c1-out">0.500</span> mol dm⁻³</label>
+      <input id="c1" type="range" min="0.1" max="2" step="0.01" value="0.5" />
+      <label for="v1">取出體積 V₁ <span id="v1-out">25.0</span> cm³</label>
+      <input id="v1" type="range" min="10" max="50" step="0.1" value="25" />
+      <label for="v2">最後體積 V₂ <span id="v2-out">250</span> cm³</label>
+      <input id="v2" type="range" min="50" max="1000" step="10" value="250" />
+      <p class="num" id="dil-result">0.0500 mol dm⁻³</p>
+      <p class="work" id="dil-work"></p>
+    </section>
+
+    <section class="panel" id="panel-indicator" hidden>
+      <h2>選擇指示劑</h2>
+      <p>指示劑要在 pH 急變的那一段變色，而不是剛好在 pH 7 變色。甲基橙大約在 pH 3.1–4.4 由紅變黃。酚酞大約在 pH 8.2–10.0 由無色變粉紅。色塊用課程裡的指示劑模型，隨滑桿改變。</p>
+      <div class="row">
+        <button type="button" data-jump="sasb" data-ph="7">強酸強鹼</button>
+        <button type="button" data-jump="wasb" data-ph="9">弱酸強鹼</button>
+        <button type="button" data-jump="sawb" data-ph="4">強酸弱鹼</button>
+      </div>
+      <label for="ph">pH <span id="ph-out">7.0</span></label>
+      <input id="ph" type="range" min="0" max="14" step="0.1" value="7" />
+      <div class="row">
+        <div>
+          <div class="swatch" id="methyl-swatch"></div>
+          <p id="methyl-name">甲基橙</p>
         </div>
-      );
+        <div>
+          <div class="swatch" id="phenol-swatch"></div>
+          <p id="phenol-name">酚酞</p>
+        </div>
+      </div>
+      <p id="ind-note"></p>
+    </section>
+
+    <div class="panel">
+      <h2>常見錯誤</h2>
+      <ul>
+        <li>cm³ 沒有換成 dm³，濃度會大 1000 倍。同一條式裡的體積要單位一致。</li>
+        <li>回滴是相減，不是把兩次滴定的體積相加。</li>
+        <li>弱酸強鹼不用甲基橙，因為它在急變之前已經變完色。</li>
+      </ul>
+    </div>
+
+    <div class="panel">
+      <h2>檢查</h2>
+      <fieldset data-q="q1" data-hint="n(酸) = 0.00250 mol，除以 0.0200 dm³，得到 0.125 mol dm⁻³。">
+        <legend>1. 25.0 cm³、0.100 mol dm⁻³ 的 HCl，用去 20.0 cm³ NaOH，比例 1:1。NaOH 的濃度是？</legend>
+        <div class="row">
+          <button type="button" data-choice="low">0.0800 mol dm⁻³</button>
+          <button type="button" data-choice="mid">0.125 mol dm⁻³</button>
+          <button type="button" data-choice="high">0.250 mol dm⁻³</button>
+        </div>
+      </fieldset>
+      <fieldset data-q="q2" data-hint="樣品用去的是被消耗的那一部分，所以用加入減剩餘。">
+        <legend>2. 回滴時，樣品用去的酸的摩爾數等於？</legend>
+        <div class="row">
+          <button type="button" data-choice="sub">加入的酸 − 剩餘的酸</button>
+          <button type="button" data-choice="add">加入的酸 + 剩餘的酸</button>
+          <button type="button" data-choice="left">只等於剩餘的酸</button>
+        </div>
+      </fieldset>
+      <fieldset data-q="q3" data-hint="弱酸強鹼的等當點在鹼性區，酚酞的變色區才蓋得住。">
+        <legend>3. 弱酸用強鹼滴定，等當點在鹼性區，應選哪種指示劑？</legend>
+        <div class="row">
+          <button type="button" data-choice="methyl">甲基橙</button>
+          <button type="button" data-choice="phenol">酚酞</button>
+          <button type="button" data-choice="either">兩種都同樣適合</button>
+        </div>
+      </fieldset>
+      <p id="score">尚未作答。</p>
+    </div>
+  </main>
+  <script src="../../lesson-kit.js"></script>
+  <script src="../../chem-model.js"></script>
+  <script>
+  (function () {
+    function num(id) { return Number(document.getElementById(id).value); }
+    function round(n, d) {
+      var f = Math.pow(10, d);
+      return Math.round(n * f) / f;
     }
-    
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+    function say(msg, kind) {
+      if (window.ChemLesson) window.ChemLesson.say(msg, kind);
+    }
+    function sup(exp) {
+      var map = { "-": "⁻", "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹" };
+      return String(exp).split("").map(function (ch) { return map[ch] || ch; }).join("");
+    }
+    function sci(n) {
+      if (!isFinite(n)) return "—";
+      if (n === 0) return "0";
+      var exp = Math.floor(Math.log10(Math.abs(n)));
+      if (Math.abs(exp) < 3) return String(round(n, 6));
+      var m = n / Math.pow(10, exp);
+      return m.toFixed(3) + " × 10" + sup(exp);
+    }
+    function text(id, value) { document.getElementById(id).textContent = value; }
+
+    var modes = ["direct", "back", "dilute", "indicator"];
+    function setMode(mode) {
+      modes.forEach(function (m) {
+        document.getElementById("panel-" + m).hidden = m !== mode;
+        document.querySelector('[data-mode="' + m + '"]').classList.toggle("on", m === mode);
+      });
+    }
+    document.querySelectorAll("[data-mode]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        setMode(btn.getAttribute("data-mode"));
+        say("已打開這個計算。改滑桿後，算式會跟著改。", "ok");
+      });
+    });
+
+    function renderDirect() {
+      var cA = round(num("cA"), 3);
+      var vA = round(num("vA"), 1);
+      var vB = round(num("vB"), 1);
+      var a = round(num("a"), 0);
+      var b = round(num("b"), 0);
+      text("cA-out", cA.toFixed(3));
+      text("vA-out", vA.toFixed(1));
+      text("vB-out", vB.toFixed(1));
+      text("a-out", String(a));
+      text("b-out", String(b));
+      var nA = cA * vA / 1000;
+      var nB = nA * (b / a);
+      var cB = nB / (vB / 1000);
+      text("direct-result", cB.toFixed(3) + " mol dm⁻³");
+      text("direct-work",
+        "n(酸) = " + cA.toFixed(3) + " × " + vA.toFixed(1) + " / 1000 = " + sci(nA) + " mol\n" +
+        "n(鹼) = n(酸) × " + b + " / " + a + " = " + sci(nB) + " mol\n" +
+        "c(鹼) = n(鹼) / (" + vB.toFixed(1) + " / 1000) = " + cB.toFixed(3) + " mol dm⁻³");
+    }
+
+    function renderBack() {
+      var cH = round(num("cH"), 3);
+      var vH = round(num("vH"), 1);
+      var cOH = round(num("cOH"), 3);
+      var vOH = round(num("vOH"), 1);
+      var per = round(num("per"), 0);
+      var mass = round(num("mass"), 2);
+      var mpure = round(num("mpure"), 0);
+      text("cH-out", cH.toFixed(3));
+      text("vH-out", vH.toFixed(1));
+      text("cOH-out", cOH.toFixed(3));
+      text("vOH-out", vOH.toFixed(1));
+      text("per-out", String(per));
+      text("mass-out", mass.toFixed(2));
+      text("mpure-out", String(mpure));
+      var nAdded = cH * vH / 1000;
+      var nLeft = cOH * vOH / 1000;
+      var nUsed = nAdded - nLeft;
+      if (nUsed <= 1e-8) {
+        text("back-result", "這組數字不成立");
+        text("back-work",
+          "加入的酸 = " + sci(nAdded) + " mol\n" +
+          "剩餘的酸 = " + sci(nLeft) + " mol\n" +
+          "剩餘不少於加入的酸，不能算出樣品用去多少酸。");
+        return;
+      }
+      var nSample = nUsed / per;
+      var molar = mass / nSample;
+      var purity = nSample * mpure / mass * 100;
+      text("back-result", molar.toFixed(1) + " g mol⁻¹");
+      text("back-work",
+        "加入的酸 = " + cH.toFixed(3) + " × " + vH.toFixed(1) + " / 1000 = " + sci(nAdded) + " mol\n" +
+        "剩餘的酸 = " + cOH.toFixed(3) + " × " + vOH.toFixed(1) + " / 1000 = " + sci(nLeft) + " mol\n" +
+        "樣品用去的酸 = 加入 − 剩餘 = " + sci(nUsed) + " mol\n" +
+        "n(樣品) = 用去的酸 / " + per + " = " + sci(nSample) + " mol\n" +
+        "摩爾質量 = " + mass.toFixed(2) + " / n(樣品) = " + molar.toFixed(1) + " g mol⁻¹\n" +
+        "純度 = n(樣品) × " + mpure + " / " + mass.toFixed(2) + " × 100% = " + purity.toFixed(1) + "%");
+    }
+
+    function renderDilute() {
+      var c1 = round(num("c1"), 3);
+      var v1 = round(num("v1"), 1);
+      var v2 = round(num("v2"), 0);
+      text("c1-out", c1.toFixed(3));
+      text("v1-out", v1.toFixed(1));
+      text("v2-out", String(v2));
+      if (v2 <= v1) {
+        text("dil-result", "這組數字不成立");
+        text("dil-work", "最後體積要大於取出體積。這裡只檢查算式，不寫配製步驟。");
+        return;
+      }
+      var c2 = c1 * v1 / v2;
+      var factor = v2 / v1;
+      text("dil-result", c2.toFixed(4) + " mol dm⁻³");
+      text("dil-work",
+        "c₁V₁ = c₂V₂\n" +
+        "c₂ = " + c1.toFixed(3) + " × " + v1.toFixed(1) + " / " + v2 + " = " + c2.toFixed(4) + " mol dm⁻³\n" +
+        "稀釋倍數 = " + v2 + " / " + v1.toFixed(1) + " = " + factor.toFixed(2));
+    }
+
+    function indicatorOf(name, ph) {
+      if (window.ChemModel) return window.ChemModel.indicatorStyle(name, ph);
+      if (name === "methyl") {
+        if (ph < 3.1) return { hex: "#ef4444", name: "紅" };
+        if (ph < 4.4) return { hex: "#f97316", name: "橙" };
+        return { hex: "#eab308", name: "黃" };
+      }
+      if (ph < 8.2) return { hex: "#e2e8f0", name: "無色" };
+      if (ph < 10) return { hex: "#fbcfe8", name: "淺紅" };
+      return { hex: "#ec4899", name: "粉紅" };
+    }
+
+    function renderIndicator() {
+      var ph = round(num("ph"), 1);
+      text("ph-out", ph.toFixed(1));
+      var methyl = indicatorOf("methyl", ph);
+      var phenol = indicatorOf("phenol", ph);
+      document.getElementById("methyl-swatch").style.background = methyl.hex;
+      document.getElementById("phenol-swatch").style.background = phenol.hex;
+      text("methyl-name", "甲基橙：" + methyl.name);
+      text("phenol-name", "酚酞：" + phenol.name);
+      var note;
+      if (ph < 3.1) note = "兩種指示劑都還未進入變色區：甲基橙仍是紅色，酚酞無色。";
+      else if (ph < 4.4) note = "甲基橙正在變色。強酸弱鹼的急變會經過這裡。酚酞仍然無色。";
+      else if (ph < 8.2) note = "甲基橙已經變黃。酚酞仍是無色，約到 8.2 才開始變粉紅。";
+      else if (ph < 10) note = "酚酞正在變色。弱酸強鹼的急變會經過這裡。";
+      else note = "酚酞已是粉紅色。這個 pH 高於大多數中學滴定的等當點。";
+      text("ind-note", note);
+    }
+
+    var JUMP = {
+      sasb: "強酸強鹼的 pH 會在很少體積內由約 3 升到約 10。甲基橙和酚酞的變色區都在這段急變裡，所以兩者都可用。pH 7 本身不是它們的變色點。",
+      wasb: "弱酸強鹼的等當點約在 pH 8–10，用酚酞。甲基橙在 pH 4 附近已經變完，會太早。",
+      sawb: "強酸弱鹼的等當點約在 pH 5–6，急變大約由 7 落到 4，用甲基橙。酚酞要到鹼性才變色，會太遲。"
+    };
+    document.querySelectorAll("[data-jump]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        document.getElementById("ph").value = btn.getAttribute("data-ph");
+        renderIndicator();
+        say(JUMP[btn.getAttribute("data-jump")], "ok");
+      });
+    });
+
+    ["cA", "vA", "vB", "a", "b"].forEach(function (id) {
+      document.getElementById(id).addEventListener("input", renderDirect);
+    });
+    ["cH", "vH", "cOH", "vOH", "per", "mass", "mpure"].forEach(function (id) {
+      document.getElementById(id).addEventListener("input", renderBack);
+    });
+    ["c1", "v1", "v2"].forEach(function (id) {
+      document.getElementById(id).addEventListener("input", renderDilute);
+    });
+    document.getElementById("ph").addEventListener("input", renderIndicator);
+
+    var KEY = { q1: "mid", q2: "sub", q3: "phenol" };
+    var picked = {};
+    document.querySelectorAll("[data-choice]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var box = btn.closest("fieldset");
+        var q = box.getAttribute("data-q");
+        picked[q] = btn.getAttribute("data-choice");
+        box.querySelectorAll("[data-choice]").forEach(function (b) {
+          b.classList.toggle("on", b === btn);
+        });
+        var ok = KEY[q] === picked[q];
+        var hint = box.getAttribute("data-hint") || "";
+        say(ok ? "正確。" + hint : "還未對。" + hint, ok ? "ok" : "no");
+        var n = 0;
+        var nOk = 0;
+        Object.keys(KEY).forEach(function (id) {
+          if (!picked[id]) return;
+          n += 1;
+          if (picked[id] === KEY[id]) nOk += 1;
+        });
+        text("score", "已答 " + n + "／3 題，其中 " + nOk + " 題正確。");
+      });
+    });
+
+    renderDirect();
+    renderBack();
+    renderDilute();
+    renderIndicator();
+  })();
   </script>
-<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+  <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 </body>
 </html>

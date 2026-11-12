@@ -1,63 +1,114 @@
 ﻿<!DOCTYPE html>
-
-<html lang="en">
-
+<html lang="zh-HK">
 <head>
-
   <meta charset="UTF-8" />
-
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <title>Atomic Emission Spectra Simulator</title>
-
-  <script src="https://cdn.tailwindcss.com"></script>
-
-<!-- NCS i18n fleet kit (auto-injected) -->
-  <link rel="stylesheet" href="../../../../../common/ncs-i18n.css" />
-  <script src="../../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
-  <style data-ncs-kit="fleet-bridge">
-    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
-    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
-      display: none !important;
-    }
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>原子發射光譜 | Emission spectra</title>
+  <style>
+    body { margin: 0; font-family: "Segoe UI", "Noto Sans HK", sans-serif; background: #0f172a; color: #e2e8f0; }
+    main { max-width: 860px; margin: 0 auto; padding: 1.2rem; }
+    a { color: #93c5fd; }
+    canvas { width: 100%; height: 160px; background: #020617; border-radius: 12px; display: block; }
+    button, select { min-height: 44px; }
+    button { border: 0; border-radius: 10px; background: #4f46e5; color: #fff; font-weight: 700; padding: 0 1rem; }
   </style>
-  <script data-ncs-kit="fleet-init">
-  (function () {
-    function hideLegacyToggles() {
-      document.body.classList.add("ncs-fleet-mounted");
-      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
-        var label = (btn.textContent || "").trim();
-        if (label === "EN" || label === "\u4E2D") {
-          btn.classList.add("ncs-hide-when-ncs-fleet");
-        }
-      });
-      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
-        el.classList.add("ncs-hide-when-ncs-fleet");
-      });
-    }
-    function boot() {
-      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
-      window.NcsI18n.init({
-        chromePath: "../../../../../_shared/ncs-chrome.json",
-        target: document.body
-      }).then(hideLegacyToggles);
-    }
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", boot);
-    } else {
-      boot();
-    }
-  })();
-  </script>
 </head>
+<body>
+  <main>
+    <p><a href="../index.html">← 原子世界</a> · <a href="../../../Form%206/index.html">中六</a></p>
+    <h1>發射光譜 · Emission lines</h1>
+    <p>拖動光標，對準該元素最長的可見發射線，再核對。不會先告訴你波長。</p>
+    <label>元素
+      <select id="el">
+        <option value="H">氫 Hydrogen</option>
+        <option value="He">氦 Helium</option>
+        <option value="Na">鈉 Sodium</option>
+      </select>
+    </label>
+    <canvas id="cv" width="800" height="160"></canvas>
+    <label>光標 <span id="pos">550</span> nm
+      <input id="mark" type="range" min="400" max="700" value="550" />
+    </label>
+    <button id="check" type="button">核對 Check</button>
+    <p id="out">先拖動光標。</p>
+  </main>
+  <script>
+    (function () {
+      var lines = {
+        H: [656.3, 486.1, 434.0, 410.2],
+        He: [667.8, 587.6, 501.6, 447.1],
+        Na: [589.0, 589.6]
+      };
+      var names = { H: "氫 Hα", He: "氦", Na: "鈉 D 線" };
+      var cv = document.getElementById("cv");
+      var ctx = cv.getContext("2d");
+      var mark = document.getElementById("mark");
+      var el = document.getElementById("el");
+      var out = document.getElementById("out");
+      var revealed = false;
 
-<body class="min-h-screen flex items-center justify-center bg-slate-900 text-slate-100 p-8">
+      function nmToX(nm) { return ((nm - 400) / 300) * cv.width; }
 
-  <p class="text-center">Atomic Emission Spectra — interactive lab coming soon.</p>
+      function draw() {
+        ctx.clearRect(0, 0, cv.width, cv.height);
+        var g = ctx.createLinearGradient(0, 0, cv.width, 0);
+        g.addColorStop(0, "#4c1d95");
+        g.addColorStop(0.35, "#2563eb");
+        g.addColorStop(0.55, "#22c55e");
+        g.addColorStop(0.75, "#eab308");
+        g.addColorStop(1, "#dc2626");
+        ctx.fillStyle = g;
+        ctx.globalAlpha = 0.25;
+        ctx.fillRect(0, 40, cv.width, 70);
+        ctx.globalAlpha = 1;
+        lines[el.value].forEach(function (nm) {
+          ctx.strokeStyle = "#f8fafc";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(nmToX(nm), 30);
+          ctx.lineTo(nmToX(nm), 120);
+          ctx.stroke();
+        });
+        ctx.strokeStyle = "#fbbf24";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(nmToX(parseFloat(mark.value)), 16);
+        ctx.lineTo(nmToX(parseFloat(mark.value)), 140);
+        ctx.stroke();
+        document.getElementById("pos").textContent = mark.value;
+        if (!revealed) out.textContent = "先拖動光標到最長的可見亮線，再核對。";
+      }
 
+      function beep(ok) {
+        try {
+          var c = beep.c || (beep.c = new (window.AudioContext || window.webkitAudioContext)());
+          if (c.state === "suspended") c.resume();
+          var o = c.createOscillator(), gn = c.createGain();
+          o.frequency.value = ok ? 880 : 220;
+          gn.gain.setValueAtTime(0.0001, c.currentTime);
+          gn.gain.exponentialRampToValueAtTime(0.06, c.currentTime + 0.02);
+          gn.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + 0.16);
+          o.connect(gn); gn.connect(c.destination);
+          o.start(); o.stop(c.currentTime + 0.17);
+        } catch (e) {}
+      }
+
+      mark.addEventListener("input", function () { revealed = false; draw(); });
+      el.addEventListener("change", function () { revealed = false; draw(); });
+      document.getElementById("check").addEventListener("click", function () {
+        revealed = true;
+        var set = lines[el.value];
+        var target = Math.max.apply(null, set);
+        var guess = parseFloat(mark.value);
+        var ok = Math.abs(guess - target) <= 12;
+        out.textContent = ok
+          ? "對。" + names[el.value] + " 最長可見線約 " + target.toFixed(1) + " nm。"
+          : "未對上。最長可見線約 " + target.toFixed(1) + " nm，你的光標在 " + guess.toFixed(0) + " nm。";
+        beep(ok);
+      });
+      draw();
+    })();
+  </script>
   <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
-
 </body>
-
 </html>
-

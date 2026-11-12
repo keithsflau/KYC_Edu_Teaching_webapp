@@ -16,7 +16,7 @@
       id: "airport", name: "赤鱲角填海", region: "大嶼山",
       layer: "reclamation", caseKey: "airport",
       lat: 22.3089, lng: 113.9146, zoom: 13,
-      detail: "1991 機場核心計劃：約 2.5 億 m³ 填海，物料來自海域挖泥及公眾填料。影響中華白海豚棲息地，須 EIA 及持續監測。",
+      detail: "赤鱲角在大嶼山以北。土力工程處報告記述平台填料約 1.97 億立方米。填海改變北大嶼山海岸，並影響中華白海豚使用的水域，須做環境影響評估和水質監察。1989年《港口及機場發展策略》提出這個選址，機場於1998年啟用。",
       fact: "1998 機場啟用",
     },
     tungchung: {
@@ -40,33 +40,40 @@
       detail: "將軍澳灣填海發展新市鎮，改變海灣地貌。",
       fact: "1980s–",
     },
-    shamwan: {
-      id: "shamwan", name: "深灣道 1972", region: "港島半山",
-      layer: "landslide", caseKey: "shamwan",
-      lat: 22.2578, lng: 114.1476, zoom: 15,
-      detail: "6·18 暴雨後半山深灣道大型山泥傾瀉，促成斜坡監管及《建築物（斜坡）規例》。",
-      fact: "DSE 指定個案",
-    },
     poshan: {
-      id: "poshan", name: "寶珊道 1994", region: "港島西",
-      layer: "landslide", caseKey: "shamwan",
-      lat: 22.2815, lng: 114.1330, zoom: 15,
-      detail: "暴雨觸發滑坡，加強排水與岩土評估標準。",
-      fact: "1994",
+      id: "poshan", name: "寶珊道 1972", region: "港島半山",
+      layer: "landslide", caseKey: "landslides",
+      lat: 22.275, lng: 114.143, zoom: 16,
+      detail: "1972年6月18日晚上，半山寶珊道以上的山泥傾瀉沖毀旭龢道一帶樓宇，67人死亡。地點在港島半山，不是南丫島的深灣，也不是1994年。",
+      fact: "1972-06-18 · 67人",
     },
-    sau: {
-      id: "sau", name: "秀茂坪 1976", region: "九龍東",
-      layer: "landslide", caseKey: "shamwan",
-      lat: 22.3330, lng: 114.2345, zoom: 14,
-      detail: "削坡建屋邨、排水不良，人為加劇滑坡風險。",
-      fact: "1976",
+    sau1972: {
+      id: "sau1972", name: "秀茂坪 1972", region: "九龍東曉光街",
+      layer: "landslide", caseKey: "landslides",
+      lat: 22.319, lng: 114.231, zoom: 16,
+      detail: "同日下午，秀茂坪曉光街的填土斜坡倒塌，沖毀寮屋，71人死亡。這是九龍東，不是港島。",
+      fact: "1972-06-18 · 71人",
+    },
+    sau1976: {
+      id: "sau1976", name: "秀茂坪 1976", region: "九龍東",
+      layer: "landslide", caseKey: "landslides",
+      lat: 22.321, lng: 114.234, zoom: 16,
+      detail: "1976年8月25日，秀茂坪邨附近另一幅填土斜坡倒塌，18人死亡。其後的檢討促成1977年成立土力工程處。",
+      fact: "1976-08-25 · 18人",
+    },
+    kwunlung: {
+      id: "kwunlung", name: "觀龍樓 1994", region: "堅尼地城",
+      layer: "landslide", caseKey: "landslides",
+      lat: 22.283, lng: 114.127, zoom: 16,
+      detail: "1994年7月23日，堅尼地城觀龍樓對下的斜坡倒塌，5人死亡。寶珊道事件是1972年，不要把兩個年份對調。",
+      fact: "1994-07-23 · 5人",
     },
     slope_nt: {
-      id: "slope_nt", name: "全港註冊斜坡", region: "全港",
+      id: "slope_nt", name: "半山斜坡管理（參考點）", region: "港島半山",
       layer: "slope", caseKey: "slope",
-      lat: 22.3520, lng: 114.1400, zoom: 11,
-      detail: "約 60,000 個註冊斜坡，屋宇署及土木工程拓展署定期巡查、維修與鞏固。",
-      fact: "~60,000 個",
+      lat: 22.278, lng: 114.150, zoom: 14,
+      detail: "土木工程拓展署斜坡紀錄冊現時記載約 61,000 個人造斜坡，數目會更新。圖上只是半山的一個參考點，不是全港斜坡的中心。",
+      fact: "約 61,000 個（會更新）",
     },
     quarry: {
       id: "quarry", name: "屯門藍地石礦", region: "新界西",
@@ -79,7 +86,7 @@
 
   const GROUPS = [
     { layer: "reclamation", title: "填海工程", desc: "DSE 個案：赤鱲角機場填海" },
-    { layer: "landslide", title: "山泥傾瀉", desc: "DSE 個案：深灣 1972" },
+    { layer: "landslide", title: "山泥傾瀉", desc: "寶珊道、秀茂坪、觀龍樓" },
     { layer: "slope", title: "斜坡管理", desc: "註冊斜坡與監管制度" },
     { layer: "resource", title: "地質資源", desc: "石礦場與填料供應" },
   ];
@@ -203,6 +210,7 @@
 
     function select(id) {
       if (!SITES[id]) return;
+      if (global.GeoAudio) global.GeoAudio.tap();
       selectedId = id;
       const site = SITES[id];
       onSelect(site);
@@ -269,7 +277,7 @@
 
     const CASE_SYNC_SITE = {
       airport: "airport",
-      shamwan: "shamwan",
+      landslides: "poshan",
       slope: "slope_nt",
       resource: "quarry",
     };

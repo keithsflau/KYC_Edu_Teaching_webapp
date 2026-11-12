@@ -13,9 +13,9 @@ window.BATTLE_DATA = (function () {
       "geo": {
           "minLng": 27.7,
           "maxLng": 30.2,
-          "minLat": 29.83,
+          "minLat": 29.15,
           "maxLat": 31.83,
-          "Z": 10
+          "Z": 9
       },
       "startDate": [
           1942,
@@ -45,9 +45,9 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       },
       "nextBattle": {
-          "href": "../berlin/",
-          "title_zh": "柏林戰役",
-          "title_en": "BERLIN 1945"
+          "href": "../normandy/",
+          "title_zh": "諾曼第登陸",
+          "title_en": "NORMANDY 1944"
       }
   };
   const factions = {
@@ -81,7 +81,7 @@ window.BATTLE_DATA = (function () {
           },
           {
               "name_en": "Qattara Depression",
-              "name_zh": "蓋塔拉洼地",
+              "name_zh": "蓋塔拉窪地",
               "type": "region",
               "lng": 28.5,
               "lat": 29.5
@@ -178,7 +178,7 @@ window.BATTLE_DATA = (function () {
       }
   ];
   const notes =   {
-      "summary": "阿拉曼戰役 — DSE 西史小戰役地圖。",
+      "summary": "阿拉曼戰役 — 課題地圖。兵力與路線為示意。",
       "caveats": [
           "本圖僅覆蓋該戰役核心區域；戰線與兵力為教學示意。",
           "衛星影像為現代地形。"
@@ -187,7 +187,7 @@ window.BATTLE_DATA = (function () {
   };
   const analysis =   {
       "military": "北非沙漠戰：蒙哥馬利率第八集團軍在第二次阿拉曼擊敗隆美爾，扭轉北非戰局。",
-      "leaders": "英第八集團軍蒙哥馬利以物資優勢擊潰隆美爾的非洲軍。邱吉爾稱「不是終結，但或許是終結的開始」。隆美爾敗退影響軸心國北非與地中海控制，為盟軍登陸意大利鋪路。",
+      "leaders": "英第八集團軍蒙哥馬利以物資優勢擊潰隆美爾的非洲軍。邱吉爾1942年11月10日說：「這不是結束。甚至不是結束的開始。但這或許是開始的結束。」隆美爾敗退影響軸心國北非與地中海控制，為盟軍登陸意大利鋪路。",
       "nationalPower": "英軍補給與情報改善；德意非洲軍補給線遭馬耳他與海軍打擊。",
       "impact": "北非軸心國崩潰，盟軍 1943 年登陸意大利；東地中海戰略態勢改變。"
   };
@@ -331,11 +331,33 @@ window.BATTLE_DATA = (function () {
           "forces_en": ""
       }
   ];
-  const outro =   {
+    const sourceTask = {
+    "cite": "邱吉爾在倫敦市長午宴的演說，1942年11月10日",
+    "excerpt": "「這不是結束。甚至不是結束的開始。但這或許是開始的結束。」",
+    "ask": "他怎樣給第二次阿拉曼定位？",
+    "options": [
+      {
+        "t": "這或許已是結束的開始。",
+        "ok": false,
+        "why": "他否定的正是「結束的開始」。引反了就會把一場北非轉折說成戰爭即將完結。"
+      },
+      {
+        "t": "這不是結束，甚至不是結束的開始，而或許是開始的結束。",
+        "ok": true,
+        "why": "北非軸心軍此後西撤，但德國仍在東線與歐洲其他戰場作戰。"
+      },
+      {
+        "t": "他宣布德國會在1942年內投降。",
+        "ok": false,
+        "why": "演說把阿拉曼放在一場長期戰爭的前段之後，不是宣布當年結束。"
+      }
+    ]
+  };
+const outro =   {
       "title_zh": "阿拉曼戰役",
       "title_en": "EL ALAMEIN",
-      "narration_zh": "本戰役為 DSE 西史重要考點。",
-      "narration_en": "A key DSE Western History topic.",
+      "narration_zh": "邱吉爾說這或許是開始的結束，不是結束的開始。",
+      "narration_en": "Churchill called it, perhaps, the end of the beginning — not the beginning of the end.",
       "cam": {
           "lng": 28.95,
           "lat": 30.83,
@@ -345,5 +367,5 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       }
   };
-  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };
+  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, sourceTask, END_DAY };
 })();

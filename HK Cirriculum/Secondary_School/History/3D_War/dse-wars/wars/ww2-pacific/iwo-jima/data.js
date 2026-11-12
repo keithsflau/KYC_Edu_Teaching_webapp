@@ -180,7 +180,7 @@ window.BATTLE_DATA = (function () {
       }
   ];
   const notes =   {
-      "summary": "硫磺島戰役 — DSE 西史小戰役地圖。",
+      "summary": "硫磺島戰役 — 課題地圖。兵力與路線為示意。",
       "caveats": [
           "本圖僅覆蓋該戰役核心區域；戰線與兵力為教學示意。",
           "衛星影像為現代地形。"
@@ -331,11 +331,33 @@ window.BATTLE_DATA = (function () {
           "forces_en": ""
       }
   ];
-  const outro =   {
+    const sourceTask = {
+    "cite": "美軍規定硫磺島戰役目標的命令，1945年2月",
+    "excerpt": "命令要求奪取島上的機場，供轟炸日本的飛機緊急降落。",
+    "ask": "這道命令把奪島的原因說成什麼？",
+    "options": [
+      {
+        "t": "為了在島上駐紮一百萬陸軍進攻東京。",
+        "ok": false,
+        "why": "硫磺島是火山小島，命令要的是機場。"
+      },
+      {
+        "t": "取得靠近日本本土的緊急降落場。",
+        "ok": true,
+        "why": "傷亡很大，是為這條跑道付出的。"
+      },
+      {
+        "t": "用佔領證明日本已經投降。",
+        "ok": false,
+        "why": "日本投降在1945年8月，硫磺島戰役在2月至3月。"
+      }
+    ]
+  };
+const outro =   {
       "title_zh": "硫磺島戰役",
       "title_en": "IWO JIMA",
-      "narration_zh": "本戰役為 DSE 西史重要考點。",
-      "narration_en": "A key DSE Western History topic.",
+      "narration_zh": "1945年2月至3月，美軍為島上機場付出逾二萬傷亡。",
+      "narration_en": "From February to March 1945 the United States took the airfields at a cost of more than 20,000 casualties.",
       "cam": {
           "lng": 141.32,
           "lat": 24.78,
@@ -345,5 +367,5 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       }
   };
-  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };
+  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, sourceTask, END_DAY };
 })();

@@ -11,11 +11,11 @@ window.BATTLE_DATA = (function () {
           "rebel"
       ],
       "geo": {
-          "minLng": 106.94,
-          "maxLng": 110.94,
-          "minLat": 32.66,
-          "maxLat": 35.86,
-          "Z": 9
+          "minLng": 108.05,
+          "maxLng": 117.25,
+          "minLat": 33.5,
+          "maxLat": 40.7,
+          "Z": 7
       },
       "startDate": [
           755,
@@ -23,8 +23,8 @@ window.BATTLE_DATA = (function () {
           16
       ],
       "introCam": {
-          "lng": 108.94,
-          "lat": 34.26,
+          "lng": 112.65,
+          "lat": 37.1,
           "dist": 720,
           "az": 200,
           "el": 46,
@@ -33,12 +33,12 @@ window.BATTLE_DATA = (function () {
       "titleCard": {
           "zh": "安史之亂",
           "en": "AN LUSHAN REBELLION · 755–763年",
-          "narr_zh": "安祿山自范陽起兵，攻陷洛陽、長安，唐室西逃。",
+          "narr_zh": "安祿山以討楊國忠為名，自范陽起兵，其後攻陷洛陽、長安。",
           "narr_en": "An Lushan rebels from Fanyang and captures Luoyang and Chang'an."
       },
       "outroCam": {
-          "lng": 108.94,
-          "lat": 34.26,
+          "lng": 112.65,
+          "lat": 37.1,
           "dist": 864,
           "az": 200,
           "el": 48,
@@ -68,6 +68,13 @@ window.BATTLE_DATA = (function () {
   const geography =   {
       "regions": [],
       "points": [
+          {
+              "name_zh": "范陽",
+              "name_en": "Fanyang",
+              "type": "city",
+              "lng": 116.2,
+              "lat": 39.7
+          },
           {
               "name_zh": "長安",
               "name_en": "Chang'an",
@@ -218,21 +225,21 @@ window.BATTLE_DATA = (function () {
           "衛星影像為現代地形，非歷史時期地貌。",
           "河川、海域水面為教學示意，按史實位置裁切顯示。"
       ],
-      "sources": "DSE 中史課程、中國通史、維基百科（交叉查證）。"
+      "sources": "《舊唐書·安祿山傳》《舊唐書·玄宗本紀》《資治通鑑》唐紀肅宗前後各卷、《新唐書·安祿山傳》。起兵檄文與通鑑所記旗號是討楊國忠。不以網絡百科為唯一依據。"
   };
   const analysis =   {
       "military": "安祿山、史思明以范陽、平盧、河東三鎮兵力起兵，攻陷洛陽、長安；唐軍與回紇聯兵反攻，歷時七年方平叛，但藩鎮勢力坐大。",
-      "leaders": "安祿山以范陽節度使身分起兵，利用玄宗晚年怠政、楊貴妃外戚干政之機，迅速攻占洛陽、長安。唐玄宗倉皇幸蜀，唐軍前期節節敗退。郭子儀、李光弼等將領率朔方軍收復兩京，以持久戰略拖垮叛軍；雖最終平定叛亂，但藩鎮割據、宦官專權加劇，盛唐國力由盛轉衰。",
+      "leaders": "安祿山以討楊國忠為名，從范陽起兵，先後攻入洛陽、長安。楊貴妃死於馬嵬，是起兵之後的事，不能寫成起兵原因。郭子儀、李光弼等其後收復兩京。叛軍首領敗死後，河朔節度使仍掌兵。",
       "nationalPower": "開元盛世後唐朝府兵制瓦解，邊將握重兵；安史之亂耗盡國力，中央對藩鎮控制力大減。",
-      "impact": "唐朝由盛轉衰的絕對轉捩點，直接引發後期的藩鎮割據。"
+      "impact": "叛亂平定後，河朔等鎮仍由節度使掌兵，朝廷沒有收回這些兵權。"
   };
   const storyboard =   [
       {
           "day": 1,
           "hold": 8,
           "cam": {
-              "lng": 108.94,
-              "lat": 34.26,
+              "lng": 116.2,
+              "lat": 39.7,
               "dist": 700,
               "az": 200,
               "el": 46,
@@ -241,7 +248,7 @@ window.BATTLE_DATA = (function () {
           "dateLabel": "755年",
           "title_zh": "安祿山起兵",
           "title_en": "An Lushan Rebellion Begins",
-          "narration_zh": "安祿山以討楊貴妃之兄楊國忠為名，率三鎮十五萬兵反唐。",
+          "narration_zh": "安祿山以討楊國忠為名，自范陽起兵南下。楊貴妃後來在馬嵬被殺，是起兵之後的事，不能寫成起兵原因。",
           "narration_en": "An Lushan rebels with 150,000 troops from three frontier commands.",
           "focus": [
               "rebel_anshi"
@@ -271,7 +278,7 @@ window.BATTLE_DATA = (function () {
           "dateLabel": "756年",
           "title_zh": "攻陷洛陽",
           "title_en": "Luoyang Falls",
-          "narration_zh": "叛軍攻占東都洛陽，安祿山稱大燕皇帝。",
+          "narration_zh": "叛軍攻佔東都洛陽，安祿山稱大燕皇帝。",
           "narration_en": "Rebels capture Luoyang — An Lushan declares himself emperor of Yan.",
           "focus": [
               "rebel_anshi"
@@ -326,7 +333,7 @@ window.BATTLE_DATA = (function () {
           "dateLabel": "756年",
           "title_zh": "長安陷落",
           "title_en": "Chang'an Lost",
-          "narration_zh": "叛軍占領長安，太子李亨即位于靈武，號肅宗，組織平叛。",
+          "narration_zh": "叛軍佔領長安，太子李亨即位于靈武，號肅宗，組織平叛。",
           "narration_en": "Rebels take Chang'an — Crown Prince Li Heng becomes Emperor Suzong at Lingwu.",
           "focus": [
               "rebel_anshi",
@@ -391,7 +398,7 @@ window.BATTLE_DATA = (function () {
           "dateLabel": "763年",
           "title_zh": "藩鎮坐大",
           "title_en": "Warlord Era Begins",
-          "narration_zh": "叛亂雖平，但河朔三鎮及各地節度使擁兵自重，唐朝由盛轉衰。",
+          "narration_zh": "763年史朝義敗死，兩京在此之前已經收復。河朔等地節度使仍掌兵。",
           "narration_en": "Rebellion ends but regional warlords hold real power — Tang decline accelerates.",
           "focus": [],
           "side": "both",
@@ -404,8 +411,8 @@ window.BATTLE_DATA = (function () {
   const outro =   {
       "title_zh": "安史之亂",
       "title_en": "AN LUSHAN REBELLION",
-      "narration_zh": "本戰役為 DSE 中史重要考點：唐朝由盛轉衰的絕對轉捩點，直接引發後期的藩鎮割據",
-      "narration_en": "A key HKDSE Chinese History topic.",
+      "narration_zh": "叛軍自范陽南下，先後進入洛陽、長安。763年叛軍首領敗死，兩京已先收復。",
+      "narration_en": "The rebels moved from Fanyang through Luoyang to Chang'an. Their leaders were dead by 763; the capitals had already been recovered.",
       "cam": {
           "lng": 108.94,
           "lat": 34.26,
@@ -415,5 +422,19 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       }
   };
-  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };
+  const lesson =   {
+      "junior": "初中：沿范陽、洛陽、長安看起兵和兩京失守。",
+      "senior": "高中：起兵旗號是討楊國忠；把馬嵬事變和起兵原因分開。",
+      "fact": "755年，安祿山以討楊國忠為名，從范陽起兵，率范陽、平盧、河東兵力南下，攻入洛陽，再入長安。唐玄宗西逃，馬嵬兵變殺死楊國忠，楊貴妃也被殺，這是起兵之後的事，不能寫成起兵原因。太子李亨在靈武即皇帝位。郭子儀、李光弼等與回紇兵力其後收復兩京。763年史朝義敗死。地圖要同時看見范陽、洛陽、長安，不能只鎖在關中卻講全國路線。",
+      "sources": "《舊唐書·安祿山傳》《舊唐書·玄宗本紀》《資治通鑑》唐紀肅宗前後各卷、《新唐書·安祿山傳》。起兵檄文與通鑑所記旗號是討楊國忠。不以網絡百科為唯一依據。",
+      "evaluation": "叛軍能迅速進入兩京，是因為邊鎮兵強、潼關失守和長安倉促。玄宗晚年怠政、節度使掌兵是背景。把楊貴妃外戚干政寫成起兵原因，和旗號不符，也解釋不了范陽到兩京的軍事進程。平叛之後河朔節度使仍掌兵，那是後來的政治局面。",
+      "judgment": {
+          "ask": "哪一則說法更能解釋安史之亂初期唐軍為什麼連失兩京？",
+          "a": "因為楊貴妃外戚干政，所以安祿山起兵，戰事只發生在關中。",
+          "b": "安祿山以討楊國忠為名自范陽起兵，沿洛陽打到長安，潼關失守後兩京相繼失陷。",
+          "better": "b",
+          "why": "起兵旗號是討楊國忠。楊貴妃死於其後的馬嵬，不是起兵原因。路線是范陽、洛陽、長安，不能只看關中。"
+      }
+  };
+  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, lesson, END_DAY };
 })();

@@ -2,79 +2,195 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>10_Nomenclature</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="../../../../common/babel-react-classic.js"></script>
-  <script src="../../../../common/learn-from-zero.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
-  <style>
-    body { font-family: "IBM Plex Sans", system-ui, sans-serif; background-color: #f8fafc; color: #0f172a; min-height: 100vh; }
-  </style>
-  <!-- NCS i18n fleet kit (auto-injected) -->
-  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
-  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
-  <style data-ncs-kit="fleet-bridge">
-    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
-    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
-      display: none !important;
-    }
-  </style>
-  <script data-ncs-kit="fleet-init">
-  (function () {
-    function hideLegacyToggles() {
-      document.body.classList.add("ncs-fleet-mounted");
-      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
-        var label = (btn.textContent || "").trim();
-        if (label === "EN" || label === "\u4E2D") {
-          btn.classList.add("ncs-hide-when-ncs-fleet");
-        }
-      });
-      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
-        el.classList.add("ncs-hide-when-ncs-fleet");
-      });
-    }
-    function boot() {
-      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
-      window.NcsI18n.init({
-        chromePath: "../../../../_shared/ncs-chrome.json",
-        target: document.body
-      }).then(hideLegacyToggles);
-    }
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", boot);
-    } else {
-      boot();
-    }
-  })();
-  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>有機命名 | Nomenclature</title>
+  <link rel="stylesheet" href="../../lesson.css" />
 </head>
-<body>
-  <div id="root"></div>
-  <script type="text/babel" data-presets="react-classic">
-    const { useState } = React;
-    
-    function App() {
-      return (
-        <div className="max-w-4xl mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-4">10 Nomenclature</h1>
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 mb-8 text-center">
-            <div className="w-full h-64 bg-slate-100 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 mb-4">
-              <span className="text-slate-400 font-medium">[ Interactive Canvas Placeholder ]</span>
-            </div>
-            <p className="text-slate-500">This interactive lab is currently under development.</p>
-          </div>
-          <LearnFromZero />
-        </div>
-      );
-    }
-    
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+<body data-chem-silent="1">
+  <section class="chem-learn" data-chem-entry="1">
+    <h2>學習目標</h2>
+    <ul>
+      <li>按碳原子數目選用甲、乙、丙、丁。</li>
+      <li>按主官能基選用後綴，並使官能基的位次最小。</li>
+      <li>分開醇、醛、酮、羧酸和烯的名稱。</li>
+    </ul>
+    <h2>常見錯因</h2>
+    <ul>
+      <li>把端位羥基寫成位次 2。</li>
+      <li>把醛和酮的後綴對調。</li>
+      <li>數錯主鏈的碳數。</li>
+    </ul>
+    <p id="chem-feedback" role="status">看結構式，選出名稱。</p>
+  </section>
+  <main>
+    <div class="panel">
+      <h1>有機命名</h1>
+      <p class="muted">只練習名稱。本頁沒有製備做法。</p>
+      <h2>操作</h2>
+      <canvas id="plot" width="640" height="150" aria-label="等待命名的結構式"></canvas>
+      <p id="stem" class="muted"></p>
+      <p id="progress" class="muted"></p>
+      <div class="row" id="choices"></div>
+      <div class="row">
+        <button type="button" id="check">核對</button>
+      </div>
+      <p><a href="../index.html">返回中五</a></p>
+    </div>
+  </main>
+  <script src="../../lesson-kit.js"></script>
+  <script>
+    (function () {
+      var index = 0;
+      var picked = "";
+      var done = [false, false, false, false, false, false];
+      var items = [
+        {
+          formula: "CH₃CH₂CH₂OH",
+          stem: "主鏈三個碳，羥基在端碳。",
+          answer: "丙-1-醇",
+          options: ["丙-1-醇", "丙-2-醇", "丙醛", "丙酸"],
+          wrong: {
+            "丙-2-醇": "錯因：丙-2-醇的羥基在中間碳。這條鏈的羥基在端碳，位次要寫 1，所以是丙-1-醇。",
+            "丙醛": "錯因：醛的後綴用在末端羰基 CHO。這裡是 OH，後綴是醇。",
+            "丙酸": "錯因：酸要有羧基 COOH。這裡只有羥基，沒有羰基，所以不是丙酸。"
+          }
+        },
+        {
+          formula: "CH₃CH(OH)CH₃",
+          stem: "主鏈三個碳，羥基在中間碳。",
+          answer: "丙-2-醇",
+          options: ["丙-1-醇", "丙-2-醇", "丙酮", "丙酸"],
+          wrong: {
+            "丙-1-醇": "錯因：丙-1-醇的羥基在端碳。這裡羥基在中間碳，位次是 2。",
+            "丙酮": "錯因：丙酮有羰基。這裡是羥基，後綴是醇，不是酮。",
+            "丙酸": "錯因：丙酸要有 COOH。這裡沒有羧基，所以是丙-2-醇。"
+          }
+        },
+        {
+          formula: "CH₃CH₂CHO",
+          stem: "三個碳，末端是 CHO。",
+          answer: "丙醛",
+          options: ["丙醛", "丙酮", "丙-1-醇", "丙酸"],
+          wrong: {
+            "丙酮": "錯因：丙酮的羰基在鏈中。這個羰基在鏈端，名稱是丙醛。",
+            "丙-1-醇": "錯因：醇的官能基是 OH。這裡是末端羰基，後綴是醛。",
+            "丙酸": "錯因：丙酸是 COOH。CHO 沒有那個羥基，所以是丙醛，不是丙酸。"
+          }
+        },
+        {
+          formula: "CH₃COCH₃",
+          stem: "三個碳，羰基在中間。",
+          answer: "丙酮",
+          options: ["丙酮", "丙醛", "丙-2-醇", "丁酮"],
+          wrong: {
+            "丙醛": "錯因：丙醛的羰基在鏈端。這裡兩邊都是甲基，所以是丙酮。",
+            "丙-2-醇": "錯因：丙-2-醇有羥基。這裡是羰基，後綴是酮。",
+            "丁酮": "錯因：丁代表四個碳。這個主鏈只有三個碳，所以是丙酮。"
+          }
+        },
+        {
+          formula: "CH₃CH₂Cl",
+          stem: "兩個碳，碳上連着氯。",
+          answer: "氯乙烷",
+          options: ["氯乙烷", "氯丙烷", "乙醛", "乙醇"],
+          wrong: {
+            "氯丙烷": "錯因：丙代表三個碳。這裡主鏈只有兩個碳，所以是氯乙烷。",
+            "乙醛": "錯因：乙醛要有 CHO。這裡沒有氧，名稱要指出氯。",
+            "乙醇": "錯因：乙醇的官能基是 OH。這裡連的是氯，所以是氯乙烷。"
+          }
+        },
+        {
+          formula: "CH₂=CHCH₂CH₃",
+          stem: "四個碳，雙鍵在鏈端。",
+          answer: "丁-1-烯",
+          options: ["丁-1-烯", "丁-3-烯", "丁烷", "丁-2-烯"],
+          wrong: {
+            "丁-3-烯": "錯因：要從離雙鍵較近的一端編號。鏈端雙鍵的位次是 1，不是 3。",
+            "丁烷": "錯因：結構式有雙鍵，不能叫烷。",
+            "丁-2-烯": "錯因：丁-2-烯的雙鍵在中間。這條鏈的雙鍵在端碳之間，所以是丁-1-烯。"
+          }
+        }
+      ];
+
+      function say(msg, kind) {
+        if (window.ChemLesson) ChemLesson.say(msg, kind);
+      }
+
+      function countDone() {
+        var n = 0;
+        var i;
+        for (i = 0; i < done.length; i++) if (done[i]) n += 1;
+        return n;
+      }
+
+      function paint() {
+        var canvas = document.getElementById("plot");
+        var g = canvas.getContext("2d");
+        var item = items[index];
+        var box = document.getElementById("choices");
+        var i;
+        var button;
+        g.fillStyle = "#0f172a";
+        g.fillRect(0, 0, canvas.width, canvas.height);
+        g.fillStyle = "#94a3b8";
+        g.font = "16px sans-serif";
+        g.fillText("選出名稱", 28, 40);
+        g.fillStyle = "#f8fafc";
+        g.font = "32px sans-serif";
+        g.fillText(item.formula, 28, 96);
+        document.getElementById("stem").textContent = item.stem;
+        document.getElementById("progress").textContent = "第 " + (index + 1) + " / " + items.length + " 題 · 已答對 " + countDone() + " / " + items.length;
+        box.innerHTML = "";
+        for (i = 0; i < item.options.length; i++) {
+          button = document.createElement("button");
+          button.type = "button";
+          button.className = "alt";
+          button.textContent = item.options[i];
+          button.setAttribute("data-choice", item.options[i]);
+          box.appendChild(button);
+        }
+        picked = "";
+      }
+
+      document.getElementById("choices").onclick = function (e) {
+        var btn = e.target.closest ? e.target.closest("button") : null;
+        var buttons;
+        var i;
+        if (!btn) return;
+        picked = btn.getAttribute("data-choice");
+        buttons = document.getElementById("choices").querySelectorAll("button");
+        for (i = 0; i < buttons.length; i++) buttons[i].className = "alt";
+        btn.className = "on";
+      };
+      document.getElementById("check").onclick = function () {
+        var item = items[index];
+        var i;
+        if (!picked) {
+          say("錯因：先選一個名稱。", "no");
+          return;
+        }
+        if (picked !== item.answer) {
+          say(item.wrong[picked], "no");
+          return;
+        }
+        done[index] = true;
+        if (countDone() === items.length) {
+          say("正確。" + item.formula + " 是" + item.answer + "。" + item.stem + " 全部 " + items.length + " 題都答對過。", "ok");
+          paint();
+          return;
+        }
+        say("正確。" + item.formula + " 是" + item.answer + "。" + item.stem, "ok");
+        for (i = 1; i <= items.length; i++) {
+          if (!done[(index + i) % items.length]) {
+            index = (index + i) % items.length;
+            paint();
+            return;
+          }
+        }
+      };
+      paint();
+    })();
   </script>
-<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+  <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 </body>
 </html>

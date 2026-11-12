@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>小一英語：satpin 拼讀 | KS1 Phonics</title>
+  <link rel="stylesheet" href="../../common/lesson.css">
+  <link rel="stylesheet" href="../../../../common/ncs-i18n.css">
+  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) { display: none !important; }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() {
+      document.body.classList.add("ncs-fleet-mounted");
+    }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({
+        chromePath: "../../../../_shared/ncs-chrome.json",
+        target: document.body
+      }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
+    else boot();
+  })();
+  </script>
+</head>
+<body class="lesson" data-stage="ks1">
+  <div class="wrap">
+    <div class="topbar">
+      <a href="../../index.html">← 英語課 English</a>
+      <div class="progress" id="progress">1 / 12</div>
+    </div>
+    <h1>satpin 拼讀<span class="zh-title">KS1 · 小一 P1 · British phonics</span></h1>
+    <section class="objective">
+      <strong>學習目標 Learning objective</strong>
+      <p>聽 /s/ /æ/ /t/ /p/ /ɪ/ /n/，再按次序把三個音拼成 sat、pin、tap、nap、pan、tin。</p>
+      <p class="muted">Hear each sound, then blend three sounds into a real word.</p>
+    </section>
+    <section class="panel">
+      <div class="row">
+        <button class="primary" id="hear" type="button">聽音 Hear</button>
+        <button class="ghost" id="again" type="button">再聽 Replay</button>
+        <div class="meter" aria-hidden="true"><span id="meter-bar"></span></div>
+      </div>
+      <p class="engine" id="engine-label"></p>
+      <p id="prompt"></p>
+      <div class="slots" id="slots"></div>
+      <div class="letters" id="letters"></div>
+      <div class="row" id="blend-tools">
+        <button class="ghost" id="undo" type="button">退一格 Undo</button>
+        <button class="primary" id="check" type="button">檢查 Check</button>
+      </div>
+    </section>
+    <div class="feedback" id="feedback" aria-live="polite"></div>
+    <p id="autotest-result" class="sr"></p>
+  </div>
+  <script src="../../common/gb-audio.js"></script>
+  <script src="../../common/checks.js"></script>
+  <script src="../../common/page.js"></script>
+  <script>
+  (function () {
+    var sounds = ["s", "a", "t", "p", "i", "n"];
+    var phoneOf = { s: "s", a: "ae", t: "t", p: "p", i: "ih", n: "n" };
+    var words = ["sat", "pin", "tap", "nap", "pan", "tin"];
+    var phase = "sound";
+    var index = 0;
+    var built = "";
+    var heard = false;
+
+    function stepNumber() {
+      return (phase === "sound" ? index : sounds.length + index) + 1;
+    }
+
+    function playCurrent() {
+      heard = true;
+      if (phase === "sound") {
+        return GBAudio.speakPhones([phoneOf[sounds[index]]], { isolated: true });
+      }
+      if (phase === "blend") {
+        var phones = GBAudio.phonesFor(words[index]);
+        return GBAudio.speakPhones(phones, { segmented: true }).then(function () {
+          return GBAudio.speakPhones(phones, {});
+        });
+      }
+      return Promise.resolve();
+    }
+
+    function draw() {
+      document.getElementById("progress").textContent = Math.min(stepNumber(), 12) + " / 12";
+      document.getElementById("blend-tools").classList.toggle("hidden", phase !== "blend");
+      var prompt = document.getElementById("prompt");
+      var letters = document.getElementById("letters");
+      var slots = document.getElementById("slots");
+      letters.replaceChildren();
+      slots.replaceChildren();
+      if (phase === "sound") {
+        prompt.textContent = "聽這個音，再點字母。 Hear the sound, then tap the letter.";
+        sounds.forEach(function (letter) {
+          var btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "letter";
+          btn.textContent = letter;
+          btn.addEventListener("click", function () { chooseSound(letter); });
+          letters.appendChild(btn);
+        });
+        return;
+      }
+      if (phase === "blend") {
+        prompt.textContent = "先聽分開的音，再聽拼起來的字，然後按次序拼。 Listen to the sounds, then build the word.";
+        var target = words[index];
+        for (var i = 0; i < target.length; i++) {
+          var slot = document.createElement("div");
+          slot.className = "slot";
+          slot.textContent = built.charAt(i) || "";
+          slots.appendChild(slot);
+        }
+        sounds.forEach(function (letter) {
+          var btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "letter";
+          btn.textContent = letter;
+          btn.addEventListener("click", function () {
+            if (built.length >= target.length) return;
+            built += letter;
+            draw();
+          });
+          letters.appendChild(btn);
+        });
+        return;
+      }
+      prompt.textContent = "六個音和六個字都完成了。 You can hear s, a, t, p, i, n and blend them.";
+    }
+
+    function needHear() {
+      LessonPage.showFeedback(document.getElementById("feedback"), {
+        ok: false,
+        messages: [{ zh: "先按「聽音」。這一題要用耳朵，不是猜。", en: "Press Hear first. This task uses your ears, not a guess." }]
+      });
+    }
+
+    function chooseSound(letter) {
+      if (!heard) return needHear();
+      var result = HKChecks.diagnoseSound(sounds[index], letter);
+      LessonPage.showFeedback(document.getElementById("feedback"), result);
+      if (!result.ok) return;
+      index += 1;
+      heard = false;
+      if (index >= sounds.length) {
+        phase = "blend";
+        index = 0;
+        built = "";
+      }
+      draw();
+    }
+
+    function checkBlend() {
+      if (phase !== "blend") return;
+      if (!heard) return needHear();
+      var target = words[index];
+      var result = HKChecks.diagnoseSpelling(target, built);
+      LessonPage.showFeedback(document.getElementById("feedback"), result);
+      var slots = document.querySelectorAll(".slot");
+      for (var i = 0; i < slots.length; i++) {
+        slots[i].classList.toggle("good", built.charAt(i) && built.charAt(i) === target.charAt(i));
+        slots[i].classList.toggle("bad", built.charAt(i) !== target.charAt(i));
+      }
+      if (!result.ok) return;
+      index += 1;
+      built = "";
+      heard = false;
+      if (index >= words.length) phase = "done";
+      draw();
+    }
+
+    window.__checkLesson = function () {
+      if (!document.getElementById("hear")) throw new Error("missing hear button");
+      var wrong = HKChecks.diagnoseSound("s", "t");
+      if (wrong.ok || wrong.messages[0].zh.indexOf("t") === -1 || wrong.messages[0].en.indexOf("/s/") === -1) {
+        throw new Error("sound feedback is not specific");
+      }
+      var moved = HKChecks.diagnoseSpelling("pin", "pan");
+      if (moved.ok || moved.messages[0].en.indexOf("Position 2") === -1) throw new Error("blend feedback missed position 2");
+      var audio = GBAudio.render("sat");
+      if (!(audio.duration > 0.25) || GBAudio.phonesFor("sat").join(" ") !== "s ae t") throw new Error("sat audio");
+      return null;
+    };
+
+    LessonPage.boot(function () {
+      document.getElementById("hear").addEventListener("click", playCurrent);
+      document.getElementById("again").addEventListener("click", playCurrent);
+      document.getElementById("undo").addEventListener("click", function () {
+        built = built.slice(0, -1);
+        draw();
+      });
+      document.getElementById("check").addEventListener("click", checkBlend);
+      draw();
+    });
+  })();
+  </script>
+  <script src="../../../../common/learn-from-zero.js"></script>
+  <script src="../../../../common/interactive-lab-kit.js"></script>
+</body>
+</html>

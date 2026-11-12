@@ -31,7 +31,7 @@ function App() {
              {[
                "Restriction Digest",
                "Ligation",
-               "Transformation",
+               "Recognition",
                "Result"
              ].map((label, idx) => (
                 <div key={idx} className="flex items-center">
@@ -76,9 +76,9 @@ function App() {
                   <div className="w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-4">
                      <Dna size={48} />
                   </div>
-                  <h2 className="text-3xl font-bold text-slate-800">Cloning Successful!</h2>
+                  <h2 className="text-3xl font-bold text-slate-800">概念完成</h2>
                   <p className="text-lg text-slate-600 max-w-2xl">
-                    You have successfully created a recombinant plasmid containing the human insulin gene and introduced it into bacteria.
+                    重組 DNA 是目標基因與載體接在一起。標誌基因只用來辨認哪些細胞取得載體。這裡沒有轉化或培養步驟。
                   </p>
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl mt-8 text-left">
@@ -91,8 +91,8 @@ function App() {
                         <p className="text-sm text-slate-600">DNA Ligase joins the fragments.</p>
                      </div>
                      <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
-                        <h3 className="font-bold text-slate-800 mb-2">3. Copy</h3>
-                        <p className="text-sm text-slate-600">Bacteria multiply the plasmid.</p>
+                        <h3 className="font-bold text-slate-800 mb-2">3. 辨認</h3>
+                        <p className="text-sm text-slate-600">標誌基因用來辨認取得載體的細胞。本程式不提供培養步驟。</p>
                      </div>
                   </div>
 

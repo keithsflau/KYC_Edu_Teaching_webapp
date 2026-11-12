@@ -45,9 +45,9 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       },
       "nextBattle": {
-          "href": "../../ww2-pacific/philippines/",
-          "title_zh": "菲律賓戰役",
-          "title_en": "PHILIPPINES 1941–42"
+          "href": "../../ww2-pacific/hong-kong/",
+          "title_zh": "香港保衛戰",
+          "title_en": "HONG KONG 1941"
       }
   };
   const factions = {
@@ -187,7 +187,7 @@ window.BATTLE_DATA = (function () {
       }
   ];
   const notes =   {
-      "summary": "柏林戰役 — DSE 西史小戰役地圖。",
+      "summary": "柏林戰役 — 課題地圖。兵力與路線為示意。",
       "caveats": [
           "本圖僅覆蓋該戰役核心區域；戰線與兵力為教學示意。",
           "衛星影像為現代地形。"
@@ -336,11 +336,33 @@ window.BATTLE_DATA = (function () {
           "forces_en": ""
       }
   ];
-  const outro =   {
+    const sourceTask = {
+    "cite": "德國於1945年5月8日簽署的投降書",
+    "excerpt": "文本要求德軍向盟軍無條件投降。",
+    "ask": "這份文件說明的是什麼？",
+    "options": [
+      {
+        "t": "柏林巷戰仍可按德軍的條件停火。",
+        "ok": false,
+        "why": "文本寫的是無條件投降，不是討價還價。"
+      },
+      {
+        "t": "德國武裝力量結束有組織的抵抗。",
+        "ok": true,
+        "why": "5月8日是歐洲戰場德國投降的日期。希特勒已在4月30日死去。"
+      },
+      {
+        "t": "同盟國同意讓納粹黨繼續執政。",
+        "ok": false,
+        "why": "無條件投降之後，納粹政府沒有保留。"
+      }
+    ]
+  };
+const outro =   {
       "title_zh": "柏林戰役",
       "title_en": "BATTLE OF BERLIN",
-      "narration_zh": "本戰役為 DSE 西史重要考點。",
-      "narration_en": "A key DSE Western History topic.",
+      "narration_zh": "蘇軍1945年4月攻入柏林。德國於5月8日投降。",
+      "narration_en": "The Red Army took Berlin in April 1945. Germany surrendered on 8 May.",
       "cam": {
           "lng": 13.4,
           "lat": 52.52,
@@ -350,5 +372,5 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       }
   };
-  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };
+  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, sourceTask, END_DAY };
 })();

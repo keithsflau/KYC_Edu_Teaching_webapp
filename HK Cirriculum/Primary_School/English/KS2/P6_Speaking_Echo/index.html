@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>小六英語：跟讀 | KS2 Speaking</title>
+  <link rel="stylesheet" href="../../common/lesson.css">
+  <link rel="stylesheet" href="../../../../common/ncs-i18n.css">
+  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) { display: none !important; }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() { document.body.classList.add("ncs-fleet-mounted"); }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({ chromePath: "../../../../_shared/ncs-chrome.json", target: document.body }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
+    else boot();
+  })();
+  </script>
+</head>
+<body class="lesson" data-stage="ks2">
+  <div class="wrap">
+    <div class="topbar">
+      <a href="../../index.html">← 英語課 English</a>
+      <div class="progress" id="progress">1 / 4</div>
+    </div>
+    <h1>跟讀句子<span class="zh-title">KS2 · 小六 P6 · Speaking echo</span></h1>
+    <section class="objective">
+      <strong>學習目標 Learning objective</strong>
+      <p>聽英式目標句，跟讀，並重聽自己的錄音。不需要貼上任何金鑰。這節課比較的是你聽到的聲音，不是自動發音評分。</p>
+      <p class="muted">Hear a British model, repeat it, and play your recording back. Nothing is pasted in. This lesson does not score pronunciation.</p>
+    </section>
+    <section class="panel">
+      <p class="muted" id="meaning"></p>
+      <p class="target-line" id="target"></p>
+      <div class="row">
+        <button class="primary" id="hear" type="button">聽英式讀音 Hear</button>
+        <button class="ghost" id="again" type="button">再聽一次 Replay</button>
+        <div class="meter" aria-hidden="true"><span id="meter-bar"></span></div>
+      </div>
+      <p class="engine" id="engine-label"></p>
+      <div class="row">
+        <button class="record" id="record" type="button">跟讀並錄音 Record</button>
+        <button class="ghost hidden" id="stop" type="button">停止 Stop</button>
+      </div>
+      <audio id="mine" controls></audio>
+      <p id="mine-note" class="muted">錄音後可在這裡重聽。 After you record, play it here.</p>
+      <div class="row">
+        <button class="ghost" id="spot" type="button">再說一次，看看聽到哪些字 Hear my words</button>
+        <button class="primary" id="next" type="button">我已跟讀，下一句 Next</button>
+      </div>
+      <p class="muted">「聽到哪些字」只列出瀏覽器辨認到的字，不是發音分數。 If the browser lists words, that is a transcript, not a pronunciation score.</p>
+    </section>
+    <div class="feedback" id="feedback" aria-live="polite"></div>
+    <p id="autotest-result" class="sr"></p>
+  </div>
+  <script src="../../common/gb-audio.js"></script>
+  <script src="../../common/checks.js"></script>
+  <script src="../../common/page.js"></script>
+  <script>
+  (function () {
+    var lines = [
+      { en: "My favourite subject is English because I like reading.", zh: "我最喜歡的科目是英文，因為我喜歡閱讀。" },
+      { en: "I go to the supermarket with my mum on Saturday.", zh: "星期六我和媽媽去超市。" },
+      { en: "The cashier gave me a receipt for the biscuits.", zh: "收銀員給了我一張餅乾的收據。" },
+      { en: "We should eat vegetables for good nutrition.", zh: "為了良好的營養，我們應該吃蔬菜。" }
+    ];
+    var alias = { favorite: "favourite", favorites: "favourites", yogurt: "yoghurt", cookie: "biscuit", cookies: "biscuits", color: "colour" };
+    var index = 0;
+    var heard = false;
+    var recorder = null;
+    var stream = null;
+    var chunks = [];
+
+    function canon(word) {
+      var clean = word.toLowerCase().replace(/[^a-z]/g, "");
+      return alias[clean] || clean;
+    }
+
+    function draw() {
+      document.getElementById("progress").textContent = Math.min(index + 1, lines.length) + " / " + lines.length;
+      if (index >= lines.length) {
+        document.getElementById("meaning").textContent = "四句都跟讀過了。";
+        document.getElementById("target").textContent = "You echoed four British sentences.";
+        return;
+      }
+      document.getElementById("meaning").textContent = lines[index].zh;
+      document.getElementById("target").textContent = lines[index].en;
+      heard = false;
+    }
+
+    function playModel() {
+      if (index >= lines.length) return Promise.resolve();
+      heard = true;
+      GBAudio.onWord = function (word) {
+        var target = document.getElementById("target");
+        if (!target || index >= lines.length) return;
+        var html = lines[index].en.split(/(\s+)/).map(function (part) {
+          if (!/^[A-Za-z']+$/.test(part)) return part;
+          return part.toLowerCase() === String(word || "").toLowerCase() ? "<span class=\"word on\">" + part + "</span>" : part;
+        }).join("");
+        target.innerHTML = html;
+      };
+      return GBAudio.speak(lines[index].en);
+    }
+
+    function startRec() {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || typeof MediaRecorder === "undefined") {
+        LessonPage.showFeedback(document.getElementById("feedback"), {
+          ok: false,
+          messages: [{ zh: "這部裝置不能錄音。請仍用「聽」和「再聽」跟讀，然後按下一句。", en: "This device cannot record. Repeat after Hear and Replay, then press Next." }]
+        });
+        return;
+      }
+      navigator.mediaDevices.getUserMedia({ audio: true }).then(function (live) {
+        stream = live;
+        chunks = [];
+        recorder = new MediaRecorder(live);
+        recorder.ondataavailable = function (event) {
+          if (event.data && event.data.size) chunks.push(event.data);
+        };
+        recorder.onstop = function () {
+          var blob = new Blob(chunks, { type: recorder.mimeType || "audio/webm" });
+          var url = URL.createObjectURL(blob);
+          var audio = document.getElementById("mine");
+          audio.src = url;
+          audio.play().catch(function () { /* the controls are still there */ });
+          document.getElementById("mine-note").textContent = "這是你的聲音，可再按播放重聽。 This is your voice. Press play to hear it again.";
+          if (stream) stream.getTracks().forEach(function (track) { track.stop(); });
+        };
+        recorder.start();
+        document.getElementById("record").classList.add("hidden");
+        document.getElementById("stop").classList.remove("hidden");
+      }).catch(function () {
+        LessonPage.showFeedback(document.getElementById("feedback"), {
+          ok: false,
+          messages: [{ zh: "麥克風沒有開啟。課堂仍可跟讀：先聽目標句，自己說一次，再聽一次。", en: "The microphone is off. You can still echo: hear the model, say it, then hear it again." }]
+        });
+      });
+    }
+
+    function stopRec() {
+      if (recorder && recorder.state === "recording") recorder.stop();
+      document.getElementById("stop").classList.add("hidden");
+      document.getElementById("record").classList.remove("hidden");
+    }
+
+    function spot() {
+      var Ctor = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!Ctor) {
+        LessonPage.showFeedback(document.getElementById("feedback"), {
+          ok: false,
+          messages: [{ zh: "這個瀏覽器沒有語音辨認。請重聽目標句和你的錄音來比較，這節課不做發音評分。", en: "This browser has no speech recognition. Compare the model and your recording by ear. This lesson does not score pronunciation." }]
+        });
+        return;
+      }
+      var rec = new Ctor();
+      rec.lang = "en-GB";
+      rec.interimResults = false;
+      rec.onresult = function (event) {
+        var said = event.results[0][0].transcript;
+        var heardWords = {};
+        said.split(/\s+/).forEach(function (word) { heardWords[canon(word)] = word; });
+        var targetWords = lines[index].en.toLowerCase().match(/[a-z']+/g) || [];
+        var missing = [];
+        var notes = [];
+        targetWords.forEach(function (word) {
+          var key = canon(word);
+          if (!heardWords[key]) missing.push(word);
+          else if (heardWords[key].toLowerCase() !== word && alias[heardWords[key].toLowerCase().replace(/[^a-z]/g, "")]) {
+            notes.push(word);
+          }
+        });
+        var zh = "瀏覽器聽到：" + said + "。";
+        var en = "The browser heard: " + said + ". ";
+        if (notes.length) {
+          zh += "其中有美式拼寫，已對應成目標句的英式字（例如 favorite 對 favourite）。這不是發音分數。";
+          en += "An American spelling was matched to the British word in the target, for example favorite to favourite. This is not a pronunciation score. ";
+        }
+        if (missing.length) {
+          zh += "目標句裡還沒聽到：" + missing.join(", ") + "。";
+          en += "These target words were not heard: " + missing.join(", ") + ".";
+        } else {
+          zh += "目標字都有聽到。請再播放錄音，自己聽一聽流暢度。";
+          en += "The target words were heard. Play your recording and listen to the flow yourself.";
+        }
+        LessonPage.showFeedback(document.getElementById("feedback"), { ok: missing.length === 0, messages: [{ zh: zh, en: en }] });
+      };
+      rec.onerror = function () {
+        LessonPage.showFeedback(document.getElementById("feedback"), {
+          ok: false,
+          messages: [{ zh: "這次沒有辨認到說話。請重聽目標句，再跟讀一次。", en: "No speech was recognised. Hear the model again and repeat." }]
+        });
+      };
+      rec.start();
+    }
+
+    function next() {
+      if (index >= lines.length) return;
+      if (!heard) {
+        LessonPage.showFeedback(document.getElementById("feedback"), {
+          ok: false,
+          messages: [{ zh: "請先聽目標句至少一次。", en: "Hear the model at least once before you move on." }]
+        });
+        return;
+      }
+      index += 1;
+      document.getElementById("feedback").className = "feedback";
+      document.getElementById("feedback").replaceChildren();
+      draw();
+    }
+
+    window.__checkLesson = function () {
+      var page = document.querySelector(".wrap").textContent;
+      if (document.querySelector("input[type='password']")) throw new Error("A password field is still on the speaking page");
+      if (/AI pronunciation|AI feedback/.test(page)) throw new Error("unexpected score claim");
+      if (page.indexOf("favourite") === -1) throw new Error("missing British favourite");
+      if (page.indexOf("Favorite") !== -1) throw new Error("American Favorite is on the page");
+      lines.forEach(function (line) {
+        var audio = GBAudio.render(line.en);
+        if (!(audio.duration > 0.8)) throw new Error("model not audible: " + line.en);
+        if (GBAudio.phonesFor("favourite").indexOf("r") === -1) throw new Error("favourite lost its r");
+      });
+      if (!document.getElementById("again") || !document.getElementById("mine")) throw new Error("replay controls missing");
+    };
+
+    LessonPage.boot(function () {
+      document.getElementById("hear").addEventListener("click", playModel);
+      document.getElementById("again").addEventListener("click", playModel);
+      document.getElementById("record").addEventListener("click", startRec);
+      document.getElementById("stop").addEventListener("click", stopRec);
+      document.getElementById("spot").addEventListener("click", spot);
+      document.getElementById("next").addEventListener("click", next);
+      draw();
+    });
+  })();
+  </script>
+  <script src="../../../../common/learn-from-zero.js"></script>
+  <script src="../../../../common/interactive-lab-kit.js"></script>
+</body>
+</html>

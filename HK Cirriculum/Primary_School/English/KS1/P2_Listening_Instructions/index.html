@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>小二英語：聽指令 | KS1 Listening</title>
+  <link rel="stylesheet" href="../../common/lesson.css">
+  <link rel="stylesheet" href="../../../../common/ncs-i18n.css">
+  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
+  <style data-ncs-kit="fleet-bridge">
+    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
+    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) { display: none !important; }
+  </style>
+  <script data-ncs-kit="fleet-init">
+  (function () {
+    function hideLegacyToggles() { document.body.classList.add("ncs-fleet-mounted"); }
+    function boot() {
+      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
+      window.NcsI18n.init({ chromePath: "../../../../_shared/ncs-chrome.json", target: document.body }).then(hideLegacyToggles);
+    }
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
+    else boot();
+  })();
+  </script>
+</head>
+<body class="lesson" data-stage="ks1">
+  <div class="wrap">
+    <div class="topbar">
+      <a href="../../index.html">← 英語課 English</a>
+      <div class="progress" id="progress">1 / 5</div>
+    </div>
+    <h1>聽指令<span class="zh-title">KS1 · 小二 P2 · Classroom listening</span></h1>
+    <section class="objective">
+      <strong>學習目標 Learning objective</strong>
+      <p>聽一句課室指令，選出相符的圖。可以重聽。答錯時會指出你選了什麼、句子實際說了什麼。</p>
+      <p class="muted">Listen to one classroom instruction and choose the matching picture. Replay as often as you need.</p>
+    </section>
+    <section class="panel">
+      <div class="row">
+        <button class="primary" id="hear" type="button">聽指令 Hear</button>
+        <button class="ghost" id="again" type="button">再聽 Replay</button>
+        <div class="meter" aria-hidden="true"><span id="meter-bar"></span></div>
+      </div>
+      <p class="engine" id="engine-label"></p>
+      <p id="prompt">先聽，再選圖。 Hear first, then choose a picture.</p>
+      <div class="choices" id="choices"></div>
+      <p id="transcript" class="muted"></p>
+    </section>
+    <div class="feedback" id="feedback" aria-live="polite"></div>
+    <p id="autotest-result" class="sr"></p>
+  </div>
+  <script src="../../common/gb-audio.js"></script>
+  <script src="../../common/checks.js"></script>
+  <script src="../../common/page.js"></script>
+  <script>
+  (function () {
+    var items = [
+      {
+        say: "Put the blue pen on the desk.",
+        choices: [
+          { id: "blue", pic: "🖊️🟦", ok: true, okZh: "對。blue pen 要放在 desk 上。", okEn: "Yes. Put the blue pen on the desk." },
+          { id: "red", pic: "🖊️🟥", zh: "你選了紅色筆。句子說的是 blue pen，不是 red pen。", en: "You chose the red pen. The sentence says blue pen, not red pen." },
+          { id: "apple", pic: "🍎", zh: "你選了蘋果。這句沒有 apple，它說 put the pen on the desk。", en: "You chose an apple. The sentence does not say apple. It says put the pen on the desk." }
+        ]
+      },
+      {
+        say: "Open your English book, please.",
+        choices: [
+          { id: "book", pic: "📖", ok: true, okZh: "對。要打開的是 English book。", okEn: "Yes. Open your English book." },
+          { id: "bottle", pic: "🍼", zh: "你選了水瓶。句子說的是 book，不是 bottle。", en: "You chose a bottle. The sentence says book, not bottle." },
+          { id: "bag", pic: "🎒", zh: "你選了書包。句子沒有叫你打開 bag，它說 open your English book。", en: "You chose a bag. The sentence does not say bag. It says open your English book." }
+        ]
+      },
+      {
+        say: "Please line up at the door.",
+        choices: [
+          { id: "line", pic: "🚶🚪", ok: true, okZh: "對。line up at the door 是在門口排隊。", okEn: "Yes. Line up at the door." },
+          { id: "sit", pic: "🪑", zh: "你選了坐下。句子說 line up，是排隊，不是 sit down。", en: "You chose sitting down. The sentence says line up, not sit down." },
+          { id: "eat", pic: "🍱", zh: "你選了吃飯。這句沒有 food，它說 line up at the door。", en: "You chose eating. The sentence does not mention food. It says line up at the door." }
+        ]
+      },
+      {
+        say: "Colour the star yellow.",
+        choices: [
+          { id: "yellow", pic: "⭐", ok: true, okZh: "對。英式用 colour，要把 star 塗成 yellow。", okEn: "Yes. In British English we say colour. Colour the star yellow." },
+          { id: "blue", pic: "🔵", zh: "你選了藍色。句子說 yellow，不是 blue。", en: "You chose blue. The sentence says yellow, not blue." },
+          { id: "circle", pic: "🔴", zh: "你選了紅色圓形。句子說的是 star，而且顏色是 yellow。", en: "You chose a red circle. The sentence says star, and the colour is yellow." }
+        ]
+      },
+      {
+        say: "Pass the green ruler to Ben.",
+        choices: [
+          { id: "ruler", pic: "📏", ok: true, okZh: "對。把 green ruler 遞給 Ben。", okEn: "Yes. Pass the green ruler to Ben." },
+          { id: "ball", pic: "⚽", zh: "你選了球。句子說的是 ruler，不是 ball。", en: "You chose a ball. The sentence says ruler, not ball." },
+          { id: "redpen", pic: "🖊️🟥", zh: "你選了紅色筆。句子說 green ruler，顏色是 green，物品是 ruler。", en: "You chose a red pen. The sentence says green ruler: the colour is green and the object is a ruler." }
+        ]
+      }
+    ];
+    var index = 0;
+    var heard = false;
+
+    function draw() {
+      document.getElementById("progress").textContent = Math.min(index + 1, items.length) + " / " + items.length;
+      var box = document.getElementById("choices");
+      box.replaceChildren();
+      if (index >= items.length) {
+        document.getElementById("prompt").textContent = "五句指令都聽完了。 You followed five classroom instructions.";
+        document.getElementById("transcript").textContent = "";
+        return;
+      }
+      document.getElementById("prompt").textContent = "先聽第 " + (index + 1) + " 句，再選圖。 Hear item " + (index + 1) + ", then choose.";
+      items[index].choices.forEach(function (choice) {
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "choice";
+        var pic = document.createElement("span");
+        pic.className = "pic";
+        pic.textContent = choice.pic;
+        pic.setAttribute("aria-hidden", "true");
+        btn.appendChild(pic);
+        btn.addEventListener("click", function () { answer(choice.id); });
+        box.appendChild(btn);
+      });
+    }
+
+    function play() {
+      if (index >= items.length) return;
+      heard = true;
+      document.getElementById("transcript").textContent = "";
+      GBAudio.speak(items[index].say, { synthOnly: false });
+    }
+
+    function answer(id) {
+      if (index >= items.length) return;
+      if (!heard) {
+        LessonPage.showFeedback(document.getElementById("feedback"), {
+          ok: false,
+          messages: [{ zh: "先按「聽指令」。圖上沒有英文句子，必須聽。", en: "Press Hear first. The pictures do not show the sentence." }]
+        });
+        return;
+      }
+      var result = HKChecks.diagnoseChoice(items[index], id);
+      LessonPage.showFeedback(document.getElementById("feedback"), result);
+      document.getElementById("transcript").textContent = "句子 Sentence: " + items[index].say;
+      if (!result.ok) return;
+      index += 1;
+      heard = false;
+      draw();
+    }
+
+    window.__checkLesson = function () {
+      if (!document.getElementById("hear")) throw new Error("missing hear");
+      items.forEach(function (item) {
+        var audio = GBAudio.render(item.say);
+        if (!(audio.duration > 0.6)) throw new Error("silent line: " + item.say);
+        item.choices.forEach(function (choice) {
+          if (choice.ok) return;
+          var result = HKChecks.diagnoseChoice(item, choice.id);
+          if (result.ok || result.messages[0].en.length < 20) throw new Error("vague listening feedback");
+          if (result.messages[0].en.indexOf("You chose") !== 0) throw new Error("feedback does not name the choice");
+        });
+      });
+      var sample = HKChecks.diagnoseChoice(items[0], "red");
+      if (sample.messages[0].en.indexOf("blue") === -1) throw new Error("did not contrast blue and red");
+    };
+
+    LessonPage.boot(function () {
+      document.getElementById("hear").addEventListener("click", play);
+      document.getElementById("again").addEventListener("click", play);
+      draw();
+    });
+  })();
+  </script>
+  <script src="../../../../common/learn-from-zero.js"></script>
+  <script src="../../../../common/interactive-lab-kit.js"></script>
+</body>
+</html>

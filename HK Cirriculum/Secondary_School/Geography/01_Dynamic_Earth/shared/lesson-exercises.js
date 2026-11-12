@@ -49,7 +49,9 @@
     check.onclick = () => {
       const total = data.statements.length;
       const done = card.querySelectorAll("[data-done]").length;
-      fb.innerHTML = `<p class="${score >= total * 0.7 ? "fb-ok" : "fb-err"}">配對 ${score}/${total}（已完成 ${done}/${total} 題）</p>`;
+      const passed = score >= total * 0.7;
+      fb.innerHTML = `<p class="${passed ? "fb-ok" : "fb-err"}">配對 ${score}/${total}（已完成 ${done}/${total} 題）</p>`;
+      if (global.GeoAudio) global.GeoAudio[passed ? "ok" : "no"]();
     };
     card.appendChild(check);
     card.appendChild(fb);
@@ -113,7 +115,9 @@
           } else chip.style.borderColor = "#f87171";
         });
       });
-      fb.innerHTML = `<p class="${ok === total && total > 0 ? "fb-ok" : "fb-err"}">正確 ${ok}/${total || data.items.length} 項</p>`;
+      const passed = ok === total && total > 0;
+      if (global.GeoAudio) global.GeoAudio[passed ? "ok" : "no"]();
+      fb.innerHTML = `<p class="${passed ? "fb-ok" : "fb-err"}">正確 ${ok}/${total || data.items.length} 項</p>`;
     };
     card.appendChild(check);
     card.appendChild(fb);
@@ -146,6 +150,7 @@
         if (s.value === s.dataset.answer) ok++;
       });
       const total = data.items.length;
+      if (global.GeoAudio) global.GeoAudio[ok === total ? "ok" : "no"]();
       fb.innerHTML = ok === total
         ? `<p class="fb-ok">✓ 全部正確（${ok}/${total}）！可對照左側 3D 剖面複習。</p>`
         : `<p class="fb-err">正確 ${ok}/${total}，錯誤題請重温「內容」分頁的內部結構表。</p>`;

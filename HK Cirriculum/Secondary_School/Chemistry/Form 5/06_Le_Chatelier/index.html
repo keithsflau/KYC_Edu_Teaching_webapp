@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>06_Le_Chatelier</title>
+  <title>勒沙特列原理 | Le Chatelier</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
@@ -53,27 +53,254 @@
   </script>
 </head>
 <body>
-  <div id="root"></div>
-  <script type="text/babel" data-presets="react-classic">
-    const { useState } = React;
-    
-    function App() {
-      return (
-        <div className="max-w-4xl mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-4">06 Le Chatelier</h1>
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 mb-8 text-center">
-            <div className="w-full h-64 bg-slate-100 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 mb-4">
-              <span className="text-slate-400 font-medium">[ Interactive Canvas Placeholder ]</span>
-            </div>
-            <p className="text-slate-500">This interactive lab is currently under development.</p>
-          </div>
-          <LearnFromZero />
-        </div>
-      );
+  <style>
+    main { max-width: 880px; margin: 0 auto; padding: 16px 16px 32px; }
+    h1 { font-size: 1.8rem; margin: 0.2rem 0 0.4rem; }
+    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px; margin-top: 12px; }
+    .muted { color: #475569; }
+    .eq { font-weight: 800; font-size: 1.15rem; }
+    .ops, .pick { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+    button { min-height: 44px; border: 0; border-radius: 10px; padding: 8px 12px; font-weight: 700; cursor: pointer; background: #e2e8f0; color: #0f172a; }
+    button.on, button#check { background: #0f766e; color: #fff; }
+    button:focus { outline: 3px solid #99f6e4; }
+    canvas { width: 100%; height: auto; border-radius: 12px; background: #0f172a; }
+    a.back { color: #0f766e; font-weight: 700; text-decoration: none; }
+  </style>
+  <main>
+    <a class="back" href="../index.html">返回中五化學</a>
+    <p class="muted">中五化學 · 化學平衡</p>
+    <h1>勒沙特列原理</h1>
+    <p class="eq">N₂(g) + 3H₂(g) &#8652; 2NH₃(g)，正反應放熱</p>
+    <p class="muted">畫面用平衡模型預測方向。左邊氣體共 4 mol，右邊共 2 mol。</p>
+    <section class="chem-learn" data-chem-entry="1">
+      <h2>學習目標</h2>
+      <ul>
+        <li>預測濃度、溫度或壓力改變時，平衡向哪一邊移動。</li>
+        <li>指出只有溫度改變會改變 Kc。</li>
+        <li>說明催化劑不改變平衡位置，只縮短達到平衡的時間。</li>
+      </ul>
+      <p id="chem-feedback" role="status">先選一項改變，再選方向和 Kc。</p>
+    </section>
+    <section class="card">
+      <h2>操作</h2>
+      <p>選一項改變，再判斷平衡移動和 Kc。按下核對後，畫面上的點才移到新位置。</p>
+      <div id="changes" class="ops">
+        <button type="button" data-id="moreN2">增加 N₂ 濃度</button>
+        <button type="button" data-id="moreNH3">增加 NH₃ 濃度</button>
+        <button type="button" data-id="hot">升高溫度</button>
+        <button type="button" data-id="cold">降低溫度</button>
+        <button type="button" data-id="press">增加壓力</button>
+        <button type="button" data-id="lowP">減少壓力</button>
+        <button type="button" data-id="cat">使用催化劑</button>
+      </div>
+      <p>平衡移動</p>
+      <div id="shift" class="pick">
+        <button type="button" data-v="左">向左</button>
+        <button type="button" data-v="右">向右</button>
+        <button type="button" data-v="不移動">不移動</button>
+      </div>
+      <p>Kc</p>
+      <div id="kc" class="pick">
+        <button type="button" data-v="變大">變大</button>
+        <button type="button" data-v="變小">變小</button>
+        <button type="button" data-v="不變">不變</button>
+      </div>
+      <button type="button" id="check" data-chem-silent="1">核對</button>
+      <canvas id="plot" width="640" height="180" aria-label="平衡位置"></canvas>
+      <p id="readout">核對後，平衡位置才會移動。</p>
+    </section>
+    <section class="card">
+      <h2>錯因</h2>
+      <ul>
+        <li>錯法：使用催化劑，平衡向生成物移動。錯因：催化劑同時加快正反應和逆反應，平衡位置不變，Kc 也不變。</li>
+        <li>錯法：升高溫度，放熱反應的 Kc 變大。錯因：升溫有利吸熱方向。正反應放熱，升溫時平衡向左，Kc 變小。</li>
+        <li>錯法：增加壓力，所有平衡都向右。錯因：要比較兩邊氣體的摩爾數。這裡左邊 4 mol、右邊 2 mol，加壓才向右。</li>
+        <li>錯法：增加濃度就會改變 Kc。錯因：溫度不變時 Kc 不變。濃度改變的是 Q，平衡移動到 Q 再次等於 Kc。</li>
+        <li>錯法：降溫既令氨變多，又一定更快。錯因：降溫有利放熱方向，平衡時氨較多，但速率會變慢。本課只判斷平衡位置。</li>
+      </ul>
+    </section>
+  </main>
+  <script src="../../lesson-kit.js"></script>
+  <script>
+    var CHANGES = {
+      moreN2: {
+        shift: "右",
+        kc: "不變",
+        ok: "N₂ 增加，Q 暫時小於 Kc，平衡向右。溫度不變，Kc 不變。",
+        badShift: "錯因：反應物增加時，平衡向消耗該反應物的方向，即向右。",
+        badKc: "錯因：只改濃度不會改變 Kc。Kc 只隨溫度改變。"
+      },
+      moreNH3: {
+        shift: "左",
+        kc: "不變",
+        ok: "NH₃ 增加，Q 暫時大於 Kc，平衡向左。Kc 不變。",
+        badShift: "錯因：生成物增加時，平衡向消耗生成物的方向，即向左。",
+        badKc: "錯因：濃度改變不會改寫 Kc 的數值。"
+      },
+      hot: {
+        shift: "左",
+        kc: "變小",
+        ok: "正反應放熱。升溫向吸熱方向，即向左，Kc 變小。",
+        badShift: "錯因：升溫不是永遠向生成物。正反應放熱，升溫向左。",
+        badKc: "錯因：溫度改變時 Kc 會變。升溫不利放熱方向，Kc 變小。"
+      },
+      cold: {
+        shift: "右",
+        kc: "變大",
+        ok: "降溫有利放熱方向，平衡向右，Kc 變大。速率會變慢，本課只看平衡位置。",
+        badShift: "錯因：降溫有利放熱的正反應，平衡向右。",
+        badKc: "錯因：降溫時 Kc 變大，不是維持原值。"
+      },
+      press: {
+        shift: "右",
+        kc: "不變",
+        ok: "壓力上升時，平衡向氣體摩爾數較少的右邊。溫度不變，Kc 不變。",
+        badShift: "錯因：加壓並非向左。左邊 4 mol，右邊 2 mol，平衡向右。",
+        badKc: "錯因：壓力會移動平衡位置，但 Kc 仍只由溫度決定。"
+      },
+      lowP: {
+        shift: "左",
+        kc: "不變",
+        ok: "壓力下降時，平衡向氣體摩爾數較多的左邊。Kc 不變。",
+        badShift: "錯因：減壓向摩爾數多的一邊。左邊是 4 mol，所以向左。",
+        badKc: "錯因：減壓不改變 Kc。"
+      },
+      cat: {
+        shift: "不移動",
+        kc: "不變",
+        ok: "催化劑同等加快正反應和逆反應。平衡位置不變，Kc 不變，只是較快達到平衡。",
+        badShift: "錯因：催化劑不推動平衡向某一邊。",
+        badKc: "錯因：催化劑不改變 Kc。"
+      }
+    };
+    var current = "";
+    var pickShift = "";
+    var pickKc = "";
+    var revealed = false;
+
+    function play(ok) {
+      try {
+        var AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return;
+        if (!play.ctx) play.ctx = new AC();
+        var ctx = play.ctx;
+        var start = function () {
+          var o = ctx.createOscillator();
+          var g = ctx.createGain();
+          var t = ctx.currentTime;
+          o.type = "sine";
+          o.frequency.value = ok ? 880 : 196;
+          g.gain.setValueAtTime(0.0001, t);
+          g.gain.exponentialRampToValueAtTime(0.05, t + 0.02);
+          g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+          o.connect(g);
+          g.connect(ctx.destination);
+          o.start(t);
+          o.stop(t + 0.2);
+        };
+        if (ctx.state === "suspended") {
+          var pending = ctx.resume();
+          if (pending && pending.then) pending.then(start);
+          else start();
+        } else start();
+      } catch (err) {}
     }
-    
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+
+    function say(msg, ok) {
+      var el = document.getElementById("chem-feedback");
+      if (el) el.textContent = msg;
+      if (window.ChemLesson) window.ChemLesson.say(msg);
+      if (ok === true || ok === false) play(ok);
+    }
+
+    function mark(box, btn) {
+      var list = box.querySelectorAll("button");
+      for (var i = 0; i < list.length; i++) list[i].classList.remove("on");
+      if (btn) btn.classList.add("on");
+    }
+
+    function paint() {
+      var c = document.getElementById("plot");
+      var g = c.getContext("2d");
+      var w = c.width;
+      var h = c.height;
+      g.fillStyle = "#0f172a";
+      g.fillRect(0, 0, w, h);
+      g.fillStyle = "#94a3b8";
+      g.font = "16px sans-serif";
+      g.fillText("反應物", 24, 36);
+      g.fillText("生成物", w - 88, 36);
+      g.strokeStyle = "#334155";
+      g.lineWidth = 8;
+      g.lineCap = "round";
+      g.beginPath();
+      g.moveTo(40, 96);
+      g.lineTo(w - 40, 96);
+      g.stroke();
+      var item = CHANGES[current];
+      var ratio = 0.5;
+      if (revealed && item) {
+        if (item.shift === "右") ratio = 0.78;
+        else if (item.shift === "左") ratio = 0.22;
+      }
+      var x = 40 + (w - 80) * ratio;
+      g.fillStyle = "#2dd4bf";
+      g.beginPath();
+      g.arc(x, 96, 12, 0, Math.PI * 2);
+      g.fill();
+      g.fillStyle = "#e2e8f0";
+      g.fillText(revealed && item ? "平衡位置已更新" : "尚未核對", 24, 150);
+    }
+
+    document.getElementById("changes").addEventListener("click", function (e) {
+      var btn = e.target.closest ? e.target.closest("button") : null;
+      if (!btn) return;
+      current = btn.getAttribute("data-id");
+      mark(document.getElementById("changes"), btn);
+      pickShift = "";
+      pickKc = "";
+      revealed = false;
+      mark(document.getElementById("shift"), null);
+      mark(document.getElementById("kc"), null);
+      document.getElementById("readout").textContent = "核對後，平衡位置才會移動。";
+      paint();
+      say("已選改變。再選方向和 Kc，然後核對。");
+    });
+
+    document.getElementById("shift").addEventListener("click", function (e) {
+      var btn = e.target.closest ? e.target.closest("button") : null;
+      if (!btn) return;
+      pickShift = btn.getAttribute("data-v");
+      mark(document.getElementById("shift"), btn);
+    });
+
+    document.getElementById("kc").addEventListener("click", function (e) {
+      var btn = e.target.closest ? e.target.closest("button") : null;
+      if (!btn) return;
+      pickKc = btn.getAttribute("data-v");
+      mark(document.getElementById("kc"), btn);
+    });
+
+    document.getElementById("check").addEventListener("click", function () {
+      var item = CHANGES[current];
+      if (!item) {
+        say("先選一項改變。");
+        return;
+      }
+      if (!pickShift || !pickKc) {
+        say("請選平衡移動方向和 Kc 的變化。");
+        return;
+      }
+      var ok = pickShift === item.shift && pickKc === item.kc;
+      var msg = ok ? item.ok : (pickShift !== item.shift ? item.badShift : item.badKc);
+      revealed = true;
+      paint();
+      var shiftWord = item.shift === "不移動" ? "不移動" : "向" + item.shift;
+      document.getElementById("readout").textContent = "平衡" + shiftWord + "，Kc " + item.kc + "。";
+      say(msg, ok);
+    });
+
+    paint();
   </script>
 <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 </body>

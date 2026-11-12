@@ -45,9 +45,9 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       },
       "nextBattle": {
-          "href": "../gallipoli/",
-          "title_zh": "加里波利戰役",
-          "title_en": "GALLIPOLI 1915"
+          "href": "../marne/",
+          "title_zh": "馬恩河戰役",
+          "title_en": "MARNE 1914"
       }
   };
   const factions = {
@@ -194,7 +194,7 @@ window.BATTLE_DATA = (function () {
       }
   ];
   const notes =   {
-      "summary": "坦能堡戰役 — DSE 西史小戰役地圖。",
+      "summary": "坦能堡戰役 — 課題地圖。兵力與路線為示意。",
       "caveats": [
           "本圖僅覆蓋該戰役核心區域；戰線與兵力為教學示意。",
           "衛星影像為現代地形。"
@@ -349,11 +349,33 @@ window.BATTLE_DATA = (function () {
           "forces_en": ""
       }
   ];
-  const outro =   {
+    const sourceTask = {
+    "cite": "東線德軍在坦能堡之後的戰報，1914年8月",
+    "excerpt": "德軍戰報強調：俄軍兩路沒有協同，而且無線電令被截收。",
+    "ask": "若用這份戰報解釋德軍得勝的原因，哪一項是它實際指出的？",
+    "options": [
+      {
+        "t": "德軍兵力從一開始就遠多於兩路俄軍的總和。",
+        "ok": false,
+        "why": "坦能堡的重點是薩姆索諾夫與連年坎普夫兩路被分割，不是德軍人數占絕對優勢。"
+      },
+      {
+        "t": "俄軍兩路脫節，德軍又掌握了他們的調動。",
+        "ok": true,
+        "why": "戰報把原因放在協同失敗與通訊被截，而不是單一句「德軍較強」。"
+      },
+      {
+        "t": "西線已經在8月結束，所以東線可以隨意用兵。",
+        "ok": false,
+        "why": "馬恩河戰役在9月。8月的德國仍要同時應付西線。"
+      }
+    ]
+  };
+const outro =   {
       "title_zh": "坦能堡戰役",
       "title_en": "TANNENBERG",
-      "narration_zh": "本戰役為 DSE 西史重要考點。",
-      "narration_en": "A key DSE Western History topic.",
+      "narration_zh": "1914年8月，俄軍兩個集團軍在東普魯士被分割。",
+      "narration_en": "In August 1914 two Russian armies were divided in East Prussia.",
       "cam": {
           "lng": 20.08,
           "lat": 53.88,
@@ -363,5 +385,5 @@ window.BATTLE_DATA = (function () {
           "orbit": 0.65
       }
   };
-  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, END_DAY };
+  return { meta, factions, geography, units, arrows, fronts, hotspots, weather, notes, analysis, storyboard, outro, sourceTask, END_DAY };
 })();

@@ -3,18 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>08_Mass_Spec</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="../../../../common/babel-react-classic.js"></script>
-  <script src="../../../../common/learn-from-zero.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
-  <style>
-    body { font-family: "IBM Plex Sans", system-ui, sans-serif; background-color: #f8fafc; color: #0f172a; min-height: 100vh; }
-  </style>
-  <!-- NCS i18n fleet kit (auto-injected) -->
+  <title>質譜峰 | Mass spectrum</title>
+  <link rel="stylesheet" href="../../lesson.css" />
   <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
   <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
   <style data-ncs-kit="fleet-bridge">
@@ -53,28 +43,218 @@
   </script>
 </head>
 <body>
-  <div id="root"></div>
-  <script type="text/babel" data-presets="react-classic">
-    const { useState } = React;
-    
-    function App() {
-      return (
-        <div className="max-w-4xl mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-4">08 Mass Spec</h1>
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 mb-8 text-center">
-            <div className="w-full h-64 bg-slate-100 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 mb-4">
-              <span className="text-slate-400 font-medium">[ Interactive Canvas Placeholder ]</span>
-            </div>
-            <p className="text-slate-500">This interactive lab is currently under development.</p>
-          </div>
-          <LearnFromZero />
-        </div>
-      );
+  <section class="chem-learn" data-chem-entry="1">
+    <h2>學習目標</h2>
+    <ul>
+      <li>分辨分子離子峰、基峰和 M+2。</li>
+      <li>用 m/z 核對相對分子質量。分子離子峰可以很矮。</li>
+      <li>氯的 M 與 M+2 約 3 : 1，溴約 1 : 1。</li>
+    </ul>
+    <h2>操作</h2>
+    <ul>
+      <li>選化合物，再選要找的是哪一種峰，然後在圖上點該峰。</li>
+      <li>判斷同位素高度比是約 3 : 1 還是約 1 : 1。</li>
+      <li>棒上的數字是 m/z，棒旁的數字是相對高度。沒有儀器操作步驟。</li>
+    </ul>
+    <h2>錯因</h2>
+    <ul>
+      <li>把最高的峰當成分子離子。最高的是基峰。</li>
+      <li>把 M+2 當成雜質，忽略氯和溴的同位素。</li>
+      <li>把氯的 3 : 1 和溴的 1 : 1 對調。</li>
+    </ul>
+    <p id="chem-feedback" role="status">先選要指出的峰，再在圖上點。</p>
+  </section>
+  <main>
+    <div class="panel">
+      <p class="muted"><a href="../index.html">← 中六化學</a></p>
+      <h1>質譜峰</h1>
+      <p class="muted">示意質譜。高度 100 是基峰。分子離子的 m/z 用最輕的常見同位素計算。</p>
+      <div class="row" id="samples"></div>
+      <p class="num" id="spec-name"></p>
+      <canvas id="plot" width="640" height="280" aria-label="示意質譜" data-chem-hit="1"></canvas>
+      <div class="row">
+        <button type="button" id="task-m">指出分子離子峰</button>
+        <button type="button" class="alt" id="task-base">指出基峰</button>
+        <button type="button" class="alt" id="task-m2">指出 M+2</button>
+      </div>
+      <div class="row">
+        <button type="button" class="alt" id="r31">同位素高度比約 3 : 1</button>
+        <button type="button" class="alt" id="r11">同位素高度比約 1 : 1</button>
+      </div>
+    </div>
+  </main>
+  <script src="../../lesson-kit.js"></script>
+  <script>
+    var SAMPLES = [
+      {
+        id: "bu",
+        name: "丁烷 C₄H₁₀",
+        ratio: "none",
+        peaks: [
+          { mz: 29, h: 45, role: "fragment" },
+          { mz: 43, h: 100, role: "base" },
+          { mz: 58, h: 12, role: "M" }
+        ],
+        why: {
+          M: "m/z 58 對應 12×4 + 10 = 58，是未碎裂的分子離子。它很矮，仍然是分子離子。",
+          base: "m/z 43 最高，所以是基峰。它是碎片，不是分子離子。",
+          M2: "丁烷沒有氯或溴，譜上沒有 M 與 M+2 的同位素對。"
+        }
+      },
+      {
+        id: "cl",
+        name: "氯甲烷 CH₃Cl",
+        ratio: "3:1",
+        peaks: [
+          { mz: 15, h: 100, role: "base" },
+          { mz: 50, h: 75, role: "M" },
+          { mz: 52, h: 25, role: "M2" }
+        ],
+        why: {
+          M: "³⁵Cl 的分子離子是 m/z 50，因為 12 + 3 + 35 = 50。它比旁邊的 52 高約三倍。",
+          base: "m/z 15 最高，是基峰，對應 CH₃⁺ 這類碎片，不是分子離子。",
+          M2: "m/z 52 是 ³⁷Cl 的 M+2，12 + 3 + 37 = 52。氯的 M : M+2 約 3 : 1。"
+        }
+      },
+      {
+        id: "br",
+        name: "溴甲烷 CH₃Br",
+        ratio: "1:1",
+        peaks: [
+          { mz: 15, h: 100, role: "base" },
+          { mz: 94, h: 98, role: "M" },
+          { mz: 96, h: 98, role: "M2" }
+        ],
+        why: {
+          M: "⁷⁹Br 的分子離子是 m/z 94，因為 12 + 3 + 79 = 94。",
+          base: "m/z 15 最高，是基峰。94 和 96 幾乎一樣高，但都不是基峰。",
+          M2: "m/z 96 是 ⁸¹Br 的 M+2，12 + 3 + 81 = 96。溴的 M : M+2 約 1 : 1。"
+        }
+      }
+    ];
+    var sampleIndex = 0;
+    var task = "M";
+    var regions = [];
+    var chosenMz = 0;
+    var canvas = document.getElementById("plot");
+    var ctx = canvas.getContext("2d");
+    var sampleButtons = [];
+
+    function sample() {
+      return SAMPLES[sampleIndex];
     }
-    
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+
+    function markTasks() {
+      document.getElementById("task-m").className = task === "M" ? "on" : "alt";
+      document.getElementById("task-base").className = task === "base" ? "on" : "alt";
+      document.getElementById("task-m2").className = task === "M2" ? "on" : "alt";
+    }
+
+    function paint() {
+      var s = sample();
+      var w = canvas.width;
+      var h = canvas.height;
+      document.getElementById("spec-name").textContent = s.name;
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = "#0f172a";
+      ctx.fillRect(0, 0, w, h);
+      ctx.strokeStyle = "#334155";
+      ctx.beginPath();
+      ctx.moveTo(36, h - 36);
+      ctx.lineTo(w - 16, h - 36);
+      ctx.stroke();
+      ctx.fillStyle = "#94a3b8";
+      ctx.font = "13px sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText("m/z", w - 48, h - 14);
+      regions = [];
+      var slot = (w - 90) / s.peaks.length;
+      for (var i = 0; i < s.peaks.length; i++) {
+        var p = s.peaks[i];
+        var bw = 32;
+        var bh = Math.max(10, (p.h / 100) * (h - 90));
+        var x = 64 + i * slot;
+        var y = h - 36 - bh;
+        ctx.fillStyle = p.mz === chosenMz ? "#f8fafc" : "#34d399";
+        ctx.fillRect(x, y, bw, bh);
+        ctx.fillStyle = "#e2e8f0";
+        ctx.textAlign = "center";
+        ctx.fillText(String(p.mz), x + bw / 2, h - 16);
+        ctx.fillText(String(p.h), x + bw / 2, y - 8);
+        regions.push({ x: x - 10, y: 8, w: bw + 20, h: h - 12, peak: p });
+      }
+    }
+
+    function miss(s, picked) {
+      if (task === "M2" && s.id === "bu") return s.why.M2;
+      if (task === "M" && picked.role === "base") return "錯因：你點了最高的峰。那是基峰。分子離子可以又矮又在較大的 m/z。";
+      if (task === "M" && picked.role === "M2") return "錯因：這是 M+2，不是較輕同位素的分子離子峰。";
+      if (task === "base" && picked.role === "M") return "錯因：分子離子不是相對高度最高的峰。基峰才是最高的。";
+      if (task === "M2" && picked.role === "M") return "錯因：這是較輕同位素的分子離子峰。M+2 在它右邊，m/z 大 2。";
+      if (picked.role === "fragment") return "錯因：這是碎片峰。它既不是分子離子，也不是這份譜的基峰。";
+      return "錯因：分子離子、基峰和 M+2 是三件不同的事。";
+    }
+
+    SAMPLES.forEach(function (s, index) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = s.name;
+      btn.className = index === 0 ? "on" : "alt";
+      btn.onclick = function () {
+        sampleIndex = index;
+        chosenMz = 0;
+        for (var i = 0; i < sampleButtons.length; i++) sampleButtons[i].className = i === index ? "on" : "alt";
+        paint();
+        ChemLesson.say("現在是 " + s.name + "。先選要找的峰，再點圖。");
+      };
+      sampleButtons.push(btn);
+      document.getElementById("samples").appendChild(btn);
+    });
+
+    document.getElementById("task-m").onclick = function () { task = "M"; markTasks(); ChemLesson.say("請點分子離子峰。丁烷看 12×4+10；氯甲烷看 12+3+35；溴甲烷看 12+3+79。"); };
+    document.getElementById("task-base").onclick = function () { task = "base"; markTasks(); ChemLesson.say("請點相對高度最高的基峰。"); };
+    document.getElementById("task-m2").onclick = function () { task = "M2"; markTasks(); ChemLesson.say("請點 M+2。若這份譜沒有氯或溴，就沒有這個同位素對。"); };
+
+    canvas.onclick = function (e) {
+      var rect = canvas.getBoundingClientRect();
+      var x = (e.clientX - rect.left) * (canvas.width / rect.width);
+      var y = (e.clientY - rect.top) * (canvas.height / rect.height);
+      var picked = null;
+      for (var i = 0; i < regions.length; i++) {
+        var r = regions[i];
+        if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) picked = r.peak;
+      }
+      if (!picked) return;
+      chosenMz = picked.mz;
+      paint();
+      var s = sample();
+      var wanted = task === "base" ? "base" : task === "M2" ? "M2" : "M";
+      if (task === "M2" && s.id === "bu") {
+        ChemLesson.say(s.why.M2, "no");
+        return;
+      }
+      if (picked.role === wanted) ChemLesson.say("正確，m/z " + picked.mz + "。" + s.why[task], "ok");
+      else ChemLesson.say("m/z " + picked.mz + " 不是這一問。" + miss(s, picked), "no");
+    };
+
+    function checkRatio(which) {
+      var s = sample();
+      if (s.ratio === "none") {
+        ChemLesson.say(s.why.M2, "no");
+        return;
+      }
+      if (which === s.ratio) {
+        ChemLesson.say("正確。" + (s.id === "cl" ? "氯約 3 : 1，所以 m/z 50 比 52 高。" : "溴約 1 : 1，所以 m/z 94 和 96 幾乎一樣高。"), "ok");
+      } else {
+        ChemLesson.say("不對。錯因：氯約 3 : 1，溴約 1 : 1，兩者不要對調。" + (s.id === "cl" ? "這份是氯甲烷。" : "這份是溴甲烷。"), "no");
+      }
+    }
+
+    document.getElementById("r31").onclick = function () { checkRatio("3:1"); };
+    document.getElementById("r11").onclick = function () { checkRatio("1:1"); };
+    markTasks();
+    paint();
   </script>
-<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+  <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 </body>
 </html>

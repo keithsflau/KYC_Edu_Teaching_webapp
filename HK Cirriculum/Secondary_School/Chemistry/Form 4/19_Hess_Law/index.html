@@ -2,79 +2,153 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>19_Hess_Law</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="../../../../common/babel-react-classic.js"></script>
-  <script src="../../../../common/learn-from-zero.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
-  <style>
-    body { font-family: "IBM Plex Sans", system-ui, sans-serif; background-color: #f8fafc; color: #0f172a; min-height: 100vh; }
-  </style>
-  <!-- NCS i18n fleet kit (auto-injected) -->
-  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
-  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
-  <style data-ncs-kit="fleet-bridge">
-    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
-    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
-      display: none !important;
-    }
-  </style>
-  <script data-ncs-kit="fleet-init">
-  (function () {
-    function hideLegacyToggles() {
-      document.body.classList.add("ncs-fleet-mounted");
-      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
-        var label = (btn.textContent || "").trim();
-        if (label === "EN" || label === "\u4E2D") {
-          btn.classList.add("ncs-hide-when-ncs-fleet");
-        }
-      });
-      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
-        el.classList.add("ncs-hide-when-ncs-fleet");
-      });
-    }
-    function boot() {
-      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
-      window.NcsI18n.init({
-        chromePath: "../../../../_shared/ncs-chrome.json",
-        target: document.body
-      }).then(hideLegacyToggles);
-    }
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", boot);
-    } else {
-      boot();
-    }
-  })();
-  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>赫斯定律 | Hess's law</title>
+  <link rel="stylesheet" href="../../lesson.css" />
 </head>
 <body>
-  <div id="root"></div>
-  <script type="text/babel" data-presets="react-classic">
-    const { useState } = React;
-    
-    function App() {
-      return (
-        <div className="max-w-4xl mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-4">19 Hess Law</h1>
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 mb-8 text-center">
-            <div className="w-full h-64 bg-slate-100 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 mb-4">
-              <span className="text-slate-400 font-medium">[ Interactive Canvas Placeholder ]</span>
-            </div>
-            <p className="text-slate-500">This interactive lab is currently under development.</p>
-          </div>
-          <LearnFromZero />
-        </div>
-      );
+  <section class="chem-learn" data-chem-entry="1">
+    <h2>學習目標</h2>
+    <ul>
+      <li>把兩條路徑的焓變相加，得到總 ΔH。</li>
+      <li>核對 C(s) + O₂(g) → CO₂(g) 的 ΔH。</li>
+      <li>起點和終點相同時，總 ΔH 不因更換路徑而改變。</li>
+    </ul>
+    <p id="chem-feedback" role="status">輸入兩條路徑相加後的 ΔH，再按核對。</p>
+  </section>
+  <main>
+    <div class="panel">
+      <h1>赫斯定律</h1>
+      <p class="muted">操作：輸入 ΔH₁ + ΔH₂，按核對。答錯會寫出錯因。這是焓變相加，沒有量熱或加熱步驟。</p>
+      <canvas id="cycle" width="640" height="300" aria-label="由碳到二氧化碳的兩條路徑"></canvas>
+      <p class="num" id="path1" style="font-size:1rem"></p>
+      <p class="num" id="path2" style="font-size:1rem"></p>
+      <p class="num" id="target" style="font-size:1rem"></p>
+      <label for="sum">ΔH = ΔH₁ + ΔH₂（kJ/mol）</label>
+      <input id="sum" type="number" step="1" style="font-size:1.1rem;padding:8px;width:8rem" />
+      <div class="row">
+        <button type="button" id="check">核對</button>
+        <button type="button" class="alt" id="same-path">換路徑後，ΔH 仍等於兩步之和</button>
+        <button type="button" class="alt" id="new-path">換路徑後，ΔH 一定不同</button>
+      </div>
+    </div>
+  </main>
+  <script src="../../lesson-kit.js"></script>
+  <script>
+    var H1 = -111;
+    var H2 = -283;
+    var sum = H1 + H2;
+
+    function kj(n) {
+      if (n < 0) return "−" + (-n);
+      return String(n);
     }
-    
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+
+    function parseKJ(raw) {
+      var s = String(raw).trim().replace(/−/g, "-").replace(/－/g, "-").replace(/\s/g, "");
+      if (!/^[+-]?\d+$/.test(s)) return null;
+      return Number(s);
+    }
+
+    function paint() {
+      document.getElementById("path1").textContent = "路徑 1：C(s) + ½O₂(g) → CO(g)　　ΔH₁ = " + kj(H1) + " kJ/mol";
+      document.getElementById("path2").textContent = "路徑 2：CO(g) + ½O₂(g) → CO₂(g)　　ΔH₂ = " + kj(H2) + " kJ/mol";
+      document.getElementById("target").textContent = "相加：C(s) + O₂(g) → CO₂(g)。CO 抵消，½O₂ + ½O₂ = O₂。";
+      draw();
+    }
+
+    function draw() {
+      var canvas = document.getElementById("cycle");
+      var ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#0f172a";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      var L = { x: 230, y: 168 };
+      var M = { x: 320, y: 52 };
+      var R = { x: 410, y: 168 };
+      function arrow(a, b, color) {
+        var dx = b.x - a.x;
+        var dy = b.y - a.y;
+        var len = Math.sqrt(dx * dx + dy * dy);
+        var ux = dx / len;
+        var uy = dy / len;
+        var x1 = a.x + ux * 18;
+        var y1 = a.y + uy * 18;
+        var x2 = b.x - ux * 18;
+        var y2 = b.y - uy * 18;
+        ctx.strokeStyle = color;
+        ctx.fillStyle = color;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+        var ang = Math.atan2(y2 - y1, x2 - x1);
+        ctx.beginPath();
+        ctx.moveTo(x2, y2);
+        ctx.lineTo(x2 - 12 * Math.cos(ang - 0.4), y2 - 12 * Math.sin(ang - 0.4));
+        ctx.lineTo(x2 - 12 * Math.cos(ang + 0.4), y2 - 12 * Math.sin(ang + 0.4));
+        ctx.closePath();
+        ctx.fill();
+      }
+      arrow(L, M, "#5eead4");
+      arrow(M, R, "#5eead4");
+      arrow({ x: 150, y: 230 }, { x: 490, y: 230 }, "#fbbf24");
+      ctx.font = "16px Segoe UI, Noto Sans HK, sans-serif";
+      ctx.fillStyle = "#e2e8f0";
+      ctx.textAlign = "right";
+      ctx.fillText("C(s) + O₂(g)", L.x - 16, L.y + 6);
+      ctx.textAlign = "center";
+      ctx.fillText("CO(g)", M.x, M.y - 14);
+      ctx.textAlign = "left";
+      ctx.fillText("CO₂(g)", R.x + 16, R.y + 6);
+      ctx.font = "14px Segoe UI, Noto Sans HK, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#99f6e4";
+      ctx.fillText("ΔH₁ = " + kj(H1), 150, 132);
+      ctx.fillText("ΔH₂ = " + kj(H2), 490, 132);
+      ctx.fillStyle = "#fde68a";
+      ctx.fillText("ΔH = ΔH₁ + ΔH₂", 320, 262);
+    }
+
+    function cause(got) {
+      if (got === H1) return "錯因：" + kj(H1) + " 只是路徑 1。目標方程式是兩步相加，CO 會抵消，還要加上路徑 2。";
+      if (got === H2) return "錯因：" + kj(H2) + " 只是路徑 2。還沒有加上路徑 1 的 " + kj(H1) + "。";
+      if (got === H1 - H2 || got === H2 - H1) return "錯因：你把兩條路徑相減，得到 " + kj(got) + "。兩步是接成同一條方程式，焓變要相加，不是相減。";
+      if (got === -sum) return "錯因：符號取反了。兩步都是放熱，負數加負數仍是負數：" + kj(H1) + " + (" + kj(H2) + ") = " + kj(sum) + "。";
+      if (got === Math.abs(H1) + Math.abs(H2)) return "錯因：兩個負號被拿掉了。放熱的焓變保持負號再相加：" + kj(H1) + " + (" + kj(H2) + ")。";
+      if (got === H1 + Math.abs(H2) || got === Math.abs(H1) + H2) return "錯因：其中一步被改成正數。題目兩步都放熱，兩個 ΔH 都是負的，然後相加。";
+      if (got === sum * 2) return "錯因：這是總和的兩倍。方程式的係數沒有再乘二，兩條路徑的焓變只加一次。";
+      if (got === 0) return "錯因：總焓變不是 0。抵消的是中間物 CO，不是把 ΔH 抵消掉。";
+      return "錯因：總焓變是兩步相加，ΔH = " + kj(H1) + " + (" + kj(H2) + ")。路徑不同不會改起點和終點，但這一題要把列出的兩步相加。";
+    }
+
+    document.getElementById("check").onclick = function () {
+      var got = parseKJ(document.getElementById("sum").value);
+      if (got === null) {
+        ChemLesson.say("錯因：請輸入整數，單位 kJ/mol。放熱的負號要保留。", "no");
+        return;
+      }
+      if (got === sum) {
+        ChemLesson.say("正確。ΔH = " + kj(H1) + " + (" + kj(H2) + ") = " + kj(sum) + " kJ/mol。路徑 1 的 CO 被路徑 2 用掉，兩份 ½O₂ 合成 O₂，得到 C(s) + O₂(g) → CO₂(g)。", "ok");
+        return;
+      }
+      ChemLesson.say(cause(got), "no");
+    };
+
+    document.getElementById("sum").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") document.getElementById("check").click();
+    });
+
+    document.getElementById("same-path").onclick = function () {
+      ChemLesson.say("正確。起點仍是 C(s) + O₂(g)、終點仍是 CO₂(g)，ΔH 就不變。另一條路徑要把該路徑各步的焓變重新相加，加總與這次相同。", "ok");
+    };
+
+    document.getElementById("new-path").onclick = function () {
+      ChemLesson.say("錯因：赫斯定律不是「路徑不同，ΔH 就不同」。改變的是中間步驟。總焓變仍是各步焓變之和，而且這個和由起點和終點決定。", "no");
+    };
+
+    paint();
   </script>
-<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 </body>
 </html>

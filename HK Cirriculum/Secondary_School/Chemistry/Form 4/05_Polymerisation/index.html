@@ -2,79 +2,264 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>05_Polymerisation</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="../../../../common/babel-react-classic.js"></script>
-  <script src="../../../../common/learn-from-zero.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>聚合 | 單體與聚合物</title>
+  <link rel="stylesheet" href="../../lesson.css" />
   <style>
-    body { font-family: "IBM Plex Sans", system-ui, sans-serif; background-color: #f8fafc; color: #0f172a; min-height: 100vh; }
+    a { color: #0f766e; }
+    .chain {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      min-height: 64px;
+      align-items: center;
+      border: 1px dashed #cbd5e1;
+      border-radius: 12px;
+      padding: 8px;
+      background: #f8fafc;
+    }
+    .unit { border-radius: 8px; padding: 8px 10px; font-weight: 800; }
+    .unit[data-m="ethene"] { background: #ccfbf1; color: #134e4a; }
+    .unit[data-m="propene"] { background: #e0f2fe; color: #0c4a6e; }
+    .unit[data-m="chloroethene"] { background: #ede9fe; color: #4c1d95; }
   </style>
-  <!-- NCS i18n fleet kit (auto-injected) -->
-  <link rel="stylesheet" href="../../../../common/ncs-i18n.css" />
-  <script src="../../../../common/ncs-i18n.js" defer data-ncs-kit="fleet"></script>
-  <style data-ncs-kit="fleet-bridge">
-    body.ncs-fleet-mounted .ncs-hide-when-ncs-fleet,
-    body.ncs-fleet-mounted .ncs-lang-btn:not(.ncs-lang-switcher *) {
-      display: none !important;
-    }
-  </style>
-  <script data-ncs-kit="fleet-init">
-  (function () {
-    function hideLegacyToggles() {
-      document.body.classList.add("ncs-fleet-mounted");
-      document.querySelectorAll("header button[type=\"button\"]").forEach(function (btn) {
-        var label = (btn.textContent || "").trim();
-        if (label === "EN" || label === "\u4E2D") {
-          btn.classList.add("ncs-hide-when-ncs-fleet");
-        }
-      });
-      document.querySelectorAll(".fixed.top-4.right-4.z-50").forEach(function (el) {
-        el.classList.add("ncs-hide-when-ncs-fleet");
-      });
-    }
-    function boot() {
-      if (!window.NcsI18n || window.NcsI18n.isInitialized()) return;
-      window.NcsI18n.init({
-        chromePath: "../../../../_shared/ncs-chrome.json",
-        target: document.body
-      }).then(hideLegacyToggles);
-    }
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", boot);
-    } else {
-      boot();
-    }
-  })();
-  </script>
 </head>
 <body>
-  <div id="root"></div>
-  <script type="text/babel" data-presets="react-classic">
-    const { useState } = React;
-    
-    function App() {
-      return (
-        <div className="max-w-4xl mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-4">05 Polymerisation</h1>
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 mb-8 text-center">
-            <div className="w-full h-64 bg-slate-100 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 mb-4">
-              <span className="text-slate-400 font-medium">[ Interactive Canvas Placeholder ]</span>
-            </div>
-            <p className="text-slate-500">This interactive lab is currently under development.</p>
-          </div>
-          <LearnFromZero />
-        </div>
-      );
+  <section class="chem-learn" data-chem-entry="1">
+    <h2>學習目標</h2>
+    <ul>
+      <li>分辨單體和聚合物。</li>
+      <li>把相同單體連成重複單位。</li>
+      <li>知道 n 表示重複很多次，不是質量。</li>
+    </ul>
+    <p id="chem-feedback" role="status">按一種單體，把它們一個一個接上鏈。</p>
+  </section>
+  <main>
+    <div class="panel">
+      <h1>單體與聚合物</h1>
+      <p class="muted">單體是可以彼此連接的小分子。聚合物是很多相同單體連成的大分子。這裡只用帶碳碳雙鍵的單體說明連接：雙鍵打開，變成重複單位。沒有質量、濃度、催化劑用量或製備步驟。</p>
+      <p class="muted"><a href="../index.html">返回中四化學</a></p>
+      <p class="muted">可以接上鏈的單體</p>
+      <div class="row" id="add">
+        <button type="button" data-add="ethene">乙烯 CH₂=CH₂</button>
+        <button type="button" data-add="propene">丙烯 CH₂=CHCH₃</button>
+        <button type="button" data-add="chloroethene">氯乙烯 CH₂=CHCl</button>
+      </div>
+      <p class="muted">這些不是單體</p>
+      <div class="row" id="reject">
+        <button type="button" class="alt" data-reject="ethane">乙烷 CH₃−CH₃</button>
+        <button type="button" class="alt" data-reject="methane">甲烷 CH₄</button>
+        <button type="button" class="alt" data-reject="poly">−[CH₂−CH₂]ₙ−</button>
+      </div>
+      <p class="muted">模型鏈</p>
+      <div id="chain" class="chain" aria-live="polite"></div>
+      <p id="chain-text" class="num" style="font-size:1.05rem"></p>
+      <div class="row">
+        <button type="button" class="alt" id="clear">清空鏈</button>
+        <button type="button" id="as-poly">這條鏈是聚合物</button>
+        <button type="button" id="as-mono">這條鏈還不是聚合物</button>
+      </div>
+      <p class="muted">這條鏈的重複單位是？</p>
+      <div class="row" id="units">
+        <button type="button" data-unit="ethene">−CH₂−CH₂−</button>
+        <button type="button" data-unit="propene">−CH₂−CH(CH₃)−</button>
+        <button type="button" data-unit="chloroethene">−CH₂−CHCl−</button>
+      </div>
+      <p class="muted">聚乙烯的單體是？</p>
+      <div class="row" id="pe">
+        <button type="button" data-pe="ethene">乙烯</button>
+        <button type="button" data-pe="ethane">乙烷</button>
+        <button type="button" data-pe="methane">甲烷</button>
+      </div>
+      <p class="muted">式子裡的 n 是什麼？</p>
+      <div class="row" id="nmean">
+        <button type="button" data-n="count">n 表示重複單位很多</button>
+        <button type="button" data-n="mass">n 是要稱出的質量</button>
+      </div>
+    </div>
+  </main>
+  <script src="../../lesson-kit.js"></script>
+  <script>
+    var MONOMERS = {
+      ethene: {
+        name: "乙烯",
+        formula: "CH₂=CH₂",
+        unit: "−CH₂−CH₂−",
+        polymer: "−[CH₂−CH₂]ₙ−"
+      },
+      propene: {
+        name: "丙烯",
+        formula: "CH₂=CHCH₃",
+        unit: "−CH₂−CH(CH₃)−",
+        polymer: "−[CH₂−CH(CH₃)]ₙ−"
+      },
+      chloroethene: {
+        name: "氯乙烯",
+        formula: "CH₂=CHCl",
+        unit: "−CH₂−CHCl−",
+        polymer: "−[CH₂−CHCl]ₙ−"
+      }
+    };
+    var REJECTS = {
+      ethane: "乙烷 CH₃−CH₃ 沒有碳碳雙鍵。加成聚合的單體要有雙鍵，連接時雙鍵才打得開。聚乙烯的單體是乙烯，不是乙烷。",
+      methane: "甲烷沒有碳碳雙鍵，不能打開雙鍵再和其他分子連接，所以不是這裡的單體。",
+      poly: "−[CH₂−CH₂]ₙ− 已經是聚合物，不是拿來再接一次的單體。單體是連接前的小分子。n 表示重複很多次，不是要稱的質量。"
+    };
+    var chain = [];
+
+    function say(msg, kind) {
+      if (window.ChemLesson) window.ChemLesson.say(msg, kind);
     }
-    
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+
+    function buttonOf(target) {
+      var node = target;
+      while (node && node !== document) {
+        if (node.tagName === "BUTTON") return node;
+        node = node.parentNode;
+      }
+      return null;
+    }
+
+    function renderChain() {
+      var box = document.getElementById("chain");
+      var text = document.getElementById("chain-text");
+      box.innerHTML = "";
+      if (!chain.length) {
+        box.textContent = "鏈還是空的。";
+        text.textContent = "未有重複單位";
+        return;
+      }
+      var spec = MONOMERS[chain[0]];
+      for (var i = 0; i < chain.length; i++) {
+        var el = document.createElement("span");
+        el.className = "unit";
+        el.setAttribute("data-m", chain[0]);
+        el.textContent = spec.unit;
+        box.appendChild(el);
+      }
+      text.textContent = spec.name + "的聚合物 " + spec.polymer + "　模型已重複 " + chain.length + " 次";
+    }
+
+    function addMonomer(id) {
+      var spec = MONOMERS[id];
+      if (chain.length && chain[0] !== id) {
+        say("鏈上已經是" + MONOMERS[chain[0]].name + "。同一條鏈只用一種單體，重複單位才一致。先清空再換。", "no");
+        return;
+      }
+      if (chain.length >= 8) {
+        say("模型接到 8 個就停。真正的聚合物更長，多出來的仍是同一個重複單位。n 不是質量。");
+        return;
+      }
+      chain.push(id);
+      renderChain();
+      say(spec.name + " " + spec.formula + " 接上了。碳碳雙鍵打開，變成重複單位 " + spec.unit + "。這只表示連接，沒有用量。現在有 " + chain.length + " 個。", "ok");
+    }
+
+    function judgeChain(asPolymer) {
+      if (!chain.length) {
+        say("鏈是空的。先按乙烯、丙烯或氯乙烯，把它們一個一個接上。", "no");
+        return;
+      }
+      var many = chain.length >= 3;
+      var spec = MONOMERS[chain[0]];
+      if (asPolymer && many) {
+        say("正確。相同的" + spec.name + "重複連接，就是聚合物。式子寫成 " + spec.polymer + "。n 表示很多個重複單位，不是要稱的質量。", "ok");
+        return;
+      }
+      if (asPolymer && chain.length === 1) {
+        say("現在只有一個" + spec.name + "，它是單體，還不是聚合物。聚合物要很多個單體連在一起。", "no");
+        return;
+      }
+      if (asPolymer) {
+        say("現在只有 " + chain.length + " 個重複單位，還太短。聚合物是很多個連成的大分子。再接上相同的" + spec.name + "。", "no");
+        return;
+      }
+      if (many) {
+        say("鏈上已有 " + chain.length + " 個 " + spec.unit + "。這是聚合物，不再是單獨的單體。", "no");
+        return;
+      }
+      if (chain.length === 1) {
+        say("正確。現在只有一個" + spec.name + "，它是單體，還沒連成聚合物。", "ok");
+        return;
+      }
+      say("正確。現在只有 " + chain.length + " 個，還不是聚合物。它也不再是單獨一個單體，再接上相同的" + spec.name + "才看得到重複。", "ok");
+    }
+
+    function judgeUnit(id) {
+      if (!chain.length) {
+        say("還沒有鏈。先把單體接上，重複單位才會出現。", "no");
+        return;
+      }
+      var spec = MONOMERS[chain[0]];
+      var picked = MONOMERS[id];
+      if (id === chain[0]) {
+        say("正確。你接的是" + spec.name + "，重複單位是 " + spec.unit + "。聚合物寫成 " + spec.polymer + "。n 不是質量。", "ok");
+        return;
+      }
+      say("鏈上是" + spec.name + "，重複單位應是 " + spec.unit + "。你選的是" + picked.name + "的重複單位。", "no");
+    }
+
+    function judgePolyethene(id) {
+      if (id === "ethene") {
+        var extra = "";
+        if (chain.length && chain[0] !== "ethene") {
+          extra = "你鏈上接的是" + MONOMERS[chain[0]].name + "，那是另一種聚合物，重複單位是 " + MONOMERS[chain[0]].unit + "。";
+        }
+        say("正確。聚乙烯的單體是乙烯 CH₂=CH₂，不是乙烷，也不是甲烷。" + extra, "ok");
+        return;
+      }
+      if (id === "ethane") {
+        say("乙烷沒有碳碳雙鍵。聚乙烯的單體是乙烯 CH₂=CH₂。雙鍵打開後才變成重複單位 −CH₂−CH₂−。", "no");
+        return;
+      }
+      say("甲烷沒有碳碳雙鍵，不能當作聚乙烯的單體。聚乙烯的單體是乙烯。", "no");
+    }
+
+    document.getElementById("add").onclick = function (e) {
+      var btn = buttonOf(e.target);
+      if (!btn) return;
+      addMonomer(btn.getAttribute("data-add"));
+    };
+
+    document.getElementById("reject").onclick = function (e) {
+      var btn = buttonOf(e.target);
+      if (!btn) return;
+      say(REJECTS[btn.getAttribute("data-reject")], "no");
+    };
+
+    document.getElementById("clear").onclick = function () {
+      chain = [];
+      renderChain();
+      say("鏈已清空。再選一種單體。");
+    };
+
+    document.getElementById("as-poly").onclick = function () { judgeChain(true); };
+    document.getElementById("as-mono").onclick = function () { judgeChain(false); };
+
+    document.getElementById("units").onclick = function (e) {
+      var btn = buttonOf(e.target);
+      if (!btn) return;
+      judgeUnit(btn.getAttribute("data-unit"));
+    };
+
+    document.getElementById("pe").onclick = function (e) {
+      var btn = buttonOf(e.target);
+      if (!btn) return;
+      judgePolyethene(btn.getAttribute("data-pe"));
+    };
+
+    document.getElementById("nmean").onclick = function (e) {
+      var btn = buttonOf(e.target);
+      if (!btn) return;
+      if (btn.getAttribute("data-n") === "count") {
+        say("正確。n 表示重複單位出現很多次。它不是要稱的質量，本課也不寫任何製備用量。", "ok");
+      } else {
+        say("n 不是質量，也不是要稱出的份量。它表示重複單位很多。聚合物是單體以化學鍵連成的大分子，不是把單體稱在一起的混合物。", "no");
+      }
+    };
+
+    renderChain();
   </script>
-<footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
+  <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>11_Colorimetry</title>
+  <title>比色法 | Colorimetry</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
@@ -53,28 +53,148 @@
   </script>
 </head>
 <body>
-  <div id="root"></div>
-  <script type="text/babel" data-presets="react-classic">
-    const { useState } = React;
-    
-    function App() {
-      return (
-        <div className="max-w-4xl mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-4">11 Colorimetry</h1>
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 mb-8 text-center">
-            <div className="w-full h-64 bg-slate-100 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 mb-4">
-              <span className="text-slate-400 font-medium">[ Interactive Canvas Placeholder ]</span>
-            </div>
-            <p className="text-slate-500">This interactive lab is currently under development.</p>
-          </div>
-          <LearnFromZero />
-        </div>
-      );
+<section class="chem-learn" data-chem-entry="1">
+  <h2>學習目標</h2>
+  <ul>
+    <li>用 A = εcl 計算吸光度。</li>
+    <li>說明稀溶液的校準曲線近乎直線。</li>
+    <li>由吸光度求濃度。只用畫面上的數字。</li>
+  </ul>
+  <p id="chem-feedback" role="status">拖動濃度，再回答下面兩題。</p>
+</section>
+<script src="../../lesson-kit.js"></script>
+<main class="f6-lesson">
+  <style>
+    .f6-lesson { max-width: 960px; margin: 0 auto; padding: 0 16px 40px; }
+    .f6-lesson h1 { font-size: 1.7rem; margin: 0.2rem 0; }
+    .f6-lesson h2 { font-size: 1.15rem; margin: 1.2rem 0 0.4rem; }
+    .f6-lesson p { line-height: 1.65; }
+    .f6-lesson .panel { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px; margin-top: 12px; }
+    .f6-lesson .row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .f6-lesson button { border: 0; border-radius: 10px; padding: 10px 14px; background: #0f766e; color: #fff; font-weight: 700; cursor: pointer; min-height: 44px; }
+    .f6-lesson button.alt { background: #e2e8f0; color: #0f172a; }
+    .f6-lesson .muted { color: #475569; }
+    .f6-lesson .big { font-size: 1.35rem; font-weight: 800; }
+    .f6-lesson input[type="range"] { width: 100%; }
+    .f6-lesson .cell { height: 120px; border-radius: 12px; background: #e2e8f0; overflow: hidden; }
+  </style>
+  <h1>比色法</h1>
+  <p>有色溶液吸光愈多，吸光度 A 愈大。在稀溶液和固定波長下，比爾–朗伯定律寫成 A = εcl。ε 是摩爾吸光係數，c 是濃度，l 是光程。</p>
+  <p>空白樣本用來把儀器的吸光度調到 0。濃度太高時，A 和 c 不再成正比，校準曲線會偏離直線。這頁是數字模型，不配置溶液。</p>
+  <div class="panel">
+    <p>模型參數：ε = 1.20 × 10³ dm³ mol⁻¹ cm⁻¹。例：c = 2.00 × 10⁻⁴ mol dm⁻³，l = 1.00 cm。</p>
+    <p class="big">A = 1200 × 2.00 × 10⁻⁴ × 1.00 = 0.240</p>
+  </div>
+  <h2>操作</h2>
+  <div class="panel">
+    <label for="conc">濃度（0 至 1.00 × 10⁻³ mol dm⁻³）</label>
+    <input id="conc" type="range" min="0" max="100" value="30" step="1" />
+    <div class="cell" aria-hidden="true"><div id="dye" style="height:100%;background:#0369a1;opacity:0.3;"></div></div>
+    <p id="conc-line" class="big">c = 3.00 × 10⁻⁴ mol dm⁻³</p>
+    <p id="abs-line">A = 1200 × c × 1.00 cm = 0.360</p>
+    <div class="row">
+      <button type="button" id="path-btn">把光程改為 2.00 cm</button>
+    </div>
+    <p id="path-note" class="muted">光程現在是 1.00 cm。ε 和濃度不變、又在直線範圍時，光程加倍則吸光度加倍。</p>
+  </div>
+  <div class="panel">
+    <p>題目固定用 l = 1.00 cm、ε = 1.20 × 10³ dm³ mol⁻¹ cm⁻¹，不受上面的光程按鈕影響。A = 0.360 時，濃度是多少？</p>
+    <div class="row">
+      <button type="button" id="q-c-low">1.50 × 10⁻⁴ mol dm⁻³</button>
+      <button type="button" id="q-c-ok">3.00 × 10⁻⁴ mol dm⁻³</button>
+      <button type="button" id="q-c-high">3.00 × 10⁻³ mol dm⁻³</button>
+    </div>
+    <p>若濃度加倍，而 ε、光程不變，並且仍在直線範圍，吸光度會怎樣？</p>
+    <div class="row">
+      <button type="button" id="q-double">加倍</button>
+      <button type="button" id="q-half">減半</button>
+      <button type="button" id="q-same">不變</button>
+    </div>
+  </div>
+</main>
+<script>
+(function () {
+  var path = 1;
+  var solved = { conc: false, trend: false };
+
+  function say(msg, kind) {
+    if (window.ChemLesson && window.ChemLesson.say) window.ChemLesson.say(msg, kind);
+    else {
+      var el = document.getElementById("chem-feedback");
+      if (el) el.textContent = msg;
     }
-    
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
-  </script>
+  }
+
+  function toSup(exp) {
+    var map = { "-": "⁻", "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹" };
+    var s = "";
+    var i;
+    for (i = 0; i < exp.length; i++) s += map[exp.charAt(i)] || exp.charAt(i);
+    return s;
+  }
+
+  function formatSci(n) {
+    if (n === 0) return "0";
+    var parts = n.toExponential(2).split("e");
+    var e = parts[1];
+    var sign = "";
+    if (e.charAt(0) === "+") e = e.substring(1);
+    else if (e.charAt(0) === "-") {
+      sign = "-";
+      e = e.substring(1);
+    }
+    while (e.length > 1 && e.charAt(0) === "0") e = e.substring(1);
+    return parts[0] + " × 10" + toSup(sign + e);
+  }
+
+  function render() {
+    var c = Number(document.getElementById("conc").value) * 1e-5;
+    var A = 1200 * c * path;
+    var aText = (Math.round(A * 1000) / 1000).toFixed(3);
+    var dye = document.getElementById("dye");
+    dye.style.opacity = A <= 0 ? "0" : String(Math.min(1, A / 1.2));
+    document.getElementById("conc-line").textContent = "c = " + formatSci(c) + " mol dm⁻³";
+    document.getElementById("abs-line").textContent = "A = 1200 × c × " + path.toFixed(2) + " cm = " + aText;
+    document.getElementById("path-note").textContent = "光程現在是 " + path.toFixed(2) + " cm。ε 和濃度不變、又在直線範圍時，光程加倍則吸光度加倍。";
+  }
+
+  function mark(key, correct, okMsg, noMsg) {
+    if (correct) {
+      solved[key] = true;
+      if (solved.conc && solved.trend) okMsg += " 兩題都答對了。c = A / (εl)，在直線範圍內 A 與 c 成正比。";
+      say(okMsg, "ok");
+    } else {
+      say(noMsg, "no");
+    }
+  }
+
+  document.getElementById("conc").addEventListener("input", render);
+  document.getElementById("path-btn").onclick = function () {
+    path = path === 1 ? 2 : 1;
+    this.textContent = path === 1 ? "把光程改為 2.00 cm" : "把光程改回 1.00 cm";
+    render();
+  };
+  document.getElementById("q-c-low").onclick = function () {
+    mark("conc", false, "", "你把結果再減半了。c = A / (εl) = 0.360 / 1200 = 3.00 × 10⁻⁴ mol dm⁻³。");
+  };
+  document.getElementById("q-c-ok").onclick = function () {
+    mark("conc", true, "正確。c = 0.360 / (1200 × 1.00) = 3.00 × 10⁻⁴ mol dm⁻³。滑桿調到這個濃度、光程 1.00 cm 時，A 也是 0.360。", "");
+  };
+  document.getElementById("q-c-high").onclick = function () {
+    mark("conc", false, "", "差了 10 倍。0.360 / 1200 = 3.00 × 10⁻⁴，不是 10⁻³。");
+  };
+  document.getElementById("q-double").onclick = function () {
+    mark("trend", true, "正確。A = εcl，c 加倍而 ε、l 不變，A 也加倍。濃度太高時這條關係不再成立。", "");
+  };
+  document.getElementById("q-half").onclick = function () {
+    mark("trend", false, "", "A = εcl。c 在分子的位置，濃度加倍則吸光度加倍，不是減半。");
+  };
+  document.getElementById("q-same").onclick = function () {
+    mark("trend", false, "", "濃度是式子裡的變數。ε 和 l 不變時，c 加倍，A 也加倍。");
+  };
+  render();
+})();
+</script>
 <footer style="text-align:center;padding:1rem;font-size:0.8rem;opacity:0.7;">@HKSTEAMAI All Copy-Right Reserved.</footer>
 </body>
 </html>
